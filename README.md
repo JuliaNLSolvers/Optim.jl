@@ -3,4 +3,5 @@
 ## Existing Functions
 
 * Simulated Annealing
-* Constant Step-Size Gradient Descent
+* Constant Step-Size Gradient Descent (gradient_descent)
+* Back-Tracking Line Search Gradient Descent (gradient_descent2)
