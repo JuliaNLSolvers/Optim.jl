@@ -4,3 +4,5 @@
 * Improve documentation
 * Write tests; distinguish tests and examples
 * Create formal library for easy installation
+
+* Need tests using both 1D and 2D problems.
