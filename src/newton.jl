@@ -6,7 +6,7 @@ function newton(f, g, h, x0, precision, alpha, beta)
   
   i = 0
   
-  while l2 / 2 > precision
+  while any(l2 / 2 > precision)
     step_size = backtracking_line_search(f, g, x, dx, alpha, beta)
     
     x = x + step_size * dx
