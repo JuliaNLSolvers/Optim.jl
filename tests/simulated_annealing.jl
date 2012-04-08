@@ -1,7 +1,17 @@
 load("src/optim.jl")
-load("/Users/johnmyleswhite/julia_libs/rng.jl")
+load("libs/rng.jl")
 
 srand(1)
+
+f = x -> (x - 5) ^ 4
+
+@assert abs(simulated_annealing(f,
+ 								0,
+								z -> rand_uniform(z - 1, z + 1),
+								i -> 1 / log(i),
+								10000,
+								true,
+								false) - 5) < 0.1
 
 function rosenbrock(x, y)
   (1 - x)^2 + 100(y - x^2)^2

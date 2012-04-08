@@ -1,5 +1,5 @@
 load("src/optim.jl")
-load("/Users/johnmyleswhite/julia_libs/rng.jl")
+load("libs/rng.jl")
 
 srand(1)
 

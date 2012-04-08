@@ -1,4 +1,4 @@
-function newton(f, g, h, x0, precision, alpha, beta)
+function newton(f, g, h, x0, tolerance, alpha, beta)
   x = x0
   
   dx = -inv(h(x)) * g(x)
@@ -6,7 +6,7 @@ function newton(f, g, h, x0, precision, alpha, beta)
   
   i = 0
   
-  while any(l2 / 2 > precision)
+  while any(l2 / 2 > tolerance)
     step_size = backtracking_line_search(f, g, x, dx, alpha, beta)
     
     x = x + step_size * dx
