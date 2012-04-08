@@ -35,9 +35,10 @@ function gradient_descent2(f::Function,
   
   # Count the number of gradient descent steps we perform.
   i = 0
+  max_iterations = 1000
   
   # Iterate until the norm of the gradient is within tolerance of zero.
-  while any(sqrt(g(x_new)' * g(x_new)) > tolerance)
+  while any(sqrt(g(x_new)' * g(x_new)) > tolerance) && i <= max_iterations
     
     # Use a back-tracking line search to select a step-size.
     step_size = backtracking_line_search(f, g, x_new, -g(x_new), alpha, beta)

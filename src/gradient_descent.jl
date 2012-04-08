@@ -29,10 +29,11 @@ function gradient_descent(f::Function,
   y_new = f(x_new)
   
   i = 0
+  max_iterations = 1000
   
   # Iterate until our purported minimum over two passes changes by
   # no more than a prespecified tolerance.
-  while abs(y_new - y_old) > tolerance
+  while abs(y_new - y_old) > tolerance && i <= max_iterations
     x_old = x_new
     x_new = x_new - step_size * g(x_new)
     
