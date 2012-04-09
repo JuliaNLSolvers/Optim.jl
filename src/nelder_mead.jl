@@ -13,7 +13,7 @@ function centroid(x)
   mean(x, 1)
 end
 
-function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations)
+function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, trace)
   p = initial_p
   
   y = zeros(size(p, 1), 1)
@@ -22,7 +22,7 @@ function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations)
   end
   
   iter = 0
-  while std(y) / sqrt(length(y)) > tolerance && iter < max_iterations
+  while sqrt(var(y) * ((length(y) - 1) / length(y))) > tolerance && iter < max_iterations
     iter = iter + 1
         
     # Find p_l and p_h
@@ -94,7 +94,12 @@ function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations)
     y = zeros(size(p, 1), 1)
     for i = 1:size(p, 1)
       y[i, 1] = f(p[i, :])
-    end    
+    end
+	
+	if trace
+	  println(p)
+	  println()
+	end
   end
   
   (centroid(p), f(centroid(p)), iter)
