@@ -27,3 +27,5 @@
   * max_iterations_newton
   * max_iterations_bt
   * trace
+
+* Conjugate Gradient

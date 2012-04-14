@@ -1,7 +1,6 @@
-load("simulated_annealing.jl")
-load("gradient_descent.jl")
-load("backtracking_line_search.jl")
-load("gradient_descent2.jl")
-load("newton.jl")
-load("nelder_mead.jl")
-
+load("src/simulated_annealing.jl")
+load("src/gradient_descent.jl")
+load("src/backtracking_line_search.jl")
+load("src/gradient_descent2.jl")
+load("src/newton.jl")
+load("src/nelder_mead.jl")
