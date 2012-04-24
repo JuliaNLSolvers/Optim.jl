@@ -1,11 +1,13 @@
-# gradient_descent()
+# newton()
 
 * Arguments:
-  * f: A function that is differentiable.
+  * f: A function that is twice-differentiable.
   * g: The gradient of f.
+  * h: The Hessian of f.
   * x0: A value in the domain of f from which to start the search for a minimum.
-  * step_size: How far along the gradient should we move with each step?
   * tolerance: How close must two successive values of f(x) be for convergence to be declared?
+  * alpha: Parameter of the back-tracking line search method.
+  * beta: Parameter of the back-tracking line search method.
 * Returns:
   * A tuple containing three items:
     * x_star: The purported minimum of the function to be optimized.
