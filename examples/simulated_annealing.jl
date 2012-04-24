@@ -1,5 +1,4 @@
-load("src/optim.jl")
-load("libs/rng.jl")
+load("src/init.jl")
 
 srand(1)
 

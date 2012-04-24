@@ -1,3 +1,4 @@
+load("src/rng.jl")
 load("src/backtracking_line_search.jl")
 load("src/gradient_descent.jl")
 load("src/gradient_descent2.jl")

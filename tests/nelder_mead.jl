@@ -1,4 +1,4 @@
-load("src/optim.jl")
+load("src/init.jl")
 
 f = x -> x[1]^2 + x[2]^2
 

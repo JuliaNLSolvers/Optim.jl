@@ -1,4 +1,4 @@
-load("src/optim.jl")
+load("src/init.jl")
 
 f = x -> (x - 5) ^ 2
 g = x -> 2(x - 5)
