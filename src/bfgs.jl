@@ -37,14 +37,3 @@ function bfgs(f, g, initial_x, initial_h, tolerance)
     println()
   end
 end
-
-f = function(x) x[1]^2 + 2x[2]^2 end
-function g(x)
-  [2x[1], 4x[2]]
-end
-
-initial_x = [100.0, 100.0]
-initial_h = eye(2)
-tolerance = 10e-8
-
-bfgs(f, g, initial_x, initial_h, tolerance)
