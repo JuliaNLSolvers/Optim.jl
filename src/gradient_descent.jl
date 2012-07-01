@@ -1,6 +1,6 @@
 function gradient_descent(f::Function,
                           g::Function,
-                          x0::Any,
+                          x0::Vector,
                           step_size::Float64,
                           tolerance::Float64)
   
@@ -11,8 +11,9 @@ function gradient_descent(f::Function,
   y_old = Inf
   y_new = f(x_new)
   
-  i = 0
+  # Don't go for more than 1,000 iterations.
   max_iterations = 1000
+  i = 0
   
   # Iterate until our purported minimum over two passes changes by
   # no more than a prespecified tolerance.
