@@ -36,3 +36,10 @@ function newton(f::Function,
   
   OptimizationResults(initial_x, x, f(x), i, converged)
 end
+
+function newton(f::Function,
+                g::Function,
+                h::Function,
+                initial_x::Vector)
+  newton(f, g, h, initial_x, 10e-8, 0.1, 0.8)
+end
