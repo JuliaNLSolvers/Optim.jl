@@ -17,7 +17,7 @@ function backtracking_line_search(f::Function,
   g_x = g(x)
   angle = (g_x' * dx)[1]
   
-  # Keep coming closer until we find a point that is as good as the gradient suggests.
+  # Keep coming closer to x until we find a point that is as good as the gradient suggests.
   while f(x + t * dx) > f_x + alpha * t * angle
     t = beta * t
     
@@ -29,4 +29,11 @@ function backtracking_line_search(f::Function,
   end
   
   t
+end
+
+function backtracking_line_search(f::Function,
+                                  g::Function,
+                                  x::Vector,
+                                  dx::Vector)
+  backtracking_line_search(f, g, x, dx, 0.1, 0.8)
 end
