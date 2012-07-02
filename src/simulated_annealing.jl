@@ -8,7 +8,7 @@
 # * temperature: Function specifying the temperature at time i.
 # * iterations: How many iterations of the algorithm should be run? This is the only termination condition.
 # * keep_best: Do we return the best state visited or the last state visisted? (Should default to true.)
-# * trace: Do we show a trace of the system's evolution?
+# * show_trace: Do we show a trace of the system's evolution?
 #
 ##
 
@@ -18,7 +18,7 @@ function simulated_annealing(cost::Function,
                              temperature::Function,
                              iterations::Int64,
                              keep_best::Bool,
-                             trace::Bool)
+                             show_trace::Bool)
                              
   # Set our current state to the specified intial state.
   s = s0
@@ -40,7 +40,7 @@ function simulated_annealing(cost::Function,
     y_n = cost(s_n)
     
     # Print out the current and proposed states of the system w/ their costs.
-    if trace
+    if show_trace
       println("$i: s = $s")
       println("$i: s_n = $s_n")
       println("$i: y = $y")
@@ -50,27 +50,27 @@ function simulated_annealing(cost::Function,
     if y_n <= y
       # If the proposed new state is superior, we always move to it.
       s = s_n
-      if trace println("Accepted") end
+      if show_trace println("Accepted") end
     else
       # If the proposed new state is inferior, we move to it with
       # probability p.
       p = exp(- ((y_n - y) / t))
       
-      if trace
+      if show_trace
         println("$i: p = $p")
         println()
       end
       
       if rand() <= p
         s = s_n
-        if trace
+        if show_trace
           println("Accepted")
           println()
         end
       else
         s = s
-        if
-          trace println("Rejected")
+        if show_trace
+          println("Rejected")
           println()
         end
       end
@@ -85,9 +85,9 @@ function simulated_annealing(cost::Function,
   # If specified by the user, we return the best state we've seen.
   # Otherwise, we return the late state we've seen.
   if keep_best
-    best_s
+    OptimizationResults(s0, best_s, f(best_s), iterations, false)
   else
-    s
+    OptimizationResults(s0, s, f(s), iterations, false)
   end
 end
 

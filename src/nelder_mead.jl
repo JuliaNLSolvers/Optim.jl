@@ -114,11 +114,11 @@ function nelder_mead(f::Function,
     for i = 1:n
       y[i] = f(p[i, :])
     end
-	  
-  	if show_trace
-  	  println(p)
-  	  println()
-  	end
+    
+    if show_trace
+      println(p)
+      println()
+    end
     
     if sqrt(var(y) * ((n - 1) / n)) <= tolerance
       converged = true

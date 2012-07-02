@@ -27,7 +27,7 @@ function gradient_descent2(f::Function,
     # Move in the direction of the gradient.
     x = x - step_size * g(x)
     
-	  if show_trace
+    if show_trace
       println(i)
       println(x)
       println(step_size)
