@@ -130,3 +130,7 @@ function l_bfgs(f, g, initial_x, m, tolerance)
   
   OptimizationResults(initial_x, x, f(x), k, converged)
 end
+
+function l_bfgs(f, g, initial_x)
+  l_bfgs(f, g, initial_x, 10, 10e-8)
+end
