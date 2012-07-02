@@ -1,12 +1,12 @@
 function newton(f::Function,
                 g::Function,
                 h::Function,
-                x0::Vector,
+                initial_x::Vector,
                 tolerance::Float64,
                 alpha::Float64,
                 beta::Float64)
   
-  x = x0
+  x = initial_x
   
   dx = -inv(h(x)) * g(x)
   l2 = (g(x)' * inv(h(x)) * g(x))[1]
@@ -15,7 +15,10 @@ function newton(f::Function,
   max_iterations = 1000  
   i = 0
   
-  while norm(g(x)) > tolerance && i <= max_iterations
+  # Track convergence.
+  converged = false
+  
+  while !converged && i <= max_iterations
     dx = -inv(h(x)) * g(x)
     
     step_size = backtracking_line_search(f, g, x, dx, alpha, beta)
@@ -25,7 +28,11 @@ function newton(f::Function,
     l2 = (g(x)' * inv(h(x)) * g(x))[1]
     
     i = i + 1
+    
+    if l2 / 2 <= tolerance
+      converged = true
+    end
   end
   
-  (x, f(x), i)
+  OptimizationResults(initial_x, x, f(x), i, converged)
 end
