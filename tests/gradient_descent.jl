@@ -9,13 +9,13 @@ function g(x)
 end
 
 results = gradient_descent(f, g, [0.0], 0.1, 10e-8)
-@assert norm(results[1] - [5.0]) < 0.01
+@assert norm(results.minimum - [5.0]) < 0.01
 
 results = gradient_descent(f, g, [0.0], 0.1, 10e-16)
-@assert norm(results[1] - [5.0]) < 0.01
+@assert norm(results.minimum - [5.0]) < 0.01
 
 results = gradient_descent(f, g, [0.0], 0.1, 10e-32)
-@assert norm(results[1] - [5.0]) < 0.01
+@assert norm(results.minimum - [5.0]) < 0.01
 
 eta = 0.9
 
@@ -28,4 +28,4 @@ function g(x)
 end
 
 results = gradient_descent(f, g, [1, 1], 0.1, 10e-8)
-@assert norm(results[1] - [0.0, 0.0]) < 0.01
+@assert norm(results.minimum - [0.0, 0.0]) < 0.01

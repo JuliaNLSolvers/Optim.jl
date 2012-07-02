@@ -24,9 +24,10 @@ function bfgs(f::Function,
   a = 0.1
   b = 0.8
   
+  converged = false
   show_trace = false
   
-  while norm(gradient_new) > tolerance && k <= max_iterations
+  while !converged && k <= max_iterations
     p = -h * gradient_new
     alpha = backtracking_line_search(f, g, x_new, p, a, b)
     x_old = x_new
@@ -38,6 +39,10 @@ function bfgs(f::Function,
     h = update_h(h, s, y)
     k = k + 1
     
+    if norm(gradient_new) <= tolerance
+      converged = true
+    end
+    
     if show_trace
       println(k)
       println(x_new)
@@ -46,5 +51,5 @@ function bfgs(f::Function,
     end
   end
   
-  (x_new, f(x_new), k)
+  OptimizationResults(initial_x, x_new, f(x_new), k, converged)
 end
