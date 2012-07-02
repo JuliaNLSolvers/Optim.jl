@@ -30,6 +30,10 @@ function parabola_gradient(x::Vector)
   [-2.0 * (1.0 - x[1]), -2.0 * (2.0 - x[2]), -2.0 * (3.0 - x[3]), -2.0 * (5.0 - x[4]), -2.0 * (8.0 - x[5])]
 end
 
+function parabola_hessian(x::Vector)
+  2.0 * eye(5)  
+end
+
 ###
 ### Powell
 ###
@@ -51,5 +55,5 @@ function rosenbrock(x::Vector)
 end
 
 function rosenbrock_gradient(x::Vector)
-  [2.0 * (1.0 - x[1]) + 200.0 * (x[2] - x[1]^2) * -2.0 * x[1], 200.0 * (x[2] - x[1]^2)]
+  [2.0 * (1.0 - x[1]) + -400.0 * (x[2] - x[1]^2) * x[1], 200.0 * (x[2] - x[1]^2)]
 end
