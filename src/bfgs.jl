@@ -53,3 +53,9 @@ function bfgs(f::Function,
   
   OptimizationResults(initial_x, x_new, f(x_new), k, converged)
 end
+
+function bfgs(f::Function,
+              g::Function,
+              initial_x::Vector)
+  bfgs(f, g, initial_x, eye(length(initial_h)), 10e-8)
+end
