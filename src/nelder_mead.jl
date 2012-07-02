@@ -9,41 +9,58 @@
 # y_l is current minimum
 # y_h is current maximum
 
-function centroid(x)
-  mean(x, 1)
+function centroid(p::Matrix)
+  mean(p, 1)
 end
 
-function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, trace)
+function nelder_mead(f::Function,
+                     initial_p::Matrix,
+                     a::Float64,
+                     g::Float64,
+                     b::Float64,
+                     tolerance::Float64,
+                     max_iterations::Int64,
+                     show_trace::Bool)
+  
+  # Center the algorithm around an arbitrary point.
   p = initial_p
   
-  y = zeros(size(p, 1), 1)
-  for i = 1:size(p, 1)
-    y[i, 1] = f(p[i, :])
+  # Maintain a record of the value of f() at n points.
+  n = size(p, 1)
+  y = zeros(n)
+  for i = 1:n
+    y[i] = f(p[i, :])
   end
   
+  # Don't run forever.
   iter = 0
-  while sqrt(var(y) * ((length(y) - 1) / length(y))) > tolerance && iter < max_iterations
+  
+  
+  while sqrt(var(y) * ((n - 1) / n)) > tolerance && iter < max_iterations
+    # Augment the iteration counter.
     iter = iter + 1
-        
-    # Find p_l and p_h
+    
+    # Find p_l and p_h, the minimum and maximum values of f() among p.
     # Always take the first min or max if many exist.
-    l = find(y == min(y))[1]
+    l = find(y .== min(y))[1]
     p_l = p[l, :]
-    y_l = y[l, 1]
+    y_l = y[l]
     
-    h = find(y == max(y))[1]
+    h = find(y .== max(y))[1]
     p_h = p[h, :]
-    y_h = y[h, 1]
+    y_h = y[h]
     
-    non_maximal_p = p[find([1:size(p, 1)] != h), :]
+    # Remove the maximum valued point from our set.
+    non_maximal_p = p[find([1:n] .!= h), :]
     
+    # Compute the centroid of the remaining points.
     p_bar = centroid(non_maximal_p)
     
     # For later, prestore function values of all non-maximal points.
-    y_bar = zeros(size(non_maximal_p, 1), 1)
+    y_bar = zeros(n - 1)
     
-    for i = 1:size(non_maximal_p, 1)
-      y_bar[i, 1] = f(non_maximal_p[i, :])
+    for i = 1:(n - 1)
+      y_bar[i] = f(non_maximal_p[i, :])
     end
     
     # Compute a reflection.
@@ -64,7 +81,7 @@ function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, trace)
         p[h, :] = p_h
       end
     else
-      if all(y_star > y_bar)
+      if all(y_star .> y_bar)
         if y_star > y_h
           1 # Do a NO-OP.
         else
@@ -77,7 +94,7 @@ function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, trace)
         y_star_star = f(p_star_star)
         
         if y_star_star > y_h
-          for i = 1:size(p, 1)
+          for i = 1:n
             p[i, :] = (p[i, :] + p_l) / 2
           end
         else
@@ -91,15 +108,15 @@ function nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, trace)
     end
     
     # Recompute y's to assess convergence.
-    y = zeros(size(p, 1), 1)
-    for i = 1:size(p, 1)
-      y[i, 1] = f(p[i, :])
+    y = zeros(n, 1)
+    for i = 1:n
+      y[i] = f(p[i, :])
     end
-	
-	if trace
-	  println(p)
-	  println()
-	end
+	  
+  	if show_trace
+  	  println(p)
+  	  println()
+  	end
   end
   
   (centroid(p), f(centroid(p)), iter)

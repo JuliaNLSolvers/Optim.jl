@@ -1,4 +1,4 @@
-function update_h(h::Array, s::Vector, y::Vector)
+function update_h(h::Matrix, s::Vector, y::Vector)
   rho = 1.0 / (y' * s)[1]
   I = eye(size(h, 1))
   (I - rho * s * y') * h * (I - rho * y * s') + rho * s * s'
@@ -7,7 +7,7 @@ end
 function bfgs(f::Function,
               g::Function,
               initial_x::Vector,
-              initial_h::Array,
+              initial_h::Matrix,
               tolerance::Float64)
   k = 0
   
