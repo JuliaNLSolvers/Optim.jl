@@ -35,8 +35,10 @@ function nelder_mead(f::Function,
   # Don't run forever.
   iter = 0
   
+  # Track convergence.
+  converged = false
   
-  while sqrt(var(y) * ((n - 1) / n)) > tolerance && iter < max_iterations
+  while !converged && iter < max_iterations
     # Augment the iteration counter.
     iter = iter + 1
     
@@ -117,7 +119,13 @@ function nelder_mead(f::Function,
   	  println(p)
   	  println()
   	end
+    
+    if sqrt(var(y) * ((n - 1) / n)) <= tolerance
+      converged = true
+    end
   end
   
-  (centroid(p), f(centroid(p)), iter)
+  m = size(initial_p, 2)
+  
+  OptimizationResults(reshape(centroid(initial_p), m), reshape(centroid(p), m), f(centroid(p)), iter, converged)
 end
