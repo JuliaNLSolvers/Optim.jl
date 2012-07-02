@@ -15,6 +15,14 @@ function gradient_descent2(f::Function,
   # Show trace?
   show_trace = false
   
+  if show_trace
+    println("Iteration: $(i)")
+    println("x: $(x)")
+    println("g(x): $(g(x))")
+    println("||g(x)||: $(norm(g(x)))")
+    println("")
+  end
+  
   # Monitor convergence.
   converged = false
   
@@ -26,19 +34,21 @@ function gradient_descent2(f::Function,
     
     # Move in the direction of the gradient.
     x = x - step_size * g(x)
-    
-    if show_trace
-      println(i)
-      println(x)
-      println(step_size)
-      println("")
-    end
-    
+        
     # Increment the number of steps we've had to perform.
     i = i + 1
     
     if norm(g(x)) <= tolerance
       converged = true
+    end
+    
+    if show_trace
+      println("Iteration: $(i)")
+      println("x: $(x)")
+      println("g(x): $(g(x))")
+      println("||g(x)||: $(norm(g(x)))")
+      println("Step-size: $(step_size)")
+      println("")
     end
   end
   
