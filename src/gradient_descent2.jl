@@ -56,3 +56,9 @@ function gradient_descent2(f::Function,
   # number of iterations required to reach the minimum.
   OptimizationResults(initial_x, x, f(x), i, converged)
 end
+
+function gradient_descent2(f::Function,
+                           g::Function,
+                           initial_x::Vector)
+  gradient_descent2(f, g, initial_x, 10e-8, 0.1, 0.8)
+end
