@@ -129,3 +129,8 @@ function nelder_mead(f::Function,
   
   OptimizationResults(reshape(centroid(initial_p), m), reshape(centroid(p), m), f(centroid(p)), iter, converged)
 end
+
+function nelder_mead(f::Function,
+                     initial_p::Matrix)
+  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 1000, false)
+end
