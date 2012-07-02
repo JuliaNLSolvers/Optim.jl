@@ -112,3 +112,14 @@ end
 function constant_temperature(i)
   1
 end
+
+function simulated_annealing(cost::Function,
+                             s0::Any,
+                             neighbor::Function)
+  simulated_annealing(cost, s0, neighbor, i -> 1 / log(i), 10000, true, false)
+end
+
+function simulated_annealing(cost::Function,
+                             s0::Vector)
+  simulated_annealing(cost, s0, normal_about_s0, i -> log(i), 10000, true, false)
+end
