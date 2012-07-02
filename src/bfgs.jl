@@ -1,10 +1,14 @@
-function update_h(h, s, y)
-  rho = 1 / (y' * s)[1]
+function update_h(h::Array, s::Vector, y::Vector)
+  rho = 1.0 / (y' * s)[1]
   I = eye(size(h, 1))
   (I - rho * s * y') * h * (I - rho * y * s') + rho * s * s'
 end
 
-function bfgs(f, g, initial_x, initial_h, tolerance)
+function bfgs(f::Function,
+              g::Function,
+              initial_x::Vector,
+              initial_h::Array,
+              tolerance::Float64)
   k = 0
   
   x_new = initial_x
@@ -20,6 +24,8 @@ function bfgs(f, g, initial_x, initial_h, tolerance)
   a = 0.1
   b = 0.8
   
+  show_trace = false
+  
   while norm(gradient_new) > tolerance && k <= max_iterations
     p = -h * gradient_new
     alpha = backtracking_line_search(f, g, x_new, p, a, b)
@@ -31,9 +37,14 @@ function bfgs(f, g, initial_x, initial_h, tolerance)
     y = gradient_new - gradient_old
     h = update_h(h, s, y)
     k = k + 1
-    println(k)
-    println(x_new)
-    println(f(x_new))
-    println()
+    
+    if show_trace
+      println(k)
+      println(x_new)
+      println(f(x_new))
+      println()
+    end
   end
+  
+  (x_new, f(x_new), k)
 end
