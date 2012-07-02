@@ -1,28 +1,49 @@
-function two_loop(x, g_x, rho, s, y, m, k)
-  q = g_x
-  loop_bounds = 1:min(k, m)
-  alpha = zeros(m)
-  for i = reverse(loop_bounds)
-    alpha[i] = (rho[i] * s[i]' * q)[1]
-    q = q - alpha[i] * y[i]
-  end
-  index = min(k, m)
-  gamm = (s[index]' * y[index])[1] / (y[index]' * y[index])[1]
-  if isnan(gamm)
-    gamm = 1
-  end
-  r = gamm * q
-  for i = loop_bounds
-    beta = (rho[i] * y[i]' * r)[1]
-    r = r + s[i] * (alpha[i] - beta)
-  end
-  r
-end
-
 # Use Any arrays for the time being
 # Eventually move over to a faster Float64 representation for which we built shift and push operations.
 
-function lbfgs(f, g, initial_x, m, tolerance)
+# while k < m, search all the way back from 1:k
+# while k >= m, search back for m copies starting k and going back to k - m + 1
+
+# In first pass, just use gradient.
+
+function two_loop(x, g_x, rho, s, y, m, k)
+  q = g_x
+    
+  if k == 1
+    1 # NO-OP
+  else
+    loop_bounds = 1:min(k - 1, m)
+    alpha = zeros(m)
+    for i = reverse(loop_bounds)
+      alpha[i] = (rho[i] * s[i]' * q)[1]
+      q = q - alpha[i] * y[i]
+    end
+  end
+  
+  index = min(k - 1, m)
+  if index < 1
+    gamm = 1
+  else
+    gamm = (s[index]' * y[index])[1] / (y[index]' * y[index])[1]
+    if isnan(gamm)
+      error("NaN-induced freak out!")
+    end
+  end
+  r = gamm * q
+  
+  if k == 1
+    1 # NO-OP
+  else
+    for i = loop_bounds
+      beta = (rho[i] * y[i]' * r)[1]
+      r = r + s[i] * (alpha[i] - beta)
+    end
+  end
+  
+  r
+end
+
+function l_bfgs(f, g, initial_x, m, tolerance)
   # Set iteration counter.
   k = 1
   
@@ -34,16 +55,16 @@ function lbfgs(f, g, initial_x, m, tolerance)
   n = length(x)
   
   # Initialize rho, s and y.
-  rho = zeros(m)
-  s = Array(Any, m)
-  for i = 1:m
-    s[i] = zeros(n)
-  end
+  rho = zeros(0)
+  s = Array(Any, 0)
+  #for i = 1:m
+  #  s[i] = zeros(n)
+  #end
   #s = zeros(n, m)
-  y = Array(Any, m)
-  for i = 1:m
-    y[i] = zeros(n)
-  end
+  y = Array(Any, 0)
+  #for i = 1:m
+  #  y[i] = zeros(n)
+  #end
   #y = zeros(n, m)
   
   # Parameters for backtracking line search.
@@ -54,43 +75,58 @@ function lbfgs(f, g, initial_x, m, tolerance)
   g_x = g(x)
   
   # Stop system from going into infinite loop.
-  max_iterations = 50
+  max_iterations = 10
   
   # Print trace information
-  show_trace = true
+  show_trace = false
   if show_trace
-    println(k)
-    println(x)
-    println(f(x))
+    println("Iteration k: $(k)")
+    println("x: $(x)")
+    println("f(x): $(f(x))")
+    println("g(x): $(g(x))")
     println()
   end
   
   # Iterate until convergence.
-  while norm(g_x) > tolerance && k <= max_iterations
+  converged = false
+  
+  while !converged && k <= max_iterations
     p = -two_loop(x, g_x, rho, s, y, m, k)
+    
     alpha = backtracking_line_search(f, g, x, p, a, b)
+    
     x_new = x + alpha * p
+    
     tmp_s = x_new - x
     tmp_y = g(x_new) - g(x)
-    if k > m # Discard the vector pair s[k - m], y[k - m]
+    
+    # Discard the vector pair s[k - m], y[k - m]
+    if k > m
       shift(s)
-      push(s, tmp_s)
       shift(y)
-      push(y, tmp_y)
       shift(rho)
-      push(rho, 1 / (tmp_y' * tmp_s)[1])
-    else
-      s[k] = tmp_s
-      y[k] = tmp_y
-      rho[k] = 1 / (tmp_y' * tmp_s)[1]
     end
+    
+    push(s, tmp_s)
+    push(y, tmp_y)
+    push(rho, 1 / (tmp_y' * tmp_s)[1])
+
     x = x_new
+    g_x = g(x)
     k = k + 1
+    
     if show_trace
-      println(k)
-      println(x)
-      println(f(x))
+      println("Iteration k: $(k)")
+      println("x: $(x)")
+      println("f(x): $(f(x))")
+      println("g(x): $(g(x))")
       println()
     end
+    
+    if norm(g_x) <= tolerance
+      converged = true
+    end
   end
+  
+  OptimizationResults(initial_x, x, f(x), k, converged)
 end
