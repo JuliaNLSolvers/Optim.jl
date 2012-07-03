@@ -1,4 +1,4 @@
-function update_h(h::Matrix, s::Vector, y::Vector)
+function update_hessian(h::Matrix, s::Vector, y::Vector)
   rho = 1.0 / (y' * s)[1]
   I = eye(size(h, 1))
   (I - rho * s * y') * h * (I - rho * y * s') + rho * s * s'
@@ -8,45 +8,72 @@ function bfgs(f::Function,
               g::Function,
               initial_x::Vector,
               initial_h::Matrix,
-              tolerance::Float64)
+              tolerance::Float64,
+              max_iterations::Int64,
+              show_trace::Bool)
+  
+  # Keep track of the number of iterations.
   k = 0
   
+  # Keep a record of our current position.
   x_new = initial_x
   x_old = initial_x
   
+  # Keep a record of the current gradient.
   gradient_new = g(x_new)
   gradient_old = g(x_old)
   
+  # Initialize our approximate Hessian.
   h = initial_h
   
-  max_iterations = 1000
-  
-  a = 0.1
-  b = 0.8
-  
+  # Iterate until convergence.
   converged = false
-  show_trace = false
+  
+  # Show state of the system.
+  if show_trace
+    println("Iteration k: $(k)")
+    println("x_new: $(x_new)")
+    println("f(x_new): $(f(x_new))")
+    println("g(x_new): $(g(x_new))")
+    println("h(x_new): $(h(x_new))")
+    println()
+  end
   
   while !converged && k <= max_iterations
+    # Increment the iteration counter.
+    k = k + 1
+    
+    # Set the search direction.
     p = -h * gradient_new
-    alpha = backtracking_line_search(f, g, x_new, p, a, b)
+    
+    # Calculate a step-size.
+    alpha = backtracking_line_search(f, g, x_new, p)
+    
+    # Update our position.
     x_old = x_new
     x_new = x_old + alpha * p
     s = x_new - x_old
+    
+    # Update the gradient.
     gradient_old = gradient_new
     gradient_new = g(x_new)
     y = gradient_new - gradient_old
-    h = update_h(h, s, y)
-    k = k + 1
     
+    # Update the Hessian.
+    h = update_hessian(h, s, y)
+    
+    # Assess convergence.
     if norm(gradient_new) <= tolerance
       converged = true
     end
     
+    # Show state of the system.
     if show_trace
-      println(k)
-      println(x_new)
-      println(f(x_new))
+      println("Iteration k: $(k)")
+      println("x_new: $(x_new)")
+      println("f(x_new): $(f(x_new))")
+      println("g(x_new): $(g(x_new))")
+      println("h(x_new): $(h(x_new))")
       println()
     end
   end
@@ -56,6 +83,14 @@ end
 
 function bfgs(f::Function,
               g::Function,
+              initial_x::Vector,
+              initial_h::Matrix)
+  bfgs(f, g, initial_x, initial_h, 10e-8, 1000, false)
+end
+
+function bfgs(f::Function,
+              g::Function,
               initial_x::Vector)
-  bfgs(f, g, initial_x, eye(length(initial_h)), 10e-8)
+  n = length(initial_x)
+  bfgs(f, g, initial_x, eye(n), 10e-8, 1000, false)
 end

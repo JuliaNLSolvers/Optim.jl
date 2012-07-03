@@ -10,11 +10,5 @@ end
 initial_x = [100.0, 100.0]
 initial_h = eye(2)
 
-results = bfgs(f, g, initial_x, initial_h, 10e-8)
-@assert norm(results.minimum - [0.0, 2.0]) < 0.01
-
-results = bfgs(f, g, initial_x, initial_h, 10e-16)
-@assert norm(results.minimum - [0.0, 2.0]) < 0.01
-
-results = bfgs(f, g, initial_x, initial_h, 10e-32)
+results = bfgs(f, g, initial_x, initial_h)
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01
