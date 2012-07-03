@@ -17,3 +17,7 @@ beta = 0.8
 t = backtracking_line_search(f, g, x, dx, alpha, beta)
 
 @assert f(x + t * dx) < f(x) + alpha * t * (g(x)' * dx)[1]
+
+t = backtracking_line_search(f, g, x, dx)
+
+@assert f(x + t * dx) < f(x) + alpha * t * (g(x)' * dx)[1]
