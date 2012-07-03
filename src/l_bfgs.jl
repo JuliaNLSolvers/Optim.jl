@@ -77,7 +77,7 @@ function l_bfgs(f::Function,
   # Iterate until convergence.
   converged = false
   
-  while !converged && k <= max_iterations
+  while !converged && k < max_iterations
     # Select a search direction.
     p = two_loop(x, g_x, rho, s, y, m, k)
     

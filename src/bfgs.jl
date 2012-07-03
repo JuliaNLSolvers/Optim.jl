@@ -39,7 +39,7 @@ function bfgs(f::Function,
     println()
   end
   
-  while !converged && k <= max_iterations
+  while !converged && k < max_iterations
     # Increment the iteration counter.
     k = k + 1
     

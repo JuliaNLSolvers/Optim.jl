@@ -16,19 +16,31 @@ function simulated_annealing(cost::Function,
                              s0::Any,
                              neighbor::Function,
                              temperature::Function,
-                             iterations::Int64,
                              keep_best::Bool,
+                             tolerance::Float64,
+                             max_iterations::Int64,
                              show_trace::Bool)
-                             
+  
   # Set our current state to the specified intial state.
   s = s0
-
+  y = cost(s)
+  
   # Set the best state we've seen to the intial state.
   best_s = s0
 
+  i = 0
+  if show_trace
+    println("Iteration: $(i)")
+    println("s = $(s)")
+    println("y = $(y)")
+    println()
+  end
+
   # We always perform a fixed number of iterations.
-  for i = 1:iterations
-  
+  while i < max_iterations
+    # Update the iteration counter.
+    i = i + 1
+    
     # Call temperature to find the proper temperature at time i.
     t = temperature(i)
     
@@ -38,41 +50,19 @@ function simulated_annealing(cost::Function,
     # Evaluate the cost function on our current and its neighbor.
     y = cost(s)
     y_n = cost(s_n)
-    
-    # Print out the current and proposed states of the system w/ their costs.
-    if show_trace
-      println("$i: s = $s")
-      println("$i: s_n = $s_n")
-      println("$i: y = $y")
-      println("$i: y_n = $y_n")    
-    end
-    
+        
     if y_n <= y
       # If the proposed new state is superior, we always move to it.
       s = s_n
-      if show_trace println("Accepted") end
     else
       # If the proposed new state is inferior, we move to it with
       # probability p.
       p = exp(- ((y_n - y) / t))
-      
-      if show_trace
-        println("$i: p = $p")
-        println()
-      end
-      
+            
       if rand() <= p
         s = s_n
-        if show_trace
-          println("Accepted")
-          println()
-        end
       else
         s = s
-        if show_trace
-          println("Rejected")
-          println()
-        end
       end
     end
     
@@ -80,17 +70,26 @@ function simulated_annealing(cost::Function,
     if cost(s) < cost(best_s)
       best_s = s
     end
+    
+    # Print out the state of the system.
+    if show_trace
+      println("Iteration: $(i)")
+      println("s = $(s)")
+      println("s_n = $(s_n)")
+      println("y = $(y)")
+      println("y_n = $(y_n)")
+      println()
+    end
   end
   
   # If specified by the user, we return the best state we've seen.
   # Otherwise, we return the late state we've seen.
   if keep_best
-    OptimizationResults(s0, best_s, f(best_s), iterations, false)
+    OptimizationResults(s0, best_s, cost(best_s), max_iterations, false)
   else
-    OptimizationResults(s0, s, f(s), iterations, false)
+    OptimizationResults(s0, s, cost(s), max_iterations, false)
   end
 end
-
 
 ##
 #
@@ -116,10 +115,13 @@ end
 function simulated_annealing(cost::Function,
                              s0::Any,
                              neighbor::Function)
-  simulated_annealing(cost, s0, neighbor, i -> 1 / log(i), 10000, true, false)
+  simulated_annealing(cost, s0, neighbor, log_temperature, true, 10e-8, 100_000, false)
 end
 
 function simulated_annealing(cost::Function,
                              s0::Vector)
-  simulated_annealing(cost, s0, normal_about_s0, i -> log(i), 10000, true, false)
+  function neighbor(x)
+    map(x_i -> rand_cauchy(x_i, 1), x)
+  end
+  simulated_annealing(cost, s0, neighbor, log_temperature, true, 10e-8, 100_000, false)
 end

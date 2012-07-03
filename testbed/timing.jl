@@ -191,35 +191,21 @@ println(join({"Parabola", "Nelder-Mead", run_time / n, iterations, errors}, "\t"
 ##########################################################################
 
 # Force compilation
-#function neighbors(x)
-#  [rand_uniform(x[1] - 1, x[1] + 1),
-#   rand_uniform(x[2] - 1, x[2] + 1),
-#   rand_uniform(x[3] - 1, x[3] + 1),
-#   rand_uniform(x[4] - 1, x[4] + 1),
-#   rand_uniform(x[5] - 1, x[5] + 1)]
-#end
+results = simulated_annealing(parabola, zeros(5))
 
-#results = simulated_annealing(parabola,
-#                              zeros(5),
-#                              neighbors,
-#                              i -> 1 / log(i),
-#                              100,
-#                              true,
-#                              false)
-
-# Estimate run time
-#run_time = @elapsed for i = 1:n
-#  results = simulated_annealing(parabola, parabola_gradient, zeros(5), 10, 10e-8)
-#end
-#run_time = run_time * 1000
+# Estimate run time. Only use 100 runs for SA because of its slowness.
+run_time = @elapsed for i = 1:100
+  results = simulated_annealing(parabola, zeros(5))
+end
+run_time = run_time * 1000
 
 # Estimate error
-#results = simulated_annealing(parabola, parabola_gradient, zeros(5), 10, 10e-8)
-#errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
+results = simulated_annealing(parabola, zeros(5))
+errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
 
-#iterations = results.iterations
+iterations = results.iterations
 
-#println(join({"Parabola", "Simulated Annealing", run_time / n, iterations, errors}, "\t"))
+println(join({"Parabola", "Simulated Annealing", run_time / 100, iterations, errors}, "\t"))
 
 ##########################################################################
 ###

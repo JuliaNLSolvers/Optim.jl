@@ -30,7 +30,7 @@ function naive_gradient_descent(f::Function,
   
   # Iterate until our purported minimum over two passes changes by
   # no more than a prespecified tolerance.
-  while !converged && i <= max_iterations
+  while !converged && i < max_iterations
     # Update the iteration counter.
     i = i + 1
     

@@ -24,7 +24,7 @@ function gradient_descent(f::Function,
   converged = false
   
   # Iterate until the norm of the gradient is within tolerance of zero.
-  while !converged && i <= max_iterations
+  while !converged && i < max_iterations
     # Increment the number of steps we've had to perform.
     i = i + 1
     

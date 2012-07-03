@@ -29,7 +29,7 @@ function newton(f::Function,
     println()
   end
   
-  while !converged && i <= max_iterations
+  while !converged && i < max_iterations
     # Update the iteration counter.
     i = i + 1
     

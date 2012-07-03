@@ -18,7 +18,7 @@ load("src/l_bfgs.jl")
 
 # Heuristic Optimization Methods
 load("src/nelder_mead.jl")
-#load("src/simulated_annealing.jl")
+load("src/simulated_annealing.jl")
 
 # End-User Facing Wrapper Functions
 load("src/optimize.jl")
