@@ -20,5 +20,5 @@ results = optimize(f, g, h, [127.0, 921.0])
 results = optimize(f, g, [127.0, 921.0])
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
 
-#results = optimize(f, [127.0, 921.0])
-#@assert norm(results.minimum - [0.0, 0.0]) < 0.01
+results = optimize(f, [127.0, 921.0])
+@assert norm(results.minimum - [0.0, 0.0]) < 0.01

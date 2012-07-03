@@ -1,5 +1,7 @@
 # http://optlab-server.sce.carleton.ca/POAnimations2007/NonLinear7.html
 
+# Debate flipping matrix of points.
+
 # Initial points
 # N + 1 points of dimension N
 # Store in N + 1 by N array
@@ -23,10 +25,11 @@ function nelder_mead(f::Function,
                      show_trace::Bool)
   
   # Center the algorithm around an arbitrary point.
-  p = initial_p
+  p = copy(initial_p)
   
   # Maintain a record of the value of f() at n points.
   n = size(p, 1)
+  m = size(p, 2)
   y = zeros(n)
   for i = 1:n
     y[i] = f(p[i, :])
@@ -34,6 +37,14 @@ function nelder_mead(f::Function,
   
   # Don't run forever.
   iter = 0
+  
+  if show_trace
+    println("Iteration: $(iter)")
+    println("Centroid of Current Points: $(reshape(centroid(p), m))")
+    println("f(Centroid): $(f(centroid(p)))")
+    println("Variance: $(sqrt(var(y) * ((n - 1) / n)))")
+    println()
+  end
   
   # Track convergence.
   converged = false
@@ -116,7 +127,10 @@ function nelder_mead(f::Function,
     end
     
     if show_trace
-      println(p)
+      println("Iteration: $(iter)")
+      println("Centroid of Current Points: $(reshape(centroid(p), m))")
+      println("f(Centroid): $(f(centroid(p)))")
+      println("Variance: $(sqrt(var(y) * ((n - 1) / n)))")
       println()
     end
     
@@ -124,13 +138,23 @@ function nelder_mead(f::Function,
       converged = true
     end
   end
-  
-  m = size(initial_p, 2)
-  
-  OptimizationResults(reshape(centroid(initial_p), m), reshape(centroid(p), m), f(centroid(p)), iter, converged)
+    
+  OptimizationResults(reshape(centroid(initial_p), m),
+                      reshape(centroid(p), m),
+                      f(centroid(p)),
+                      iter,
+                      converged)
 end
 
 function nelder_mead(f::Function,
                      initial_p::Matrix)
-  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 1000, false)
+  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 10e-8, 1000, false)
+end
+
+function nelder_mead(f::Function,
+                     initial_x::Vector)
+  n = length(initial_x)
+  repmat(initial_x', n + 1, 1)
+  initial_p = vcat(diagm(ones(n)), initial_x')
+  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 10e-8, 1000, false)
 end

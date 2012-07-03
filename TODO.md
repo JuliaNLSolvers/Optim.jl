@@ -1,3 +1,7 @@
+# Priority Changes
+* Set up Nelder-Mead to automatically create points around a starting vector.
+* Add even more default variations.
+
 # General Changes
 * Switch over to using `base/distributions.jl` for all RNG's
 
@@ -24,19 +28,3 @@
   * Powell's
   * Simple parabola in 5D
 * Track run time (after initial compiling run), number of iterations
-
-# API Changes
-* All algorithms need to have max iterations set, esp. backtracking line search
-* Add new parameters to `gradient_descent()`:
-  * `max_iterations`
-  * `trace`
-* Add new parameters to `gradient_descent2()`:
-  * `alpha`, `beta`
-  * `max_iterations_gd`
-  * `max_iterations_bt`
-  * `trace`
-* Add new parameters to `newton()`:
-  * `alpha`, `beta`
-  * `max_iterations_newton`
-  * `max_iterations_bt`
-  * `trace`
