@@ -1,46 +1,60 @@
 function gradient_descent(f::Function,
                           g::Function,
                           initial_x::Vector,
-                          step_size::Float64,
-                          tolerance::Float64)
+                          tolerance::Float64,
+                          max_iterations::Int64,
+                          show_trace::Bool)
   
   # Set up the initial state of the system.
-  # We insure the termination condition is not met by setting y_old = Inf.
-  x_old = initial_x
-  x_new = initial_x
-  y_old = Inf
-  y_new = f(x_new)
+  x = initial_x
   
-  # Don't go for more than 1,000 iterations.
-  max_iterations = 1000
+  # Count the number of gradient descent steps we perform.
   i = 0
   
-  # Track convergence.
+  # Show trace.
+  if show_trace
+    println("Iteration: $(i)")
+    println("x: $(x)")
+    println("g(x): $(g(x))")
+    println("||g(x)||: $(norm(g(x)))")
+    println("")
+  end
+  
+  # Monitor convergence.
   converged = false
   
-  # Iterate until our purported minimum over two passes changes by
-  # no more than a prespecified tolerance.
+  # Iterate until the norm of the gradient is within tolerance of zero.
   while !converged && i <= max_iterations
-    x_old = x_new
-    x_new = x_new - step_size * g(x_new)
-    
-    y_old = y_new
-    y_new = f(x_new)
-    
+    # Increment the number of steps we've had to perform.
     i = i + 1
     
-    if abs(y_new - y_old) <= tolerance
+    # Use a back-tracking line search to select a step-size.
+    step_size = backtracking_line_search(f, g, x, -g(x))
+    
+    # Move in the direction of the gradient.
+    x = x - step_size * g(x)
+    
+    # Assess convergence.
+    if norm(g(x)) <= tolerance
       converged = true
+    end
+    
+    # Show trace.
+    if show_trace
+      println("Iteration: $(i)")
+      println("x: $(x)")
+      println("g(x): $(g(x))")
+      println("||g(x)||: $(norm(g(x)))")
+      println("Step-size: $(step_size)")
+      println("")
     end
   end
   
-  # Return the minimum, the function evaluated at the minimum and the
-  # number of iterations required to reach the minimum.
-  OptimizationResults(initial_x, x_new, y_new, i, converged)
+  OptimizationResults(initial_x, x, f(x), i, converged)
 end
 
 function gradient_descent(f::Function,
                           g::Function,
                           initial_x::Vector)
-  gradient_descent(f, g, initial_x, 0.1, 10e-8)                        
+  gradient_descent(f, g, initial_x, 10e-8, 1000, false)
 end
