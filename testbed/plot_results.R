@@ -10,16 +10,19 @@ results <- read.csv("testbed/results.tsv", sep = "\t")
 # * Runtime vs. error
 ggplot(results, aes(x = Algorithm, y = AverageRunTimeInMilliseconds, fill = Algorithm)) +
   geom_bar() +
+  coord_flip() +
   opts(legend.position = "none")
 ggsave("testbed/graphs/run_times.pdf")
 
 ggplot(results, aes(x = Algorithm, y = Iterations, fill = Algorithm)) +
   geom_bar() +
+  coord_flip() +
   opts(legend.position = "none")
 ggsave("testbed/graphs/iterations.pdf")
 
 ggplot(results, aes(x = reorder(Algorithm, Error), y = log1p(Error), fill = Algorithm)) +
   geom_bar() +
+  coord_flip() +
   scale_y_log10() +
   opts(legend.position = "none")
 ggsave("testbed/graphs/solution_error.pdf")
@@ -28,3 +31,5 @@ ggplot(results, aes(x = AverageRunTimeInMilliseconds, y = Error, color = Algorit
   geom_point() +
   scale_y_log10()
 ggsave("testbed/graphs/solution_error_vs_runtime.pdf")
+
+# Also plot results without Nelder-Mead.

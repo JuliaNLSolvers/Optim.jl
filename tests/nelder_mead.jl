@@ -1,6 +1,6 @@
 load("src/init.jl")
 
-function f(x)
+function f(x::Vector)
   (100.0 - x[1])^2 + x[2]^2
 end
 
@@ -22,7 +22,7 @@ max_iterations = 100
 results = nelder_mead(f, initial_p, a, g, b, tolerance, max_iterations, show_trace)
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 
-function rosenbrock(x)
+function rosenbrock(x::Vector)
   (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 

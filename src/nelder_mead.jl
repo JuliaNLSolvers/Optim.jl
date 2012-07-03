@@ -32,7 +32,7 @@ function nelder_mead(f::Function,
   m = size(p, 2)
   y = zeros(n)
   for i = 1:n
-    y[i] = f(p[i, :])
+    y[i] = f(reshape(p[i, :], m))
   end
   
   # Don't run forever.
@@ -41,7 +41,7 @@ function nelder_mead(f::Function,
   if show_trace
     println("Iteration: $(iter)")
     println("Centroid of Current Points: $(reshape(centroid(p), m))")
-    println("f(Centroid): $(f(centroid(p)))")
+    println("f(Centroid): $(f(reshape(centroid(p), m)))")
     println("Variance: $(sqrt(var(y) * ((n - 1) / n)))")
     println()
   end
@@ -73,18 +73,18 @@ function nelder_mead(f::Function,
     y_bar = zeros(n - 1)
     
     for i = 1:(n - 1)
-      y_bar[i] = f(non_maximal_p[i, :])
+      y_bar[i] = f(reshape(non_maximal_p[i, :], m))
     end
     
     # Compute a reflection.
     p_star = (1 + a) * p_bar - a * p_h
     
-    y_star = f(p_star)
+    y_star = f(reshape(p_star, m))
     
     if y_star < y_l
       # Compute an expansion.
       p_star_star = g * p_star + (1 - g) * p_bar
-      y_star_star = f(p_star_star)
+      y_star_star = f(reshape(p_star_star, m))
       
       if y_star_star < y_l
         p_h = p_star_star
@@ -104,7 +104,7 @@ function nelder_mead(f::Function,
         
         # Compute a contraction.
         p_star_star = b * p_h + (1 - b) * p_bar
-        y_star_star = f(p_star_star)
+        y_star_star = f(reshape(p_star_star, m))
         
         if y_star_star > y_h
           for i = 1:n
@@ -123,13 +123,13 @@ function nelder_mead(f::Function,
     # Recompute y's to assess convergence.
     y = zeros(n, 1)
     for i = 1:n
-      y[i] = f(p[i, :])
+      y[i] = f(reshape(p[i, :], m))
     end
     
     if show_trace
       println("Iteration: $(iter)")
       println("Centroid of Current Points: $(reshape(centroid(p), m))")
-      println("f(Centroid): $(f(centroid(p)))")
+      println("f(Centroid): $(f(reshape(centroid(p), m)))")
       println("Variance: $(sqrt(var(y) * ((n - 1) / n)))")
       println()
     end
@@ -141,7 +141,7 @@ function nelder_mead(f::Function,
     
   OptimizationResults(reshape(centroid(initial_p), m),
                       reshape(centroid(p), m),
-                      f(centroid(p)),
+                      f(reshape(centroid(p), m)),
                       iter,
                       converged)
 end
