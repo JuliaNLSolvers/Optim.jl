@@ -1,4 +1,4 @@
-# gradient_descent()
+# naive_gradient_descent()
 
 * Arguments:
   * f: A function that is differentiable.
