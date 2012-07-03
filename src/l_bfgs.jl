@@ -125,7 +125,7 @@ function l_bfgs(f::Function,
     end
   end
   
-  OptimizationResults(initial_x, x, f(x), k, converged)
+  OptimizationResults("L-BFGS", initial_x, x, f(x), k, converged)
 end
 
 function l_bfgs(f::Function, g::Function, initial_x::Vector)

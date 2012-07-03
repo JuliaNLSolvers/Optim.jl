@@ -57,7 +57,7 @@ function naive_gradient_descent(f::Function,
     end
   end
   
-  OptimizationResults(initial_x, x_new, y_new, i, converged)
+  OptimizationResults("Constant Step-Size Gradient Descent", initial_x, x_new, y_new, i, converged)
 end
 
 # Set default tolerance, max_iterations and show_trace.

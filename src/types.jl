@@ -1,4 +1,5 @@
 type OptimizationResults
+  method::String
   initial_x::Vector
   minimum::Vector
   f_minimum::Float64

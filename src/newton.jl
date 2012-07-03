@@ -59,7 +59,7 @@ function newton(f::Function,
     end
   end
   
-  OptimizationResults(initial_x, x, f(x), i, converged)
+  OptimizationResults("Newton's Method", initial_x, x, f(x), i, converged)
 end
 
 function newton(f::Function,

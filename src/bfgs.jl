@@ -78,7 +78,7 @@ function bfgs(f::Function,
     end
   end
   
-  OptimizationResults(initial_x, x_new, f(x_new), k, converged)
+  OptimizationResults("BFGS", initial_x, x_new, f(x_new), k, converged)
 end
 
 function bfgs(f::Function,

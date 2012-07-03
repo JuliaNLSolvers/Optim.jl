@@ -50,7 +50,7 @@ function gradient_descent(f::Function,
     end
   end
   
-  OptimizationResults(initial_x, x, f(x), i, converged)
+  OptimizationResults("Gradient Descent w/ Backtracking Line Search", initial_x, x, f(x), i, converged)
 end
 
 function gradient_descent(f::Function,

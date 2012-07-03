@@ -139,7 +139,8 @@ function nelder_mead(f::Function,
     end
   end
     
-  OptimizationResults(reshape(centroid(initial_p), m),
+  OptimizationResults("Nelder-Mead",
+                      reshape(centroid(initial_p), m),
                       reshape(centroid(p), m),
                       f(reshape(centroid(p), m)),
                       iter,

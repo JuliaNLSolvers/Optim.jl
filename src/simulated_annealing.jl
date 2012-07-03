@@ -85,9 +85,9 @@ function simulated_annealing(cost::Function,
   # If specified by the user, we return the best state we've seen.
   # Otherwise, we return the late state we've seen.
   if keep_best
-    OptimizationResults(s0, best_s, cost(best_s), max_iterations, false)
+    OptimizationResults("Simulated Annealing", s0, best_s, cost(best_s), max_iterations, false)
   else
-    OptimizationResults(s0, s, cost(s), max_iterations, false)
+    OptimizationResults("Simulated Annealing", s0, s, cost(s), max_iterations, false)
   end
 end
 
