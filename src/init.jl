@@ -21,4 +21,4 @@ load("src/l_bfgs.jl")
 #load("src/simulated_annealing.jl")
 
 # End-User Facing Wrapper Functions
-#load("src/optimize.jl")
+load("src/optimize.jl")
