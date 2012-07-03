@@ -35,7 +35,7 @@ function bfgs(f::Function,
     println("x_new: $(x_new)")
     println("f(x_new): $(f(x_new))")
     println("g(x_new): $(g(x_new))")
-    println("h(x_new): $(h(x_new))")
+    println("h: $(h)")
     println()
   end
   
@@ -73,7 +73,7 @@ function bfgs(f::Function,
       println("x_new: $(x_new)")
       println("f(x_new): $(f(x_new))")
       println("g(x_new): $(g(x_new))")
-      println("h(x_new): $(h(x_new))")
+      println("h: $(h)")
       println()
     end
   end
