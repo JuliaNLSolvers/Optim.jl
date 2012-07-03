@@ -4,6 +4,9 @@ load("src/types.jl")
 # RNG Sources
 load("src/rng.jl")
 
+# Grid Search
+load("src/grid_search.jl")
+
 # Line Search Methods
 load("src/backtracking_line_search.jl")
 
