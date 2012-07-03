@@ -14,10 +14,10 @@ function h(x)
   a
 end
 
-results = newton(f, g, h, [0.0], 10e-16, 0.1, 0.8)
+results = newton(f, g, h, [0.0], 10e-16, 1000, true)
 @assert norm(results.minimum - 5.0) < 0.01
 
-results = newton(f, g, h, [0.0], 10e-32, 0.1, 0.8)
+results = newton(f, g, h, [0.0])
 @assert norm(results.minimum - 5.0) < 0.01
 
 eta = 0.9
@@ -34,5 +34,8 @@ function h(x)
   [1.0 0.0; 0.0 eta]
 end
 
-results = newton(f, g, h, [127.0, 921.0], 10e-8, 0.1, 0.8)
+results = newton(f, g, h, [127.0, 921.0], 10e-16, 1000, true)
+@assert norm(results.minimum - [0.0, 0.0]) < 0.01
+
+results = newton(f, g, h, [127.0, 921.0])
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
