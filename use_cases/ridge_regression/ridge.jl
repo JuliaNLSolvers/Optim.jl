@@ -5,7 +5,7 @@ load("src/init.jl")
 # Assume first entry of w is an intercept and do not penalize.
 
 function ridge_error(x, y, l, w)
-  (1.0 / 2) * sum(map(x -> x ^ 2, y - x * w)) + (l / 2) * sum(map(x -> x ^ 2, w[2:length(w)]))
+  (1.0 / 2.0) * sum(map(z -> z^2, y - x * w)) + (l / 2.0) * sum(map(z -> z^2, w[2:length(w)]))
 end
 
 ridge_error([1.0 2; 3 4], [1, 2], 1, [1, 1])
@@ -17,44 +17,53 @@ end
 ridge_gradient([1.0 1 2; 1 3 4], [1, 2], 1, [1, 1, 1])
 
 function ridge_regression(x, y, l)
-	f = w -> ridge_error(x, y, l, w)
+	function f(w)
+    ridge_error(x, y, l, w)
+  end
 	
-	g = w -> ridge_gradient(x, y, l, w)
+  function g(w)
+    ridge_gradient(x, y, l, w)
+  end
 	
 	w0 = zeros(size(x, 2))
 	
-	solution = gradient_descent2(f, g, w0, 10e-8, 0.01, 0.8)
+	solution = gradient_descent(f, g, w0)
 	
 	solution.minimum
 end
 
-x = [1 1 2; 1 3 4]
-y = [1, 2]
-l = 1
+x = [1 1 2; 1 3 3; 1 5 6]
+y = [1, 2, 2]
 
-w = ridge_regression(x, y, 0)
+w = ridge_regression(x, y, 0.0)
 x * w
+norm(w)
 
-w = ridge_regression(x, y, 1)
+w = ridge_regression(x, y, 1.0)
 x * w
+norm(w)
 
-w = ridge_regression(x, y, 10)
+w = ridge_regression(x, y, 10.0)
 x * w
+norm(w)
 
-w = ridge_regression(x, y, 100)
+w = ridge_regression(x, y, 100.0)
 x * w
+norm(w)
 
 p = 10
 
 x = hcat([1, 1], vcat([1:p]', [(p + 1):(2p)]'))
 y = [1, 2]
-l = 1
 
 w = ridge_regression(x, y, 0)
 x * w
+norm(w)
 
 w = ridge_regression(x, y, 1)
 x * w
+norm(w)
 
 w = ridge_regression(x, y, 10)
 x * w
+norm(w)
