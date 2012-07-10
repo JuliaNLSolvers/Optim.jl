@@ -39,16 +39,64 @@ Note that `optimize()` has some simple rules you must follow to use it effective
 * The gradient `g` must return a vector.
 * The Hessian `h` must return a matrix.
 
+### Rosenbrock Function Demo
+
+    load("src/init.jl")
+    
+    function rosenbrock(x::Vector)
+      (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+    end
+    
+    function rosenbrock_gradient(x::Vector)
+      [-2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1],
+       200.0 * (x[2] - x[1]^2)]
+    end
+    
+    function rosenbrock_hessian(x::Vector)
+      h = zeros(2, 2)
+      h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+      h[1, 2] = -400.0 * x[1]
+      h[2, 1] = -400.0 * x[1]
+      h[2, 2] = 200.0
+      h
+    end
+
+    problem = Dict()
+    problem[:f] = rosenbrock
+    problem[:g] = rosenbrock_gradient
+    problem[:h] = rosenbrock_hessian
+    problem[:initial_x] = [0.0, 0.0]
+    problem[:solution] = [1.0, 1.0]
+    
+    algorithms = ["naive_gradient_descent",
+                  "gradient_descent",
+                  "newton",
+                  "bfgs",
+                  "l-bfgs",
+                  "nelder-mead",
+                  "sa"]
+    
+    for algorithm = algorithms
+      results = optimize(problem[:f],
+                         problem[:g],
+                         problem[:h],
+                         problem[:initial_x],
+                         algorithm,
+                         10e-8,
+                         true)
+      print(results)
+    end
+
 ## State of the Library
 
 ### Existing Functions
 * Constant Step-Size Gradient Descent: `naive_gradient_descent()`
 * Back-Tracking Line Search Gradient Descent: `gradient_descent()`
 * Guarded Newton's Method: `newton()`
-* Nelder-Mead Method: `nelder_mead()`
-* Simulated Annealing: `simulated_annealing()`
 * BFGS: `bfgs()`
 * L-BFGS: `l_bfgs()`
+* Nelder-Mead Method: `nelder_mead()`
+* Simulated Annealing: `simulated_annealing()`
 
 ### Planned Functions
 * Brent's method
@@ -57,5 +105,7 @@ Note that `optimize()` has some simple rules you must follow to use it effective
 * L-BFGS-B
 
 ### Wrapping Functions
-* Will provide methods for wrapping functions to insure they satisfy usage rules.
-* Will convert automatic conversion tools for input.
+* Will provide methods for wrapping functions to insure they satisfy usage rules
+* Will convert automatic conversion tools for input
+* Will provide automatic differentiation
+* Will provide finite differencing

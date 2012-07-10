@@ -1,6 +1,25 @@
 ##########################################################################
 #
-# Iterate over optimizable functions:
+# Benchmark optimization algorithms by tracking:
+# * Run time over 100 runs -- after 1 initial run that forces JIT.
+# * Number of iterations
+# * Euclidean error of solution
+# * Memory requirements (TODO)
+#
+##########################################################################
+
+##########################################################################
+#
+# Load the software and test functions.
+#
+##########################################################################
+
+load("src/init.jl")
+load("benchmarks/test_functions.jl")
+
+##########################################################################
+#
+# Iterate over 5 optimizable functions:
 # * parabola
 # * powell
 # * rosenbrock
@@ -9,415 +28,122 @@
 #
 ##########################################################################
 
-##########################################################################
-#
-# Iterate over optimization functions:
-# * gradient_descent
-# * gradient_descent
-# * newton
-# * bfgs
-# * l_bfgs
-# * nelder_mead
-# * simulated_annealing
-#
-##########################################################################
+problems = Array(Any, 5)
+
+parabola_problem = Dict()
+parabola_problem[:name] = "Parabola"
+parabola_problem[:f] = parabola
+parabola_problem[:g] = parabola_gradient
+parabola_problem[:h] = parabola_hessian
+parabola_problem[:initial_x] = [0.0, 0.0, 0.0, 0.0, 0.0]
+parabola_problem[:solution] = [1.0, 2.0, 3.0, 5.0, 8.0]
+problems[1] = parabola_problem
+
+powell_problem = Dict()
+powell_problem[:name] = "Powell"
+powell_problem[:f] = powell
+powell_problem[:g] = powell_gradient
+powell_problem[:h] = powell_hessian
+powell_problem[:initial_x] = [3.0, -1.0, 0.0, 1.0]
+powell_problem[:solution] = [0.0, 0.0, 0.0, 0.0]
+problems[2] = powell_problem
+
+rosenbrock_problem = Dict()
+rosenbrock_problem[:name] = "Rosenbrock"
+rosenbrock_problem[:f] = rosenbrock
+rosenbrock_problem[:g] = rosenbrock_gradient
+rosenbrock_problem[:h] = rosenbrock_hessian
+rosenbrock_problem[:initial_x] = [0.0, 0.0]
+rosenbrock_problem[:solution] = [1.0, 1.0]
+problems[3] = rosenbrock_problem
+
+polynomial_problem = Dict()
+polynomial_problem[:name] = "Polynomial"
+polynomial_problem[:f] = polynomial
+polynomial_problem[:g] = polynomial_gradient
+polynomial_problem[:h] = polynomial_hessian
+polynomial_problem[:initial_x] = [0.0, 0.0, 0.0]
+polynomial_problem[:solution] = [10.0, 7.0, 108.0]
+problems[4] = polynomial_problem
+
+exponential_problem = Dict()
+exponential_problem[:name] = "Exponential"
+exponential_problem[:f] = exponential
+exponential_problem[:g] = exponential_gradient
+exponential_problem[:h] = exponential_hessian
+exponential_problem[:initial_x] = [0.0, 0.0]
+exponential_problem[:solution] = [2.0, 3.0]
+problems[5] = exponential_problem
 
 ##########################################################################
 #
-# Use same initial point for all algorithms.
+# Iterate over 7 optimization functions:
+# * naive_gradient_descent: Naive Gradient Descent
+# * gradient_descent: Gradient Descent
+# * newton: Newton's Method
+# * bfgs: BFGS
+# * l-bfgs: L-BFGS
+# * nelder-mead: Nelder-Mead
+# * sa: Simulated Annealing
 #
 ##########################################################################
 
-##########################################################################
-#
-# Track:
-# * Run time over 100 runs -- after initial compiling run
-# * Number of iterations
-# * Euclidean error of solution
-# * Memory requirements
-#
-##########################################################################
+algorithms = ["naive_gradient_descent",
+              "gradient_descent",
+              "newton",
+              "bfgs",
+              "l-bfgs",
+              "nelder-mead",
+              "sa"]
 
-load("src/init.jl")
-load("benchmarks/test_functions.jl")
+# Print out a header line for the TSV-formatted report.
+println(join({"Problem",
+              "Algorithm",
+              "AverageRunTimeInMilliseconds",
+              "Iterations",
+              "Error"},
+             "\t"))
 
-println(join({"Problem", "Algorithm", "AverageRunTimeInMilliseconds", "Iterations", "Error"}, "\t"))
-
-# Go for 10,000 runs of each algorithm.
-n = 10_000
-
-##########################################################################
-###
-###
-###
-### Parabola Problem
-###
-###
-###
-###
-##########################################################################
-
-##########################################################################
-###
-### Constant Stepsize Gradient Descent
-###
-##########################################################################
-
-# Force compilation
-results = naive_gradient_descent(parabola, parabola_gradient, zeros(5))
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = naive_gradient_descent(parabola, parabola_gradient, zeros(5))
+for problem = problems
+  for algorithm = algorithms
+    # Force compilation
+    results = optimize(problem[:f],
+                       problem[:g],
+                       problem[:h],
+                       problem[:initial_x],
+                       algorithm,
+                       10e-8,
+                       true)
+    
+    # Run each algorithm 100 times.
+    n = 100
+    
+    # Estimate run time in milliseconds
+    run_time = @elapsed for i = 1:n
+      results = optimize(problem[:f],
+                         problem[:g],
+                         problem[:h],
+                         problem[:initial_x],
+                         algorithm,
+                         10e-8,
+                         true)
+    end
+    run_time = run_time * 1_000
+    
+    # Estimate error in discovered solution.
+    results = optimize(problem[:f],
+                       problem[:g],
+                       problem[:h],
+                       problem[:initial_x],
+                       algorithm,
+                       10e-8,
+                       true)
+    errors = norm(results.minimum - problem[:solution])
+    
+    # Count iterations.
+    iterations = results.iterations
+    
+    # Print out results.
+    println(join({problem[:name], results.method, run_time / n, iterations, errors}, "\t"))
+  end
 end
-run_time = run_time * 1000
-
-# Estimate error
-results = naive_gradient_descent(parabola, parabola_gradient, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "Naive Gradient Descent", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Gradient Descent 2
-###
-##########################################################################
-
-# Force compilation
-results = gradient_descent(parabola, parabola_gradient, zeros(5))
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = gradient_descent(parabola, parabola_gradient, zeros(5))
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = gradient_descent(parabola, parabola_gradient, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "Gradient Descent", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Newton's Method
-###
-##########################################################################
-
-# Force compilation
-results = newton(parabola, parabola_gradient, parabola_hessian, zeros(5))
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = newton(parabola, parabola_gradient, parabola_hessian, zeros(5))
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = newton(parabola, parabola_gradient, parabola_hessian, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "Newton's Method", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### BFGS
-###
-##########################################################################
-
-# Force compilation
-results = bfgs(parabola, parabola_gradient, zeros(5))
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = bfgs(parabola, parabola_gradient, zeros(5))
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = bfgs(parabola, parabola_gradient, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "BFGS", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### L-BFGS
-###
-##########################################################################
-
-# Force compilation
-results = l_bfgs(parabola, parabola_gradient, zeros(5))
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = l_bfgs(parabola, parabola_gradient, zeros(5))
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = l_bfgs(parabola, parabola_gradient, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "L-BFGS", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Nelder-Mead
-###
-##########################################################################
-
-# Force compilation
-initial_points = randn(6, 5)
-results = nelder_mead(parabola, initial_points)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = nelder_mead(parabola, initial_points)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = nelder_mead(parabola, initial_points)
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "Nelder-Mead", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Simulated Annealing
-###
-##########################################################################
-
-# Force compilation
-results = simulated_annealing(parabola, zeros(5))
-
-# Estimate run time. Only use 100 runs for SA because of its slowness.
-run_time = @elapsed for i = 1:100
-  results = simulated_annealing(parabola, zeros(5))
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = simulated_annealing(parabola, zeros(5))
-errors = norm(results.minimum - [1.0, 2.0, 3.0, 5.0, 8.0])
-
-iterations = results.iterations
-
-println(join({"Parabola", "Simulated Annealing", run_time / 100, iterations, errors}, "\t"))
-
-##########################################################################
-###
-###
-###
-### Powell Problem
-###
-###
-###
-###
-##########################################################################
-
-initial_x = [3.0, -1.0, 0.0, 1.0]
-solution = [0.0, 0.0, 0.0, 0.0]
-
-##########################################################################
-###
-### Constant Stepsize Gradient Descent
-###
-##########################################################################
-
-# Force compilation
-results = naive_gradient_descent(powell, powell_gradient, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = naive_gradient_descent(powell, powell_gradient, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = naive_gradient_descent(powell, powell_gradient, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "Naive Gradient Descent", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Gradient Descent 2
-###
-##########################################################################
-
-# Force compilation
-results = gradient_descent(powell, powell_gradient, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = gradient_descent(powell, powell_gradient, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = gradient_descent(powell, powell_gradient, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "Gradient Descent", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Newton's Method
-###
-##########################################################################
-
-# Force compilation
-results = newton(powell, powell_gradient, powell_hessian, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = newton(powell, powell_gradient, powell_hessian, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = newton(powell, powell_gradient, powell_hessian, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "Newton's Method", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### BFGS
-###
-##########################################################################
-
-# Force compilation
-results = bfgs(powell, powell_gradient, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = bfgs(powell, powell_gradient, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = bfgs(powell, powell_gradient, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "BFGS", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### L-BFGS
-###
-##########################################################################
-
-# Force compilation
-results = l_bfgs(powell, powell_gradient, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = l_bfgs(powell, powell_gradient, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = l_bfgs(powell, powell_gradient, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "L-BFGS", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Nelder-Mead
-###
-##########################################################################
-
-# Force compilation
-results = nelder_mead(powell, initial_x)
-
-# Estimate run time
-run_time = @elapsed for i = 1:n
-  results = nelder_mead(powell, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = nelder_mead(powell, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "Nelder-Mead", run_time / n, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### Simulated Annealing
-###
-##########################################################################
-
-# Force compilation
-results = simulated_annealing(powell, initial_x)
-
-# Estimate run time. Only use 100 runs for SA because of its slowness.
-run_time = @elapsed for i = 1:100
-  results = simulated_annealing(powell, initial_x)
-end
-run_time = run_time * 1000
-
-# Estimate error
-results = simulated_annealing(powell, initial_x)
-errors = norm(results.minimum - solution)
-
-iterations = results.iterations
-
-println(join({"Powell", "Simulated Annealing", run_time / 100, iterations, errors}, "\t"))
-
-##########################################################################
-###
-### NOTES
-###
-##########################################################################
-
-exit()
-
-results = newton(polynomial, polynomial_gradient, polynomial_hessian, zeros(3))
-results = newton(exponential, exponential_gradient, exponential_hessian, zeros(2))
-results = newton(exponential, exponential_gradient, exponential_hessian, zeros(2), 10e-8, 10000, false)
-
-results = bfgs(polynomial, polynomial_gradient, zeros(3))
-results = bfgs(polynomial, polynomial_gradient, zeros(3), eye(3), 10e-8, 1000, true)
-results = bfgs(exponential, exponential_gradient, zeros(2))
-
-results = l_bfgs(polynomial, polynomial_gradient, zeros(3))
-results = l_bfgs(polynomial, polynomial_gradient, zeros(3), 10, 10e-8, 1000, true)
-results = l_bfgs(polynomial, polynomial_gradient, zeros(3), 3, 10e-8, 1000, true)
-results = l_bfgs(exponential, exponential_gradient, zeros(2))
-
-results = newton(rosenbrock, rosenbrock_gradient, rosenbrock_hessian, zeros(2))
-
-initial_x = [3.0, -1.0, 0.0, 1.0]
-results = newton(powell, powell_gradient, powell_hessian, initial_x)
-results = bfgs(powell, powell_gradient, initial_x)
-results = l_bfgs(powell, powell_gradient, initial_x)

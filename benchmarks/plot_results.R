@@ -1,7 +1,3 @@
-library("ggplot2")
-
-results <- read.csv("benchmarks/results.tsv", sep = "\t")
-
 # Plot:
 # * Runtimes
 # * Iterations
@@ -10,6 +6,10 @@ results <- read.csv("benchmarks/results.tsv", sep = "\t")
 # * Runtime vs. error
 
 # Also plot results without Nelder-Mead.
+
+library("ggplot2")
+
+results <- read.csv("benchmarks/results.tsv", sep = "\t")
 
 n <- length(unique(results$Problem))
 
@@ -21,7 +21,7 @@ ggplot(results, aes(x = Algorithm, y = log1p(AverageRunTimeInMilliseconds), fill
   ylab("Average Run-time on a Log Scale") +
   opts(title = "Speed of Optimization Algorithms") +
   facet_grid(Problem ~ .)
-ggsave("benchmarks/graphs/run_times.pdf", width = 10, height = 9 * n)
+ggsave("benchmarks/graphs/run_times.png", width = 12, height = 9 * n)
 
 ggplot(results, aes(x = Algorithm, y = log1p(Iterations), fill = Algorithm)) +
   geom_bar() +
@@ -31,7 +31,7 @@ ggplot(results, aes(x = Algorithm, y = log1p(Iterations), fill = Algorithm)) +
   ylab("Iterations Used on a Log Scale") +
   opts(title = "Efficiency of Optimization Algorithms") +
   facet_grid(Problem ~ .)
-ggsave("benchmarks/graphs/iterations.pdf", width = 10, height = 9 * n)
+ggsave("benchmarks/graphs/iterations.png", width = 12, height = 9 * n)
 
 ggplot(results, aes(x = reorder(Algorithm, Error), y = log1p(Error + .Machine$double.eps)^(1/10), fill = Algorithm)) +
   geom_bar() +
@@ -41,7 +41,7 @@ ggplot(results, aes(x = reorder(Algorithm, Error), y = log1p(Error + .Machine$do
   ylab("Euclidean Norm of Error on a Root Log Scale") +
   opts(title = "Size of Errors in Solution from Optimization Algorithms") +
   facet_grid(Problem ~ .)
-ggsave("benchmarks/graphs/solution_error.pdf", width = 10, height = 9 * n)
+ggsave("benchmarks/graphs/solution_error.png", width = 12, height = 9 * n)
 
 ggplot(results, aes(x = log1p(AverageRunTimeInMilliseconds), y = Error, color = Algorithm)) +
   geom_point() +
@@ -52,4 +52,4 @@ ggplot(results, aes(x = log1p(AverageRunTimeInMilliseconds), y = Error, color = 
   ylab("Euclidean Norm of Error") +
   opts(title = "Speed vs. Errors in Solution from Optimization Algorithms") +
   facet_grid(Problem ~ .)
-ggsave("benchmarks/graphs/solution_error_vs_runtime.pdf", width = 12, height = 9 * n)
+ggsave("benchmarks/graphs/solution_error_vs_runtime.png", width = 12, height = 9 * n)
