@@ -1,6 +1,11 @@
 # Priority Changes
 * Set up Nelder-Mead to automatically create points around a starting vector.
 * Add even more default variations.
+* Get benchmarks to run on all of the problems provided.
+* Make `optimize()` the best function to use.
+
+# Step-Size
+* Add more complex step-size method from Nocedal and Wright.
 
 # General Changes
 * Switch over to using `base/distributions.jl` for all RNG's

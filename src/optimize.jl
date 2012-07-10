@@ -7,7 +7,21 @@ function optimize(f::Function,
                   method::String,
                   tolerance::Float64,
                   minimize::Bool)
-  error("Not yet implemented")
+  if method == "nelder-mead"
+    nelder_mead(f, initial_x)
+  elseif method == "sa"
+    simulated_annealing(f, initial_x)
+  elseif method == "naive_gradient_descent"
+    naive_gradient_descent(f, g, initial_x)
+  elseif method == "gradient_descent"
+    gradient_descent(f, g, initial_x)
+  elseif method == "newton"
+    newton(f, g, h, initial_x)
+  elseif method == "bfgs"
+    bfgs(f, g, initial_x)
+  elseif method == "l-bfgs"
+    l_bfgs(f, g, initial_x)
+  end
 end
 
 function optimize(f::Function,

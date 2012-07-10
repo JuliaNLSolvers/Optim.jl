@@ -1,5 +1,5 @@
 #!/bin/bash
 
-julia testbed/timing.jl > testbed/results.tsv
-Rscript testbed/plot_results.R
-open testbed/graphs
+julia benchmarks/timing.jl > benchmarks/results.tsv
+Rscript benchmarks/plot_results.R
+open benchmarks/graphs
