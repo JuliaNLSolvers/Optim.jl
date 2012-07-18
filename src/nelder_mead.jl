@@ -29,9 +29,14 @@ function nelder_mead(f::Function,
   # Center the algorithm around an arbitrary point.
   p = copy(initial_p)
   
-  # Maintain a record of the value of f() at n points.
+  # Confirm that we have a proper simplex.
   m = size(p, 1)
   n = size(p, 2)
+  if m != n - 1
+    error("A simplex in n-dimensions must include n+1 points.")
+  end
+  
+  # Maintain a record of the value of f() at n points.
   y = zeros(n)
   for i = 1:n
     y[i] = f(p[:, i])

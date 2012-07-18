@@ -25,3 +25,6 @@ load("src/simulated_annealing.jl")
 
 # End-User Facing Wrapper Functions
 load("src/optimize.jl")
+
+# Finite-Difference Methods
+load("src/estimate_gradient.jl")
