@@ -1,20 +1,18 @@
-# Simple forward-differencing based on Nocedal and Wright and
-# suggestions from Nathaniel Daw.
-#
-# Will need to implement central-differencing as well. Wrap both.
+# Simple forward-differencing and central-differencing
+# based on Nocedal and Wright and
+# suggestions from Nathaniel Daw. 
 
 # Arguments:
 # f: A function.
 # x: A vector in the domain of f.
 
+# Forward-differencing
 function estimate_gradient(f::Function)
-  function g(x::Vector)
-    # Establish a baseline value of f(x).
-    f_x = f(x)
-    
+  # Construct and return a closure.
+  function g(x::Vector)    
     # How far do we move in each direction?
     # See Nodedal and Wright for motivation.
-    alpha = sqrt(10e-16)
+    epsilon = sqrt(10e-16)
     
     # What is the dimension of x?
     n = length(x)
@@ -22,17 +20,47 @@ function estimate_gradient(f::Function)
     # Compute forward differences.
     diff = zeros(n)
     
-    # Iterate over each dimension separately.
+    # Establish a baseline value of f(x).
+    f_x = f(x)
+    
+    # Iterate over each dimension of the gradient separately.
     for j = 1:n
       dx = zeros(n)
-      dx[j] = alpha
-      diff[j] = f(x + dx)
+      dx[j] = epsilon
+      diff[j] = f(x + dx) - f_x
+      diff[j] /= epsilon
     end
     
-    # Estimate gradient by dividing out by forward movement.
-    (diff - f_x) ./ alpha
+    # Return the estimated gradient.
+    diff
   end
-  
-  # Return a closure.
+  g
+end
+
+# Central-differencing.
+function estimate_gradient2(f::Function)
+  # Construct and return a closure.
+  function g(x::Vector)    
+    # How far do we move in each direction?
+    # See Nodedal and Wright for motivation.
+    epsilon = sqrt(10e-16)
+    
+    # What is the dimension of x?
+    n = length(x)
+    
+    # Compute forward differences.
+    diff = zeros(n)
+    
+    # Iterate over each dimension of the gradient separately.
+    for j = 1:n
+      dx = zeros(n)
+      dx[j] = epsilon
+      diff[j] = f(x + dx) - f(x - dx)
+      diff[j] /= 2 * epsilon
+    end
+    
+    # Return the estimated gradient.
+    diff
+  end
   g
 end
