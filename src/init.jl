@@ -28,3 +28,4 @@ load("src/optimize.jl")
 
 # Finite-Difference Methods
 load("src/estimate_gradient.jl")
+load("src/derivative.jl")
