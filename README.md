@@ -6,7 +6,7 @@
 
 If you're just getting started, you probably want to use `optimize()`, which wraps the specific algorithms currently implemented and selects a good one based on the amount of information you can provide. See the examples below:
 
-    load("src/Optim.jl")
+    load("Optim")
     using Optim
 
     eta = 0.9
