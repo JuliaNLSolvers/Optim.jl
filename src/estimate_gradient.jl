@@ -1,3 +1,5 @@
+using Base
+
 # Simple forward-differencing and central-differencing
 # based on Nocedal and Wright and
 # suggestions from Nathaniel Daw. 

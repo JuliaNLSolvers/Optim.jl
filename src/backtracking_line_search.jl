@@ -1,3 +1,5 @@
+using Base
+
 function backtracking_line_search(f::Function,
                                   g::Function,
                                   x::Vector,

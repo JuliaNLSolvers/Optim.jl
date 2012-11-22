@@ -1,3 +1,5 @@
+using Base
+
 function update_hessian(h::Matrix, s::Vector, y::Vector)
   rho = 1.0 / (y' * s)[1]
   I = eye(size(h, 1))

@@ -1,3 +1,5 @@
+using Base
+
 # Functions for calculating numerical derivates. By exploiting Taylor series expansions higher order approximations of derivatives are calculated.
 
 # The function "derivative" is the workhorse function for calculation fo derivatives. The function f must be of the form Float64->Float64 and hence x0 must also be a Float64. The argument h is the step size. Step sizes around 0.0001 seem to be optimal. The estimate can be either single sided or double sided where there latter is preferred but not always feasible.

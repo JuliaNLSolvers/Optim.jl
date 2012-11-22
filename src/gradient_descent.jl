@@ -1,3 +1,5 @@
+using Base
+
 function gradient_descent(f::Function,
                           g::Function,
                           initial_x::Vector,

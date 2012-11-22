@@ -1,3 +1,7 @@
+# Modularize Optim.jl
+* Wrap everything in module block
+* Export `optimize` function.
+
 # Priority Changes
 * Set up Nelder-Mead to automatically create points around a starting vector.
 * Add even more default variations.

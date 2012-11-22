@@ -1,3 +1,5 @@
+using Base
+
 function newton(f::Function,
                 g::Function,
                 h::Function,

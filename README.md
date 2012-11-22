@@ -1,10 +1,13 @@
 # Optimization Functions for Julia
 
-### Usage Examples
+## Usage Examples
+
+### Simple Function Demo
 
 If you're just getting started, you probably want to use `optimize()`, which wraps the specific algorithms currently implemented and selects a good one based on the amount of information you can provide. See the examples below:
 
-    load("src/init.jl")
+    load("src/Optim.jl")
+    using Optim
 
     eta = 0.9
 
@@ -41,17 +44,18 @@ Note that `optimize()` has some simple rules you must follow to use it effective
 
 ### Rosenbrock Function Demo
 
-    load("src/init.jl")
-    
+    load("src/Optim.jl")
+    using Optim
+
     function rosenbrock(x::Vector)
       (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
     end
-    
+
     function rosenbrock_gradient(x::Vector)
       [-2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1],
        200.0 * (x[2] - x[1]^2)]
     end
-    
+
     function rosenbrock_hessian(x::Vector)
       h = zeros(2, 2)
       h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
@@ -67,7 +71,7 @@ Note that `optimize()` has some simple rules you must follow to use it effective
     problem[:h] = rosenbrock_hessian
     problem[:initial_x] = [0.0, 0.0]
     problem[:solution] = [1.0, 1.0]
-    
+
     algorithms = ["naive_gradient_descent",
                   "gradient_descent",
                   "newton",
@@ -75,7 +79,7 @@ Note that `optimize()` has some simple rules you must follow to use it effective
                   "l-bfgs",
                   "nelder-mead",
                   "sa"]
-    
+
     for algorithm = algorithms
       results = optimize(problem[:f],
                          problem[:g],

@@ -1,3 +1,5 @@
+using Base
+
 function grid_search(f::Function, grid::Vector)
   min_value = Inf
   arg_min_value = Inf

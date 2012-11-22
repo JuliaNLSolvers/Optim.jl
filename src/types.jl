@@ -1,3 +1,5 @@
+using Base
+
 type OptimizationResults
   method::String
   initial_x::Vector
