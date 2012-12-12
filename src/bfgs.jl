@@ -1,11 +1,5 @@
 using Base
 
-function update_hessian(h::Matrix, s::Vector, y::Vector)
-  rho = 1.0 / (y' * s)[1]
-  I = eye(size(h, 1))
-  (I - rho * s * y') * h * (I - rho * y * s') + rho * s * s'
-end
-
 function bfgs(f::Function,
               g::Function,
               initial_x::Vector,
@@ -32,18 +26,18 @@ function bfgs(f::Function,
   converged = false
   
   # Show state of the system.
-  if show_trace
-    println("Iteration k: $(k)")
-    println("x_new: $(x_new)")
-    println("f(x_new): $(f(x_new))")
-    println("g(x_new): $(g(x_new))")
-    println("h: $(h)")
-    println()
-  end
+  # if show_trace
+  #   println("Iteration k: $(k)")
+  #   println("x_new: $(x_new)")
+  #   println("f(x_new): $(f(x_new))")
+  #   println("g(x_new): $(g(x_new))")
+  #   println("h: $(h)")
+  #   println()
+  # end
   
   while !converged && k < max_iterations
     # Increment the iteration counter.
-    k = k + 1
+    k += 1
     
     # Set the search direction.
     p = -h * gradient_new
@@ -51,48 +45,61 @@ function bfgs(f::Function,
     # Calculate a step-size.
     alpha = backtracking_line_search(f, g, x_new, p)
     
+    # Show state of the system.
+    if show_trace
+      # println("Iteration k: $(k)")
+      # println("x_new: $(x_new)")
+      # println("f(x_new): $(f(x_new))")
+      # println("g(x_new): $(g(x_new))")
+      # println("h: $(h)")
+      # println()
+      @printf("Iteration: %-6d f(x): %10.3e\tStep-size: %8.5f\tFirst-order opt.:%10.3e\n", k, f(x_old), alpha, norm(gradient_old, Inf))
+    end
+
     # Update our position.
     x_old = x_new
     x_new = x_old + alpha * p
     s = x_new - x_old
-    
+
     # Update the gradient.
     gradient_old = gradient_new
     gradient_new = g(x_new)
     y = gradient_new - gradient_old
     
     # Update the Hessian.
-    h = update_hessian(h, s, y)
+    rho = 1.0 / dot(y,s)
+    if rho == Inf
+      println("Cannot decrease the objective function along the current search direction")
+      break
+    end
+    v = eye(size(h, 1)) - rho * y * s'
+    h = (k == 1 ? v'v * dot(y,s)/dot(y,y) : v' * h * v + rho * s * s')
     
     # Assess convergence.
-    if norm(gradient_new) <= tolerance
+    if norm(gradient_new, Inf) <= tolerance
       converged = true
-    end
-    
-    # Show state of the system.
-    if show_trace
-      println("Iteration k: $(k)")
-      println("x_new: $(x_new)")
-      println("f(x_new): $(f(x_new))")
-      println("g(x_new): $(g(x_new))")
-      println("h: $(h)")
-      println()
     end
   end
   
   OptimizationResults("BFGS", initial_x, x_new, f(x_new), k, converged)
 end
 
-function bfgs(f::Function,
-              g::Function,
-              initial_x::Vector,
-              initial_h::Matrix)
-  bfgs(f, g, initial_x, initial_h, 10e-8, 1000, false)
-end
+bfgs(f::Function,
+     g::Function,
+     initial_x::Vector,
+     initial_h::Matrix,
+     show_trace::Bool) = bfgs(f, g, initial_x, initial_h, 10e-8, 1000, show_trace)
 
-function bfgs(f::Function,
-              g::Function,
-              initial_x::Vector)
-  n = length(initial_x)
-  bfgs(f, g, initial_x, eye(n), 10e-8, 1000, false)
-end
+bfgs(f::Function,
+     g::Function,
+     initial_x::Vector,
+     initial_h::Matrix) = bfgs(f, g, initial_x, initial_h, false)
+
+bfgs(f::Function,
+     g::Function,
+     initial_x::Vector,
+     show_trace::Bool) = bfgs(f, g, initial_x, eye(length(initial_x)), show_trace)
+
+bfgs(f::Function,
+     g::Function,
+     initial_x::Vector) = bfgs(f, g, initial_x, false)

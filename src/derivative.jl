@@ -18,11 +18,11 @@ derivative(f::Function, x0::Float64, h::Float64) = derivative(f, x0, h, true)
 derivative(f::Function, x0::Float64) = derivative(f, x0, 0.0001)
 derivative(f::Function) = x -> derivative(f, x)
 
-# The function "dirderivative" calculates directional derivatives in the direction v. The function supplied must have the form Array{Float64, 1} -> Float64
-dirderivative(f::Function, v::Array{Float64, 1}, x0::Array{Float64, 1}, h::Float64, twoside::Bool) = derivative(t::Float64 -> f(x0 + v*t) / norm(v), 0.0, h, twoside)
-dirderivative(f::Function, v::Array{Float64, 1}, x0::Array{Float64, 1}, h::Float64) = dirderivative(f, v, x0, h, true)
-dirderivative(f::Function, v::Array{Float64, 1}, x0::Array{Float64, 1}, ) = derivative(f, v, x0, 0.0001)
-dirderivative(f::Function, v::Array{Float64, 1}) = x -> dirderivative(f, v, x)
+# The function "dirderivative" calculates directional derivatives in the direction v. The function supplied must have the form Vector{Float64} -> Float64
+dirderivative(f::Function, v::Vector{Float64}, x0::Vector{Float64}, h::Float64, twoside::Bool) = derivative(t::Float64 -> f(x0 + v*t) / norm(v), 0.0, h, twoside)
+dirderivative(f::Function, v::Vector{Float64}, x0::Vector{Float64}, h::Float64) = dirderivative(f, v, x0, h, true)
+dirderivative(f::Function, v::Vector{Float64}, x0::Vector{Float64}, ) = derivative(f, v, x0, 0.0001)
+dirderivative(f::Function, v::Vector{Float64}) = x -> dirderivative(f, v, x)
 
 # Function for calculation of second order derivatives. This seem not more precise than applying derivative twice but it is more efficient. Eventually single sided option but will wait to see how often problems arise.
 function derivative2(f::Function, x0::Float64, h::Float64)
@@ -31,45 +31,48 @@ function derivative2(f::Function, x0::Float64, h::Float64)
 	return d / (3*2^6*(2^8-1)*h^2)
 end 
 
-# Function for calculation of a gradient. The function supplied must be of the form Array{Float64, 1} -> Float64
-function gradient(f::Function, x::Array{Float64, 1}, h::Float64, twoside::Bool)
-	k = length(x)
+# Function for calculation of a gradient. The function supplied must be of the form Vector{Float64} -> Float64
+function gradient(f::Function, x0::Vector{Float64}, h::Float64, twoside::Bool)
+	k = length(x0)
 	ans = Array(Float64, k)
 	for i = 1:k
 		v 		= zeros(k)
 		v[i] 	= 1.0
-		ans[i] 	= dirderivative(f, v, x, h, twoside)
+		ans[i] 	= dirderivative(f, v, x0, h, twoside)
 	end
 	ans
 end
-gradient(f::Function, x::Array{Float64, 1}, h::Float64) = gradient(f, x, h, true)
-gradient(f::Function, x::Array{Float64, 1}) = gradient(f, x, 0.0001)
-gradient(f::Function, x::Array{Int64, 1}) = gradient(f, float(x))
-gradient(f::Function) = x::Array -> gradient(f, x)
+gradient(f::Function, x0::Vector{Float64}, h::Float64) = gradient(f, x0, h, true)
+gradient(f::Function, x0::Vector{Float64}) = gradient(f, x0, 0.0001)
+gradient(f::Function, x0::Vector{Int64}) = gradient(f, float(x0))
+gradient(f::Function) = x::Vector -> gradient(f, x)
 
-# Function for calculation of Jacobians. One method for functions of the form Float64 -> Array{Float64, 1} and one method for function of the form Array{Float64, 1} -> Array{Float64, 1}.
-function jacobian(f::Function, x::Float64, h::Float64)
-	l = length(f(x))
+# Function for calculation of Jacobians. One method for functions of the form Float64 -> Vector{Float64} and one method for function of the form Vector{Float64} -> Vector{Float64}.
+function jacobian(f::Function, x0::Float64, h::Float64)
+	l = length(f(x0))
 	ans = Array(Float64, l)
 	for i = 1:l
-		ans[i] = derivative(y -> f(y)[i], x, h)
+		ans[i] = derivative(y -> f(y)[i], x0, h)
 	end
 	ans
 end
-function jacobian(f::Function, x::Array{Float64, 1}, h::Float64)
-	k = length(x)
-	l = length(f(x))
-	ans = Array(Float64, (k,l))
+function jacobian(f::Function, x0::Vector{Float64}, h::Float64)
+	k = length(x0)
+	l = length(f(x0))
+	ans = Array(Float64, k, l)
 	for i = 1:l
-		ans[:,i] = gradient(y->f(y)[i], x, h)
+		ans[:,i] = gradient(y->f(y)[i], x0, h)
 	end
 	ans'
 end
-jacobian(f::Function, x) = jacobian(f, x, 0.0001)
+jacobian(f::Function, x0) = jacobian(f, x0, 0.0001)
 
-# Function for calculation of the Hessian. Function argument must be of the form Array{Float64, 1} -> Float64
-hessian(f::Function, x, h::Float64) = jacobian(gradient(f), x, h)
-hessian(f::Function, x) = hessian(f, x, 0.0001)
+# Function for calculation of the Hessian. Function argument must be of the form Vector{Float64} -> Float64
+function hessian(f::Function, x0, h::Float64)
+	hess = jacobian(gradient(f), x0, h)
+	symmetrize!(hess)
+end
+hessian(f::Function, x0) = hessian(f, x0, 0.0001)
 hessian(f::Function) = x -> hessian(f, x)
 
 
