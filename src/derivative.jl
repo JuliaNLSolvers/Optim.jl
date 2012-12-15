@@ -71,3 +71,46 @@ jacobian(f::Function, x) = jacobian(f, x, 0.0001)
 hessian(f::Function, x, h::Float64) = jacobian(gradient(f), x, h)
 hessian(f::Function, x) = hessian(f, x, 0.0001)
 hessian(f::Function) = x -> hessian(f, x)
+
+
+# Estimate derivatives numerically
+# See https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&ved=0CDcQFjAB&url=http%3A%2F%2Fwww.mpi-hd.mpg.de%2Fastrophysik%2FHEA%2Finternal%2FNumerical_Recipes%2Ff5-7.pdf&ei=ldbMUIyLCIqM2gX5ooCgCA&usg=AFQjCNFg6b_sqBIzabFfFmGYrQl1sQ4qUw&bvm=bv.1355325884,d.b2U&cad=rja
+# for the basis of some tricks to reduce roundoff error, and for the reasoning behind the automatic choice of h.
+# These use centered-differencing for higher accuracy
+function derivative_numer{T<:Number}(func::Function, x::T, h::T)
+    xp = x + h
+    vp = func(xp)
+    xm = x - h
+    vm = func(xm)
+    return (vp-vm)/(xp-xm)
+end
+derivative_numer{T<:Number}(func::Function, x::T, index::Int, h::T) = derivative_numer(func, x, h)  # compatibility with partial derivatives
+function derivative_numer{T<:Number}(func::Function, x::Array{T}, index::Int, h::T)
+    xsave = x[index]
+    xp = xsave + h
+    xm = xsave - h
+    x[index] = xp
+    vp = func(x)
+    x[index] = xm
+    vm = func(x)
+    x[index] = xsave
+    return (vp-vm)/(xp-xm)
+end
+function derivative_numer{T<:Number}(func::Function, x::T, h::Vector{T})
+    d = zeros(T, length(h))
+    for i = 1:length(h)
+        d[i] = derivative_numer(func, x, h[i])
+    end
+    return d
+end
+function derivative_numer{T<:Number}(func::Function, x, index::Int, h::Vector{T})
+    d = zeros(T, length(h))
+    for i = 1:length(h)
+        d[i] = derivative_numer(func, x, index, h[i])
+    end
+    return d
+end
+derivative_numer{T<:Number}(func::Function, x::T) = derivative_numer(func, x, (eps(max(abs(x),one(T))))^convert(T, 1/3))
+derivative_numer{T<:Number}(func::Function, x::Array{T}, index::Int) = derivative_numer(func, x, index, (eps(max(abs(x[index]),one(T))))^convert(T, 1/3))
+
+export derivative_numer
