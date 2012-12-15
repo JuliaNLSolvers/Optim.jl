@@ -1,37 +1,45 @@
 module Optim
-  using Base
+
+  loadoptim(filename) = load(file_path("..", "src", filename))
+#   loadoptim(filename) = load(file_path("Optim", "src", filename))
 
   export optimize
 
   # Types
-  load("Optim/src/types.jl")
+  loadoptim("types.jl")
 
   # RNG Sources
-  load("Optim/src/rng.jl")
+  loadoptim("rng.jl")
 
   # Grid Search
-  load("Optim/src/grid_search.jl")
+  loadoptim("grid_search.jl")
 
   # Line Search Methods
-  load("Optim/src/backtracking_line_search.jl")
+  loadoptim("backtracking_line_search.jl")
 
   # Gradient Descent Methods
-  load("Optim/src/naive_gradient_descent.jl")
-  load("Optim/src/gradient_descent.jl")
+  loadoptim("naive_gradient_descent.jl")
+  loadoptim("gradient_descent.jl")
+  
+  # Conjugate gradient
+  loadoptim("cgdescent.jl")
 
   # Newton and Quasi-Newton Methods
-  load("Optim/src/newton.jl")
-  load("Optim/src/bfgs.jl")
-  load("Optim/src/l_bfgs.jl")
+  loadoptim("newton.jl")
+  loadoptim("bfgs.jl")
+  loadoptim("l_bfgs.jl")
+  
+  # Constrained optimization
+  loadoptim("fminbox.jl")
 
   # Heuristic Optimization Methods
-  load("Optim/src/nelder_mead.jl")
-  load("Optim/src/simulated_annealing.jl")
+  loadoptim("nelder_mead.jl")
+  loadoptim("simulated_annealing.jl")
 
   # End-User Facing Wrapper Functions
-  load("Optim/src/optimize.jl")
+  loadoptim("optimize.jl")
 
   # Finite-Difference Methods
-  load("Optim/src/estimate_gradient.jl")
-  load("Optim/src/derivative.jl")
+  loadoptim("estimate_gradient.jl")
+  loadoptim("derivative.jl")
 end
