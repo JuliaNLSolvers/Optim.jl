@@ -1,7 +1,6 @@
 module Optim
 
-  loadoptim(filename) = load(file_path("..", "src", filename))
-#   loadoptim(filename) = load(file_path("Optim", "src", filename))
+  loadoptim(filename) = load(file_path("Optim", "src", filename))
 
   export optimize
 
