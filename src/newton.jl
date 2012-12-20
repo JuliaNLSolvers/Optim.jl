@@ -7,20 +7,13 @@ function newton(f::Function,
                 tolerance::Float64,
                 max_iterations::Int64,
                 show_trace::Bool)
-  
+    
   # Maintain a record of the state.
   x = initial_x
-  
-  # Select a stepsize.
-  dx = -inv(h(x)) * g(x)
-  l2 = (g(x)' * inv(h(x)) * g(x))[1]
-  
+
   # Don't run forever.
   i = 0
-  
-  # Track convergence.
-  converged = false
-  
+
   # Show state of the system.
   if show_trace
     println("Iteration: $(i)")
@@ -31,24 +24,22 @@ function newton(f::Function,
     println()
   end
   
+  # Track convergence.
+  converged = false
+
+  # Select a stepsize.
+  dx = -h(x)\g(x)
+  l2 = dot(g(x), -dx)
+
   while !converged && i < max_iterations
     # Update the iteration counter.
-    i = i + 1
-    
-    # Select a search direction.
-    dx = -inv(h(x)) * g(x)
-    
+    i += 1
+
     # Select a step size.
     step_size = backtracking_line_search(f, g, x, dx)
-    
+
     # Update our position.
-    x = x + step_size * dx
-    
-    # Assess converged convergence.
-    l2 = (g(x)' * inv(h(x)) * g(x))[1]
-    if l2 / 2 <= tolerance
-      converged = true
-    end
+    x += step_size * dx
     
     # Show state of the system.
     if show_trace
@@ -59,14 +50,27 @@ function newton(f::Function,
       println("h(x): $(h(x))")
       println()
     end
+
+    # Select a search direction.
+    dx = -h(x)\g(x)
+
+    # Assess convergence.
+    l2 = dot(g(x),-dx)
+    if l2 / 2 <= tolerance
+      converged = true
+    end
   end
   
   OptimizationResults("Newton's Method", initial_x, x, f(x), i, converged)
 end
 
-function newton(f::Function,
-                g::Function,
-                h::Function,
-                initial_x::Vector)
-  newton(f, g, h, initial_x, 10e-16, 1000, false)
-end
+newton(f::Function,
+       g::Function,
+       h::Function,
+       initial_x::Vector,
+       show_trace::Bool) = newton(f, g, h, initial_x, 10e-16, 1000, show_trace)
+newton(f::Function,
+       g::Function,
+       h::Function,
+       initial_x::Vector) = newton(f, g, h, initial_x, false)
+

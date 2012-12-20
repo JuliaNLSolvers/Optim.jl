@@ -1,7 +1,6 @@
 using Base
 
-function two_loop(x::Vector,
-                  g_x::Vector,
+function two_loop(g_x::Vector,
                   rho::Vector,
                   s::Vector,
                   y::Vector,
@@ -9,31 +8,18 @@ function two_loop(x::Vector,
                   k::Int64)
   q = g_x
   
-  if k != 1
-    loop_bounds = 1:min(k - 1, m)
-    alpha = zeros(m)
-    for i = reverse(loop_bounds)
-      alpha[i] = (rho[i] * s[i]' * q)[1]
-      q = q - alpha[i] * y[i]
-    end
-  end
-  
   index = min(k - 1, m)
-  if index < 1
-    gamm = 1
-  else
-    gamm = (s[index]' * y[index])[1] / (y[index]' * y[index])[1]
-    if isnan(gamm)
-      error("NaN-induced freak out!")
-    end
+  alpha = zeros(m)
+  for i = index:-1:1
+    alpha[i] = rho[i] * dot(s[i], q)
+    q -= alpha[i] * y[i]
   end
-  r = gamm * q
   
-  if k != 1
-    for i = loop_bounds
-      beta = (rho[i] * y[i]' * r)[1]
-      r = r + s[i] * (alpha[i] - beta)
-    end
+  r = index == 0 ? q : q*dot(s[index],s[index])/dot(s[index],s[index])
+  
+  for i = 1:index
+    beta = rho[i] * dot(y[i], r)
+    r += s[i] * (alpha[i] - beta)
   end
   
   -r
@@ -61,75 +47,81 @@ function l_bfgs(f::Function,
   # Eventually move over to a faster Float64 representation
   # for which we build shift and push operations.
   rho = zeros(0)
-  s = Array(Any, 0)
-  y = Array(Any, 0)
+  s = {}
+  y = {}
   
   # Compute the initial gradient.
   g_x = g(x)
     
   # Print trace information
-  if show_trace
-    println("Iteration k: $(k)")
-    println("x: $(x)")
-    println("f(x): $(f(x))")
-    println("g(x): $(g(x))")
-    println()
-  end
+  # if show_trace
+    # println("Iteration: $(k)")
+    # println("x: $(x)")
+    # println("f(x): $(f(x))")
+    # println("g(x): $(g(x))")
+    # println()
+    # @printf("Iteration: %-6d f(x): %10.3e\tStep-size: %8.5f\n", k, f(x), alpha)
+  # end
   
   # Iterate until convergence.
   converged = false
   
-  while !converged && k < max_iterations
+  while !converged && k <= max_iterations
     # Select a search direction.
-    p = two_loop(x, g_x, rho, s, y, m, k)
-    
+    p = two_loop(g_x, rho, s, y, m, k)
+
     # Select a step-size.
     alpha = backtracking_line_search(f, g, x, p)
-    
+
+    # Show trace.
+    if show_trace
+      # println("Iteration: $(k)")
+      # println("x: $(x)")
+      # println("f(x): $(f(x))")
+      # println("g(x): $(g(x))")
+      # println()
+      @printf("Iteration: %-6d f(x): %10.3e\tStep-size: %8.5f\tFirst-order opt.:%10.3e\n", k, f(x), alpha, norm(g_x, Inf))
+    end
+
     # Update position.
     x_new = x + alpha * p
     
     # Estimate movement.
     tmp_s = x_new - x
     tmp_y = g(x_new) - g(x)
-    
+    tmp_rho = 1 / dot(tmp_y, tmp_s)
+    if tmp_rho == Inf
+      println("Cannot decrease the objective function along the current search direction")
+      break
+    end
+
     # Discard unneeded s, y and rho.
     if k > m
       shift(s)
       shift(y)
       shift(rho)
     end
-    
+
     # Keep a record of the new s, y and rho.
     push(s, tmp_s)
     push(y, tmp_y)
-    push(rho, 1 / (tmp_y' * tmp_s)[1])
-    
+    push(rho, tmp_rho)
+      
     # Update our position.
     x = x_new
     g_x = g(x)
-    
+      
     # Update the iteration counter.
-    k = k + 1
+    k += 1
     
     # Assess convergence.
-    if norm(g_x) <= tolerance
+    if norm(g_x, Inf) <= tolerance
       converged = true
-    end
-    
-    # Show trace.
-    if show_trace
-      println("Iteration: $(k)")
-      println("x: $(x)")
-      println("f(x): $(f(x))")
-      println("g(x): $(g(x))")
-      println()
     end
   end
   
   OptimizationResults("L-BFGS", initial_x, x, f(x), k, converged)
 end
 
-function l_bfgs(f::Function, g::Function, initial_x::Vector)
-  l_bfgs(f, g, initial_x, 10, 10e-8, 1000, false)
-end
+l_bfgs(f::Function, g::Function, initial_x::Vector, show_trace::Bool) = l_bfgs(f, g, initial_x, 10, 10e-8, 1000, show_trace)
+l_bfgs(f::Function, g::Function, initial_x::Vector) = l_bfgs(f, g, initial_x, false)
