@@ -1,6 +1,6 @@
 module Optim
 
-  loadoptim(filename) = load(file_path("Optim", "src", filename))
+  loadoptim(filename) = include(file_path(julia_pkgdir(),"Optim", "src", filename))
 
   export optimize, curve_fit, estimate_errors
 
@@ -32,7 +32,7 @@ module Optim
   loadoptim("fminbox.jl")
 
   # trust region methods
-  loadoptim("Optim/src/levenberg_marquardt.jl")
+  loadoptim("levenberg_marquardt.jl")
 
   # Heuristic Optimization Methods
   loadoptim("nelder_mead.jl")
