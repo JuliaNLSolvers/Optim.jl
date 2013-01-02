@@ -1,17 +1,18 @@
-load("src/init.jl")
+load("Optim")
+using Optim
 
 eta = 0.9
 
 function f(x)
-  (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
+    (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
 end
 
 function g(x)
-  [x[1], eta * x[2]]
+    [x[1], eta * x[2]]
 end
 
 function h(x)
-  [1.0 0.0; 0.0 eta]
+    [1.0 0.0; 0.0 eta]
 end
 
 results = optimize(f, g, h, [127.0, 921.0])

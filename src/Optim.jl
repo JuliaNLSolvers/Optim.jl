@@ -9,6 +9,10 @@ module Optim
         include(file_path(julia_pkgdir(), "Optim", "src", filename))
     end
 
+    function centroid(p::Matrix)
+         reshape(mean(p, 2), size(p, 1))
+    end
+
     import Base.assign,
            Base.dot,
            Base.length,
@@ -17,7 +21,9 @@ module Optim
            Base.repl_show,
            Base.show
 
-    export optimize, curve_fit, estimate_errors
+    export curve_fit,
+           estimate_errors,
+           optimize
 
     # Types
     loadoptim("types.jl")

@@ -1,6 +1,3 @@
-load("Optim")
-using Optim
-
 srand(1)
 
 function f(x::Vector)
@@ -23,7 +20,8 @@ function rosenbrock(x)
 end
 
 function neighbors(x)
-    [Optim.rand_uniform(x[1] - 1, x[1] + 1), Optim.rand_uniform(x[2] - 1, x[2] + 1)]
+    [Optim.rand_uniform(x[1] - 1, x[1] + 1),
+     Optim.rand_uniform(x[2] - 1, x[2] + 1)]
 end
 
 results = Optim.simulated_annealing(rosenbrock,

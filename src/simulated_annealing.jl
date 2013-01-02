@@ -26,7 +26,7 @@ function simulated_annealing(cost::Function,
                              tolerance::Float64,
                              max_iterations::Int64,
                              store_trace::Bool,
-                             show_trace::Bool
+                             show_trace::Bool)
 
     # Maintain a trace of the optimization algo's state.
     tr = OptimizationTrace()

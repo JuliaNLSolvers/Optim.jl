@@ -3,8 +3,10 @@
 #
 
 load("Optim")
+using Optim
 
-my_tests = ["test/simulated_annealing.jl"]
+my_tests = ["test/nelder_mead.jl",
+            "test/simulated_annealing.jl"]
 
 println("Running tests:")
 
