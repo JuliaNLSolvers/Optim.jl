@@ -1,8 +1,8 @@
 module Optim
 
-  loadoptim(filename) = load(file_path("Optim", "src", filename))
+  loadoptim(filename) = include(file_path(julia_pkgdir(),"Optim", "src", filename))
 
-  export optimize
+  export optimize, curve_fit, estimate_errors
 
   # Types
   loadoptim("types.jl")
@@ -31,12 +31,16 @@ module Optim
   # Constrained optimization
   loadoptim("fminbox.jl")
 
+  # trust region methods
+  loadoptim("levenberg_marquardt.jl")
+
   # Heuristic Optimization Methods
   loadoptim("nelder_mead.jl")
   loadoptim("simulated_annealing.jl")
 
   # End-User Facing Wrapper Functions
   loadoptim("optimize.jl")
+  loadoptim("curve_fit.jl")
 
   # Finite-Difference Methods
   loadoptim("estimate_gradient.jl")
