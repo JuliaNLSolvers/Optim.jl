@@ -27,8 +27,8 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 	@defaults opts tolX=1e-8 tolG=1e-12 maxIter=100*n lambda=100.0 show_trace=false
 
 	# other constants
-	const MAX_LAMBDA = 1e16 # maximum trust region radius
-	const MIN_LAMBDA = 1e-16 # minimum trust region radius
+	const MAX_LAMBDA = 1e16 # minimum trust region radius
+	const MIN_LAMBDA = 1e-16 # maximum trust region radius
 	const MIN_STEP_QUALITY = 1e-3
 	const MIN_DIAGONAL = 1e-6 # lower bound on values of diagonal matrix used to regularize the trust region step
 
@@ -43,10 +43,10 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 	# show state
 	if show_trace
 		println("Iteration: $(iterCt)")
-	    println("x: $(x)")
-	    println("||f(x)||^2: $(sse(fcur))")
+		println("x: $(x)")
+		println("||f(x)||^2: $(sse(fcur))")
 		println("lambda: $(lambda)")
-	    println()
+		println()
 	end
 
 	while ( ~converged && iterCt < maxIter )
