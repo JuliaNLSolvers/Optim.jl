@@ -1,37 +1,41 @@
 module Optim
   using Base
 
-  export optimize
+  export optimize, curve_fit, estimate_errors
 
   # Types
-  load("Optim/src/types.jl")
+  include(find_in_path("Optim/src/types.jl"))
 
   # RNG Sources
-  load("Optim/src/rng.jl")
+  include(find_in_path("Optim/src/rng.jl"))
 
   # Grid Search
-  load("Optim/src/grid_search.jl")
+  include(find_in_path("Optim/src/grid_search.jl"))
 
   # Line Search Methods
-  load("Optim/src/backtracking_line_search.jl")
+  include(find_in_path("Optim/src/backtracking_line_search.jl"))
 
   # Gradient Descent Methods
-  load("Optim/src/naive_gradient_descent.jl")
-  load("Optim/src/gradient_descent.jl")
+  include(find_in_path("Optim/src/naive_gradient_descent.jl"))
+  include(find_in_path("Optim/src/gradient_descent.jl"))
 
   # Newton and Quasi-Newton Methods
-  load("Optim/src/newton.jl")
-  load("Optim/src/bfgs.jl")
-  load("Optim/src/l_bfgs.jl")
+  include(find_in_path("Optim/src/newton.jl"))
+  include(find_in_path("Optim/src/bfgs.jl"))
+  include(find_in_path("Optim/src/l_bfgs.jl"))
+
+  # trust region methods
+  include(find_in_path("Optim/src/levenberg_marquardt.jl"))
 
   # Heuristic Optimization Methods
-  load("Optim/src/nelder_mead.jl")
-  load("Optim/src/simulated_annealing.jl")
+  include(find_in_path("Optim/src/nelder_mead.jl"))
+  include(find_in_path("Optim/src/simulated_annealing.jl"))
 
   # End-User Facing Wrapper Functions
-  load("Optim/src/optimize.jl")
+  include(find_in_path("Optim/src/optimize.jl"))
+  include(find_in_path("Optim/src/curve_fit.jl"))
 
   # Finite-Difference Methods
-  load("Optim/src/estimate_gradient.jl")
-  load("Optim/src/derivative.jl")
+  include(find_in_path("Optim/src/estimate_gradient.jl"))
+  include(find_in_path("Optim/src/derivative.jl"))
 end
