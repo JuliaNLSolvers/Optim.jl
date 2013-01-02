@@ -1,8 +1,3 @@
-require("Distributions")
-
-using Base
-using Distributions
-
 function curve_fit(model::Function, xpts, ydata, p0)
 	# assumes model(xpts, params...) = ydata + noise
 	# minimizes F(p) = sum(ydata - f(xdata)).^2 using leastsq()

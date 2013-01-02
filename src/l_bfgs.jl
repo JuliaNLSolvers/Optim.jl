@@ -1,5 +1,3 @@
-using Base
-
 function two_loop(g_x::Vector,
                   rho::Vector,
                   s::Vector,

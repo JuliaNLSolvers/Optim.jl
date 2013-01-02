@@ -1,5 +1,3 @@
-using Base
-
 function naive_gradient_descent(f::Function,
                                 g::Function,
                                 initial_x::Vector,

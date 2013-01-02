@@ -1,5 +1,3 @@
-using Base
-
 # Wrap other functions.
 # Automatically wrap inputs and convert vectors appropriately.
 function optimize(f::Function,

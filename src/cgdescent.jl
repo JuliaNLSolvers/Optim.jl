@@ -1,8 +1,3 @@
-require("Options")
-using OptionsMod
-
-import Base.push, Base.length, Base.dot
-
 # A cache for results from linesearch (to avoid recomputation)
 type LineSearchResults{T}
     alpha::Vector{T}

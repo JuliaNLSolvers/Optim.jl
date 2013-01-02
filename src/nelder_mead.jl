@@ -1,5 +1,3 @@
-using Base
-
 # http://optlab-server.sce.carleton.ca/POAnimations2007/NonLinear7.html
 
 # Debate flipping matrix of points.

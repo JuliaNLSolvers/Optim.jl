@@ -1,5 +1,3 @@
-using Base
-
 function bfgs(f::Function,
               g::Function,
               initial_x::Vector,

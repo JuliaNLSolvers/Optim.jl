@@ -1,7 +1,3 @@
-require("Options")
-using Base
-using OptionsMod
-
 # sse(x) gives the L2 norm of x
 sse(x) = (x'*x)[1]
 

@@ -1,5 +1,3 @@
-using Base
-
 ## return a uniform random sample from the interval (a, b)
 function rand_uniform(a, b)
     a + rand()*(b - a)

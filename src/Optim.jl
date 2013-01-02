@@ -1,50 +1,63 @@
+require("Options")
+require("Distributions")
+
 module Optim
+    using OptionsMod
+    using Distributions
 
-  loadoptim(filename) = include(file_path(julia_pkgdir(), "Optim", "src", filename))
+    function loadoptim(filename)
+        include(file_path(julia_pkgdir(), "Optim", "src", filename))
+    end
 
-  import Base.show, Base.repl_show
+    import Base.assign,
+           Base.dot,
+           Base.length,
+           Base.push,
+           Base.ref,
+           Base.repl_show,
+           Base.show
 
-  export optimize, curve_fit, estimate_errors
+    export optimize, curve_fit, estimate_errors
 
-  # Types
-  loadoptim("types.jl")
+    # Types
+    loadoptim("types.jl")
 
-  # RNG Sources
-  loadoptim("rng.jl")
+    # RNG Sources
+    loadoptim("rng.jl")
 
-  # Grid Search
-  loadoptim("grid_search.jl")
+    # Grid Search
+    loadoptim("grid_search.jl")
 
-  # Line Search Methods
-  loadoptim("backtracking_line_search.jl")
+    # Line Search Methods
+    loadoptim("backtracking_line_search.jl")
 
-  # Gradient Descent Methods
-  loadoptim("naive_gradient_descent.jl")
-  loadoptim("gradient_descent.jl")
+    # Gradient Descent Methods
+    loadoptim("naive_gradient_descent.jl")
+    loadoptim("gradient_descent.jl")
 
-  # Conjugate gradient
-  loadoptim("cgdescent.jl")
+    # Conjugate gradient
+    loadoptim("cgdescent.jl")
 
-  # Newton and Quasi-Newton Methods
-  loadoptim("newton.jl")
-  loadoptim("bfgs.jl")
-  loadoptim("l_bfgs.jl")
+    # Newton and Quasi-Newton Methods
+    loadoptim("newton.jl")
+    loadoptim("bfgs.jl")
+    loadoptim("l_bfgs.jl")
 
-  # Constrained optimization
-  loadoptim("fminbox.jl")
+    # Constrained optimization
+    loadoptim("fminbox.jl")
 
-  # trust region methods
-  loadoptim("levenberg_marquardt.jl")
+    # trust region methods
+    loadoptim("levenberg_marquardt.jl")
 
-  # Heuristic Optimization Methods
-  loadoptim("nelder_mead.jl")
-  loadoptim("simulated_annealing.jl")
+    # Heuristic Optimization Methods
+    loadoptim("nelder_mead.jl")
+    loadoptim("simulated_annealing.jl")
 
-  # End-User Facing Wrapper Functions
-  loadoptim("optimize.jl")
-  loadoptim("curve_fit.jl")
+    # End-User Facing Wrapper Functions
+    loadoptim("optimize.jl")
+    loadoptim("curve_fit.jl")
 
-  # Finite-Difference Methods
-  loadoptim("estimate_gradient.jl")
-  loadoptim("derivative.jl")
+    # Finite-Difference Methods
+    loadoptim("estimate_gradient.jl")
+    loadoptim("derivative.jl")
 end
