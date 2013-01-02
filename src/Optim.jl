@@ -1,6 +1,8 @@
 module Optim
 
-  loadoptim(filename) = include(file_path(julia_pkgdir(),"Optim", "src", filename))
+  loadoptim(filename) = include(file_path(julia_pkgdir(), "Optim", "src", filename))
+
+  import Base.show, Base.repl_show
 
   export optimize, curve_fit, estimate_errors
 
@@ -19,7 +21,7 @@ module Optim
   # Gradient Descent Methods
   loadoptim("naive_gradient_descent.jl")
   loadoptim("gradient_descent.jl")
-  
+
   # Conjugate gradient
   loadoptim("cgdescent.jl")
 
@@ -27,7 +29,7 @@ module Optim
   loadoptim("newton.jl")
   loadoptim("bfgs.jl")
   loadoptim("l_bfgs.jl")
-  
+
   # Constrained optimization
   loadoptim("fminbox.jl")
 
