@@ -9,6 +9,7 @@ my_tests = ["test/l_bfgs.jl",
             "test/naive_gradient_descent.jl",
             "test/newton.jl",
             "test/nelder_mead.jl",
+            "test/optimize.jl",
             "test/simulated_annealing.jl"]
 
 println("Running tests:")
