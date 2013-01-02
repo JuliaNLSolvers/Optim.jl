@@ -5,7 +5,11 @@ using Distributions
 
 function curve_fit(model::Function, xpts, ydata, p0)
 	# assumes model(xpts, params...) = ydata + noise
-	# minimizes sum(ydata - f(xdata)).^2 using leastsq()
+	# minimizes F(p) = sum(ydata - f(xdata)).^2 using leastsq()
+	# returns p, f(p), g(p) where
+	#   p - best fit parameters
+	#   f(p) - vector of residuals
+	#   g(p) - estimated Jacobian at p
 
 	# construct the cost function
 	f(p) = model(xpts, p) - ydata
@@ -15,9 +19,7 @@ function curve_fit(model::Function, xpts, ydata, p0)
 
 	results = levenberg_marquardt(f, g, p0)
 	p = results.minimum
-	residuals = model(xpts, p) - ydata
-	J = g(p)
-	return p, residuals, J
+	return p, f(p), g(p)
 end
 
 estimate_errors(p, residuals, J) = estimate_errors(p, residuals, J, .95)

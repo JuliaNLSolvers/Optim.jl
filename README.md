@@ -91,6 +91,25 @@ Note that `optimize()` has some simple rules you must follow to use it effective
       print(results)
     end
 
+### Curve Fitting Demo
+
+There are also top-level methods `curve_fit()` and `estimate_errors()` that are useful for fitting data to non-linear models. See the following example:
+
+    # a two-parameter exponential model
+    model(xpts, p) = p[1]*exp(-xpts.*p[2])
+    
+    # some example data
+    xpts = linspace(0,10,20)
+    data = model(xpts, [1.0 2.0]) + 0.01*randn(length(xpts))
+    
+    beta, r, J = curve_fit(model, xpts, data, [0.5, 0.5])
+	# beta = best fit parameters
+	# r = vector of residuals
+	# J = estimated Jacobian at solution
+    
+    # We can use these values to estimate errors on the fit parameters. To get 95% confidence error bars:
+    errors = estimate_errors(beta, r, J)
+
 ## State of the Library
 
 ### Existing Functions
@@ -101,6 +120,7 @@ Note that `optimize()` has some simple rules you must follow to use it effective
 * L-BFGS: `l_bfgs()`
 * Nelder-Mead Method: `nelder_mead()`
 * Simulated Annealing: `simulated_annealing()`
+* Levenberg-Marquardt: `levenberg_marquardt()`
 
 ### Planned Functions
 * Brent's method
