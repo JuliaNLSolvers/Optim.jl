@@ -5,7 +5,8 @@
 load("Optim")
 using Optim
 
-my_tests = ["test/newton.jl",
+my_tests = ["test/naive_gradient_descent.jl",
+            "test/newton.jl",
             "test/nelder_mead.jl",
             "test/simulated_annealing.jl"]
 

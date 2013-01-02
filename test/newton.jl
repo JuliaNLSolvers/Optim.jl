@@ -45,7 +45,8 @@ function h(x)
 end
 
 store_trace, show_trace = true, false
-results = Optim.newton(f, g, h, [127.0, 921.0], 10e-16, 1_000, store_trace, show_trace)
+results = Optim.newton(f, g, h, [127.0, 921.0], 10e-16, 1_000,
+	                   store_trace, show_trace)
 @assert length(results.trace.states) > 0
 @assert results.converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
