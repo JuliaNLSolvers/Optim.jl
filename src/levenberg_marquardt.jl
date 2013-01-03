@@ -36,13 +36,13 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 	fcur = f(x)
 	residual = sse(fcur)
 	
-	# show state
+	# Maintain a trace of the system.
+	tr = OptimizationTrace()
 	if show_trace
-		println("Iteration: $(iterCt)")
-		println("x: $(x)")
-		println("||f(x)||^2: $(sse(fcur))")
-		println("lambda: $(lambda)")
-		println()
+		d = {"lambda" => lambda}
+		os = OptimizationState(x, sse(fcur), iterCt, d)
+		push(tr, os)
+		println(os)
 	end
 
 	while ( ~converged && iterCt < maxIter )
@@ -83,12 +83,10 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 
 		# show state
 		if show_trace
-			println("Iteration: $(iterCt)")
-		    println("x: $(x)")
-		    println("||f(x)||^2: $(sse(fcur))")
-		    println("g(x): $(J'*fcur)")
-			println("lambda: $(lambda)")
-		    println()
+			d = {"g(x)" => norm(J'*fcur, Inf), "dx" => delta_x, "lambda" => lambda}
+			os = OptimizationState(x, sse(fcur), iterCt, d)
+			push(tr, os)
+			println(os)
 		end
 
 		# check convergence criteria:
@@ -108,5 +106,5 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 		println("Exceeded maximum number of iterations")
 	end
 
-	OptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, converged)
+	OptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, converged, tr)
 end
