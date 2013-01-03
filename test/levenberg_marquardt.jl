@@ -1,6 +1,3 @@
-require("Optim")
-using Optim
-
 function f(x)
   [x[1], 2.0 - x[2]]
 end

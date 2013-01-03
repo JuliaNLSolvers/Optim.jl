@@ -2,10 +2,13 @@
 # Correctness Tests
 #
 
-load("Optim")
+require("Optim")
 using Optim
 
-my_tests = ["test/l_bfgs.jl",
+my_tests = [#"test/bfgs.jl", # TODO: Make this pass
+            "test/gradient_descent.jl",
+            "test/grid_search.jl",
+            "test/l_bfgs.jl",
             "test/naive_gradient_descent.jl",
             "test/newton.jl",
             "test/nelder_mead.jl",

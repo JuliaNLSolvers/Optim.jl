@@ -1,5 +1,3 @@
-load("src/init.jl")
-
 # Define a simple function.
 function f(x::Vector)
   (100.0 - x[1])^2 + (50.0 - x[2])^2

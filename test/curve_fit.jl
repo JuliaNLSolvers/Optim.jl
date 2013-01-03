@@ -1,6 +1,3 @@
-require("Optim")
-using Optim
-
 # fitting noisy data to an exponential model
 model(xpts, p) = p[1]*exp(-xpts.*p[2])
 

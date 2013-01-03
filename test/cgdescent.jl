@@ -1,5 +1,3 @@
-using Optim
-
 gtol = 1e-5
 
 # Quadratic objective function

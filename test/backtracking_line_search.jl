@@ -1,5 +1,3 @@
-load("src/init.jl")
-
 function f(x)
   (1.0 - x[1])^2
 end
