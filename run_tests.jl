@@ -6,9 +6,11 @@ require("Optim")
 using Optim
 
 my_tests = [#"test/bfgs.jl", # TODO: Make this pass
+            "test/curve_fit.jl",
             "test/gradient_descent.jl",
             "test/grid_search.jl",
             "test/l_bfgs.jl",
+            "test/levenberg_marquardt.jl",
             "test/naive_gradient_descent.jl",
             "test/newton.jl",
             "test/nelder_mead.jl",
