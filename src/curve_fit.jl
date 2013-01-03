@@ -10,7 +10,7 @@ function curve_fit(model::Function, xpts, ydata, p0)
 	f(p) = model(xpts, p) - ydata
 	
 	# construct Jacobian function
-	g = Calculus.estimate_jacobian(f)
+	g = Calculus.jacobian(f)
 
 	results = levenberg_marquardt(f, g, p0)
 	p = results.minimum
