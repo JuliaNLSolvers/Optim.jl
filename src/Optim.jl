@@ -1,9 +1,11 @@
 require("Options")
 require("Distributions")
+require("Calculus")
 
 module Optim
     using OptionsMod
     using Distributions
+    using Calculus
 
     function loadoptim(filename)
         include(file_path(julia_pkgdir(), "Optim", "src", filename))
@@ -62,8 +64,4 @@ module Optim
     # End-User Facing Wrapper Functions
     loadoptim("optimize.jl")
     loadoptim("curve_fit.jl")
-
-    # Finite-Difference Methods
-    loadoptim("estimate_gradient.jl")
-    loadoptim("derivative.jl")
 end
