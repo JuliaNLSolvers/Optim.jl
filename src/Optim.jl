@@ -8,7 +8,7 @@ module Optim
     using Calculus
 
     function loadoptim(filename)
-        include(file_path(julia_pkgdir(), "Optim", "src", filename))
+        include(joinpath(julia_pkgdir(), "Optim", "src", filename))
     end
 
     function centroid(p::Matrix)
