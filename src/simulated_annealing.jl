@@ -44,7 +44,7 @@ function simulated_annealing(cost::Function,
     # Update our trace information.
     os = OptimizationState(s, y, i)
     if store_trace
-        push(tr, os)
+        push!(tr, os)
     end
     if show_trace
         println(os)
@@ -88,7 +88,7 @@ function simulated_annealing(cost::Function,
         # Print out the state of the system.
         os = OptimizationState(s, y, i)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)

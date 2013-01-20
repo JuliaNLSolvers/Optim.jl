@@ -21,7 +21,7 @@ function newton(f::Function,
         d["h(x)"] = h(x)
         os = OptimizationState(x, f(x), i, d)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)
@@ -52,7 +52,7 @@ function newton(f::Function,
             d["h(x)"] = h(x)
             os = OptimizationState(x, f(x), i, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)

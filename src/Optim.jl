@@ -1,15 +1,9 @@
 require("Options")
-require("Distributions")
-require("Calculus")
 
 module Optim
     using OptionsMod
     using Distributions
     using Calculus
-
-    function loadoptim(filename)
-        include(joinpath(julia_pkgdir(), "Optim", "src", filename))
-    end
 
     function centroid(p::Matrix)
          reshape(mean(p, 2), size(p, 1))
@@ -18,9 +12,8 @@ module Optim
     import Base.assign,
            Base.dot,
            Base.length,
-           Base.push,
+           Base.push!,
            Base.ref,
-           Base.repl_show,
            Base.show
 
     export curve_fit,
@@ -28,40 +21,40 @@ module Optim
            optimize
 
     # Types
-    loadoptim("types.jl")
+    include("types.jl")
 
     # RNG Sources
-    loadoptim("rng.jl")
+    include("rng.jl")
 
     # Grid Search
-    loadoptim("grid_search.jl")
+    include("grid_search.jl")
 
     # Line Search Methods
-    loadoptim("backtracking_line_search.jl")
+    include("backtracking_line_search.jl")
 
     # Gradient Descent Methods
-    loadoptim("naive_gradient_descent.jl")
-    loadoptim("gradient_descent.jl")
+    include("naive_gradient_descent.jl")
+    include("gradient_descent.jl")
 
     # Conjugate gradient
-    loadoptim("cgdescent.jl")
+    include("cgdescent.jl")
 
     # Newton and Quasi-Newton Methods
-    loadoptim("newton.jl")
-    loadoptim("bfgs.jl")
-    loadoptim("l_bfgs.jl")
+    include("newton.jl")
+    include("bfgs.jl")
+    include("l_bfgs.jl")
 
     # Constrained optimization
-    loadoptim("fminbox.jl")
+    include("fminbox.jl")
 
     # trust region methods
-    loadoptim("levenberg_marquardt.jl")
+    include("levenberg_marquardt.jl")
 
     # Heuristic Optimization Methods
-    loadoptim("nelder_mead.jl")
-    loadoptim("simulated_annealing.jl")
+    include("nelder_mead.jl")
+    include("simulated_annealing.jl")
 
     # End-User Facing Wrapper Functions
-    loadoptim("optimize.jl")
-    loadoptim("curve_fit.jl")
+    include("optimize.jl")
+    include("curve_fit.jl")
 end

@@ -6,7 +6,6 @@
 
 If you're just getting started, you probably want to use `optimize()`, which wraps the specific algorithms currently implemented and selects a good one based on the amount of information you can provide. See the examples below:
 
-    load("Optim")
     using Optim
 
     eta = 0.9
@@ -44,7 +43,6 @@ Note that `optimize()` has some simple rules you must follow to use it effective
 
 ### Rosenbrock Function Demo
 
-    load("src/Optim.jl")
     using Optim
 
     function rosenbrock(x::Vector)

@@ -41,7 +41,7 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 	if show_trace
 		d = {"lambda" => lambda}
 		os = OptimizationState(x, sse(fcur), iterCt, d)
-		push(tr, os)
+		push!(tr, os)
 		println(os)
 	end
 
@@ -85,7 +85,7 @@ function levenberg_marquardt(f::Function, g::Function, x0, opts::Options)
 		if show_trace
 			d = {"g(x)" => norm(J'*fcur, Inf), "dx" => delta_x, "lambda" => lambda}
 			os = OptimizationState(x, sse(fcur), iterCt, d)
-			push(tr, os)
+			push!(tr, os)
 			println(os)
 		end
 

@@ -141,7 +141,7 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         x, fval, fcount, converged = optimizer(funcc, x, ops)
-        push(fval_all, fval)
+        push!(fval_all, fval)
         fcount_all += fcount
 
         # Decrease mu

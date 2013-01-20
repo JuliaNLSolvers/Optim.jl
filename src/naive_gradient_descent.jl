@@ -27,7 +27,7 @@ function naive_gradient_descent(f::Function,
         d["g(x)"] = g(x_new)
         os = OptimizationState(x_new, y_new, i, d)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)
@@ -59,7 +59,7 @@ function naive_gradient_descent(f::Function,
             d["g(x)"] = g(x_new)
             os = OptimizationState(x_new, y_new, i, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)

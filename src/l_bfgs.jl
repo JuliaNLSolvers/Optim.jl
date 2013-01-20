@@ -73,7 +73,7 @@ function l_bfgs(f::Function,
             d["First-order opt"] = norm(g_x, Inf)
             os = OptimizationState(x, f(x), k, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)
@@ -100,9 +100,9 @@ function l_bfgs(f::Function,
         end
 
         # Keep a record of the new s, y and rho.
-        push(s, tmp_s)
-        push(y, tmp_y)
-        push(rho, tmp_rho)
+        push!(s, tmp_s)
+        push!(y, tmp_y)
+        push!(rho, tmp_rho)
 
         # Update our position.
         x = x_new

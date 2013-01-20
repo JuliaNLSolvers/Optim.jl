@@ -32,7 +32,7 @@ function bfgs(f::Function,
         d["h"] = h
         os = OptimizationState(x_new, f(x_new), k, d)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)
@@ -58,7 +58,7 @@ function bfgs(f::Function,
             d["First-order opt."] = norm(gradient_old, Inf)
             os = OptimizationState(x_new, f(x_new), k, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)

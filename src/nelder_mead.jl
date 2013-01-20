@@ -53,7 +53,7 @@ function nelder_mead(f::Function,
         d["Variance"] = v
         os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)
@@ -146,7 +146,7 @@ function nelder_mead(f::Function,
             d["Variance"] = v
             os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)

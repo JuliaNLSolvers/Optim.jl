@@ -2,7 +2,6 @@
 # Correctness Tests
 #
 
-require("Optim")
 using Optim
 
 my_tests = [#"test/bfgs.jl", # TODO: Make this pass

@@ -23,19 +23,18 @@ type OptimizationResults
   trace::OptimizationTrace
 end
 
-function show(io::IOStream, o_trace::OptimizationState)
+function show(io::IO, o_trace::OptimizationState)
   print(io, "State of Optimization Algorithm\n")
   print(io, " * Iteration: $(o_trace.iteration)\n")
   print(io, " * State: $(o_trace.state)\n")
   print(io, " * f(State): $(o_trace.f_state)\n")
   print(io, " * Additional Information: $(o_trace.metadata)")
 end
-repl_show(io::IOStream, s::OptimizationState) = show(io, s)
-push(tr::OptimizationTrace, s::OptimizationState) = push(tr.states, s)
+push!(tr::OptimizationTrace, s::OptimizationState) = push!(tr.states, s)
 ref(tr::OptimizationTrace, i::Int64) = ref(tr.states, i)
 assign(tr::OptimizationTrace, s::OptimizationState, i::Int64) = assign(tr.states, s, i)
 
-function show(io::IOStream, results::OptimizationResults)
+function show(io::IO, results::OptimizationResults)
   print(io, "Results of Optimization Algorithm\n")
   print(io, " * Algorithm: $(results.method)\n")
   print(io, " * Starting Point: $(results.initial_x)\n")
@@ -44,4 +43,3 @@ function show(io::IOStream, results::OptimizationResults)
   print(io, " * Iterations: $(results.iterations)\n")
   print(io, " * Self-Reported Convergence: $(results.converged)")
 end
-repl_show(io::IOStream, results::OptimizationResults) = show(io, results)

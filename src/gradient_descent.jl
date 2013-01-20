@@ -20,7 +20,7 @@ function gradient_descent(f::Function,
         d["||g(x)||"] = norm(d["g(x)"])
         os = OptimizationState(x, f(x), i, d)
         if store_trace
-            push(tr, os)
+            push!(tr, os)
         end
         if show_trace
             println(os)
@@ -53,7 +53,7 @@ function gradient_descent(f::Function,
             d["||g(x)||"] = norm(d["g(x)"])
             os = OptimizationState(x, f(x), i, d)
             if store_trace
-                push(tr, os)
+                push!(tr, os)
             end
             if show_trace
                 println(os)
