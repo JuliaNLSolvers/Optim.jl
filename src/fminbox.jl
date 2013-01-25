@@ -72,7 +72,7 @@ function barrier_combined{T}(g, gfunc, gbarrier, valeach::Vector{T}, x::Array{T}
     valeach[1] = valfunc
     valeach[2] = valbarrier
     if calc_grad
-        for i = 1:numel(g)
+        for i = 1:length(g)
             g[i] = gfunc[i] + mu*gbarrier[i]
         end
     end
@@ -110,7 +110,7 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
-    for i = 1:numel(gbarrier)
+    for i = 1:length(gbarrier)
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
@@ -150,7 +150,7 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
         # Test for convergence
         fcmp = abs(fval[1]) + abs(fval[end])
         tot = zero(T)
-        for i = 1:numel(x)
+        for i = 1:length(x)
             tot += abs((x[i] - xold[i]) * (gfunc[i] + mu*gbarrier[i]))
         end
         if tot <= tol * (fcmp + eps(T))
