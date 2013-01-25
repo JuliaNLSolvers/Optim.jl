@@ -6,7 +6,7 @@ function quadratic(g, x, A, b)
     v = x'*A*x/2 + b'*x
     if calc_grad
         A_mul_B(g, A, x)
-        for i = 1:numel(g)
+        for i = 1:length(g)
             g[i] += b[i]
         end
     end
@@ -69,10 +69,8 @@ x0 = Float64[-1,1]
 g = Array(Float64, 2)
 mobjfun(g, x0)
 fun = x->mobjfun(nothing, x)
-d = derivative_numer(fun, x0, 1)
-@assert abs(d-g[1]) < 1e-8
-d = derivative_numer(fun, x0, 2)
-@assert abs(d-g[2]) < 1e-8
+d = Calculus.finite_difference(fun, x0)
+@assert all(abs(d-g) .< 1e-8)
 func = (g, x) -> mobjfun(g, x)
 x, fval, fcount, converged = cgdescent(func, x0) #, ops)
 @assert converged
