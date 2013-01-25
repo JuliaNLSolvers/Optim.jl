@@ -107,7 +107,62 @@ There are also top-level methods `curve_fit()` and `estimate_errors()` that are 
     
     # We can use these values to estimate errors on the fit parameters. To get 95% confidence error bars:
     errors = estimate_errors(beta, r, J)
+    
+## Conjugate gradients, box minimization, and nonnegative least squares
 
+There is a separate suite of tools that implement the nonlinear conjugate gradient method, and there are some additional algorithms built on top of it. Unfortunately, currently these algorithms use a different API. Rather than providing one function for the function value and another for the gradient, here you combine them into a single function. The function must be written to take the gradient as the first input. When the gradient is desired, that first input will be a vector; otherwise, the value `nothing` indicates that the gradient is not needed. Let's demonstrate this for the Rosenbrock Function:
+
+    function rosenbrock(g, x::Vector)
+      d1 = 1.0 - x[1]
+      d2 = x[2] - x[1]^2
+      if !(g === nothing)
+        g[1] = -2.0*d1 - 400.0*d2*x[1]
+        g[2] = 200.0*d2
+      end
+      val = d1^2 + 100.0 * d2^2
+      return val
+    end
+
+In this example, you can see that we'll save a bit of time by not needing to recompute `d1` and `d2` in a separate gradient function. More subtly, it does not require the allocation of a new vector to store the gradient; indeed, the conjugate-gradient algorithm reuses the same block of memory for the gradient on each iteration.  (These differences in API are intended to enhance performance on very large problems.)
+
+### Conjugate gradient
+
+The nonlinear conjugate gradient function is an implementation of an algorithm known as CG-DESCENT (see Citations below):
+
+    x0 = [0.0,0.0]  # the initial guess
+    x, fval, fcount, converged = cgdescent(rosenbrock, x0)
+
+Here `x` is the solution vector, `fval` is a vector of function values after each iteration, `fcount` is the number of function evaluations, and `converged` is `true` if the algorithm converged to within the prescribed tolerance.
+
+The algorithm can be controlled with a wide variety of options:
+
+    using OptionsMod
+    ops = @options display=Optim.ITER fcountmax=1000 tol=1e-5
+    x, fval, fcount, converged = cgdescent(func, x0, ops)
+
+This will cause it to display its progress at each iteration, limit itself to a maximum of 1000 function evaluations, and use a custom tolerance. There are many more options available, including a wide array of display options; for these, it's best to see the code.
+
+### Box minimization
+
+A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available:
+
+    l = [1.25, -2.1]
+    u = [Inf, Inf]
+    x0 = [2.0, 2.0]
+    x, fval, fcount, converged = fminbox(rosenbrock, x0, l, u, ops)
+
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `cgdescent` for convergence at each step.
+
+Currently the accuracy of this algorithm is somewhat low; it seems likely that the best cure will be to implement preconditioning in `cgdescent`.
+
+### Nonnegative least-squares
+
+Finally, nonnegative least-squares is such a common application of box-constrained optimization that it is available in a convenient package:
+
+    A = randn(5,3)
+    b = randn(size(A, 1))
+    xnn, fval, fcount, converged = nnls(A, b)
+    
 ## State of the Library
 
 ### Existing Functions
@@ -119,15 +174,20 @@ There are also top-level methods `curve_fit()` and `estimate_errors()` that are 
 * Nelder-Mead Method: `nelder_mead()`
 * Simulated Annealing: `simulated_annealing()`
 * Levenberg-Marquardt: `levenberg_marquardt()`
+* Nonlinear conjugate-gradient: `cgdescent()`
+* Box minimization: `fminbox()`
+* Nonnegative least-squares: `nnls()`
 
 ### Planned Functions
 * Brent's method
 * Linear conjugate gradients
-* Nonlinear conjugate gradients
-* L-BFGS-B
+* L-BFGS-B (note that this functionality is already available in fminbox)
 
 ### Wrapping Functions
 * Will provide methods for wrapping functions to insure they satisfy usage rules
 * Will convert automatic conversion tools for input
 * Will provide automatic differentiation
-* Will provide finite differencing
+
+### Citations
+
+W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.

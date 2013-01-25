@@ -1,3 +1,5 @@
+import Base.push!
+
 # A cache for results from linesearch (to avoid recomputation)
 type LineSearchResults{T}
     alpha::Vector{T}
@@ -7,16 +9,16 @@ type LineSearchResults{T}
 end
 LineSearchResults{T}(::Type{T}) = LineSearchResults(T[], T[], T[], 0)
 length(lsr::LineSearchResults) = length(lsr.alpha)
-function push{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
+function push!{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
     push!(lsr.alpha, a)
     push!(lsr.value, v)
     push!(lsr.slope, d)
 end
 function clear(lsr::LineSearchResults)
     N = length(lsr.alpha)
-    del(lsr.alpha, 1:N)
-    del(lsr.value, 1:N)
-    del(lsr.slope, 1:N)
+    delete!(lsr.alpha, 1:N)
+    delete!(lsr.value, 1:N)
+    delete!(lsr.slope, 1:N)
     # nfailures is deliberately not set to 0
 end
 
@@ -123,7 +125,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     gold = similar(g)
     y = similar(g)
     # d is allocated below
-    N = numel(x)
+    N = length(x)
     iter = 1
     fcount = 1
 
@@ -652,14 +654,14 @@ end
 # Define one-parameter function for line searches
 function linefunc(gphi, alpha, func, x, d, xtmp, g)
     calc_grad = !(gphi === nothing)
-    for i = 1:numel(x)
+    for i = 1:length(x)
         xtmp[i] = x[i] + alpha*d[i]
     end
     if calc_grad
         val = func(g, xtmp)
         if isfinite(val)
             gtmp = g[1]*d[1]
-            for i = 2:numel(g)
+            for i = 2:length(g)
                 gtmp += g[i]*d[i]
             end
             gphi[1] = gtmp
@@ -675,7 +677,7 @@ end
 # Dot product of two "vectors", even if they don't have a vector shape
 function dot(x::Array, y::Array)
     d = x[1]*y[1]
-    for i = 2:numel(x)
+    for i = 2:length(x)
         d += x[i]*y[i]
     end
     return d
