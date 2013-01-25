@@ -83,10 +83,14 @@ function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
     alphamax = inf(T)
     for i = 1:length(x)
         if d[i] < 0
-            alphamax = min(alphamax, (l[i]-x[i]+eps(l[i]))/d[i])
+            alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
         elseif d[i] > 0
-            alphamax = min(alphamax, (u[i]-x[i]-eps(u[i]))/d[i])
+            alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
         end
+    end
+    epsilon = eps(max(alphamax, one(T)))
+    if !isinf(alphamax) && alphamax > epsilon
+        alphamax -= epsilon
     end
     return alphamax
 end
