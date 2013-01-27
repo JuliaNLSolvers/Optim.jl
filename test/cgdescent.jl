@@ -1,3 +1,9 @@
+using OptionsMod
+
+dispflags = 0
+# dispflags = Optim.FINAL | Optim.ITER #| Optim.LINESEARCH | Optim.BRACKET | Optim.BISECT
+ops = @options display=dispflags
+
 gtol = 1e-5
 
 # Quadratic objective function
@@ -51,17 +57,15 @@ A = randn(N,N)
 A = A'*A
 b = randn(N)
 x0 = randn(N)
-# dispflags = OptimizeMod.FINAL | OptimizeMod.ITER# | OptimizeMod.LINESEARCH | OptimizeMod.BRACKET | OptimizeMod.BISECT
-# ops = @options display=dispflags
 func = (g, x) -> quadratic(g, x, A, b)
-x, fval, fcount, converged = cgdescent(func, x0) #, ops)
+x, fval, fcount, converged = cgdescent(func, x0, ops)
 @assert converged
 @assert all(abs(A*x + b) .< gtol)
 
 l = fill(-2.0, N)
 u = fill(2.0, N)
 x0 = rand(N)-0.5
-x, fval, fcount, converged = fminbox(func, x0, l, u) #, ops)
+x, fval, fcount, converged = fminbox(func, x0, l, u, ops)
 @assert converged
 
 # Matlab objective function
@@ -72,11 +76,12 @@ fun = x->mobjfun(nothing, x)
 d = Calculus.finite_difference(fun, x0)
 @assert all(abs(d-g) .< 1e-8)
 func = (g, x) -> mobjfun(g, x)
-x, fval, fcount, converged = cgdescent(func, x0) #, ops)
+x, fval, fcount, converged = cgdescent(func, x0, ops)
 @assert converged
 
 # cgdescent driver1
 n = 100
 x0 = ones(n)
 func = (g,x) -> driver1(g, x)
-x, fval, fcount, converged = cgdescent(func, x0) #, ops)
+x, fval, fcount, converged = cgdescent(func, x0, ops)
+@assert converged
