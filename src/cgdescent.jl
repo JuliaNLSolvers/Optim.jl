@@ -39,6 +39,7 @@ const UPDATE      = one64<<10
 const SECANT2     = one64<<11
 const BISECT      = one64<<12
 const BARRIERCOEF = one64<<13
+display_nextbit = 14
 
 #### Conjugate gradient ####
 # Syntax:
@@ -66,6 +67,10 @@ const BARRIERCOEF = one64<<13
 #     Transactions on Mathematical Software 32: 113–137.
 # Code comments such as "HZ, stage X" or "HZ, eqs Y" are with
 # reference to a particular point in this paper.
+# Several aspects of the following have also been incorporated:
+#   W. W. Hager and H. Zhang (2012) The limited memory conjugate
+#     gradient method.
+# This paper will be denoted HZ2012 below.
 #
 # It's worth noting that, in addition to the modified update rule that
 # guarantees descent, one of the attractions of this paper is its
@@ -101,7 +106,7 @@ const BARRIERCOEF = one64<<13
 #     distance, it can still be handled by returning Inf/NaN for
 #     exterior points. It's just more efficient if you know the
 #     maximum, because you don't have to test values that won't
-#     work..) The maximum should be specified as the largest value for
+#     work.) The maximum should be specified as the largest value for
 #     which a finite value will be returned.  See, e.g., limits_box
 #     below.  The default value for alphamax is Inf. See alphamaxfunc
 #     for cgdescent and alphamax for linesearch_hz.
@@ -115,16 +120,17 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     alpha::T
     tol::T
     # Default settings
-    @defaults ops eta=0.01 display=0 alpha=nan(T) itermax=typemax(Int) fcountmax=typemax(Int) nfailuresmax=1000 iterfinitemax=20 tol=eps(T)^(2/3) alphamaxfunc=(x,d)->inf(T) reportfunc=val->val
+    @defaults ops eta=0.4 display=0 alpha=nan(T) itermax=typemax(Int) fcountmax=typemax(Int) nfailuresmax=1000 iterfinitemax=20 tol=eps(T)^(2/3) alphamaxfunc=(x,d)->inf(T) reportfunc=val->val P=nothing precondprep=(P,x)->nothing
     # Don't modify inputs
     x = copy(x)
     ops = copy(ops)
     # Allocation of temporaries
     xtmp = similar(x)
     g = similar(x)
+    pg = similar(x)    # preconditioned gradient
+    d = similar(x)
     gold = similar(g)
     y = similar(g)
-    # d is allocated below
     N = length(x)
     iter = 1
     fcount = 1
@@ -140,10 +146,17 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         @printf("------   ------   --------------   --------------\n")
         @printf("%6d   %6d   %14e\n", iter, fcount, val)
     end
-    d = -g
+
+    precondprep(P, x)
+    precondfwd(d, P, g)     # first iteration store the preconditioned gradient in d
+    negate(d)               # d -> -d
     copy_to(gold, g)
     phi0 = val              # value at alpha=0
-    dphi0 = dot(g, d)     # derivative at alpha=0
+    dphi0 = dot(g, d)       # derivative at alpha=0
+    if dphi0 == 0
+        # We started at the minimum, return
+        return x, fval, fcount, true
+    end
     @assert dphi0 < 0
     alpha = alphainit(alpha, x, g, val, ops)
     alphamax = alphamaxfunc(x, d)
@@ -180,7 +193,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         # Test for termination (this differs from HZ eq 30; at least
         # here, it seems to make sense to be "unit-correct", i.e., to
         # make the criterion respect the possibility that different
-        # parameters have different physical units)
+        # parameters have different scaling/physical units)
         absstep = alpha*sum(abs(g.*d)) # has units of the function value
         if display & ITER > 0
             @printf("%6d   %6d   %14e %14e\n", iter, fcount, reportfunc(val), absstep)
@@ -194,31 +207,24 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         if iter > itermax || fcount > fcountmax || lsr.nfailures > nfailuresmax
             break
         end
-        # Calculate the beta factor (HZ, eqs 7-9)
-        etak::T = -1/sqrt(norm2(d))/min(eta, sqrt(norm2(g)))
+        # Calculate the beta factor (HZ2012)
+        precondprep(P, x)
+        dPd = precondinvdot(d, P, d)
+        etak::T = eta*dot(d, gold)/dPd
         for i = 1:N
             y[i] = g[i]-gold[i]
         end
         copy_to(gold, g)
-        ydotd = zero(T)
-        y2 = zero(T)
-        for i = 1:N
-            ydotd += y[i]*d[i]
-            y2 += y[i]^2
-        end
-        fac::T = 2y2/ydotd
-        ypdotg = zero(T)
-        for i = 1:N
-            ypdotg += (y[i] - fac*d[i])*g[i]
-        end
-        betak = ypdotg/ydotd
+        ydotd = dot(y, d)
+        precondfwd(pg, P, g)
+        betak = (dot(y, pg) - precondfwddot(y, P, y)*dot(d,g)/ydotd)/ydotd
         beta = max(betak, etak)
         if display & BETA > 0
             println("beta: ", beta)
         end
         # Generate the new search direction
         for i = 1:N
-            d[i] = beta*d[i] - g[i]
+            d[i] = beta*d[i] - pg[i]
         end
         # Define the new line search function
         phi = (galpha, alpha) -> linefunc(galpha, alpha, func, x, d, xtmp, g)
@@ -686,4 +692,36 @@ end
 # Vector-norm-squared, even if it doesn't have a vector shape
 norm2(x::Array) = dot(x,x)
 
+function negate(A::Array)
+    for i = 1:length(A)
+        A[i] = -A[i]
+    end
+end
 
+## Preconditioners
+# Empty preconditioner
+precondfwd(out::Array, P::Nothing, A::Array) = copy_to(out, A)
+precondfwddot(A::Array, P::Nothing, B::Array) = dot(A, B)
+precondinvdot(A::Array, P::Nothing, B::Array) = dot(A, B)
+
+# Diagonal preconditioner
+function precondfwd(out::Array, p::Vector, A::Array)
+    for i = 1:length(A)
+        out[i] = p[i]*A[i]
+    end
+    out
+end
+function precondfwddot(A::Array, p::Vector, B::Array)
+    s = zero(eltype(A))
+    for i = 1:length(A)
+        s += A[i]*p[i]*B[i]
+    end
+    s
+end
+function precondinvdot(A::Array, p::Vector, B::Array)
+    s = zero(eltype(A))
+    for i = 1:length(A)
+        s += A[i]*B[i]/p[i]
+    end
+    s
+end
