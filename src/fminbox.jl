@@ -102,11 +102,7 @@ function precondprepbox(P, x, l, u, mu)
         xi = x[i]
         li = l[i]
         ui = u[i]
-        if isfinite(li) || isfinite(ui)
-            P[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2))
-        else
-            P[i] = 1
-        end
+        P[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2) + 1) # +1 like identity far from edges
     end
 end
 
