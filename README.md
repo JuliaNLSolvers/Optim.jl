@@ -153,16 +153,18 @@ A primal interior-point algorithm for simple "box" constraints (lower and upper 
 
 This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `cgdescent` for convergence at each step.
 
-Currently the accuracy of this algorithm is somewhat low; it seems likely that the best cure will be to implement preconditioning in `cgdescent`.
+This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `cgdescent` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner (see `nnls` for an example).
 
 ### Nonnegative least-squares
 
-Finally, nonnegative least-squares is such a common application of box-constrained optimization that it is available in a convenient package:
+Finally, one common application of box-constrained optimization is non-negative least-squares:
 
     A = randn(5,3)
     b = randn(size(A, 1))
     xnn, fval, fcount, converged = nnls(A, b)
-    
+
+This leverages fminbox and cgdescent; surely one could get even better performance by using an algorithm that takes advantage of this problem's linearity. Despite this, for large problems the performance is quite good compared to Matlab's `lsqnonneg`.
+
 ## State of the Library
 
 ### Existing Functions
