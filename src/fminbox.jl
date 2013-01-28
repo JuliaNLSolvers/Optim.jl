@@ -4,7 +4,7 @@
 function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}, ops::Options)
     mu0::T
     mu0factor::T
-    @defaults ops mu0=nan(T) mu0factor=0.01
+    @defaults ops mu0=nan(T) mu0factor=0.001
     if isnan(mu0)
         gbarriernorm = sum(abs(gbarrier))
         if gbarriernorm > 0
@@ -95,12 +95,24 @@ function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
     return alphamax
 end
 
+# Default preconditioner for box-constrained optimization
+# This creates the inverse Hessian of the barrier penalty
+function precondprepbox(P, x, l, u, mu)
+    for i = 1:length(x)
+        xi = x[i]
+        li = l[i]
+        ui = u[i]
+        P[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2) + 1) # +1 like identity far from edges
+    end
+end
 
+const PARAMETERS_MU = one64<<display_nextbit
+display_nextbit += 1
 
 function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::Options)
     tol::T
     mufactor::T
-    @defaults ops tol=eps(T)^(2/3) mufactor=0.1 display=0 optimizer=(func, x, ops)->cgdescent(func, x, ops)
+    @defaults ops tol=eps(T)^(2/3) mufactor=0.001 display=0 optimizer=(func, x, ops)->cgdescent(func, x, ops) P=Array(T,length(x)) precondprep=precondprepbox
     ops = copy(ops)  # to avoid passing back extended options
     x = copy(x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
@@ -136,15 +148,19 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
     fcount_all = 0
     xold = similar(x)
     converged = false
-    @set_options ops tol=100*tol alphamaxfunc=(x, d)->limits_box(x, d, l, u) reportfunc=val->valboth[1]
+    @set_options ops tol=10*tol alphamaxfunc=(x, d)->limits_box(x, d, l, u) P=P reportfunc=val->valboth[1]
     while true
         copy_to(xold, x)
         # Optimize with current setting of mu
         funcc = (g, x) -> barrier_combined(g, gfunc, gbarrier, valboth, x, fb, mu)
+        @set_options ops precondprep=(out, x)->precondprep(out, x, l, u, mu)
         if display > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         x, fval, fcount, converged = optimizer(funcc, x, ops)
+        if display & PARAMETERS_MU > 0
+            println("x: ", x)
+        end
         push!(fval_all, fval)
         fcount_all += fcount
 

@@ -1,14 +1,12 @@
 function nnls(A::AbstractMatrix, b::AbstractVector, ops::Options)
-    # Solve the unconstrained problem
-    x = A\b
-    # Generate an interior point
-    @defaults ops xmin=one(eltype(x))
-    flag = x .< xmin
-    if isa(xmin, AbstractVector)
-        x[flag] = xmin[flag]
-    else
-        x[flag] = xmin
-    end
+    # Set up the preconditioner as the inverse diagonal of the Hessian
+    a = sum(A.^2, 1)
+    @defaults ops precondprep=(P, x, l, u, mu)->precondprepnnls(P, x, mu, a)
+    ops = copy(ops)
+    @set_options ops precondprep=precondprep
+    # Create the initial guess (an interior point)
+    T = promote_type(eltype(A), eltype(b))
+    x = fill(one(T), size(A, 2))
     # Set up constraints
     l = zeros(eltype(x), length(x))
     u = fill(inf(eltype(x)), length(x))
@@ -25,6 +23,12 @@ function nnlsobjective(g, x::AbstractVector, A::AbstractMatrix, b::AbstractVecto
         At_mul_B(g, A, d)
     end
     val
+end
+
+function precondprepnnls(P, x, mu, a)
+    for i = 1:length(x)
+        P[i] = 1/(mu/x[i]^2 + a[i])
+    end
 end
 
 export nnls
