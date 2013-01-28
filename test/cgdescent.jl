@@ -85,3 +85,9 @@ x0 = ones(n)
 func = (g,x) -> driver1(g, x)
 x, fval, fcount, converged = cgdescent(func, x0, ops)
 @assert converged
+
+# Check nnls
+A = randn(50,30)
+b = randn(size(A, 1))
+xnn, fval, fcount, converged = nnls(A, b)
+@assert converged
