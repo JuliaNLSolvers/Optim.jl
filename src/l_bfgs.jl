@@ -3,15 +3,15 @@ function two_loop(g_x::Vector,
                   s::Vector,
                   y::Vector,
                   m::Int64,
-                  k::Int64)
+                  k::Int64,
+                  alpha::Vector)
     q = g_x
 
     index = min(k - 1, m)
-    alpha = zeros(m)
     for i = index:-1:1
         alpha[i] = rho[i] * dot(s[i], q)
         q -= alpha[i] * y[i]
-      end
+    end
 
     r = index == 0 ? q : q * dot(s[index], s[index]) / dot(s[index], s[index])
 
@@ -49,6 +49,9 @@ function l_bfgs(f::Function,
     s = {}
     y = {}
 
+    # Re-use this vector during every call to two_loop()
+    twoloop_v = zeros(m)
+
     # Compute the initial gradient.
     g_x = g(x)
 
@@ -60,7 +63,7 @@ function l_bfgs(f::Function,
 
     while !converged && k <= max_iterations
         # Select a search direction.
-        p = two_loop(g_x, rho, s, y, m, k)
+        p = two_loop(g_x, rho, s, y, m, k, twoloop_v)
 
         # Select a step-size.
         alpha = backtracking_line_search(f, g, x, p)
@@ -94,9 +97,9 @@ function l_bfgs(f::Function,
 
         # Discard unneeded s, y and rho.
         if k > m
-            shift(s)
-            shift(y)
-            shift(rho)
+            shift!(s)
+            shift!(y)
+            shift!(rho)
         end
 
         # Keep a record of the new s, y and rho.
