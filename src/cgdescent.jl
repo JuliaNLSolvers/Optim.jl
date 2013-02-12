@@ -150,7 +150,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     precondprep(P, x)
     precondfwd(d, P, g)     # first iteration store the preconditioned gradient in d
     negate(d)               # d -> -d
-    copy_to(gold, g)
+    copy!(gold, g)
     phi0 = val              # value at alpha=0
     dphi0 = dot(g, d)       # derivative at alpha=0
     if dphi0 == 0
@@ -186,7 +186,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             println("alpha: ", alpha)
         end
         # xtmp contains the new point, g contains the gradient at that point
-        copy_to(x, xtmp)
+        copy!(x, xtmp)
         push!(fval, reportfunc(val))
         iter += 1
         fcount += length(lsr)-1
@@ -214,7 +214,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         for i = 1:N
             y[i] = g[i]-gold[i]
         end
-        copy_to(gold, g)
+        copy!(gold, g)
         ydotd = dot(y, d)
         precondfwd(pg, P, g)
         betak = (dot(y, pg) - precondfwddot(y, P, y)*dot(d,g)/ydotd)/ydotd
@@ -700,7 +700,7 @@ end
 
 ## Preconditioners
 # Empty preconditioner
-precondfwd(out::Array, P::Nothing, A::Array) = copy_to(out, A)
+precondfwd(out::Array, P::Nothing, A::Array) = copy!(out, A)
 precondfwddot(A::Array, P::Nothing, B::Array) = dot(A, B)
 precondinvdot(A::Array, P::Nothing, B::Array) = dot(A, B)
 
