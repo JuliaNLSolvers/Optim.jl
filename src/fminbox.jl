@@ -150,7 +150,7 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
     converged = false
     @set_options ops tol=10*tol alphamaxfunc=(x, d)->limits_box(x, d, l, u) P=P reportfunc=val->valboth[1]
     while true
-        copy_to(xold, x)
+        copy!(xold, x)
         # Optimize with current setting of mu
         funcc = (g, x) -> barrier_combined(g, gfunc, gbarrier, valboth, x, fb, mu)
         @set_options ops precondprep=(out, x)->precondprep(out, x, l, u, mu)
