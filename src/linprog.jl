@@ -1,9 +1,9 @@
 
 if Pkg.installed("Clp") != nothing
     @eval using Clp
-    solver = Clp
+    lpsolver = Clp
 else
-    solver = nothing
+    lpsolver = nothing
 end
 
 type LinprogSolution
@@ -29,10 +29,10 @@ end
 
 
 function linprog(c::InputVector, A::AbstractMatrix, rowlb::InputVector, rowub::InputVector, lb::InputVector, ub::InputVector)
-    if solver == nothing
+    if lpsolver == nothing
         error("No LP solver installed. Please run Pkg.add(\"Clp\") and reload Optim")
     end
-    m = solver.model()
+    m = lpsolver.model()
     nrow,ncol = size(A)
 
     c = expandvec(c, ncol)
@@ -68,13 +68,13 @@ function linprog(c::InputVector, A::AbstractMatrix, rowlb::InputVector, rowub::I
         rowub = rowubtmp
     end
 
-    solver.loadproblem(m, A, lb, ub, c, rowlb, rowub)
+    lpsolver.loadproblem(m, A, lb, ub, c, rowlb, rowub)
     # optimize is masked by Optim's optimize
     # maybe there's a better way
-    solver.optimize(m)
-    status = solver.status(m)
+    lpsolver.optimize(m)
+    status = lpsolver.status(m)
     if status == :Optimal
-        return LinprogSolution(status, solver.getobjval(m), solver.getsolution(m), Dict())
+        return LinprogSolution(status, lpsolver.getobjval(m), lpsolver.getsolution(m), Dict())
     else
         return LinprogSolution(status, nothing, [], Dict())
     end
