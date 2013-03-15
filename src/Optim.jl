@@ -55,6 +55,9 @@ module Optim
     include("nelder_mead.jl")
     include("simulated_annealing.jl")
 
+    # Linear programming
+    include("linprog.jl")
+
     # End-User Facing Wrapper Functions
     include("optimize.jl")
     include("curve_fit.jl")
