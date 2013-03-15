@@ -41,7 +41,7 @@ function linprog(c::InputVector, A::AbstractMatrix, rowlb::InputVector, rowub::I
     lb = expandvec(lb, ncol)
     ub = expandvec(ub, ncol)
     
-    # rowub is allowed to be vector of senses
+    # rowlb is allowed to be vector of senses
     if eltype(rowlbtmp) == Char
         realtype = eltype(rowubtmp)
         sense = rowlbtmp
