@@ -165,6 +165,10 @@ Finally, one common application of box-constrained optimization is non-negative 
 
 This leverages fminbox and cgdescent; surely one could get even better performance by using an algorithm that takes advantage of this problem's linearity. Despite this, for large problems the performance is quite good compared to Matlab's `lsqnonneg`.
 
+### Linear programming
+
+For tools for doing linear programming, you should look into the MathProg package.
+
 ## State of the Library
 
 ### Existing Functions
