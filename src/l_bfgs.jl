@@ -1,26 +1,51 @@
+function modindex(i::Integer, m::Integer)
+    x = mod(i, m)
+    if x == 0
+        return m
+    else
+        return x
+    end
+end
+
 function two_loop(g_x::Vector,
                   rho::Vector,
-                  s::Vector,
-                  y::Vector,
+                  s::Matrix,
+                  y::Matrix,
                   m::Int64,
                   k::Int64,
                   alpha::Vector)
     q = g_x
 
-    index = min(k - 1, m)
-    for i = index:-1:1
-        alpha[i] = rho[i] * dot(s[i], q)
-        q -= alpha[i] * y[i]
+    upper = k - 1
+    lower = k - m
+    for index = upper:-1:lower
+        if index < 1 || index > k - 1
+            continue
+        end
+        i = modindex(index, m)
+        alpha[i] = rho[i] * dot(s[:, i], q)
+        q -= alpha[i] * y[:, i]
     end
 
-    r = index == 0 ? q : q * dot(s[index], s[index]) / dot(s[index], s[index])
-
-    for i = 1:index
-        beta = rho[i] * dot(y[i], r)
-        r += s[i] * (alpha[i] - beta)
+    upper2 = min(k - 1, m)
+    if k == 1
+        r = q
+    else
+        r = q *
+              dot(s[:, upper2], s[:, upper2]) /
+              dot(s[:, upper2], s[:, upper2])
     end
 
-    -r
+    for index = lower:1:upper
+        if index < 1 || index > k - 1
+            continue
+        end
+        i = modindex(index, m)
+        beta = rho[i] * dot(y[:, i], r)
+        r += s[:, i] * (alpha[i] - beta)
+    end
+
+    return -r
 end
 
 function l_bfgs(f::Function,
@@ -45,12 +70,12 @@ function l_bfgs(f::Function,
     # Use Any arrays for the time being
     # Eventually move over to a faster Float64 representation
     # for which we build shift and push operations.
-    rho = zeros(0)
-    s = {}
-    y = {}
+    rho = Array(Float64, m)
+    s = Array(Float64, n, m)
+    y = Array(Float64, n, m)
 
     # Re-use this vector during every call to two_loop()
-    twoloop_v = zeros(m)
+    twoloop_v = Array(Float64, m)
 
     # Compute the initial gradient.
     g_x = g(x)
@@ -95,17 +120,10 @@ function l_bfgs(f::Function,
             break
         end
 
-        # Discard unneeded s, y and rho.
-        if k > m
-            shift!(s)
-            shift!(y)
-            shift!(rho)
-        end
-
         # Keep a record of the new s, y and rho.
-        push!(s, tmp_s)
-        push!(y, tmp_y)
-        push!(rho, tmp_rho)
+        s[:, modindex(k, m)] = tmp_s
+        y[:, modindex(k, m)] = tmp_y
+        rho[modindex(k, m)] = tmp_rho
 
         # Update our position.
         x = x_new
