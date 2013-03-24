@@ -1,31 +1,40 @@
-function naive_gradient_descent(f::Function,
-                                g::Function,
+function naive_gradient_descent(d::DifferentiableFunction,
                                 initial_x::Vector,
                                 step_size::Float64,
                                 tolerance::Float64,
-                                max_iterations::Int64,
+                                max_iterations::Integer,
                                 store_trace::Bool,
                                 show_trace::Bool)
 
-    # Set up the initial state of the system.
-    # We insure the termination condition is not met by setting y_old = Inf.
-    x_old = initial_x
-    x_new = initial_x
-    y_old = Inf
-    y_new = f(x_new)
+    # Keep a copy of the initial state of the system
+    x = copy(initial_x)
 
-    # Keep track of the number of iterations.
+    # Keep track of the number of iterations
     i = 0
 
-    # Track convergence.
+    # Track calls to f and g!
+    f_calls, g_calls = 0, 0
+
+    # Allocate vectors for re-use by gradient calls
+    n = length(x)
+    gradient = Array(Float64, n)
+
+    # Maintain current value of f and g
+    f_calls += 1
+    g_calls += 1
+    f_x = d.f(x)
+    d.g!(x, gradient)
+
+    # Track convergence
     converged = false
 
-    # Maintain trace information.
+    # Maintain trace information
     tr = OptimizationTrace()
     if store_trace || show_trace
-        d = Dict()
-        d["g(x)"] = g(x_new)
-        os = OptimizationState(x_new, y_new, i, d)
+        dt = Dict()
+        dt["g(x)"] = copy(gradient)
+        dt["|g(x)|"] = norm(gradient)
+        os = OptimizationState(x, f_x, i, dt)
         if store_trace
             push!(tr, os)
         end
@@ -34,30 +43,31 @@ function naive_gradient_descent(f::Function,
         end
     end
 
-    # Iterate until our purported minimum over two passes changes by
-    # no more than a prespecified tolerance.
+    # Iterate until convergence
     while !converged && i < max_iterations
-        # Update the iteration counter.
+        # Update the iteration counter
         i = i + 1
 
-        # Update our position.
-        x_old = x_new
-        x_new = x_new - step_size * g(x_new)
+        # Update our position
+        x = x - step_size * gradient
 
-        # Update the cached function value.
-        y_old = y_new
-        y_new = f(x_new)
+        # Update the cached values of f and g
+        f_calls += 1
+        g_calls += 1
+        f_x = d.f(x)
+        d.g!(x, gradient)
 
-        # Assess convergence.
-        if abs(y_new - y_old) <= tolerance
+        # Assess convergence
+        if norm(gradient) <= tolerance
             converged = true
         end
 
-        # Update trace.
+        # Update trace
         if store_trace || show_trace
-            d = Dict()
-            d["g(x)"] = g(x_new)
-            os = OptimizationState(x_new, y_new, i, d)
+            dt = Dict()
+            dt["g(x)"] = copy(gradient)
+            dt["|g(x)|"] = norm(gradient)
+            os = OptimizationState(x, f_x, i, dt)
             if store_trace
                 push!(tr, os)
             end
@@ -69,25 +79,77 @@ function naive_gradient_descent(f::Function,
 
     OptimizationResults("Constant Step-Size Gradient Descent",
                         initial_x,
-                        x_new,
-                        y_new,
+                        x,
+                        f_x,
                         i,
                         converged,
                         tr)
 end
 
-# Set default tolerance, max_iterations and show_trace.
-function naive_gradient_descent(f::Function,
-                                g::Function,
+function naive_gradient_descent(d::DifferentiableFunction,
                                 initial_x::Vector,
                                 step_size::Float64)
-    naive_gradient_descent(f, g, initial_x, step_size, 10e-8, 1_000,
-                           false, false)
+    naive_gradient_descent(d,
+                           initial_x,
+                           step_size,
+                           1e-8,
+                           1_000,
+                           false,
+                           false)
 end
 
-# Set default step_size, tolerance, max_iterations and show_trace.
-function naive_gradient_descent(f::Function,
-                                g::Function,
+function naive_gradient_descent(d::DifferentiableFunction,
                                 initial_x::Vector)
-    naive_gradient_descent(f, g, initial_x, 0.1, 10e-8, 1_000, false, false)
+    naive_gradient_descent(d,
+                           initial_x,
+                           0.01,
+                           1e-8,
+                           1_000,
+                           false,
+                           false)
+end
+
+function naive_gradient_descent(f::Function,
+                                g!::Function,
+                                initial_x::Vector,
+                                step_size::Float64,
+                                tolerance::Float64,
+                                max_iterations::Integer,
+                                store_trace::Bool,
+                                show_trace::Bool)
+    d = DifferentiableFunction(f, g!)
+    naive_gradient_descent(d,
+                           initial_x,
+                           step_size,
+                           tolerance,
+                           max_iterations,
+                           store_trace,
+                           show_trace)
+end
+
+function naive_gradient_descent(f::Function,
+                                g!::Function,
+                                initial_x::Vector,
+                                step_size::Float64)
+    d = DifferentiableFunction(f, g!)
+    naive_gradient_descent(d,
+                           initial_x,
+                           step_size,
+                           1e-8,
+                           1_000,
+                           false,
+                           false)
+end
+
+function naive_gradient_descent(f::Function,
+                                g!::Function,
+                                initial_x::Vector)
+    d = DifferentiableFunction(f, g!)
+    naive_gradient_descent(d,
+                           initial_x,
+                           0.1,
+                           1e-8,
+                           1_000,
+                           false,
+                           false)
 end

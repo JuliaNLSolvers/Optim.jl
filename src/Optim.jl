@@ -18,7 +18,9 @@ module Optim
 
     export curve_fit,
            estimate_errors,
-           optimize
+           optimize,
+           DifferentiableFunction,
+           TwiceDifferentiableFunction
 
     # Types
     include("types.jl")
