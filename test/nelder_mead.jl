@@ -7,7 +7,7 @@ function rosenbrock(x::Vector)
 end
 
 (nm_a, nm_g, nm_b) = (1.0, 2.0, 0.5)
-initial_p = [0.0 0.0; 0.0 1.0; 1.0 0.0;]' #'
+initial_p = [0.0 0.0; 0.0 1.0; 1.0 0.0;]'
 tolerance = 10e-8
 max_iterations = 100
 store_trace, show_trace = false, false
@@ -38,7 +38,7 @@ results = Optim.nelder_mead(f,
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 @assert length(results.trace.states) > 0
 
-initial_p = [-10.0 -15.0; 5.0 1.0; 1.0 17.0;]' #'
+initial_p = [-10.0 -15.0; 5.0 1.0; 1.0 17.0;]'
 tolerance = 10e-16
 max_iterations = 100
 results = Optim.nelder_mead(f,
@@ -53,7 +53,7 @@ results = Optim.nelder_mead(f,
 @assert results.converged
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 
-initial_p = [-10.0 -15.0; 5.0 1.0; 1.0 17.0;]' #'
+initial_p = [-10.0 -15.0; 5.0 1.0; 1.0 17.0;]'
 tolerance = 10e-8
 max_iterations = 1_000
 results = Optim.nelder_mead(rosenbrock,
@@ -76,5 +76,3 @@ initial_x = [0.0, 0.0]
 results = Optim.nelder_mead(rosenbrock, initial_x)
 @assert results.converged
 @assert norm(results.minimum - [1.0, 1.0]) < 0.01
-
-# Need to check that initial_p is an n * (n + 1) array.

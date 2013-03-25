@@ -1,36 +1,41 @@
-function bfgs(f::Function,
-              g::Function,
+function bfgs(d::DifferentiableFunction,
               initial_x::Vector,
-              initial_h::Matrix,
+              initial_B::Matrix,
               tolerance::Float64,
-              max_iterations::Int64,
+              max_iterations::Integer,
               store_trace::Bool,
               show_trace::Bool)
 
-    # Keep track of the number of iterations.
+    # Keep track of the number of iterations
     k = 0
 
-    # Keep a record of our current position.
-    x_new = initial_x
-    x_old = initial_x
+    # Keep a record of our current position
+    x_old = copy(initial_x)
+    x_new = copy(initial_x)
 
-    # Keep a record of the current gradient.
-    gradient_new = g(x_new)
-    gradient_old = g(x_old)
+    # Determine number of parameters
+    n = length(initial_x)
+    gradient_old = Array(Float64, n)
+    gradient_new = Array(Float64, n)
 
-    # Initialize our approximate Hessian.
-    h = initial_h
+    # Keep a record of the current gradient
+    f_x = f(x)
+    d.g!(x_old, gradient_old)
+    d.g!(x_new, gradient_new)
 
-    # Iterate until convergence.
+    # Initialize our approximate inverse Hessian
+    B = copy(initial_B)
+
+    # Iterate until convergence
     converged = false
 
-    # Show state of the system.
+    # Show state of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        d = Dict()
-        d["g(x_new)"] = g(x_new)
-        d["h"] = h
-        os = OptimizationState(x_new, f(x_new), k, d)
+        dt = Dict()
+        dt["g(x_new)"] = copy(gradient_new)
+        dt["~inv(h)"] = copy(B)
+        os = OptimizationState(x_old, f_x, k, dt)
         if store_trace
             push!(tr, os)
         end
@@ -39,23 +44,56 @@ function bfgs(f::Function,
         end
     end
 
+    # Maintain arrays for position and gradient changes
+    s = Array(Float64, n)
+    y = Array(Float64, n)
+
     while !converged && k < max_iterations
-        # Increment the iteration counter.
+        # Increment the iteration counter
         k += 1
 
-        # Set the search direction.
-        p = -h * gradient_new
+        # Set the search direction
+        p = -B * gradient_new
 
-        # Calculate a step-size.
-        alpha = backtracking_line_search(f, g, x_new, p)
+        # Calculate a step-size
+        # TODO: Clean up backtracking_line_search
+        alpha, f_update, g_update = backtracking_line_search(d.f, d.g!, x_new, p)
 
-        # Show state of the system.
+        # Update our position
+        s = alpha * p
+        copy!(x_old, x_new)
+        x_new = x_old + s
+
+        # Update the gradient
+        copy!(gradient_old, gradient_new)
+        g!(x_new, gradient_new)
+
+        # Update the change in the gradient
+        for index in 1:n
+            y[index] = gradient_new[index] - gradient_old[index]
+        end
+
+        # Update the inverse Hessian approximation
+        rho = 1.0 / dot(y, s)
+        if rho == Inf
+           println("Cannot decrease the objective function along the current search direction")
+           break
+        end
+        # MAINTAIN ACROSS CALLS
+        v = eye(size(h, 1)) - rho * y * s'
+        if k == 1
+          h = v'v * dot(y, s) / dot(y, y)
+        else
+          h = v' * h * v + rho * s * s'
+        end
+
+        # Show state of the system
         if store_trace || show_trace
             d = Dict()
-            d["g(x_new)"] = g(x_new)
-            d["h"] = h
+            d["g(x_new)"] = copy(gradient_new)
+            d["~inv(H)"] = copy(B)
             d["Step-size"] = alpha
-            d["First-order opt."] = norm(gradient_old, Inf)
+            d["First-order opt."] = norm(gradient_new, Inf)
             os = OptimizationState(x_new, f(x_new), k, d)
             if store_trace
                 push!(tr, os)
@@ -64,25 +102,6 @@ function bfgs(f::Function,
                 println(os)
             end
         end
-
-        # Update our position.
-        x_old = x_new
-        x_new = x_old + alpha * p
-        s = x_new - x_old
-
-        # Update the gradient.
-        gradient_old = gradient_new
-        gradient_new = g(x_new)
-        y = gradient_new - gradient_old
-
-        # Update the Hessian.
-        rho = 1.0 / dot(y, s)
-        if rho == Inf
-           println("Cannot decrease the objective function along the current search direction")
-           break
-        end
-        v = eye(size(h, 1)) - rho * y * s'
-        h = (k == 1 ? v'v * dot(y, s) / dot(y, y) : v' * h * v + rho * s * s')
 
         # Assess convergence.
         if norm(gradient_new, Inf) <= tolerance

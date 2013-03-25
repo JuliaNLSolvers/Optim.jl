@@ -6,7 +6,7 @@ end
 
 results = Optim.simulated_annealing(f,
                                     [0.0],
-                                    z -> [Optim.rand_uniform(z - 1.0, z + 1.0)],
+                                    z -> 2 * rand() - 1.0 + z,
                                     i -> 1 / log(i),
                                     true,
                                     10e-8,
@@ -15,13 +15,12 @@ results = Optim.simulated_annealing(f,
                                     false)
 @assert norm(results.minimum - [5.0]) < 0.1
 
-function rosenbrock(x)
+function rosenbrock(x::Vector)
     (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 
-function neighbors(x)
-    [Optim.rand_uniform(x[1] - 1, x[1] + 1),
-     Optim.rand_uniform(x[2] - 1, x[2] + 1)]
+function neighbors(x::Vector)
+    [2.0 * rand() - 1.0 + x[1], 2.0 * rand() - 1.0 + x[2]]
 end
 
 results = Optim.simulated_annealing(rosenbrock,

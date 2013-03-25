@@ -4,7 +4,7 @@ type OptimizationState
     iteration::Int64
     metadata::Dict
 end
-function OptimizationState(s::Any, f::Float64, i::Int64)
+function OptimizationState(s::Any, f::Float64, i::Integer)
     OptimizationState(s, f, i, Dict())
 end
 
@@ -23,27 +23,6 @@ type OptimizationResults
     trace::OptimizationTrace
 end
 
-function show(io::IO, o_trace::OptimizationState)
-    print(io, "State of Optimization Algorithm\n")
-    print(io, " * Iteration: $(o_trace.iteration)\n")
-    print(io, " * State: $(o_trace.state)\n")
-    print(io, " * f(State): $(o_trace.f_state)\n")
-    print(io, " * Additional Information: $(o_trace.metadata)")
-end
-push!(tr::OptimizationTrace, s::OptimizationState) = push!(tr.states, s)
-ref(tr::OptimizationTrace, i::Int64) = ref(tr.states, i)
-assign(tr::OptimizationTrace, s::OptimizationState, i::Int64) = assign(tr.states, s, i)
-
-function show(io::IO, results::OptimizationResults)
-    print(io, "Results of Optimization Algorithm\n")
-    print(io, " * Algorithm: $(results.method)\n")
-    print(io, " * Starting Point: $(results.initial_x)\n")
-    print(io, " * Minimum: $(results.minimum)\n")
-    print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
-    print(io, " * Iterations: $(results.iterations)\n")
-    print(io, " * Self-Reported Convergence: $(results.converged)")
-end
-
 immutable DifferentiableFunction
     f::Function
     g!::Function
@@ -55,7 +34,43 @@ immutable TwiceDifferentiableFunction
     g!::Function
     fg!::Function
     h!::Function
-    # TODO: Add higher-order coupled functions?
+end
+
+function show(io::IO, o_trace::OptimizationState)
+    print(io, "State of Optimization Algorithm\n")
+    print(io, " * Iteration: $(o_trace.iteration)\n")
+    print(io, " * State: $(o_trace.state)\n")
+    print(io, " * f(State): $(o_trace.f_state)\n")
+    print(io, " * Additional Information:\n")
+    for (key, value) in o_trace.metadata
+        @printf io "   * %s: %s\n" key value
+    end
+end
+function push!(tr::OptimizationTrace, s::OptimizationState)
+    push!(tr.states, s)
+end
+function getindex(tr::OptimizationTrace, i::Integer)
+    getindex(tr.states, i)
+end
+function setindex!(tr::OptimizationTrace,
+                   s::OptimizationState,
+                   i::Integer)
+    setindex!(tr.states, s, i)
+end
+function show(io::IO, o_trace::OptimizationTrace)
+    for state in o_trace.states
+        show(io, state)
+    end
+end
+
+function show(io::IO, results::OptimizationResults)
+    print(io, "Results of Optimization Algorithm\n")
+    print(io, " * Algorithm: $(results.method)\n")
+    print(io, " * Starting Point: $(results.initial_x)\n")
+    print(io, " * Minimum: $(results.minimum)\n")
+    print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
+    print(io, " * Iterations: $(results.iterations)\n")
+    print(io, " * Self-Reported Convergence: $(results.converged)")
 end
 
 function DifferentiableFunction(f::Function)

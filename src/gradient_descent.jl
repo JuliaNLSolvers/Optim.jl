@@ -136,7 +136,7 @@ end
 function gradient_descent(f::Function,
                           g!::Function,
                           initial_x::Vector)
-    gradient_descent(f, g, initial_x, 1e-8, 1_000, false, false)
+    gradient_descent(f, g!, initial_x, 1e-8, 1_000, false, false)
 end
 
 function gradient_descent(f::Function,

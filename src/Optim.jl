@@ -14,7 +14,9 @@ module Optim
            Base.length,
            Base.push!,
            Base.ref,
-           Base.show
+           Base.show,
+           Base.getindex,
+           Base.setindex!
 
     export curve_fit,
            estimate_errors,
@@ -24,9 +26,6 @@ module Optim
 
     # Types
     include("types.jl")
-
-    # RNG Sources
-    include("rng.jl")
 
     # Grid Search
     include("grid_search.jl")

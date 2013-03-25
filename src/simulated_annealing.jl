@@ -24,24 +24,24 @@ function simulated_annealing(cost::Function,
                              temperature::Function,
                              keep_best::Bool,
                              tolerance::Float64,
-                             max_iterations::Int64,
+                             max_iterations::Integer,
                              store_trace::Bool,
                              show_trace::Bool)
 
-    # Maintain a trace of the optimization algo's state.
+    # Maintain a trace of the optimization algo's state
     tr = OptimizationTrace()
 
-    # Set our current state to the specified intial state.
+    # Set our current state to the specified intial state
     s = s0
     y = cost(s)
 
-    # Set the best state we've seen to the intial state.
-    best_s = s0
+    # Set the best state we've seen to the intial state
+    best_s = copy(s0)
 
-    # Record the number of iterations we perform.
+    # Record the number of iterations we perform
     i = 0
 
-    # Update our trace information.
+    # Update our trace information
     os = OptimizationState(s, y, i)
     if store_trace
         push!(tr, os)
@@ -50,29 +50,28 @@ function simulated_annealing(cost::Function,
         println(os)
     end
 
-    # We always perform a fixed number of iterations.
+    # We always perform a fixed number of iterations
     while i < max_iterations
-        # Update the iteration counter.
+        # Update the iteration counter
         i = i + 1
 
-        # Call temperature to find the proper temperature at time i.
+        # Call temperature to find the proper temperature at time i
         t = temperature(i)
 
-        # Call neighbor to randomly generate a neighbor of our current state.
+        # Call neighbor to randomly generate a neighbor of our current state
         s_n = neighbor(s)
 
-        # Evaluate the cost function on our current and its neighbor.
+        # Evaluate the cost function on our current state and its neighbor
         y = cost(s)
         y_n = cost(s_n)
 
         if y_n <= y
-            # If the proposed new state is superior, we always move to it.
+            # If the proposed new state is superior, we always move to it
             s = s_n
         else
             # If the proposed new state is inferior, we move to it with
-            # probability p.
+            # probability p
             p = exp(- ((y_n - y) / t))
-
             if rand() <= p
                 s = s_n
             else
@@ -80,12 +79,12 @@ function simulated_annealing(cost::Function,
             end
         end
 
-        # If the new state is the best state we have seen, keep a record of it.
+        # If the new state is the best state we have seen, keep a record of it
         if cost(s) < cost(best_s)
-            best_s = s
+            best_s = copy(s)
         end
 
-        # Print out the state of the system.
+        # Print out the state of the system
         os = OptimizationState(s, y, i)
         if store_trace
             push!(tr, os)
@@ -95,8 +94,8 @@ function simulated_annealing(cost::Function,
         end
     end
 
-    # If specified by the user, we return the best state we've seen.
-    # Otherwise, we return the last state we've seen.
+    # If specified by the user, we return the best state we've seen
+    # Otherwise, we return the last state we've seen
     if keep_best
         OptimizationResults("Simulated Annealing",
                                                 s0,
@@ -127,15 +126,11 @@ end
 #
 # For this to work, an unknown constant must be used.
 # In practice, we use 1 instead of this unknown constant.
-function log_temperature(i::Real)
-    1 / log(i)
-end
+log_temperature(i::Real) = 1.0 / log(i)
 
 # If the temperature is held constant and the cost function is -log(p),
 # SA reduces to the Metropolis algorithm for sampling from a distribution.
-function constant_temperature(i::Real)
-    1
-end
+constant_temperature(i::Real) = 1.0
 
 ##############################################################################
 ##
@@ -151,7 +146,7 @@ function simulated_annealing(cost::Function,
                         neighbor,
                         log_temperature,
                         true,
-                        10e-8,
+                        1e-8,
                         100_000,
                         false,
                         false)
@@ -159,15 +154,13 @@ end
 
 function simulated_annealing(cost::Function,
                              s0::Vector)
-    function neighbor(x)
-        map(x_i -> Optim.rand_cauchy(x_i, 1), x)
-    end
+    neighbor(x) = map(x_i -> rand(Cauchy(x_i, 1)), x)
     simulated_annealing(cost,
                         s0,
                         neighbor,
                         log_temperature,
                         true,
-                        10e-8,
+                        1e-8,
                         100_000,
                         false,
                         false)

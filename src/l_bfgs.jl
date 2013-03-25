@@ -16,7 +16,7 @@ function two_loop!(g_x::Vector,
                    alpha::Vector,
                    q::Vector,
                    p::Vector)
-    # Copy gradient into q
+    # Copy gradient into q for backward pass
     copy!(q, g_x)
 
     upper = k - 1
@@ -27,10 +27,10 @@ function two_loop!(g_x::Vector,
         end
         i = modindex(index, m)
         alpha[i] = rho[i] * dot(s[:, i], q)
-        q -= alpha[i] * y[:, i]
+        q[:] -= alpha[i] * y[:, i]
     end
 
-    # Copy q into p
+    # Copy q into p for forward pass
     copy!(p, q)
 
     for index = lower:1:upper
@@ -42,7 +42,9 @@ function two_loop!(g_x::Vector,
         p[:] += s[:, i] * (alpha[i] - beta)
     end
 
-    p[:] = -p
+    for index in 1:length(p)
+        p[index] = -1.0 * p[index]
+    end
 
     return
 end
@@ -57,8 +59,7 @@ function l_bfgs(d::DifferentiableFunction,
     # Set iteration counter
     k = 1
 
-    # Set starting point
-    # We will store x and new_x
+    # Keep a record of the starting point
     x = copy(initial_x)
 
     # Establish size of parameter space
@@ -68,6 +69,8 @@ function l_bfgs(d::DifferentiableFunction,
     rho = Array(Float64, m)
     s = Array(Float64, n, m)
     y = Array(Float64, n, m)
+
+    # Initialize q, p, tmp_s and tmp_y
     q = Array(Float64, n)
     p = Array(Float64, n)
     tmp_s = Array(Float64, n)
@@ -112,14 +115,16 @@ function l_bfgs(d::DifferentiableFunction,
         end
 
         # Update position
-        tmp_s = alpha * p
-        x = x + tmp_s
+        for i in 1:n
+            tmp_s[i] = alpha * p[i]
+            x[i] = x[i] + tmp_s[i]
+        end
         copy!(g_x, g_new)
         d.g!(x, g_new)
 
         # Estimate movement
-        for index in 1:n
-            tmp_y[index] = g_new[index] - g_x[index]
+        for i in 1:n
+            tmp_y[i] = g_new[i] - g_x[i]
         end
         tmp_rho = 1.0 / dot(tmp_y, tmp_s)
         if isinf(tmp_rho)
@@ -144,10 +149,16 @@ function l_bfgs(d::DifferentiableFunction,
     OptimizationResults("L-BFGS", initial_x, x, f_x, k, converged, tr)
 end
 
+function l_bfgs(d::DifferentiableFunction, initial_x::Vector)
+    l_bfgs(d, initial_x, 10, 10e-8, 1_000, false, false)
+end
+
 function l_bfgs(f::Function, g!::Function, initial_x::Vector,
                 store_trace::Bool, show_trace::Bool)
-    l_bfgs(f, g!, initial_x, 10, 10e-8, 1_000, store_trace, show_trace)
+    d = DifferentiableFunction(f, g!)
+    l_bfgs(d, initial_x, 10, 10e-8, 1_000, store_trace, show_trace)
 end
 function l_bfgs(f::Function, g!::Function, initial_x::Vector)
-    l_bfgs(f, g!, initial_x, 10, 10e-8, 1_000, false, false)
+    d = DifferentiableFunction(f, g!)
+    l_bfgs(d, initial_x, 10, 10e-8, 1_000, false, false)
 end

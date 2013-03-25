@@ -1,25 +1,33 @@
-function newton(f::Function,
-                g::Function,
-                h::Function,
+function newton(d::TwiceDifferentiableFunction,
                 initial_x::Vector,
                 tolerance::Float64,
                 max_iterations::Int64,
                 store_trace::Bool,
                 show_trace::Bool)
 
-    # Maintain a record of the state.
-    x = initial_x
+    # Maintain a record of the initial state
+    x = copy(initial_x)
 
-    # Don't run forever.
+    # Count number of parameters
+    n = length(x)
+
+    # Cache the values of f, g and h
+    f_x = d.f(x)
+    gradient = Array(Float64, n)
+    d.g!(x, gradient)
+    H = Array(Float64, n, n)
+    d.h!(x, H)
+
+    # Don't run forever
     i = 0
 
-    # Maintain a trace of the system.
+    # Maintain a trace of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        d = Dict()
-        d["g(x)"] = g(x)
-        d["h(x)"] = h(x)
-        os = OptimizationState(x, f(x), i, d)
+        dt = Dict()
+        dt["g(x)"] = copy(gradient)
+        dt["h(x)"] = copy(H)
+        os = OptimizationState(x, f_x, i, dt)
         if store_trace
             push!(tr, os)
         end
@@ -28,29 +36,33 @@ function newton(f::Function,
         end
     end
 
-    # Track convergence.
+    # Track convergence
     converged = false
 
-    # Select a stepsize.
-    dx = -h(x) \ g(x)
-    l2 = dot(g(x), -dx)
+    # Determine direction of line search
+    dx = -H \ gradient
 
     while !converged && i < max_iterations
-        # Update the iteration counter.
+        # Update the iteration counter
         i += 1
 
-        # Select a step size.
-        step_size = backtracking_line_search(f, g, x, dx)
+        # Select a step size
+        step_size, f_up, g_up = backtracking_line_search(d.f, d.g!, x, dx)
 
-        # Update our position.
+        # Update our position
         x += step_size * dx
 
-        # Show state of the system.
+        # Cache values again
+        f_x = d.f(x)
+        d.g!(x, gradient)
+        d.h!(x, H)
+
+        # Show state of the system
         if store_trace || show_trace
-            d = Dict()
-            d["g(x)"] = g(x)
-            d["h(x)"] = h(x)
-            os = OptimizationState(x, f(x), i, d)
+            dt = Dict()
+            dt["g(x)"] = copy(gradient)
+            dt["h(x)"] = copy(H)
+            os = OptimizationState(x, f_x, i, dt)
             if store_trace
                 push!(tr, os)
             end
@@ -59,11 +71,11 @@ function newton(f::Function,
             end
         end
 
-        # Select a search direction.
-        dx = -h(x) \ g(x)
+        # Select a search direction
+        dx = -H \ gradient
 
-        # Assess convergence.
-        l2 = dot(g(x), -dx)
+        # Assess convergence
+        l2 = dot(gradient, -dx)
         if l2 / 2 <= tolerance
            converged = true
         end
@@ -72,16 +84,38 @@ function newton(f::Function,
     OptimizationResults("Newton's Method",
                         initial_x,
                         x,
-                        f(x),
+                        f_x,
                         i,
                         converged,
                         tr)
 end
 
-function newton(f::Function, g::Function, h::Function, initial_x::Vector,
-                store_trace::Bool)
-    newton(f, g, h, initial_x, 10e-16, 1000, store_trace, false)
+function newton(d::TwiceDifferentiableFunction,
+                initial_x::Vector)
+    newton(d, initial_x, 1e-16, 1_000, false, false)
 end
-function newton(f::Function, g::Function, h::Function, initial_x::Vector)
-    newton(f, g, h, initial_x, 10e-16, 1_000, false, false)
+
+function newton(f::Function,
+                g!::Function,
+                h!::Function,
+                initial_x::Vector,
+                tolerance::Float64,
+                max_iterations::Int64,
+                store_trace::Bool,
+                show_trace::Bool)
+    d = TwiceDifferentiableFunction(f, g!, h!)
+    newton(d,
+           initial_x,
+           tolerance,
+           max_iterations,
+           store_trace,
+           show_trace)
+end
+
+function newton(f::Function,
+                g!::Function,
+                h!::Function,
+                initial_x::Vector)
+    d = TwiceDifferentiableFunction(f, g!, h!)
+    newton(d, initial_x, 1e-16, 1_000, false, false)
 end
