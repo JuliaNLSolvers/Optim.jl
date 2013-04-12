@@ -142,6 +142,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     end
     if !all(isfinite(g))
         @show g
+        @show find(!isfinite(g))
         error("Gradient must have all finite values at starting point")
     end
     if display & ITER > 0
