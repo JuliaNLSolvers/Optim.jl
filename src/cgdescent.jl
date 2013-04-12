@@ -140,6 +140,10 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     if !isfinite(val)
         error("Must have finite starting value")
     end
+    if !all(isfinite(g))
+        @show g
+        error("Gradient must have all finite values at starting point")
+    end
     if display & ITER > 0
         # FIXME ndigits (6->width based on itermax & fcountmax)
         @printf("Iter     Evals    Function value   |step|\n")
