@@ -110,7 +110,7 @@ There are also top-level methods `curve_fit()` and `estimate_errors()` that are 
     
 ## Conjugate gradients, box minimization, and nonnegative least squares
 
-There is a separate suite of tools that implement the nonlinear conjugate gradient method, and there are some additional algorithms built on top of it. Unfortunately, currently these algorithms use a different API. Rather than providing one function for the function value and another for the gradient, here you combine them into a single function. The function must be written to take the gradient as the first input. When the gradient is desired, that first input will be a vector; otherwise, the value `nothing` indicates that the gradient is not needed. Let's demonstrate this for the Rosenbrock Function:
+There is a separate suite of tools that implement the nonlinear conjugate gradient method, and there are some additional algorithms built on top of it. Unfortunately, currently these algorithms use a different API. These differences in API are intended to enhance performance. Rather than providing one function for the function value and another for the gradient, here you combine them into a single function. The function must be written to take the gradient as the first input. When the gradient is desired, that first input will be a vector; otherwise, the value `nothing` indicates that the gradient is not needed. Let's demonstrate this for the Rosenbrock Function:
 
     function rosenbrock(g, x::Vector)
       d1 = 1.0 - x[1]
@@ -123,7 +123,21 @@ There is a separate suite of tools that implement the nonlinear conjugate gradie
       return val
     end
 
-In this example, you can see that we'll save a bit of time by not needing to recompute `d1` and `d2` in a separate gradient function. More subtly, it does not require the allocation of a new vector to store the gradient; indeed, the conjugate-gradient algorithm reuses the same block of memory for the gradient on each iteration.  (These differences in API are intended to enhance performance on very large problems.)
+In this example, you can see that we'll save a bit of time by not needing to recompute `d1` and `d2` in a separate gradient function.
+
+More subtly, it does not require the allocation of a new vector to store the gradient; indeed, the conjugate-gradient algorithm reuses the same block of memory for the gradient on each iteration. While this design has substantial performance advantages, one common "gotcha" is overwriting the gradient array, for example by writing
+
+    g = [-2.0*d1 - 400.0*d2*x[1], 200.0*d2]
+    
+Internally within `rosenbrock` this will appear to work, but the value is not passed back to the calling function and the memory locations for the original `g` may contain random values. Perhaps the easiest way to catch this type of error is to check, within `rosenbrock`, that the pointer is still the same as it was on entry:
+
+      if !(g === nothing)
+	gptr = pointer(g)
+	# Code to assign values to g
+        if pointer(g) != gptr
+	  error("gradient vector overwritten")
+	end
+      end
 
 ### Conjugate gradient
 
