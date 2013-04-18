@@ -8,7 +8,7 @@ function naive_gradient_descent_trace!(tr::OptimizationTrace,
     dt = Dict()
     dt["g(x)"] = copy(gradient)
     dt["|g(x)|"] = norm(gradient)
-    os = OptimizationState(x, f_x, iteration, dt)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
     end

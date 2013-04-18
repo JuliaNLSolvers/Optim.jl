@@ -2,13 +2,13 @@ function gradient_descent_trace!(tr::OptimizationTrace,
                                  x::Vector,
                                  f_x::Real,
                                  gradient::Vector,
-                                 i::Integer,
+                                 iteration::Integer,
                                  store_trace::Bool,
                                  show_trace::Bool)
     dt = Dict()
     dt["g(x)"] = copy(gradient)
     dt["|g(x)|"] = norm(gradient, Inf)
-    os = OptimizationState(x, f_x, i, dt)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
     end

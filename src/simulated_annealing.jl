@@ -69,10 +69,10 @@ function simulated_annealing(cost::Function,
     best_y = y
 
     # Record the number of iterations we perform
-    i = 0
+    iteration = 0
 
     # Update our trace information
-    os = OptimizationState(s, y, i)
+    os = OptimizationState(copy(s), y, iteration)
     if store_trace
         push!(tr, os)
     end
@@ -81,12 +81,12 @@ function simulated_annealing(cost::Function,
     end
 
     # We always perform a fixed number of iterations
-    while i < iterations
+    while iteration < iterations
         # Update the iteration counter
-        i = i + 1
+        iteration += 1
 
         # Call temperature to find the proper temperature at time i
-        t = temperature(i)
+        t = temperature(iteration)
 
         # Call neighbor to randomly generate a neighbor of our current state
         neighbor!(s, s_n)
@@ -118,7 +118,7 @@ function simulated_annealing(cost::Function,
 
         # Print out the state of the system
         if store_trace || show_trace
-            os = OptimizationState(s, y, i)
+            os = OptimizationState(copy(s), y, iteration)
             if store_trace
                 push!(tr, os)
             end

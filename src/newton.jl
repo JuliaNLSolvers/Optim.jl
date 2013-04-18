@@ -1,7 +1,7 @@
 function newton_trace!(tr::OptimizationTrace,
                        x::Vector,
                        f_x::Real,
-                       i::Integer,
+                       iteration::Integer,
                        gradient::Vector,
                        H::Matrix,
                        store_trace::Bool,
@@ -9,7 +9,7 @@ function newton_trace!(tr::OptimizationTrace,
     dt = Dict()
     dt["g(x)"] = copy(gradient)
     dt["h(x)"] = copy(H)
-    os = OptimizationState(x, f_x, i, dt)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
     end

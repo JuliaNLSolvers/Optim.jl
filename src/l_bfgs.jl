@@ -12,7 +12,7 @@ function twoloop!(g_x::Vector,
                   s::Matrix,
                   y::Matrix,
                   m::Integer,
-                  k::Integer,
+                  iteration::Integer,
                   alpha::Vector,
                   q::Vector,
                   p::Vector)
@@ -22,8 +22,8 @@ function twoloop!(g_x::Vector,
     n = length(p)
     @assert length(q) == n
 
-    upper = k - 1
-    lower = k - m
+    upper = iteration - 1
+    lower = iteration - m
     for index in upper:-1:lower
         if index < 1
             continue
@@ -60,7 +60,7 @@ function l_bfgs_trace!(tr::OptimizationTrace,
                        x::Vector,
                        f_x::Real,
                        g_new::Vector,
-                       k::Integer,
+                       iteration::Integer,
                        alpha::Real,
                        store_trace::Bool,
                        show_trace::Bool)
@@ -68,7 +68,7 @@ function l_bfgs_trace!(tr::OptimizationTrace,
     dt["g(x)"] = copy(g_new)
     dt["Step-size"] = alpha
     dt["First-order opt"] = norm(g_new, Inf)
-    os = OptimizationState(x, f_x, k, dt)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
     end
@@ -86,7 +86,7 @@ function l_bfgs(d::DifferentiableFunction,
                 show_trace::Bool = false)
 
     # Set iteration counter
-    k = 0
+    iteration = 0
 
     # Keep a record of the starting point
     x = copy(initial_x)
@@ -125,18 +125,18 @@ function l_bfgs(d::DifferentiableFunction,
 
     # Show trace
     if store_trace || show_trace
-        l_bfgs_trace!(tr, x, f_x, g_new, k, 0.0, store_trace, show_trace)
+        l_bfgs_trace!(tr, x, f_x, g_new, iteration, 0.0, store_trace, show_trace)
     end
 
     # Iterate until convergence
     converged = false
 
-    while !converged && k <= iterations
+    while !converged && iteration <= iterations
         # Update count
-        k += 1
+        iteration += 1
 
         # Select a search direction
-        twoloop!(g_new, rho, s, y, m, k, twoloop_v, q, p)
+        twoloop!(g_new, rho, s, y, m, iteration, twoloop_v, q, p)
 
         # Select a step-size
         alpha, f_update, g_update =
@@ -165,9 +165,9 @@ function l_bfgs(d::DifferentiableFunction,
         end
 
         # Keep a record of the new s, y and rho
-        s[:, modindex(k, m)] = tmp_s
-        y[:, modindex(k, m)] = tmp_y
-        rho[modindex(k, m)] = tmp_rho
+        s[:, modindex(iteration, m)] = tmp_s
+        y[:, modindex(iteration, m)] = tmp_y
+        rho[modindex(iteration, m)] = tmp_rho
 
         # Assess convergence
         if norm(g_x, Inf) <= tolerance
@@ -176,7 +176,7 @@ function l_bfgs(d::DifferentiableFunction,
 
         # Show trace
         if store_trace || show_trace
-            l_bfgs_trace!(tr, x, f_x, g_new, k, alpha, store_trace, show_trace)
+            l_bfgs_trace!(tr, x, f_x, g_new, iteration, alpha, store_trace, show_trace)
         end
     end
 
@@ -184,7 +184,7 @@ function l_bfgs(d::DifferentiableFunction,
                         initial_x,
                         x,
                         f_x,
-                        k,
+                        iteration,
                         converged,
                         tr,
                         f_calls,

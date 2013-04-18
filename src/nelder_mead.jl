@@ -18,12 +18,12 @@ function nelder_mead_trace!(tr::OptimizationTrace,
                             y::Vector,
                             n::Integer,
                             f::Function,
-                            iter::Integer,
+                            iteration::Integer,
                             store_trace::Bool,
                             show_trace::Bool)
     d = Dict()
     d["Standard Deviation over Simplex"] = std(y)
-    os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
+    os = OptimizationState(centroid(p), f(centroid(p)), iteration, d)
     if store_trace
         push!(tr, os)
     end

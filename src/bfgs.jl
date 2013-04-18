@@ -9,7 +9,7 @@ function bfgs_trace!(tr::OptimizationTrace,
     dt = Dict()
     dt["g(x_new)"] = copy(gradient_new)
     dt["~inv(H)"] = copy(B)
-    os = OptimizationState(x_old, f_x, iteration, dt)
+    os = OptimizationState(copy(x_old), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
     end
