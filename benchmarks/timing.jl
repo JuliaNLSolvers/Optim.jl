@@ -86,24 +86,22 @@ problems[6] = large_polynomial_problem
 
 ##########################################################################
 #
-# Iterate over 7 optimization functions:
-# * naive_gradient_descent: Naive Gradient Descent
+# Iterate over 6 optimization functions:
 # * gradient_descent: Gradient Descent
 # * newton: Newton's Method
-######## * bfgs: BFGS
+# * bfgs: BFGS
 # * l_bfgs: L-BFGS
 # * nelder_mead: Nelder-Mead
-######## * sa: Simulated Annealing
+# * sa: Simulated Annealing
 #
 ##########################################################################
 
-algorithms = [:naive_gradient_descent,
-              :gradient_descent,
+algorithms = [:gradient_descent,
               :newton,
-              #:bfgs,
+              :bfgs,
               :l_bfgs,
-              :nelder_mead]
-              #:simulated_annealing]
+              :nelder_mead,
+              :simulated_annealing]
 
 # Print out a header line for the TSV-formatted report.
 println(join({"Problem",
@@ -120,9 +118,8 @@ for problem = problems
                        problem[:g],
                        problem[:h],
                        problem[:initial_x],
-                       algorithm,
-                       1e-16,
-                       true)
+                       method = algorithm,
+                       tolerance = 1e-16)
     
     # Run each algorithm 100 times
     n = 100
@@ -133,9 +130,8 @@ for problem = problems
                          problem[:g],
                          problem[:h],
                          problem[:initial_x],
-                         algorithm,
-                         1e-16,
-                         true)
+                         method = algorithm,
+                         tolerance = 1e-16)
     end
     run_time = run_time * n
 
@@ -144,15 +140,19 @@ for problem = problems
                        problem[:g],
                        problem[:h],
                        problem[:initial_x],
-                       algorithm,
-                       1e-16,
-                       true)
+                       method = algorithm,
+                       tolerance = 1e-16)
     errors = norm(results.minimum - problem[:solution])
     
     # Count iterations
     iterations = results.iterations
     
     # Print out results.
-    println(join({problem[:name], results.method, run_time / n, iterations, errors}, "\t"))
+    println(join({problem[:name],
+                  results.method,
+                  run_time / n,
+                  iterations,
+                  errors},
+                  "\t"))
   end
 end

@@ -10,20 +10,9 @@ function h!(x::Vector, storage::Matrix)
     storage[1, 1] = 12.0 * (x[1] - 5.0)^2
 end
 
-store_trace, show_trace = false, false
-results = Optim.newton(f,
-	                   g!,
-	                   h!,
-	                   [0.0],
-	                   10e-16,
-	                   1_000,
-	                   store_trace,
-	                   show_trace)
-@assert length(results.trace.states) == 0
-@assert results.converged
-@assert norm(results.minimum - [5.0]) < 0.01
+d = TwiceDifferentiableFunction(f, g!, h!)
 
-results = Optim.newton(f, g!, h!, [0.0])
+results = Optim.newton(d, [0.0])
 @assert length(results.trace.states) == 0
 @assert results.converged
 @assert norm(results.minimum - [5.0]) < 0.01
@@ -46,15 +35,8 @@ function h!(x::Vector, storage::Matrix)
   storage[2, 2] = eta
 end
 
-store_trace, show_trace = true, false
-results = Optim.newton(f, g!, h!, [127.0, 921.0], 10e-16, 1_000,
-	                   store_trace, show_trace)
-@assert length(results.trace.states) > 0
-@assert results.converged
-@assert norm(results.minimum - [0.0, 0.0]) < 0.01
-
-store_trace, show_trace = false, false
-results = Optim.newton(f, g!, h!, [127.0, 921.0])
+d = TwiceDifferentiableFunction(f, g!, h!)
+results = Optim.newton(d, [127.0, 921.0])
 @assert length(results.trace.states) == 0
 @assert results.converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01

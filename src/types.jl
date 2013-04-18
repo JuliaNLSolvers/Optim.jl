@@ -21,6 +21,8 @@ type OptimizationResults
     iterations::Int64
     converged::Bool
     trace::OptimizationTrace
+    f_calls::Int64
+    g_calls::Int64
 end
 
 immutable DifferentiableFunction
@@ -70,7 +72,9 @@ function show(io::IO, results::OptimizationResults)
     print(io, " * Minimum: $(results.minimum)\n")
     print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
     print(io, " * Iterations: $(results.iterations)\n")
-    print(io, " * Self-Reported Convergence: $(results.converged)")
+    print(io, " * Self-Reported Convergence: $(results.converged)\n")
+    print(io, " * Objective Function Calls: $(results.f_calls)\n")
+    print(io, " * Gradient Call: $(results.g_calls)")
 end
 
 function DifferentiableFunction(f::Function)

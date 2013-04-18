@@ -7,57 +7,86 @@ function modindex(i::Integer, m::Integer)
     end
 end
 
-function two_loop!(g_x::Vector,
-                   rho::Vector,
-                   s::Matrix,
-                   y::Matrix,
-                   m::Integer,
-                   k::Integer,
-                   alpha::Vector,
-                   q::Vector,
-                   p::Vector)
+function twoloop!(g_x::Vector,
+                  rho::Vector,
+                  s::Matrix,
+                  y::Matrix,
+                  m::Integer,
+                  k::Integer,
+                  alpha::Vector,
+                  q::Vector,
+                  p::Vector)
     # Copy gradient into q for backward pass
     copy!(q, g_x)
 
+    n = length(p)
+    @assert length(q) == n
+
     upper = k - 1
     lower = k - m
-    for index = upper:-1:lower
+    for index in upper:-1:lower
         if index < 1
             continue
         end
         i = modindex(index, m)
         alpha[i] = rho[i] * dot(s[:, i], q)
-        q[:] -= alpha[i] * y[:, i]
+        for j in 1:n
+            q[j] -= alpha[i] * y[j, i]
+        end
     end
 
     # Copy q into p for forward pass
     copy!(p, q)
 
-    for index = lower:1:upper
+    for index in lower:1:upper
         if index < 1
             continue
         end
         i = modindex(index, m)
         beta = rho[i] * dot(y[:, i], p)
-        p[:] += s[:, i] * (alpha[i] - beta)
+        for j in 1:n
+            p[j] += s[j, i] * (alpha[i] - beta)
+        end
     end
 
-    for index in 1:length(p)
-        p[index] = -1.0 * p[index]
+    for j in 1:n
+        p[j] = -1.0 * p[j]
     end
 
     return
 end
 
+function l_bfgs_trace!(tr::OptimizationTrace,
+                       x::Vector,
+                       f_x::Real,
+                       g_new::Vector,
+                       k::Integer,
+                       alpha::Real,
+                       store_trace::Bool,
+                       show_trace::Bool)
+    dt = Dict()
+    dt["g(x)"] = copy(g_new)
+    dt["Step-size"] = alpha
+    dt["First-order opt"] = norm(g_new, Inf)
+    os = OptimizationState(x, f_x, k, dt)
+    if store_trace
+        push!(tr, os)
+    end
+    if show_trace
+        println(os)
+    end
+end
+
 function l_bfgs(d::DifferentiableFunction,
-                initial_x::Vector,
-                m::Integer,
-                tolerance::Float64,
-                max_iterations::Integer,
-                store_trace::Bool,
-                show_trace::Bool)
+                initial_x::Vector;
+                m::Integer = 10,
+                tolerance::Real = 1e-8,
+                iterations::Integer = 1_000,
+                store_trace::Bool = false,
+                show_trace::Bool = false)
+
     # Set iteration counter
-    k = 1
+    k = 0
 
     # Keep a record of the starting point
     x = copy(initial_x)
@@ -76,43 +105,44 @@ function l_bfgs(d::DifferentiableFunction,
     tmp_s = Array(Float64, n)
     tmp_y = Array(Float64, n)
 
+    # Reuse storage during calls to backtracking line search
+    ls_x = Array(Float64, n)
+    ls_gradient = Array(Float64, n)
+
     # Re-use this vector during every call to two_loop()
     twoloop_v = Array(Float64, m)
 
     # Compute the initial values of f and g
-    f_x = d.f(x)
     g_x = Array(Float64, n)
     g_new = Array(Float64, n)
-    d.g!(x, g_new)
+    f_calls = 1
+    g_calls = 1
+    f_x = d.fg!(x, g_new)
     copy!(g_x, g_new)
 
     # Print trace information
     tr = OptimizationTrace()
 
-    # Iterate until convergence.
+    # Show trace
+    if store_trace || show_trace
+        l_bfgs_trace!(tr, x, f_x, g_new, k, 0.0, store_trace, show_trace)
+    end
+
+    # Iterate until convergence
     converged = false
 
-    while !converged && k <= max_iterations
+    while !converged && k <= iterations
+        # Update count
+        k += 1
+
         # Select a search direction
-        two_loop!(g_new, rho, s, y, m, k, twoloop_v, q, p)
+        twoloop!(g_new, rho, s, y, m, k, twoloop_v, q, p)
 
         # Select a step-size
-        alpha, f_update, g_update = backtracking_line_search(d.f, d.g!, x, p)
-
-        # Show trace
-        if store_trace || show_trace
-            dt = Dict()
-            dt["g(x)"] = copy(g_new)
-            dt["Step-size"] = alpha
-            dt["First-order opt"] = norm(g_new, Inf)
-            os = OptimizationState(x, f_x, k, dt)
-            if store_trace
-                push!(tr, os)
-            end
-            if show_trace
-                println(os)
-            end
-        end
+        alpha, f_update, g_update =
+          backtracking_line_search!(d, x, p, ls_x, ls_gradient)
+        f_calls += f_update
+        g_calls += g_update
 
         # Update position
         for i in 1:n
@@ -120,7 +150,9 @@ function l_bfgs(d::DifferentiableFunction,
             x[i] = x[i] + tmp_s[i]
         end
         copy!(g_x, g_new)
-        d.g!(x, g_new)
+        f_x = d.fg!(x, g_new)
+        f_calls += 1
+        g_calls += 1
 
         # Estimate movement
         for i in 1:n
@@ -128,37 +160,33 @@ function l_bfgs(d::DifferentiableFunction,
         end
         tmp_rho = 1.0 / dot(tmp_y, tmp_s)
         if isinf(tmp_rho)
-            println("Cannot decrease the objective function along the current search direction")
+            @printf "Cannot decrease the objective function along the current search direction\n"
             break
         end
 
-        # Keep a record of the new s, y and rho.
+        # Keep a record of the new s, y and rho
         s[:, modindex(k, m)] = tmp_s
         y[:, modindex(k, m)] = tmp_y
         rho[modindex(k, m)] = tmp_rho
-
-        # Update the iteration counter
-        k += 1
 
         # Assess convergence
         if norm(g_x, Inf) <= tolerance
            converged = true
         end
+
+        # Show trace
+        if store_trace || show_trace
+            l_bfgs_trace!(tr, x, f_x, g_new, k, store_trace, show_trace)
+        end
     end
 
-    OptimizationResults("L-BFGS", initial_x, x, f_x, k, converged, tr)
-end
-
-function l_bfgs(d::DifferentiableFunction, initial_x::Vector)
-    l_bfgs(d, initial_x, 10, 10e-8, 1_000, false, false)
-end
-
-function l_bfgs(f::Function, g!::Function, initial_x::Vector,
-                store_trace::Bool, show_trace::Bool)
-    d = DifferentiableFunction(f, g!)
-    l_bfgs(d, initial_x, 10, 10e-8, 1_000, store_trace, show_trace)
-end
-function l_bfgs(f::Function, g!::Function, initial_x::Vector)
-    d = DifferentiableFunction(f, g!)
-    l_bfgs(d, initial_x, 10, 10e-8, 1_000, false, false)
+    OptimizationResults("L-BFGS",
+                        initial_x,
+                        x,
+                        f_x,
+                        k,
+                        converged,
+                        tr,
+                        f_calls,
+                        g_calls)
 end
