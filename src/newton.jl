@@ -1,87 +1,109 @@
-function newton(f::Function,
-                g::Function,
-                h::Function,
-                initial_x::Vector,
-                tolerance::Float64,
-                max_iterations::Int64,
-                store_trace::Bool,
-                show_trace::Bool)
+function newton_trace!(tr::OptimizationTrace,
+                       x::Vector,
+                       f_x::Real,
+                       iteration::Integer,
+                       gradient::Vector,
+                       H::Matrix,
+                       store_trace::Bool,
+                       show_trace::Bool)
+    dt = Dict()
+    dt["g(x)"] = copy(gradient)
+    dt["h(x)"] = copy(H)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
+    if store_trace
+        push!(tr, os)
+    end
+    if show_trace
+        println(os)
+    end
+end
 
-    # Maintain a record of the state.
-    x = initial_x
+function newton(d::TwiceDifferentiableFunction,
+                initial_x::Vector;
+                tolerance::Real = 1e-8,
+                iterations::Integer = 1_000,
+                store_trace::Bool = false,
+                show_trace::Bool = false)
 
-    # Don't run forever.
-    i = 0
+    # Maintain a record of the initial state
+    x = copy(initial_x)
 
-    # Maintain a trace of the system.
+    # Count function and gradient calls
+    f_calls = 0
+    g_calls = 0
+
+    # Count number of parameters
+    n = length(x)
+
+    # Cache the values of f, g and h
+    gradient = Array(Float64, n)
+    f_x = d.fg!(x, gradient)
+    f_calls += 1
+    g_calls += 1
+    H = Array(Float64, n, n)
+    d.h!(x, H)
+
+    # Allocate buffers
+    ls_x = Array(Float64, n)
+    ls_gradient = Array(Float64, n)
+
+    # Count iterations
+    iteration = 0
+
+    # Maintain a trace of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        d = Dict()
-        d["g(x)"] = g(x)
-        d["h(x)"] = h(x)
-        os = OptimizationState(x, f(x), i, d)
-        if store_trace
-            push!(tr, os)
-        end
-        if show_trace
-            println(os)
-        end
+        newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
     end
 
-    # Track convergence.
+    # Track convergence
     converged = false
 
-    # Select a stepsize.
-    dx = -h(x) \ g(x)
-    l2 = dot(g(x), -dx)
+    # Determine direction of line search
+    dx = -H \ gradient
 
-    while !converged && i < max_iterations
-        # Update the iteration counter.
-        i += 1
+    while !converged && iteration < iterations
+        # Update the iteration counter
+        iteration += 1
 
-        # Select a step size.
-        step_size = backtracking_line_search(f, g, x, dx)
+        # Select a step size
+        step_size, f_up, g_up =
+          backtracking_line_search!(d, x, dx, ls_x, ls_gradient)
+        f_calls += f_up
+        g_calls += g_up
 
-        # Update our position.
-        x += step_size * dx
-
-        # Show state of the system.
-        if store_trace || show_trace
-            d = Dict()
-            d["g(x)"] = g(x)
-            d["h(x)"] = h(x)
-            os = OptimizationState(x, f(x), i, d)
-            if store_trace
-                push!(tr, os)
-            end
-            if show_trace
-                println(os)
-            end
+        # Update our position
+        for i in 1:n
+            x[i] += step_size * dx[i]
         end
 
-        # Select a search direction.
-        dx = -h(x) \ g(x)
+        # Cache values again
+        f_x = d.fg!(x, gradient)
+        d.h!(x, H)
+        f_calls += 1
+        g_calls += 1
 
-        # Assess convergence.
-        l2 = dot(g(x), -dx)
-        if l2 / 2 <= tolerance
+        # Select a search direction
+        dx = -H \ gradient
+
+        # Assess convergence
+        if norm(gradient, Inf) <= tolerance
            converged = true
+        end
+
+        # Show state of the system
+        if store_trace || show_trace
+            newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
         end
     end
 
     OptimizationResults("Newton's Method",
                         initial_x,
                         x,
-                        f(x),
-                        i,
+                        f_x,
+                        iteration,
                         converged,
-                        tr)
-end
-
-function newton(f::Function, g::Function, h::Function, initial_x::Vector,
-                store_trace::Bool)
-    newton(f, g, h, initial_x, 10e-16, 1000, store_trace, false)
-end
-function newton(f::Function, g::Function, h::Function, initial_x::Vector)
-    newton(f, g, h, initial_x, 10e-16, 1_000, false, false)
+                        tr,
+                        f_calls,
+                        g_calls)
 end

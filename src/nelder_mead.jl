@@ -11,146 +11,164 @@
 ## y_l is current minimum
 ## y_h is current maximum
 ##
-## TODO: Switch over to column-major form for points.
-##
 ##############################################################################
 
+function nelder_mead_trace!(tr::OptimizationTrace,
+                            p::Matrix,
+                            y::Vector,
+                            n::Integer,
+                            f::Function,
+                            iteration::Integer,
+                            store_trace::Bool,
+                            show_trace::Bool)
+    d = Dict()
+    d["Standard Deviation over Simplex"] = std(y)
+    os = OptimizationState(centroid(p), f(centroid(p)), iteration, d)
+    if store_trace
+        push!(tr, os)
+    end
+    if show_trace
+        println(os)
+    end
+end
+
 function nelder_mead(f::Function,
-                     initial_p::Matrix,
-                     a::Float64,
-                     g::Float64,
-                     b::Float64,
-                     tolerance::Float64,
-                     max_iterations::Int64,
-                     store_trace::Bool,
-                     show_trace::Bool)
+                     initial_x::Vector;
+                     a::Real = 1.0,
+                     g::Real = 2.0,
+                     b::Real = 0.5,
+                     tolerance::Real = 1e-8,
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false)
 
-    # Center the algorithm around an arbitrary point.
-    p = copy(initial_p)
-
-    # Confirm that we have a proper simplex.
-    m = size(p, 1)
-    n = size(p, 2)
-    if m != n - 1
-        error("A simplex in n-dimensions must include n + 1 points")
+    # Set up a simplex of points around starting value
+    m = length(initial_x)
+    n = m + 1
+    p = repmat(initial_x, 1, n)
+    for i in 1:length(p)
+        p[i] += randn()
     end
 
-    # Maintain a record of the value of f() at n points.
-    y = zeros(n)
-    for i = 1:n
+    # Count function calls
+    f_calls = 0
+
+    # Maintain a record of the value of f() at n points
+    y = Array(Float64, n)
+    for i in 1:n
         y[i] = f(p[:, i])
     end
+    f_calls += n
 
-    # Don't run forever.
-    iter = 0
+    # Count iterations
+    iteration = 0
 
+    # Maintain a trace
     tr = OptimizationTrace()
-
-    # Maintain a trace.
     if store_trace || show_trace
-        d = Dict()
-        v = sqrt(var(y) * ((n - 1) / n))
-        d["Variance"] = v
-        os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
-        if store_trace
-            push!(tr, os)
-        end
-        if show_trace
-            println(os)
-        end
+        nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
     end
 
-    # Track convergence.
+    # Monitor convergence
     converged = false
 
-    # Iterate until convergence or exhaustion.
-    while !converged && iter < max_iterations
-        # Keep a record of which p's are modified to save on updating y's.
-        modified_indices = Array(Int, 0)
+    # Cache p_bar, y_bar, p_star and p_star_star
+    p_bar = Array(Float64, m)
+    y_bar = Array(Float64, m)
+    p_star = Array(Float64, m)
+    p_star_star = Array(Float64, m)
 
-        # Augment the iteration counter.
-        iter = iter + 1
+    # Iterate until convergence or exhaustion
+    while !converged && iteration < iterations
+        # Augment the iteration counter
+        iteration = iteration + 1
 
-        # Find p_l and p_h, the minimum and maximum values of f() among p.
-        # Always take the first min or max if many exist.
-        l = findfirst(y .== min(y))
+        # Find p_l and p_h, the minimum and maximum values of f() among p
+        # Always take the first min or max if many exist
+        y_l, l = findmin(y)
         p_l = p[:, l]
-        y_l = y[l]
-        h = findfirst(y .== max(y))
+        y_h, h = findmax(y)
         p_h = p[:, h]
-        y_h = y[h]
 
-        # Remove the maximum valued point from our set.
-        non_maximal_p = p[:, find([1:n] .!= h)]
+        # Compute the centroid of the non-maximal points
+        # Cache function values of all non-maximal points
+        fill!(p_bar, 0.0)
+        let
+            tmpindex = 0
+            for i in 1:n
+                if i != h
+                    tmpindex += 1
+                    y_bar[tmpindex] = y[i]
+                    p_bar[:] += p[:, i]
+                end
+            end
+        end
+        for j in 1:m
+            p_bar[j] /= m
+        end
 
-        # Compute the centroid of the remaining points.
-        p_bar = centroid(non_maximal_p)
-
-        # For later, prestore function values of all non-maximal points.
-        y_bar = y[find([1:n] .!= h)]
-
-        # Compute a reflection.
-        p_star = (1 + a) * p_bar - a * p_h
+        # Compute a reflection
+        for j in 1:m
+            p_star[j] = (1 + a) * p_bar[j] - a * p_h[j]
+        end
         y_star = f(p_star)
+        f_calls += 1
 
         if y_star < y_l
-            # Compute an expansion.
-            p_star_star = g * p_star + (1 - g) * p_bar
+            # Compute an expansion
+            for j in 1:m
+                p_star_star[j] = g * p_star[j] + (1 - g) * p_bar[j]
+            end
             y_star_star = f(p_star_star)
+            f_calls += 1
 
             if y_star_star < y_l
-                p_h = p_star_star
-                p[:, h] = p_h
+                p_h[:] = p_star_star
+                p[:, h] = p_star_star
                 y[h] = y_star_star
             else
                 p_h = p_star
-                p[:, h] = p_h
+                p[:, h] = p_star
                 y[h] = y_star
             end
         else
             if all(y_star .> y_bar)
-                if y_star > y_h
-                    1 # Do a NO-OP.
-                else
-                    p_h = p_star
+                if y_star < y_h
+                    p_h[:] = p_star
                     p[:, h] = p_h
                     y[h] = y_star
                 end
 
-                # Compute a contraction.
-                p_star_star = b * p_h + (1 - b) * p_bar
+                # Compute a contraction
+                for j in 1:m
+                    p_star_star[j] = b * p_h[j] + (1 - b) * p_bar[j]
+                end
                 y_star_star = f(p_star_star)
+                f_calls += 1
 
                 if y_star_star > y_h
                     for i = 1:n
-                        # This makes reuse tricky.
-                        p[:, i] = (p[:, i] + p_l) / 2
+                        for j in 1:m
+                            p[j, i] = (p[j, i] + p_l[j]) / 2.0
+                        end
                         y[i] = f(p[:, i])
                     end
                 else
-                    p_h = p_star_star
+                    p_h[:] = p_star_star
                     p[:, h] = p_h
                     y[h] = y_star_star
                 end
             else
-                p_h = p_star
+                p_h[:] = p_star
                 p[:, h] = p_h
                 y[h] = y_star
             end
         end
 
-        v = sqrt(var(y) * ((n - 1) / n))
+        v = sqrt(var(y) * (m / n))
 
         if store_trace || show_trace
-            d = Dict()
-            d["Variance"] = v
-            os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
-            if store_trace
-                push!(tr, os)
-            end
-            if show_trace
-                println(os)
-            end
+            nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
         end
 
         if v <= tolerance
@@ -159,22 +177,12 @@ function nelder_mead(f::Function,
     end
 
     OptimizationResults("Nelder-Mead",
-                        centroid(initial_p),
+                        initial_x,
                         centroid(p),
                         f(centroid(p)),
-                        iter,
+                        iteration,
                         converged,
-                        tr)
-end
-
-function nelder_mead(f::Function,
-                     initial_p::Matrix)
-  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 10e-8, 1_000, false, false)
-end
-
-function nelder_mead(f::Function,
-                     initial_x::Vector)
-  n = length(initial_x)
-  initial_p = hcat(diagm(ones(n)), initial_x)
-  nelder_mead(f, initial_p, 1.0, 2.0, 0.5, 10e-8, 1_000, false, false)
+                        tr,
+                        f_calls,
+                        0)
 end

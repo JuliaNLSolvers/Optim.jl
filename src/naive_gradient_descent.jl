@@ -1,93 +1,97 @@
-function naive_gradient_descent(f::Function,
-                                g::Function,
-                                initial_x::Vector,
-                                step_size::Float64,
-                                tolerance::Float64,
-                                max_iterations::Int64,
-                                store_trace::Bool,
-                                show_trace::Bool)
+function naive_gradient_descent_trace!(tr::OptimizationTrace,
+                                       x::Vector,
+                                       f_x::Real,
+                                       gradient::Vector,
+                                       iteration::Integer,
+                                       store_trace::Bool,
+                                       show_trace::Bool)
+    dt = Dict()
+    dt["g(x)"] = copy(gradient)
+    dt["|g(x)|"] = norm(gradient)
+    os = OptimizationState(copy(x), f_x, iteration, dt)
+    if store_trace
+        push!(tr, os)
+    end
+    if show_trace
+        println(os)
+    end
+end
 
-    # Set up the initial state of the system.
-    # We insure the termination condition is not met by setting y_old = Inf.
-    x_old = initial_x
-    x_new = initial_x
-    y_old = Inf
-    y_new = f(x_new)
+function naive_gradient_descent(d::DifferentiableFunction,
+                                initial_x::Vector;
+                                step_size::Real = 0.1,
+                                tolerance::Real = 1e-8,
+                                iterations::Integer = 1_000,
+                                store_trace::Bool = false,
+                                show_trace::Bool = false)
 
-    # Keep track of the number of iterations.
-    i = 0
+    # Keep a copy of the initial state of the system
+    x = copy(initial_x)
 
-    # Track convergence.
+    # Keep track of the number of iterations
+    iteration = 0
+
+    # Track calls to f, g! and fg!
+    f_calls, g_calls = 0, 0
+
+    # Allocate vectors for re-use by gradient calls
+    n = length(x)
+    gradient = Array(Float64, n)
+
+    # Maintain current value of f and g
+    f_calls += 1
+    g_calls += 1
+    f_x = d.fg!(x, gradient)
+
+    # Track convergence
     converged = false
 
-    # Maintain trace information.
+    # Maintain trace information
     tr = OptimizationTrace()
     if store_trace || show_trace
-        d = Dict()
-        d["g(x)"] = g(x_new)
-        os = OptimizationState(x_new, y_new, i, d)
-        if store_trace
-            push!(tr, os)
-        end
-        if show_trace
-            println(os)
-        end
+        naive_gradient_descent_trace!(tr, x, f_x,
+                                      gradient, iteration,
+                                      store_trace, show_trace)
     end
 
-    # Iterate until our purported minimum over two passes changes by
-    # no more than a prespecified tolerance.
-    while !converged && i < max_iterations
-        # Update the iteration counter.
-        i = i + 1
+    # Iterate until convergence
+    while !converged && iteration < iterations
+        # Update the iteration counter
+        iteration += 1
 
-        # Update our position.
-        x_old = x_new
-        x_new = x_new - step_size * g(x_new)
+        # Set local step size
+        alpha = step_size / iteration
 
-        # Update the cached function value.
-        y_old = y_new
-        y_new = f(x_new)
+        # Update our position
+        for i in 1:n
+            x[i] = x[i] - alpha * gradient[i]
+        end
 
-        # Assess convergence.
-        if abs(y_new - y_old) <= tolerance
+        # Update the cached values of f and g
+        f_calls += 1
+        g_calls += 1
+        f_x = d.fg!(x, gradient)
+
+        # Assess convergence
+        if norm(gradient, Inf) <= tolerance
             converged = true
         end
 
-        # Update trace.
+        # Update trace
         if store_trace || show_trace
-            d = Dict()
-            d["g(x)"] = g(x_new)
-            os = OptimizationState(x_new, y_new, i, d)
-            if store_trace
-                push!(tr, os)
-            end
-            if show_trace
-                println(os)
-            end
+            naive_gradient_descent_trace!(tr, x, f_x,
+                                          gradient, iteration,
+                                          store_trace, show_trace)
         end
     end
 
     OptimizationResults("Constant Step-Size Gradient Descent",
                         initial_x,
-                        x_new,
-                        y_new,
-                        i,
+                        x,
+                        f_x,
+                        iteration,
                         converged,
-                        tr)
-end
-
-# Set default tolerance, max_iterations and show_trace.
-function naive_gradient_descent(f::Function,
-                                g::Function,
-                                initial_x::Vector,
-                                step_size::Float64)
-    naive_gradient_descent(f, g, initial_x, step_size, 10e-8, 1_000,
-                           false, false)
-end
-
-# Set default step_size, tolerance, max_iterations and show_trace.
-function naive_gradient_descent(f::Function,
-                                g::Function,
-                                initial_x::Vector)
-    naive_gradient_descent(f, g, initial_x, 0.1, 10e-8, 1_000, false, false)
+                        tr,
+                        f_calls,
+                        g_calls)
 end
