@@ -3,7 +3,9 @@ function newton_trace!(tr::OptimizationTrace,
                        f_x::Real,
                        i::Integer,
                        gradient::Vector,
-                       H::Matrix)
+                       H::Matrix,
+                       store_trace::Bool,
+                       show_trace::Bool)
     dt = Dict()
     dt["g(x)"] = copy(gradient)
     dt["h(x)"] = copy(H)
@@ -51,7 +53,7 @@ function newton(d::TwiceDifferentiableFunction,
     # Maintain a trace of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        newton_trace!(tr, x, f_x, iteration, gradient, H)
+        newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
     end
 
     # Track convergence
@@ -91,7 +93,7 @@ function newton(d::TwiceDifferentiableFunction,
 
         # Show state of the system
         if store_trace || show_trace
-            newton_trace!(tr, x, f_x, iteration, gradient, H)
+            newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
         end
     end
 

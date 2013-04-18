@@ -176,7 +176,7 @@ function l_bfgs(d::DifferentiableFunction,
 
         # Show trace
         if store_trace || show_trace
-            l_bfgs_trace!(tr, x, f_x, g_new, k, store_trace, show_trace)
+            l_bfgs_trace!(tr, x, f_x, g_new, k, alpha, store_trace, show_trace)
         end
     end
 

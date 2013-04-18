@@ -18,7 +18,9 @@ function nelder_mead_trace!(tr::OptimizationTrace,
                             y::Vector,
                             n::Integer,
                             f::Function,
-                            iter::Integer)
+                            iter::Integer,
+                            store_trace::Bool,
+                            show_trace::Bool)
     d = Dict()
     d["Standard Deviation over Simplex"] = std(y)
     os = OptimizationState(centroid(p), f(centroid(p)), iter, d)
@@ -64,7 +66,7 @@ function nelder_mead(f::Function,
     # Maintain a trace
     tr = OptimizationTrace()
     if store_trace || show_trace
-        nelder_mead_trace!(tr, p, y, n, f, iteration)
+        nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
     end
 
     # Monitor convergence
@@ -166,7 +168,7 @@ function nelder_mead(f::Function,
         v = sqrt(var(y) * (m / n))
 
         if store_trace || show_trace
-            nelder_mead_trace!(tr, p, y, n, f, iteration)
+            nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
         end
 
         if v <= tolerance

@@ -3,7 +3,9 @@ function bfgs_trace!(tr::OptimizationTrace,
                      f_x::Real,
                      iteration::Integer,
                      gradient_new::Vector,
-                     B::Matrix)
+                     B::Matrix,
+                     store_trace::Bool,
+                     show_trace::Bool)
     dt = Dict()
     dt["g(x_new)"] = copy(gradient_new)
     dt["~inv(H)"] = copy(B)
@@ -55,7 +57,7 @@ function bfgs(d::DifferentiableFunction,
     # Show state of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B)
+        bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B, store_trace, show_trace)
     end
 
     # Maintain arrays for position and gradient changes
@@ -114,7 +116,7 @@ function bfgs(d::DifferentiableFunction,
 
         # Show state of the system
         if store_trace || show_trace
-            bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B)
+            bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B, store_trace, show_trace)
         end
 
         # Assess convergence
