@@ -14,17 +14,18 @@ module Optim
            Base.length,
            Base.push!,
            Base.ref,
-           Base.show
+           Base.show,
+           Base.getindex,
+           Base.setindex!
 
     export curve_fit,
            estimate_errors,
-           optimize
+           optimize,
+           DifferentiableFunction,
+           TwiceDifferentiableFunction
 
     # Types
     include("types.jl")
-
-    # RNG Sources
-    include("rng.jl")
 
     # Grid Search
     include("grid_search.jl")

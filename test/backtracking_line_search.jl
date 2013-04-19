@@ -1,21 +1,15 @@
-function f(x)
-  (1.0 - x[1])^2
-end
-
-function g(x)
-  [-2.0 * (1.0 - x[1])]
+f(x::Vector) = (1.0 - x[1])^2
+function g!(x::Vector, storage::Vector)
+	storage[1] = -2.0 * (1.0 - x[1])
 end
 
 x = [0.0]
-dx = -g(x)
+gradient = [0.0]
+ls_x = [0.0]
+ls_gradient = [0.0]
+g!(x, gradient)
+dx = -gradient
+d = DifferentiableFunction(f, g!)
 
-alpha = 0.1
-beta = 0.8
-
-t = backtracking_line_search(f, g, x, dx, alpha, beta)
-
-@assert f(x + t * dx) < f(x) + alpha * t * (g(x)' * dx)[1]
-
-t = backtracking_line_search(f, g, x, dx)
-
-@assert f(x + t * dx) < f(x) + alpha * t * (g(x)' * dx)[1]
+t, f_up, g_up = Optim.backtracking_line_search!(d, x, dx, ls_x, ls_gradient)
+@assert f(x + t * dx) < f(x) + 0.9 * t * -dot(gradient, dx)
