@@ -1,93 +1,135 @@
-# Optimization Functions for Julia
+Optim.jl
+========
 
-## Usage Examples
+The Optim package represents an ongoing project to implement basic optimization algorithms in pure Julia under an MIT license. Because it is being developed from scratch, it is not as robust as the C-based NLOpt package. For work whose accuracy must be unquestionable, we recommend using the NLOpt package. See [the NLOpt.jl GitHub repository](https://github.com/stevengj/NLopt.jl) for details.
 
-### Simple Function Demo
+Although Optim is a work in progress, it is quite usable as is. In what follows, we describe the Optim package's API.
 
-If you're just getting started, you probably want to use `optimize()`, which wraps the specific algorithms currently implemented and selects a good one based on the amount of information you can provide. See the examples below:
+# Basic API Introduction
 
-    using Optim
+To show how the Optim package can be used, we'll implement the [Rosenbrock function](http://en.wikipedia.org/wiki/Rosenbrock_function), a classic problem in numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager.
 
-    eta = 0.9
-
-    function f(x)
-      (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
-    end
-
-    function g(x)
-      [x[1], eta * x[2]]
-    end
-
-    function h(x)
-      [1.0 0.0; 0.0 eta]
-    end
-
-    # If you don't have gradient, uses Nelder-Mead.
-    results = optimize(f, [127.0, 921.0])
-    @assert norm(results.minimum - [0.0, 0.0]) < 0.01
-
-    # If you don't have Hessian, uses L-BFGS.
-    results = optimize(f, g, [127.0, 921.0])
-    @assert norm(results.minimum - [0.0, 0.0]) < 0.01
-
-    # If you have Hessian, uses Newton's method.
-    results = optimize(f, g, h, [127.0, 921.0])
-    @assert norm(results.minimum - [0.0, 0.0]) < 0.01
-
-Note that `optimize()` has some simple rules you must follow to use it effectively:
-
-* The function to be optimized must take in Float64 vectors as input.
-* The raw function `f` must return a scalar.
-* The gradient `g` must return a vector.
-* The Hessian `h` must return a matrix.
-
-### Rosenbrock Function Demo
+First, we'll load Optim and define the Rosenbrock function:
 
     using Optim
-
+  
     function rosenbrock(x::Vector)
-      (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+        return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+    end
+  
+    function rosenbrock_gradient!(x::Vector, storage::Vector)
+        storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+        storage[2] = 200.0 * (x[2] - x[1]^2)
+    end
+  
+    function rosenbrock_hessian!(x::Vector, storage::Matrix)
+        storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+        storage[1, 2] = -400.0 * x[1]
+        storage[2, 1] = -400.0 * x[1]
+        storage[2, 2] = 200.0
     end
 
-    function rosenbrock_gradient(x::Vector)
-      [-2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1],
-       200.0 * (x[2] - x[1]^2)]
+Note that the functions we're using to calculate the gradient and Hessian of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called `storage`. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the `rosenbrock_gradient!` or `rosenbrock_hessian!` functions. You can use `Optim` without manually defining a gradient or Hessian function, but if you do define these functions, they must take these two arguments in this order.
+
+Once we've defined these core functions, we can find the minimum of the Rosenbrock function using any of our favorite optimization algorithms. To make the code easier to read, we'll use shorter names for the core functions:
+
+    f = rosenbrock
+    g! = rosenbrock_gradient!
+    h! = rosenbrock_hessian!
+
+With that done, the easiest way to perform optimization is to specify the core function `f` and an initial point, `x`:
+
+    optimize(f, [0.0, 0.0])
+
+Optim will default to using the Nelder-Mead method in this case. We can specify the Nelder-Mead method explicitly using the `method` keyword:
+
+    optimize(f, [0.0, 0.0], method = :nelder_mead)
+
+The `method` keyword also allows us to specify other methods as well. Below, we use L-BFGS, a quasi-Newton method that requires a gradient. If we pass `f` alone, Optim will construct an approximate gradient for us using central finite differencing:
+
+    optimize(f, [0.0, 0.0], method = :l_bfgs)
+
+For greater precision, you should pass in the exact gradient function, `g!`:
+  
+    optimize(f, g!, [0.0, 0.0], method = :l_bfgs)
+
+For some methods, like simulated annealing, the exact gradient will be ignored:
+
+    optimize(f, g!, [0.0, 0.0], method = :simulated_annealing)
+
+In addition to providing exact gradients, you can provide an exact Hessian function `h!` as well:
+
+    optimize(f, g!, h!, [0.0, 0.0], method = :newton)
+
+Like gradients, the Hessian function will be ignored if you use a method that does not require it:
+
+    optimize(f, g!, h!, [0.0, 0.0], method = :l_bfgs)
+
+Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.
+
+# Configurable Options
+
+The section above described the basic API for the Optim package. We employed several different optimization algorithms using the `method` keyword, which can take on any of the following values:
+
+* `:bfgs`
+* `:gradient_descent`
+* `:l_bfgs`
+* `:nelder_mead`
+* `:newton`
+* `:simulated_annealing`
+
+In addition to the `method` keyword, you can alter the behavior of the Optim package by using four other keywords:
+
+* `tolerance`: What is the threshold for determining convergence? Defaults to `1e-8`.
+* `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
+* `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
+* `show_trace`: Should a trace of the optimization algorithm's state be shown on `STDOUT`? Defaults to `false`.
+
+Thus, one might construct a complex call to `optimize` like:
+
+    res = optimize(f, g!,
+                   [0.0, 0.0],
+                   method = :gradient_descent,
+                   tolerance = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
+
+# Getting Better Performance
+
+If you want to get better performance out of Optim, you'll need to dig into the internals. In particular, you'll need to understand the `DifferentiableFunction` and `TwiceDifferentiableFunction` types that the Optim package uses to couple a function `f` with its gradient `g!` and its Hessian `h!`. We could create objects of these types as follows:
+
+    d1 = DifferentiableFunction(rosenbrock)
+    d2 = DifferentiableFunction(rosenbrock,
+                                rosenbrock_gradient!)
+    d3 = TwiceDifferentiableFunction(rosenbrock,
+                                     rosenbrock_gradient!,
+                                     rosenbrock_hessian!)
+
+Note that `d1` above will use central finite differencing to approximate the gradient of `rosenbrock`.
+
+In addition to these core ways of creating a `DifferentiableFunction` object, one can also create a `DifferentiableFunction` using three functions -- the third of which will evaluate the function and gradient simultaneously. To see this, let's implement such a joint evaluation function and insert it into a `DifferentiableFunction`:
+
+    function rosenbrock_and_gradient!(x::Vector, storage)
+        d1 = (1.0 - x[1])
+        d2 = (x[2] - x[1]^2)
+        storage[1] = -2.0 * d1 - 400.0 * d2 * x[1]
+        storage[2] = 200.0 * d2
+        return d1^2 + 100.0 * d2^2
     end
 
-    function rosenbrock_hessian(x::Vector)
-      h = zeros(2, 2)
-      h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
-      h[1, 2] = -400.0 * x[1]
-      h[2, 1] = -400.0 * x[1]
-      h[2, 2] = 200.0
-      h
-    end
+    d4 = DifferentiableFunction(rosenbrock,
+                                rosenbrock_gradient!,
+                                rosenbrock_and_gradient!)
 
-    problem = Dict()
-    problem[:f] = rosenbrock
-    problem[:g] = rosenbrock_gradient
-    problem[:h] = rosenbrock_hessian
-    problem[:initial_x] = [0.0, 0.0]
-    problem[:solution] = [1.0, 1.0]
+You can then use any of the functions contained in `d4` depending on performance/algorithm needs:
 
-    algorithms = ["naive_gradient_descent",
-                  "gradient_descent",
-                  "newton",
-                  "bfgs",
-                  "l-bfgs",
-                  "nelder-mead",
-                  "sa"]
+    y = d4.f(x)
+    storage = Array(Float64, length(x))
+    d4.g!(x, storage)
+    y = d4.fg!(x, storage)
 
-    for algorithm = algorithms
-      results = optimize(problem[:f],
-                         problem[:g],
-                         problem[:h],
-                         problem[:initial_x],
-                         algorithm,
-                         10e-8,
-                         true)
-      print(results)
-    end
+If you do not provide a function like `rosenbrock_and_gradient!`, the constructor for `DifferentiableFunction` will define one for you automatically. By providing `rosenbrock_and_gradient!` function, you can sometimes get substantially better performance.
 
 ### Curve Fitting Demo
 
