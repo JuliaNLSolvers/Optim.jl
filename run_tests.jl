@@ -5,11 +5,11 @@
 using Optim
 
 my_tests = [#"test/bfgs.jl",
-            #"test/curve_fit.jl",
+            "test/curve_fit.jl",
             "test/gradient_descent.jl",
             "test/grid_search.jl",
             "test/l_bfgs.jl",
-            #"test/levenberg_marquardt.jl",
+            "test/levenberg_marquardt.jl",
             "test/newton.jl",
             "test/nelder_mead.jl",
             "test/optimize.jl",
