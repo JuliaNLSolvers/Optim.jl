@@ -1,3 +1,36 @@
+function optimize(d::DifferentiableFunction,
+                  initial_x::Vector;
+                  method::Symbol = :l_bfgs,
+                  tolerance::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
+                  show_trace::Bool = false)
+    if method == :gradient_descent
+        gradient_descent(d,
+                         initial_x,
+                         tolerance = tolerance,
+                         iterations = iterations,
+                         store_trace = store_trace,
+                         show_trace = show_trace)
+    elseif method == :bfgs
+        bfgs(d,
+             initial_x,
+             tolerance = tolerance,
+             iterations = iterations,
+             store_trace = store_trace,
+             show_trace = show_trace)
+    elseif method == :l_bfgs
+        l_bfgs(d,
+               initial_x,
+               tolerance = tolerance,
+               iterations = iterations,
+               store_trace = store_trace,
+               show_trace = show_trace)
+    else
+        throw(ArgumentError("Unknown method $method"))
+    end
+end
+
 function optimize(f::Function,
                   g!::Function,
                   h!::Function,

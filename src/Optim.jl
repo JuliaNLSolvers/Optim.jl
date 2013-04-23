@@ -33,8 +33,7 @@ module Optim
     # Line Search Methods
     include("backtracking_line_search.jl")
 
-    # Gradient Descent Methods
-    include("naive_gradient_descent.jl")
+    # Gradient Descent
     include("gradient_descent.jl")
 
     # Conjugate gradient

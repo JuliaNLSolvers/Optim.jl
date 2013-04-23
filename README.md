@@ -131,6 +131,13 @@ You can then use any of the functions contained in `d4` depending on performance
 
 If you do not provide a function like `rosenbrock_and_gradient!`, the constructor for `DifferentiableFunction` will define one for you automatically. By providing `rosenbrock_and_gradient!` function, you can sometimes get substantially better performance.
 
+By defining a `DifferentiableFunction` that estimates function values and gradients simultaneously, you can sometimes achieve noticeable performance gains:
+
+    @elapsed optimize(f, g!, [0.0, 0.0], method = :bfgs)
+    @elapsed optimize(d4, [0.0, 0.0], method = :bfgs)
+
+At the moment, the performance bottleneck for many problems is the simplistic backtracking line search we are using in Optim. As this step becomes more efficient, we expect that the gains from using a function that evaluates the main function and its gradient simultaneously will grow.
+
 ### Curve Fitting Demo
 
 There are also top-level methods `curve_fit()` and `estimate_errors()` that are useful for fitting data to non-linear models. See the following example:
@@ -228,7 +235,6 @@ For tools for doing linear programming, you should look into the MathProg packag
 ## State of the Library
 
 ### Existing Functions
-* Constant Step-Size Gradient Descent: `naive_gradient_descent()`
 * Back-Tracking Line Search Gradient Descent: `gradient_descent()`
 * Guarded Newton's Method: `newton()`
 * BFGS: `bfgs()`
