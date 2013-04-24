@@ -23,7 +23,8 @@ function newton(d::TwiceDifferentiableFunction,
                 tolerance::Real = 1e-8,
                 iterations::Integer = 1_000,
                 store_trace::Bool = false,
-                show_trace::Bool = false)
+                show_trace::Bool = false,
+                line_search!::Function = backtracking_line_search!)
 
     # Maintain a record of the initial state
     x = copy(initial_x)
@@ -75,7 +76,7 @@ function newton(d::TwiceDifferentiableFunction,
 
         # Select a step size
         step_size, f_up, g_up =
-          interpolating_line_search!(d, x, dx, ls_x, ls_gradient)
+          line_search!(d, x, dx, ls_x, ls_gradient)
         f_calls += f_up
         g_calls += g_up
 

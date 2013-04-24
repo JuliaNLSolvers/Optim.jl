@@ -24,7 +24,8 @@ function bfgs(d::DifferentiableFunction,
               tolerance::Real = 1e-8,
               iterations::Integer = 1_000,
               store_trace::Bool = false,
-              show_trace::Bool = false)
+              show_trace::Bool = false,
+              line_search!::Function = interpolating_line_search!)
 
     # Keep track of the number of iterations
     iteration = 0
@@ -88,7 +89,7 @@ function bfgs(d::DifferentiableFunction,
 
         # Calculate a step-size
         alpha, f_update, g_update =
-          interpolating_line_search!(d, x_new, p, ls_x, ls_gradient)
+          line_search!(d, x_new, p, ls_x, ls_gradient)
         f_calls += f_update
         g_calls += g_update
 

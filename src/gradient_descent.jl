@@ -22,7 +22,8 @@ function gradient_descent(d::DifferentiableFunction,
                           tolerance::Real = 1e-8,
                           iterations::Integer = 1_000,
                           store_trace::Bool = false,
-                          show_trace::Bool = false)
+                          show_trace::Bool = false,
+                          line_search!::Function = backtracking_line_search!)
 
     # Keep a copy of the initial state of the system
     x = copy(initial_x)
@@ -75,7 +76,7 @@ function gradient_descent(d::DifferentiableFunction,
             p[i] = -gradient[i]
         end
         step_size, f_update, g_update =
-          interpolating_line_search!(d, x, p, ls_x, ls_gradient)
+          line_search!(d, x, p, ls_x, ls_gradient)
         f_calls += f_update
         g_calls += g_update
 
