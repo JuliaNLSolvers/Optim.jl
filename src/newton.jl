@@ -53,7 +53,14 @@ function newton(d::TwiceDifferentiableFunction,
     # Maintain a trace of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
+        newton_trace!(tr,
+                      x,
+                      f_x,
+                      iteration,
+                      gradient,
+                      H,
+                      store_trace,
+                      show_trace)
     end
 
     # Track convergence
@@ -68,7 +75,7 @@ function newton(d::TwiceDifferentiableFunction,
 
         # Select a step size
         step_size, f_up, g_up =
-          backtracking_line_search!(d, x, dx, ls_x, ls_gradient)
+          interpolating_line_search!(d, x, dx, ls_x, ls_gradient)
         f_calls += f_up
         g_calls += g_up
 
@@ -93,7 +100,14 @@ function newton(d::TwiceDifferentiableFunction,
 
         # Show state of the system
         if store_trace || show_trace
-            newton_trace!(tr, x, f_x, iteration, gradient, H, store_trace, show_trace)
+            newton_trace!(tr,
+                          x,
+                          f_x,
+                          iteration,
+                          gradient,
+                          H,
+                          store_trace,
+                          show_trace)
         end
     end
 

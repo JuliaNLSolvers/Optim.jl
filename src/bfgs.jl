@@ -57,7 +57,14 @@ function bfgs(d::DifferentiableFunction,
     # Show state of the system
     tr = OptimizationTrace()
     if store_trace || show_trace
-        bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B, store_trace, show_trace)
+        bfgs_trace!(tr,
+                    x_old,
+                    f_x,
+                    iteration,
+                    gradient_new,
+                    B,
+                    store_trace,
+                    show_trace)
     end
 
     # Maintain arrays for position and gradient changes
@@ -68,17 +75,20 @@ function bfgs(d::DifferentiableFunction,
     ls_x = Array(Float64, n)
     ls_gradient = Array(Float64, n)
 
+    # Reuse identity matrix during BFGS approximate inverse Hessian updates
+    I = eye(size(B, 1))
+
     while !converged && iteration < iterations
         # Increment the iteration counter
         iteration += 1
 
         # Set the search direction
+        # TODO: Can this made more efficient?
         p = -B * gradient_new
 
         # Calculate a step-size
-        # TODO: Clean up backtracking_line_search
         alpha, f_update, g_update =
-          backtracking_line_search!(d, x_new, p, ls_x, ls_gradient)
+          interpolating_line_search!(d, x_new, p, ls_x, ls_gradient)
         f_calls += f_update
         g_calls += g_update
 
@@ -107,7 +117,7 @@ function bfgs(d::DifferentiableFunction,
            break
         end
         # TODO: Reuse storage here
-        v = eye(size(B, 1)) - rho * y * s'
+        v = I - rho * y * s'
         if iteration == 1
             B = v'v * dot(y, s) / dot(y, y)
         else
@@ -116,7 +126,14 @@ function bfgs(d::DifferentiableFunction,
 
         # Show state of the system
         if store_trace || show_trace
-            bfgs_trace!(tr, x_old, f_x, iteration, gradient_new, B, store_trace, show_trace)
+            bfgs_trace!(tr,
+                        x_old,
+                        f_x,
+                        iteration,
+                        gradient_new,
+                        B,
+                        store_trace,
+                        show_trace)
         end
 
         # Assess convergence

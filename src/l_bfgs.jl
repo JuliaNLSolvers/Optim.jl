@@ -20,7 +20,6 @@ function twoloop!(g_x::Vector,
     copy!(q, g_x)
 
     n = length(p)
-    @assert length(q) == n
 
     upper = iteration - 1
     lower = iteration - m
@@ -52,8 +51,6 @@ function twoloop!(g_x::Vector,
     for j in 1:n
         p[j] = -1.0 * p[j]
     end
-
-    return
 end
 
 function l_bfgs_trace!(tr::OptimizationTrace,
@@ -105,7 +102,7 @@ function l_bfgs(d::DifferentiableFunction,
     tmp_s = Array(Float64, n)
     tmp_y = Array(Float64, n)
 
-    # Reuse storage during calls to backtracking line search
+    # Reuse storage during calls to line search
     ls_x = Array(Float64, n)
     ls_gradient = Array(Float64, n)
 
@@ -125,7 +122,14 @@ function l_bfgs(d::DifferentiableFunction,
 
     # Show trace
     if store_trace || show_trace
-        l_bfgs_trace!(tr, x, f_x, g_new, iteration, 0.0, store_trace, show_trace)
+        l_bfgs_trace!(tr,
+                      x,
+                      f_x,
+                      g_new,
+                      iteration,
+                      0.0,
+                      store_trace,
+                      show_trace)
     end
 
     # Iterate until convergence
@@ -140,7 +144,7 @@ function l_bfgs(d::DifferentiableFunction,
 
         # Select a step-size
         alpha, f_update, g_update =
-          backtracking_line_search!(d, x, p, ls_x, ls_gradient)
+          interpolating_line_search!(d, x, p, ls_x, ls_gradient)
         f_calls += f_update
         g_calls += g_update
 
@@ -176,7 +180,14 @@ function l_bfgs(d::DifferentiableFunction,
 
         # Show trace
         if store_trace || show_trace
-            l_bfgs_trace!(tr, x, f_x, g_new, iteration, alpha, store_trace, show_trace)
+            l_bfgs_trace!(tr,
+                          x,
+                          f_x,
+                          g_new,
+                          iteration,
+                          alpha,
+                          store_trace,
+                          show_trace)
         end
     end
 

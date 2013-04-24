@@ -1,10 +1,17 @@
+# From Andreas' changes and Nocedal & Wright
+# c1::Real = 1e-6
+# c2::Real = 0.9
+# rho::Real = 0.9
+
+# From Boyd and Vanderberghe
+
 function backtracking_line_search!(d::Union(DifferentiableFunction,
                                             TwiceDifferentiableFunction),
                                    x::Vector,
                                    p::Vector,
                                    new_x::Vector,
                                    new_gradient::Vector;
-                                   c1::Real = 1e-6,
+                                   c1::Real = 1e-4,
                                    c2::Real = 0.9,
                                    rho::Real = 0.9,
                                    iterations::Integer = 1_000)
@@ -33,15 +40,13 @@ function backtracking_line_search!(d::Union(DifferentiableFunction,
     end
 
     # Expand step-size
-    # NB: This is very expensive if the gradient costs much more than f(x)
-    # In my tests, it also increases the number of steps, not decreases it
     # while (dot(new_gradient, p) < c2 * gxp) && (alpha < 65536.0)
     #     alpha *= 2.0
     #     for i in 1:n
     #         new_x[i] = x[i] + alpha * p[i]
     #     end
     #     g_calls += 1
-    #     g!(new_x, new_gradient)
+    #     d.g!(new_x, new_gradient)
     # end
 
     # Keep coming closer to x until we find a point that is
@@ -51,7 +56,7 @@ function backtracking_line_search!(d::Union(DifferentiableFunction,
     while f_new_x > f_x + c1 * alpha * gxp
         iteration += 1
         if iteration > iterations
-            error("Too many iterations in backtracking_line_search")
+            error("Too many iterations in backtracking_line_search!")
         end
         alpha *= rho
         for i in 1:n

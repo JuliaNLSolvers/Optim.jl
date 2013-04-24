@@ -4,7 +4,7 @@
 
 using Optim
 
-my_tests = [#"test/bfgs.jl",
+my_tests = ["test/bfgs.jl",
             "test/curve_fit.jl",
             "test/gradient_descent.jl",
             "test/grid_search.jl",
@@ -13,7 +13,9 @@ my_tests = [#"test/bfgs.jl",
             "test/newton.jl",
             "test/nelder_mead.jl",
             "test/optimize.jl",
-            "test/simulated_annealing.jl"]
+            "test/simulated_annealing.jl",
+            "test/interpolating_line_search.jl",
+            "test/api.jl"]
 
 println("Running tests:")
 

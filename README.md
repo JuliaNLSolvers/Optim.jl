@@ -124,6 +124,7 @@ In addition to these core ways of creating a `DifferentiableFunction` object, on
 
 You can then use any of the functions contained in `d4` depending on performance/algorithm needs:
 
+    x = [0.0, 0.0]
     y = d4.f(x)
     storage = Array(Float64, length(x))
     d4.g!(x, storage)

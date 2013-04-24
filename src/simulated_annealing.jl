@@ -1,48 +1,13 @@
-##############################################################################
-##
-## simulated_annealing()
-##
-## Arguments:
-## * cost: Function from states to the real numbers. Often called an energy
-##         function, but this algorithm works for both positive and negative
-##         costs.
-## * s0: The initial state of the system.
-## * neighbor: Function from states to states. Produces what the Metropolis
-##             algorithm would call a proposal.
-## * temperature: Function specifying the temperature at time i.
-## * iterations: How many iterations of the algorithm should be run? This is
-##               the only termination condition.
-## * keep_best: Do we return the best state visited or the last state visited?
-##              (Should default to true.)
-## * show_trace: Do we show a trace of the system's evolution?
-##
-##############################################################################
-
-##############################################################################
-##
-## Off-the-shelf cooling schedules
-##
-##############################################################################
-
-# Theoretically, SA will converge if the temperature decreases
-# according inversely proportional to the current time.
-#
-# For this to work, an unknown constant must be used.
-# In practice, we use 1 instead of this unknown constant.
 log_temperature(t::Real) = 1.0 / log(t)
 
-# If the temperature is held constant and the cost function is -log(p),
-# SA reduces to the Metropolis algorithm for sampling from a distribution.
 constant_temperature(t::Real) = 1.0
 
-# Default neighbor takes Gaussian jumps
 function default_neighbor!(x::Vector, storage::Vector)
     for i in 1:length(x)
         storage[i] = x[i] + randn()
     end
 end
 
-# NB: The neighbor function is mutating now
 function simulated_annealing(cost::Function,
                              s0::Vector;
                              neighbor!::Function = default_neighbor!,
@@ -91,7 +56,7 @@ function simulated_annealing(cost::Function,
         # Call neighbor to randomly generate a neighbor of our current state
         neighbor!(s, s_n)
 
-        # Evaluate the cost function on our current state and its neighbor
+        # Evaluate the cost function at the proposed state
         y_n = cost(s_n)
         f_calls += 1
 
@@ -109,7 +74,7 @@ function simulated_annealing(cost::Function,
         else
             # If the proposed new state is inferior, we move to it with
             #  probability p
-            p = exp(-(y_n - y)/t)
+            p = exp(-(y_n - y) / t)
             if rand() <= p
                 copy!(s, s_n)
                 y = y_n

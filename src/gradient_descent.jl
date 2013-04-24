@@ -75,7 +75,7 @@ function gradient_descent(d::DifferentiableFunction,
             p[i] = -gradient[i]
         end
         step_size, f_update, g_update =
-          backtracking_line_search!(d, x, p, ls_x, ls_gradient)
+          interpolating_line_search!(d, x, p, ls_x, ls_gradient)
         f_calls += f_update
         g_calls += g_update
 
@@ -106,7 +106,7 @@ function gradient_descent(d::DifferentiableFunction,
         end
     end
 
-    OptimizationResults("Gradient Descent w/ Backtracking Line Search",
+    OptimizationResults("Gradient Descent",
                         initial_x,
                         x,
                         f_x,

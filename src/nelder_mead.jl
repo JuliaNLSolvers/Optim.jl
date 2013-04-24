@@ -1,18 +1,3 @@
-##############################################################################
-##
-## REF: http://optlab-server.sce.carleton.ca/POAnimations2007/NonLinear7.html
-##
-## Initial points
-## N + 1 points of dimension N
-## Store in N + 1 by N array
-## Compute centroid of non-maximal points
-## Iteratively update p_h
-## Parameters: a, g, b
-## y_l is current minimum
-## y_h is current maximum
-##
-##############################################################################
-
 function nelder_mead_trace!(tr::OptimizationTrace,
                             p::Matrix,
                             y::Vector,
@@ -66,7 +51,14 @@ function nelder_mead(f::Function,
     # Maintain a trace
     tr = OptimizationTrace()
     if store_trace || show_trace
-        nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
+        nelder_mead_trace!(tr,
+                           p,
+                           y,
+                           n,
+                           f,
+                           iteration,
+                           store_trace,
+                           show_trace)
     end
 
     # Monitor convergence
@@ -84,14 +76,13 @@ function nelder_mead(f::Function,
         iteration = iteration + 1
 
         # Find p_l and p_h, the minimum and maximum values of f() among p
-        # Always take the first min or max if many exist
         y_l, l = findmin(y)
         p_l = p[:, l]
         y_h, h = findmax(y)
         p_h = p[:, h]
 
         # Compute the centroid of the non-maximal points
-        # Cache function values of all non-maximal points
+        # Also cache function values of all non-maximal points
         fill!(p_bar, 0.0)
         let
             tmpindex = 0
@@ -168,7 +159,14 @@ function nelder_mead(f::Function,
         v = sqrt(var(y) * (m / n))
 
         if store_trace || show_trace
-            nelder_mead_trace!(tr, p, y, n, f, iteration, store_trace, show_trace)
+            nelder_mead_trace!(tr,
+                               p,
+                               y,
+                               n,
+                               f,
+                               iteration,
+                               store_trace,
+                               show_trace)
         end
 
         if v <= tolerance
