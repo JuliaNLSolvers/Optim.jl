@@ -114,7 +114,6 @@ function bfgs(d::DifferentiableFunction,
         # Update the inverse Hessian approximation
         rho = 1.0 / dot(y, s)
         if isinf(rho)
-           @printf "Cannot decrease the objective function along the current search direction\n"
            break
         end
         # TODO: Reuse storage here

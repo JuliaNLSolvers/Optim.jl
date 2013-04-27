@@ -11,6 +11,7 @@ function backtracking_line_search!(d::Union(DifferentiableFunction,
                                    p::Vector,
                                    new_x::Vector,
                                    new_gradient::Vector;
+                                   alpha::Real = 1.0,
                                    c1::Real = 1e-4,
                                    c2::Real = 0.9,
                                    rho::Real = 0.9,
@@ -30,9 +31,6 @@ function backtracking_line_search!(d::Union(DifferentiableFunction,
     g_calls += 1
     f_x = d.fg!(x, new_gradient)
     gxp = dot(new_gradient, p)
-
-    # The default step-size is always 1.0
-    alpha = 1.0
 
     # Propose a new x after moving length alpha in direction p
     for i in 1:n

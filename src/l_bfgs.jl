@@ -165,7 +165,6 @@ function l_bfgs(d::DifferentiableFunction,
         end
         tmp_rho = 1.0 / dot(tmp_y, tmp_s)
         if isinf(tmp_rho)
-            @printf "Cannot decrease the objective function along the current search direction\n"
             break
         end
 
