@@ -11,4 +11,4 @@ beta, r, J = curve_fit(model, xpts, data, [0.5, 0.5])
 
 # can also get error estimates on the fit parameters
 errors = estimate_errors(beta, r, J)
-@assert norm(errors - [0.016, 0.075]) < 0.01
+@assert norm(errors - [0.017, 0.075]) < 0.01

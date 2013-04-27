@@ -33,7 +33,7 @@ function estimate_errors(p, residuals, J, alpha)
 	# compute the covariance matrix from the QR decomposition
 	Q,R = qr(J)
 	Rinv = inv(R)
-	covar = Rinv*Rinv*mse
+	covar = Rinv*Rinv'*mse
 
 	# then the standard errors are given by the sqrt of the diagonal
 	std_error = sqrt(diag(covar))
