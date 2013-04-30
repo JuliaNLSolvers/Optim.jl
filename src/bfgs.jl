@@ -71,6 +71,8 @@ function bfgs(d::DifferentiableFunction,
     # Maintain arrays for position and gradient changes
     s = Array(Float64, n)
     y = Array(Float64, n)
+    p = Array(Float64, n)
+    u = Array(Float64, n)
 
     # Reuse arrays during every line search
     ls_x = Array(Float64, n)
@@ -83,9 +85,11 @@ function bfgs(d::DifferentiableFunction,
         # Increment the iteration counter
         iteration += 1
 
-        # Set the search direction
-        # TODO: Can this made more efficient?
-        p = -B * gradient_new
+        # Set the search direction        
+        A_mul_B(p, B, gradient_new)  # p = - B * gradient_new
+        for i = 1 : n
+            p[i] = -p[i]
+        end
 
         # Calculate a step-size
         alpha, f_update, g_update =
@@ -112,16 +116,20 @@ function bfgs(d::DifferentiableFunction,
         end
 
         # Update the inverse Hessian approximation
-        rho = 1.0 / dot(y, s)
-        if isinf(rho)
-           break
+        # (using the formula in Wikipedia)
+        
+        sy = dot(s, y)
+        if sy == 0
+            break
         end
-        # TODO: Reuse storage here
-        v = I - rho * y * s'
-        if iteration == 1
-            B = v'v * dot(y, s) / dot(y, y)
-        else
-            B = v' * B * v + rho * s * s'
+        A_mul_B(u, B, y)  # u = B * y
+        
+        c1 = (sy + dot(y, u)) / (sy * sy)
+        c2 = 1 / sy
+        
+        # B = B + c1 * (s * s') - c2 * (u * s' + s * u')                
+        for i = 1 : n, j = 1 : n
+        	B[i,j] += c1 * s[i] * s[j] - c2 * (u[i] * s[j] + u[j] * s[i])
         end
 
         # Show state of the system
