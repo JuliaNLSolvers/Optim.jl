@@ -1,3 +1,4 @@
+# TODO: Avoid recomputing centroids and f(centroid)
 function nelder_mead_trace!(tr::OptimizationTrace,
                             p::Matrix,
                             y::Vector,
@@ -73,7 +74,7 @@ function nelder_mead(f::Function,
     # Iterate until convergence or exhaustion
     while !converged && iteration < iterations
         # Augment the iteration counter
-        iteration = iteration + 1
+        iteration += 1
 
         # Find p_l and p_h, the minimum and maximum values of f() among p
         y_l, l = findmin(y)

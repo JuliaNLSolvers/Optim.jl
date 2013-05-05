@@ -1,3 +1,7 @@
+# Notational note
+# JMW's dx_history <=> NW's S
+# JMW's dgr_history <=> NW's Y
+
 function modindex(i::Integer, m::Integer)
     x = mod(i, m)
     if x == 0
@@ -7,64 +11,75 @@ function modindex(i::Integer, m::Integer)
     end
 end
 
-function twoloop!(g_x::Vector,
+# Here alpha is a cache that parallels betas
+# It is not the step-size
+# q is also a cache
+function twoloop!(s::Vector,
+                  gr::Vector,
                   rho::Vector,
-                  s::Matrix,
-                  y::Matrix,
+                  dx_history::Matrix,
+                  dgr_history::Matrix,
                   m::Integer,
                   iteration::Integer,
                   alpha::Vector,
-                  q::Vector,
-                  p::Vector)
-    # Copy gradient into q for backward pass
-    copy!(q, g_x)
+                  q::Vector)
+    # Count number of parameters
+    n = length(s)
 
-    n = length(p)
-
-    upper = iteration - 1
+    # Determine lower and upper bounds for loops
     lower = iteration - m
+    upper = iteration - 1
+
+    # Copy gr into q for backward pass
+    copy!(q, gr)
+
+    # Backward pass
     for index in upper:-1:lower
         if index < 1
             continue
         end
         i = modindex(index, m)
-        alpha[i] = rho[i] * dot(s[:, i], q)
+        alpha[i] = rho[i] * dot(dx_history[:, i], q)
         for j in 1:n
-            q[j] -= alpha[i] * y[j, i]
+            q[j] -= alpha[i] * dgr_history[j, i]
         end
     end
 
-    # Copy q into p for forward pass
-    copy!(p, q)
+    # Copy q into s for forward pass
+    copy!(s, q)
 
+    # Forward pass
     for index in lower:1:upper
         if index < 1
             continue
         end
         i = modindex(index, m)
-        beta = rho[i] * dot(y[:, i], p)
+        beta = rho[i] * dot(dgr_history[:, i], s)
         for j in 1:n
-            p[j] += s[j, i] * (alpha[i] - beta)
+            s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
     end
 
-    for j in 1:n
-        p[j] = -1.0 * p[j]
+    # Negate search direction
+    for i in 1:n
+        s[i] = -1.0 * s[i]
     end
+
+    return
 end
 
 function l_bfgs_trace!(tr::OptimizationTrace,
                        x::Vector,
                        f_x::Real,
-                       g_new::Vector,
-                       iteration::Integer,
+                       gr::Vector,
                        alpha::Real,
+                       iteration::Integer,
                        store_trace::Bool,
                        show_trace::Bool)
     dt = Dict()
-    dt["g(x)"] = copy(g_new)
-    dt["Step-size"] = alpha
-    dt["First-order opt"] = norm(g_new, Inf)
+    dt["g(x)"] = copy(gr)
+    dt["Current step size"] = alpha
+    dt["Maximum component of g(x)"] = norm(gr, Inf)
     os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
@@ -74,120 +89,140 @@ function l_bfgs_trace!(tr::OptimizationTrace,
     end
 end
 
-function l_bfgs(d::DifferentiableFunction,
-                initial_x::Vector;
-                m::Integer = 10,
-                tolerance::Real = 1e-8,
-                iterations::Integer = 1_000,
-                store_trace::Bool = false,
-                show_trace::Bool = false,
-                line_search!::Function = backtracking_line_search!)
+function l_bfgs{T}(d::Union(DifferentiableFunction,
+                            TwiceDifferentiableFunction),
+                   initial_x::Vector{T};
+                   m::Integer = 10,
+                   tolerance::Real = 1e-8,
+                   iterations::Integer = 1_000,
+                   store_trace::Bool = false,
+                   show_trace::Bool = false,
+                   linesearch!::Function = hz_linesearch!)
 
-    # Set iteration counter
-    iteration = 0
-
-    # Keep a record of the starting point
+    # Maintain current state in x
     x = copy(initial_x)
 
-    # Establish size of parameter space
+    # Count the total number of iterations
+    iteration = 0
+
+    # Track calls to function and gradient
+    f_calls = 0
+    g_calls = 0
+
+    # Count number of parameters
     n = length(x)
 
-    # Initialize rho, s and y
+    # Maintain current gradient in gr and previous gradient in gr_previous
+    gr = Array(Float64, n)
+    gr_previous = Array(Float64, n)
+
+    # Store a history of changes in position and gradient
     rho = Array(Float64, m)
-    s = Array(Float64, n, m)
-    y = Array(Float64, n, m)
+    dx_history = Array(Float64, n, m)
+    dgr_history = Array(Float64, n, m)
 
-    # Initialize q, p, tmp_s and tmp_y
-    q = Array(Float64, n)
-    p = Array(Float64, n)
-    tmp_s = Array(Float64, n)
-    tmp_y = Array(Float64, n)
+    # The current search direction
+    s = Array(Float64, n)
 
-    # Reuse storage during calls to line search
-    ls_x = Array(Float64, n)
-    ls_gradient = Array(Float64, n)
+    # Buffers for use in line search
+    x_ls = Array(Float64, n)
+    gr_ls = Array(Float64, n)
 
-    # Re-use this vector during every call to two_loop()
-    twoloop_v = Array(Float64, m)
+    # Store f(x) in f_x
+    f_x = d.fg!(x, gr)
+    f_calls += 1
+    g_calls += 1
+    copy!(gr_previous, gr)
 
-    # Compute the initial values of f and g
-    g_x = Array(Float64, n)
-    g_new = Array(Float64, n)
-    f_calls = 1
-    g_calls = 1
-    f_x = d.fg!(x, g_new)
-    copy!(g_x, g_new)
+    # Keep track of step-sizes
+    alpha = 1.0
+    # TODO: Restore these pieces
+    # alpha = alphainit(1.0, x, g???, phi0???)
+    # alphamax = Inf # alphamaxfunc(x, d)
+    # alpha = min(alphamax, alpha)
 
-    # Print trace information
+    # TODO: How should this flag be set?
+    mayterminate = false
+
+    # Maintain a cache for line search results
+    lsr = LineSearchResults(T)
+
+    # Buffers for new entries of dx_history and dgr_history
+    dx = Array(Float64, n)
+    dgr = Array(Float64, n)
+
+    # Buffers for use by twoloop!
+    twoloop_q = Array(Float64, n)
+    twoloop_alpha = Array(Float64, m)
+
+    # Trace the history of states visited
     tr = OptimizationTrace()
-
-    # Show trace
-    if store_trace || show_trace
-        l_bfgs_trace!(tr,
-                      x,
-                      f_x,
-                      g_new,
-                      iteration,
-                      0.0,
-                      store_trace,
-                      show_trace)
+    tracing = store_trace || show_trace
+    if tracing
+        l_bfgs_trace!(tr, x, f_x, gr, alpha,
+                      iteration, store_trace, show_trace)
     end
 
     # Iterate until convergence
     converged = false
-
     while !converged && iteration <= iterations
-        # Update count
+        # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Select a search direction
-        twoloop!(g_new, rho, s, y, m, iteration, twoloop_v, q, p)
+        # Determine the L-BFGS search direction
+        twoloop!(s, gr, rho, dx_history, dgr_history, m, iteration,
+                 twoloop_alpha, twoloop_q)
 
-        # Select a step-size
+        # Refresh the line search cache
+        dphi0 = dot(gr, s)
+        clear!(lsr)
+        push!(lsr, zero(T), f_x, dphi0)
+
+        # Determine the distance of movement along the search line
+        # TODO: Fix f_update, g_update
         alpha, f_update, g_update =
-          line_search!(d, x, p, ls_x, ls_gradient)
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls += f_update
         g_calls += g_update
 
-        # Update position
+        # Update current position
         for i in 1:n
-            tmp_s[i] = alpha * p[i]
-            x[i] = x[i] + tmp_s[i]
+            dx[i] = alpha * s[i]
+            x[i] = x[i] + dx[i]
         end
-        copy!(g_x, g_new)
-        f_x = d.fg!(x, g_new)
+
+        # Maintain a record of the previous gradient
+        copy!(gr_previous, gr)
+
+        # Update the function value and gradient
+        f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
 
-        # Estimate movement
+        # Measure the change in the gradient
         for i in 1:n
-            tmp_y[i] = g_new[i] - g_x[i]
+            dgr[i] = gr[i] - gr_previous[i]
         end
-        tmp_rho = 1.0 / dot(tmp_y, tmp_s)
-        if isinf(tmp_rho)
+
+        # Update the L-BFGS history of positions and gradients
+        rho_iteration = 1.0 / dot(dx, dgr)
+        if isinf(rho_iteration)
+            # TODO: Introduce a formal error? There was a warning here previously
             break
         end
-
-        # Keep a record of the new s, y and rho
-        s[:, modindex(iteration, m)] = tmp_s
-        y[:, modindex(iteration, m)] = tmp_y
-        rho[modindex(iteration, m)] = tmp_rho
+        dx_history[:, modindex(iteration, m)] = dx
+        dgr_history[:, modindex(iteration, m)] = dgr
+        rho[modindex(iteration, m)] = rho_iteration
 
         # Assess convergence
-        if norm(g_x, Inf) <= tolerance
+        if norm(gr, Inf) <= tolerance
            converged = true
         end
 
         # Show trace
-        if store_trace || show_trace
-            l_bfgs_trace!(tr,
-                          x,
-                          f_x,
-                          g_new,
-                          iteration,
-                          alpha,
-                          store_trace,
-                          show_trace)
+        if tracing
+            l_bfgs_trace!(tr, x, f_x, gr, alpha,
+                          iteration, store_trace, show_trace)
         end
     end
 

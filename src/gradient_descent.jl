@@ -1,13 +1,13 @@
 function gradient_descent_trace!(tr::OptimizationTrace,
                                  x::Vector,
                                  f_x::Real,
-                                 gradient::Vector,
+                                 gr::Vector,
                                  iteration::Integer,
                                  store_trace::Bool,
                                  show_trace::Bool)
     dt = Dict()
-    dt["g(x)"] = copy(gradient)
-    dt["|g(x)|"] = norm(gradient, Inf)
+    dt["g(x)"] = copy(gr)
+    dt["Maximum component of g(x)"] = norm(gr, Inf)
     os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
@@ -17,93 +17,106 @@ function gradient_descent_trace!(tr::OptimizationTrace,
     end
 end
 
-function gradient_descent(d::DifferentiableFunction,
-                          initial_x::Vector;
-                          tolerance::Real = 1e-8,
-                          iterations::Integer = 1_000,
-                          store_trace::Bool = false,
-                          show_trace::Bool = false,
-                          line_search!::Function = backtracking_line_search!)
+function gradient_descent{T}(d::Union(DifferentiableFunction,
+                                      TwiceDifferentiableFunction),
+                             initial_x::Vector{T};
+                             tolerance::Real = 1e-8,
+                             iterations::Integer = 1_000,
+                             store_trace::Bool = false,
+                             show_trace::Bool = false,
+                             linesearch!::Function = hz_linesearch!)
 
-    # Keep a copy of the initial state of the system
+    # Maintain current state in x
     x = copy(initial_x)
 
-    # Count the number of gradient descent steps we perform
+    # Count the total number of iterations
     iteration = 0
 
-    # Track calls to f and g!
-    f_calls, g_calls = 0, 0
+    # Track calls to function and gradient
+    f_calls = 0
+    g_calls = 0
 
-    # Allocate vectors for re-use by gradient calls
+    # Count number of parameters
     n = length(x)
-    gradient = Array(Float64, n)
 
-    # Allocate vector for step direction
-    p = Array(Float64, n)
+    # Maintain current gradient in gr
+    gr = Array(Float64, n)
 
-    # Allocate vectors for line search
-    ls_x = Array(Float64, n)
-    ls_gradient = Array(Float64, n)
+    # The current search direction
+    s = Array(Float64, n)
 
-    # Maintain current value of f and g
+    # Buffers for use in line search
+    x_ls = Array(Float64, n)
+    gr_ls = Array(Float64, n)
+
+    # Store f(x) in f_x
+    f_x = d.fg!(x, gr)
     f_calls += 1
     g_calls += 1
-    f_x = d.fg!(x, gradient)
 
-    # Show trace
+    # Keep track of step-sizes
+    alpha = 1.0
+    # TODO: Restore these pieces
+    # alpha = alphainit(1.0, x, g???, phi0???)
+    # alphamax = Inf # alphamaxfunc(x, d)
+    # alpha = min(alphamax, alpha)
+
+    # TODO: How should this flag be set?
+    mayterminate = false
+
+    # Maintain a cache for line search results
+    lsr = LineSearchResults(T)
+
+    # Trace the history of states visited
     tr = OptimizationTrace()
-    if store_trace || show_trace
-        gradient_descent_trace!(tr,
-                                x,
-                                f_x,
-                                gradient,
-                                iteration,
-                                store_trace,
-                                show_trace)
+    tracing = store_trace || show_trace
+    if tracing
+        gradient_descent_trace!(tr, x, f_x, gr,
+                                iteration, store_trace, show_trace)
     end
 
-    # Monitor convergence
+    # Iterate until convergence
     converged = false
-
-    # Iterate until the norm of the gradient is within tolerance of zero
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
-        iteration = iteration + 1
+        iteration += 1
 
-        # Use a back-tracking line search to select a step-size
-        #  Direction is always negative gradient
+        # Search direction is always the negative gradient
         for i in 1:n
-            p[i] = -gradient[i]
+            s[i] = -gr[i]
         end
-        step_size, f_update, g_update =
-          line_search!(d, x, p, ls_x, ls_gradient)
+
+        # Refresh the line search cache
+        dphi0 = dot(gr, s)
+        clear!(lsr)
+        push!(lsr, zero(T), f_x, dphi0)
+
+        # Determine the distance of movement along the search line
+        # TODO: Fix f_update, g_update
+        alpha, f_update, g_update =
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls += f_update
         g_calls += g_update
 
-        # Move in the direction of the gradient
+        # Update current position
         for i in 1:n
-            x[i] = x[i] - step_size * gradient[i]
+            x[i] = x[i] + alpha * s[i]
         end
 
         # Update the function value and gradient
+        f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
-        f_x = d.fg!(x, gradient)
 
         # Assess convergence
-        if norm(gradient, Inf) <= tolerance
+        if norm(gr, Inf) <= tolerance
             converged = true
         end
 
         # Show trace
-        if store_trace || show_trace
-            gradient_descent_trace!(tr,
-                                    x,
-                                    f_x,
-                                    gradient,
-                                    iteration,
-                                    store_trace,
-                                    show_trace)
+        if tracing
+            gradient_descent_trace!(tr, x, f_x, gr,
+                                    iteration, store_trace, show_trace)
         end
     end
 

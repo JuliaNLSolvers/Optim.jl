@@ -31,10 +31,11 @@ module Optim
     include("grid_search.jl")
 
     # Line Search Methods
-    include("backtracking_line_search.jl")
-    include("interpolating_line_search.jl")
-    include("mt_cstep.jl")
-    include("mt_line_search.jl")
+    include(joinpath("linesearch", "backtracking_linesearch.jl"))
+    include(joinpath("linesearch", "interpolating_linesearch.jl"))
+    include(joinpath("linesearch", "mt_cstep.jl"))
+    include(joinpath("linesearch", "mt_linesearch.jl"))
+    include(joinpath("linesearch", "hz_linesearch.jl"))
 
     # Gradient Descent
     include("gradient_descent.jl")
@@ -62,4 +63,7 @@ module Optim
     # End-User Facing Wrapper Functions
     include("optimize.jl")
     include("curve_fit.jl")
+
+    # Examples for testing
+    include(joinpath("problems", "unconstrained.jl"))
 end

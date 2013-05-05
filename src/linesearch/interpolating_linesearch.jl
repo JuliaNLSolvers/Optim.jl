@@ -1,12 +1,15 @@
 # TODO: Optimize for fg! calls
 # TODO: Implement safeguards
 
-function interpolating_line_search!(d::Union(DifferentiableFunction,
+function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
                                              TwiceDifferentiableFunction),
                                     x::Vector,
                                     p::Vector,
                                     x_new::Vector,
-                                    gr_new::Vector;
+                                    gr_new::Vector,
+                                    lsr::LineSearchResults{T},
+                                    c::Real,
+                                    mayterminate::Bool;
                                     c1::Real = 1e-4,
                                     c2::Real = 0.9,
                                     rho::Real = 2.0)
@@ -90,7 +93,7 @@ function interpolating_line_search!(d::Union(DifferentiableFunction,
     end
 
     # Quasi-error response
-    return a_max
+    return a_max, f_calls, g_calls
 end
 
 function zoom(a_lo::Real,

@@ -1,11 +1,11 @@
-function optimize(d::DifferentiableFunction,
+function optimize(d::TwiceDifferentiableFunction,
                   initial_x::Vector;
                   method::Symbol = :l_bfgs,
                   tolerance::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
-                  line_search!::Function = backtracking_line_search!)
+                  linesearch!::Function = hz_linesearch!)
     if method == :gradient_descent
         gradient_descent(d,
                          initial_x,
@@ -13,7 +13,7 @@ function optimize(d::DifferentiableFunction,
                          iterations = iterations,
                          store_trace = store_trace,
                          show_trace = show_trace,
-                         line_search! = line_search!)
+                         linesearch! = linesearch!)
     elseif method == :bfgs
         bfgs(d,
              initial_x,
@@ -21,7 +21,7 @@ function optimize(d::DifferentiableFunction,
              iterations = iterations,
              store_trace = store_trace,
              show_trace = show_trace,
-             line_search! = line_search!)
+             linesearch! = linesearch!)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -29,7 +29,52 @@ function optimize(d::DifferentiableFunction,
                iterations = iterations,
                store_trace = store_trace,
                show_trace = show_trace,
-               line_search! = line_search!)
+               linesearch! = linesearch!)
+    elseif method == :newton
+        newton(d,
+               initial_x,
+               tolerance = tolerance,
+               iterations = iterations,
+               store_trace = store_trace,
+               show_trace = show_trace,
+               linesearch! = linesearch!)
+    else
+        throw(ArgumentError("Unknown method $method"))
+    end
+end
+
+function optimize(d::DifferentiableFunction,
+                  initial_x::Vector;
+                  method::Symbol = :l_bfgs,
+                  tolerance::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
+                  show_trace::Bool = false,
+                  linesearch!::Function = hz_linesearch!)
+    if method == :gradient_descent
+        gradient_descent(d,
+                         initial_x,
+                         tolerance = tolerance,
+                         iterations = iterations,
+                         store_trace = store_trace,
+                         show_trace = show_trace,
+                         linesearch! = linesearch!)
+    elseif method == :bfgs
+        bfgs(d,
+             initial_x,
+             tolerance = tolerance,
+             iterations = iterations,
+             store_trace = store_trace,
+             show_trace = show_trace,
+             linesearch! = linesearch!)
+    elseif method == :l_bfgs
+        l_bfgs(d,
+               initial_x,
+               tolerance = tolerance,
+               iterations = iterations,
+               store_trace = store_trace,
+               show_trace = show_trace,
+               linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
     end
@@ -44,7 +89,7 @@ function optimize(f::Function,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
-                  line_search!::Function = backtracking_line_search!)
+                  linesearch!::Function = hz_linesearch!)
     if method == :nelder_mead
         nelder_mead(f,
                     initial_x,
@@ -67,7 +112,7 @@ function optimize(f::Function,
                          iterations = iterations,
                          store_trace = store_trace,
                          show_trace = show_trace,
-                         line_search! = line_search!)
+                         linesearch! = linesearch!)
     elseif method == :newton
         d = TwiceDifferentiableFunction(f, g!, h!)
         newton(d,
@@ -76,7 +121,7 @@ function optimize(f::Function,
                iterations = iterations,
                store_trace = store_trace,
                show_trace = show_trace,
-               line_search! = line_search!)
+               linesearch! = linesearch!)
     elseif method == :bfgs
         d = DifferentiableFunction(f, g!)
         bfgs(d,
@@ -85,7 +130,7 @@ function optimize(f::Function,
              iterations = iterations,
              store_trace = store_trace,
              show_trace = show_trace,
-             line_search! = line_search!)
+             linesearch! = linesearch!)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -94,7 +139,7 @@ function optimize(f::Function,
                iterations = iterations,
                store_trace = store_trace,
                show_trace = show_trace,
-               line_search! = line_search!)
+               linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
     end
@@ -108,7 +153,7 @@ function optimize(f::Function,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
-                  line_search!::Function = backtracking_line_search!)
+                  linesearch!::Function = hz_linesearch!)
     if method == :nelder_mead
         nelder_mead(f,
                     initial_x,
@@ -131,7 +176,7 @@ function optimize(f::Function,
                          iterations = iterations,
                          store_trace = store_trace,
                          show_trace = show_trace,
-                         line_search! = line_search!)
+                         linesearch! = linesearch!)
     elseif method == :bfgs
         d = DifferentiableFunction(f, g!)
         bfgs(d,
@@ -140,7 +185,7 @@ function optimize(f::Function,
              iterations = iterations,
              store_trace = store_trace,
              show_trace = show_trace,
-             line_search! = line_search!)
+             linesearch! = linesearch!)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -149,7 +194,7 @@ function optimize(f::Function,
                iterations = iterations,
                store_trace = store_trace,
                show_trace = show_trace,
-               line_search! = line_search!)
+               linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
     end
@@ -162,7 +207,7 @@ function optimize(f::Function,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
-                  line_search!::Function = backtracking_line_search!)
+                  linesearch!::Function = hz_linesearch!)
     if method == :nelder_mead
         nelder_mead(f,
                     initial_x,
@@ -185,7 +230,7 @@ function optimize(f::Function,
                          iterations = iterations,
                          store_trace = store_trace,
                          show_trace = show_trace,
-                         line_search! = line_search!)
+                         linesearch! = linesearch!)
     elseif method == :bfgs
         d = DifferentiableFunction(f)
         bfgs(d,
@@ -194,7 +239,7 @@ function optimize(f::Function,
              iterations = iterations,
              store_trace = store_trace,
              show_trace = show_trace,
-             line_search! = line_search!)
+             linesearch! = linesearch!)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f)
         l_bfgs(d,
@@ -203,7 +248,7 @@ function optimize(f::Function,
                iterations = iterations,
                store_trace = store_trace,
                show_trace = show_trace,
-               line_search! = line_search!)
+               linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
     end

@@ -1,13 +1,13 @@
 function newton_trace!(tr::OptimizationTrace,
                        x::Vector,
                        f_x::Real,
-                       iteration::Integer,
-                       gradient::Vector,
+                       gr::Vector,
                        H::Matrix,
+                       iteration::Integer,
                        store_trace::Bool,
                        show_trace::Bool)
     dt = Dict()
-    dt["g(x)"] = copy(gradient)
+    dt["g(x)"] = copy(gr)
     dt["h(x)"] = copy(H)
     os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
@@ -18,97 +18,112 @@ function newton_trace!(tr::OptimizationTrace,
     end
 end
 
-function newton(d::TwiceDifferentiableFunction,
-                initial_x::Vector;
-                tolerance::Real = 1e-8,
-                iterations::Integer = 1_000,
-                store_trace::Bool = false,
-                show_trace::Bool = false,
-                line_search!::Function = backtracking_line_search!)
+function newton{T}(d::TwiceDifferentiableFunction,
+                   initial_x::Vector{T};
+                   tolerance::Real = 1e-8,
+                   iterations::Integer = 1_000,
+                   store_trace::Bool = false,
+                   show_trace::Bool = false,
+                   linesearch!::Function = hz_linesearch!)
 
-    # Maintain a record of the initial state
+    # Maintain current state in x
     x = copy(initial_x)
 
-    # Count function and gradient calls
+    # Count the total number of iterations
+    iteration = 0
+
+    # Track calls to function and gradient
     f_calls = 0
     g_calls = 0
 
     # Count number of parameters
     n = length(x)
 
-    # Cache the values of f, g and h
-    gradient = Array(Float64, n)
-    f_x = d.fg!(x, gradient)
+    # Maintain current gradient in gr
+    gr = Array(Float64, n)
+
+    # The current search direction
+    # TODO: Try to avoid re-allocating s
+    s = Array(Float64, n)
+
+    # Buffers for use in line search
+    x_ls = Array(Float64, n)
+    gr_ls = Array(Float64, n)
+
+    # Store f(x) in f_x
+    f_x = d.fg!(x, gr)
     f_calls += 1
     g_calls += 1
+
+    # Store h(x) in H
     H = Array(Float64, n, n)
     d.h!(x, H)
 
-    # Allocate buffers
-    ls_x = Array(Float64, n)
-    ls_gradient = Array(Float64, n)
+    # Keep track of step-sizes
+    alpha = 1.0
+    # TODO: Restore these pieces
+    # alpha = alphainit(1.0, x, g???, phi0???)
+    # alphamax = Inf # alphamaxfunc(x, d)
+    # alpha = min(alphamax, alpha)
 
-    # Count iterations
-    iteration = 0
+    # TODO: How should this flag be set?
+    mayterminate = false
 
-    # Maintain a trace of the system
+    # Maintain a cache for line search results
+    lsr = LineSearchResults(T)
+
+    # Trace the history of states visited
     tr = OptimizationTrace()
-    if store_trace || show_trace
-        newton_trace!(tr,
-                      x,
-                      f_x,
-                      iteration,
-                      gradient,
-                      H,
-                      store_trace,
-                      show_trace)
+    tracing = store_trace || show_trace
+    if tracing
+        newton_trace!(tr, x, f_x, gr, H,
+                      iteration, store_trace, show_trace)
     end
 
-    # Track convergence
+    # Iterate until convergence
     converged = false
-
-    # Determine direction of line search
-    dx = -H \ gradient
-
     while !converged && iteration < iterations
-        # Update the iteration counter
+        # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Select a step size
-        step_size, f_up, g_up =
-          line_search!(d, x, dx, ls_x, ls_gradient)
-        f_calls += f_up
-        g_calls += g_up
+        # Search direction is always the negative gradient divided by H
+        # TODO: Do this calculation in place
+        s[:] = -(H \ gr)
 
-        # Update our position
+        # Refresh the line search cache
+        dphi0 = dot(gr, s)
+        clear!(lsr)
+        push!(lsr, zero(T), f_x, dphi0)
+
+        # Determine the distance of movement along the search line
+        # TODO: Fix f_update, g_update
+        alpha, f_update, g_update =
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+        f_calls += f_update
+        g_calls += g_update
+
+        # Update current position
         for i in 1:n
-            x[i] += step_size * dx[i]
+            x[i] = x[i] + alpha * s[i]
         end
 
-        # Cache values again
-        f_x = d.fg!(x, gradient)
-        d.h!(x, H)
+        # Update the function value and gradient
+        f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
 
-        # Select a search direction
-        dx = -H \ gradient
+        # Update the Hessian
+        d.h!(x, H)
 
         # Assess convergence
-        if norm(gradient, Inf) <= tolerance
+        if norm(gr, Inf) <= tolerance
            converged = true
         end
 
-        # Show state of the system
-        if store_trace || show_trace
-            newton_trace!(tr,
-                          x,
-                          f_x,
-                          iteration,
-                          gradient,
-                          H,
-                          store_trace,
-                          show_trace)
+        # Show trace
+        if tracing
+            newton_trace!(tr, x, f_x, gr, H,
+                          iteration, store_trace, show_trace)
         end
     end
 

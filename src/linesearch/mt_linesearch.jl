@@ -132,12 +132,15 @@
 # TODO: Decide whether to update x, f, g and info
 #       or just return step and nfev and let existing code do its job
 
-function mt_line_search!(fcn::Union(DifferentiableFunction,
-                                    TwiceDifferentiableFunction),
+function mt_linesearch!{T}(fcn::Union(DifferentiableFunction,
+                                      TwiceDifferentiableFunction),
                          x::Vector,
                          s::Vector,
                          new_x::Vector,
                          g::Vector,
+                         lsr::LineSearchResults{T},
+                         c::Real,
+                         mayterminate::Bool;
                          n::Integer = length(x),
                          stp::Real = 1.0,
                          ftol::Real = 1e-4,
@@ -150,7 +153,13 @@ function mt_line_search!(fcn::Union(DifferentiableFunction,
    info = 0
    info_cstep = 1 # Info from step
 
+   # Count function and gradient calls
+   f_calls = 0
+   g_calls = 0
+
    f = fcn.fg!(x, g)
+   f_calls += 1
+   g_calls += 1
 
    #
    # Check the input parameters for errors.
@@ -244,6 +253,8 @@ function mt_line_search!(fcn::Union(DifferentiableFunction,
          new_x[i] = x[i] + stp * s[i] # TODO: Use x_new here
       end
       f = fcn.fg!(new_x, g)
+      f_calls += 1
+      g_calls += 1
       nfev += 1 # This includes calls to f() and g!()
       dg = dot(g, s)
       ftest1 = finit + stp * dgtest
@@ -278,7 +289,7 @@ function mt_line_search!(fcn::Union(DifferentiableFunction,
       #
 
       if info != 0
-         return stp, nfev, nfev
+         return stp, f_calls, g_calls
       end
 
       #

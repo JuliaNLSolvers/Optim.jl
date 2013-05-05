@@ -1,15 +1,16 @@
 # http://stronglyconvex.com/blog/accelerated-gradient-descent.html
+# TODO: Need to specify alphamax on each iteration
 
 function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
                                              x::Vector,
                                              f_x::Real,
-                                             gradient::Vector,
+                                             gr::Vector,
                                              iteration::Integer,
                                              store_trace::Bool,
                                              show_trace::Bool)
     dt = Dict()
-    dt["g(x)"] = copy(gradient)
-    dt["|g(x)|"] = norm(gradient, Inf)
+    dt["g(x)"] = copy(gr)
+    dt["|g(x)|"] = norm(gr, Inf)
     os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
@@ -19,119 +20,131 @@ function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
     end
 end
 
-# Flip notation
+# Flip notation relative to Duckworth
 # Start with x_{0}
 # y_{t} = x_{t - 1} - alpha g(x_{t - 1})
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-function accelerated_gradient_descent(d::DifferentiableFunction,
-                                      initial_x::Vector;
-                                      tolerance::Real = 1e-8,
-                                      iterations::Integer = 1_000,
-                                      store_trace::Bool = false,
-                                      show_trace::Bool = false,
-                                      line_search!::Function = backtracking_line_search!)
+function accelerated_gradient_descent{T}(d::DifferentiableFunction,
+                                         initial_x::Vector{T};
+                                         tolerance::Real = 1e-8,
+                                         iterations::Integer = 1_000,
+                                         store_trace::Bool = false,
+                                         show_trace::Bool = false,
+                                         linesearch!::Function = hz_linesearch!)
 
-    # Keep a copy of the initial state of the system
-    x_t1 = copy(initial_x)
-    x_t = copy(initial_x)
-    y_t1 = copy(initial_x)
-    y_t = copy(initial_x)
+    # Maintain current state in x and previous state in x_previous
+    x_previous = copy(initial_x)
+    x = copy(initial_x)
 
-    # Count the number of gradient descent steps we perform
+    # Maintain current intermediate state in y and previous intermediate state in y_previous
+    y_previous = copy(initial_x)
+    y = copy(initial_x)
+
+    # Count the total number of iterations
     iteration = 0
 
-    # Track calls to f and g!
-    f_calls, g_calls = 0, 0
+    # Track calls to function and gradient
+    f_calls = 0
+    g_calls = 0
 
-    # Allocate vectors for re-use by gradient calls
-    n = length(initial_x)
-    gradient = Array(Float64, n)
+    # Count number of parameters
+    n = length(x)
 
-    # Maintain current value of f and g
-    f_x = d.fg!(x_t, gradient)
+    # Maintain current gradient in gr
+    gr = Array(Float64, n)
+
+    # The current search direction
+    s = Array(Float64, n)
+
+    # Buffers for use in line search
+    x_ls = Array(Float64, n)
+    gr_ls = Array(Float64, n)
+
+    # Store f(x) in f_x
+    f_x = d.fg!(x, gr)
     f_calls += 1
     g_calls += 1
 
-    # Allocate vector for step direction
-    p = Array(Float64, n)
+    # Keep track of step-sizes
+    alpha = 1.0
+    # TODO: Restore these pieces
+    # alpha = alphainit(1.0, x, g???, phi0???)
+    # alphamax = Inf # alphamaxfunc(x, d)
+    # alpha = min(alphamax, alpha)
 
-    # Allocate vectors for line search
-    ls_x = Array(Float64, n)
-    ls_gradient = Array(Float64, n)
+    # TODO: How should this flag be set?
+    mayterminate = false
 
-    # Show trace
+    # Maintain a cache for line search results
+    lsr = LineSearchResults(T)
+
+    # Trace the history of states visited
     tr = OptimizationTrace()
-    if store_trace || show_trace
-        accelerated_gradient_descent_trace!(tr,
-                                            x_t,
-                                            f_x,
-                                            gradient,
-                                            iteration,
-                                            store_trace,
-                                            show_trace)
+    tracing = store_trace || show_trace
+    if tracing
+        accelerated_gradient_descent_trace!(tr, x, f_x, gr,
+                                            iteration, store_trace, show_trace)
     end
 
-    # Monitor convergence
+    # Iterate until convergence
     converged = false
-
-    # Iterate until the norm of the gradient is within tolerance of zero
     while !converged && iteration <= iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Use a back-tracking line search to select a step-size
-        #  Direction is always negative gradient
+        # Search direction is always the negative gradient
         for i in 1:n
-            p[i] = -gradient[i]
+            s[i] = -gr[i]
         end
+
+        # Refresh the line search cache
+        dphi0 = dot(gr, s)
+        clear!(lsr)
+        push!(lsr, zero(T), f_x, dphi0)
+
+        # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          line_search!(d, x_t, p, ls_x, ls_gradient, c1 = 0.5, rho = 0.99, alpha = 0.05)
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls += f_update
         g_calls += g_update
 
-        # Move in the direction of the gradient
-        copy!(y_t1, y_t)
+        # Make one move in the direction of the gradient
+        copy!(y_previous, y)
         for i in 1:n
-            y_t[i] = x_t1[i] + alpha * p[i]
+            y[i] = x_previous[i] + alpha * s[i]
         end
 
-        # x_t1 = x_t
-        copy!(x_t1, x_t)
+        # Record previous state
+        copy!(x_previous, x)
 
-        # Take Nesterov step
+        # Update current position with Nesterov correction
         scaling = (iteration - 1.0) / (iteration + 2.0)
         for i in 1:n
-            x_t[i] = y_t[i] + scaling * (y_t[i] - y_t1[i])
+            x[i] = y[i] + scaling * (y[i] - y_previous[i])
         end
 
-        # Update current value of f and g
-        f_x = d.fg!(x_t, gradient)
+        # Update the function value and gradient
+        f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
 
         # Assess convergence
-        if norm(gradient, Inf) <= tolerance
+        if norm(gr, Inf) <= tolerance
             converged = true
-            continue
         end
 
         # Show trace
-        if store_trace || show_trace
-            accelerated_gradient_descent_trace!(tr,
-                                                x_t,
-                                                f_x,
-                                                gradient,
-                                                iteration,
-                                                store_trace,
-                                                show_trace)
+        if tracing
+            accelerated_gradient_descent_trace!(tr, x, f_x, gr,
+                                                iteration, store_trace, show_trace)
         end
     end
 
     OptimizationResults("Accelerated Gradient Descent",
                         initial_x,
-                        x_t,
+                        x,
                         f_x,
                         iteration,
                         converged,

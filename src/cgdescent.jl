@@ -1,46 +1,3 @@
-import Base.push!
-
-# A cache for results from linesearch (to avoid recomputation)
-type LineSearchResults{T}
-    alpha::Vector{T}
-    value::Vector{T}
-    slope::Vector{T}
-    nfailures::Int
-end
-LineSearchResults{T}(::Type{T}) = LineSearchResults(T[], T[], T[], 0)
-length(lsr::LineSearchResults) = length(lsr.alpha)
-function push!{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
-    push!(lsr.alpha, a)
-    push!(lsr.value, v)
-    push!(lsr.slope, d)
-end
-function clear(lsr::LineSearchResults)
-    N = length(lsr.alpha)
-    delete!(lsr.alpha, 1:N)
-    delete!(lsr.value, 1:N)
-    delete!(lsr.slope, 1:N)
-    # nfailures is deliberately not set to 0
-end
-
-# Display flags are represented as a bitfield
-# (not exported, but can use via OptimizeMod.ITER, for example)
-const one64 = convert(Uint64, 1)
-const FINAL       = one64
-const ITER        = one64<<1
-const PARAMETERS  = one64<<2
-const GRADIENT    = one64<<3
-const SEARCHDIR   = one64<<4
-const ALPHA       = one64<<5
-const BETA        = one64<<6
-const ALPHAGUESS  = one64<<7
-const BRACKET     = one64<<8
-const LINESEARCH  = one64<<9
-const UPDATE      = one64<<10
-const SECANT2     = one64<<11
-const BISECT      = one64<<12
-const BARRIERCOEF = one64<<13
-display_nextbit = 14
-
 #### Conjugate gradient ####
 # Syntax:
 #    x, fval, fcount, converged = cgdescent(func, x0)
@@ -111,9 +68,8 @@ display_nextbit = 14
 #     below.  The default value for alphamax is Inf. See alphamaxfunc
 #     for cgdescent and alphamax for linesearch_hz.
 
-const DEFAULTDELTA = 0.1
-const DEFAULTSIGMA = 0.9 
 cgdescent(func::Function, x) = cgdescent(func, x, Options())
+
 function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     # Type declarations
     eta::T
@@ -154,7 +110,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
 
     precondprep(P, x)
     precondfwd(d, P, g)     # first iteration store the preconditioned gradient in d
-    negate(d)               # d -> -d
+    negate!(d)               # d -> -d
     copy!(gold, g)
     phi0 = val              # value at alpha=0
     dphi0 = dot(g, d)       # derivative at alpha=0
@@ -163,14 +119,14 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         return x, fval, fcount, true
     end
     @assert dphi0 < 0
-    alpha = alphainit(alpha, x, g, val, ops)
+    alpha = cg_alphainit(alpha, x, g, val, ops)
     alphamax = alphamaxfunc(x, d)
     alpha = min(alphamax, alpha)
     @set_options ops alphamax=alphamax
     mayterminate = false
     converged = false
     # Define the line search function
-    phi = (galpha, alpha) -> linefunc(galpha, alpha, func, x, d, xtmp, g)
+    phi = (galpha, alpha) -> cg_linefunc(galpha, alpha, func, x, d, xtmp, g)
     lsr = LineSearchResults(T)
     push!(lsr, zero(T), phi0, dphi0)
     absstep = zero(T)
@@ -185,7 +141,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         if display & SEARCHDIR > 0
             println("search:     ", d)
         end
-        alpha, val = linesearch_hz(phi, lsr, alpha, mayterminate, ops)
+        alpha, val = cg_linesearch_hz(phi, lsr, alpha, mayterminate, ops)
         @assert isfinite(val)
         if display & ALPHA > 0
             println("alpha: ", alpha)
@@ -232,7 +188,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             d[i] = beta*d[i] - pg[i]
         end
         # Define the new line search function
-        phi = (galpha, alpha) -> linefunc(galpha, alpha, func, x, d, xtmp, g)
+        phi = (galpha, alpha) -> cg_linefunc(galpha, alpha, func, x, d, xtmp, g)
         phi0 = val              # value at alpha=0
         dphi0 = dot(g, d)     # derivative at alpha=0
         if !(dphi0 < 0)
@@ -245,7 +201,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             end
             @assert dphi0 < 0
         end
-        clear(lsr)
+        clear!(lsr)
         push!(lsr, zero(T), phi0, dphi0)
         # Pick the initial step size (HZ #I1-I2)
         alphamax = alphamaxfunc(x, d)
@@ -254,7 +210,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             println("An edge point has been reached (alphamax = ", alphamax, ") and no further progress can be achieved, because the search direction points out of the valid region.")
             break
         end
-        alpha, mayterminate = alphatry(alpha, phi, lsr, ops)
+        alpha, mayterminate = cg_alphatry(alpha, phi, lsr, ops)
         fcount += 1
     end
     if display & FINAL > 0
@@ -274,7 +230,7 @@ end
 export cgdescent
 
 # Generate initial guess for step size (HZ, stage I0)
-function alphainit{T}(alpha, x::Array{T}, g, val, ops)
+function cg_alphainit{T}(alpha, x::Array{T}, g, val, ops)
     psi0::T
     @defaults ops psi0=0.01
     if isnan(alpha)
@@ -293,7 +249,7 @@ function alphainit{T}(alpha, x::Array{T}, g, val, ops)
     return alpha
 end
 
-function alphatry{T}(alpha::T, phi::Function, lsr::LineSearchResults, ops::Options)
+function cg_alphatry{T}(alpha::T, phi::Function, lsr::LineSearchResults, ops::Options)
     psi1::T
     psi2::T
     psi3::T
@@ -349,7 +305,7 @@ function alphatry{T}(alpha::T, phi::Function, lsr::LineSearchResults, ops::Optio
 end
 
 
-function linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayterminate::Bool, ops::Options)
+function cg_linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayterminate::Bool, ops::Options)
     # Type declarations
     delta::T
     sigma::T
@@ -383,7 +339,7 @@ function linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayter
     push!(lsr, c, phic, dphic)
     # If c was generated by quadratic interpolation, check whether it
     # satisfies the Wolfe conditions
-    if mayterminate && satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
+    if mayterminate && cg_satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
         if display & LINESEARCH > 0
             println("Wolfe condition satisfied on point alpha = ", c)
         end
@@ -486,7 +442,7 @@ function linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayter
             @check_used ops
             return a, lsr.value[ia]
         end
-        iswolfe, iA, iB = secant2(phi, lsr, ia, ib, philim, ops)
+        iswolfe, iA, iB = cg_secant2(phi, lsr, ia, ib, philim, ops)
         if iswolfe
             @check_used ops
             return lsr.alpha[iA], lsr.value[iA]
@@ -510,7 +466,7 @@ function linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayter
             @assert isfinite(phic)
             dphic = gphi[1]
             push!(lsr, c, phic, dphic)
-            ia, ib = update(phi, lsr, iA, iB, length(lsr), philim, ops)
+            ia, ib = cg_update(phi, lsr, iA, iB, length(lsr), philim, ops)
         end
         iter += 1
     end
@@ -518,12 +474,12 @@ function linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, mayter
 end
 
 # Check Wolfe & approximate Wolfe
-satisfies_wolfe{T<:Number}(c::T, phic, dphic, phi0, dphi0, philim, delta, sigma) = (delta*dphi0 >= (phic - phi0)/c && dphic >= sigma*dphi0) || ((2*delta-1)*dphi0 >= dphic >= sigma*dphi0 && phic <= philim)
+cg_satisfies_wolfe{T<:Number}(c::T, phic, dphic, phi0, dphi0, philim, delta, sigma) = (delta*dphi0 >= (phic - phi0)/c && dphic >= sigma*dphi0) || ((2*delta-1)*dphi0 >= dphic >= sigma*dphi0 && phic <= philim)
 
 # HZ, stages S1-S4
-secant(a, b, dphia, dphib) = (a*dphib - b*dphia)/(dphib - dphia)
-secant(lsr::LineSearchResults, ia::Int, ib::Int) = secant(lsr.alpha[ia], lsr.alpha[ib], lsr.slope[ia], lsr.slope[ib])
-function secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, philim, ops::Options)
+cg_secant(a, b, dphia, dphib) = (a*dphib - b*dphia)/(dphib - dphia)
+cg_secant(lsr::LineSearchResults, ia::Int, ib::Int) = cg_secant(lsr.alpha[ia], lsr.alpha[ib], lsr.slope[ia], lsr.slope[ib])
+function cg_secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, philim, ops::Options)
     @defaults ops delta=DEFAULTDELTA sigma=DEFAULTSIGMA display=0
     phi0 = lsr.value[1]
     dphi0 = lsr.slope[1]
@@ -533,7 +489,7 @@ function secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, 
     dphib = lsr.slope[ib]
     @assert dphia < 0
     @assert dphib >= 0
-    c = secant(a, b, dphia, dphib)
+    c = cg_secant(a, b, dphia, dphib)
     if display & SECANT2 > 0
         println("secant2: a = ", a, ", b = ", b, ", c = ", c)
     end
@@ -550,7 +506,7 @@ function secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, 
         end
         return true, ic, ic
     end
-    iA, iB = update(phi, lsr, ia, ib, ic, philim, ops)
+    iA, iB = cg_update(phi, lsr, ia, ib, ic, philim, ops)
     if display & SECANT2 > 0
         println("secant2: iA = ", iA, ", iB = ", iB, ", ic = ", ic)
     end
@@ -559,10 +515,10 @@ function secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, 
     doupdate = false
     if iB == ic
         # we updated b, make sure we also update a
-        c = secant(lsr, ib, iB)
+        c = cg_secant(lsr, ib, iB)
     elseif iA == ic
         # we updated a, do it for b too
-        c = secant(lsr, ia, iA)
+        c = cg_secant(lsr, ia, iA)
     end
     if a <= c <= b
         if display & SECANT2 > 0
@@ -573,13 +529,13 @@ function secant2{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, 
         dphic = tmpc[1]
         push!(lsr, c, phic, dphic)
         ic = length(lsr)
-        if satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
+        if cg_satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
             if display & SECANT2 > 0
                 println("secant2: second c satisfied Wolfe conditions")
             end
             return true, ic, ic
         end
-        iA, iB = update(phi, lsr, iA, iB, ic, philim, ops)
+        iA, iB = cg_update(phi, lsr, iA, iB, ic, philim, ops)
     end
     if display & SECANT2 > 0
         println("secant2 output: a = ", lsr.alpha[iA], ", b = ", lsr.alpha[iB])
@@ -591,7 +547,7 @@ end
 # Given a third point, pick the best two that retain the bracket
 # around the minimum (as defined by HZ, eq. 29)
 # b will be the upper bound, and a the lower bound
-function update(phi::Function, lsr::LineSearchResults, ia::Int, ib::Int, ic::Int, philim, ops::Options)
+function cg_update(phi::Function, lsr::LineSearchResults, ia::Int, ib::Int, ic::Int, philim, ops::Options)
     @defaults ops display=0
     a = lsr.alpha[ia]
     b = lsr.alpha[ib]
@@ -622,11 +578,11 @@ function update(phi::Function, lsr::LineSearchResults, ia::Int, ib::Int, ic::Int
     end
     # phic is bigger than phi0, which implies that the minimum
     # lies between a and c. Find it via bisection.
-    bisect(phi, lsr, ia, ic, philim, ops)
+    cg_bisect(phi, lsr, ia, ic, philim, ops)
 end
 
 # HZ, stage U3 (with theta=0.5)
-function bisect{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, philim, ops::Options)
+function cg_bisect{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, philim, ops::Options)
     @defaults ops display=0
     gphi = Array(T, 1)
     a = lsr.alpha[ia]
@@ -663,7 +619,7 @@ function bisect{T}(phi::Function, lsr::LineSearchResults{T}, ia::Int, ib::Int, p
 end
 
 # Define one-parameter function for line searches
-function linefunc(gphi, alpha, func, x, d, xtmp, g)
+function cg_linefunc(gphi, alpha, func, x, d, xtmp, g)
     calc_grad = !(gphi === nothing)
     for i = 1:length(x)
         xtmp[i] = x[i] + alpha*d[i]
@@ -685,19 +641,7 @@ function linefunc(gphi, alpha, func, x, d, xtmp, g)
     return val
 end
 
-# Dot product of two "vectors", even if they don't have a vector shape
-function dot(x::Array, y::Array)
-    d = x[1]*y[1]
-    for i = 2:length(x)
-        d += x[i]*y[i]
-    end
-    return d
-end
-
-# Vector-norm-squared, even if it doesn't have a vector shape
-norm2(x::Array) = dot(x,x)
-
-function negate(A::Array)
+function negate!(A::Array)
     for i = 1:length(A)
         A[i] = -A[i]
     end
