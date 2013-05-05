@@ -15,6 +15,7 @@ algorithms = [:gradient_descent,
               :newton,
               :bfgs,
               :l_bfgs,
+              :cg,
               :nelder_mead,
               :simulated_annealing]
 
@@ -35,6 +36,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
               (algorithm == :gradient_descent ||
                algorithm == :l_bfgs ||
                algorithm == :bfgs ||
+               algorithm == :cg ||
                algorithm == :newton)
             continue
         end

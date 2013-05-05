@@ -1,5 +1,5 @@
 function backtracking_linesearch!{T}(d::Union(DifferentiableFunction,
-                                            TwiceDifferentiableFunction),
+                                              TwiceDifferentiableFunction),
                                      x::Vector{T},
                                      s::Vector,
                                      x_scratch::Vector,
@@ -34,17 +34,6 @@ function backtracking_linesearch!{T}(d::Union(DifferentiableFunction,
     for i in 1:n
         x_scratch[i] = x[i] + alpha * s[i]
     end
-
-    # TODO: Remove?
-    # Expand step-size
-    # while (dot(gr_scratch, p) < c2 * gxp) && (alpha < 65536.0)
-    #     alpha *= 2.0
-    #     for i in 1:n
-    #         x_scratch[i] = x[i] + alpha * p[i]
-    #     end
-    #     g_calls += 1
-    #     d.g!(x_scratch, gr_scratch)
-    # end
 
     # Backtrack until we satisfy sufficient decrease condition
     f_x_scratch = d.f(x_scratch)

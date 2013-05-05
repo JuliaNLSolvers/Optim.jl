@@ -2,17 +2,17 @@
 # TODO: Implement safeguards
 
 function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
-                                             TwiceDifferentiableFunction),
-                                    x::Vector,
-                                    p::Vector,
-                                    x_new::Vector,
-                                    gr_new::Vector,
-                                    lsr::LineSearchResults{T},
-                                    c::Real,
-                                    mayterminate::Bool;
-                                    c1::Real = 1e-4,
-                                    c2::Real = 0.9,
-                                    rho::Real = 2.0)
+                                               TwiceDifferentiableFunction),
+                                      x::Vector,
+                                      p::Vector,
+                                      x_new::Vector,
+                                      gr_new::Vector,
+                                      lsr::LineSearchResults{T},
+                                      c::Real,
+                                      mayterminate::Bool;
+                                      c1::Real = 1e-4,
+                                      c2::Real = 0.9,
+                                      rho::Real = 2.0)
 
     # Parameter space
     n = length(x)
@@ -72,8 +72,6 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
 
         # Check condition 3
         if phiprime_a_i >= 0.0
-            # This seems odd to me, but it's as the book lists
-            # and may be required for condition (c) on p. 60
             a_star, f_up, g_up = zoom(a_i, a_iminus1,
                                       phiprime_0, phi_0,
                                       d.f, d.g!, x, p, x_new, gr_new)
@@ -89,7 +87,6 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
 
         # Update iteration count
         i += 1
-
     end
 
     # Quasi-error response

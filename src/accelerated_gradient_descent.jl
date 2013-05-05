@@ -1,5 +1,10 @@
 # http://stronglyconvex.com/blog/accelerated-gradient-descent.html
 # TODO: Need to specify alphamax on each iteration
+# Flip notation relative to Duckworth
+# Start with x_{0}
+# y_{t} = x_{t - 1} - alpha g(x_{t - 1})
+# If converged, return y_{t}
+# x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
 function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
                                              x::Vector,
@@ -10,7 +15,7 @@ function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
                                              show_trace::Bool)
     dt = Dict()
     dt["g(x)"] = copy(gr)
-    dt["|g(x)|"] = norm(gr, Inf)
+    dt["Maximum component of g(x)"] = norm(gr, Inf)
     os = OptimizationState(copy(x), f_x, iteration, dt)
     if store_trace
         push!(tr, os)
@@ -19,12 +24,6 @@ function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
         println(os)
     end
 end
-
-# Flip notation relative to Duckworth
-# Start with x_{0}
-# y_{t} = x_{t - 1} - alpha g(x_{t - 1})
-# If converged, return y_{t}
-# x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
 function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                                          initial_x::Vector{T};
@@ -68,11 +67,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     g_calls += 1
 
     # Keep track of step-sizes
-    alpha = 1.0
-    # TODO: Restore these pieces
-    # alpha = alphainit(1.0, x, g???, phi0???)
-    # alphamax = Inf # alphamaxfunc(x, d)
-    # alpha = min(alphamax, alpha)
+    alpha = alphainit(1.0, x, gr, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false

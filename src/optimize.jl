@@ -14,6 +14,14 @@ function optimize(d::TwiceDifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :cg
+        cg(d,
+           initial_x,
+           tolerance = tolerance,
+           iterations = iterations,
+           store_trace = store_trace,
+           show_trace = show_trace,
+           linesearch! = linesearch!)
     elseif method == :bfgs
         bfgs(d,
              initial_x,
@@ -59,6 +67,14 @@ function optimize(d::DifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :cg
+        cg(d,
+           initial_x,
+           tolerance = tolerance,
+           iterations = iterations,
+           store_trace = store_trace,
+           show_trace = show_trace,
+           linesearch! = linesearch!)
     elseif method == :bfgs
         bfgs(d,
              initial_x,
@@ -113,6 +129,15 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :cg
+        d = DifferentiableFunction(f, g!)
+        cg(d,
+           initial_x,
+           tolerance = tolerance,
+           iterations = iterations,
+           store_trace = store_trace,
+           show_trace = show_trace,
+           linesearch! = linesearch!)
     elseif method == :newton
         d = TwiceDifferentiableFunction(f, g!, h!)
         newton(d,
@@ -177,6 +202,15 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :cg
+        d = DifferentiableFunction(f, g!)
+        cg(d,
+           initial_x,
+           tolerance = tolerance,
+           iterations = iterations,
+           store_trace = store_trace,
+           show_trace = show_trace,
+           linesearch! = linesearch!)
     elseif method == :bfgs
         d = DifferentiableFunction(f, g!)
         bfgs(d,
@@ -231,6 +265,15 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :cg
+        d = DifferentiableFunction(f)
+        cg(d,
+           initial_x,
+           tolerance = tolerance,
+           iterations = iterations,
+           store_trace = store_trace,
+           show_trace = show_trace,
+           linesearch! = linesearch!)
     elseif method == :bfgs
         d = DifferentiableFunction(f)
         bfgs(d,

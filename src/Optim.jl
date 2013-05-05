@@ -43,6 +43,7 @@ module Optim
 
     # Conjugate gradient
     include("cgdescent.jl")
+    include("cg.jl")
 
     # Newton and Quasi-Newton Methods
     include("newton.jl")

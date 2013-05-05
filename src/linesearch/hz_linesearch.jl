@@ -69,18 +69,18 @@ const DEFAULTSIGMA = 0.9
 # Generate initial guess for step size (HZ, stage I0)
 function alphainit{T}(alpha::Real,
                       x::Array{T},
-                      g::Vector, # Could loosen to Array
-                      val::Real,
+                      gr::Vector, # Could loosen to Array
+                      f_x::Real,
                       psi0::T = 0.01)
     if isnan(alpha)
         alpha = 1.0
-        gmax = max(abs(g)) # TODO: Avoid temporary
-        if gmax != 0.0
-            xmax = max(abs(x)) # TODO: Avoid temporary
-            if xmax != 0.0
-                alpha = psi0 * xmax / gmax
-            elseif val != 0.0
-                alpha = psi0 * abs(val) / norm2(g) # TODO: Use standard norm
+        gr_max = max(abs(gr))
+        if gr_max != 0.0
+            x_max = max(abs(x))
+            if x_max != 0.0
+                alpha = psi0 * x_max / gr_max
+            elseif f_x != 0.0
+                alpha = psi0 * abs(f_x) / norm(gr)
             end
         end
     end
@@ -97,11 +97,11 @@ function alphatry{T}(alpha::T,
                      xtmp::Vector,
                      gtmp::Vector,
                      lsr::LineSearchResults,
-                     psi1::T = 0.2,
-                     psi2::T = 2,
-                     psi3::T = 0.1,
+                     psi1::Real = 0.2,
+                     psi2::Real = 2,
+                     psi3::Real = 0.1,
                      iterfinitemax::Integer = iceil(-log2(eps(T))),
-                     alphamax::T = Inf,
+                     alphamax::Real = Inf,
                      display::Integer = 0)
     f_calls = 0
     g_calls = 0

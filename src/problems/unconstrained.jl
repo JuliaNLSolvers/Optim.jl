@@ -6,7 +6,7 @@ immutable OptimizationProblem
     g!::Function
     h!::Function
     initial_x::Vector{Float64}
-    solutions::Vector#{Vector{Float64}}
+    solutions::Vector
     isdifferentiable::Bool
     istwicedifferentiable::Bool
 end

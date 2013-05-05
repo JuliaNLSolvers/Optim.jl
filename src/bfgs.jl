@@ -71,11 +71,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     copy!(gr_previous, gr)
 
     # Keep track of step-sizes
-    alpha = 1.0
-    # TODO: Restore these pieces
-    # alpha = alphainit(1.0, x, g???, phi0???)
-    # alphamax = Inf # alphamaxfunc(x, d)
-    # alpha = min(alphamax, alpha)
+    alpha = alphainit(1.0, x, gr, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false

@@ -135,11 +135,7 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
     copy!(gr_previous, gr)
 
     # Keep track of step-sizes
-    alpha = 1.0
-    # TODO: Restore these pieces
-    # alpha = alphainit(1.0, x, g???, phi0???)
-    # alphamax = Inf # alphamaxfunc(x, d)
-    # alpha = min(alphamax, alpha)
+    alpha = alphainit(1.0, x, gr, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -179,7 +175,6 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
         push!(lsr, zero(T), f_x, dphi0)
 
         # Determine the distance of movement along the search line
-        # TODO: Fix f_update, g_update
         alpha, f_update, g_update =
           linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls += f_update
