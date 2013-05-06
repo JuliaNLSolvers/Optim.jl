@@ -18,15 +18,15 @@ function nelder_mead_trace!(tr::OptimizationTrace,
     end
 end
 
-function nelder_mead(f::Function,
-                     initial_x::Vector;
-                     a::Real = 1.0,
-                     g::Real = 2.0,
-                     b::Real = 0.5,
-                     tolerance::Real = 1e-8,
-                     iterations::Integer = 1_000,
-                     store_trace::Bool = false,
-                     show_trace::Bool = false)
+function nelder_mead{T}(f::Function,
+                        initial_x::Vector{T};
+                        a::Real = 1.0,
+                        g::Real = 2.0,
+                        b::Real = 0.5,
+                        tolerance::Real = 1e-8,
+                        iterations::Integer = 1_000,
+                        store_trace::Bool = false,
+                        show_trace::Bool = false)
 
     # Set up a simplex of points around starting value
     m = length(initial_x)
@@ -46,6 +46,12 @@ function nelder_mead(f::Function,
     end
     f_calls += n
 
+    # Store the history of function values
+    f_values = Array(T, iterations + 1)
+    fill!(f_values, nan(T))
+    # TODO: Set this properly
+    # f_values[iteration + 1] = f_x
+
     # Count iterations
     iteration = 0
 
@@ -62,9 +68,6 @@ function nelder_mead(f::Function,
                            show_trace)
     end
 
-    # Monitor convergence
-    converged = false
-
     # Cache p_bar, y_bar, p_star and p_star_star
     p_bar = Array(Float64, m)
     y_bar = Array(Float64, m)
@@ -72,6 +75,7 @@ function nelder_mead(f::Function,
     p_star_star = Array(Float64, m)
 
     # Iterate until convergence or exhaustion
+    converged = false
     while !converged && iteration < iterations
         # Augment the iteration counter
         iteration += 1
@@ -181,7 +185,9 @@ function nelder_mead(f::Function,
                         f(centroid(p)),
                         iteration,
                         converged,
+                        false,
                         tr,
                         f_calls,
-                        0)
+                        0,
+                        f_values[1:(iteration + 1)])
 end

@@ -16,30 +16,30 @@ n <- length(unique(results$Problem))
 ggplot(results, aes(x = Algorithm, y = log1p(AverageRunTimeInMilliseconds), fill = Algorithm)) +
   geom_bar() +
   coord_flip() +
-  opts(legend.position = "none") +
+  theme(legend.position = "none") +
   xlab("") +
   ylab("Average Run-time on a Log Scale") +
-  opts(title = "Speed of Optimization Algorithms") +
+  ggtitle("Speed of Optimization Algorithms") +
   facet_grid(Problem ~ .)
 ggsave("benchmarks/graphs/run_times.png", width = 12, height = 9 * n)
 
 ggplot(results, aes(x = Algorithm, y = log1p(Iterations), fill = Algorithm)) +
   geom_bar() +
   coord_flip() +
-  opts(legend.position = "none") +
+  theme(legend.position = "none") +
   xlab("") +
   ylab("Iterations Used on a Log Scale") +
-  opts(title = "Efficiency of Optimization Algorithms") +
+  ggtitle("Efficiency of Optimization Algorithms") +
   facet_grid(Problem ~ .)
 ggsave("benchmarks/graphs/iterations.png", width = 12, height = 9 * n)
 
 ggplot(results, aes(x = reorder(Algorithm, Error), y = log1p(Error + .Machine$double.eps)^(1/10), fill = Algorithm)) +
   geom_bar() +
   coord_flip() +
-  opts(legend.position = "none") +
+  theme(legend.position = "none") +
   xlab("") +
   ylab("Euclidean Norm of Error on a Root Log Scale") +
-  opts(title = "Size of Errors in Solution from Optimization Algorithms") +
+  ggtitle("Size of Errors in Solution from Optimization Algorithms") +
   facet_grid(Problem ~ .)
 ggsave("benchmarks/graphs/solution_error.png", width = 12, height = 9 * n)
 
@@ -50,6 +50,6 @@ ggplot(results, aes(x = log1p(AverageRunTimeInMilliseconds), y = Error, color = 
   #ylim(-.Machine$double.eps, max(results$Error)) +
   xlab("Average Run-time on a Log Scale") +
   ylab("Euclidean Norm of Error") +
-  opts(title = "Speed vs. Errors in Solution from Optimization Algorithms") +
+  ggtitle("Speed vs. Errors in Solution from Optimization Algorithms") +
   facet_grid(Problem ~ .)
 ggsave("benchmarks/graphs/solution_error_vs_runtime.png", width = 12, height = 9 * n)

@@ -10,12 +10,12 @@ initial_x = [0.0, 0.0]
 
 results = Optim.nelder_mead(f, initial_x)
 
-@assert results.converged
+@assert results.f_converged
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 @assert length(results.trace.states) == 0
 
 results = Optim.nelder_mead(rosenbrock, initial_x)
 
-@assert results.converged
+@assert results.f_converged
 @assert norm(results.minimum - [1.0, 1.0]) < 0.01
 @assert length(results.trace.states) == 0

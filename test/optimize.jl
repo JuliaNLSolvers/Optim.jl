@@ -17,13 +17,13 @@ function h1(x, storage)
 end
 
 results = optimize(f1, g1, h1, [127.0, 921.0])
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
 
 results = optimize(f1, g1, [127.0, 921.0])
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
 
 results = optimize(f1, [127.0, 921.0])
-@assert results.converged
+@assert results.f_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01

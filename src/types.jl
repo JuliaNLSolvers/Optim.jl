@@ -19,10 +19,12 @@ type OptimizationResults
     minimum::Vector{Float64}
     f_minimum::Float64
     iterations::Int64
-    converged::Bool
+    f_converged::Bool
+    gr_converged::Bool
     trace::OptimizationTrace
     f_calls::Int64
     g_calls::Int64
+    f_values::Vector{Float64}
 end
 
 immutable DifferentiableFunction
@@ -72,7 +74,8 @@ function show(io::IO, results::OptimizationResults)
     print(io, " * Minimum: $(results.minimum)\n")
     print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
     print(io, " * Iterations: $(results.iterations)\n")
-    print(io, " * Self-Reported Convergence: $(results.converged)\n")
+    print(io, " * Function Convergence: $(results.f_converged)\n")
+    print(io, " * Gradient Convergence: $(results.gr_converged)\n")
     print(io, " * Objective Function Calls: $(results.f_calls)\n")
     print(io, " * Gradient Call: $(results.g_calls)")
 end

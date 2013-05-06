@@ -72,6 +72,7 @@ Note that Optim will not generate approximate Hessians using finite differencing
 The section above described the basic API for the Optim package. We employed several different optimization algorithms using the `method` keyword, which can take on any of the following values:
 
 * `:bfgs`
+* `:cg`
 * `:gradient_descent`
 * `:l_bfgs`
 * `:nelder_mead`
@@ -236,10 +237,11 @@ For tools for doing linear programming, you should look into the MathProg packag
 ## State of the Library
 
 ### Existing Functions
-* Back-Tracking Line Search Gradient Descent: `gradient_descent()`
-* Guarded Newton's Method: `newton()`
+* Gradient Descent: `gradient_descent()`
+* Newton's Method: `newton()`
 * BFGS: `bfgs()`
 * L-BFGS: `l_bfgs()`
+* Conjugate Gradient: `cg()`
 * Nelder-Mead Method: `nelder_mead()`
 * Simulated Annealing: `simulated_annealing()`
 * Levenberg-Marquardt: `levenberg_marquardt()`
@@ -251,11 +253,6 @@ For tools for doing linear programming, you should look into the MathProg packag
 * Brent's method
 * Linear conjugate gradients
 * L-BFGS-B (note that this functionality is already available in fminbox)
-
-### Wrapping Functions
-* Will provide methods for wrapping functions to insure they satisfy usage rules
-* Will convert automatic conversion tools for input
-* Will provide automatic differentiation
 
 ### Citations
 

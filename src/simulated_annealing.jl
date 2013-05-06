@@ -24,15 +24,15 @@ function simulated_annealing_trace!(tr::OptimizationTrace,
     end
 end
 
-function simulated_annealing(cost::Function,
-                             initial_x::Vector;
-                             neighbor!::Function = default_neighbor!,
-                             temperature::Function = log_temperature,
-                             keep_best::Bool = true,
-                             tolerance::Real = 1e-8,
-                             iterations::Integer = 100_000,
-                             store_trace::Bool = false,
-                             show_trace::Bool = false)
+function simulated_annealing{T}(cost::Function,
+                                initial_x::Vector{T};
+                                neighbor!::Function = default_neighbor!,
+                                temperature::Function = log_temperature,
+                                keep_best::Bool = true,
+                                tolerance::Real = 1e-8,
+                                iterations::Integer = 100_000,
+                                store_trace::Bool = false,
+                                show_trace::Bool = false)
 
     # Maintain current state in x
     x = copy(initial_x)
@@ -50,6 +50,11 @@ function simulated_annealing(cost::Function,
     # Store f(x) in f_x
     f_x = cost(x)
     f_calls += 1
+
+    # Store the history of function values
+    f_values = Array(T, iterations + 1)
+    fill!(f_values, nan(T))
+    f_values[iteration + 1] = f_x
 
     # Store the best state ever visited
     best_x = copy(x)
@@ -97,6 +102,9 @@ function simulated_annealing(cost::Function,
             end
         end
 
+        # Update history of function values
+        f_values[iteration + 1] = f_x
+
         # Show trace
         if tracing
             simulated_annealing_trace!(tr, x, f_x,
@@ -111,7 +119,9 @@ function simulated_annealing(cost::Function,
                                best_f_x,
                                iterations,
                                false,
+                               false,
                                tr,
                                f_calls,
-                               0)
+                               0,
+                               f_values[1:(iteration + 1)])
 end

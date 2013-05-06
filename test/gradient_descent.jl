@@ -12,7 +12,7 @@ d = DifferentiableFunction(f_gd, g_gd)
 
 results = Optim.gradient_descent(d, initial_x)
 @assert isempty(results.trace.states)
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [5.0]) < 0.01
 
 eta = 0.9
@@ -30,5 +30,5 @@ d = DifferentiableFunction(f_gd, g_gd)
 
 results = Optim.gradient_descent(d, [1.0, 1.0])
 @assert isempty(results.trace.states)
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01

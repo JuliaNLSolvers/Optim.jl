@@ -66,6 +66,11 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     f_calls += 1
     g_calls += 1
 
+    # Store the history of function values
+    f_values = Array(T, iterations + 1)
+    fill!(f_values, nan(T))
+    f_values[iteration + 1] = f_x
+
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
 
@@ -84,8 +89,10 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     end
 
     # Iterate until convergence
+    f_converged = false
+    gr_converged = false
     converged = false
-    while !converged && iteration <= iterations
+    while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
@@ -124,11 +131,16 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
+        f_values[iteration + 1] = f_x
 
         # Assess convergence
-        if norm(gr, Inf) <= tolerance
-            converged = true
+        if norm(gr, Inf) < tolerance
+            gr_converged = true
         end
+        if abs(f_values[iteration + 1] - f_values[iteration]) < 1e-32
+            f_converged = true
+        end
+        converged = gr_converged || f_converged
 
         # Show trace
         if tracing
@@ -142,8 +154,10 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                         x,
                         f_x,
                         iteration,
-                        converged,
+                        f_converged,
+                        gr_converged,
                         tr,
                         f_calls,
-                        g_calls)
+                        g_calls,
+                        f_values[1:(iteration + 1)])
 end

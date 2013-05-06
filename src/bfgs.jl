@@ -70,6 +70,11 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     g_calls += 1
     copy!(gr_previous, gr)
 
+    # Store the history of function values
+    f_values = Array(T, iterations + 1)
+    fill!(f_values, nan(T))
+    f_values[iteration + 1] = f_x
+
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
 
@@ -95,6 +100,8 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     end
 
     # Iterate until convergence
+    f_converged = false
+    gr_converged = false
     converged = false
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
@@ -140,6 +147,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
+        f_values[iteration + 1] = f_x
 
         # Measure the change in the gradient
         for i in 1:n
@@ -164,9 +172,13 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         end
 
         # Assess convergence
-        if norm(gr, Inf) <= tolerance
-           converged = true
+        if norm(gr, Inf) < tolerance
+            gr_converged = true
         end
+        if abs(f_values[iteration + 1] - f_values[iteration]) < 1e-32
+            f_converged = true
+        end
+        converged = gr_converged || f_converged
 
         # Show trace
         if tracing
@@ -180,8 +192,10 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                         x,
                         f_x,
                         iteration,
-                        converged,
+                        f_converged,
+                        gr_converged,
                         tr,
                         f_calls,
-                        g_calls)
+                        g_calls,
+                        f_values[1:(iteration + 1)])
 end

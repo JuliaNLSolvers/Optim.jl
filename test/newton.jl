@@ -14,7 +14,7 @@ d = TwiceDifferentiableFunction(f, g!, h!)
 
 results = Optim.newton(d, [0.0])
 @assert length(results.trace.states) == 0
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [5.0]) < 0.01
 
 eta = 0.9
@@ -38,5 +38,5 @@ end
 d = TwiceDifferentiableFunction(f, g!, h!)
 results = Optim.newton(d, [127.0, 921.0])
 @assert length(results.trace.states) == 0
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01

@@ -10,5 +10,5 @@ initial_x = [100.0, 100.0]
 
 results = Optim.bfgs(d2, initial_x)
 @assert length(results.trace.states) == 0
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01

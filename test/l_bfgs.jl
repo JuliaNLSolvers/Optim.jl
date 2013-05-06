@@ -14,5 +14,5 @@ store_trace, show_trace = false, false
 
 results = Optim.l_bfgs(d, initial_x)
 @assert length(results.trace.states) == 0
-@assert results.converged
+@assert results.gr_converged
 @assert norm(results.minimum - [309.0 / 5.0, 17.0]) < 0.01
