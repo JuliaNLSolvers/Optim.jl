@@ -27,7 +27,9 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                           TwiceDifferentiableFunction),
                  initial_x::Vector{T};
                  initial_invH::Matrix = eye(length(initial_x)),
-                 tolerance::Real = 1e-8,
+                 xtol::Real = 1e-32,
+                 ftol::Real = 1e-32,
+                 grtol::Real = 1e-8,
                  iterations::Integer = 1_000,
                  store_trace::Bool = false,
                  show_trace::Bool = false,
@@ -100,6 +102,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     end
 
     # Iterate until convergence
+    x_converged = false
     f_converged = false
     gr_converged = false
     converged = false
@@ -172,13 +175,23 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         end
 
         # Assess convergence
-        if norm(gr, Inf) < tolerance
-            gr_converged = true
+        deltax = 0.0
+        for i in 1:n
+            diff = abs(x[i] - x_previous[i])
+            if diff > deltax
+                deltax = diff
+            end
         end
-        if abs(f_values[iteration + 1] - f_values[iteration]) < 1e-32
+        if deltax < xtol
+            x_converged = true
+        end
+        if abs(f_values[iteration + 1] - f_values[iteration]) < ftol
             f_converged = true
         end
-        converged = gr_converged || f_converged
+        if norm(gr, Inf) < grtol
+            gr_converged = true
+        end
+        converged = x_converged || f_converged || gr_converged
 
         # Show trace
         if tracing
@@ -192,8 +205,13 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                         x,
                         f_x,
                         iteration,
+                        iteration == iterations,
+                        x_converged,
+                        xtol,
                         f_converged,
+                        ftol,
                         gr_converged,
+                        grtol,
                         tr,
                         f_calls,
                         g_calls,

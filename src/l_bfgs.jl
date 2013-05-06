@@ -93,14 +93,17 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
                             TwiceDifferentiableFunction),
                    initial_x::Vector{T};
                    m::Integer = 10,
-                   tolerance::Real = 1e-8,
+                   xtol::Real = 1e-32,
+                   ftol::Real = 1e-32,
+                   grtol::Real = 1e-8,
                    iterations::Integer = 1_000,
                    store_trace::Bool = false,
                    show_trace::Bool = false,
                    linesearch!::Function = hz_linesearch!)
 
-    # Maintain current state in x
+    # Maintain current state in x and previous state in x_previous
     x = copy(initial_x)
+    x_previous = copy(initial_x)
 
     # Count the total number of iterations
     iteration = 0
@@ -165,6 +168,7 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
     end
 
     # Iterate until convergence
+    x_converged = false
     f_converged = false
     gr_converged = false
     converged = false
@@ -186,6 +190,9 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
           linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls += f_update
         g_calls += g_update
+
+        # Maintain a record of previous position
+        copy!(x_previous, x)
 
         # Update current position
         for i in 1:n
@@ -218,13 +225,23 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
         rho[modindex(iteration, m)] = rho_iteration
 
         # Assess convergence
-        if norm(gr, Inf) < tolerance
-            gr_converged = true
+        deltax = 0.0
+        for i in 1:n
+            diff = abs(x[i] - x_previous[i])
+            if diff > deltax
+                deltax = diff
+            end
         end
-        if abs(f_values[iteration + 1] - f_values[iteration]) < 1e-32
+        if deltax < xtol
+            x_converged = true
+        end
+        if abs(f_values[iteration + 1] - f_values[iteration]) < ftol
             f_converged = true
         end
-        converged = gr_converged || f_converged
+        if norm(gr, Inf) < grtol
+            gr_converged = true
+        end
+        converged = x_converged || f_converged || gr_converged
 
         # Show trace
         if tracing
@@ -238,8 +255,13 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
                         x,
                         f_x,
                         iteration,
+                        iteration == iterations,
+                        x_converged,
+                        xtol,
                         f_converged,
+                        ftol,
                         gr_converged,
+                        grtol,
                         tr,
                         f_calls,
                         g_calls,

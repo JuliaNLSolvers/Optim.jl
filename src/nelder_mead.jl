@@ -23,7 +23,7 @@ function nelder_mead{T}(f::Function,
                         a::Real = 1.0,
                         g::Real = 2.0,
                         b::Real = 0.5,
-                        tolerance::Real = 1e-8,
+                        ftol::Real = 1e-8,
                         iterations::Integer = 1_000,
                         store_trace::Bool = false,
                         show_trace::Bool = false)
@@ -75,8 +75,8 @@ function nelder_mead{T}(f::Function,
     p_star_star = Array(Float64, m)
 
     # Iterate until convergence or exhaustion
-    converged = false
-    while !converged && iteration < iterations
+    f_converged = false
+    while !f_converged && iteration < iterations
         # Augment the iteration counter
         iteration += 1
 
@@ -174,8 +174,8 @@ function nelder_mead{T}(f::Function,
                                show_trace)
         end
 
-        if v <= tolerance
-            converged = true
+        if v <= ftol
+            f_converged = true
         end
     end
 
@@ -184,8 +184,13 @@ function nelder_mead{T}(f::Function,
                         centroid(p),
                         f(centroid(p)),
                         iteration,
-                        converged,
+                        iteration == iterations,
                         false,
+                        0.0,
+                        f_converged,
+                        0.0,
+                        false,
+                        0.0,
                         tr,
                         f_calls,
                         0,

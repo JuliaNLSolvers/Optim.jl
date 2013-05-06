@@ -27,19 +27,21 @@ end
 
 function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                                          initial_x::Vector{T};
-                                         tolerance::Real = 1e-8,
+                                         xtol::Real = 1e-32,
+                                         ftol::Real = 1e-32,
+                                         grtol::Real = 1e-8,
                                          iterations::Integer = 1_000,
                                          store_trace::Bool = false,
                                          show_trace::Bool = false,
                                          linesearch!::Function = hz_linesearch!)
 
     # Maintain current state in x and previous state in x_previous
-    x_previous = copy(initial_x)
     x = copy(initial_x)
+    x_previous = copy(initial_x)
 
     # Maintain current intermediate state in y and previous intermediate state in y_previous
-    y_previous = copy(initial_x)
     y = copy(initial_x)
+    y_previous = copy(initial_x)
 
     # Count the total number of iterations
     iteration = 0
@@ -89,6 +91,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     end
 
     # Iterate until convergence
+    x_converged = false
     f_converged = false
     gr_converged = false
     converged = false
@@ -134,13 +137,23 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         f_values[iteration + 1] = f_x
 
         # Assess convergence
-        if norm(gr, Inf) < tolerance
-            gr_converged = true
+        deltax = 0.0
+        for i in 1:n
+            diff = abs(x[i] - x_previous[i])
+            if diff > deltax
+                deltax = diff
+            end
         end
-        if abs(f_values[iteration + 1] - f_values[iteration]) < 1e-32
+        if deltax < xtol
+            x_converged = true
+        end
+        if abs(f_values[iteration + 1] - f_values[iteration]) < ftol
             f_converged = true
         end
-        converged = gr_converged || f_converged
+        if norm(gr, Inf) < grtol
+            gr_converged = true
+        end
+        converged = x_converged || f_converged || gr_converged
 
         # Show trace
         if tracing
@@ -154,8 +167,13 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                         x,
                         f_x,
                         iteration,
+                        iteration == iterations,
+                        x_converged,
+                        xtol,
                         f_converged,
+                        ftol,
                         gr_converged,
+                        grtol,
                         tr,
                         f_calls,
                         g_calls,

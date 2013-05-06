@@ -1,10 +1,10 @@
-type OptimizationState
-    state::Any
-    f_state::Float64
-    iteration::Int64
+type OptimizationState{T}
+    state::Vector{T}
+    f_state::T
+    iteration::Int
     metadata::Dict
 end
-function OptimizationState(s::Any, f::Float64, i::Integer)
+function OptimizationState{T}(s::Vector{T}, f::T, i::Integer)
     OptimizationState(s, f, i, Dict())
 end
 
@@ -14,18 +14,38 @@ end
 OptimizationTrace() = OptimizationTrace(Array(OptimizationState, 0))
 
 type OptimizationResults
-    method::String
-    initial_x::Vector{Float64}
-    minimum::Vector{Float64}
-    f_minimum::Float64
-    iterations::Int64
+    method::ASCIIString
+    initial_x::Vector
+    minimum::Vector
+    f_minimum::Real
+    iterations::Int
+    iteration_converged::Bool
+    x_converged::Bool
+    xtol::Real
     f_converged::Bool
+    ftol::Real
     gr_converged::Bool
+    grtol::Real
     trace::OptimizationTrace
-    f_calls::Int64
-    g_calls::Int64
-    f_values::Vector{Float64}
+    f_calls::Int
+    g_calls::Int
+    f_values::Vector
 end
+
+# type OptimizationResults{T}
+#     method::ASCIIString
+#     initial_x::Vector{T}
+#     minimum::Vector{T}
+#     f_minimum::T
+#     iterations::Int
+#     x_converged::Bool
+#     f_converged::Bool
+#     gr_converged::Bool
+#     trace::OptimizationTrace
+#     f_calls::Int
+#     g_calls::Int
+#     f_values::Vector{T}
+# end
 
 immutable DifferentiableFunction
     f::Function
@@ -74,12 +94,16 @@ function show(io::IO, results::OptimizationResults)
     print(io, " * Minimum: $(results.minimum)\n")
     print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
     print(io, " * Iterations: $(results.iterations)\n")
-    print(io, " * Function Convergence: $(results.f_converged)\n")
-    print(io, " * Gradient Convergence: $(results.gr_converged)\n")
+    print(io, " * Exceeded Maximum Number of Iterations: $(results.iteration_converged)\n")
+    print(io, " * Convergence: $(results.x_converged || results.f_converged || results.gr_converged)\n")
+    @printf io "   * |x - x'| < %.1e: %s\n" results.xtol results.x_converged
+    @printf io "   * |f(x) - f(x')| < %.1e: %s\n" results.ftol results.f_converged
+    @printf io "   * |g(x)| < %.1e: %s\n" results.grtol results.gr_converged
     print(io, " * Objective Function Calls: $(results.f_calls)\n")
     print(io, " * Gradient Call: $(results.g_calls)")
 end
 
+# TODO: Expose ability to do forward and backward differencing
 function DifferentiableFunction(f::Function)
     function g!(x::Vector, storage::Vector)
         Calculus.finite_difference!(f, x, storage, :central)
@@ -136,11 +160,13 @@ end
 LineSearchResults{T}(::Type{T}) = LineSearchResults(T[], T[], T[], 0)
 
 Base.length(lsr::LineSearchResults) = length(lsr.alpha)
+
 function Base.push!{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
     push!(lsr.alpha, a)
     push!(lsr.value, v)
     push!(lsr.slope, d)
 end
+
 function clear!(lsr::LineSearchResults)
     N = length(lsr.alpha)
     delete!(lsr.alpha, 1:N)

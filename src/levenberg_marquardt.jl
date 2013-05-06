@@ -105,5 +105,5 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		println("Exceeded maximum number of iterations")
 	end
 
-	OptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, converged, false, tr, f_calls, g_calls, Float64[])
+	OptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, false, 0.0, false, 0.0, converged, tolG, tr, f_calls, g_calls, Float64[])
 end

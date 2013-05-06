@@ -1,45 +1,52 @@
 Problem	Algorithm	AverageRunTimeInMilliseconds	Iterations	Error
-Rosenbrock	Gradient Descent	3.223187	1000	0.1405149658795275
-Rosenbrock	Newton's Method	0.114803743	14	0.0
-Rosenbrock	BFGS	0.092093443	22	0.0
-Rosenbrock	L-BFGS	0.217916998	22	0.0
-Rosenbrock	Nelder-Mead	0.474157386	91	3.3642057557036077e-10
-Rosenbrock	Simulated Annealing	0.42184225	1000	0.07537806355683162
-Hosaki	Nelder-Mead	4.35392844	63	3.0000000038374086
-Hosaki	Simulated Annealing	0.385216933	1000	299.58382253764614
-Exponential	Gradient Descent	0.037387212	6	0.0
-Exponential	Newton's Method	0.221954948	34	0.0
-Exponential	BFGS	0.054396262	11	0.0
-Exponential	L-BFGS	0.093894568	11	0.0
-Exponential	Nelder-Mead	0.711791312	66	6.0621555347716114e-9
-Exponential	Simulated Annealing	0.454599949	1000	0.06331560016410248
-Fletcher-Powell	Nelder-Mead	1.562584581	277	1.0000000032588137
-Fletcher-Powell	Simulated Annealing	1.345292644	1000	0.0
-Large Polynomial	Gradient Descent	0.0598668	1	0.0
-Large Polynomial	Newton's Method	0.663333691	1	0.0
-Large Polynomial	BFGS	1.450541988	1	0.0
-Large Polynomial	L-BFGS	0.080693555	1	0.0
-Large Polynomial	Simulated Annealing	4.507501308	1000	1908.135743949071
-Polynomial	Gradient Descent	4.015285896	1000	0.0030370570728736708
-Polynomial	Newton's Method	0.034460192	3	0.0
-Polynomial	BFGS	0.261443627	57	9.198140491721485e-7
-Polynomial	L-BFGS	0.463662409	40	3.0461066592501225e-6
-Polynomial	Nelder-Mead	1.260746624	204	0.000133309137617876
-Polynomial	Simulated Annealing	0.408447755	1000	0.051140931820562494
-Parabola	Gradient Descent	0.005198816	1	0.0
-Parabola	Newton's Method	0.023625804	1	0.0
-Parabola	BFGS	0.009717896	1	0.0
-Parabola	L-BFGS	0.007331753	1	0.0
-Parabola	Nelder-Mead	2.909612687	275	2.2764691429086226e-9
-Parabola	Simulated Annealing	0.511042431	1000	0.3360396956134232
-Himmelbrau	Gradient Descent	0.157295917	45	2.8284271247461903
-Himmelbrau	BFGS	0.061938678	11	2.8284271247461903
-Himmelbrau	L-BFGS	0.095209634	10	2.8284271247461903
-Himmelbrau	Nelder-Mead	0.442941617	69	4.927884103080692
-Himmelbrau	Simulated Annealing	0.435020291	1000	4.9467068498844124
-Powell	Gradient Descent	3.646946767	1000	0.10140709455151257
-Powell	Newton's Method	0.810515138	57	6.572075897754222e-9
-Powell	BFGS	0.2882543	59	1.2268568954006489e-8
-Powell	L-BFGS	0.726218165	58	4.086695251929438e-9
-Powell	Nelder-Mead	2.200809813	290	7.429377524142825e-5
-Powell	Simulated Annealing	0.485547937	1000	0.8528888127360095
+Rosenbrock	Gradient Descent	3.38013661	1000	0.1405149658795275
+Rosenbrock	Newton's Method	0.119907575	14	0.0
+Rosenbrock	BFGS	0.102839125	22	0.0
+Rosenbrock	L-BFGS	0.201203709	22	0.0
+Rosenbrock	Conjugate Gradient	0.136613398	23	0.0
+Rosenbrock	Nelder-Mead	2.274103494	131	4.965068306494546e-16
+Rosenbrock	Simulated Annealing	0.474186558	1000	0.3724734008243305
+Hosaki	Nelder-Mead	3.930037827	1000	858.1353148927984
+Hosaki	Simulated Annealing	0.43459991	1000	300.0132423878837
+Exponential	Gradient Descent	0.040622823	6	0.0
+Exponential	Newton's Method	0.134839689	20	2.6468953336819005e-9
+Exponential	BFGS	0.059000111	11	0.0
+Exponential	L-BFGS	0.103828221	11	0.0
+Exponential	Conjugate Gradient	0.071596367	15	0.0
+Exponential	Nelder-Mead	0.647395633	65	5.748747926150748e-9
+Exponential	Simulated Annealing	0.476659191	1000	0.06098769310000804
+Fletcher-Powell	Nelder-Mead	2.433746132	325	1.0
+Fletcher-Powell	Simulated Annealing	1.366760262	1000	0.0
+Large Polynomial	Gradient Descent	0.075288432	1	0.0
+Large Polynomial	Newton's Method	0.660660423	1	0.0
+Large Polynomial	BFGS	1.548744948	1	0.0
+Large Polynomial	L-BFGS	0.093560739	1	0.0
+Large Polynomial	Conjugate Gradient	0.147542401	2	0.0
+Large Polynomial	Simulated Annealing	4.573057548	1000	1904.2254761596905
+Polynomial	Gradient Descent	4.242767635	1000	0.0030370570728736708
+Polynomial	Newton's Method	0.038358343	3	0.0
+Polynomial	BFGS	0.256657463	57	9.198140491721485e-7
+Polynomial	L-BFGS	0.448921195	40	3.0461066592501225e-6
+Polynomial	Conjugate Gradient	0.29917504	63	4.030767765950035e-7
+Polynomial	Nelder-Mead	1.864421875	289	9.09481215849375e-9
+Polynomial	Simulated Annealing	0.453535065	1000	0.2223528443548935
+Parabola	Gradient Descent	0.021803069	1	0.0
+Parabola	Newton's Method	0.012284017	1	0.0
+Parabola	BFGS	0.027159796	1	0.0
+Parabola	L-BFGS	0.009317369	1	0.0
+Parabola	Conjugate Gradient	0.026495389	1	0.0
+Parabola	Nelder-Mead	11.210871587	1000	0.0
+Parabola	Simulated Annealing	0.676429373	1000	0.48446384549208593
+Himmelbrau	Gradient Descent	0.202832499	45	2.8284271247461903
+Himmelbrau	BFGS	0.076168436	11	2.8284271247461903
+Himmelbrau	L-BFGS	0.138238423	10	2.8284271247461903
+Himmelbrau	Conjugate Gradient	0.106603179	17	2.8284271247461903
+Himmelbrau	Nelder-Mead	2.650431898	120	2.8284271247461903
+Himmelbrau	Simulated Annealing	0.60821782	1000	2.8567308846304926
+Powell	Gradient Descent	4.647186873	1000	0.10140709455151257
+Powell	Newton's Method	0.857917376	57	6.572075897754222e-9
+Powell	BFGS	0.342938137	59	1.2268568954006489e-8
+Powell	L-BFGS	0.967883505	57	4.224304446891652e-9
+Powell	Conjugate Gradient	5.876821991	1000	0.0037750152348657224
+Powell	Nelder-Mead	4.661967091	572	3.897403771708578e-9
+Powell	Simulated Annealing	0.651926573	1000	0.7175632432378594
