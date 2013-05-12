@@ -12,6 +12,7 @@
 using Optim
 
 algorithms = [:gradient_descent,
+              :momentum_gradient_descent,
               :newton,
               :bfgs,
               :l_bfgs,
@@ -34,6 +35,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
         end
         if !problem.isdifferentiable &&
               (algorithm == :gradient_descent ||
+               algorithm == :momentum_gradient_descent ||
                algorithm == :l_bfgs ||
                algorithm == :bfgs ||
                algorithm == :cg ||

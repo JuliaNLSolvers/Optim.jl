@@ -18,6 +18,16 @@ function optimize(d::TwiceDifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :momentum_gradient_descent
+        momentum_gradient_descent(d,
+                                  initial_x,
+                                  xtol = xtol,
+                                  ftol = ftol,
+                                  grtol = grtol,
+                                  iterations = iterations,
+                                  store_trace = store_trace,
+                                  show_trace = show_trace,
+                                  linesearch! = linesearch!)
     elseif method == :cg
         cg(d,
            initial_x,
@@ -83,6 +93,16 @@ function optimize(d::DifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :momentum_gradient_descent
+        momentum_gradient_descent(d,
+                                  initial_x,
+                                  xtol = xtol,
+                                  ftol = ftol,
+                                  grtol = grtol,
+                                  iterations = iterations,
+                                  store_trace = store_trace,
+                                  show_trace = show_trace,
+                                  linesearch! = linesearch!)
     elseif method == :cg
         cg(d,
            initial_x,
@@ -154,6 +174,17 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :momentum_gradient_descent
+        d = DifferentiableFunction(f, g!)
+        momentum_gradient_descent(d,
+                                  initial_x,
+                                  xtol = xtol,
+                                  ftol = ftol,
+                                  grtol = grtol,
+                                  iterations = iterations,
+                                  store_trace = store_trace,
+                                  show_trace = show_trace,
+                                  linesearch! = linesearch!)
     elseif method == :cg
         d = DifferentiableFunction(f, g!)
         cg(d,
@@ -238,6 +269,17 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :momentum_gradient_descent
+        d = DifferentiableFunction(f, g!)
+        momentum_gradient_descent(d,
+                                  initial_x,
+                                  xtol = xtol,
+                                  ftol = ftol,
+                                  grtol = grtol,
+                                  iterations = iterations,
+                                  store_trace = store_trace,
+                                  show_trace = show_trace,
+                                  linesearch! = linesearch!)
     elseif method == :cg
         d = DifferentiableFunction(f, g!)
         cg(d,
@@ -310,6 +352,17 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          linesearch! = linesearch!)
+    elseif method == :momentum_gradient_descent
+        d = DifferentiableFunction(f)
+        momentum_gradient_descent(d,
+                                  initial_x,
+                                  xtol = xtol,
+                                  ftol = ftol,
+                                  grtol = grtol,
+                                  iterations = iterations,
+                                  store_trace = store_trace,
+                                  show_trace = show_trace,
+                                  linesearch! = linesearch!)
     elseif method == :cg
         d = DifferentiableFunction(f)
         cg(d,

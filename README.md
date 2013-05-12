@@ -74,6 +74,7 @@ The section above described the basic API for the Optim package. We employed sev
 * `:bfgs`
 * `:cg`
 * `:gradient_descent`
+* `:momentum_gradient_descent`
 * `:l_bfgs`
 * `:nelder_mead`
 * `:newton`
@@ -81,7 +82,10 @@ The section above described the basic API for the Optim package. We employed sev
 
 In addition to the `method` keyword, you can alter the behavior of the Optim package by using four other keywords:
 
-* `tolerance`: What is the threshold for determining convergence? Defaults to `1e-8`.
+
+* `xtol`: What is the threshold for determining convergence? Defaults to `1e-32`.
+* `ftol`: What is the threshold for determining convergence? Defaults to `1e-32`.
+* `grtol`: What is the threshold for determining convergence? Defaults to `1e-8`.
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `STDOUT`? Defaults to `false`.
@@ -91,7 +95,7 @@ Thus, one might construct a complex call to `optimize` like:
     res = optimize(f, g!,
                    [0.0, 0.0],
                    method = :gradient_descent,
-                   tolerance = 1e-12,
+                   grtol = 1e-12,
                    iterations = 10,
                    store_trace = true,
                    show_trace = false)

@@ -40,6 +40,7 @@ module Optim
     # Gradient Descent
     include("gradient_descent.jl")
     include("accelerated_gradient_descent.jl")
+    include("momentum_gradient_descent.jl")
 
     # Conjugate gradient
     include("cgdescent.jl")

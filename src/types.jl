@@ -94,11 +94,11 @@ function show(io::IO, results::OptimizationResults)
     print(io, " * Minimum: $(results.minimum)\n")
     print(io, " * Value of Function at Minimum: $(results.f_minimum)\n")
     print(io, " * Iterations: $(results.iterations)\n")
-    print(io, " * Exceeded Maximum Number of Iterations: $(results.iteration_converged)\n")
     print(io, " * Convergence: $(results.x_converged || results.f_converged || results.gr_converged)\n")
     @printf io "   * |x - x'| < %.1e: %s\n" results.xtol results.x_converged
     @printf io "   * |f(x) - f(x')| < %.1e: %s\n" results.ftol results.f_converged
     @printf io "   * |g(x)| < %.1e: %s\n" results.grtol results.gr_converged
+    @printf io "   * Exceeded Maximum Number of Iterations: %s\n" results.iteration_converged
     print(io, " * Objective Function Calls: $(results.f_calls)\n")
     print(io, " * Gradient Call: $(results.g_calls)")
 end

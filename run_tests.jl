@@ -7,6 +7,7 @@ using Optim
 my_tests = ["test/bfgs.jl",
             "test/curve_fit.jl",
             "test/gradient_descent.jl",
+            "test/momentum_gradient_descent.jl",
             "test/grid_search.jl",
             "test/l_bfgs.jl",
             "test/levenberg_marquardt.jl",
