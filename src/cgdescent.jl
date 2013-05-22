@@ -376,7 +376,7 @@ function cg_linesearch_hz{T}(phi::Function, lsr::LineSearchResults{T}, c::T, may
             if c != lsr.alpha[ib] || lsr.slope[ib] >= 0
                 error("c = ", c, ", lsr = ", lsr)
             end
-            ia, ib = bisect(phi, lsr, ia, ib, philim, ops)
+            ia, ib = cg_bisect(phi, lsr, ia, ib, philim, ops)
             isbracketed = true
         else
             # We'll still going downhill, expand the interval and try again
