@@ -168,9 +168,8 @@ function Base.push!{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
 end
 
 function clear!(lsr::LineSearchResults)
-    N = length(lsr.alpha)
-    delete!(lsr.alpha, 1:N)
-    delete!(lsr.value, 1:N)
-    delete!(lsr.slope, 1:N)
+    empty!(lsr.alpha)
+    empty!(lsr.value)
+    empty!(lsr.slope)
     # nfailures is deliberately not set to 0
 end
