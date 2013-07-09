@@ -1,20 +1,20 @@
 # TODO: Avoid recomputing centroids and f(centroid)
-function nelder_mead_trace!(tr::OptimizationTrace,
-                            p::Matrix,
-                            y::Vector,
-                            n::Integer,
-                            f::Function,
-                            iteration::Integer,
-                            store_trace::Bool,
-                            show_trace::Bool)
-    d = Dict()
-    d["Standard Deviation over Simplex"] = std(y)
-    os = OptimizationState(centroid(p), f(centroid(p)), iteration, d)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro nmtrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+            end
+            grnorm = NaN
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -26,7 +26,8 @@ function nelder_mead{T}(f::Function,
                         ftol::Real = 1e-8,
                         iterations::Integer = 1_000,
                         store_trace::Bool = false,
-                        show_trace::Bool = false)
+                        show_trace::Bool = false,
+                        extended_trace::Bool = false)
 
     # Set up a simplex of points around starting value
     m = length(initial_x)
@@ -46,27 +47,16 @@ function nelder_mead{T}(f::Function,
     end
     f_calls += n
 
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    # TODO: Set this properly
-    # f_values[iteration + 1] = f_x
+    f_x = NaN
+    f_x_previous = NaN
 
     # Count iterations
     iteration = 0
 
     # Maintain a trace
     tr = OptimizationTrace()
-    if store_trace || show_trace
-        nelder_mead_trace!(tr,
-                           p,
-                           y,
-                           n,
-                           f,
-                           iteration,
-                           store_trace,
-                           show_trace)
-    end
+    tracing = show_trace || store_trace || extended_trace
+    @nmtrace
 
     # Cache p_bar, y_bar, p_star and p_star_star
     p_bar = Array(Float64, m)
@@ -161,38 +151,28 @@ function nelder_mead{T}(f::Function,
             end
         end
 
-        v = sqrt(var(y) * (m / n))
+        f_x = sqrt(var(y) * (m / n))
 
-        if store_trace || show_trace
-            nelder_mead_trace!(tr,
-                               p,
-                               y,
-                               n,
-                               f,
-                               iteration,
-                               store_trace,
-                               show_trace)
-        end
+        @nmtrace
 
-        if v <= ftol
+        if f_x <= ftol
             f_converged = true
         end
     end
 
-    OptimizationResults("Nelder-Mead",
+    MultivariateOptimizationResults("Nelder-Mead",
                         initial_x,
                         centroid(p),
                         f(centroid(p)),
                         iteration,
                         iteration == iterations,
                         false,
-                        0.0,
+                        NaN,
                         f_converged,
                         ftol,
                         false,
-                        0.0,
+                        NaN,
                         tr,
                         f_calls,
-                        0,
-                        f_values[1:(iteration + 1)])
+                        0)
 end

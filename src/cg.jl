@@ -80,24 +80,24 @@ end
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-function cg_trace!(tr::OptimizationTrace,
-                   x::Vector,
-                   f_x::Real,
-                   gr::Vector,
-                   alpha::Real,
-                   iteration::Integer,
-                   store_trace::Bool,
-                   show_trace::Bool)
-    dt = Dict()
-    dt["g(x)"] = copy(gr)
-    dt["Current step size"] = alpha
-    dt["Maximum component of g(x)"] = norm(gr, Inf)
-    os = OptimizationState(copy(x), f_x, iteration, dt)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro cgtrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+                dt["g(x)"] = copy(gr)
+                dt["Current step size"] = alpha
+            end
+            grnorm = norm(gr, Inf)
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -110,6 +110,7 @@ function cg{T}(df::Union(DifferentiableFunction,
                iterations::Integer = 1_000,
                store_trace::Bool = false,
                show_trace::Bool = false,
+               extended_trace::Bool = false,
                linesearch!::Function = hz_linesearch!,
                eta::Real = 0.4,
                P::Any = nothing,
@@ -148,14 +149,10 @@ function cg{T}(df::Union(DifferentiableFunction,
 
     # Store f(x) in f_x
     f_x = df.fg!(x, gr)
+    f_x_previous = NaN
     f_calls += 1
     g_calls += 1
     copy!(gr_previous, gr)
-
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    f_values[iteration + 1] = f_x
 
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
@@ -169,10 +166,7 @@ function cg{T}(df::Union(DifferentiableFunction,
     # Trace the history of states visited
     tr = OptimizationTrace()
     tracing = store_trace || show_trace
-    if tracing
-        cg_trace!(tr, x, f_x, gr, alpha,
-                  iteration, store_trace, show_trace)
-    end
+    @cgtrace
 
     # Output messages
     if !isfinite(f_x)
@@ -240,10 +234,10 @@ function cg{T}(df::Union(DifferentiableFunction,
         copy!(gr_previous, gr)
 
         # Update the function value and gradient
+        f_x_previous = f_x
         f_x = df.fg!(x, gr)
         f_calls += 1
         g_calls += 1
-        f_values[iteration + 1] = f_x
 
         # Check sanity of function and gradient
         if !isfinite(f_x)
@@ -271,8 +265,8 @@ function cg{T}(df::Union(DifferentiableFunction,
         gr_converged,
         converged = assess_convergence(x,
                                        x_previous,
-                                       f_values[iteration + 1],
-                                       f_values[iteration],
+                                       f_x,
+                                       f_x_previous,
                                        gr,
                                        xtol,
                                        ftol,
@@ -285,7 +279,7 @@ function cg{T}(df::Union(DifferentiableFunction,
         end
     end
 
-    OptimizationResults("Conjugate Gradient",
+    MultivariateOptimizationResults("Conjugate Gradient",
                         initial_x,
                         x,
                         f_x,
@@ -299,6 +293,5 @@ function cg{T}(df::Union(DifferentiableFunction,
                         grtol,
                         tr,
                         f_calls,
-                        g_calls,
-                        f_values[1:(iteration + 1)])
+                        g_calls)
 end

@@ -1,14 +1,3 @@
-function maxdiff(x::Vector, y::Vector)
-    res = 0.0
-    for i in 1:length(x)
-        delta = abs(x[i] - y[i])
-        if delta > res
-            res = delta
-        end
-    end
-    return res
-end
-
 function assess_convergence(x::Vector,
                             x_previous::Vector,
                             f_x::Real,
@@ -22,9 +11,11 @@ function assess_convergence(x::Vector,
     if maxdiff(x, x_previous) < xtol
         x_converged = true
     end
+
     if abs(f_x - f_x_previous) < ftol
         f_converged = true
     end
+
     if norm(gr, Inf) < grtol
         gr_converged = true
     end

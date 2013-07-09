@@ -2,24 +2,24 @@
 # JMW's dx <=> NW's s
 # JMW's dgr <=> NW' y
 
-function bfgs_trace!(tr::OptimizationTrace,
-                     x::Vector,
-                     f_x::Real,
-                     gr::Vector,
-                     invH::Matrix,
-                     iteration::Integer,
-                     store_trace::Bool,
-                     show_trace::Bool)
-    dt = Dict()
-    dt["g(x)"] = copy(gr)
-    dt["Maximum component of g(x)"] = norm(gr, Inf)
-    dt["~inv(H)"] = copy(invH)
-    os = OptimizationState(copy(x), f_x, iteration, dt)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro bfgstrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+                dt["g(x)"] = copy(gr)
+                dt["~inv(H)"] = copy(invH)
+            end
+            grnorm = norm(gr, Inf)
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -33,6 +33,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                  iterations::Integer = 1_000,
                  store_trace::Bool = false,
                  show_trace::Bool = false,
+                 extended_trace::Bool = false,
                  linesearch!::Function = hz_linesearch!)
 
     # Maintain current state in x and previous state in x_previous
@@ -68,14 +69,10 @@ function bfgs{T}(d::Union(DifferentiableFunction,
 
     # Store f(x) in f_x
     f_x = d.fg!(x, gr)
+    f_x_previous = NaN
     f_calls += 1
     g_calls += 1
     copy!(gr_previous, gr)
-
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    f_values[iteration + 1] = f_x
 
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
@@ -96,10 +93,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     # Trace the history of states visited
     tr = OptimizationTrace()
     tracing = store_trace || show_trace
-    if tracing
-        bfgs_trace!(tr, x, f_x, gr, invH,
-                    iteration, store_trace, show_trace)
-    end
+    @bfgstrace
 
     # Iterate until convergence
     x_converged = false
@@ -147,10 +141,10 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         copy!(gr_previous, gr)
 
         # Update the function value and gradient
+        f_x_previous = f_x
         f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
-        f_values[iteration + 1] = f_x
 
         # Measure the change in the gradient
         for i in 1:n
@@ -179,21 +173,17 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         gr_converged,
         converged = assess_convergence(x,
                                        x_previous,
-                                       f_values[iteration + 1],
-                                       f_values[iteration],
+                                       f_x,
+                                       f_x_previous,
                                        gr,
                                        xtol,
                                        ftol,
                                        grtol)
 
-        # Show trace
-        if tracing
-            bfgs_trace!(tr, x, f_x, gr, invH,
-                        iteration, store_trace, show_trace)
-        end
+        @bfgstrace
     end
 
-    OptimizationResults("BFGS",
+    MultivariateOptimizationResults("BFGS",
                         initial_x,
                         x,
                         f_x,
@@ -207,6 +197,5 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                         grtol,
                         tr,
                         f_calls,
-                        g_calls,
-                        f_values[1:(iteration + 1)])
+                        g_calls)
 end

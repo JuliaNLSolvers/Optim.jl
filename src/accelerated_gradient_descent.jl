@@ -6,22 +6,23 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-function accelerated_gradient_descent_trace!(tr::OptimizationTrace,
-                                             x::Vector,
-                                             f_x::Real,
-                                             gr::Vector,
-                                             iteration::Integer,
-                                             store_trace::Bool,
-                                             show_trace::Bool)
-    dt = Dict()
-    dt["g(x)"] = copy(gr)
-    dt["Maximum component of g(x)"] = norm(gr, Inf)
-    os = OptimizationState(copy(x), f_x, iteration, dt)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro agdtrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+                dt["g(x)"] = copy(gr)
+            end
+            grnorm = norm(gr, Inf)
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -33,45 +34,37 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                                          iterations::Integer = 1_000,
                                          store_trace::Bool = false,
                                          show_trace::Bool = false,
+                                         extended_trace::Bool = false,
                                          linesearch!::Function = hz_linesearch!)
-
     # Maintain current state in x and previous state in x_previous
-    x = copy(initial_x)
-    x_previous = copy(initial_x)
+    x, x_previous = copy(initial_x), copy(initial_x)
 
     # Maintain current intermediate state in y and previous intermediate state in y_previous
-    y = copy(initial_x)
-    y_previous = copy(initial_x)
+    y, y_previous = copy(initial_x), copy(initial_x)
 
     # Count the total number of iterations
     iteration = 0
 
     # Track calls to function and gradient
-    f_calls = 0
-    g_calls = 0
+    f_calls, g_calls = 0, 0
 
     # Count number of parameters
     n = length(x)
 
     # Maintain current gradient in gr
-    gr = Array(Float64, n)
+    gr = Array(T, n)
 
     # The current search direction
-    s = Array(Float64, n)
+    s = Array(T, n)
 
     # Buffers for use in line search
-    x_ls = Array(Float64, n)
-    gr_ls = Array(Float64, n)
+    x_ls = Array(T, n)
+    gr_ls = Array(T, n)
 
     # Store f(x) in f_x
     f_x = d.fg!(x, gr)
-    f_calls += 1
-    g_calls += 1
-
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    f_values[iteration + 1] = f_x
+    f_x_previous = NaN
+    f_calls, g_calls = f_calls + 1, g_calls + 1
 
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
@@ -84,16 +77,13 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace
-    if tracing
-        accelerated_gradient_descent_trace!(tr, x, f_x, gr,
-                                            iteration, store_trace, show_trace)
-    end
+    tracing = store_trace || show_trace || extended_trace
+    @agdtrace
+
+    # Assess types of convergence
+    x_converged, f_converged, gr_converged = false, false, false
 
     # Iterate until convergence
-    x_converged = false
-    f_converged = false
-    gr_converged = false
     converged = false
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
@@ -112,8 +102,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
           linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
-        f_calls += f_update
-        g_calls += g_update
+        f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Make one move in the direction of the gradient
         copy!(y_previous, y)
@@ -125,37 +114,32 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         copy!(x_previous, x)
 
         # Update current position with Nesterov correction
-        scaling = (iteration - 1.0) / (iteration + 2.0)
+        scaling = (iteration - 1) / (iteration + 2)
         for i in 1:n
             x[i] = y[i] + scaling * (y[i] - y_previous[i])
         end
 
         # Update the function value and gradient
+        f_x_previous = f_x
         f_x = d.fg!(x, gr)
-        f_calls += 1
-        g_calls += 1
-        f_values[iteration + 1] = f_x
+        f_calls, g_calls = f_calls + 1, g_calls + 1
 
         x_converged,
         f_converged,
         gr_converged,
         converged = assess_convergence(x,
                                        x_previous,
-                                       f_values[iteration + 1],
-                                       f_values[iteration],
+                                       f_x,
+                                       f_x_previous,
                                        gr,
                                        xtol,
                                        ftol,
                                        grtol)
 
-        # Show trace
-        if tracing
-            accelerated_gradient_descent_trace!(tr, x, f_x, gr,
-                                                iteration, store_trace, show_trace)
-        end
+        @agdtrace
     end
 
-    OptimizationResults("Accelerated Gradient Descent",
+    MultivariateOptimizationResults("Accelerated Gradient Descent",
                         initial_x,
                         x,
                         f_x,
@@ -169,6 +153,5 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                         grtol,
                         tr,
                         f_calls,
-                        g_calls,
-                        f_values[1:(iteration + 1)])
+                        g_calls)
 end

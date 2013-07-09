@@ -1,20 +1,21 @@
-function newton_trace!(tr::OptimizationTrace,
-                       x::Vector,
-                       f_x::Real,
-                       gr::Vector,
-                       H::Matrix,
-                       iteration::Integer,
-                       store_trace::Bool,
-                       show_trace::Bool)
-    dt = Dict()
-    dt["g(x)"] = copy(gr)
-    dt["h(x)"] = copy(H)
-    os = OptimizationState(copy(x), f_x, iteration, dt)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro newtontrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+                dt["g(x)"] = copy(gr)
+                dt["h(x)"] = copy(H)
+            end
+            grnorm = norm(gr, Inf)
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -26,6 +27,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
                    iterations::Integer = 1_000,
                    store_trace::Bool = false,
                    show_trace::Bool = false,
+                   extended_trace::Bool = false,
                    linesearch!::Function = hz_linesearch!)
 
     # Maintain current state in x and previous state in x_previous
@@ -54,6 +56,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
     gr_ls = Array(Float64, n)
 
     # Store f(x) in f_x
+    f_x_previous = NaN
     f_x = d.fg!(x, gr)
     f_calls += 1
     g_calls += 1
@@ -61,11 +64,6 @@ function newton{T}(d::TwiceDifferentiableFunction,
     # Store h(x) in H
     H = Array(Float64, n, n)
     d.h!(x, H)
-
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    f_values[iteration + 1] = f_x
 
     # Keep track of step-sizes
     alpha = alphainit(1.0, x, gr, f_x)
@@ -78,11 +76,8 @@ function newton{T}(d::TwiceDifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace
-    if tracing
-        newton_trace!(tr, x, f_x, gr, H,
-                      iteration, store_trace, show_trace)
-    end
+    tracing = store_trace || show_trace || extended_trace
+    @newtontrace
 
     # Iterate until convergence
     x_converged = false
@@ -118,10 +113,10 @@ function newton{T}(d::TwiceDifferentiableFunction,
         end
 
         # Update the function value and gradient
+        f_x_previous = f_x
         f_x = d.fg!(x, gr)
         f_calls += 1
         g_calls += 1
-        f_values[iteration + 1] = f_x
 
         # Update the Hessian
         d.h!(x, H)
@@ -131,21 +126,17 @@ function newton{T}(d::TwiceDifferentiableFunction,
         gr_converged,
         converged = assess_convergence(x,
                                        x_previous,
-                                       f_values[iteration + 1],
-                                       f_values[iteration],
+                                       f_x,
+                                       f_x_previous,
                                        gr,
                                        xtol,
                                        ftol,
                                        grtol)
 
-        # Show trace
-        if tracing
-            newton_trace!(tr, x, f_x, gr, H,
-                          iteration, store_trace, show_trace)
-        end
+        @newtontrace
     end
 
-    OptimizationResults("Newton's Method",
+    MultivariateOptimizationResults("Newton's Method",
                         initial_x,
                         x,
                         f_x,
@@ -159,6 +150,5 @@ function newton{T}(d::TwiceDifferentiableFunction,
                         grtol,
                         tr,
                         f_calls,
-                        g_calls,
-                        f_values[1:(iteration + 1)])
+                        g_calls)
 end

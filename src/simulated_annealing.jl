@@ -1,4 +1,4 @@
-log_temperature(t::Real) = 1.0 / log(t)
+log_temperature(t::Real) = 1 / log(t)
 
 constant_temperature(t::Real) = 1.0
 
@@ -9,18 +9,22 @@ function default_neighbor!(x::Vector, x_proposal::Vector)
     return
 end
 
-function simulated_annealing_trace!(tr::OptimizationTrace,
-                                    x::Vector,
-                                    f_x::Real,
-                                    iteration::Integer,
-                                    store_trace::Bool,
-                                    show_trace::Bool)
-    os = OptimizationState(copy(x), f_x, iteration)
-    if store_trace
-        push!(tr, os)
-    end
-    if show_trace
-        println(os)
+macro satrace()
+    quote
+        if tracing
+            dt = Dict()
+            if extended_trace
+                dt["x"] = copy(x)
+            end
+            grnorm = NaN
+            update!(tr,
+                    iteration,
+                    f_x,
+                    grnorm,
+                    dt,
+                    store_trace,
+                    show_trace)
+        end
     end
 end
 
@@ -31,11 +35,10 @@ function simulated_annealing{T}(cost::Function,
                                 keep_best::Bool = true,
                                 iterations::Integer = 100_000,
                                 store_trace::Bool = false,
-                                show_trace::Bool = false)
-
-    # Maintain current state in x
-    x = copy(initial_x)
-    x_proposal = copy(initial_x)
+                                show_trace::Bool = false,
+                                extended_trace::Bool = false)
+    # Maintain current and proposed state
+    x, x_proposal = copy(initial_x), copy(initial_x)
 
     # Record the number of iterations we perform
     iteration = 0
@@ -50,22 +53,14 @@ function simulated_annealing{T}(cost::Function,
     f_x = cost(x)
     f_calls += 1
 
-    # Store the history of function values
-    f_values = Array(T, iterations + 1)
-    fill!(f_values, nan(T))
-    f_values[iteration + 1] = f_x
-
     # Store the best state ever visited
     best_x = copy(x)
     best_f_x = f_x
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace
-    if tracing
-        simulated_annealing_trace!(tr, x, f_x,
-                                   iteration, store_trace, show_trace)
-    end
+    tracing = store_trace || show_trace || extended_trace
+    @satrace
 
     # We always perform a fixed number of iterations
     while iteration < iterations
@@ -101,31 +96,22 @@ function simulated_annealing{T}(cost::Function,
             end
         end
 
-        # Update history of function values
-        f_values[iteration + 1] = f_x
-
-        # Show trace
-        if tracing
-            simulated_annealing_trace!(tr, x, f_x,
-                                       iteration, store_trace, show_trace)
-        end
+        @satrace
     end
 
-    # Return the best state ever visited
-    return OptimizationResults("Simulated Annealing",
-                               initial_x,
-                               best_x,
-                               best_f_x,
-                               iterations,
-                               iteration == iterations,
-                               false,
-                               0.0,
-                               false,
-                               0.0,
-                               false,
-                               0.0,
-                               tr,
-                               f_calls,
-                               0,
-                               f_values[1:(iteration + 1)])
+    return MultivariateOptimizationResults("Simulated Annealing",
+                                           initial_x,
+                                           best_x,
+                                           best_f_x,
+                                           iterations,
+                                           iteration == iterations,
+                                           false,
+                                           NaN,
+                                           false,
+                                           NaN,
+                                           false,
+                                           NaN,
+                                           tr,
+                                           f_calls,
+                                           0)
 end

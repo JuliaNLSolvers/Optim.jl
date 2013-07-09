@@ -25,10 +25,16 @@ module Optim
            TwiceDifferentiableFunction
 
     # Types
-    include("utilities/assess_convergence.jl")
-
-    # Types
     include("types.jl")
+
+    # Maxdiff
+    include("utilities/maxdiff.jl")
+
+    # Tracing
+    include("utilities/update.jl")
+
+    # Convergence
+    include("utilities/assess_convergence.jl")
 
     # Grid Search
     include("grid_search.jl")
