@@ -25,6 +25,9 @@ module Optim
            TwiceDifferentiableFunction
 
     # Types
+    include("utilities/assess_convergence.jl")
+
+    # Types
     include("types.jl")
 
     # Grid Search

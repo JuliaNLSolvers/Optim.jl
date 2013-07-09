@@ -224,24 +224,17 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
         dgr_history[:, modindex(iteration, m)] = dgr
         rho[modindex(iteration, m)] = rho_iteration
 
-        # Assess convergence
-        deltax = 0.0
-        for i in 1:n
-            diff = abs(x[i] - x_previous[i])
-            if diff > deltax
-                deltax = diff
-            end
-        end
-        if deltax < xtol
-            x_converged = true
-        end
-        if abs(f_values[iteration + 1] - f_values[iteration]) < ftol
-            f_converged = true
-        end
-        if norm(gr, Inf) < grtol
-            gr_converged = true
-        end
-        converged = x_converged || f_converged || gr_converged
+        x_converged,
+        f_converged,
+        gr_converged,
+        converged = assess_convergence(x,
+                                       x_previous,
+                                       f_values[iteration + 1],
+                                       f_values[iteration],
+                                       gr,
+                                       xtol,
+                                       ftol,
+                                       grtol)
 
         # Show trace
         if tracing
