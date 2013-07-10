@@ -12,7 +12,10 @@ function assess_convergence(x::Vector,
         x_converged = true
     end
 
-    if abs(f_x - f_x_previous) < ftol
+    # Absolute Tolerance
+    # if abs(f_x - f_x_previous) < ftol
+    # Relative Tolerance
+    if abs(f_x - f_x_previous) / (abs(f_x) + ftol) < ftol
         f_converged = true
     end
 

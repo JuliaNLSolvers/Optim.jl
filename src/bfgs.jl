@@ -28,7 +28,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                  initial_x::Vector{T};
                  initial_invH::Matrix = eye(length(initial_x)),
                  xtol::Real = 1e-32,
-                 ftol::Real = 1e-32,
+                 ftol::Real = 1e-8,
                  grtol::Real = 1e-8,
                  iterations::Integer = 1_000,
                  store_trace::Bool = false,
@@ -37,45 +37,39 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                  linesearch!::Function = hz_linesearch!)
 
     # Maintain current state in x and previous state in x_previous
-    x = copy(initial_x)
-    x_previous = copy(initial_x)
+    x, x_previous = copy(initial_x), copy(initial_x)
 
     # Count the total number of iterations
     iteration = 0
 
     # Track calls to function and gradient
-    f_calls = 0
-    g_calls = 0
+    f_calls, g_calls = 0, 0
 
     # Count number of parameters
     n = length(x)
 
     # Maintain current gradient in gr and previous gradient in gr_previous
-    gr = Array(Float64, n)
-    gr_previous = Array(Float64, n)
+    gr, gr_previous = Array(T, n), Array(T, n)
 
     # Store the approximate inverse Hessian in invH
     invH = copy(initial_invH)
 
     # The current search direction
-    s = Array(Float64, n)
+    s = Array(T, n)
 
-    # For something????
-    u = Array(Float64, n)
+    # Intermediate storage
+    u = Array(T, n)
 
     # Buffers for use in line search
-    x_ls = Array(Float64, n)
-    gr_ls = Array(Float64, n)
+    x_ls, gr_ls = Array(T, n), Array(T, n)
 
     # Store f(x) in f_x
-    f_x = d.fg!(x, gr)
-    f_x_previous = NaN
-    f_calls += 1
-    g_calls += 1
+    f_x_previous, f_x = NaN, d.fg!(x, gr)
+    f_calls, g_calls = f_calls + 1, g_calls + 1
     copy!(gr_previous, gr)
 
     # Keep track of step-sizes
-    alpha = alphainit(1.0, x, gr, f_x)
+    alpha = alphainit(one(T), x, gr, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -84,21 +78,20 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Maintain record of changes in position and gradient
-    dx = Array(Float64, n)
-    dgr = Array(Float64, n)
+    dx, dgr = Array(T, n), Array(T, n)
 
     # Maintain a cached copy of the identity matrix
     I = eye(size(invH)...)
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace
+    tracing = store_trace || show_trace || extended_trace
     @bfgstrace
 
+    # Assess multiple types of convergence
+    x_converged, f_converged, gr_converged = false, false, false
+
     # Iterate until convergence
-    x_converged = false
-    f_converged = false
-    gr_converged = false
     converged = false
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
@@ -116,7 +109,9 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)
-            s = -gr
+            for i in 1:n
+                s[i] = -gr[i]
+            end
             dphi0 = dot(gr, s)
         end
         clear!(lsr)
@@ -125,8 +120,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
           linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
-        f_calls += f_update
-        g_calls += g_update
+        f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
         copy!(x_previous, x)
@@ -141,10 +135,8 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         copy!(gr_previous, gr)
 
         # Update the function value and gradient
-        f_x_previous = f_x
-        f_x = d.fg!(x, gr)
-        f_calls += 1
-        g_calls += 1
+        f_x_previous, f_x = f_x, d.fg!(x, gr)
+        f_calls, g_calls = f_calls + 1, g_calls + 1
 
         # Measure the change in the gradient
         for i in 1:n
@@ -183,19 +175,19 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         @bfgstrace
     end
 
-    MultivariateOptimizationResults("BFGS",
-                        initial_x,
-                        x,
-                        f_x,
-                        iteration,
-                        iteration == iterations,
-                        x_converged,
-                        xtol,
-                        f_converged,
-                        ftol,
-                        gr_converged,
-                        grtol,
-                        tr,
-                        f_calls,
-                        g_calls)
+    return MultivariateOptimizationResults("BFGS",
+                                           initial_x,
+                                           x,
+                                           f_x,
+                                           iteration,
+                                           iteration == iterations,
+                                           x_converged,
+                                           xtol,
+                                           f_converged,
+                                           ftol,
+                                           gr_converged,
+                                           grtol,
+                                           tr,
+                                           f_calls,
+                                           g_calls)
 end

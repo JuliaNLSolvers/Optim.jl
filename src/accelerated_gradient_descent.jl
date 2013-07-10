@@ -29,7 +29,7 @@ end
 function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                                          initial_x::Vector{T};
                                          xtol::Real = 1e-32,
-                                         ftol::Real = 1e-32,
+                                         ftol::Real = 1e-8,
                                          grtol::Real = 1e-8,
                                          iterations::Integer = 1_000,
                                          store_trace::Bool = false,
@@ -58,16 +58,14 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     s = Array(T, n)
 
     # Buffers for use in line search
-    x_ls = Array(T, n)
-    gr_ls = Array(T, n)
+    x_ls, gr_ls = Array(T, n), Array(T, n)
 
     # Store f(x) in f_x
-    f_x = d.fg!(x, gr)
-    f_x_previous = NaN
+    f_x_previous, f_x = NaN, d.fg!(x, gr)
     f_calls, g_calls = f_calls + 1, g_calls + 1
 
     # Keep track of step-sizes
-    alpha = alphainit(1.0, x, gr, f_x)
+    alpha = alphainit(one(T), x, gr, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -120,8 +118,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         end
 
         # Update the function value and gradient
-        f_x_previous = f_x
-        f_x = d.fg!(x, gr)
+        f_x_previous, f_x = f_x, d.fg!(x, gr)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         x_converged,
@@ -139,19 +136,19 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         @agdtrace
     end
 
-    MultivariateOptimizationResults("Accelerated Gradient Descent",
-                        initial_x,
-                        x,
-                        f_x,
-                        iteration,
-                        iteration == iterations,
-                        x_converged,
-                        xtol,
-                        f_converged,
-                        ftol,
-                        gr_converged,
-                        grtol,
-                        tr,
-                        f_calls,
-                        g_calls)
+    return MultivariateOptimizationResults("Accelerated Gradient Descent",
+                                           initial_x,
+                                           x,
+                                           f_x,
+                                           iteration,
+                                           iteration == iterations,
+                                           x_converged,
+                                           xtol,
+                                           f_converged,
+                                           ftol,
+                                           gr_converged,
+                                           grtol,
+                                           tr,
+                                           f_calls,
+                                           g_calls)
 end

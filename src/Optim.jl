@@ -5,10 +5,6 @@ module Optim
     using Distributions
     using Calculus
 
-    function centroid(p::Matrix)
-         reshape(mean(p, 2), size(p, 1))
-    end
-
     import Base.assign,
            Base.dot,
            Base.length,

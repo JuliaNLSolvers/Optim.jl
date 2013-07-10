@@ -94,7 +94,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io " * Iterations: %d\n" r.iterations
     @printf io " * Convergence: %s\n" converged(r)
     @printf io "   * |x - x'| < %.1e: %s\n" r.xtol r.x_converged
-    @printf io "   * |f(x) - f(x')| < %.1e: %s\n" r.ftol r.f_converged
+    @printf io "   * |f(x) - f(x')| / |f(x)| < %.1e: %s\n" r.ftol r.f_converged
     @printf io "   * |g(x)| < %.1e: %s\n" r.grtol r.gr_converged
     @printf io "   * Exceeded Maximum Number of Iterations: %s\n" r.iteration_converged
     @printf io " * Objective Function Calls: %d\n" r.f_calls

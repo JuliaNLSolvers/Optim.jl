@@ -1,4 +1,25 @@
-# TODO: Avoid recomputing centroids and f(centroid)
+centroid(p::Matrix) = reshape(mean(p, 2), size(p, 1))
+
+function dominates(x::Vector, y::Vector)
+    for i in 1:length(x)
+        if x[i] <= y[i]
+            return false
+        end
+    end
+    return true
+end
+
+function dominates(x::Real, y::Vector)
+    for i in 1:length(y)
+        if x <= y[i]
+            return false
+        end
+    end
+    return true
+end
+
+nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
+
 macro nmtrace()
     quote
         if tracing
@@ -28,13 +49,12 @@ function nelder_mead{T}(f::Function,
                         store_trace::Bool = false,
                         show_trace::Bool = false,
                         extended_trace::Bool = false)
-
     # Set up a simplex of points around starting value
     m = length(initial_x)
     n = m + 1
     p = repmat(initial_x, 1, n)
-    for i in 1:length(p)
-        p[i] += randn()
+    for i in 1:m
+        p[i, i] += one(T)
     end
 
     # Count function calls
@@ -47,8 +67,7 @@ function nelder_mead{T}(f::Function,
     end
     f_calls += n
 
-    f_x = NaN
-    f_x_previous = NaN
+    f_x_previous, f_x = NaN, nmobjective(y, m, n)
 
     # Count iterations
     iteration = 0
@@ -59,10 +78,10 @@ function nelder_mead{T}(f::Function,
     @nmtrace
 
     # Cache p_bar, y_bar, p_star and p_star_star
-    p_bar = Array(Float64, m)
-    y_bar = Array(Float64, m)
-    p_star = Array(Float64, m)
-    p_star_star = Array(Float64, m)
+    p_bar = Array(T, m)
+    y_bar = Array(T, m)
+    p_star = Array(T, m)
+    p_star_star = Array(T, m)
 
     # Iterate until convergence or exhaustion
     f_converged = false
@@ -79,14 +98,12 @@ function nelder_mead{T}(f::Function,
         # Compute the centroid of the non-maximal points
         # Also cache function values of all non-maximal points
         fill!(p_bar, 0.0)
-        let
-            tmpindex = 0
-            for i in 1:n
-                if i != h
-                    tmpindex += 1
-                    y_bar[tmpindex] = y[i]
-                    p_bar[:] += p[:, i]
-                end
+        tmpindex = 0
+        for i in 1:n
+            if i != h
+                tmpindex += 1
+                y_bar[tmpindex] = y[i]
+                p_bar[:] += p[:, i]
             end
         end
         for j in 1:m
@@ -118,7 +135,7 @@ function nelder_mead{T}(f::Function,
                 y[h] = y_star
             end
         else
-            if all(y_star .> y_bar)
+            if dominates(y_star, y_bar)
                 if y_star < y_h
                     p_h[:] = p_star
                     p[:, h] = p_h
@@ -151,7 +168,7 @@ function nelder_mead{T}(f::Function,
             end
         end
 
-        f_x = sqrt(var(y) * (m / n))
+        f_x_previous, f_x = f_x, nmobjective(y, m, n)
 
         @nmtrace
 
@@ -160,19 +177,21 @@ function nelder_mead{T}(f::Function,
         end
     end
 
-    MultivariateOptimizationResults("Nelder-Mead",
-                        initial_x,
-                        centroid(p),
-                        f(centroid(p)),
-                        iteration,
-                        iteration == iterations,
-                        false,
-                        NaN,
-                        f_converged,
-                        ftol,
-                        false,
-                        NaN,
-                        tr,
-                        f_calls,
-                        0)
+    minimum = centroid(p)
+
+    return MultivariateOptimizationResults("Nelder-Mead",
+                                           initial_x,
+                                           minimum,
+                                           f(minimum),
+                                           iteration,
+                                           iteration == iterations,
+                                           false,
+                                           NaN,
+                                           f_converged,
+                                           ftol,
+                                           false,
+                                           NaN,
+                                           tr,
+                                           f_calls,
+                                           0)
 end
