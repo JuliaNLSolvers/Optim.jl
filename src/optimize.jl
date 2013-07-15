@@ -12,6 +12,9 @@ function optimize(d::TwiceDifferentiableFunction,
     if extended_trace
         store_trace = true
     end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
+    end
     if method == :gradient_descent
         gradient_descent(d,
                          initial_x,
@@ -97,6 +100,9 @@ function optimize(d::DifferentiableFunction,
     if extended_trace
         show_trace = true
     end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
+    end
     if method == :gradient_descent
         gradient_descent(d,
                          initial_x,
@@ -172,6 +178,9 @@ function optimize(f::Function,
                   linesearch!::Function = hz_linesearch!)
     if extended_trace
         show_trace = true
+    end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :nelder_mead
         nelder_mead(f,
@@ -280,6 +289,9 @@ function optimize(f::Function,
     if extended_trace
         show_trace = true
     end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
+    end
     if method == :nelder_mead
         nelder_mead(f,
                     initial_x,
@@ -373,6 +385,9 @@ function optimize(f::Function,
                   linesearch!::Function = hz_linesearch!)
     if extended_trace
         show_trace = true
+    end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :nelder_mead
         nelder_mead(f,
