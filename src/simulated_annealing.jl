@@ -4,7 +4,7 @@ constant_temperature(t::Real) = 1.0
 
 function default_neighbor!(x::Vector, x_proposal::Vector)
     for i in 1:length(x)
-        x_proposal[i] = x[i] + randn()
+        @inbounds x_proposal[i] = x[i] + randn()
     end
     return
 end

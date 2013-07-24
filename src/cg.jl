@@ -7,21 +7,21 @@ cg_precondinvdot(A::Array, P::Nothing, B::Array) = dot(A, B)
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
     for i in 1:length(A)
-        out[i] = p[i] * A[i]
+        @inbounds out[i] = p[i] * A[i]
     end
     return out
 end
 function cg_precondfwddot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
     for i in 1:length(A)
-        s += A[i] * p[i] * B[i]
+        @inbounds s += A[i] * p[i] * B[i]
     end
     return s
 end
 function cg_precondinvdot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
     for i in 1:length(A)
-        s += A[i] * B[i] / p[i]
+        @inbounds s += A[i] * B[i] / p[i]
     end
     return s
 end
@@ -176,7 +176,7 @@ function cg{T}(df::Union(DifferentiableFunction,
     precondprep(P, x)
     cg_precondfwd(s, P, gr)
     for i in 1:n
-        s[i] = -s[i]
+        @inbounds s[i] = -s[i]
     end
 
     # Assess multiple types of convergence
@@ -192,7 +192,7 @@ function cg{T}(df::Union(DifferentiableFunction,
         dphi0 = dot(gr, s)
         if dphi0 >= 0
             for i in 1:n
-                s[i] = -gr[i]
+                @inbounds s[i] = -gr[i]
             end
             dphi0 = dot(gr, s)
             if dphi0 < 0
@@ -219,7 +219,7 @@ function cg{T}(df::Union(DifferentiableFunction,
 
         # Update current position
         for i in 1:n
-            x[i] = x[i] + alpha * s[i]
+            @inbounds x[i] = x[i] + alpha * s[i]
         end
 
         # Maintain a record of the previous gradient
@@ -240,7 +240,7 @@ function cg{T}(df::Union(DifferentiableFunction,
         dPd = cg_precondinvdot(s, P, s)
         etak::T = eta * dot(s, gr_previous) / dPd
         for i in 1:n
-            y[i] = gr[i] - gr_previous[i]
+            @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = dot(y, s)
         cg_precondfwd(pgr, P, gr)
@@ -248,7 +248,7 @@ function cg{T}(df::Union(DifferentiableFunction,
                  dot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         for i in 1:n
-            s[i] = beta * s[i] - pgr[i]
+            @inbounds s[i] = beta * s[i] - pgr[i]
         end
 
         x_converged,

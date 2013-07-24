@@ -101,7 +101,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # Search direction is the negative gradient divided by the approximate Hessian
         A_mul_B(s, invH, gr)
         for i in 1:n
-            s[i] = -s[i]
+            @inbounds s[i] = -s[i]
         end
 
         # Refresh the line search cache
@@ -110,7 +110,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         if dphi0 > 0.0
             copy!(invH, I)
             for i in 1:n
-                s[i] = -gr[i]
+                @inbounds s[i] = -gr[i]
             end
             dphi0 = dot(gr, s)
         end
@@ -127,8 +127,8 @@ function bfgs{T}(d::Union(DifferentiableFunction,
 
         # Update current position
         for i in 1:n
-            dx[i] = alpha * s[i]
-            x[i] = x[i] + dx[i]
+            @inbounds dx[i] = alpha * s[i]
+            @inbounds x[i] = x[i] + dx[i]
         end
 
         # Maintain a record of the previous gradient
@@ -140,7 +140,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
 
         # Measure the change in the gradient
         for i in 1:n
-            dgr[i] = gr[i] - gr_previous[i]
+            @inbounds dgr[i] = gr[i] - gr_previous[i]
         end
 
         # Update the inverse Hessian approximation using Sherman-Morrison
@@ -156,7 +156,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         for i in 1:n
             for j in 1:n
-                invH[i, j] += c1 * dx[i] * dx[j] - c2 * (u[i] * dx[j] + u[j] * dx[i])
+                @inbounds invH[i, j] += c1 * dx[i] * dx[j] - c2 * (u[i] * dx[j] + u[j] * dx[i])
             end
         end
 

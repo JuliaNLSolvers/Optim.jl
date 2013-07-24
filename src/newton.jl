@@ -85,7 +85,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
 
         # Search direction is always the negative gradient divided by H
         # TODO: Do this calculation in place
-        s[:] = -(H \ gr)
+        @inbounds s[:] = -(H \ gr)
 
         # Refresh the line search cache
         dphi0 = dot(gr, s)
@@ -102,7 +102,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
 
         # Update current position
         for i in 1:n
-            x[i] = x[i] + alpha * s[i]
+            @inbounds x[i] = x[i] + alpha * s[i]
         end
 
         # Update the function value and gradient

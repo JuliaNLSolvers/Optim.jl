@@ -81,7 +81,7 @@ function gradient_descent{T}(d::Union(DifferentiableFunction,
 
         # Search direction is always the negative gradient
         for i in 1:n
-            s[i] = -gr[i]
+            @inbounds s[i] = -gr[i]
         end
 
         # Refresh the line search cache
@@ -99,7 +99,7 @@ function gradient_descent{T}(d::Union(DifferentiableFunction,
 
         # Update current position
         for i in 1:n
-            x[i] = x[i] + alpha * s[i]
+            @inbounds x[i] = x[i] + alpha * s[i]
         end
 
         # Update the function value and gradient

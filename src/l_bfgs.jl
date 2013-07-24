@@ -30,9 +30,9 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        alpha[i] = rho[i] * dot(dx_history[:, i], q)
+        @inbounds alpha[i] = rho[i] * dot(dx_history[:, i], q)
         for j in 1:n
-            q[j] -= alpha[i] * dgr_history[j, i]
+            @inbounds q[j] -= alpha[i] * dgr_history[j, i]
         end
     end
 
@@ -45,15 +45,15 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        beta = rho[i] * dot(dgr_history[:, i], s)
+        @inbounds beta = rho[i] * dot(dgr_history[:, i], s)
         for j in 1:n
-            s[j] += dx_history[j, i] * (alpha[i] - beta)
+            @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
     end
 
     # Negate search direction
     for i in 1:n
-        s[i] = -1.0 * s[i]
+        @inbounds s[i] = -1.0 * s[i]
     end
 
     return
@@ -171,8 +171,8 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
 
         # Update current position
         for i in 1:n
-            dx[i] = alpha * s[i]
-            x[i] = x[i] + dx[i]
+            @inbounds dx[i] = alpha * s[i]
+            @inbounds x[i] = x[i] + dx[i]
         end
 
         # Maintain a record of the previous gradient
@@ -184,7 +184,7 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
 
         # Measure the change in the gradient
         for i in 1:n
-            dgr[i] = gr[i] - gr_previous[i]
+            @inbounds dgr[i] = gr[i] - gr_previous[i]
         end
 
         # Update the L-BFGS history of positions and gradients

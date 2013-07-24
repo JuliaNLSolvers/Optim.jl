@@ -2,7 +2,7 @@ centroid(p::Matrix) = reshape(mean(p, 2), size(p, 1))
 
 function dominates(x::Vector, y::Vector)
     for i in 1:length(x)
-        if x[i] <= y[i]
+        @inbounds if x[i] <= y[i]
             return false
         end
     end
@@ -11,7 +11,7 @@ end
 
 function dominates(x::Real, y::Vector)
     for i in 1:length(y)
-        if x <= y[i]
+        @inbounds if x <= y[i]
             return false
         end
     end
@@ -54,7 +54,7 @@ function nelder_mead{T}(f::Function,
     n = m + 1
     p = repmat(initial_x, 1, n)
     for i in 1:m
-        p[i, i] += one(T)
+        @inbounds p[i, i] += one(T)
     end
 
     # Count function calls
@@ -63,7 +63,7 @@ function nelder_mead{T}(f::Function,
     # Maintain a record of the value of f() at n points
     y = Array(Float64, n)
     for i in 1:n
-        y[i] = f(p[:, i])
+        @inbounds y[i] = f(p[:, i])
     end
     f_calls += n
 
@@ -91,9 +91,9 @@ function nelder_mead{T}(f::Function,
 
         # Find p_l and p_h, the minimum and maximum values of f() among p
         y_l, l = findmin(y)
-        p_l = p[:, l]
+        @inbounds p_l = p[:, l]
         y_h, h = findmax(y)
-        p_h = p[:, h]
+        @inbounds p_h = p[:, h]
 
         # Compute the centroid of the non-maximal points
         # Also cache function values of all non-maximal points
@@ -102,17 +102,17 @@ function nelder_mead{T}(f::Function,
         for i in 1:n
             if i != h
                 tmpindex += 1
-                y_bar[tmpindex] = y[i]
-                p_bar[:] += p[:, i]
+                @inbounds y_bar[tmpindex] = y[i]
+                @inbounds p_bar[:] += p[:, i]
             end
         end
         for j in 1:m
-            p_bar[j] /= m
+            @inbounds p_bar[j] /= m
         end
 
         # Compute a reflection
         for j in 1:m
-            p_star[j] = (1 + a) * p_bar[j] - a * p_h[j]
+            @inbounds p_star[j] = (1 + a) * p_bar[j] - a * p_h[j]
         end
         y_star = f(p_star)
         f_calls += 1
@@ -120,31 +120,31 @@ function nelder_mead{T}(f::Function,
         if y_star < y_l
             # Compute an expansion
             for j in 1:m
-                p_star_star[j] = g * p_star[j] + (1 - g) * p_bar[j]
+                @inbounds p_star_star[j] = g * p_star[j] + (1 - g) * p_bar[j]
             end
             y_star_star = f(p_star_star)
             f_calls += 1
 
             if y_star_star < y_l
-                p_h[:] = p_star_star
-                p[:, h] = p_star_star
-                y[h] = y_star_star
+                @inbounds p_h[:] = p_star_star
+                @inbounds p[:, h] = p_star_star
+                @inbounds y[h] = y_star_star
             else
                 p_h = p_star
-                p[:, h] = p_star
-                y[h] = y_star
+                @inbounds p[:, h] = p_star
+                @inbounds y[h] = y_star
             end
         else
             if dominates(y_star, y_bar)
                 if y_star < y_h
-                    p_h[:] = p_star
-                    p[:, h] = p_h
-                    y[h] = y_star
+                    @inbounds p_h[:] = p_star
+                    @inbounds p[:, h] = p_h
+                    @inbounds y[h] = y_star
                 end
 
                 # Compute a contraction
                 for j in 1:m
-                    p_star_star[j] = b * p_h[j] + (1 - b) * p_bar[j]
+                    @inbounds p_star_star[j] = b * p_h[j] + (1 - b) * p_bar[j]
                 end
                 y_star_star = f(p_star_star)
                 f_calls += 1
@@ -152,19 +152,19 @@ function nelder_mead{T}(f::Function,
                 if y_star_star > y_h
                     for i = 1:n
                         for j in 1:m
-                            p[j, i] = (p[j, i] + p_l[j]) / 2.0
+                            @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
                         end
-                        y[i] = f(p[:, i])
+                        @inbounds y[i] = f(p[:, i])
                     end
                 else
-                    p_h[:] = p_star_star
-                    p[:, h] = p_h
-                    y[h] = y_star_star
+                    @inbounds p_h[:] = p_star_star
+                    @inbounds p[:, h] = p_h
+                    @inbounds y[h] = y_star_star
                 end
             else
-                p_h[:] = p_star
-                p[:, h] = p_h
-                y[h] = y_star
+                @inbounds p_h[:] = p_star
+                @inbounds p[:, h] = p_h
+                @inbounds y[h] = y_star
             end
         end
 
