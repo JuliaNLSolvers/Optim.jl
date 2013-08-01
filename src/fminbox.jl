@@ -149,6 +149,8 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
     xold = similar(x)
     converged = false
     @set_options ops tol=10*tol alphamaxfunc=(x, d)->limits_box(x, d, l, u) P=P reportfunc=val->valboth[1]
+    local fval
+    local fcount
     while true
         copy!(xold, x)
         # Optimize with current setting of mu
@@ -157,7 +159,12 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
         if display > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
-        x, fval, fcount, converged = optimizer(funcc, x, ops)
+        try
+            x, fval, fcount, converged = optimizer(funcc, x, ops)
+        catch
+            warn(string("Encountered an error in optimizing with mu = ", mu, ", returning previous result"))
+            return xold, fval_all, fcount_all, converged
+        end
         if display & PARAMETERS_MU > 0
             println("x: ", x)
         end

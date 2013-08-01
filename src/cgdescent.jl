@@ -184,9 +184,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             println("beta: ", beta)
         end
         # Generate the new search direction
-        for i = 1:N
-            d[i] = beta*d[i] - pg[i]
-        end
+        update_d!(d, beta, pg)  # for some reason this needs a separate function to be optimized
         # Define the new line search function
         phi = (galpha, alpha) -> cg_linefunc(galpha, alpha, func, x, d, xtmp, g)
         phi0 = val              # value at alpha=0
@@ -228,6 +226,12 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     return x, fval, fcount, converged
 end
 export cgdescent
+
+function update_d!(d, beta, pg)
+    for i = 1:length(d)
+        d[i] = beta*d[i] - pg[i]
+    end
+end
 
 # Generate initial guess for step size (HZ, stage I0)
 function cg_alphainit{T}(alpha, x::Array{T}, g, val, ops)
