@@ -99,7 +99,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
 
         # Set the search direction        
         # Search direction is the negative gradient divided by the approximate Hessian
-        A_mul_B(s, invH, gr)
+        A_mul_B!(s, invH, gr)
         for i in 1:n
             @inbounds s[i] = -s[i]
         end
@@ -148,7 +148,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         if dx_dgr == 0.0
             break
         end
-        A_mul_B(u, invH, dgr)
+        A_mul_B!(u, invH, dgr)
 
         c1 = (dx_dgr + dot(dgr, u)) / (dx_dgr * dx_dgr)
         c2 = 1 / dx_dgr
