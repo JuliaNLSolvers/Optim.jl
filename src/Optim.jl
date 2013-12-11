@@ -23,6 +23,9 @@ module Optim
     # Types
     include("types.jl")
 
+    # Automatic differentiation utilities
+    include("autodiff.jl")
+
     # Maxdiff
     include("utilities/maxdiff.jl")
 

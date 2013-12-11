@@ -89,6 +89,7 @@ In addition to the `method` keyword, you can alter the behavior of the Optim pac
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `STDOUT`? Defaults to `false`.
+* `autodiff`: When only an objective function is provided, use automatic differentiation to compute exact numerical gradients. If not, finite differencing will be used. This functionality is experimental. Defaults to `false`.
 
 Thus, one might construct a complex call to `optimize` like:
 

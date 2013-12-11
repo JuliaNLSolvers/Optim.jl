@@ -27,3 +27,8 @@ results = optimize(f1, g1, [127.0, 921.0])
 results = optimize(f1, [127.0, 921.0])
 @assert results.f_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
+
+results = optimize(f1, [127.0, 921.0], autodiff = true)
+@assert results.f_converged
+@assert norm(results.minimum - [0.0, 0.0]) < 0.01
+
