@@ -382,7 +382,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  autodiff::Bool = false)
     if extended_trace
         show_trace = true
     end
@@ -390,7 +391,7 @@ function optimize(f::Function,
         @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :nelder_mead
-        nelder_mead(f,
+        return nelder_mead(f,
                     initial_x,
                     ftol = ftol,
                     iterations = iterations,
@@ -398,14 +399,20 @@ function optimize(f::Function,
                     show_trace = show_trace,
                     extended_trace = extended_trace)
     elseif method == :simulated_annealing
-        simulated_annealing(f,
+        return simulated_annealing(f,
                             initial_x,
                             iterations = iterations,
                             store_trace = store_trace,
                             show_trace = show_trace,
                             extended_trace = extended_trace)
-    elseif method == :gradient_descent
+    end
+    # otherwise we need a gradient:
+    if !autodiff
         d = DifferentiableFunction(f)
+    else
+        d = autodiff(f,eltype(x),length(x))
+    end
+    if method == :gradient_descent
         gradient_descent(d,
                          initial_x,
                          xtol = xtol,
@@ -417,7 +424,6 @@ function optimize(f::Function,
                          extended_trace = extended_trace,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
-        d = DifferentiableFunction(f)
         momentum_gradient_descent(d,
                                   initial_x,
                                   xtol = xtol,
@@ -429,7 +435,6 @@ function optimize(f::Function,
                                   extended_trace = extended_trace,
                                   linesearch! = linesearch!)
     elseif method == :cg
-        d = DifferentiableFunction(f)
         cg(d,
            initial_x,
            xtol = xtol,
@@ -441,7 +446,6 @@ function optimize(f::Function,
            extended_trace = extended_trace,
            linesearch! = linesearch!)
     elseif method == :bfgs
-        d = DifferentiableFunction(f)
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -453,7 +457,6 @@ function optimize(f::Function,
              extended_trace = extended_trace,
              linesearch! = linesearch!)
     elseif method == :l_bfgs
-        d = DifferentiableFunction(f)
         l_bfgs(d,
                initial_x,
                xtol = xtol,
