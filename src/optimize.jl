@@ -383,7 +383,7 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  autodiff = false)
+                  autodiff::Bool = false)
     if extended_trace
         show_trace = true
     end
