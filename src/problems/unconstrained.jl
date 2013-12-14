@@ -149,7 +149,7 @@ examples["Hosaki"] = OptimizationProblem("Hosaki",
 ##########################################################################
 
 function large_polynomial(x::Vector)
-    res = 0.0
+    res = zero(x[1])
     for i in 1:250
         res += (i - x[i])^2
     end
