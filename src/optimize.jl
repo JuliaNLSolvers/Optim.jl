@@ -175,7 +175,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  autodiff::Bool = false)
     if extended_trace
         show_trace = true
     end
@@ -285,7 +286,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  autodiff::Bool = false)
     if extended_trace
         show_trace = true
     end
@@ -383,7 +385,7 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  autodiff::Bool = false)
+                  ad::Bool = false)
     if extended_trace
         show_trace = true
     end
@@ -407,10 +409,10 @@ function optimize(f::Function,
                             extended_trace = extended_trace)
     end
     # otherwise we need a gradient:
-    if !autodiff
+    if !ad
         d = DifferentiableFunction(f)
     else
-        d = autodiff(f,eltype(x),length(x))
+        d = autodiff(f,eltype(initial_x),length(initial_x))
     end
     if method == :gradient_descent
         gradient_descent(d,
