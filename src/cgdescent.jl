@@ -121,7 +121,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
     @assert dphi0 < 0
     alpha = cg_alphainit(alpha, x, g, val, ops)
     alphamax = alphamaxfunc(x, d)
-    alpha = min(alphamax, alpha)
+    alpha = minimum(alphamax, alpha)
     @set_options ops alphamax=alphamax
     mayterminate = false
     converged = false
@@ -160,7 +160,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             @printf("%6d   %6d   %14e %14e\n", iter, fcount, reportfunc(val), absstep)
         end
         fsum = abs(val) + abs(valold)
-        if absstep <= tol*fsum/N || abs(val) < eps(max(max(abs(x)), max(abs(g))))
+        if absstep <= tol*fsum/N || abs(val) < eps(maximum(maximum(abs(x)), maximum(abs(g))))
 #        if norm2(g) <= tol^2
             converged = true
             break
@@ -179,7 +179,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
         ydotd = dot(y, d)
         precondfwd(pg, P, g)
         betak = (dot(y, pg) - precondfwddot(y, P, y)*dot(d,g)/ydotd)/ydotd
-        beta = max(betak, etak)
+        beta = maximum(betak, etak)
         if display & BETA > 0
             println("beta: ", beta)
         end
@@ -239,9 +239,9 @@ function cg_alphainit{T}(alpha, x::Array{T}, g, val, ops)
     @defaults ops psi0=0.01
     if isnan(alpha)
         alpha = 1
-        gmax = max(abs(g))
+        gmax = maximum(abs(g))
         if gmax != 0
-            xmax = max(abs(x))
+            xmax = maximum(abs(x))
             if xmax != 0
                 alpha = psi0*xmax/gmax
             elseif val != 0
@@ -262,7 +262,7 @@ function cg_alphatry{T}(alpha::T, phi::Function, lsr::LineSearchResults, ops::Op
     phi0 = lsr.value[1]
     dphi0 = lsr.slope[1]
     alphatest = psi1*alpha
-    alphatest = min(alphatest, alphamax)
+    alphatest = minimum(alphatest, alphamax)
     phitest = phi(nothing, alphatest)
     iterfinite = 1
     while !isfinite(phitest)
@@ -300,7 +300,7 @@ function cg_alphatry{T}(alpha::T, phi::Function, lsr::LineSearchResults, ops::Op
             alpha *= psi2       # if not convex, expand the interval
         end
     end
-    alpha = min(alphamax, alpha)
+    alpha = minimum(alphamax, alpha)
     if display & ALPHAGUESS > 0
         println("alpha guess (expand): ", alpha)
     end
