@@ -43,7 +43,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.initial_x,
                            method = algorithm,
                            grtol = 1e-8,
-                           autodiffing = ad)
+                           autodiff = ad)
 
         # Run each algorithm 1,000 times
         n = 100
@@ -54,7 +54,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                                problem.initial_x,
                                method = algorithm,
                                grtol = 1e-8,
-                               autodiffing = ad)
+                               autodiff = ad)
         end
 
         # Estimate error in discovered solution
@@ -62,7 +62,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.initial_x,
                            method = algorithm,
                            grtol = 1e-8,
-                           autodiffing = ad)
+                           autodiff = ad)
         errors = minimum(map(sol -> norm(results.minimum - sol), problem.solutions))
 
         # Count iterations
