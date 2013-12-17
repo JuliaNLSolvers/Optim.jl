@@ -11,8 +11,8 @@
 
 using Optim
 
-algorithms = [#:gradient_descent,
-              #:momentum_gradient_descent,
+algorithms = [:gradient_descent,
+              :momentum_gradient_descent,
               :bfgs,
               :l_bfgs,
               :cg]
@@ -46,7 +46,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            autodiff = ad)
 
         # Run each algorithm 1,000 times
-        n = 100
+        n = 1_000
 
         # Estimate run time in seconds
         run_time = @elapsed for i = 1:n
