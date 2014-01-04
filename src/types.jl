@@ -88,8 +88,8 @@ end
 function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" r.method
-    @printf io " * Starting Point: %s\n" string(r.initial_x)
-    @printf io " * Minimum: %s\n" string(r.minimum)
+    @printf io " * Starting Point: [%s]\n" join(r.initial_x, ",")
+    @printf io " * Minimum: [%s]\n" join(r.minimum, ",")
     @printf io " * Value of Function at Minimum: %f\n" r.f_minimum
     @printf io " * Iterations: %d\n" r.iterations
     @printf io " * Convergence: %s\n" converged(r)
