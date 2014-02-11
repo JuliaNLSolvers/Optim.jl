@@ -237,7 +237,7 @@ This leverages fminbox and cgdescent; surely one could get even better performan
 
 ### Linear programming
 
-For tools for doing linear programming, you should look into the MathProg package.
+For linear programming and extensions, see the [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl) packages.
 
 ## State of the Library
 
