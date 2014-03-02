@@ -80,7 +80,7 @@ The section above described the basic API for the Optim package. We employed sev
 * `:newton`
 * `:simulated_annealing`
 
-In addition to the `method` keyword, you can alter the behavior of the Optim package by using four other keywords:
+In addition to the `method` keyword, you can alter the behavior of the Optim package by using the following keywords:
 
 
 * `xtol`: What is the threshold for determining convergence? Defaults to `1e-32`.
