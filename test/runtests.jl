@@ -17,7 +17,9 @@ my_tests = ["bfgs.jl",
             "optimize.jl",
             "simulated_annealing.jl",
             "interpolating_line_search.jl",
-            "api.jl"]
+            "api.jl",
+            "golden_section.jl",
+            "brent.jl"]
 
 println("Running tests:")
 

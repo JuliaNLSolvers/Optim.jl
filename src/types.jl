@@ -39,6 +39,20 @@ type MultivariateOptimizationResults{T} <: OptimizationResults
     g_calls::Int
 end
 
+type UnivariateOptimizationResults{T} <: OptimizationResults
+    method::ASCIIString
+    initial_lower::T
+    initial_upper::T
+    minimum::T
+    f_minimum::Float64
+    iterations::Int
+    converged::Bool
+    rel_tol::Float64
+    abs_tol::Float64
+    trace::OptimizationTrace
+    f_calls::Int
+end
+
 immutable DifferentiableFunction
     f::Function
     g!::Function
@@ -99,6 +113,22 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io "   * Exceeded Maximum Number of Iterations: %s\n" r.iteration_converged
     @printf io " * Objective Function Calls: %d\n" r.f_calls
     @printf io " * Gradient Call: %d" r.g_calls
+    return
+end
+
+function converged(r::UnivariateOptimizationResults)
+    return r.converged
+end
+
+function Base.show(io::IO, r::UnivariateOptimizationResults)
+    @printf io "Results of Optimization Algorithm\n"
+    @printf io " * Algorithm: %s\n" r.method
+    @printf io " * Search Interval: [%f, %f]\n" r.initial_lower r.initial_upper
+    @printf io " * Minimum: %f\n" r.minimum
+    @printf io " * Value of Function at Minimum: %f\n" r.f_minimum
+    @printf io " * Iterations: %d\n" r.iterations
+    @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" r.rel_tol r.abs_tol r.converged
+    @printf io " * Objective Function Calls: %d\n" r.f_calls
     return
 end
 
