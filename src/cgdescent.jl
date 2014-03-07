@@ -160,7 +160,7 @@ function cgdescent{T}(func::Function, x::Array{T}, ops::Options)
             @printf("%6d   %6d   %14e %14e\n", iter, fcount, reportfunc(val), absstep)
         end
         fsum = abs(val) + abs(valold)
-        if absstep <= tol*fsum/N || abs(val) < eps(max(max(abs(x)), max(abs(g))))
+        if absstep <= tol*fsum/N || abs(val) < eps(max(maximum(abs(x)), maximum(abs(g))))
 #        if norm2(g) <= tol^2
             converged = true
             break
@@ -239,9 +239,9 @@ function cg_alphainit{T}(alpha, x::Array{T}, g, val, ops)
     @defaults ops psi0=0.01
     if isnan(alpha)
         alpha = 1
-        gmax = max(abs(g))
+        gmax = maximum(abs(g))
         if gmax != 0
-            xmax = max(abs(x))
+            xmax = maximum(abs(x))
             if xmax != 0
                 alpha = psi0*xmax/gmax
             elseif val != 0
