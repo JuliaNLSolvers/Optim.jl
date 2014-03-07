@@ -12,3 +12,19 @@ for (name, prob) in Optim.UnconstrainedProblems.examples
 		end
 	end
 end
+
+let
+objective(X, B) = sum((X.-B).^2)/2
+
+function objective_gradient!(X, G, B)
+    for i = 1:length(G)
+        G[i] = X[i]-B[i]
+    end
+end
+
+B = rand(2,2)
+df = Optim.DifferentiableFunction(X -> objective(X, B), (X, G) -> objective_gradient!(X, G, B))
+results = Optim.cg(df, rand(2,2))
+@assert Optim.converged(results)
+@assert results.f_minimum < 1e-8
+end
