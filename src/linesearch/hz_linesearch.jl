@@ -69,7 +69,7 @@ const DEFAULTSIGMA = 0.9
 # Generate initial guess for step size (HZ, stage I0)
 function alphainit{T}(alpha::Real,
                       x::Array{T},
-                      gr::Vector, # Could loosen to Array
+                      gr::Array,
                       f_x::Real,
                       psi0::T = 0.01)
     if isnan(alpha)
@@ -92,10 +92,10 @@ end
 function alphatry{T}(alpha::T,
                      d::Union(DifferentiableFunction,
                               TwiceDifferentiableFunction),
-                     x::Vector,
-                     s::Vector,
-                     xtmp::Vector,
-                     gtmp::Vector,
+                     x::Array,
+                     s::Array,
+                     xtmp::Array,
+                     gtmp::Array,
                      lsr::LineSearchResults,
                      psi1::Real = 0.2,
                      psi2::Real = 2,
@@ -167,10 +167,10 @@ end
 
 function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                                      TwiceDifferentiableFunction),
-                           x::Vector{T},
-                           s::Vector,
-                           xtmp::Vector,
-                           g::Vector,
+                           x::Array{T},
+                           s::Array,
+                           xtmp::Array,
+                           g::Array,
                            lsr::LineSearchResults{T},
                            c::Real,
                            mayterminate::Bool,
@@ -605,11 +605,11 @@ end
 # Define one-parameter function for line searches
 function linefunc!(df::Union(DifferentiableFunction,
                             TwiceDifferentiableFunction),
-                   x::Vector,
-                   s::Vector,
+                   x::Array,
+                   s::Array,
                    alpha::Real,
-                   xtmp::Vector,
-                   g::Vector,
+                   xtmp::Array,
+                   g::Array,
                    calc_grad::Bool)
     f_calls = 0
     g_calls = 0

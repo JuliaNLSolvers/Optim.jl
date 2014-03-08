@@ -21,10 +21,10 @@ OptimizationTrace() = OptimizationTrace(Array(OptimizationState, 0))
 
 abstract OptimizationResults
 
-type MultivariateOptimizationResults{T} <: OptimizationResults
+type MultivariateOptimizationResults{T,N} <: OptimizationResults
     method::ASCIIString
-    initial_x::Vector{T}
-    minimum::Vector{T}
+    initial_x::Array{T,N}
+    minimum::Array{T,N}
     f_minimum::Float64
     iterations::Int
     iteration_converged::Bool
@@ -104,11 +104,11 @@ end
 
 # TODO: Expose ability to do forward and backward differencing
 function DifferentiableFunction(f::Function)
-    function g!(x::Vector, storage::Vector)
+    function g!(x::Array, storage::Array)
         Calculus.finite_difference!(f, x, storage, :central)
         return
     end
-    function fg!(x::Vector, storage::Vector)
+    function fg!(x::Array, storage::Array)
         g!(x, storage)
         return f(x)
     end
@@ -116,7 +116,7 @@ function DifferentiableFunction(f::Function)
 end
 
 function DifferentiableFunction(f::Function, g!::Function)
-    function fg!(x::Vector, storage::Vector)
+    function fg!(x::Array, storage::Array)
         g!(x, storage)
         return f(x)
     end

@@ -1,8 +1,8 @@
-function assess_convergence(x::Vector,
-                            x_previous::Vector,
+function assess_convergence(x::Array,
+                            x_previous::Array,
                             f_x::Real,
                             f_x_previous::Real,
-                            gr::Vector,
+                            gr::Array,
                             xtol::Real,
                             ftol::Real,
                             grtol::Real)
