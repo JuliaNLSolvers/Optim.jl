@@ -104,15 +104,15 @@ end
 function cg{T}(df::Union(DifferentiableFunction,
                          TwiceDifferentiableFunction),
                initial_x::Array{T};
-               xtol::Real = 1e-32,
-               ftol::Real = 1e-8,
-               grtol::Real = 1e-8,
+               xtol::Real = convert(T,1e-32),
+               ftol::Real = convert(T,1e-8),
+               grtol::Real = convert(T,1e-8),
                iterations::Integer = 1_000,
                store_trace::Bool = false,
                show_trace::Bool = false,
                extended_trace::Bool = false,
                linesearch!::Function = hz_linesearch!,
-               eta::Real = 0.4,
+               eta::Real = convert(T,0.4),
                P::Any = nothing,
                precondprep::Function = (P, x) -> nothing)
 

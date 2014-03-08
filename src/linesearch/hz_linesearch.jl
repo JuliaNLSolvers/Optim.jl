@@ -71,12 +71,12 @@ function alphainit{T}(alpha::Real,
                       x::Array{T},
                       gr::Array,
                       f_x::Real,
-                      psi0::T = 0.01)
+                      psi0::T = convert(T,0.01))
     if isnan(alpha)
-        alpha = 1.0
-        gr_max = max(abs(gr))
+        alpha = one(T)
+        gr_max = maximum(abs(gr))
         if gr_max != 0.0
-            x_max = max(abs(x))
+            x_max = maximum(abs(x))
             if x_max != 0.0
                 alpha = psi0 * x_max / gr_max
             elseif f_x != 0.0
@@ -97,11 +97,11 @@ function alphatry{T}(alpha::T,
                      xtmp::Array,
                      gtmp::Array,
                      lsr::LineSearchResults,
-                     psi1::Real = 0.2,
-                     psi2::Real = 2,
-                     psi3::Real = 0.1,
+                     psi1::Real = convert(T,0.2),
+                     psi2::Real = convert(T,2),
+                     psi3::Real = convert(T,0.1),
                      iterfinitemax::Integer = iceil(-log2(eps(T))),
-                     alphamax::Real = Inf,
+                     alphamax::Real = inf(T),
                      display::Integer = 0)
     f_calls = 0
     g_calls = 0
@@ -177,11 +177,11 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                            delta::Real = DEFAULTDELTA,
                            sigma::Real = DEFAULTSIGMA,
                            alphamax::Real = inf(T),
-                           rho::Real = 5,
-                           epsilon::Real = 1e-6,
-                           gamma::Real = 0.66,
+                           rho::Real = convert(T,5),
+                           epsilon::Real = convert(T,1e-6),
+                           gamma::Real = convert(T,0.66),
                            linesearchmax::Integer = 50,
-                           psi3::Real = 0.1,
+                           psi3::Real = convert(T,0.1),
                            iterfinitemax::Integer = iceil(-log2(eps(T))),
                            display::Integer = 0)
                            # lsr::LineSearchResults{T},
