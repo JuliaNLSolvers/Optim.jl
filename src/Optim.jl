@@ -9,11 +9,17 @@ module Optim
            Base.setindex!
 
     export optimize,
+           interior,
+           linlsq,
            DifferentiableFunction,
-           TwiceDifferentiableFunction
+           TwiceDifferentiableFunction,
+           ConstraintsBox
 
     # Types
     include("types.jl")
+
+    # Types for constrained optimization
+    include("constraints.jl")
 
     # Automatic differentiation utilities
     include("autodiff.jl")
@@ -64,6 +70,9 @@ module Optim
     # Univariate methods
     include("golden_section.jl")
     include("brent.jl")
+
+    # Constrained optimization algorithms
+    include("interior.jl")
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")

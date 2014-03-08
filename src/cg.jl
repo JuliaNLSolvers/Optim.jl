@@ -104,6 +104,8 @@ end
 function cg{T}(df::Union(DifferentiableFunction,
                          TwiceDifferentiableFunction),
                initial_x::Array{T};
+               constraints::AbstractConstraints = ConstraintsNone(),
+               interior::Bool = false,
                xtol::Real = convert(T,1e-32),
                ftol::Real = convert(T,1e-8),
                grtol::Real = convert(T,1e-8),
@@ -117,7 +119,9 @@ function cg{T}(df::Union(DifferentiableFunction,
                precondprep::Function = (P, x) -> nothing)
 
     # Maintain current state in x and previous state in x_previous
-    x, x_previous = copy(initial_x), copy(initial_x)
+    x = copy(initial_x)
+    project!(x, constraints)
+    x_previous = copy(x)
 
     # Count the total number of iterations
     iteration = 0
@@ -208,23 +212,28 @@ function cg{T}(df::Union(DifferentiableFunction,
         @assert typeof(dphi0) == T
         push!(lsr, zero(T), f_x, dphi0)
 
+        alphamax = interior ? toedge(x, s, constraints) : inf(T)
+
         # Pick the initial step size (HZ #I1-I2)
         alpha, mayterminate, f_update, g_update =
-          alphatry(alpha, df, x, s, x_ls, gr_ls, lsr)
+          alphatry(alpha, df, x, s, x_ls, gr_ls, lsr, constraints, alphamax)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
+
+        if alpha == zero(T)
+            x_converged = true
+            break
+        end
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate, constraints, alphamax)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
         copy!(x_previous, x)
 
         # Update current position
-        for i in 1:n
-            @inbounds x[i] = x[i] + alpha * s[i]
-        end
+        step!(x, x, s, alpha, constraints)
 
         # Maintain a record of the previous gradient
         copy!(gr_previous, gr)
