@@ -239,6 +239,25 @@ This leverages fminbox and cgdescent; surely one could get even better performan
 
 For linear programming and extensions, see the [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl) packages.
 
+## Univariate optimization without derivatives
+
+Minimization of univariate functions without derivatives is available through
+the `optimize` interface:
+
+    f(x) = 2x^2+3x+1
+    optimize(f, -2.0, 1.0)
+
+Two methods are available:
+
+* Brent's method, the default (can be explicitly selected with `method = :brent`).
+* Golden section search, available with `method = :golden_section`.
+
+In addition to the `iterations`, `store_trace`, `show_trace` and
+`extended_trace` options, the following options are also available:
+
+* `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
+* `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
+
 ## State of the Library
 
 ### Existing Functions
@@ -253,12 +272,15 @@ For linear programming and extensions, see the [JuMP](https://github.com/JuliaOp
 * Nonlinear conjugate-gradient: `cgdescent()`
 * Box minimization: `fminbox()`
 * Nonnegative least-squares: `nnls()`
+* Brent's method: `brent()`
+* Golden Section search: `golden_section()`
 
 ### Planned Functions
-* Brent's method
 * Linear conjugate gradients
 * L-BFGS-B (note that this functionality is already available in fminbox)
 
 ### Citations
 
 W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
+
+R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover reedition.

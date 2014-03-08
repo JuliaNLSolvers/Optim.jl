@@ -17,7 +17,6 @@
 # Method Changes
 * Revise L-BFGS
 * Add L-BFGS-B
-* Add Brent's method
 * Add all methods from Boyd and Vanderberghe's Convex Optimization book
 * Add all methods from Nocedal and Wright's book
 * Incorporate conjugate gradient code or write from scratch.

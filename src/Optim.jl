@@ -70,6 +70,10 @@ module Optim
     include("nelder_mead.jl")
     include("simulated_annealing.jl")
 
+    # Univariate methods
+    include("golden_section.jl")
+    include("brent.jl")
+
     # End-User Facing Wrapper Functions
     include("optimize.jl")
     include("curve_fit.jl")
