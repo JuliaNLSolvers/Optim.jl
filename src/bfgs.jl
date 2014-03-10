@@ -138,6 +138,18 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         f_x_previous, f_x = f_x, d.fg!(x, gr)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
+        x_converged,
+        f_converged,
+        gr_converged,
+        converged = assess_convergence(x,
+                                       x_previous,
+                                       f_x,
+                                       f_x_previous,
+                                       gr,
+                                       xtol,
+                                       ftol,
+                                       grtol)
+
         # Measure the change in the gradient
         for i in 1:n
             @inbounds dgr[i] = gr[i] - gr_previous[i]
@@ -159,18 +171,6 @@ function bfgs{T}(d::Union(DifferentiableFunction,
                 @inbounds invH[i, j] += c1 * dx[i] * dx[j] - c2 * (u[i] * dx[j] + u[j] * dx[i])
             end
         end
-
-        x_converged,
-        f_converged,
-        gr_converged,
-        converged = assess_convergence(x,
-                                       x_previous,
-                                       f_x,
-                                       f_x_previous,
-                                       gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
 
         @bfgstrace
     end

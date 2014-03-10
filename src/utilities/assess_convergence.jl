@@ -19,7 +19,7 @@ function assess_convergence(x::Array,
         f_converged = true
     end
 
-    if norm(gr, Inf) < grtol
+    if norm(vec(gr), Inf) < grtol
         gr_converged = true
     end
 
