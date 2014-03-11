@@ -77,8 +77,11 @@ module Optim
     # End-User Facing Wrapper Functions
     include("optimize.jl")
 
-    # Examples for testing
-    include(joinpath("problems", "unconstrained.jl"))
-
     cgdescent(args...) = error("API has changed. Please use cg.")
+
+    # Tests
+    const basedir = dirname(Base.source_path())
+    const testpaths = [joinpath(basedir, "problems", "unconstrained.jl"),
+                       joinpath(basedir, "problems", "constrained.jl")]
+
 end
