@@ -14,27 +14,50 @@ immutable ConstraintsBox{T,N} <: AbstractConstraints
         new(l, u)
     end
 end
-ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N})
-ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l::AbstractArray{T,N}, infs(T, size(l)))
-ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(-infs(T,size(u)), u::AbstractArray{T,N})
+ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(l, u)
+ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, infs(T, size(l)))
+ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(-infs(T,size(u)), u)
 
-# FIXME: need a way to indicate equality/inequality
-immutable ConstraintsL{T,M<:AbstractMatrix,V<:AbstractVector} <: AbstractConstraints
+immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     A::M
-    b::V
+    lower::Array{T,N}
+    upper::Array{T,N}
+    scratch1::Array{T,N}
+    scratch2::Array{T,N}
+    scratch3::Array{T,N}
+
+    function ConstraintsL(A, l::Array{T,N}, u::Array{T,N},
+                          scratch1 = similar(l), scratch2 = similar(l), scratch3 = Array(T, ndims(l) == 1 ? size(A, 2) : (size(A,2),size(l,2))))
+        size(A, 1) == size(l,1) == size(u,1) || error("The sizes of the bounds must match the size of A")
+        for i = 1:length(l)
+            l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")
+        end
+        new(A, l, u, scratch1, scratch2, scratch3)
+    end
 end
+ConstraintsL{T}(A::AbstractMatrix, l::Union(Vector{T},Matrix{T}), u::Union(Vector{T},Matrix{T})) = ConstraintsL{T,typeof(A),ndims(l)}(A, l, u)
+ConstraintsL{T}(A::AbstractMatrix, l::Union(Vector{T},Matrix{T}), u::Nothing) = ConstraintsL(A, l, infs(T, size(l)))
+ConstraintsL{T}(A::AbstractMatrix, l::Nothing, u::Union(Vector{T},Matrix{T})) = ConstraintsL(A, -infs(T,size(u)), u)
 
 # Generic constraints
-immutable ConstraintsNL{F<:Union(Function,DifferentiableFunction,TwiceDifferentiableFunction)} <: AbstractConstraints
+immutable ConstraintsNL{T,F<:Union(Function,DifferentiableFunction,TwiceDifferentiableFunction)} <: AbstractConstraints
     funcs::Vector{F}
+    lower::Vector{T}
+    upper::Vector{T}
+
+    function ConstraintsNL(funcs::Vector, l::AbstractVector{T}, u::AbstractVector{T})
+        size(A, 1) == length(l) == length(u) || error("The sizes of the bounds must match the ")
+        for i = 1:length(l)
+            l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")
+        end
+        new(funcs, l, u)
+    end
 end
 
 type Constraints
     bounds::AbstractConstraints
-    leq::AbstractConstraints
-    lineq::AbstractConstraints
-    nleq::AbstractConstraints
-    nlineq::AbstractConstraints
+    linear::AbstractConstraints
+    nonlinear::AbstractConstraints
     mu::Real
 end
 Constraints() = Constraints(ConstraintsNone(), ConstraintsNone(), ConstraintsNone(), ConstraintsNone(), ConstraintsNone())
@@ -52,6 +75,16 @@ function feasible(x, constraints::ConstraintsBox)
     true
 end
 
+function feasible(x, constraints::ConstraintsL)
+    l = constraints.lower
+    u = constraints.upper
+    y = constraints.scratch1
+    A_mul_B!(y, constraints.A, x)
+    for i = 1:length(y)
+        l[i] <= y[i] <= u[i] || return false
+    end
+    true
+end
 
 ## project!
 project!(x, constraints::AbstractConstraints) = x

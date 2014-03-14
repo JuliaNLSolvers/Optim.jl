@@ -75,7 +75,52 @@ function barrier_h!{T}(x::Vector{T}, H::Matrix{T}, bounds::ConstraintsBox)
     end
 end
 
-## Linear inequalities
+## Linear constraints
+function barrier_fg!{T}(x::Array{T}, g::Array{T}, constraints::ConstraintsL)
+    m, n = size(constraints.A)
+    y1 = constraints.scratch1
+    A_mul_B!(y1, constraints.A, x)
+    phi = zero(T)
+    l = constraints.lower
+    u = constraints.upper
+    lenx = length(x)
+    lenc = length(y1)
+    for i = 1:lenc
+        li, ui = l[i], u[i]
+        yi = y1[i]
+        if isfinite(li)
+            yi >= li || return inf(T)  # no need to compute additional gradient terms
+            phi += log(yi-li)
+        end
+        if isfinite(ui)
+            yi <= ui || return inf(T)
+            phi += log(ui-yi)
+        end
+    end
+    if isempty(g)
+        return -phi
+    end
+    y2 = constraints.scratch2
+    y3 = constraints.scratch3
+    for i = 1:lenc
+        y2[i] = 1/(y1[i] - l[i])
+    end
+    At_mul_B!(y3, constraints.A, y2)
+    for i = 1:lenx
+        g[i] -= y3[i]
+    end
+    for i = 1:lenc
+        y2[i] = 1/(u[i] - y1[i])
+    end
+    At_mul_B!(y3, constraints.A, y2)
+    for i = 1:lenx
+        g[i] += y3[i]
+    end
+    -phi
+end
+
+barrier_f{T}(x::Array{T}, constraints::ConstraintsL) = barrier_fg!(x, T[], constraints)
+
 
 ## Nonlinear inequalities
 
@@ -132,7 +177,7 @@ linlsq(A::Matrix, b::Vector) =
                                 (x,g) -> linlsq_fg!(x, g, A, b, similar(b)),
                                 (x,H) -> linlsq_h!(x, H, A, b))
 
-dummy(x) = (Base.show_backtrace(STDOUT, backtrace()); error("No f"))
+dummy_f (x)   = (Base.show_backtrace(STDOUT, backtrace()); error("No f"))
 dummy_g!(x,g) = (Base.show_backtrace(STDOUT, backtrace()); error("No g!"))
 
 function linlsq_fg!{T}(x::AbstractArray{T}, g, A, b, scratch)
@@ -184,7 +229,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
     tr = OptimizationTrace()
     tracing = store_trace || show_trace || extended_trace
     
-    df = DifferentiableFunction(dummy,
+    df = DifferentiableFunction(dummy_f,
                                 dummy_g!,
                                 (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
     iteration, f_calls, g_calls = 0, 0, 0
@@ -210,7 +255,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_x /= t
         if alphamax >= 1
             t *= mu
-            df = DifferentiableFunction(dummy,
+            df = DifferentiableFunction(dummy_f,
                                         dummy_g!,
                                         (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
         end
@@ -243,8 +288,9 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                     g_calls)
 end
 
+
 function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiableFunction),
-                     initial_x::Vector{T},
+                     initial_x::Array{T},
                      constraints::AbstractConstraints;
                      method = :cg, t = one(T), mu = 10, eps_gap = 1e-12)
     if method == :newton
@@ -258,7 +304,7 @@ function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiabl
     local results
     iteration, f_calls, g_calls = 0, 0, 0
     while m/t > eps_gap
-        df = DifferentiableFunction( x    -> combined_f(x, objective.f, constraints, t),
+        df = DifferentiableFunction( x    -> combined_f  (x, objective.f, constraints, t),
                                     (x,g) -> combined_g! (x, g, objective.g!, constraints, t),
                                     (x,g) -> combined_fg!(x, g, objective.fg!, constraints, t))
         results = optimize(df, x, method=method)
