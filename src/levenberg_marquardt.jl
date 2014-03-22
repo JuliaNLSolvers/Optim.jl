@@ -39,7 +39,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	tr = OptimizationTrace()
 	if show_trace
 		d = {"lambda" => lambda}
-		os = OptimizationState(x, sse(fcur), iterCt, d)
+		os = OptimizationState(iterCt, sse(fcur), NaN, d)
 		push!(tr, os)
 		println(os)
 	end
@@ -60,7 +60,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		predicted_residual = sse(J*delta_x + fcur)
 		# check for numerical problems in solving for delta_x by ensuring that the predicted residual is smaller
 		# than the current residual
-		if predicted_residual > residual
+		if predicted_residual > residual + max(eps(predicted_residual),eps(residual))
 			error("Error solving for delta_x: predicted residual increase.")
 		end
 		# try the step and compute its quality
@@ -84,8 +84,9 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 
 		# show state
 		if show_trace
-			d = {"g(x)" => norm(J'*fcur, Inf), "dx" => delta_x, "lambda" => lambda}
-			os = OptimizationState(x, sse(fcur), iterCt, d)
+			gradnorm = norm(J'*fcur, Inf)
+			d = {"g(x)" => gradnorm, "dx" => delta_x, "lambda" => lambda}
+			os = OptimizationState(iterCt, sse(fcur), gradnorm, d)
 			push!(tr, os)
 			println(os)
 		end
