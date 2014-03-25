@@ -1,4 +1,4 @@
-function curve_fit(model::Function, xpts, ydata, p0)
+function curve_fit(model::Function, xpts, ydata, p0; kwargs...)
 	# assumes model(xpts, params...) = ydata + noise
 	# minimizes F(p) = sum(ydata - f(xdata)).^2 using leastsq()
 	# returns p, f(p), g(p) where
@@ -12,7 +12,7 @@ function curve_fit(model::Function, xpts, ydata, p0)
 	# construct Jacobian function
 	g = Calculus.jacobian(f)
 
-	results = levenberg_marquardt(f, g, p0)
+	results = levenberg_marquardt(f, g, p0; kwargs...)
 	p = results.minimum
 	return p, f(p), g(p)
 end
