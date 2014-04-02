@@ -292,9 +292,41 @@ end
 function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiableFunction),
                      initial_x::Array{T},
                      constraints::AbstractConstraints;
-                     method = :cg, t = one(T), mu = 10, eps_gap = 1e-12)
+                     method = :cg, t = nan(T), mu = 10, eps_gap = 1e-12,
+                     xtol::Real = 1e-32,
+                     ftol::Real = 1e-8,
+                     grtol::Real = 1e-8,
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     extended_trace::Bool = false)
+    if isnan(t)
+        vo, vc, go, gc = gnorm(objective, constraints, initial_x)
+        if isfinite(vo) && isfinite(vc) && go < grtol
+            return MultivariateOptimizationResults("Interior",
+                                    initial_x,
+                                    initial_x,
+                                    float64(vo),
+                                    0,
+                                    false,
+                                    false,
+                                    xtol,
+                                    false,
+                                    ftol,
+                                    true,
+                                    grtol,
+                                    OptimizationTrace(),
+                                    0,
+                                    0)
+        end
+        if gc == 0
+            t = one(T)  # FIXME: bounds constraints, starting at exact center. This is probably not the right guess.
+        else
+            t = gc/(0.1*go)
+        end
+    end
     if method == :newton
-        return iterior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap)
+        return iterior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap) # FIXME
     end
     if !feasible(initial_x, constraints)
         error("Initial guess must be feasible")
@@ -303,11 +335,11 @@ function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiabl
     m = length(x)
     local results
     iteration, f_calls, g_calls = 0, 0, 0
-    while m/t > eps_gap
+    while m/t > eps_gap || iteration == 0
         df = DifferentiableFunction( x    -> combined_f  (x, objective.f, constraints, t),
                                     (x,g) -> combined_g! (x, g, objective.g!, constraints, t),
                                     (x,g) -> combined_fg!(x, g, objective.fg!, constraints, t))
-        results = optimize(df, x, method=method)
+        results = optimize(df, x, method=method, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations, store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace)
         copy!(x, results.minimum)
         iteration += results.iterations
         f_calls += results.f_calls
@@ -318,4 +350,18 @@ function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiabl
     results.iterations, results.f_calls, results.g_calls = iteration, f_calls, g_calls
     copy!(results.initial_x, initial_x)
     results
+end
+
+function gnorm(objective, constraints, initial_x)
+    go = similar(initial_x)
+    gc = similar(initial_x)
+    fill!(gc, 0)
+    vo = objective.fg!(initial_x, go)
+    vc = barrier_fg!(initial_x, gc, constraints)
+    gom = gcm = zero(eltype(go))
+    for i = 1:length(go)
+        gom += abs(go[i])
+        gcm += abs(gc[i])
+    end
+    vo, vc, gom, gcm
 end
