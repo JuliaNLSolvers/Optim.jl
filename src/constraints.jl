@@ -15,8 +15,8 @@ immutable ConstraintsBox{T,N} <: AbstractConstraints
     end
 end
 ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(l, u)
-ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, infs(T, size(l)))
-ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(-infs(T,size(u)), u)
+ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, fill(inf(T), size(l)))
+ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(fill(-inf(T),size(u)), u)
 
 immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     A::M
