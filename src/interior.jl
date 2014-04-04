@@ -24,7 +24,7 @@ function barrier_f{T}(x::Array{T}, bounds::ConstraintsBox)
             phi += log(ui-xi)
         end
     end
-    -phi
+    -phi::T
 end
 
 function barrier_g!{T}(x::Array{T}, g::Array{T}, bounds::ConstraintsBox)
@@ -58,7 +58,7 @@ function barrier_fg!{T}(x::Array{T}, g::Array{T}, bounds::ConstraintsBox)
             g[i] += 1/(ui-xi)
         end
     end
-    -phi
+    -phi::T
 end
 
 function barrier_h!{T}(x::Vector{T}, H::Matrix{T}, bounds::ConstraintsBox)
@@ -116,7 +116,7 @@ function barrier_fg!{T}(x::Array{T}, g::Array{T}, constraints::ConstraintsL)
     for i = 1:lenx
         g[i] += y3[i]
     end
-    -phi
+    -phi::T
 end
 
 barrier_f{T}(x::Array{T}, constraints::ConstraintsL) = barrier_fg!(x, T[], constraints)
@@ -322,7 +322,7 @@ function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiabl
         if gc == 0
             t = one(T)  # FIXME: bounds constraints, starting at exact center. This is probably not the right guess.
         else
-            t = gc/(0.1*go)
+            t = gc/(convert(T,0.1)*go)
         end
     end
     if method == :newton
