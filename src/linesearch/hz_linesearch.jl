@@ -420,8 +420,8 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     b = lsr.alpha[ib]
     dphia = lsr.slope[ia]
     dphib = lsr.slope[ib]
-    @assert dphia < 0
-    @assert dphib >= 0
+    @assert dphia < 0 && isfinite(dphia)
+    @assert dphib >= 0 && isfinite(dphib)
     c = secant(a, b, dphia, dphib)
     if detailed_trace & SECANT2 > 0
         println("secant2: a = ", a, ", b = ", b, ", c = ", c)
@@ -431,7 +431,6 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true, constraints)
     f_calls += f_up
     g_calls += g_up
-    @assert isfinite(phic) && isfinite(dphic)
     push!(lsr, c, phic, dphic)
     ic = length(lsr)
     if satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
@@ -561,7 +560,12 @@ function bisect!{T}(df::Union(DifferentiableFunction,
     # Debugging (HZ, conditions shown following U3)
     @assert lsr.slope[ia] < 0
     @assert lsr.value[ia] <= philim
-    @assert lsr.slope[ib] < 0       # otherwise we wouldn't be here
+    # if !(lsr.slope[ib] < 0)
+    #     @show a, b
+    #     @show lsr.value[ia], lsr.value[ib]
+    #     @show lsr.slope[ia], lsr.slope[ib]
+    # end
+    # @assert lsr.slope[ib] < 0       # otherwise we wouldn't be here
     @assert lsr.value[ib] > philim
     @assert b > a
     while b - a > eps(b)
@@ -572,7 +576,6 @@ function bisect!{T}(df::Union(DifferentiableFunction,
         phid, gphi, f_up, g_up = linefunc!(df, x, s, d, xtmp, g, true, constraints)
         f_calls += f_up
         g_calls += g_up
-        @assert isfinite(phid) && isfinite(gphi)
         push!(lsr, d, phid, gphi)
         id = length(lsr)
         if gphi >= 0
