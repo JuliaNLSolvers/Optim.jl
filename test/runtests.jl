@@ -20,7 +20,8 @@ my_tests = ["bfgs.jl",
             "api.jl",
             "golden_section.jl",
             "brent.jl",
-            "type_stability.jl"]
+            "type_stability.jl",
+            "array.jl"]
 
 println("Running tests:")
 

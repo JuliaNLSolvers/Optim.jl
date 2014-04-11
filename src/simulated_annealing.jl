@@ -2,7 +2,8 @@ log_temperature(t::Real) = 1 / log(t)
 
 constant_temperature(t::Real) = 1.0
 
-function default_neighbor!(x::Vector, x_proposal::Vector)
+function default_neighbor!(x::Array, x_proposal::Array)
+    @assert size(x) == size(x_proposal)
     for i in 1:length(x)
         @inbounds x_proposal[i] = x[i] + randn()
     end
@@ -29,7 +30,7 @@ macro satrace()
 end
 
 function simulated_annealing{T}(cost::Function,
-                                initial_x::Vector{T};
+                                initial_x::Array{T};
                                 neighbor!::Function = default_neighbor!,
                                 temperature::Function = log_temperature,
                                 keep_best::Bool = true,

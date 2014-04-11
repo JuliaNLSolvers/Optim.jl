@@ -1,5 +1,5 @@
 function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -87,7 +87,7 @@ function optimize(d::TwiceDifferentiableFunction,
 end
 
 function optimize(d::DifferentiableFunction,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -166,7 +166,7 @@ end
 function optimize(f::Function,
                   g!::Function,
                   h!::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :newton,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -276,7 +276,7 @@ end
 
 function optimize(f::Function,
                   g!::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -373,7 +373,7 @@ function optimize(f::Function,
 end
 
 function optimize(f::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :nelder_mead,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -472,16 +472,16 @@ function optimize(f::Function,
     end
 end
 
-function optimize{T <: FloatingPoint}(f::Function,
-                                      lower::T,
-                                      upper::T;
-                                      method::Symbol = :brent,
-                                      rel_tol::Real = sqrt(eps(T)),
-                                      abs_tol::Real = eps(T),
-                                      iterations::Integer = 1_000,
-                                      store_trace::Bool = false,
-                                      show_trace::Bool = false,
-                                      extended_trace::Bool = false)
+function optimize{T <: Real}(f::Function,
+                             lower::T,
+                             upper::T;
+                             method::Symbol = :brent,
+                             rel_tol::Real = sqrt(eps(T)),
+                             abs_tol::Real = eps(T),
+                             iterations::Integer = 1_000,
+                             store_trace::Bool = false,
+                             show_trace::Bool = false,
+                             extended_trace::Bool = false)
     if extended_trace
         show_trace = true
     end
@@ -489,7 +489,7 @@ function optimize{T <: FloatingPoint}(f::Function,
         @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :brent
-        brent(f, lower, upper;
+        brent(f, float64(lower), float64(upper);
               rel_tol = rel_tol,
               abs_tol = abs_tol,
               iterations = iterations,
@@ -497,7 +497,7 @@ function optimize{T <: FloatingPoint}(f::Function,
               show_trace = show_trace,
               extended_trace = extended_trace)
     elseif method == :golden_section
-        golden_section(f, lower, upper;
+        golden_section(f, float64(lower), float64(upper);
                        rel_tol = rel_tol,
                        abs_tol = abs_tol,
                        iterations = iterations,
