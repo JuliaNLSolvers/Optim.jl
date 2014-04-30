@@ -20,7 +20,7 @@ end
 
 function gradient_descent{T}(d::Union(DifferentiableFunction,
                                       TwiceDifferentiableFunction),
-                             initial_x::Vector{T};
+                             initial_x::Array{T};
                              xtol::Real = 1e-32,
                              ftol::Real = 1e-8,
                              grtol::Real = 1e-8,
@@ -43,14 +43,14 @@ function gradient_descent{T}(d::Union(DifferentiableFunction,
     n = length(x)
 
     # Maintain current gradient in gr
-    gr = Array(T, n)
+    gr = similar(x)
 
     # The current search direction
-    s = Array(T, n)
+    s = similar(x)
 
     # Buffers for use in line search
-    x_ls = Array(T, n)
-    gr_ls = Array(T, n)
+    x_ls = similar(x)
+    gr_ls = similar(x)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)
