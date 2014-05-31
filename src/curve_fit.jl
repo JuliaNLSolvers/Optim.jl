@@ -1,20 +1,45 @@
-function curve_fit(model::Function, xpts, ydata, p0; kwargs...)
-	# assumes model(xpts, params...) = ydata + noise
-	# minimizes F(p) = sum(ydata - f(xdata)).^2 using leastsq()
+function lmfit(f::Function, p0; kwargs...)
+	# minimizes f(p) using leastsq()
 	# returns p, f(p), g(p) where
 	#   p - best fit parameters
-	#   f(p) - vector of residuals
+	#   f(p) - vector of function at p, typically residuals
 	#   g(p) - estimated Jacobian at p
 
-	# construct the cost function
-	f(p) = model(xpts, p) - ydata
-	
+	# this is a convenience function for the below curve_fit() methods
+	# which assume f(p) is the cost function, i.e. the residual of a 
+	# model where model(xpts, params...) = ydata + noise
+
 	# construct Jacobian function
 	g = Calculus.jacobian(f)
 
 	results = levenberg_marquardt(f, g, p0; kwargs...)
 	p = results.minimum
 	return p, f(p), g(p)
+end
+
+function curve_fit(model::Function, xpts, ydata, p0; kwargs...)
+	# minimizes model(p) = sum(ydata - model(xpts)).^2 using leastsq()
+
+	# construct the cost function
+	f(p) = model(xpts, p) - ydata
+	lmfit(f,p0; kwargs...)
+end
+
+function curve_fit( model::Function, xpts, ydata, wt::Vector, p0; kwargs...)
+	# use a per bin weight, e.g. wt = 1/sigma
+	f(p) = wt .* ( model(xpts, p) - ydata )
+	lmfit(f,p0; kwargs...)
+end
+
+function curve_fit( model::Function, xpts, ydata, wt::Matrix, p0; kwargs... )
+	# use a matrix weight, e.g. inverse_covariance 
+
+	# Cholesky is effectively a sqrt of a matrix,  which is what we want 
+	# to minimize in the least-squares of levenberg_marquardt()
+	u = chol(wt)  # requires matrix to be positive definite
+
+	f(p) = u * ( model(xpts, p) - ydata )
+	lmfit(f,p0; kwargs...)
 end
 
 estimate_errors(p, residuals, J) = estimate_errors(p, residuals, J, .95)
@@ -41,4 +66,4 @@ function estimate_errors(p, residuals, J, alpha)
 	# scale by quantile of the student-t distribution
 	dist = TDist(n-p)
 	std_error *= quantile(dist, alpha)
-end
+end 
