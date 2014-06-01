@@ -5,7 +5,6 @@
 using Optim
 
 my_tests = ["bfgs.jl",
-            "curve_fit.jl",
             "gradient_descent.jl",
             "momentum_gradient_descent.jl",
             "grid_search.jl",
