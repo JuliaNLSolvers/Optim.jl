@@ -60,7 +60,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		predicted_residual = sse(J*delta_x + fcur)
 		# check for numerical problems in solving for delta_x by ensuring that the predicted residual is smaller
 		# than the current residual
-		if predicted_residual > residual + max(eps(predicted_residual),eps(residual))
+		if predicted_residual > residual + 2max(eps(predicted_residual),eps(residual))
 			warn("""Problem solving for delta_x: predicted residual increase.
                              $predicted_residual (predicted_residual) >
                              $residual (residual) + $(eps(predicted_residual)) (eps)""")
