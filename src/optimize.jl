@@ -1,5 +1,5 @@
 function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -8,7 +8,8 @@ function optimize(d::TwiceDifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = eye(length(initial_x)))
     if extended_trace
         store_trace = true
     end
@@ -58,7 +59,8 @@ function optimize(d::TwiceDifferentiableFunction,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -87,7 +89,7 @@ function optimize(d::TwiceDifferentiableFunction,
 end
 
 function optimize(d::DifferentiableFunction,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -96,7 +98,8 @@ function optimize(d::DifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = eye(length(initial_x)))
     if extended_trace
         show_trace = true
     end
@@ -146,7 +149,8 @@ function optimize(d::DifferentiableFunction,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -166,7 +170,7 @@ end
 function optimize(f::Function,
                   g!::Function,
                   h!::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :newton,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -175,7 +179,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = eye(length(initial_x)))
     if extended_trace
         show_trace = true
     end
@@ -256,7 +261,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -276,7 +282,7 @@ end
 
 function optimize(f::Function,
                   g!::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -285,7 +291,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = eye(length(initial_x)))
     if extended_trace
         show_trace = true
     end
@@ -354,7 +361,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -373,7 +381,7 @@ function optimize(f::Function,
 end
 
 function optimize(f::Function,
-                  initial_x::Vector;
+                  initial_x::Array;
                   method::Symbol = :nelder_mead,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -383,7 +391,8 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  autodiff::Bool = false)
+                  autodiff::Bool = false,
+                  bfgs_initial_invH::Matrix = eye(length(initial_x)))
     if extended_trace
         show_trace = true
     end
@@ -455,7 +464,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -467,6 +477,43 @@ function optimize(f::Function,
                show_trace = show_trace,
                extended_trace = extended_trace,
                linesearch! = linesearch!)
+    else
+        throw(ArgumentError("Unknown method $method"))
+    end
+end
+
+function optimize{T <: Real}(f::Function,
+                             lower::T,
+                             upper::T;
+                             method::Symbol = :brent,
+                             rel_tol::Real = sqrt(eps(T)),
+                             abs_tol::Real = eps(T),
+                             iterations::Integer = 1_000,
+                             store_trace::Bool = false,
+                             show_trace::Bool = false,
+                             extended_trace::Bool = false)
+    if extended_trace
+        show_trace = true
+    end
+    if show_trace
+        @printf "Iter     Function value   Gradient norm \n"
+    end
+    if method == :brent
+        brent(f, float64(lower), float64(upper);
+              rel_tol = rel_tol,
+              abs_tol = abs_tol,
+              iterations = iterations,
+              store_trace = store_trace,
+              show_trace = show_trace,
+              extended_trace = extended_trace)
+    elseif method == :golden_section
+        golden_section(f, float64(lower), float64(upper);
+                       rel_tol = rel_tol,
+                       abs_tol = abs_tol,
+                       iterations = iterations,
+                       store_trace = store_trace,
+                       show_trace = show_trace,
+                       extended_trace = extended_trace)
     else
         throw(ArgumentError("Unknown method $method"))
     end
