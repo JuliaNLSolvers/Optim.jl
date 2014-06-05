@@ -105,7 +105,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 
 	# give the user info about the stopping condition
 	if ~converged
-		println("Exceeded maximum number of iterations")
+		warn("Exceeded maximum number of iterations ($maxIter) without converging")
 	end
 
 	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, false, 0.0, false, 0.0, converged, tolG, tr, f_calls, g_calls)
