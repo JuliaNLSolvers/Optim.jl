@@ -60,8 +60,10 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		predicted_residual = sse(J*delta_x + fcur)
 		# check for numerical problems in solving for delta_x by ensuring that the predicted residual is smaller
 		# than the current residual
-		if predicted_residual > residual + max(eps(predicted_residual),eps(residual))
-			error("Error solving for delta_x: predicted residual increase.")
+		if predicted_residual > residual + 2max(eps(predicted_residual),eps(residual))
+			warn("""Problem solving for delta_x: predicted residual increase.
+                             $predicted_residual (predicted_residual) >
+                             $residual (residual) + $(eps(predicted_residual)) (eps)""")
 		end
 		# try the step and compute its quality
 		trial_f = f(x + delta_x)
@@ -103,7 +105,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 
 	# give the user info about the stopping condition
 	if ~converged
-		println("Exceeded maximum number of iterations")
+		warn("Exceeded maximum number of iterations ($maxIter) without converging")
 	end
 
 	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, false, 0.0, false, 0.0, converged, tolG, tr, f_calls, g_calls)
