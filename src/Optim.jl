@@ -2,7 +2,6 @@ require("Options")
 
 module Optim
     using OptionsMod
-    using Distributions
     using Calculus
 
     import Base.assign,
@@ -14,9 +13,7 @@ module Optim
            Base.getindex,
            Base.setindex!
 
-    export curve_fit,
-           estimate_errors,
-           optimize,
+    export optimize,
            DifferentiableFunction,
            TwiceDifferentiableFunction
 
@@ -76,7 +73,6 @@ module Optim
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")
-    include("curve_fit.jl")
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
