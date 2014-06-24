@@ -106,7 +106,6 @@ function bfgs{T}(d::Union(DifferentiableFunction,
 
         # Refresh the line search cache
         dphi0 = dot(gr, s)
-        
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)

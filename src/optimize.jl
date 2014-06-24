@@ -1,5 +1,5 @@
 function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Array;
+                  initial_x::Vector;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -92,7 +92,7 @@ function optimize(d::TwiceDifferentiableFunction,
 end
 
 function optimize(d::DifferentiableFunction,
-                  initial_x::Array;
+                  initial_x::Vector;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -176,7 +176,7 @@ end
 function optimize(f::Function,
                   g!::Function,
                   h!::Function,
-                  initial_x::Array;
+                  initial_x::Vector;
                   method::Symbol = :newton,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -291,7 +291,7 @@ end
 
 function optimize(f::Function,
                   g!::Function,
-                  initial_x::Array;
+                  initial_x::Vector;
                   method::Symbol = :l_bfgs,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
@@ -393,7 +393,7 @@ function optimize(f::Function,
 end
 
 function optimize(f::Function,
-                  initial_x::Array;
+                  initial_x::Vector;
                   method::Symbol = :nelder_mead,
                   xtol::Real = 1e-32,
                   ftol::Real = 1e-8,
