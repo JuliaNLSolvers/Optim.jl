@@ -482,39 +482,3 @@ function optimize(f::Function,
     end
 end
 
-function optimize{T <: Real}(f::Function,
-                             lower::T,
-                             upper::T;
-                             method::Symbol = :brent,
-                             rel_tol::Real = sqrt(eps(T)),
-                             abs_tol::Real = eps(T),
-                             iterations::Integer = 1_000,
-                             store_trace::Bool = false,
-                             show_trace::Bool = false,
-                             extended_trace::Bool = false)
-    if extended_trace
-        show_trace = true
-    end
-    if show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
-    if method == :brent
-        brent(f, float64(lower), float64(upper);
-              rel_tol = rel_tol,
-              abs_tol = abs_tol,
-              iterations = iterations,
-              store_trace = store_trace,
-              show_trace = show_trace,
-              extended_trace = extended_trace)
-    elseif method == :golden_section
-        golden_section(f, float64(lower), float64(upper);
-                       rel_tol = rel_tol,
-                       abs_tol = abs_tol,
-                       iterations = iterations,
-                       store_trace = store_trace,
-                       show_trace = show_trace,
-                       extended_trace = extended_trace)
-    else
-        throw(ArgumentError("Unknown method $method"))
-    end
-end
