@@ -8,7 +8,8 @@ function optimize(d::TwiceDifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = nothing)
     if extended_trace
         store_trace = true
     end
@@ -49,6 +50,9 @@ function optimize(d::TwiceDifferentiableFunction,
            extended_trace = extended_trace,
            linesearch! = linesearch!)
     elseif method == :bfgs
+        if bfgs_initial_invH == nothing
+            bfgs_initial_invH = eye(length(initial_x))
+        end        
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -58,7 +62,8 @@ function optimize(d::TwiceDifferentiableFunction,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -96,7 +101,8 @@ function optimize(d::DifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = nothing)
     if extended_trace
         show_trace = true
     end
@@ -137,6 +143,9 @@ function optimize(d::DifferentiableFunction,
            extended_trace = extended_trace,
            linesearch! = linesearch!)
     elseif method == :bfgs
+        if bfgs_initial_invH == nothing
+            bfgs_initial_invH = eye(length(initial_x))
+        end        
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -146,7 +155,8 @@ function optimize(d::DifferentiableFunction,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
@@ -175,7 +185,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = nothing)
     if extended_trace
         show_trace = true
     end
@@ -246,6 +257,9 @@ function optimize(f::Function,
                extended_trace = extended_trace,
                linesearch! = linesearch!)
     elseif method == :bfgs
+        if bfgs_initial_invH == nothing
+            bfgs_initial_invH = eye(length(initial_x))
+        end        
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -256,7 +270,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -285,7 +300,8 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  linesearch!::Function = hz_linesearch!)
+                  linesearch!::Function = hz_linesearch!,
+                  bfgs_initial_invH::Matrix = nothing)
     if extended_trace
         show_trace = true
     end
@@ -344,6 +360,9 @@ function optimize(f::Function,
            extended_trace = extended_trace,
            linesearch! = linesearch!)
     elseif method == :bfgs
+        if bfgs_initial_invH == nothing
+            bfgs_initial_invH = eye(length(initial_x))
+        end        
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -354,7 +373,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         d = DifferentiableFunction(f, g!)
         l_bfgs(d,
@@ -383,7 +403,8 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  autodiff::Bool = false)
+                  autodiff::Bool = false,
+                  bfgs_initial_invH::Matrix = nothing)
     if extended_trace
         show_trace = true
     end
@@ -446,6 +467,9 @@ function optimize(f::Function,
            extended_trace = extended_trace,
            linesearch! = linesearch!)
     elseif method == :bfgs
+        if bfgs_initial_invH == nothing
+            bfgs_initial_invH = eye(length(initial_x))
+        end        
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -455,7 +479,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
-             linesearch! = linesearch!)
+             linesearch! = linesearch!,
+             initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
                initial_x,
