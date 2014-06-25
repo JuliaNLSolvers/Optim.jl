@@ -9,7 +9,7 @@ function optimize(d::TwiceDifferentiableFunction,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH::Matrix = nothing)
+                  bfgs_initial_invH = nothing)
     if extended_trace
         store_trace = true
     end
@@ -102,7 +102,7 @@ function optimize(d::DifferentiableFunction,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH::Matrix = nothing)
+                  bfgs_initial_invH = nothing)
     if extended_trace
         show_trace = true
     end
@@ -186,7 +186,7 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH::Matrix = nothing)
+                  bfgs_initial_invH = nothing)
     if extended_trace
         show_trace = true
     end
@@ -301,7 +301,7 @@ function optimize(f::Function,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH::Matrix = nothing)
+                  bfgs_initial_invH = nothing)
     if extended_trace
         show_trace = true
     end
@@ -404,7 +404,7 @@ function optimize(f::Function,
                   extended_trace::Bool = false,
                   linesearch!::Function = hz_linesearch!,
                   autodiff::Bool = false,
-                  bfgs_initial_invH::Matrix = nothing)
+                  bfgs_initial_invH = nothing)
     if extended_trace
         show_trace = true
     end
