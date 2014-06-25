@@ -32,3 +32,11 @@ results = optimize(f1, [127.0, 921.0], autodiff = true)
 @assert results.f_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
 
+# tests for bfgs_initial_invH
+initial_invH = zeros(2,2)
+h1([127.0, 921.0],initial_invH)
+initial_invH = diagm(diag(initial_invH))
+results = optimize(f1, g1, [127.0, 921.0], 
+                   method = :bfgs, bfgs_initial_invH = initial_invH)
+@assert results.gr_converged
+@assert norm(results.minimum - [0.0, 0.0]) < 0.01
