@@ -51,6 +51,9 @@ function nelder_mead{T}(f::Function,
                         extended_trace::Bool = false)
     # Set up a simplex of points around starting value
     m = length(initial_x)
+    if m == 1
+        error("Use optimize(f, scalar, scalar) for 1D problems")
+    end
     n = m + 1
     p = repmat(initial_x, 1, n)
     for i in 1:m
