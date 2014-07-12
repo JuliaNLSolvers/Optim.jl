@@ -20,7 +20,7 @@ function nnlsobjective(g, x::AbstractVector, A::AbstractMatrix, b::AbstractVecto
     d = A*x - b
     val = sum(d.^2)/2
     if !(g === nothing)
-        At_mul_B(g, A, d)
+        At_mul_B!(g, A, d)
     end
     val
 end
