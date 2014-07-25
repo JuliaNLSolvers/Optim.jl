@@ -63,6 +63,9 @@ module Optim
     include("fminbox.jl")
     include("nnls.jl")
 
+    # Multiple minima
+    include("minfinder.jl")
+
     # trust region methods
     include("levenberg_marquardt.jl")
 
