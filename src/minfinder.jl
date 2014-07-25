@@ -35,6 +35,7 @@
 # Because the search domain is bounded, minfinder uses fminbox for local 
 # searches and therefore the cgdescent function API.
 #
+# TODO: is the check that a new minima was already found correct (norm<tol)?
 # TODO: the 2008 paper introduces non-gradient based checking rules. Thus a
 #		derivative-free MinFinder could be implement that also uses derivative-
 #		free local searches
@@ -47,7 +48,7 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	#	stopping tolerances are set quite high by default (sqrt of usual tol); 
 	# 	at the end the minima are polished off. Inspiration from S. Johnson:
 	#	[http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms#MLSL_.28Multi-Level_Single-Linkage.29]
-	@defaults ops localtol=sqrt(eps(T)^(2/3)) polishtol=eps(T)^(2/3) ENRICH=1.1 NMAX=100 NINIT=20 EXHAUSTIVE=.5
+	@defaults ops localtol=sqrt(eps(T)^(2/3)) polishtol=eps(T)^(2/3) ENRICH=1.1 NMAX=100 NINIT=20 EXHAUSTIVE=.5 show_iter=0 polish=true
 
 	# Algortihm parameters as in paper:
 	# NMAX = "predefined upper limit for the number of samples in each 
@@ -57,6 +58,11 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	# EXHAUSTIVE =  "..in the range (0,1). For small values of p (p→0) the 
 	# 		algorithm searches the area exhaustively, while for p→1, the 
 	#		algorithm terminates earlier, but perhaps prematurely."
+
+	# Other options:
+	# localtol: tolerance level for local searches
+	# polishtol: tolerance level for final polish of minima
+	# polish: use final polish? (default=true)
 
 	# Create Type for starting points and minima
 	type SearchPoint
@@ -131,6 +137,12 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 		end
 	end
 
+	# Show progress
+	if show_iter > 0 
+		@printf io "Iter   N    Searches   Function Calls   Minima \n"
+	    @printf io "----   ---  --------   --------------   ------ \n"
+	end
+    
 	# main iteration loop
 	while !(DoubleBox(N) < stoplevel)
 		iteration += 1
@@ -174,9 +186,7 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 			searches += 1
 			px, pval, fmincount, converged = fminbox(func, p.x, l, u, fminops)
 			fcount+=fmincount
-			# Gradient not given as output fminbox, needs extra function eval :(
-			pval = func(pg, px)
-			fcount+=1
+
 
 			if converged
 				converges +=1
@@ -186,30 +196,53 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 					norm(p.x - px, 2)) / searches
 				
 				# See if minima already found, if not, add to minimalists
-				if !any([norm(px - m, 2) < localtol for m in minima])
+				if !any([norm(px - m.x, 2) < localtol for m in minima])
 
 					# Update stoplevel
 					stoplevel = EXHAUSTIVE * DoubleBox(N) 
 
 					# Update typical minima distance
 					MinDistance = min(MinDistance, 
-						[norm(px-m, 2) for m in minima]...)
+						[norm(px-m.x, 2) for m in minima]...)
+
+					# Gradient not given as output fminbox, needs extra function
+					# evaluation.
+					pval = func(pg, px)
+					fcount += 1
 
 				   #Add also to global minima, to check next minima in iteration
 					push!(iterminima, SearchPoint(px, pg, pval))
 					push!(minima, SearchPoint(px, pg, pval))
-				end
-			end
+
+				end #if
+			end #converged
+		end #points
+
+		if show_iter > 0 
+			@printf io "%4d   %3d   %8d   %14d   %6d\n" iteration N searches fcount length(minima)
 		end
-	end
+	end #while
 
 	# Polish off minima
-	for m in minima
-		px, pval, fpolishcount, converged = fminbox(func, m.x, l, u, polishops)
-		fcount += fpolishcount
+	if polish
+		for m in minima
+			px, pval, fpolishcount,converged=fminbox(func, m.x, l, u, polishops)
+			fcount += fpolishcount
+			if !any([norm(px - h.x, 2) < polishtol for h in polishminina])
+				pval = func(pg, px)
+				fcount += 1
+				push!(polishminina, SearchPoint(px, pg, pval))
+			end
+		end
 		
+		if show_iter > 0 
+			@printf io "Final polish retained %d minima out of %d\n" length(polishminima) length(minima)
+		end
 
-	return polishminima, fcount, searches, iteration
+		return polishminima, fcount, searches, iteration
+	else
+		return minima, fcount, searches, iteration
+	end
 end
 
 minfinder{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}) = 
