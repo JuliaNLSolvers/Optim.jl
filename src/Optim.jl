@@ -5,11 +5,9 @@ module Optim
     using Distributions
     using Calculus
 
-    import Base.assign,
-           Base.dot,
+    import Base.dot,
            Base.length,
            Base.push!,
-           Base.ref,
            Base.show,
            Base.getindex,
            Base.setindex!
