@@ -2,6 +2,7 @@ require("Options")
 
 module Optim
     using OptionsMod
+    using Distributions
     using Calculus
 
     import Base.dot,
@@ -12,6 +13,7 @@ module Optim
            Base.setindex!
 
     export optimize,
+           minfinder,
            DifferentiableFunction,
            TwiceDifferentiableFunction
 
@@ -58,6 +60,9 @@ module Optim
     include("fminbox.jl")
     include("nnls.jl")
 
+    # Multiple minima
+    include("minfinder.jl")
+
     # trust region methods
     include("levenberg_marquardt.jl")
 
@@ -74,4 +79,5 @@ module Optim
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
+    include(joinpath("problems", "multiple_minima.jl"))
 end

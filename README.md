@@ -256,6 +256,38 @@ xnn, fval, fcount, converged = nnls(A, b)
 
 This leverages fminbox and cgdescent; surely one could get even better performance by using an algorithm that takes advantage of this problem's linearity. Despite this, for large problems the performance is quite good compared to Matlab's `lsqnonneg`.
 
+### Multiple minima
+
+The [MinFinder algorithm](www.cs.uoi.gr/~lagaris/papers/MINF.pdf) solves those problems where you need to find all the minima for a differentiable function inside a bounded domain. It launches many local optimizations with `fminbox` from a set of random starting points in the search domain, after some preselection of the points and until a stopping criteria is hit.
+
+For example, the Six Hump Camel Back function has 6 minima inside [-5, 5]²:
+
+    function camel(g, x::Vector)
+        if !(g === nothing)
+            g[1] = 8x[1] - 8.4x[1]^3 + 2x[1]^5 + x[2]
+            g[2] = x[1] - 8x[2] + 16x[2]^3
+        end
+        return 4x[1]^2 - 2.1x[1]^4 + 1/3*x[1]^6 + x[1]*x[2] - 4x[2]^2 + 4x[2]^4
+    end
+
+    minima, fcount, searches, iteration = minfinder(camel, [-5, -5], [5, 5], minops)
+
+The output `minima` is a vector with elements of type `SearchPoint`, each with fields `x` for location, `f` for function value and `g` for gradient.
+
+The options can be set `using OptionsMod`:
+* `NINIT`: initial number of sample points in the search space per iteration (default = 20).
+* `NMAX`: maximum number of sample points in the search space per iteration (default = 250, the 100 of the paper is too small).
+* `ENRICH`: multiplication of sample points N when more than half of sample points failed preselection criteria (default = 1.1).
+* `EXHAUSTIVE`: in (0,1). For small values of p (p→0) the algorithm searches the area exhaustively, while for p→1, the algorithm terminates earlier, but perhaps prematurely (default = 0.5).
+* `max_iter`: maximum number of iterations, each with N ponts samples and local searches (default = 10_000).
+* `show_iter`: print iteration results when `show_iter > 0` (default = 0)
+* `distmin`: the results of a local search will be added to the `minima` list if its location differs less than this threshold from previously found minima. Increase when lots of returned minima correspond to the same physical point (default = `sqrt(localtol)`).
+* `distpolish`: same as distmin for final polish phase (default = `sqrt(polishtol)` ).
+* `polish`: boolean flag to indicate whether to perform an extra search at the very end for each minima found, to polish off the found minima with extra precision (default = false).
+* `localtol`: tolerance level passed to fminbox for the local searches (default = `eps(Type)^(2/3)` or `sqrt(eps(T)^(2/3))` when `polish=true`).
+* `polishtol`: tolerance level of final polish searches (default = `eps(Type)^(2/3)`).
+
+
 ### Linear programming
 
 For linear programming and extensions, see the [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl) packages.
