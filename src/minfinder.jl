@@ -263,9 +263,9 @@ end
 
 minfinder{T}(func::Function, l::Array{T}, u::Array{T}) = 
 	minfinder(func, l, u, Options())
-export minfinder
-minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options) = 
-	minfinder(func, [convert(Float64,i) for i in l], [convert(Float64,i) for i in u], ops)
+minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1}, ops::Options) = 
+	minfinder(func, [convert(Float64,i) for i in l], 
+					[convert(Float64,i) for i in u], ops)
 
 
 

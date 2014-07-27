@@ -15,6 +15,7 @@ module Optim
     export curve_fit,
            estimate_errors,
            optimize,
+           minfinder,
            DifferentiableFunction,
            TwiceDifferentiableFunction
 
