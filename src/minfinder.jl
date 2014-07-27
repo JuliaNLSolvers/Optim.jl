@@ -39,6 +39,7 @@
 # TODO: the 2008 paper introduces non-gradient based checking rules. Thus a
 #		derivative-free MinFinder could be implement that also uses derivative-
 #		free local searches
+# TODO: add parallel computing
 
 # Create types for the starting points and the minima
 type SearchPoint{T} 
@@ -107,12 +108,6 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
 	# Compare this value with `stoplevel` at the latest iteration when a minima 
 	# was found. 
 	DoubleBox(n::Int) = var([rand(Binomial(i))/i for i=1:n])
-	# function DoubleBox(n::Int) #for debugging
-	# 	out::Float64 = var([rand(Binomial(i))/i for i=1:n])
-	# 	println(out)
-	# 	return out
-	# end
-
 
 	# Checking rules for each point before starting local searches
 	function ValidPoint(p, pnts, mins)
@@ -120,16 +115,12 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
 
 		# condition 1: check against all other points, order matters
 		for q in pnts
-			#@printf "points: %f<%f && %f >0 \n?" norm(p.x - q.x, 2) TypicalDistance dot(p.x - q.x, p.g - q.g)
-			#println(p)
-			#println(q)
 			norm(p.x - q.x, 2) < TypicalDistance &&
 				dot(p.x - q.x, p.g - q.g) > 0 && return false
 		end
 
 		# condition 2: check against found minima
-		for z in minima
-			#@printf "minima: %f<%f && %f >0 \n?" norm(p.x-z.x,2) MinDistance dot(p.x-z.x,p.g-z.g)
+		for z in minima			
 			norm(p.x - z.x, 2) < MinDistance && 
 				dot(p.x - z.x, p.g - z.g) > 0 && return false
 		end
@@ -164,70 +155,51 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
 
 		iterminima = Array(SearchPoint{T}, 0) #empty iterminima
 		for p in points
-			#@printf "Sample point: %s \n" p
 
 			# If minima found during this iteration, check point against these.
 			nextpoint = false #TODO is there a way to break out of outer for?
 			if !isempty(iterminima)
-				#@printf "start iterminima test \n"
-				#@printf "mindistance: %f" MinDistance
 				for z in iterminima					
-					#@printf "norm: %s" norm(p.x - z.x, 2)
-					#@printf "grad: %s" (p.x - z.x)'*(p.g - z.g)
 					if norm(p.x - z.x, 2) < MinDistance && 
 							dot(p.x - z.x, p.g - z.g) > 0
 						nextpoint = true
-						#@printf "point discarded with iterminimatest"
 					end
 					nextpoint && continue # skip other minima checks
 				end
-				#@printf "go to next point? %s \n" nextpoint
 				nextpoint && continue # skip local search for this point
 			end
 
 			# local minimization
-			#@printf "Start search from: %s \n" p.x
 			px, pvals, fmincount, converged = fminbox(func, p.x, l, u, fminops)
 			fcount+=fmincount
 			searches += 1
-			#@printf "searches: %d \n" searches
 			pval = minimum([minimum(pvals[i]) for i in 1:length(pvals)])
 
 			if converged
 				converges +=1
-				#@printf "converged! \n"
-
+			
 				# Update typical search distance 
 				TypicalDistance = (TypicalDistance*(searches - 1) + 
 					norm(p.x - px, 2)) / searches
-				#@printf "new TypicalDistance: %f \n" TypicalDistance
 				
 				# See if minima already found, if not, add to minimalists
-				#println([norm(px - m.x, 2) for m in minima])
 				if !any([norm(px - m.x, 2) < distmin for m in minima])
-					#@printf "new minima found: %s \n" px
-
+			
 					# Update stoplevel
 					stoplevel = EXHAUSTIVE * DoubleBox(N) 
-					# @printf " new stoplevel: %f \n" stoplevel
-
+			
 					# Update typical minima distance
 					MinDistance = minimum([MinDistance, 
 						[norm(px - m.x, 2) for m in minima]...])
-					#@printf " new MinDistance: %f \n" MinDistance
-
+			
 					# Gradient not given as output fminbox, needs extra function
 					# evaluation.
 					pval = func(pg, px)
 					fcount += 1				  
 					push!(iterminima, SearchPoint(px, copy(pg), pval))
-					#@printf "iterminima pushed: "
-					#println(iterminima)
 				   #Add also to global minima, to check next minima in iteration
 					push!(minima, SearchPoint(px, copy(pg), pval))
-					#@printf "minima pushed: "
-					#println(minima)
-
+			
 				end #if minima found
 			end #if converged
 		end #for points
@@ -266,6 +238,3 @@ minfinder{T}(func::Function, l::Array{T}, u::Array{T}) =
 minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1}, ops::Options) = 
 	minfinder(func, [convert(Float64,i) for i in l], 
 					[convert(Float64,i) for i in u], ops)
-
-
-
