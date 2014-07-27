@@ -16,6 +16,7 @@ my_tests = ["bfgs.jl",
             "nelder_mead.jl",
             "optimize.jl",
             "simulated_annealing.jl",
+            "minfinder.jl"
             "interpolating_line_search.jl",
             "api.jl",
             "golden_section.jl",

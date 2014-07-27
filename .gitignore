@@ -1,3 +1,4 @@
 benchmarks/graphs/*
 *~
 *.kate-swp
+/benchmarks/multiple.tsv

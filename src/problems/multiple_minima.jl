@@ -8,7 +8,7 @@ immutable OptimizationProblem
     f::Function
     l::Vector
     u::Vector
-    min::Vector{Vector} # all local minima
+    minima::Vector{Vector} # all local minima
     # glob_x::Vector{Float64} # set of global minimum points 
     glob_f::FloatingPoint # global minimum function value
 end
