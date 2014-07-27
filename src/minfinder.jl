@@ -40,31 +40,22 @@
 #		derivative-free MinFinder could be implement that also uses derivative-
 #		free local searches
 
-# Create types for starting points and minima
-type SearchPoint{T}
+# Create types for the starting points and the minima
+type SearchPoint{T} 
 	x::Vector{T} # point
 	g::Vector{T} # gradient, can be nothing
-	f::T          # function value
+	f::T         # function value
 end
 SearchPoint{T}(x::Vector{T}, g::Vector{T}) = SearchPoint(x, g, nan(T))
 SearchPoint{T}(x::Vector{T}) = SearchPoint(x, Array(T,0))
-type Points{T}
-	s::Vector{SearchPoint{T}}
-end
-Points(T) = Points{T}(Array(SearchPoint{T},0))
-Base.push!{T}(P::Points{T}, S::SearchPoint{T}) = push!(P.s, S)
-Base.deleteat!{T}(P::Points{T}, i::Integer) = deleteat!(P.s, i)
-Base.length{T}(P::Points{T}) = length(P.s)
-#Base.getindex{T}(P::Points{T}, i::Integer) = getindex(P.s, i)
-#Base.setindex!{T}(P::Points{T}, S::SearchPoint{T}, i::Integer) = setindex!(P.s, S, i)
 
-function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
+function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 
 	# Set default options:
 	#	stopping tolerances are set quite high by default (sqrt of usual tol); 
 	# 	at the end the minima are polished off. Inspiration from S. Johnson:
 	#	[http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms#MLSL_.28Multi-Level_Single-Linkage.29]
-	@defaults ops localtol=sqrt(eps(T)^(2/3)) polishtol=eps(T)^(2/3) ENRICH=1.1 NMAX=100 NINIT=20 EXHAUSTIVE=.5 show_iter=0 polish=true
+	@defaults ops polish=false localtol=(polish?sqrt(eps(T)^(2/3)):eps(T)^(2/3)) polishtol=eps(T)^(2/3) distmin=sqrt(localtol) distpolish=sqrt(polishtol) ENRICH=1.1 NMAX=250 NINIT=20 EXHAUSTIVE=.5 max_iter=1_000 show_iter=0 
 
 	# Algortihm parameters as in paper:
 	# NMAX = "predefined upper limit for the number of samples in each 
@@ -79,24 +70,29 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	# localtol: tolerance level for local searches
 	# polishtol: tolerance level for final polish of minima
 	# polish: use final polish? (default=true)
+	# distmin: discard minima is closer than distmin to found minima
+	# distpolish: same for final minima polish
+	# max_iter: maximum number of iterations (each with N points sampled)
+	# show_iter: show progress if >0
 
 	# Initiate
 	length(l) == length(u) ||error("boundary vectors must have the same length")
 
 	N = NINIT # number of starting point samples 
-	TypicalDistance = 0. #Float64 because averaging
-	MinDistance = Inf #for use in ValidPoint: min distance between found minima	
+	TypicalDistance = zero(T) # typical distance between start and its minima
+	MinDistance = inf(T) #for use in ValidPoint: min distance between minima	
 	stoplevel = 0. # 'a' in paper = EXHAUSTIVE * var_last
 
-	minima = Points{T} # type with found minima
-	polishminina = Points{T} # mimina after final polish
-	iterminima = Points{T} #minima found during one iteration
-	points = Points{T} #starting points for local minimizations
+	minima = Array(SearchPoint{T}, 0) # type with found minima
+	polishminina = Array(SearchPoint{T}, 0) # mimina after final polish
+	iterminima = Array(SearchPoint{T}, 0) #minima found during one iteration
+	points = Array(SearchPoint{T}, 0) #starting points for local minimizations
 
 	gfunc = similar(l) # temporary jacobian for use inside `func`
 	px = similar(l) # temporary point input
 	pval = zero(T) # temporary function value
 	pg = similar(l) # temporary point function gradient 
+	p = SearchPoint(px, pg, pval) #temporary SearchPoint
 
 	fcount::Int = 0 #number of function evaluations
 	iteration::Int =0 #number of minfinder iterations
@@ -106,11 +102,17 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	fminops = @options tol=localtol # options for local minimizations
 	polishops = @options tol=polishtol # options for final polish minimizations
 
-	# Define stopping rule of paper. In short, create a series of binomial
+	# Define stopping rule of the paper. In short, create a series of binomial
 	# events from 1 to N. The variance of this series goes slowly to zero. 
 	# Compare this value with `stoplevel` at the latest iteration when a minima 
 	# was found. 
-	DoubleBox(n::Int) = var([rand(Binomial(i))/i for i=1:n]) 
+	DoubleBox(n::Int) = var([rand(Binomial(i))/i for i=1:n])
+	# function DoubleBox(n::Int) #for debugging
+	# 	out::Float64 = var([rand(Binomial(i))/i for i=1:n])
+	# 	println(out)
+	# 	return out
+	# end
+
 
 	# Checking rules for each point before starting local searches
 	function ValidPoint(p, pnts, mins)
@@ -118,14 +120,18 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 
 		# condition 1: check against all other points, order matters
 		for q in pnts
+			#@printf "points: %f<%f && %f >0 \n?" norm(p.x - q.x, 2) TypicalDistance dot(p.x - q.x, p.g - q.g)
+			#println(p)
+			#println(q)
 			norm(p.x - q.x, 2) < TypicalDistance &&
-				(p.x - q.x)'*(p.g - q.g) > 0 && return false
+				dot(p.x - q.x, p.g - q.g) > 0 && return false
 		end
 
 		# condition 2: check against found minima
 		for z in minima
+			#@printf "minima: %f<%f && %f >0 \n?" norm(p.x-z.x,2) MinDistance dot(p.x-z.x,p.g-z.g)
 			norm(p.x - z.x, 2) < MinDistance && 
-				(p.x - z.x)'*(p.g - z.g) > 0 &&	return false
+				dot(p.x - z.x, p.g - z.g) > 0 && return false
 		end
 		return true
 	end
@@ -138,73 +144,90 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	end
     
 	# main iteration loop
-	while !(DoubleBox(N) < stoplevel)
+	while (DoubleBox(N) > stoplevel) & (iteration < max_iter)
 		iteration += 1
 
 		# Sampling and checking step
-		empty!(points)
+		points = Array(SearchPoint{T}, 0) #empty points
 		for unused=1:N
 			px = l + rand(length(l)).*(u-l)
-			if length(minima) == 0 # no checks possible, gradient not required.
-				push!(points, SearchPoint(px))
-			else
-				pval = func(pg, px)
+				pval::T = func(pg, px)
 				fcount += 1
-				p = SearchPoint(p, pg, pval)
+				p = SearchPoint(px, copy(pg), pval)
 				ValidPoint(p, points, minima) && push!(points, p)
-			end
 		end
 
 		# Enrichment for next iteration
 		if length(points) < N/2 
-			N = int(N * ENRICH)
+			N = min(int(N * ENRICH), NMAX)
 		end
 
-		empty!(iterminima)
+		iterminima = Array(SearchPoint{T}, 0) #empty iterminima
 		for p in points
-			
-			# if minima found during this iteration, check point against these.
-			nextpoint = false
+			#@printf "Sample point: %s \n" p
+
+			# If minima found during this iteration, check point against these.
+			nextpoint = false #TODO is there a way to break out of outer for?
 			if !isempty(iterminima)
-				for z in iterminima
+				#@printf "start iterminima test \n"
+				#@printf "mindistance: %f" MinDistance
+				for z in iterminima					
+					#@printf "norm: %s" norm(p.x - z.x, 2)
+					#@printf "grad: %s" (p.x - z.x)'*(p.g - z.g)
 					if norm(p.x - z.x, 2) < MinDistance && 
-							(p.x - z.x)'*(p.g - z.g) > 0
+							dot(p.x - z.x, p.g - z.g) > 0
 						nextpoint = true
+						#@printf "point discarded with iterminimatest"
 					end
 					nextpoint && continue # skip other minima checks
 				end
+				#@printf "go to next point? %s \n" nextpoint
 				nextpoint && continue # skip local search for this point
 			end
 
 			# local minimization
-			px, pval, fmincount, converged = fminbox(func, p.x, l, u, fminops)
+			#@printf "Start search from: %s \n" p.x
+			px, pvals, fmincount, converged = fminbox(func, p.x, l, u, fminops)
 			fcount+=fmincount
 			searches += 1
+			#@printf "searches: %d \n" searches
+			pval = minimum([minimum(pvals[i]) for i in 1:length(pvals)])
 
 			if converged
 				converges +=1
+				#@printf "converged! \n"
 
 				# Update typical search distance 
 				TypicalDistance = (TypicalDistance*(searches - 1) + 
 					norm(p.x - px, 2)) / searches
+				#@printf "new TypicalDistance: %f \n" TypicalDistance
 				
 				# See if minima already found, if not, add to minimalists
-				if !any([norm(px - m.x, 2) < localtol for m in minima])
+				#println([norm(px - m.x, 2) for m in minima])
+				if !any([norm(px - m.x, 2) < distmin for m in minima])
+					#@printf "new minima found: %s \n" px
 
 					# Update stoplevel
 					stoplevel = EXHAUSTIVE * DoubleBox(N) 
+					# @printf " new stoplevel: %f \n" stoplevel
 
 					# Update typical minima distance
-					MinDistance = min(MinDistance, 
-						[norm(px-m.x, 2) for m in minima]...)
+					MinDistance = minimum([MinDistance, 
+						[norm(px - m.x, 2) for m in minima]...])
+					#@printf " new MinDistance: %f \n" MinDistance
 
 					# Gradient not given as output fminbox, needs extra function
 					# evaluation.
 					pval = func(pg, px)
 					fcount += 1				  
-					push!(iterminima, SearchPoint(px, pg, pval))
-				#Add also to global minima, to check next minima in iteration
-					push!(minima, SearchPoint(px, pg, pval))
+					push!(iterminima, SearchPoint(px, copy(pg), pval))
+					#@printf "iterminima pushed: "
+					#println(iterminima)
+				   #Add also to global minima, to check next minima in iteration
+					push!(minima, SearchPoint(px, copy(pg), pval))
+					#@printf "minima pushed: "
+					#println(minima)
+
 				end #if minima found
 			end #if converged
 		end #for points
@@ -217,9 +240,9 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 	# Polish off minima
 	if polish
 		for m in minima
-			px, pval, fpolishcount, converged=fminbox(func, m.x, l, u,polishops)
+			px, pvals, fpolishcount, converged=fminbox(func, m.x, l, u,polishops)
 			fcount += fpolishcount
-			if !any([norm(px - h.x, 2) < polishtol for h in polishminina])
+			if !any([norm(px - h.x, 2) < distpolish for h in polishminina])
 				pval = func(pg, px)
 				fcount += 1
 				push!(polishminina, SearchPoint(px, pg, pval))
@@ -227,18 +250,22 @@ function minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options)
 		end
 		
 		if show_iter > 0 
-			@printf "Final polish retained %d minima out of %d \n" length(polishminima) length(minima)
+			@printf "Final polish retained %d minima out of %d \n" length(polishminina) length(minima)
 		end
 
-		return polishminima, fcount, searches, iteration
+		@check_used ops
+		return polishminina, fcount, searches, iteration
 	else
+		@check_used ops
 		return minima, fcount, searches, iteration
 	end
 end
 
-minfinder{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}) = 
-	minfinder(func, x, l, u, Options())
+minfinder{T}(func::Function, l::Array{T}, u::Array{T}) = 
+	minfinder(func, l, u, Options())
 export minfinder
+minfinder{T}(func::Function, l::Array{T,1}, u::Array{T,1},ops::Options) = 
+	minfinder(func, [convert(Float64,i) for i in l], [convert(Float64,i) for i in u], ops)
 
 
 

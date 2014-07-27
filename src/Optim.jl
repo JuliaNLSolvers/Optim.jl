@@ -81,4 +81,5 @@ module Optim
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
+    include(joinpath("problems", "multiple_minima.jl"))
 end
