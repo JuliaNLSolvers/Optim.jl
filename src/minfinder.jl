@@ -118,18 +118,32 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
     # was found. 
     doublebox(n::Int) = var([StatsBase.rand_binom(i, .5)/i for i=1:n])
 
-    function checkrule(p::SearchPoint, q::SearchPoint, dist)
-        norm(p.x - q.x, 2) < dist && dot(p.x - q.x, p.g - q.g) > 0
+    dim = length(l) #precalc dimension of problem
+    function checkrule{T}(a::SearchPoint{T}, b::SearchPoint{T}, dist)
+        #L1dist(a.x, b.x) < dist && dot(a.x - b.x, a.g - b.g) > 0
+        ax = a.x
+        bx = b.x
+        ag = a.g
+        bg = b.g
+        s = zero(T)
+        t = zero(T)
+        for i = 1:dim
+            dx = ax[i] - bx[i]
+            #dg = pg[i] - qg[i]
+            s += dx * dx
+            t += dx * (ag[i] - bg[i])
+        end
+        return s < dist && t > 0
     end
 
     # Checking rules for each point before starting local searches
     function validpoint(p, pnts, mins)
         length(minima) == 0 && return true # no typical_distance without minima
-
-        # condition 1: check against all other points, order matters
+        
+        # condition 1: check against all other points in `pnts`
         for q in pnts; checkrule(p, q, typical_distance) && return false; end
 
-        # condition 2: check against found minima
+        # condition 2: check against found minima in `mins`
         for z in minima; checkrule(p, z, min_distance) && return false; end
                 
         return true
@@ -149,7 +163,7 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
         # Sampling and checking step
         points = Array(SearchPoint{T}, 0) #empty points
         for unused=1:N
-            px = l + rand(length(l)) .* (u - l)
+            px = l + rand(dim) .* (u - l)
             pval::T = func(pg, px)
             fcount += 1
             p = SearchPoint(px, copy(pg), pval)
@@ -185,12 +199,12 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
             
                 # Update typical search distance 
                 typical_distance = (typical_distance*(searches - 1) + 
-                    norm(p.x - px, 2)) / searches
+                    L1dist(p.x, px)) / searches
                 
                 # Check if minima already found, if not, add to minimalists
                 minfound = false
                 for m in minima
-                    if norm(px - m.x, 2) < distmin
+                    if L2dist(px, m.x) < distmin
                         minfound = true
                         continue
                     end
@@ -202,7 +216,7 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
             
                     # Update typical minima distance
                     for m in minima
-                       min_distance = min(min_distance, norm(px - m.x, 2))
+                       min_distance = min(min_distance, L1dist(px,m.x))
                     end
             
                     # Gradient not given as output fminbox, needs extra function
@@ -225,9 +239,11 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
     # Polish off minima
     if polish
         for m in minima
+            # run final optization from each found minima
             px, pvals, fpolishcount, converged = fminbox(func, m.x, l, u, polishops)
             fcount += fpolishcount
-            if !any([norm(px - h.x, 2) < distpolish for h in polishminina])
+            # Check if not converges to another final optimization minima
+            if !any([L2dist(px, h.x) < distpolish for h in polishminina])
                 pval = func(pg, px)
                 fcount += 1
                 push!(polishminina, SearchPoint(px, pg, pval))
