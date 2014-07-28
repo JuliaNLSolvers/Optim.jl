@@ -242,8 +242,16 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
             # run final optization from each found minima
             px, pvals, fpolishcount, converged = fminbox(func, m.x, l, u, polishops)
             fcount += fpolishcount
+
             # Check if not converges to another final optimization minima
-            if !any([L2dist(px, h.x) < distpolish for h in polishminina])
+            minfound = false
+            for h in polishminina
+                if L2dist(px, h.x) < distpolish
+                    minfound = true
+                    continue
+                end
+            end
+            if !minfound
                 pval = func(pg, px)
                 fcount += 1
                 push!(polishminina, SearchPoint(px, pg, pval))
