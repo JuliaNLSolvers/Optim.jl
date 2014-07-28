@@ -2,7 +2,7 @@ require("Options")
 
 module Optim
     using OptionsMod
-    using Distributions
+    using StatsBase
     using Calculus
 
     import Base.dot,
