@@ -91,7 +91,7 @@ end
 
 examples["Shekel5"] = OptimizationProblem(
     "Shekel5",
-    (g,x)->shekel(g, x),
+    shekel,
     zeros(4),
     10*ones(4),
     {[4.00003,4.00013,4.00003,4.00013],[1.00013,1.00015,1.00013,1.00015],
