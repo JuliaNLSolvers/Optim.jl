@@ -1,11 +1,9 @@
-
+srand(1)
 for (name, problem) in Optim.MultipleMinimaProblems.examples
-    #@printf "%s \n" name
-
-    srand(1)
+    @printf "%s \n" name
+    
     mins, fcount, search, iters = minfinder(problem.f, problem.l, problem.u)#;show_trace=true)
     
-    #println(show(minimum([m.f for m in mins])))
     @assert length(mins)==length(problem.minima)    
 
     for m in mins

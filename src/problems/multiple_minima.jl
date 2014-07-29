@@ -37,7 +37,8 @@ examples["Rosenbrock"] = OptimizationProblem(
 examples["Camel"] = OptimizationProblem(
     "Camel",
     function camel(g, x::Vector)
-        if !(g === nothing)            g[1] = 8x[1] - 8.4x[1]^3 + 2x[1]^5 + x[2]
+        if !(g === nothing)            
+            g[1] = 8x[1] - 8.4x[1]^3 + 2x[1]^5 + x[2]
             g[2] = x[1] - 8x[2] + 16x[2]^3
         end
         return 4x[1]^2 - 2.1x[1]^4 + 1/3*x[1]^6 + x[1]*x[2] - 4x[2]^2 + 4x[2]^4
