@@ -2,7 +2,7 @@
 for (name, problem) in Optim.MultipleMinimaProblems.examples
     #@printf "%s \n" name
 
-    srand(6)
+    srand(1)
     mins, fcount, search, iters = minfinder(problem.f, problem.l, problem.u)#;show_trace=true)
     
     #println(show(minimum([m.f for m in mins])))
@@ -20,4 +20,4 @@ for (name, problem) in Optim.MultipleMinimaProblems.examples
     end
     
 end
-println("succes")
+println("minfinder test successful")

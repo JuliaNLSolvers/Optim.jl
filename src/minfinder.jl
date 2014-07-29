@@ -99,10 +99,10 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
     points = Array(SearchPoint{T}, 0) #starting points for local minimizations
 
     gfunc = similar(l) # temporary jacobian for use inside `func`
-    px = similar(l) # temporary point input
-    pval = zero(T) # temporary function value
-    pg = similar(l) # temporary point function gradient 
-    p = SearchPoint(px, pg, pval) #temporary SearchPoint
+    fx = similar(l) # temporary point input
+    fval = zero(T) # temporary function value
+    fg = similar(l) # temporary point function gradient 
+    p = SearchPoint(fx, fg, fval) #temporary SearchPoint
 
     fcount::Int = 0 #number of function evaluations
     iteration::Int = 0 #number of minfinder iterations
@@ -120,7 +120,7 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
 
     dim = length(l) #precalc dimension of problem
     function checkrule{T}(a::SearchPoint{T}, b::SearchPoint{T}, dist)
-        #L1dist(a.x, b.x) < dist && dot(a.x - b.x, a.g - b.g) > 0
+        #L2dist(a.x, b.x) < dist && dot(a.x - b.x, a.g - b.g) > 0
         ax = a.x
         bx = b.x
         ag = a.g
@@ -129,24 +129,10 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
         t = zero(T)
         for i = 1:dim
             dx = ax[i] - bx[i]
-            #dg = pg[i] - qg[i]
             s += dx * dx
             t += dx * (ag[i] - bg[i])
         end
-        return s < dist && t > 0
-    end
-
-    # Checking rules for each point before starting local searches
-    function validpoint(p, pnts, mins)
-        length(minima) == 0 && return true # no typical_distance without minima
-        
-        # condition 1: check against all other points in `pnts`
-        for q in pnts; checkrule(p, q, typical_distance) && return false; end
-
-        # condition 2: check against found minima in `mins`
-        for z in minima; checkrule(p, z, min_distance) && return false; end
-                
-        return true
+        return sqrt(s) < dist && t > 0
     end
 
     # Show progress
@@ -163,11 +149,24 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
         # Sampling and checking step
         points = Array(SearchPoint{T}, 0) #empty points
         for unused=1:N
-            px = l + rand(dim) .* (u - l)
-            pval::T = func(pg, px)
+            fx = l + rand(dim) .* (u - l)
+            fval::T = func(fg, fx)
             fcount += 1
-            p = SearchPoint(px, copy(pg), pval)
-            validpoint(p, points, minima) && push!(points, p)
+            p = SearchPoint(fx, copy(fg), fval)
+
+            # check on each point before accepting as starting point
+            validpoint = true
+            if !isempty(minima) # no typical_distance without minima        
+                # condition 1: check against all other points in `pnts`
+                for q in points
+                    if checkrule(p, q, typical_distance); validpoint=false; end
+                end
+                # condition 2: check against found minima in `mins`
+                for z in minima
+                    if checkrule(p, z, min_distance);validpoint=false; end
+                end
+            end 
+            validpoint && push!(points, p)
         end
 
         # Enrichment for next iteration
@@ -189,22 +188,23 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
             end
 
             # local minimization
-            px, pvals, fmincount, converged = fminbox(func, p.x, l, u, fminops)
+            fx, fvals, fmincount, converged = fminbox(func, p.x, l, u, fminops)
             fcount += fmincount
             searches += 1
-            pval = minimum([minimum(pvals[i]) for i in 1:length(pvals)])
+            fval = minimum([minimum(fvals[i]) for i in 1:length(fvals)])
 
             if converged
                 converges +=1
             
                 # Update typical search distance 
                 typical_distance = (typical_distance*(searches - 1) + 
-                    L1dist(p.x, px)) / searches
+                    L2dist(p.x, fx)) / searches
+                #@printf "new typ distance: %s \n" typical_distance
                 
                 # Check if minima already found, if not, add to minimalists
                 minfound = false
                 for m in minima
-                    if L2dist(px, m.x) < distmin
+                    if L2dist(fx, m.x) < distmin
                         minfound = true
                         continue
                     end
@@ -215,17 +215,18 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
                     stoplevel = EXHAUSTIVE * doublebox(N) 
             
                     # Update typical minima distance
+                    if isempty(minima); min_distance = L2dist(fx, p.x); end
                     for m in minima
-                       min_distance = min(min_distance, L1dist(px,m.x))
+                       min_distance = min(min_distance, L2dist(fx, m.x))
                     end
-            
+
                     # Gradient not given as output fminbox, needs extra function
                     # evaluation.
-                    pval = func(pg, px)
+                    fval = func(fg, fx)
                     fcount += 1                  
-                    push!(iterminima, SearchPoint(px, copy(pg), pval))
+                    push!(iterminima, SearchPoint(fx, copy(fg), fval))
                     #Add also to global minima, to check next minima in iteration
-                    push!(minima, SearchPoint(px, copy(pg), pval))
+                    push!(minima, SearchPoint(fx, copy(fg), fval))
             
                 end #if minima found
             end #if converged
@@ -240,21 +241,21 @@ function minfinder{T <: FloatingPoint}(func::Function, l::Array{T,1}, u::Array{T
     if polish
         for m in minima
             # run final optization from each found minima
-            px, pvals, fpolishcount, converged = fminbox(func, m.x, l, u, polishops)
+            fx, fvals, fpolishcount, converged = fminbox(func, m.x, l, u, polishops)
             fcount += fpolishcount
 
             # Check if not converges to another final optimization minima
             minfound = false
             for h in polishminina
-                if L2dist(px, h.x) < distpolish
+                if L2dist(fx, h.x) < distpolish
                     minfound = true
                     continue
                 end
             end
             if !minfound
-                pval = func(pg, px)
+                fval = func(fg, fx)
                 fcount += 1
-                push!(polishminina, SearchPoint(px, pg, pval))
+                push!(polishminina, SearchPoint(fx, fg, fval))
             end
         end
         
