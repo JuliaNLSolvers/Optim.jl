@@ -1,7 +1,7 @@
 # sse(x) gives the L2 norm of x
 sse(x) = (x'*x)[1]
 
-function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12, maxIter=100, lambda=100.0, show_trace=false)
+function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12, maxIter=100, lambda=100.0, show_trace=false, quiet=false)
 	# finds argmin sum(f(x).^2) using the Levenberg-Marquardt algorithm
 	#          x
 	# The function f should take an input vector of length n and return an output vector of length m
@@ -104,7 +104,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	end
 
 	# give the user info about the stopping condition
-	if ~converged
+	if ~converged && ~quiet
 		warn("Exceeded maximum number of iterations ($maxIter) without converging")
 	end
 
