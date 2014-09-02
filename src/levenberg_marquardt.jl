@@ -1,7 +1,7 @@
 # sse(x) gives the L2 norm of x
 sse(x) = (x'*x)[1]
 
-function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12, maxIter=100, lambda=100.0, show_trace=false, quiet=false)
+function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12, maxIter=100, lambda=100.0, show_trace=false)
 	# finds argmin sum(f(x).^2) using the Levenberg-Marquardt algorithm
 	#          x
 	# The function f should take an input vector of length n and return an output vector of length m
@@ -25,6 +25,8 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	const MIN_DIAGONAL = 1e-6 # lower bound on values of diagonal matrix used to regularize the trust region step
 
 	converged = false
+	x_converged = false
+	g_converged = false
 	iterCt = 0
 	x = x0
 	delta_x = copy(x0)
@@ -97,16 +99,12 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		# 1. Small gradient: norm(J^T * fcur, Inf) < tolG
 		# 2. Small step size: norm(delta_x) < tolX
 		if norm(J' * fcur, Inf) < tolG
-			converged = true
+			g_converged = true
 		elseif norm(delta_x) < tolX*(tolX + norm(x))
-			converged = true
+			x_converged = true
 		end
+		converged = g_converged | x_converged   
 	end
 
-	# give the user info about the stopping condition
-	if ~converged && ~quiet
-		warn("Exceeded maximum number of iterations ($maxIter) without converging")
-	end
-
-	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, false, 0.0, false, 0.0, converged, tolG, tr, f_calls, g_calls)
+	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)
 end
