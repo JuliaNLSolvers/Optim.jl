@@ -208,26 +208,6 @@ if !(g === nothing)
 end
 ```
 
-### Conjugate gradient
-
-The nonlinear conjugate gradient function is an implementation of an algorithm known as CG-DESCENT (see Citations below):
-
-```jl
-x0 = [0.0,0.0]  # the initial guess
-x, fval, fcount, converged = cgdescent(rosenbrock, x0)
-```
-
-Here `x` is the solution vector, `fval` is a vector of function values after each iteration, `fcount` is the number of function evaluations, and `converged` is `true` if the algorithm converged to within the prescribed tolerance.
-
-The algorithm can be controlled with a wide variety of options:
-
-```jl
-using OptionsMod
-ops = @options display=Optim.ITER fcountmax=1000 tol=1e-5
-x, fval, fcount, converged = cgdescent(func, x0, ops)
-```
-
-This will cause it to display its progress at each iteration, limit itself to a maximum of 1000 function evaluations, and use a custom tolerance. There are many more options available, including a wide array of display options; for these, it's best to see the code.
 
 ### Box minimization
 
@@ -237,12 +217,12 @@ A primal interior-point algorithm for simple "box" constraints (lower and upper 
 l = [1.25, -2.1]
 u = [Inf, Inf]
 x0 = [2.0, 2.0]
-x, fval, fcount, converged = fminbox(rosenbrock, x0, l, u, ops)
+results = fminbox(d4, x0, l, u)  # d4 from rosenbrock example
 ```
 
-This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `cgdescent` for convergence at each step.
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `cg` for convergence at each step.
 
-This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `cgdescent` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner (see `nnls` for an example).
+This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `cg` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner (see `nnls` for an example).
 
 ### Nonnegative least-squares
 
@@ -251,10 +231,10 @@ Finally, one common application of box-constrained optimization is non-negative 
 ```jl
 A = randn(5,3)
 b = randn(size(A, 1))
-xnn, fval, fcount, converged = nnls(A, b)
+results = nnls(A, b)
 ```
 
-This leverages fminbox and cgdescent; surely one could get even better performance by using an algorithm that takes advantage of this problem's linearity. Despite this, for large problems the performance is quite good compared to Matlab's `lsqnonneg`.
+This leverages `fminbox` and `cg`; surely one could get even better performance by using an algorithm that takes advantage of this problem's linearity. Despite this, for large problems the performance is quite good compared to Matlab's `lsqnonneg`.
 
 ### Linear programming
 

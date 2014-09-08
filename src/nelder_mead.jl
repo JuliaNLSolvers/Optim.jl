@@ -45,6 +45,7 @@ function nelder_mead{T}(f::Function,
                         g::Real = 2.0,
                         b::Real = 0.5,
                         ftol::Real = 1e-8,
+                        initial_step::Vector{T} = ones(T,length(initial_x)),
                         iterations::Integer = 1_000,
                         store_trace::Bool = false,
                         show_trace::Bool = false,
@@ -57,7 +58,7 @@ function nelder_mead{T}(f::Function,
     n = m + 1
     p = repmat(initial_x, 1, n)
     for i in 1:m
-        @inbounds p[i, i] += one(T)
+        @inbounds p[i, i] += initial_step[i]
     end
 
     # Count function calls

@@ -144,7 +144,9 @@ function cg{T}(df::Union(DifferentiableFunction,
     y = similar(x)
 
     # Store f(x) in f_x
-    f_x_previous, f_x = NaN, df.fg!(x, gr)
+    f_x = df.fg!(x, gr)
+    @assert typeof(f_x) == T
+    f_x_previous = nan(T)
     f_calls, g_calls = f_calls + 1, g_calls + 1
     copy!(gr_previous, gr)
 
@@ -202,6 +204,8 @@ function cg{T}(df::Union(DifferentiableFunction,
 
         # Refresh the line search cache
         clear!(lsr)
+        @assert typeof(f_x) == T
+        @assert typeof(dphi0) == T
         push!(lsr, zero(T), f_x, dphi0)
 
         # Pick the initial step size (HZ #I1-I2)
@@ -229,6 +233,18 @@ function cg{T}(df::Union(DifferentiableFunction,
         f_x_previous, f_x = f_x, df.fg!(x, gr)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
+        x_converged,
+        f_converged,
+        gr_converged,
+        converged = assess_convergence(x,
+                                       x_previous,
+                                       f_x,
+                                       f_x_previous,
+                                       gr,
+                                       xtol,
+                                       ftol,
+                                       grtol)
+
         # Check sanity of function and gradient
         if !isfinite(f_x)
             error("Function must finite function values")
@@ -250,18 +266,6 @@ function cg{T}(df::Union(DifferentiableFunction,
         for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]
         end
-
-        x_converged,
-        f_converged,
-        gr_converged,
-        converged = assess_convergence(x,
-                                       x_previous,
-                                       f_x,
-                                       f_x_previous,
-                                       gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
 
         @cgtrace
     end

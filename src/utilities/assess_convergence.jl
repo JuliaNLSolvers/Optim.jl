@@ -15,11 +15,11 @@ function assess_convergence(x::Array,
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < ftol
     # Relative Tolerance
-    if abs(f_x - f_x_previous) / (abs(f_x) + ftol) < ftol
+    if abs(f_x - f_x_previous) / (abs(f_x) + ftol) < ftol || nextfloat(f_x) >= f_x_previous
         f_converged = true
     end
 
-    if norm(gr, Inf) < grtol
+    if norm(vec(gr), Inf) < grtol
         gr_converged = true
     end
 

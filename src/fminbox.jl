@@ -1,10 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}, ops::Options)
-    mu0::T
-    mu0factor::T
-    @defaults ops mu0=nan(T) mu0factor=0.001
+function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = nan(T), mu0factor::T = 0.001)
     if isnan(mu0)
         gbarriernorm = sum(abs(gbarrier))
         if gbarriernorm > 0
@@ -16,11 +13,10 @@ function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}, ops::Options)
     else
         mu = mu0
     end
-    @check_used ops
     return mu
 end
 
-function barrier_box{T}(g, x::Array{T}, l::Array{T}, u::Array{T})
+function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
     n = length(x)
     calc_grad = !(g === nothing)
 
@@ -56,21 +52,21 @@ function barrier_box{T}(g, x::Array{T}, l::Array{T}, u::Array{T})
     return v
 end
 
-function function_barrier{T}(gfunc, gbarrier, x::Array{T}, f::Function, fbarrier::Function)
-    vbarrier = fbarrier(gbarrier, x)
+function function_barrier{T}(x::Array{T}, gfunc, gbarrier, f::Function, fbarrier::Function)
+    vbarrier = fbarrier(x, gbarrier)
     if isfinite(vbarrier)
-        vfunc = f(gfunc, x)
+        vfunc = f(x, gfunc)
     else
         vfunc = vbarrier
     end
     return vfunc, vbarrier
 end
 
-function barrier_combined{T}(g, gfunc, gbarrier, valeach::Vector{T}, x::Array{T}, fb::Function, mu::T)
+function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T}, fb::Function, mu::T)
     calc_grad = !(g === nothing)
-    valfunc, valbarrier = fb(gfunc, gbarrier, x)
-    valeach[1] = valfunc
-    valeach[2] = valbarrier
+    valfunc, valbarrier = fb(x, gfunc, gbarrier)
+    val_each[1] = valfunc
+    val_each[2] = valbarrier
     if calc_grad
         for i = 1:length(g)
             g[i] = gfunc[i] + mu*gbarrier[i]
@@ -109,17 +105,30 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::Options)
-    tol::T
-    mufactor::T
-    @defaults ops tol=eps(T)^(2/3) mufactor=0.001 display=0 optimizer=(func, x, ops)->cgdescent(func, x, ops) P=Array(T,length(x)) precondprep=precondprepbox
-    ops = copy(ops)  # to avoid passing back extended options
-    x = copy(x)
-    fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
-    fb = (gfunc, gbarrier, x) -> function_barrier(gfunc, gbarrier, x, func, fbarrier)
+function fminbox{T}(df::DifferentiableFunction,
+                    initial_x::Array{T},
+                    l::Array{T},
+                    u::Array{T};
+                    xtol::T = eps(T),
+                    ftol::T = sqrt(eps(T)),
+                    grtol::T = sqrt(eps(T)),
+                    tol::T = eps(T)^(2/3),
+                    iterations::Integer = 1_000,
+                    store_trace::Bool = false,
+                    show_trace::Bool = false,
+                    extended_trace::Bool = false,
+                    linesearch!::Function = hz_linesearch!,
+                    eta::Real = convert(T,0.4),
+                    mufactor::T = convert(T, 0.001),
+                    precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
+                    optimizer = cg)
+
+    x = copy(initial_x)
+    fbarrier = (x, gbarrier) -> barrier_box(x, gbarrier, l, u)
+    fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
-    # Because we use the gradient to estimate the initial mu, we have
+    P = Array(T, length(initial_x))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
@@ -135,9 +144,9 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
         end
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
-    valfunc = func(gfunc, x)
-    mu = initialize_mu(gfunc, gbarrier, ops)
-    if display > 0
+    valfunc = df.fg!(x, gfunc)  # is this used??
+    mu = initialize_mu(gfunc, gbarrier; mu0factor=mufactor)
+    if show_trace > 0
         println("######## fminbox ########")
         println("Initial mu = ", mu)
     end
@@ -148,44 +157,44 @@ function fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}, ops::
     fcount_all = 0
     xold = similar(x)
     converged = false
-    @set_options ops tol=10*tol alphamaxfunc=(x, d)->limits_box(x, d, l, u) P=P reportfunc=val->valboth[1]
-    local fval
-    local fcount
+    local results
+    first = true
     while true
         copy!(xold, x)
         # Optimize with current setting of mu
-        funcc = (g, x) -> barrier_combined(g, gfunc, gbarrier, valboth, x, fb, mu)
-        @set_options ops precondprep=(out, x)->precondprep(out, x, l, u, mu)
-        if display > 0
+        funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, valboth, fb, mu)
+        fval0 = funcc(x, nothing)
+        dfbox = DifferentiableFunction(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc)
+        if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
-        try
-            x, fval, fcount, converged = optimizer(funcc, x, ops)
-        catch
-            warn(string("Encountered an error in optimizing with mu = ", mu, ", returning previous result"))
-            return xold, fval_all, fcount_all, converged
+        pcp = (P, x) -> precondprep(P, x, l, u, mu)
+        resultsnew = optimizer(dfbox, x; xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
+                                         store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace,
+                                         linesearch! = linesearch!, eta=eta, P=P, precondprep=pcp)
+        if first == true
+            results = resultsnew
+        else
+            append!(results, resultsnew)
         end
-        if display & PARAMETERS_MU > 0
+        copy!(x, results.minimum)
+        if show_trace > 0
             println("x: ", x)
         end
-        push!(fval_all, fval)
-        fcount_all += fcount
 
         # Decrease mu
         mu *= mufactor
 
         # Test for convergence
-        fcmp = abs(fval[1]) + abs(fval[end])
-        tot = zero(T)
         for i = 1:length(x)
-            tot += abs((x[i] - xold[i]) * (gfunc[i] + mu*gbarrier[i]))
+            g[i] = gfunc[i] + mu*gbarrier[i]
         end
-        if tot <= tol * (fcmp + eps(T))
+        x_converged, f_converged, gr_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, xtol, ftol, grtol)
+        if converged
             break
         end
     end
-    @check_used ops
-    return x, fval_all, fcount_all, converged
+    results.initial_x = initial_x
+    results
 end
-fminbox{T}(func::Function, x::Array{T}, l::Array{T}, u::Array{T}) = fminbox(func, x, l, u, Options())
 export fminbox

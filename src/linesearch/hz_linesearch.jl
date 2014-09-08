@@ -125,10 +125,11 @@ function alphatry{T}(alpha::T,
         lsr.nfailures += 1
         iterfinite += 1
         if iterfinite >= iterfinitemax
-            error("Failed to achieve finite test value")
+            return zero(T), true, f_calls, g_calls
+#             error("Failed to achieve finite test value; alphatest = ", alphatest)
         end
     end
-    a = (phitest - alphatest * dphi0 - phi0) / alphatest^2 # quadratic fit
+    a = ((phitest-phi0)/alphatest - dphi0)/alphatest  # quadratic fit
     if display & ALPHAGUESS > 0
         println("quadfit: alphatest = ", alphatest,
                 ", phi0 = ", phi0,
@@ -136,10 +137,10 @@ function alphatry{T}(alpha::T,
                 ", quadcoef = ", a)
     end
     mayterminate = false
-    if a > 0 && phitest <= phi0
+    if isfinite(a) && a > 0 && phitest <= phi0
         alpha = -dphi0 / 2 / a # if convex, choose minimum of quadratic
         if alpha == 0
-            error("alpha is zero. dphi0 = ", dphi0, ", a = ", a)
+            error("alpha is zero. dphi0 = ", dphi0, ", phi0 = ", phi0, ", phitest = ", phitest, ", alphatest = ", alphatest, ", a = ", a)
         end
         if alpha <= alphamax
             mayterminate = true
@@ -184,20 +185,9 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                            psi3::Real = convert(T,0.1),
                            iterfinitemax::Integer = iceil(-log2(eps(T))),
                            display::Integer = 0)
-                           # lsr::LineSearchResults{T},
-                           # c::T,
-                           # mayterminate::Bool,
-                           # delta::T = DEFAULTDELTA,
-                           # sigma::T = DEFAULTSIGMA,
-                           # alphamax::T = inf(T),
-                           # rho::T = 5,
-                           # epsilon::T = 1e-6,
-                           # gamma::T = 0.66,
-                           # linesearchmax::Integer = 50,
-                           # psi3::T = 0.1,
-                           # iterfinitemax::Integer = iceil(-log2(eps(T))),
-                           # display::Integer = 0)
-
+    if display & LINESEARCH > 0
+        println("New linesearch")
+    end
     f_calls = 0
     g_calls = 0
 
@@ -206,7 +196,6 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
     philim = phi0 + epsilon * abs(phi0)
     @assert c > 0
     @assert isfinite(c) && c <= alphamax
-    # phic = phi(gphi, c)
     phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
     f_calls += f_up
     g_calls += g_up
@@ -216,7 +205,6 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
         lsr.nfailures += 1
         iterfinite += 1
         c *= psi3
-        # phic = phi(gphi, c) # TODO: Fix
         phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
         f_calls += f_up
         g_calls += g_up
@@ -279,29 +267,34 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
             cold = c
             c *= rho
             if c > alphamax
+                c = (alphamax + cold)/2
                 if display & BRACKET > 0
-                    println("bracket: exceeding alphamax, truncating")
+                    println("bracket: exceeding alphamax, bisecting: alphamax = ", alphamax,
+                            ", cold = ", cold, ", new c = ", c)
                 end
-                c = alphamax
+                if c == cold || nextfloat(c) >= alphamax
+                    return cold, f_calls, g_calls
+                end
             end
-            # phic = phi(gphi, c) # TODO: Replace
             phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
             f_calls += f_up
             g_calls += g_up
             iterfinite = 1
-            while !isfinite(phic) && c > cold && iterfinite < iterfinitemax
+            while !isfinite(phic) && c > nextfloat(cold) && iterfinite < iterfinitemax
+                alphamax = c
                 lsr.nfailures += 1
                 iterfinite += 1
                 if display & BRACKET > 0
                     println("bracket: non-finite value, bisection")
                 end
-                c = (cold + c) / convert(T, 2)
-                # phic = phi(gphi, c) # TODO: Replace
+                c = (cold + c) / 2
                 phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
                 f_calls += f_up
                 g_calls += g_up
             end
-            if (dphic < 0 && c == alphamax) || !isfinite(phic)
+            if !isfinite(phic)
+                return cold, f_calls, g_calls
+            elseif dphic < 0 && c == alphamax
                 # We're on the edge of the allowed region, and the
                 # value is still decreasing. This can be due to
                 # roundoff error in barrier penalties, a barrier
@@ -315,23 +308,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                             ", phic = ", phic,
                             ", dphic = ", dphic)
                 end
-                ic = length(lsr)
-                while !isfinite(phic)
-                    ic -= 1
-                    c = lsr.alpha[ic]
-                    phic = lsr.value[ic]
-                    if isfinite(phic)
-                        println("Using c = ", c, ", phic = ", phic)
-                    end
-                    # Re-evaluate at current position. This is important if
-                    # reportfunc makes use of cached storage, and that cache
-                    # has been corrupted by NaN/Inf
-                    # phic = phi(gphi, c) # TODO: Replace
-                    phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
-                    f_calls += f_up
-                    g_calls += g_up
-                end
-                return c, f_calls, g_calls # phic
+                return c, f_calls, g_calls
             end
             push!(lsr, c, phic, dphic)
         end
@@ -364,6 +341,13 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
         if B - A < gamma * (b - a)
             if display & LINESEARCH > 0
                 println("Linesearch: secant succeeded")
+            end
+            if nextfloat(lsr.value[ia]) >= lsr.value[ib] && nextfloat(lsr.value[iA]) >= lsr.value[iB]
+                # It's so flat, secant didn't do anything useful, time to quit
+                if display & LINESEARCH > 0
+                    println("Linesearch: secant suggests it's flat")
+                end
+                return A, f_calls, g_calls
             end
             ia = iA
             ib = iB
