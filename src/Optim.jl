@@ -1,7 +1,4 @@
-require("Options")
-
 module Optim
-    using OptionsMod
     using Calculus
 
     import Base.dot,
@@ -46,7 +43,6 @@ module Optim
     include("momentum_gradient_descent.jl")
 
     # Conjugate gradient
-    include("cgdescent.jl")
     include("cg.jl")
 
     # Newton and Quasi-Newton Methods
@@ -74,4 +70,6 @@ module Optim
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
+
+    cgdescent(args...) = error("API has changed. Please use cg.")
 end

@@ -132,6 +132,19 @@ function Base.show(io::IO, r::UnivariateOptimizationResults)
     return
 end
 
+function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimizationResults)
+    a.iterations += b.iterations
+    a.minimum = b.minimum
+    a.f_minimum = b.f_minimum
+    a.iteration_converged = b.iteration_converged
+    a.x_converged = b.x_converged
+    a.f_converged = b.f_converged
+    a.gr_converged = b.gr_converged
+    append!(a.trace, b.trace)
+    a.f_calls += b.f_calls
+    a.g_calls += b.g_calls
+end
+
 # TODO: Expose ability to do forward and backward differencing
 function DifferentiableFunction(f::Function)
     function g!(x::Array, storage::Array)

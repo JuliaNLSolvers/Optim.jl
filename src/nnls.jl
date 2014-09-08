@@ -1,9 +1,6 @@
-function nnls(A::AbstractMatrix, b::AbstractVector, ops::Options)
+function nnls(A::AbstractMatrix, b::AbstractVector)
     # Set up the preconditioner as the inverse diagonal of the Hessian
     a = sum(A.^2, 1)
-    @defaults ops precondprep=(P, x, l, u, mu)->precondprepnnls(P, x, mu, a)
-    ops = copy(ops)
-    @set_options ops precondprep=precondprep
     # Create the initial guess (an interior point)
     T = promote_type(eltype(A), eltype(b))
     x = fill(one(T), size(A, 2))
@@ -11,12 +8,12 @@ function nnls(A::AbstractMatrix, b::AbstractVector, ops::Options)
     l = zeros(eltype(x), length(x))
     u = fill(inf(eltype(x)), length(x))
     # Perform the optimization    
-    func = (g,x) -> nnlsobjective(g, x, A, b)
-    fminbox(func, x, l, u, ops)
+    func = (x, g) -> nnlsobjective(x, g, A, b)
+    df = DifferentiableFunction(x->func(x,nothing), func, func)
+    fminbox(df, x, l, u, precondprep=(P, x, l, u, mu)->precondprepnnls(P, x, mu, a))
 end
-nnls(A::AbstractMatrix, b::AbstractVector) = nnls(A, b, Options())
 
-function nnlsobjective(g, x::AbstractVector, A::AbstractMatrix, b::AbstractVector)
+function nnlsobjective(x::AbstractVector, g, A::AbstractMatrix, b::AbstractVector)
     d = A*x - b
     val = sum(d.^2)/2
     if !(g === nothing)
