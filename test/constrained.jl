@@ -15,6 +15,7 @@ function quadratic!(x, g, AtA, Atb, tmp)
     return v
 end
 
+srand(1)
 N = 8
 boxl = 2.0
 outbox = false

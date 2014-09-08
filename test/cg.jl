@@ -22,6 +22,7 @@ function objective_gradient!(X, G, B)
     end
 end
 
+srand(1)
 B = rand(2,2)
 df = Optim.DifferentiableFunction(X -> objective(X, B), (X, G) -> objective_gradient!(X, G, B))
 results = Optim.cg(df, rand(2,2))
