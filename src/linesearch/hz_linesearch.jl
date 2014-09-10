@@ -193,6 +193,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
 
     phi0 = lsr.value[1]
     dphi0 = lsr.slope[1]
+    (isfinite(phi0) && isfinite(dphi0)) || error("Initial value and slope must be finite")
     philim = phi0 + epsilon * abs(phi0)
     @assert c > 0
     @assert isfinite(c) && c <= alphamax
@@ -200,7 +201,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
     f_calls += f_up
     g_calls += g_up
     iterfinite = 1
-    while !isfinite(phic) && iterfinite < iterfinitemax
+    while !(isfinite(phic) && isfinite(dphic)) && iterfinite < iterfinitemax
         mayterminate = false
         lsr.nfailures += 1
         iterfinite += 1
@@ -209,7 +210,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
         f_calls += f_up
         g_calls += g_up
     end
-    if !isfinite(phic)
+    if !(isfinite(phic) && isfinite(dphic))
         println("Warning: failed to achieve finite new evaluation point, using alpha=0")
         return zero(T), f_calls, g_calls # phi0
     end
@@ -280,7 +281,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
             f_calls += f_up
             g_calls += g_up
             iterfinite = 1
-            while !isfinite(phic) && c > nextfloat(cold) && iterfinite < iterfinitemax
+            while !(isfinite(phic) && isfinite(dphic)) && c > nextfloat(cold) && iterfinite < iterfinitemax
                 alphamax = c
                 lsr.nfailures += 1
                 iterfinite += 1
@@ -292,7 +293,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                 f_calls += f_up
                 g_calls += g_up
             end
-            if !isfinite(phic)
+            if !(isfinite(phic) && isfinite(dphic))
                 return cold, f_calls, g_calls
             elseif dphic < 0 && c == alphamax
                 # We're on the edge of the allowed region, and the
@@ -361,7 +362,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
             phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
             f_calls += f_up
             g_calls += g_up
-            @assert isfinite(phic)
+            @assert isfinite(phic) && isfinite(dphic)
             push!(lsr, c, phic, dphic)
             # ia, ib = update(phi, lsr, iA, iB, length(lsr), philim) # TODO: Pass options
             ia, ib, f_up, g_up = update!(df, x, s, xtmp, g, lsr, iA, iB, length(lsr), philim, display)
@@ -430,7 +431,7 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
     f_calls += f_up
     g_calls += g_up
-    @assert isfinite(phic)
+    @assert isfinite(phic) && isfinite(dphic)
     push!(lsr, c, phic, dphic)
     ic = length(lsr)
     if satisfies_wolfe(c, phic, dphic, phi0, dphi0, philim, delta, sigma)
@@ -464,7 +465,7 @@ function secant2!{T}(df::Union(DifferentiableFunction,
         phic, dphic, f_up, g_up = linefunc!(df, x, s, c, xtmp, g, true)
         f_calls += f_up
         g_calls += g_up
-        @assert isfinite(phic)
+        @assert isfinite(phic) && isfinite(dphic)
         push!(lsr, c, phic, dphic)
         ic = length(lsr)
         # Check arguments here
@@ -569,7 +570,7 @@ function bisect!{T}(df::Union(DifferentiableFunction,
         phid, gphi, f_up, g_up = linefunc!(df, x, s, d, xtmp, g, true)
         f_calls += f_up
         g_calls += g_up
-        @assert isfinite(phid)
+        @assert isfinite(phid) && isfinite(gphi)
         push!(lsr, d, phid, gphi)
         id = length(lsr)
         if gphi >= 0
