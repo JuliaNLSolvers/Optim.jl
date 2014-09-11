@@ -105,20 +105,20 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-function fminbox{T}(df::DifferentiableFunction,
+function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
                     initial_x::Array{T},
                     l::Array{T},
                     u::Array{T};
                     xtol::T = eps(T),
                     ftol::T = sqrt(eps(T)),
                     grtol::T = sqrt(eps(T)),
-                    tol::T = eps(T)^(2/3),
                     iterations::Integer = 1_000,
                     store_trace::Bool = false,
                     show_trace::Bool = false,
                     extended_trace::Bool = false,
                     linesearch!::Function = hz_linesearch!,
                     eta::Real = convert(T,0.4),
+                    mu0::T = nan(T),
                     mufactor::T = convert(T, 0.001),
                     precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
                     optimizer = cg)
@@ -145,7 +145,7 @@ function fminbox{T}(df::DifferentiableFunction,
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
     valfunc = df.fg!(x, gfunc)  # is this used??
-    mu = initialize_mu(gfunc, gbarrier; mu0factor=mufactor)
+    mu = isnan(mu0) ? initialize_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
     if show_trace > 0
         println("######## fminbox ########")
         println("Initial mu = ", mu)
