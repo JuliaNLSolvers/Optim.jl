@@ -89,7 +89,7 @@ macro cgtrace()
                 dt["g(x)"] = copy(gr)
                 dt["Current step size"] = alpha
             end
-            grnorm = norm(gr, Inf)
+            grnorm = norm(gr[:], Inf)
             update!(tr,
                     iteration,
                     f_x,
