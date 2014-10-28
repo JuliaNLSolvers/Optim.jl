@@ -1,0 +1,27 @@
+method(x::MultivariateOptimizationResults) = x.method
+initial_state(x::MultivariateOptimizationResults) = x.initial_x
+minimizer(x::MultivariateOptimizationResults) = x.minimum
+Base.minimum(x::MultivariateOptimizationResults) = x.f_minimum
+iterations(x::MultivariateOptimizationResults) = x.iterations
+iteration_converged(x::MultivariateOptimizationResults) = x.iteration_converged
+x_converged(x::MultivariateOptimizationResults) = x.x_converged
+xtol(x::MultivariateOptimizationResults) = x.xtol
+f_converged(x::MultivariateOptimizationResults) = x.f_converged
+ftol(x::MultivariateOptimizationResults) = x.ftol
+gr_converged(x::MultivariateOptimizationResults) = x.gr_converged
+grtol(x::MultivariateOptimizationResults) = x.grtol
+history(x::MultivariateOptimizationResults) = x.trace
+f_calls(x::MultivariateOptimizationResults) = x.f_calls
+g_calls(x::MultivariateOptimizationResults) = x.g_calls
+
+method(x::UnivariateOptimizationResults) = x.method
+lower_bound(x::UnivariateOptimizationResults) = x.initial_lower
+upper_bound(x::UnivariateOptimizationResults) = x.initial_upper
+minimizer(x::UnivariateOptimizationResults) = x.minimum
+Base.minimum(x::UnivariateOptimizationResults) = x.f_minimum
+iterations(x::UnivariateOptimizationResults) = x.iterations
+isconverged(x::UnivariateOptimizationResults) = x.converged
+rel_tol(x::UnivariateOptimizationResults) = x.rel_tol
+abs_tol(x::UnivariateOptimizationResults) = x.abs_tol
+history(x::UnivariateOptimizationResults) = x.trace
+f_calls(x::UnivariateOptimizationResults) = x.f_calls

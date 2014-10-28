@@ -12,6 +12,21 @@ module Optim
            DifferentiableFunction,
            TwiceDifferentiableFunction
 
+    export method,
+           initial_state,
+           minimizer,
+           iterations,
+           iteration_converged,
+           x_converged,
+           xtol,
+           f_converged,
+           ftol,
+           gr_converged,
+           grtol,
+           history,
+           f_calls,
+           g_calls
+
     # Types
     include("types.jl")
 
@@ -67,6 +82,7 @@ module Optim
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")
+    include("api.jl")
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
