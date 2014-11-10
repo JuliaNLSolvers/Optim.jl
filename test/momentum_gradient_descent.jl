@@ -1,4 +1,4 @@
-p = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+p = UnconstrainedProblems.examples["Rosenbrock"]
 
 df = DifferentiableFunction(p.f, p.g!)
 

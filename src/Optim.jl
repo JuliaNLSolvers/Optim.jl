@@ -9,11 +9,17 @@ module Optim
            Base.setindex!
 
     export optimize,
+           interior,
+           linlsq,
            DifferentiableFunction,
-           TwiceDifferentiableFunction
+           TwiceDifferentiableFunction,
+           ConstraintsBox
 
     # Types
     include("types.jl")
+
+    # Types for constrained optimization
+    include("constraints.jl")
 
     # Automatic differentiation utilities
     include("autodiff.jl")
@@ -65,11 +71,17 @@ module Optim
     include("golden_section.jl")
     include("brent.jl")
 
+    # Constrained optimization algorithms
+    include("interior.jl")
+
     # End-User Facing Wrapper Functions
     include("optimize.jl")
 
-    # Examples for testing
-    include(joinpath("problems", "unconstrained.jl"))
-
     cgdescent(args...) = error("API has changed. Please use cg.")
+
+    # Tests
+    const basedir = dirname(Base.source_path())
+    const testpaths = [joinpath(basedir, "problems", "unconstrained.jl"),
+                       joinpath(basedir, "problems", "constrained.jl")]
+
 end

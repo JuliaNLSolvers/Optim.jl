@@ -69,6 +69,7 @@ function nelder_mead{T}(f::Function,
     for i in 1:n
         @inbounds y[i] = f(p[:, i])
     end
+    any(isfinite(y)) || error("At least one of the starting points must have finite penalty")
     f_calls += n
 
     f_x_previous, f_x = NaN, nmobjective(y, m, n)

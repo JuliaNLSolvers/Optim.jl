@@ -4,6 +4,10 @@
 
 using Optim
 
+for path in Optim.testpaths
+    require(path)
+end
+
 my_tests = ["bfgs.jl",
             "gradient_descent.jl",
             "momentum_gradient_descent.jl",
