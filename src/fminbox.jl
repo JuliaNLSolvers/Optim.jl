@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = nan(T), mu0factor::T = 0.001)
+function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = T(NaN), mu0factor::T = 0.001)
     if isnan(mu0)
         gbarriernorm = sum(abs(gbarrier))
         if gbarriernorm > 0
@@ -26,7 +26,7 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
         if isfinite(thisl)
             dx = x[i] - thisl
             if dx <= 0
-                return inf(T)
+                return T(Inf)
             end
             v -= log(dx)
             if calc_grad
@@ -41,7 +41,7 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
         if isfinite(thisu)
             dx = thisu - x[i]
             if dx <= 0
-                return inf(T)
+                return T(Inf)
             end
             v -= log(dx)
             if calc_grad
@@ -76,7 +76,7 @@ function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T
 end
 
 function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
-    alphamax = inf(T)
+    alphamax = T(Inf)
     for i = 1:length(x)
         if d[i] < 0
             alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
@@ -118,7 +118,7 @@ function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
                     extended_trace::Bool = false,
                     linesearch!::Function = hz_linesearch!,
                     eta::Real = convert(T,0.4),
-                    mu0::T = nan(T),
+                    mu0::T = T(NaN),
                     mufactor::T = convert(T, 0.001),
                     precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
                     optimizer = cg)

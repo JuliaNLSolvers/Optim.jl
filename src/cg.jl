@@ -146,7 +146,7 @@ function cg{T}(df::Union(DifferentiableFunction,
     # Store f(x) in f_x
     f_x = df.fg!(x, gr)
     @assert typeof(f_x) == T
-    f_x_previous = nan(T)
+    f_x_previous = T(NaN)
     f_calls, g_calls = f_calls + 1, g_calls + 1
     copy!(gr_previous, gr)
 
