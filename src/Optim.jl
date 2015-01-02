@@ -1,5 +1,6 @@
 module Optim
     using Calculus
+    using Compat
 
     import Base.dot,
            Base.length,

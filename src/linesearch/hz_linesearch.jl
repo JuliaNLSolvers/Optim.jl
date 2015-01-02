@@ -100,8 +100,8 @@ function alphatry{T}(alpha::T,
                      psi1::Real = convert(T,0.2),
                      psi2::Real = convert(T,2),
                      psi3::Real = convert(T,0.1),
-                     iterfinitemax::Integer = iceil(-log2(eps(T))),
-                     alphamax::Real = inf(T),
+                     iterfinitemax::Integer = ceil(Integer, -log2(eps(T))),
+                     alphamax::Real = convert(T, Inf),
                      display::Integer = 0)
     f_calls = 0
     g_calls = 0
@@ -177,13 +177,13 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                            mayterminate::Bool,
                            delta::Real = DEFAULTDELTA,
                            sigma::Real = DEFAULTSIGMA,
-                           alphamax::Real = inf(T),
+                           alphamax::Real = convert(T,Inf),
                            rho::Real = convert(T,5),
                            epsilon::Real = convert(T,1e-6),
                            gamma::Real = convert(T,0.66),
                            linesearchmax::Integer = 50,
                            psi3::Real = convert(T,0.1),
-                           iterfinitemax::Integer = iceil(-log2(eps(T))),
+                           iterfinitemax::Integer = ceil(Integer, -log2(eps(T))),
                            display::Integer = 0)
     if display & LINESEARCH > 0
         println("New linesearch")
@@ -553,7 +553,7 @@ function bisect!{T}(df::Union(DifferentiableFunction,
                     display::Integer = 0)
     f_calls = 0
     g_calls = 0
-    gphi = nan(T)
+    gphi = convert(T, NaN)
     a = lsr.alpha[ia]
     b = lsr.alpha[ib]
     # Debugging (HZ, conditions shown following U3)
@@ -601,7 +601,7 @@ function linefunc!(df::Union(DifferentiableFunction,
     for i = 1:length(x)
         xtmp[i] = x[i] + alpha * s[i]
     end
-    gphi = nan(eltype(g))
+    gphi = convert(eltype(g), NaN)
     if calc_grad
         val = df.fg!(xtmp, g)
         f_calls += 1
