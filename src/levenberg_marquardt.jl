@@ -27,6 +27,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	converged = false
 	x_converged = false
 	g_converged = false
+        need_jacobian = true
 	iterCt = 0
 	x = x0
 	delta_x = copy(x0)
@@ -47,8 +48,11 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	end
 
 	while ( ~converged && iterCt < maxIter )
-		J = g(x)
-		g_calls += 1
+                if need_jacobian
+                    J = g(x)
+                    g_calls += 1
+                    need_jacobian = false
+                end
 		# we want to solve:
 		#    argmin 0.5*||J(x)*delta_x + f(x)||^2 + lambda*||diagm(J'*J)*delta_x||^2
 		# Solving for the minimum gives:
@@ -80,6 +84,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 			residual = trial_residual
 			# increase trust region radius
 			lambda = max(0.1*lambda, MIN_LAMBDA)
+                        need_jacobian = true
 		else
 			# decrease trust region radius
 			lambda = min(10*lambda, MAX_LAMBDA)
