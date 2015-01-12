@@ -12,8 +12,8 @@ results = Optim.levenberg_marquardt(f_lm, g_lm, initial_x)
 
 
 function rosenbrock_res(x, r)
-    r[1] = 10. * (x[2] - x[1]^2 )
-    r[2] = 1. - x[1]
+    r[1] = 10.0 * (x[2] - x[1]^2 )
+    r[2] =  1.0 - x[1]
     return r
 end
 
