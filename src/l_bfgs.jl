@@ -30,7 +30,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds alpha[i] = rho[i] * dot(dx_history[:, i], q)
+        @inbounds alpha[i] = rho[i] * _dot(dx_history[:, i], q)
         for j in 1:n
             @inbounds q[j] -= alpha[i] * dgr_history[j, i]
         end
@@ -45,7 +45,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * dot(dgr_history[:, i], s)
+        @inbounds beta = rho[i] * _dot(dgr_history[:, i], s)
         for j in 1:n
             @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
@@ -157,7 +157,7 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
                  twoloop_alpha, twoloop_q)
 
         # Refresh the line search cache
-        dphi0 = dot(gr, s)
+        dphi0 = _dot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -188,7 +188,7 @@ function l_bfgs{T}(d::Union(DifferentiableFunction,
         end
 
         # Update the L-BFGS history of positions and gradients
-        rho_iteration = 1 / dot(dx, dgr)
+        rho_iteration = 1 / _dot(dx, dgr)
         if isinf(rho_iteration)
             # TODO: Introduce a formal error? There was a warning here previously
             break

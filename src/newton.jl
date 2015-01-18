@@ -88,7 +88,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
         @inbounds s[:] = -(H \ gr)
 
         # Refresh the line search cache
-        dphi0 = dot(gr, s)
+        dphi0 = _dot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 

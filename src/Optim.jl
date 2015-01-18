@@ -2,8 +2,7 @@ module Optim
     using Calculus
     using Compat
 
-    import Base.dot,
-           Base.length,
+    import Base.length,
            Base.push!,
            Base.show,
            Base.getindex,
@@ -12,6 +11,9 @@ module Optim
     export optimize,
            DifferentiableFunction,
            TwiceDifferentiableFunction
+
+    # Utils
+    include("utils.jl")
 
     # Types
     include("types.jl")

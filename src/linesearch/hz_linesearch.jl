@@ -1,17 +1,5 @@
 # phi = (galpha, alpha) -> linefunc(galpha, alpha, func, x, d, xtmp, g)
 
-# Dot product of two "vectors", even if they don't have a vector shape
-function dot(x::Array, y::Array)
-    d = x[1] * y[1]
-    for i = 2:length(x)
-        d += x[i] * y[i]
-    end
-    return d
-end
-
-# Vector-norm-squared, even if it doesn't have a vector shape
-norm2(x::Array) = dot(x, x)
-
 # Display flags are represented as a bitfield
 # (not exported, but can use via OptimizeMod.ITER, for example)
 const one64 = convert(Uint64, 1)
@@ -64,7 +52,7 @@ display_nextbit = 14
 #     for cgdescent and alphamax for linesearch_hz.
 
 const DEFAULTDELTA = 0.1
-const DEFAULTSIGMA = 0.9 
+const DEFAULTSIGMA = 0.9
 
 # Generate initial guess for step size (HZ, stage I0)
 function alphainit{T}(alpha::Real,
@@ -317,7 +305,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
     end
     while iter < linesearchmax
         a = lsr.alpha[ia]
-        b = lsr.alpha[ib]        
+        b = lsr.alpha[ib]
         @assert b > a
         if display & LINESEARCH > 0
             println("linesearch: ia = ", ia,
@@ -607,7 +595,7 @@ function linefunc!(df::Union(DifferentiableFunction,
         f_calls += 1
         g_calls += 1
         if isfinite(val)
-            gphi = dot(g, s)
+            gphi = _dot(g, s)
         end
     else
         val = df.f(xtmp)
