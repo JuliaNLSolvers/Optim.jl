@@ -420,8 +420,11 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     b = lsr.alpha[ib]
     dphia = lsr.slope[ia]
     dphib = lsr.slope[ib]
-    @assert dphia < 0 "dphia = $dphia < 0; gradient or Hessian may be incorrect"
-    @assert dphib >= 0 "dphib = $dphib >= 0; gradient or Hessian may be incorrect"
+    if !(dphia < 0 && dphib >= 0)
+        throw(Error(string("Search direction is not a direction of descent; ",
+                           "this error may indicate that user-provided derivatives are inaccurate. ",
+                           "(dphia = $dphia; dphib = $dphib)")))
+    end
     c = secant(a, b, dphia, dphib)
     if display & SECANT2 > 0
         println("secant2: a = ", a, ", b = ", b, ", c = ", c)
