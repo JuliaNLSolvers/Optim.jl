@@ -420,8 +420,8 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     b = lsr.alpha[ib]
     dphia = lsr.slope[ia]
     dphib = lsr.slope[ib]
-    @assert dphia < 0
-    @assert dphib >= 0
+    @assert dphia < 0 "dphia = $dphia < 0; gradient or Hessian may be incorrect"
+    @assert dphib >= 0 "dphib = $dphib >= 0; gradient or Hessian may be incorrect"
     c = secant(a, b, dphia, dphib)
     if display & SECANT2 > 0
         println("secant2: a = ", a, ", b = ", b, ", c = ", c)
