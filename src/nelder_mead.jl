@@ -30,7 +30,7 @@ macro nmtrace()
             grnorm = NaN
             update!(tr,
                     iteration,
-                    f_x,
+                    minimum(y),
                     grnorm,
                     dt,
                     store_trace,
@@ -181,12 +181,12 @@ function nelder_mead{T}(f::Function,
         end
     end
 
-    minimum = centroid(p)
+    x = centroid(p)
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           minimum,
-                                           float64(f(minimum)),
+                                           x,
+                                           float64(f(x)),
                                            iteration,
                                            iteration == iterations,
                                            false,
