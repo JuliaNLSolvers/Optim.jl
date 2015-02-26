@@ -152,7 +152,7 @@ function nelder_mead{T}(f::Function,
                 f_calls += 1
 
                 if y_star_star > y_h
-                    for i = 1:n
+                    for i in 1:n
                         for j in 1:m
                             @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
                         end
