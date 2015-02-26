@@ -1,3 +1,5 @@
+centroid(p::Matrix) = reshape(mean(p, 2), size(p, 1))
+
 function dominates(x::Vector, y::Vector)
     for i in 1:length(x)
         @inbounds if x[i] <= y[i]
@@ -180,12 +182,26 @@ function nelder_mead{T}(f::Function,
         end
     end
 
+    # finally, select smaller one comparing the best vertex and the centroid
+    iteration += 1
     y_l, l = findmin(y)
+    x_c = centroid(p)
+    y_c = float64(f(x_c))
+    f_calls += 1
+    if y_l < y_c
+        x = p[:, l]
+        f_x = y_l
+    else
+        x = x_c
+        f_x = y_c
+        y[1] = y_c  # hack for tracing
+    end
+    @nmtrace
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           p[:, l],
-                                           float64(y_l),
+                                           x,
+                                           f_x,
                                            iteration,
                                            iteration == iterations,
                                            false,
