@@ -1,5 +1,3 @@
-centroid(p::Matrix) = reshape(mean(p, 2), size(p, 1))
-
 function dominates(x::Vector, y::Vector)
     for i in 1:length(x)
         @inbounds if x[i] <= y[i]
@@ -181,12 +179,12 @@ function nelder_mead{T}(f::Function,
         end
     end
 
-    x = centroid(p)
+    y_l, l = findmin(y)
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           x,
-                                           float64(f(x)),
+                                           p[:, l],
+                                           float64(y_l),
                                            iteration,
                                            iteration == iterations,
                                            false,
