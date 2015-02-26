@@ -127,7 +127,7 @@ function nelder_mead{T}(f::Function,
             y_star_star = f(p_star_star)
             f_calls += 1
 
-            if y_star_star < y_l
+            if y_star_star < y_star
                 @inbounds p_h[:] = p_star_star
                 @inbounds p[:, h] = p_star_star
                 @inbounds y[h] = y_star_star
