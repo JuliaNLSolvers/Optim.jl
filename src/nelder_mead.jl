@@ -157,6 +157,7 @@ function nelder_mead{T}(f::Function,
                             @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
                         end
                         @inbounds y[i] = f(p[:, i])
+                        f_calls += 1
                     end
                 else
                     @inbounds p_h[:] = p_star_star
