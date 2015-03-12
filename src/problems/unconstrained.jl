@@ -1,5 +1,12 @@
 module UnconstrainedProblems
 
+### Sources
+### 
+### [1] Ali, Khompatraporn, & Zabinsky: A Numerical Evaluation of Several Stochastic Algorithms on Selected Continuous Global Optimization Test
+### Link: www.researchgate.net/profile/Montaz_Ali/publication/226654862_A_Numerical_Evaluation_of_Several_Stochastic_Algorithms_on_Selected_Continuous_Global_Optimization_Test_Problems/links/00b4952bef133a1a6b000000.pdf
+###
+### [2] Fletcher & Powell: A rapidly convergent descent method for minimization,
+
 immutable OptimizationProblem
     name::ASCIIString
     f::Function
@@ -47,7 +54,10 @@ examples["Exponential"] = OptimizationProblem("Exponential",
 ##########################################################################
 ###
 ### Fletcher-Powell
-###
+### 
+### From [2]
+### Source: A rapidly convergent descent method for minimization
+###         Fletcher & Powell
 ##########################################################################
 
 function fletcher_powell(x::Vector)
@@ -77,70 +87,75 @@ examples["Fletcher-Powell"] = OptimizationProblem("Fletcher-Powell",
                                                   fletcher_powell,
                                                   fletcher_powell_gradient!,
                                                   fletcher_powell_hessian!,
-                                                  [0.0, 0.0, 0.0],
-                                                  [[0.0, 0.0, 0.0]], # TODO: Fix
+                                                  [-1.0, 0.0, 0.0], # Same as in source
+                                                  [[1.0, 0.0, 0.0]], 
                                                   false,
                                                   false)
 
 ##########################################################################
 ###
-### Himmelbrau's Function
+### Himmelblau's Function
 ###
 ##########################################################################
 
-function himmelbrau(x::Vector)
+function himmelblau(x::Vector)
     return (x[1]^2 + x[2] - 11)^2 + (x[1] + x[2]^2 - 7)^2
 end
 
-function himmelbrau_gradient!(x::Vector, storage::Vector)
+function himmelblau_gradient!(x::Vector, storage::Vector)
     storage[1] = 4.0 * x[1]^3 + 4.0 * x[1] * x[2] -
                   44.0 * x[1] + 2.0 * x[1] + 2.0 * x[2]^2 - 14.0
     storage[2] = 2.0 * x[1]^2 + 2.0 * x[2] - 22.0 +
                   4.0 * x[1] * x[2] + 4.0 * x[2]^3 - 28.0 * x[2]
 end
 
-# TODO: Implement
-function himmelbrau_hessian!(x::Vector, storage::Matrix)
-    return
+function himmelblau_hessian!(x::Vector, storage::Matrix)
+    storage[1, 1] = 12.0 * x[1]^2 + 4.0 * x[2] - 42.0
+    storage[1, 2] = 4.0 * x[1] + 4.0 * x[2]
+    storage[2, 1] = 4.0 * x[1] + 4.0 * x[2]
+    storage[2, 2] = 12.0 * x[2]^2 + 4.0 * x[1] - 26.0
 end
 
-examples["Himmelbrau"] = OptimizationProblem("Himmelbrau",
-                                             himmelbrau,
-                                             himmelbrau_gradient!,
-                                             himmelbrau_hessian!,
-                                             [0.0, 0.0],
-                                             [[1.0, 0.0]], # TODO: Fix
+examples["Himmelblau"] = OptimizationProblem("Himmelblau",
+                                             himmelblau,
+                                             himmelblau_gradient!,
+                                             himmelblau_hessian!,
+                                             [2.0, 2.0],
+                                             [[3.0, 2.0]], 
                                              true,
-                                             false)
+                                             true)
 ##########################################################################
 ###
-### Hosaki
+### Hosaki's Problem
 ###
-### REF: http://infinity77.net/global_optimization/test_functions_nd_H.html
+### Problem 20 in [1]
 ##########################################################################
 
 function hosaki(x::Vector)
-    a = (1 - 8 * x[1] + 7 * x[1]^2 - (7 / 3) * x[1]^3 + (1 / 4) * x[1]^4)
+    a = (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4)
     return a * x[2]^2 * exp(-x[2])
 end
 
 function hosaki_gradient!(x::Vector, storage::Vector)
-    return
+    storage[1] = (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8)* x[2]^2 * exp(-x[2])
+    storage[2] = 2.0 * (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2] * exp(-x[2]) - (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2]^2 * exp(-x[2])
 end
 
-# TODO: Implement
 function hosaki_hessian!(x::Vector, storage::Matrix)
-    return
+    storage[1, 1] = (3.0 * x[1]^2 - 14.0 * x[1] + 14.0) * x[2]^2 * exp(-x[2])
+    storage[1, 2] = 2.0 * (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2] * exp(-x[2])  - (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2]^2 * exp(-x[2])
+    storage[2, 1] =  2.0 * (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2] * exp(-x[2])  - (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2]^2 * exp(-x[2])
+    storage[2, 2] = 2.0 * (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * exp(-x[2]) - 4.0 * ( 1.0 - 8.0 * x[1] + 7.0 *  x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2] * exp(-x[2]) + (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2]^2 * exp(-x[2])
 end
 
 examples["Hosaki"] = OptimizationProblem("Hosaki",
                                          hosaki,
                                          hosaki_gradient!,
                                          hosaki_hessian!,
-                                         [0.0, 0.0],
+                                         [3.6, 1.9],
                                          [[4.0, 2.0]],
-                                         false,
-                                         false)
+                                         true,
+                                         true)
 
 ##########################################################################
 ###
@@ -263,8 +278,10 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
 
 ##########################################################################
 ###
-### Powell
+### Powell (d=4)
 ###
+### Problem 35 in [1]
+### Difficuly since the hessian is singular at the optimum
 ##########################################################################
 
 function powell(x::Vector)
@@ -303,14 +320,17 @@ examples["Powell"] = OptimizationProblem("Powell",
                                          powell_gradient!,
                                          powell_hessian!,
                                          [3.0, -1.0, 0.0, 1.0],
-                                         [[0.0, 0.0, 0.0, 0.0]], # TODO: Fix
+                                         [[0.0, 0.0, 0.0, 0.0]],
                                          true,
                                          true)
 
 ##########################################################################
 ###
-### Rosenbrock
+### Rosenbrock (2D)
 ###
+### Problem 38 in [1]
+###
+### Saddle point makes optimization difficult
 ##########################################################################
 
 function rosenbrock(x::Vector)

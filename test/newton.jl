@@ -1,3 +1,5 @@
+using Optim
+
 function f(x::Vector)
     (x[1] - 5.0)^4
 end
@@ -40,3 +42,12 @@ results = Optim.newton(d, [127.0, 921.0])
 @assert length(results.trace.states) == 0
 @assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
+
+# Test Optim.newton for all twice differentiable functions in Optim.UnconstrainedProblems.examples
+for (name, prob) in Optim.UnconstrainedProblems.examples
+	if prob.istwicedifferentiable
+		ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
+		res = Optim.newton(ddf, prob.initial_x)
+		@assert norm(res.minimum - prob.solutions) < 1e-2
+	end
+end
