@@ -61,7 +61,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		# It is additionally useful to bound the elements of DtD below to help
 		# prevent "parameter evaporation".
 		DtD = diagm(Float64[max(x, MIN_DIAGONAL) for x in sum(J.^2,1)])
-		delta_x = ( J'*J + sqrt(lambda)*DtD ) \ -J'*fcur
+		delta_x = ( J'*J + sqrt(lambda)*DtD ) \ ( -J'*fcur )
 		# if the linear assumption is valid, our new residual should be:
 		predicted_residual = sse(J*delta_x + fcur)
 		# check for numerical problems in solving for delta_x by ensuring that the predicted residual is smaller
