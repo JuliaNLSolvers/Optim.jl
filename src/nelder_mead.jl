@@ -251,7 +251,7 @@ function nelder_mead{T}(f::Function,
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           x,
+                                           convert(typeof(initial_x), x),
                                            float64(f_x),
                                            iteration,
                                            iteration == iterations,
