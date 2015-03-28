@@ -74,7 +74,7 @@ function nelder_mead{T}(f::Function,
     f_calls = 0
 
     # initialize a simplex and function values
-    simplex = Vector{Float64}[initial_x]
+    simplex = Vector{Float64}[copy(initial_x)]
     fvalues = Float64[@fcall(initial_x)]
     for i in 1:n
         x = similar(initial_x)
