@@ -97,7 +97,7 @@ function project!(x::Array, bounds::ConstraintsBox)
 end
 
 ## step!
-function step!{T}(xtmp::Array{T}, x, s, alpha::Real, constraints::AbstractConstraints = ConstraintsNone{T}())
+function step!{T}(xtmp::Array{T}, x, s, alpha::Real, constraints::AbstractConstraints = ConstraintsNone())
     (length(xtmp) == length(x) == length(s)) || error("lengths of xtmp ($(length(xtmp))), x ($(length(x))), and s ($(length(s))) disagree")
     for i = 1:length(xtmp)
         @inbounds xtmp[i] = x[i] + alpha*s[i]
