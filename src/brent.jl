@@ -33,13 +33,13 @@ function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
     # Save for later
     initial_lower = x_lower
     initial_upper = x_upper
-    
+
     const golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
 
     x_minimum = x_lower + golden_ratio*(x_upper-x_lower)
     f_minimum = f(x_minimum)
     f_calls = 1 # Number of calls to f
-    
+
     step = zero(T)
     step_old = zero(T)
 
@@ -48,7 +48,7 @@ function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
 
     f_minimum_old = f_minimum
     f_minimum_old_old = f_minimum
-    
+
     it = 0
     converged = false
 
@@ -72,12 +72,12 @@ function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
         end
 
         it += 1
-        
+
         if abs(step_old) > tolx
             # Compute parabola interpolation
             # x_minimum + p/q is the optimum of the parabola
             # Also, q is guaranteed to be positive
-            
+
             r = (x_minimum - x_minimum_old) * (f_minimum - f_minimum_old_old)
             q = (x_minimum - x_minimum_old_old) * (f_minimum - f_minimum_old)
             p = (x_minimum - x_minimum_old_old) * q - (x_minimum - x_minimum_old) * r
@@ -150,7 +150,7 @@ function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
                                          initial_lower,
                                          initial_upper,
                                          x_minimum,
-                                         float64(f_minimum),
+                                         @compat(Float64(f_minimum)),
                                          it,
                                          converged,
                                          rel_tol,

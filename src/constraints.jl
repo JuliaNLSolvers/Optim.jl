@@ -15,8 +15,8 @@ immutable ConstraintsBox{T,N} <: AbstractConstraints
     end
 end
 ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(l, u)
-ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, fill(inf(T), size(l)))
-ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(fill(-inf(T),size(u)), u)
+ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, fill(convert(T,Inf), size(l)))
+ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(fill(-convert(T,Inf),size(u)), u)
 
 immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     A::M
@@ -112,12 +112,12 @@ end
 #  - tocorner returns the "distance along s" needed to be projected into the "corner" (all constraints are active)
 # The first is the farthest you might consider searching in a barrier method. The second is the farthest that it
 # makes sense to search in a projection method.
-toedge{T}(x::AbstractArray{T}, s, constraints::AbstractConstraints) = inf(T)
-tocorner{T}(x::AbstractArray{T}, s, constraints::AbstractConstraints) = inf(T)
+toedge{T}(x::AbstractArray{T}, s, constraints::AbstractConstraints) = convert(T, Inf)
+tocorner{T}(x::AbstractArray{T}, s, constraints::AbstractConstraints) = convert(T, Inf)
 
 function toedge{T}(x::AbstractArray{T}, s, bounds::ConstraintsBox)
     # Stop at the first coordinate to leave the box
-    alphamax = inf(T)
+    alphamax = convert(T,Inf)
     for i = 1:length(x)
         si = s[i]
         li = bounds.lower[i]
@@ -145,7 +145,7 @@ function tocorner{T}(x::AbstractArray{T}, s, bounds::ConstraintsBox)
         elseif si > 0 && isfinite(ui)
             alphamax = max(alphamax, (ui-x[i])/si)
         else
-            return inf(T)
+            return convert(T,Inf)
         end
     end
     convert(T, alphamax)

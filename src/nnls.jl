@@ -6,8 +6,8 @@ function nnls(A::AbstractMatrix, b::AbstractVector)
     x = fill(one(T), size(A, 2))
     # Set up constraints
     l = zeros(eltype(x), length(x))
-    u = fill(inf(eltype(x)), length(x))
-    # Perform the optimization    
+    u = fill(convert(eltype(x),Inf), length(x))
+    # Perform the optimization
     func = (x, g) -> nnlsobjective(x, g, A, b)
     df = DifferentiableFunction(x->func(x,nothing), func, func)
     fminbox(df, x, l, u, precondprep=(P, x, l, u, mu)->precondprepnnls(P, x, mu, a))

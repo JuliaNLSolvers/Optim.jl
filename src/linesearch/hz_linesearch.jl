@@ -59,7 +59,7 @@ display_nextbit = 14
 #   - Support for projected-gradient methods
 
 const DEFAULTDELTA = 0.1
-const DEFAULTSIGMA = 0.9 
+const DEFAULTSIGMA = 0.9
 
 # Generate initial guess for step size (HZ, stage I0)
 function alphainit{T}(alpha::Real,
@@ -97,7 +97,7 @@ function alphatry{T}(alpha::T,
                      psi1::Real = convert(T,0.2),
                      psi2::Real = convert(T,2),
                      psi3::Real = convert(T,0.1),
-                     iterfinitemax::Integer = iceil(-log2(eps(T))),
+                     iterfinitemax::Integer = ceil(Int,-log2(eps(T))),
                      detailed_trace::Integer = 0)
     f_calls = 0
     g_calls = 0
@@ -315,7 +315,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
     end
     while iter < linesearchmax
         a = lsr.alpha[ia]
-        b = lsr.alpha[ib]        
+        b = lsr.alpha[ib]
         @assert b > a
         if detailed_trace & LINESEARCH > 0
             println("linesearch: ia = ", ia,

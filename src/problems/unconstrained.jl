@@ -180,7 +180,7 @@ examples["Large Polynomial"] = OptimizationProblem("Large Polynomial",
                                                    large_polynomial_gradient!,
                                                    large_polynomial_hessian!,
                                                    zeros(250),
-                                                   {float([1:250])},
+                                                   {float([1:250;])},
                                                    true,
                                                    true)
 
@@ -268,7 +268,7 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
 ##########################################################################
 
 function powell(x::Vector)
-    return (x[1] + 10.0 * x[2])^2 + 5.0 * (x[3] - x[4])^2 + 
+    return (x[1] + 10.0 * x[2])^2 + 5.0 * (x[3] - x[4])^2 +
             (x[2] - 2.0 * x[3])^4 + 10.0 * (x[1] - x[4])^4
 end
 

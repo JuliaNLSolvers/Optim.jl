@@ -16,11 +16,11 @@ function barrier_f{T}(x::Array{T}, bounds::ConstraintsBox)
         li, ui = l[i], u[i]
         xi = x[i]
         if isfinite(li)
-            xi >= li || return inf(T)
+            xi >= li || return convert(T,Inf)
             phi += log(xi-li)
         end
         if isfinite(ui)
-            xi <= ui || return inf(T)
+            xi <= ui || return convert(T,Inf)
             phi += log(ui-xi)
         end
     end
@@ -48,12 +48,12 @@ function barrier_fg!{T}(x::Array{T}, g::Array{T}, bounds::ConstraintsBox)
         li, ui = l[i], u[i]
         xi = x[i]
         if isfinite(li)
-            xi >= li || return inf(T)  # no need to compute additional gradient terms
+            xi >= li || return convert(T,Inf)  # no need to compute additional gradient terms
             phi += log(xi-li)
             g[i] -= 1/(xi-li)
         end
         if isfinite(ui)
-            xi <= ui || return inf(T)
+            xi <= ui || return convert(T,Inf)
             phi += log(ui-xi)
             g[i] += 1/(ui-xi)
         end
@@ -89,11 +89,11 @@ function barrier_fg!{T}(x::Array{T}, g::Array{T}, constraints::ConstraintsL)
         li, ui = l[i], u[i]
         yi = y1[i]
         if isfinite(li)
-            yi >= li || return inf(T)  # no need to compute additional gradient terms
+            yi >= li || return convert(T,Inf)  # no need to compute additional gradient terms
             phi += log(yi-li)
         end
         if isfinite(ui)
-            yi <= ui || return inf(T)
+            yi <= ui || return convert(T,Inf)
             phi += log(ui-yi)
         end
     end
@@ -154,13 +154,13 @@ end
 
 # combined_f(x, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
 #     combined_f(x, objective.f, constraints, t)
-# 
+#
 # combined_g!(x, g, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
 #     combined_g!(x, g, objective.g, constraints, t)
-# 
+#
 # combined_fg!(x, g, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
 #     combined_fg!(x, g, objective.fg!, constraints, t)
-# 
+#
 # combined_h!(x, H, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
 #     combined_h!(x, H, objective.h!, constraints, t)
 
@@ -170,7 +170,7 @@ end
 ## Cost function for linear least squares
 ##
 #########################################
-    
+
 linlsq(A::Matrix, b::Vector) =
     TwiceDifferentiableFunction( x    -> linlsq_fg!(x, Array(eltype(x),0), A, b, similar(b)),
                                 (x,g) -> linlsq_fg!(x, g, A, b, similar(b)),
@@ -228,12 +228,12 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
 
     tr = OptimizationTrace()
     tracing = store_trace || show_trace || extended_trace
-    
+
     df = DifferentiableFunction(dummy_f,
                                 dummy_g!,
                                 (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
     iteration, f_calls, g_calls = 0, 0, 0
-    f_x = f_x_previous = inf(T)
+    f_x = f_x_previous = convert(T,Inf)
     while m/t > eps_gap && iteration < iterations
         f_x_previous = f_x
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
@@ -274,7 +274,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
     MultivariateOptimizationResults("Interior/Newton",
                                     initial_x,
                                     x,
-                                    float64(f_x),
+                                    @compat(Float64(f_x)),
                                     iteration,
                                     iteration == iterations,
                                     x_converged,
@@ -292,7 +292,7 @@ end
 function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiableFunction),
                      initial_x::Array{T},
                      constraints::AbstractConstraints;
-                     method = :cg, t = nan(T), mu = 10, eps_gap = 1e-12,
+                     method = :cg, t = convert(T,NaN), mu = 10, eps_gap = 1e-12,
                      xtol::Real = 1e-32,
                      ftol::Real = 1e-8,
                      grtol::Real = 1e-8,
@@ -306,7 +306,7 @@ function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiabl
             return MultivariateOptimizationResults("Interior",
                                     initial_x,
                                     initial_x,
-                                    float64(vo),
+                                    @compat(Float64(vo)),
                                     0,
                                     false,
                                     false,

@@ -52,7 +52,7 @@ function optimize(d::TwiceDifferentiableFunction,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -145,7 +145,7 @@ function optimize(d::DifferentiableFunction,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -259,7 +259,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -362,7 +362,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -469,7 +469,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -514,7 +514,7 @@ function optimize{T <: Real}(f::Function,
         @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :brent
-        brent(f, float64(lower), float64(upper);
+        brent(f, @compat(Float64(lower)), @compat(Float64(upper));
               rel_tol = rel_tol,
               abs_tol = abs_tol,
               iterations = iterations,
@@ -522,7 +522,7 @@ function optimize{T <: Real}(f::Function,
               show_trace = show_trace,
               extended_trace = extended_trace)
     elseif method == :golden_section
-        golden_section(f, float64(lower), float64(upper);
+        golden_section(f, @compat(Float64(lower)), @compat(Float64(upper));
                        rel_tol = rel_tol,
                        abs_tol = abs_tol,
                        iterations = iterations,
