@@ -177,7 +177,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
                            rho::Real = convert(T,5),
                            epsilon::Real = convert(T,1e-6),
                            gamma::Real = convert(T,0.66),
-                           linesearchmax::Integer = 50,
+                           linesearchmax::Integer = 100,
                            psi3::Real = convert(T,0.1),
                            iterfinitemax::Integer = (@compat ceil(Integer, -log2(eps(T)))),
                            detailed_trace::Integer = 0)
@@ -370,6 +370,7 @@ function hz_linesearch!{T}(df::Union(DifferentiableFunction,
         end
         iter += 1
     end
+    @show lsr
     error("Linesearch failed to converge")
 end
 
