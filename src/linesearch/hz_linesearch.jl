@@ -421,9 +421,9 @@ function secant2!{T}(df::Union(DifferentiableFunction,
     dphia = lsr.slope[ia]
     dphib = lsr.slope[ib]
     if !(dphia < 0 && dphib >= 0)
-        throw(error(string("Search direction is not a direction of descent; ",
-                           "this error may indicate that user-provided derivatives are inaccurate. ",
-                           @sprintf "(dphia = %f; dphib = %f)" dphia dphib)))
+        error(string("Search direction is not a direction of descent; ",
+                     "this error may indicate that user-provided derivatives are inaccurate. ",
+                      @sprintf "(dphia = %f; dphib = %f)" dphia dphib))
     end
     c = secant(a, b, dphia, dphib)
     if display & SECANT2 > 0
