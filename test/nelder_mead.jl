@@ -2,11 +2,13 @@ using Optim
 
 # Test Optim.nelder_mead for all functions except Large Polynomials in Optim.UnconstrainedProblems.examples
 for (name, prob) in Optim.UnconstrainedProblems.examples
-	f_prob = prob.f
-	res = Optim.nelder_mead(f_prob, prob.initial_x)
-	if name != "Large Polynomial" # FIX THIS!
-		@assert norm(res.minimum - prob.solutions) < 1e-2
-	end
+    f_prob = prob.f
+    if name == "Large Polynomial"
+        res = Optim.nelder_mead(f_prob, prob.initial_x, iterations=1_000_000)
+    else
+        res = Optim.nelder_mead(f_prob, prob.initial_x)
+    end
+    @assert norm(res.minimum - prob.solutions) < 1e-2
 end
 
 function f(x::Vector)
