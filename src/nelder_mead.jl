@@ -30,7 +30,7 @@ macro nmtrace()
             grnorm = NaN
             update!(tr,
                     iteration,
-                    f_x,
+                    minimum(y),
                     grnorm,
                     dt,
                     store_trace,
@@ -129,7 +129,7 @@ function nelder_mead{T}(f::Function,
             y_star_star = f(p_star_star)
             f_calls += 1
 
-            if y_star_star < y_l
+            if y_star_star < y_star
                 @inbounds p_h[:] = p_star_star
                 @inbounds p[:, h] = p_star_star
                 @inbounds y[h] = y_star_star
@@ -154,11 +154,12 @@ function nelder_mead{T}(f::Function,
                 f_calls += 1
 
                 if y_star_star > y_h
-                    for i = 1:n
+                    for i in 1:n
                         for j in 1:m
                             @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
                         end
                         @inbounds y[i] = f(p[:, i])
+                        f_calls += 1
                     end
                 else
                     @inbounds p_h[:] = p_star_star
@@ -181,12 +182,26 @@ function nelder_mead{T}(f::Function,
         end
     end
 
-    minimum = centroid(p)
+    # finally, select smaller one comparing the best vertex and the centroid
+    iteration += 1
+    y_l, l = findmin(y)
+    x_c = centroid(p)
+    y_c = float64(f(x_c))
+    f_calls += 1
+    if y_l < y_c
+        x = p[:, l]
+        f_x = y_l
+    else
+        x = x_c
+        f_x = y_c
+        y[1] = y_c  # hack for tracing
+    end
+    @nmtrace
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           minimum,
-                                           float64(f(minimum)),
+                                           x,
+                                           f_x,
                                            iteration,
                                            iteration == iterations,
                                            false,
