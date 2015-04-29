@@ -150,7 +150,7 @@ function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
                                          initial_lower,
                                          initial_upper,
                                          x_minimum,
-                                         float64(f_minimum),
+                                         @compat(Float64(f_minimum)),
                                          it,
                                          converged,
                                          rel_tol,

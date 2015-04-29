@@ -1,7 +1,7 @@
 module UnconstrainedProblems
 
 ### Sources
-### 
+###
 ### [1] Ali, Khompatraporn, & Zabinsky: A Numerical Evaluation of Several Stochastic Algorithms on Selected Continuous Global Optimization Test
 ### Link: www.researchgate.net/profile/Montaz_Ali/publication/226654862_A_Numerical_Evaluation_of_Several_Stochastic_Algorithms_on_Selected_Continuous_Global_Optimization_Test_Problems/links/00b4952bef133a1a6b000000.pdf
 ###
@@ -47,14 +47,14 @@ examples["Exponential"] = OptimizationProblem("Exponential",
                                               exponential_gradient!,
                                               exponential_hessian!,
                                               [0.0, 0.0],
-                                              [[2.0, 3.0]],
+                                              [2.0, 3.0],
                                               true,
                                               true)
 
 ##########################################################################
 ###
 ### Fletcher-Powell
-### 
+###
 ### From [2]
 ### Source: A rapidly convergent descent method for minimization
 ###         Fletcher & Powell
@@ -88,7 +88,7 @@ examples["Fletcher-Powell"] = OptimizationProblem("Fletcher-Powell",
                                                   fletcher_powell_gradient!,
                                                   fletcher_powell_hessian!,
                                                   [-1.0, 0.0, 0.0], # Same as in source
-                                                  [[1.0, 0.0, 0.0]], 
+                                                  [1.0, 0.0, 0.0],
                                                   false,
                                                   false)
 
@@ -121,7 +121,7 @@ examples["Himmelblau"] = OptimizationProblem("Himmelblau",
                                              himmelblau_gradient!,
                                              himmelblau_hessian!,
                                              [2.0, 2.0],
-                                             [[3.0, 2.0]], 
+                                             [3.0, 2.0],
                                              true,
                                              true)
 ##########################################################################
@@ -153,7 +153,7 @@ examples["Hosaki"] = OptimizationProblem("Hosaki",
                                          hosaki_gradient!,
                                          hosaki_hessian!,
                                          [3.6, 1.9],
-                                         [[4.0, 2.0]],
+                                         [4.0, 2.0],
                                          true,
                                          true)
 
@@ -195,7 +195,7 @@ examples["Large Polynomial"] = OptimizationProblem("Large Polynomial",
                                                    large_polynomial_gradient!,
                                                    large_polynomial_hessian!,
                                                    zeros(250),
-                                                   [float([1:250])],
+                                                   float([1:250;]),
                                                    true,
                                                    true)
 
@@ -235,7 +235,7 @@ examples["Parabola"] = OptimizationProblem("Parabola",
                                            parabola_gradient!,
                                            parabola_hessian!,
                                            [0.0, 0.0, 0.0, 0.0, 0.0],
-                                           [[1.0, 2.0, 3.0, 5.0, 8.0]],
+                                           [1.0, 2.0, 3.0, 5.0, 8.0],
                                            true,
                                            true)
 
@@ -272,7 +272,7 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
                                              polynomial_gradient!,
                                              polynomial_hessian!,
                                              [0.0, 0.0, 0.0],
-                                             [[10.0, 7.0, 108.0]],
+                                             [10.0, 7.0, 108.0],
                                              true,
                                              true)
 
@@ -285,7 +285,7 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
 ##########################################################################
 
 function powell(x::Vector)
-    return (x[1] + 10.0 * x[2])^2 + 5.0 * (x[3] - x[4])^2 + 
+    return (x[1] + 10.0 * x[2])^2 + 5.0 * (x[3] - x[4])^2 +
             (x[2] - 2.0 * x[3])^4 + 10.0 * (x[1] - x[4])^4
 end
 
@@ -320,7 +320,7 @@ examples["Powell"] = OptimizationProblem("Powell",
                                          powell_gradient!,
                                          powell_hessian!,
                                          [3.0, -1.0, 0.0, 1.0],
-                                         [[0.0, 0.0, 0.0, 0.0]],
+                                         [0.0, 0.0, 0.0, 0.0],
                                          true,
                                          true)
 
@@ -354,7 +354,7 @@ examples["Rosenbrock"] = OptimizationProblem("Rosenbrock",
                                              rosenbrock_gradient!,
                                              rosenbrock_hessian!,
                                              [0.0, 0.0],
-                                             [[1.0, 1.0]],
+                                             [1.0, 1.0],
                                              true,
                                              true)
 
