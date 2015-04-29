@@ -514,7 +514,7 @@ function optimize{T <: FloatingPoint}(f::Function,
         @printf "Iter     Function value   Gradient norm \n"
     end
     if method == :brent
-        brent(f, float64(lower), float64(upper);
+        brent(f, @compat(Float64(lower)), @compat(Float64(upper));
               rel_tol = rel_tol,
               abs_tol = abs_tol,
               iterations = iterations,
@@ -522,7 +522,7 @@ function optimize{T <: FloatingPoint}(f::Function,
               show_trace = show_trace,
               extended_trace = extended_trace)
     elseif method == :golden_section
-        golden_section(f, float64(lower), float64(upper);
+        golden_section(f, @compat(Float64(lower)), @compat(Float64(upper));
                        rel_tol = rel_tol,
                        abs_tol = abs_tol,
                        iterations = iterations,
@@ -539,7 +539,7 @@ function optimize(f::Function,
                   upper::Real;
                   kwargs...)
     optimize(f,
-             float64(lower),
-             float64(upper);
+             @compat(Float64(lower)),
+             @compat(Float64(upper));
              kwargs...)
 end
