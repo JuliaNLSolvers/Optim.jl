@@ -29,8 +29,8 @@ d3 = TwiceDifferentiableFunction(rosenbrock,
 
 for method in (:nelder_mead,
                :simulated_annealing)
-    optimize(rosenbrock, [0.0,0,.0], method = method)
-    optimize(rosenbrock, float32([0.0,0.0]), method = method)
+    optimize(rosenbrock, zeros(Float64,2), method = method)
+    optimize(rosenbrock, zeros(Float32,2), method = method)
 end
 
 for method in (:bfgs,
@@ -39,11 +39,11 @@ for method in (:bfgs,
                :momentum_gradient_descent,
 #                :accelerated_gradient_descent,
                :l_bfgs)
-    optimize(d2, [0.0,0,.0], method = method)
-    optimize(d2, float32([0.0,0.0]), method = method)
+    optimize(d2, zeros(Float64,2), method = method)
+    optimize(d2, zeros(Float32,2), method = method)
 end
 
 for method in (:newton,)
-    optimize(d3, [0.0,0.0], method = method)
-    optimize(d3, float32([0.0,0.0]), method = method)
+    optimize(d3, zeros(Float64,2), method = method)
+    optimize(d3, zeros(Float32,2), method = method)
 end

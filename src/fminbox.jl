@@ -152,7 +152,7 @@ function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
     end
 
     g = similar(x)
-    valboth = Array(T, 2)    
+    valboth = Array(T, 2)
     fval_all = Array(Vector{T}, 0)
     fcount_all = 0
     xold = similar(x)

@@ -6,11 +6,11 @@ immutable OptimizationState
 end
 
 function OptimizationState(i::Integer, f::Real)
-    OptimizationState(int(i), float64(f), NaN, Dict())
+    OptimizationState(int(i), Float64(f), NaN, Dict())
 end
 
 function OptimizationState(i::Integer, f::Real, g::Real)
-    OptimizationState(int(i), float64(f), float64(g), Dict())
+    OptimizationState(int(i), Float64(f), Float64(g), Dict())
 end
 
 immutable OptimizationTrace

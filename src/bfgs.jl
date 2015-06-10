@@ -97,7 +97,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Set the search direction        
+        # Set the search direction
         # Search direction is the negative gradient divided by the approximate Hessian
         A_mul_B!(s, invH, gr)
         for i in 1:n
@@ -178,7 +178,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
     return MultivariateOptimizationResults("BFGS",
                                            initial_x,
                                            x,
-                                           float64(f_x),
+                                           @compat Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

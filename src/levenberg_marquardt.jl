@@ -37,7 +37,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	fcur = f(x)
 	f_calls += 1
 	residual = sse(fcur)
-	
+
 	# Maintain a trace of the system.
 	tr = OptimizationTrace()
 	if show_trace
@@ -60,7 +60,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		# Where we have used the equivalence: diagm(J'*J) = diagm(sum(J.^2, 1))
 		# It is additionally useful to bound the elements of DtD below to help
 		# prevent "parameter evaporation".
-		DtD = diagm(Float64[max(x, MIN_DIAGONAL) for x in sum(J.^2,1)])
+		DtD = diagm(@compat Float64[max(x, MIN_DIAGONAL) for x in sum(J.^2,1)])
 		delta_x = ( J'*J + sqrt(lambda)*DtD ) \ -J'*fcur
 		# if the linear assumption is valid, our new residual should be:
 		predicted_residual = sse(J*delta_x + fcur)
@@ -108,7 +108,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		elseif norm(delta_x) < tolX*(tolX + norm(x))
 			x_converged = true
 		end
-		converged = g_converged | x_converged   
+		converged = g_converged | x_converged
 	end
 
 	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)

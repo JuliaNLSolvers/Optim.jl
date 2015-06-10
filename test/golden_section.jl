@@ -1,6 +1,6 @@
-f(x) = 2x^2+3x+1
+f(x) = 2x^2 + 3x + 1
 
 results = optimize(f, -2.0, 1.0, method = :golden_section)
 
 @assert results.converged
-@assert abs(results.minimum+0.75) < 1e-7
+@assert abs(results.minimum + 0.75) < 1e-7
