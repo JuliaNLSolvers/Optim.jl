@@ -50,6 +50,7 @@ module Optim
     include("newton.jl")
     include("bfgs.jl")
     include("l_bfgs.jl")
+    include("modified_newton.jl")
 
     # Constrained optimization
     include("fminbox.jl")
