@@ -97,7 +97,7 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Set the search direction        
+        # Set the search direction
         # Search direction is the negative gradient divided by the approximate Hessian
         A_mul_B!(s, invH, gr)
         for i in 1:n
@@ -105,14 +105,14 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         end
 
         # Refresh the line search cache
-        dphi0 = dot(gr, s)
+        dphi0 = _dot(gr, s)
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)
             for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = dot(gr, s)
+            dphi0 = _dot(gr, s)
         end
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
@@ -156,13 +156,13 @@ function bfgs{T}(d::Union(DifferentiableFunction,
         end
 
         # Update the inverse Hessian approximation using Sherman-Morrison
-        dx_dgr = dot(dx, dgr)
+        dx_dgr = _dot(dx, dgr)
         if dx_dgr == 0.0
             break
         end
         A_mul_B!(u, invH, dgr)
 
-        c1 = (dx_dgr + dot(dgr, u)) / (dx_dgr * dx_dgr)
+        c1 = (dx_dgr + _dot(dgr, u)) / (dx_dgr * dx_dgr)
         c2 = 1 / dx_dgr
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')

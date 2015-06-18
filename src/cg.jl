@@ -1,8 +1,8 @@
 # Preconditioners
 #  * Empty preconditioner
 cg_precondfwd(out::Array, P::Nothing, A::Array) = copy!(out, A)
-cg_precondfwddot(A::Array, P::Nothing, B::Array) = dot(A, B)
-cg_precondinvdot(A::Array, P::Nothing, B::Array) = dot(A, B)
+cg_precondfwddot(A::Array, P::Nothing, B::Array) = _dot(A, B)
+cg_precondinvdot(A::Array, P::Nothing, B::Array) = _dot(A, B)
 
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
@@ -191,12 +191,12 @@ function cg{T}(df::Union(DifferentiableFunction,
         iteration += 1
 
         # Reset the search direction if it becomes corrupted
-        dphi0 = dot(gr, s)
+        dphi0 = _dot(gr, s)
         if dphi0 >= 0
             for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = dot(gr, s)
+            dphi0 = _dot(gr, s)
             if dphi0 < 0
                 break
             end
@@ -254,14 +254,14 @@ function cg{T}(df::Union(DifferentiableFunction,
         #  Calculate the beta factor (HZ2012)
         precondprep(P, x)
         dPd = cg_precondinvdot(s, P, s)
-        etak::T = eta * dot(s, gr_previous) / dPd
+        etak::T = eta * _dot(s, gr_previous) / dPd
         for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
-        ydots = dot(y, s)
+        ydots = _dot(y, s)
         cg_precondfwd(pgr, P, gr)
-        betak = (dot(y, pgr) - cg_precondfwddot(y, P, y) *
-                 dot(gr, s) / ydots) / ydots
+        betak = (_dot(y, pgr) - cg_precondfwddot(y, P, y) *
+                 _dot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]

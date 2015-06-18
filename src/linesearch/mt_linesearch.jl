@@ -175,7 +175,7 @@ function mt_linesearch!{T}(fcn::Union(DifferentiableFunction,
    # and check that s is a descent direction.
    #
 
-   dginit = dot(g, s)
+   dginit = _dot(g, s)
    if dginit >= 0.0
       throw(ArgumentError("Search direction is not a direction of descent"))
    end
@@ -256,7 +256,7 @@ function mt_linesearch!{T}(fcn::Union(DifferentiableFunction,
       f_calls += 1
       g_calls += 1
       nfev += 1 # This includes calls to f() and g!()
-      dg = dot(g, s)
+      dg = _dot(g, s)
       ftest1 = finit + stp * dgtest
 
       #

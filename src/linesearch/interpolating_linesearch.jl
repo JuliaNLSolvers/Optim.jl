@@ -32,10 +32,10 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
     phi_a_iminus1 = phi_0
     phi_a_i = NaN
 
-    # phi'(alpha) = dot(g(x + alpha * p), p)
+    # phi'(alpha) = _dot(g(x + alpha * p), p)
     d.g!(x, gr_new)
     g_calls += 1
-    phiprime_0 = dot(gr_new, p)
+    phiprime_0 = _dot(gr_new, p)
     phiprime_a_i = NaN
 
     # Iteration counter
@@ -63,7 +63,7 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
         # Evaluate phi'(a_i)
         d.g!(x_new, gr_new)
         g_calls += 1
-        phiprime_a_i = dot(gr_new, p)
+        phiprime_a_i = _dot(gr_new, p)
 
         # Check condition 2
         if abs(phiprime_a_i) <= -c2 * phiprime_0
@@ -131,7 +131,7 @@ function zoom(a_lo::Real,
         g!(x_new, gr_new)
         f_calls += 1
         g_calls += 1
-        phiprime_a_lo = dot(gr_new, p)
+        phiprime_a_lo = _dot(gr_new, p)
 
         # Cache phi_a_hi
         for index in 1:n
@@ -141,7 +141,7 @@ function zoom(a_lo::Real,
         g!(x_new, gr_new)
         f_calls += 1
         g_calls += 1
-        phiprime_a_hi = dot(gr_new, p)
+        phiprime_a_hi = _dot(gr_new, p)
 
         # Interpolate a_j
         if a_lo < a_hi
@@ -172,7 +172,7 @@ function zoom(a_lo::Real,
             # Evaluate phiprime(a_j)
             g!(x_new, gr_new)
             g_calls += 1
-            phiprime_a_j = dot(gr_new, p)
+            phiprime_a_j = _dot(gr_new, p)
 
             if abs(phiprime_a_j) <= -c2 * phiprime_0
                 return a_j, f_calls, g_calls
