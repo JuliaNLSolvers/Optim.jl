@@ -70,6 +70,7 @@ evalfg!(df::SimpleDifferentiableFunction, x, grad) = df.fg!(x, grad)
 
 Base.convert(::Type{DifferentiableFunction}, f::Function, g!::Function, fg!::Function) = SimpleDifferentiableFunction(f, g!, fg!)
 
+if VERSION >= v"0.4-"
 # Callable wrapper of DifferentiableFunction
 # that evaluates the function properties specified by WHAT parameter
 immutable DifferentiableFunctionEval{WHAT, DF<:DifferentiableFunction}
@@ -86,6 +87,7 @@ evalfg!_func{DF<:DifferentiableFunction}(df::DF) = DifferentiableFunctionEval{:F
 Base.call(dfevalf::DifferentiableFunctionEval{:F}, x) = evalf(dfevalf.df, x)
 Base.call(dfevalf::DifferentiableFunctionEval{:G!}, x, grad) = evalfg!(dfevalf.df, x, grad)
 Base.call(dfevalf::DifferentiableFunctionEval{:FG!}, x, grad) = evalfg!(dfevalf.df, x, grad)
+end
 
 # Interface for evaluating the value, gradient and Hessian of
 # a twice differentiable function
@@ -106,6 +108,7 @@ evalg!(df::SimpleTwiceDifferentiableFunction, x, grad) = df.g!(x, grad)
 evalfg!(df::SimpleTwiceDifferentiableFunction, x, grad) = df.fg!(x, grad)
 evalh!(df::SimpleTwiceDifferentiableFunction, x, hessian) = df.h!(x, hessian)
 
+if VERSION >= v"0.4-"
 # Callable wrapper of TwiceDifferentiableFunction
 # that evaluates the function properties specified by WHAT parameter
 # (only :H as all other properties are already handled by DifferentiableFunctionEval)
@@ -115,6 +118,7 @@ end
 
 evalh!_func{DF<:TwiceDifferentiableFunction}(df::DF) = TwiceDifferentiableFunctionEval{:H!, DF}(df)
 Base.call(dfevalf::TwiceDifferentiableFunctionEval{:H!}, x, hessian) = evalh!(dfevalf.df, x, hessian)
+end
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.gradnorm
