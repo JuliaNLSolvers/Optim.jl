@@ -27,14 +27,13 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
     a_max = 65536.0
 
     # phi(alpha) = f(x + alpha * p)
-    phi_0 = d.f(x)
+    phi_0 = evalfg!(d, x, gr_new)
     f_calls += 1
+    g_calls += 1
     phi_a_iminus1 = phi_0
     phi_a_i = NaN
 
     # phi'(alpha) = _dot(g(x + alpha * p), p)
-    d.g!(x, gr_new)
-    g_calls += 1
     phiprime_0 = _dot(gr_new, p)
     phiprime_a_i = NaN
 
@@ -48,7 +47,7 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
         end
 
         # Evaluate phi(a_i)
-        phi_a_i = d.f(x_new)
+        phi_a_i = evalf(d, x_new)
         f_calls += 1
 
         # Test Wolfe conditions
@@ -56,12 +55,12 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
              (phi_a_i >= phi_a_iminus1 && i > 1)
             a_star, f_up, g_up = zoom(a_iminus1, a_i,
                                       phiprime_0, phi_0,
-                                      d.f, d.g!, x, p, x_new, gr_new)
+                                      d, x, p, x_new, gr_new)
             return a_star, f_calls + f_up, g_calls + g_up
         end
 
         # Evaluate phi'(a_i)
-        d.g!(x_new, gr_new)
+        evalg!(d, x_new, gr_new)
         g_calls += 1
         phiprime_a_i = _dot(gr_new, p)
 
@@ -74,7 +73,7 @@ function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
         if phiprime_a_i >= 0.0
             a_star, f_up, g_up = zoom(a_i, a_iminus1,
                                       phiprime_0, phi_0,
-                                      d.f, d.g!, x, p, x_new, gr_new)
+                                      d, x, p, x_new, gr_new)
             return a_star, f_calls + f_up, g_calls + g_up
         end
 
@@ -97,8 +96,7 @@ function zoom(a_lo::Real,
               a_hi::Real,
               phiprime_0::Real,
               phi_0::Real,
-              f::Function,
-              g!::Function,
+              df::DifferentiableFunction,
               x::Vector,
               p::Vector,
               x_new::Vector,
@@ -127,8 +125,7 @@ function zoom(a_lo::Real,
         for index in 1:n
             x_new[index] = x[index] + a_lo * p[index]
         end
-        phi_a_lo = f(x_new)
-        g!(x_new, gr_new)
+        phi_a_lo = evalfg!(df, x_new, gr_new)
         f_calls += 1
         g_calls += 1
         phiprime_a_lo = _dot(gr_new, p)
@@ -137,8 +134,7 @@ function zoom(a_lo::Real,
         for index in 1:n
             x_new[index] = x[index] + a_hi * p[index]
         end
-        phi_a_hi = f(x_new)
-        g!(x_new, gr_new)
+        phi_a_hi = evalfg!(df, x_new, gr_new)
         f_calls += 1
         g_calls += 1
         phiprime_a_hi = _dot(gr_new, p)
@@ -161,7 +157,7 @@ function zoom(a_lo::Real,
         end
 
         # Evaluate phi(a_j)
-        phi_a_j = f(x_new)
+        phi_a_j = evalf(df, x_new)
         f_calls += 1
 
         # Check Armijo
@@ -170,7 +166,7 @@ function zoom(a_lo::Real,
             a_hi = a_j
         else
             # Evaluate phiprime(a_j)
-            g!(x_new, gr_new)
+            evalg!(df, x_new, gr_new)
             g_calls += 1
             phiprime_a_j = _dot(gr_new, p)
 

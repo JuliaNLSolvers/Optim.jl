@@ -157,7 +157,7 @@ function mt_linesearch!{T}(fcn::Union(DifferentiableFunction,
    f_calls = 0
    g_calls = 0
 
-   f = fcn.fg!(x, g)
+   f = evalfg!(fcn, x, g)
    f_calls += 1
    g_calls += 1
 
@@ -252,7 +252,7 @@ function mt_linesearch!{T}(fcn::Union(DifferentiableFunction,
       for i in 1:n
          new_x[i] = x[i] + stp * s[i] # TODO: Use x_new here
       end
-      f = fcn.fg!(new_x, g)
+      f = evalfg!(fcn, new_x, g)
       f_calls += 1
       g_calls += 1
       nfev += 1 # This includes calls to f() and g!()
