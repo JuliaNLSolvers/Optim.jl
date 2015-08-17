@@ -11,7 +11,7 @@ function optimize(d::TwiceDifferentiableFunction,
                   linesearch!::Function = hz_linesearch!,
                   bfgs_initial_invH = nothing)
     if extended_trace
-        store_trace = true
+        show_trace = true
     end
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
@@ -52,7 +52,7 @@ function optimize(d::TwiceDifferentiableFunction,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -145,7 +145,7 @@ function optimize(d::DifferentiableFunction,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
@@ -259,7 +259,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -362,7 +362,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         d = DifferentiableFunction(f, g!)
         bfgs(d,
              initial_x,
@@ -469,7 +469,7 @@ function optimize(f::Function,
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
             bfgs_initial_invH = eye(length(initial_x))
-        end        
+        end
         bfgs(d,
              initial_x,
              xtol = xtol,
