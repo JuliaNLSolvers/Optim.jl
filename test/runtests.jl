@@ -21,7 +21,8 @@ my_tests = ["bfgs.jl",
             "brent.jl",
             "type_stability.jl",
             "array.jl",
-            "constrained.jl"
+            "constrained.jl",
+            "callbacks.jl"
            ]
 
 println("Running tests:")

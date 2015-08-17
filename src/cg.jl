@@ -96,7 +96,9 @@ macro cgtrace()
                     grnorm,
                     dt,
                     store_trace,
-                    show_trace)
+                    show_trace,
+                    show_every,
+                    callback)
         end
     end
 end
@@ -111,6 +113,8 @@ function cg{T}(df::Union(DifferentiableFunction,
                store_trace::Bool = false,
                show_trace::Bool = false,
                extended_trace::Bool = false,
+               callback = nothing,
+               show_every = 1,
                linesearch!::Function = hz_linesearch!,
                eta::Real = convert(T,0.4),
                P::Any = nothing,
@@ -161,7 +165,7 @@ function cg{T}(df::Union(DifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace
+    tracing = store_trace || show_trace || extended_trace || callback != nothing
     @cgtrace
 
     # Output messages

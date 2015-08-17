@@ -12,7 +12,9 @@ module Optim
 
     export optimize,
            DifferentiableFunction,
-           TwiceDifferentiableFunction
+           TwiceDifferentiableFunction,
+           OptimizationState,
+           OptimizationTrace
 
     # Utils
     include("utils.jl")

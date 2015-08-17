@@ -21,7 +21,9 @@ macro agdtrace()
                     grnorm,
                     dt,
                     store_trace,
-                    show_trace)
+                    show_trace,
+                    show_every,
+                    callback)
         end
     end
 end
@@ -35,6 +37,8 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
                                          store_trace::Bool = false,
                                          show_trace::Bool = false,
                                          extended_trace::Bool = false,
+                                         callback = nothing,
+                                         show_every = 1,
                                          linesearch!::Function = hz_linesearch!)
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -75,7 +79,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace
+    tracing = store_trace || show_trace || extended_trace || callback != nothing
     @agdtrace
 
     # Assess types of convergence

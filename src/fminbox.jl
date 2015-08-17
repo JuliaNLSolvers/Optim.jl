@@ -116,6 +116,8 @@ function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
                     store_trace::Bool = false,
                     show_trace::Bool = false,
                     extended_trace::Bool = false,
+                    callback = nothing,
+                    show_every = 1,
                     linesearch!::Function = hz_linesearch!,
                     eta::Real = convert(T,0.4),
                     mu0::T = convert(T, NaN),
@@ -152,7 +154,7 @@ function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
     end
 
     g = similar(x)
-    valboth = Array(T, 2)    
+    valboth = Array(T, 2)
     fval_all = Array(Vector{T}, 0)
     fcount_all = 0
     xold = similar(x)

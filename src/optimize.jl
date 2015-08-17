@@ -8,9 +8,12 @@ function optimize(d::TwiceDifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
+                  callback = nothing,
+                  show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   bfgs_initial_invH = nothing)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -26,6 +29,8 @@ function optimize(d::TwiceDifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          extended_trace = extended_trace,
+                         show_every = show_every,
+                         callback = callback,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
         momentum_gradient_descent(d,
@@ -37,6 +42,8 @@ function optimize(d::TwiceDifferentiableFunction,
                                   store_trace = store_trace,
                                   show_trace = show_trace,
                                   extended_trace = extended_trace,
+                                  show_every = show_every,
+                                  callback = callback,
                                   linesearch! = linesearch!)
     elseif method == :cg
         cg(d,
@@ -48,6 +55,8 @@ function optimize(d::TwiceDifferentiableFunction,
            store_trace = store_trace,
            show_trace = show_trace,
            extended_trace = extended_trace,
+           show_every = show_every,
+           callback = callback,
            linesearch! = linesearch!)
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
@@ -63,6 +72,8 @@ function optimize(d::TwiceDifferentiableFunction,
              show_trace = show_trace,
              extended_trace = extended_trace,
              linesearch! = linesearch!,
+             show_every = show_every,
+             callback = callback,
              initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
@@ -74,6 +85,8 @@ function optimize(d::TwiceDifferentiableFunction,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     elseif method == :newton
         newton(d,
@@ -85,6 +98,8 @@ function optimize(d::TwiceDifferentiableFunction,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
@@ -101,9 +116,12 @@ function optimize(d::DifferentiableFunction,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
+                  callback = nothing,
+                  show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   bfgs_initial_invH = nothing)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -119,6 +137,8 @@ function optimize(d::DifferentiableFunction,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          extended_trace = extended_trace,
+                         show_every = show_every,
+                         callback = callback,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
         momentum_gradient_descent(d,
@@ -130,6 +150,8 @@ function optimize(d::DifferentiableFunction,
                                   store_trace = store_trace,
                                   show_trace = show_trace,
                                   extended_trace = extended_trace,
+                                  show_every = show_every,
+                                  callback = callback,
                                   linesearch! = linesearch!)
     elseif method == :cg
         cg(d,
@@ -141,6 +163,8 @@ function optimize(d::DifferentiableFunction,
            store_trace = store_trace,
            show_trace = show_trace,
            extended_trace = extended_trace,
+           show_every = show_every,
+           callback = callback,
            linesearch! = linesearch!)
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
@@ -156,6 +180,8 @@ function optimize(d::DifferentiableFunction,
              show_trace = show_trace,
              extended_trace = extended_trace,
              linesearch! = linesearch!,
+             show_every = show_every,
+             callback = callback,
              initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
         l_bfgs(d,
@@ -167,6 +193,8 @@ function optimize(d::DifferentiableFunction,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
@@ -185,9 +213,12 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
+                  callback = nothing,
+                  show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   bfgs_initial_invH = nothing)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -200,6 +231,8 @@ function optimize(f::Function,
                     iterations = iterations,
                     store_trace = store_trace,
                     show_trace = show_trace,
+                    show_every = show_every,
+                    callback = callback,
                     extended_trace = extended_trace)
     elseif method == :simulated_annealing
         simulated_annealing(f,
@@ -207,6 +240,8 @@ function optimize(f::Function,
                             iterations = iterations,
                             store_trace = store_trace,
                             show_trace = show_trace,
+                            show_every = show_every,
+                            callback = callback,
                             extended_trace = extended_trace)
     elseif method == :gradient_descent
         d = DifferentiableFunction(f, g!)
@@ -219,6 +254,8 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          extended_trace = extended_trace,
+                         show_every = show_every,
+                         callback = callback,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
         d = DifferentiableFunction(f, g!)
@@ -231,6 +268,8 @@ function optimize(f::Function,
                                   store_trace = store_trace,
                                   show_trace = show_trace,
                                   extended_trace = extended_trace,
+                                  show_every = show_every,
+                                  callback = callback,
                                   linesearch! = linesearch!)
     elseif method == :cg
         d = DifferentiableFunction(f, g!)
@@ -243,6 +282,8 @@ function optimize(f::Function,
            store_trace = store_trace,
            show_trace = show_trace,
            extended_trace = extended_trace,
+           show_every = show_every,
+           callback = callback,
            linesearch! = linesearch!)
     elseif method == :newton
         d = TwiceDifferentiableFunction(f, g!, h!)
@@ -255,6 +296,8 @@ function optimize(f::Function,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
@@ -270,6 +313,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
+             show_every = show_every,
+             callback = callback,
              linesearch! = linesearch!,
              initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
@@ -283,6 +328,8 @@ function optimize(f::Function,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
@@ -300,9 +347,12 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
+                  callback = nothing,
+                  show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   bfgs_initial_invH = nothing)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -315,6 +365,8 @@ function optimize(f::Function,
                     iterations = iterations,
                     store_trace = store_trace,
                     show_trace = show_trace,
+                    show_every = show_every,
+                    callback = callback,
                     extended_trace = extended_trace)
     elseif method == :simulated_annealing
         simulated_annealing(f,
@@ -322,6 +374,8 @@ function optimize(f::Function,
                             iterations = iterations,
                             store_trace = store_trace,
                             show_trace = show_trace,
+                            show_every = show_every,
+                            callback = callback,
                             extended_trace = extended_trace)
     elseif method == :gradient_descent
         d = DifferentiableFunction(f, g!)
@@ -334,6 +388,8 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          extended_trace = extended_trace,
+                         show_every = show_every,
+                         callback = callback,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
         d = DifferentiableFunction(f, g!)
@@ -346,6 +402,8 @@ function optimize(f::Function,
                                   store_trace = store_trace,
                                   show_trace = show_trace,
                                   extended_trace = extended_trace,
+                                  show_every = show_every,
+                                  callback = callback,
                                   linesearch! = linesearch!)
     elseif method == :cg
         d = DifferentiableFunction(f, g!)
@@ -358,6 +416,8 @@ function optimize(f::Function,
            store_trace = store_trace,
            show_trace = show_trace,
            extended_trace = extended_trace,
+           show_every = show_every,
+           callback = callback,
            linesearch! = linesearch!)
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
@@ -373,6 +433,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
+             show_every = show_every,
+             callback = callback,
              linesearch! = linesearch!,
              initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
@@ -386,6 +448,8 @@ function optimize(f::Function,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
@@ -402,10 +466,13 @@ function optimize(f::Function,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
+                  callback = nothing,
+                  show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   autodiff::Bool = false,
                   bfgs_initial_invH = nothing)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -418,6 +485,8 @@ function optimize(f::Function,
                     iterations = iterations,
                     store_trace = store_trace,
                     show_trace = show_trace,
+                    show_every = show_every,
+                    callback = callback,
                     extended_trace = extended_trace)
     elseif method == :simulated_annealing
         return simulated_annealing(f,
@@ -425,6 +494,8 @@ function optimize(f::Function,
                             iterations = iterations,
                             store_trace = store_trace,
                             show_trace = show_trace,
+                            show_every = show_every,
+                            callback = callback,
                             extended_trace = extended_trace)
     end
     # otherwise we need a gradient:
@@ -443,6 +514,8 @@ function optimize(f::Function,
                          store_trace = store_trace,
                          show_trace = show_trace,
                          extended_trace = extended_trace,
+                         show_every = show_every,
+                         callback = callback,
                          linesearch! = linesearch!)
     elseif method == :momentum_gradient_descent
         momentum_gradient_descent(d,
@@ -454,6 +527,8 @@ function optimize(f::Function,
                                   store_trace = store_trace,
                                   show_trace = show_trace,
                                   extended_trace = extended_trace,
+                                  show_every = show_every,
+                                  callback = callback,
                                   linesearch! = linesearch!)
     elseif method == :cg
         cg(d,
@@ -465,6 +540,8 @@ function optimize(f::Function,
            store_trace = store_trace,
            show_trace = show_trace,
            extended_trace = extended_trace,
+           show_every = show_every,
+           callback = callback,
            linesearch! = linesearch!)
     elseif method == :bfgs
         if bfgs_initial_invH == nothing
@@ -479,6 +556,8 @@ function optimize(f::Function,
              store_trace = store_trace,
              show_trace = show_trace,
              extended_trace = extended_trace,
+             show_every = show_every,
+             callback = callback,
              linesearch! = linesearch!,
              initial_invH = bfgs_initial_invH)
     elseif method == :l_bfgs
@@ -491,6 +570,8 @@ function optimize(f::Function,
                store_trace = store_trace,
                show_trace = show_trace,
                extended_trace = extended_trace,
+               show_every = show_every,
+               callback = callback,
                linesearch! = linesearch!)
     else
         throw(ArgumentError("Unknown method $method"))
@@ -506,8 +587,11 @@ function optimize{T <: FloatingPoint}(f::Function,
                                       iterations::Integer = 1_000,
                                       store_trace::Bool = false,
                                       show_trace::Bool = false,
+                                      callback = nothing,
+                                      show_every = 1,
                                       extended_trace::Bool = false)
-    if extended_trace
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
         show_trace = true
     end
     if show_trace
@@ -520,6 +604,8 @@ function optimize{T <: FloatingPoint}(f::Function,
               iterations = iterations,
               store_trace = store_trace,
               show_trace = show_trace,
+              show_every = show_every,
+              callback = callback,
               extended_trace = extended_trace)
     elseif method == :golden_section
         golden_section(f, @compat(Float64(lower)), @compat(Float64(upper));
@@ -528,6 +614,8 @@ function optimize{T <: FloatingPoint}(f::Function,
                        iterations = iterations,
                        store_trace = store_trace,
                        show_trace = show_trace,
+                       show_every = show_every,
+                       callback = callback,
                        extended_trace = extended_trace)
     else
         throw(ArgumentError("Unknown method $method"))
