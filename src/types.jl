@@ -128,7 +128,7 @@ function Base.show(io::IO, r::UnivariateOptimizationResults)
     @printf io " * Value of Function at Minimum: %f\n" r.f_minimum
     @printf io " * Iterations: %d\n" r.iterations
     @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" r.rel_tol r.abs_tol r.converged
-    @printf io " * Objective Function Calls: %d\n" r.f_calls
+    @printf io " * Objective Function Calls: %d" r.f_calls
     return
 end
 
