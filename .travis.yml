@@ -1,19 +1,15 @@
-language: cpp
-compiler: 
-    - gcc
+language: julia
+os:
+    - linux
+    - osx
+julia:
+    - release
+    - nightly
 notifications:
     email: false
-env:
-  matrix: 
-    - JULIAVERSION="juliareleases" 
-    - JULIAVERSION="julianightlies"
-before_install:
-    - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-    - sudo add-apt-repository ppa:staticfloat/${JULIAVERSION} -y
-    - sudo apt-get update -qq -y
-    - sudo apt-get install julia -y
-    - git config --global user.name "Travis User"
-    - git config --global user.email "travis@example.net"
+sudo: false
 script:
-    - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Optim"))`); Pkg.pin("Optim"); Pkg.resolve()'
-    - julia ./test/runtests.jl
+    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+    - julia -e 'Pkg.clone(pwd()); Pkg.test("Optim", coverage=true)'
+after_success:
+    - julia -e 'cd(Pkg.dir("Optim")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
