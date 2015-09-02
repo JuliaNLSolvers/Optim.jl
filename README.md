@@ -1,6 +1,9 @@
 Optim.jl
 ========
 
+[![Optim](http://pkg.julialang.org/badges/Optim_0.3.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.3)
+[![Optim](http://pkg.julialang.org/badges/Optim_0.4.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.4)
+
 The Optim package represents an ongoing project to implement basic optimization algorithms in pure Julia under an MIT license. Because it is being developed from scratch, it is not as robust as the C-based NLOpt package. For work whose accuracy must be unquestionable, we recommend using the NLOpt package. See [the NLOpt.jl GitHub repository](https://github.com/stevengj/NLopt.jl) for details.
 
 Although Optim is a work in progress, it is quite usable as is. In what follows, we describe the Optim package's API.
