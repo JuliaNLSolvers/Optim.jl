@@ -34,7 +34,9 @@ macro nmtrace()
                     grnorm,
                     dt,
                     store_trace,
-                    show_trace)
+                    show_trace,
+                    show_every,
+                    callback)
         end
     end
 end
@@ -49,6 +51,8 @@ function nelder_mead{T}(f::Function,
                         iterations::Integer = 1_000,
                         store_trace::Bool = false,
                         show_trace::Bool = false,
+                        callback = nothing,
+                        show_every = 1,
                         extended_trace::Bool = false)
     # Set up a simplex of points around starting value
     m = length(initial_x)
@@ -78,7 +82,7 @@ function nelder_mead{T}(f::Function,
 
     # Maintain a trace
     tr = OptimizationTrace()
-    tracing = show_trace || store_trace || extended_trace
+    tracing = show_trace || store_trace || extended_trace || callback != nothing
     @nmtrace
 
     # Cache p_bar, y_bar, p_star and p_star_star

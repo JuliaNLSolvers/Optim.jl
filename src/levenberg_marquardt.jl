@@ -1,7 +1,14 @@
 # sse(x) gives the L2 norm of x
 sse(x) = (x'*x)[1]
 
-function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12, maxIter=100, lambda=100.0, show_trace=false)
+function levenberg_marquardt(f::Function, g::Function, x0;
+                             tolX=1e-8,
+                             tolG=1e-12,
+                             maxIter=100,
+                             lambda=100.0,
+                             show_trace=false,
+                             callback = nothing,
+                             show_every = 1)
 	# finds argmin sum(f(x).^2) using the Levenberg-Marquardt algorithm
 	#          x
 	# The function f should take an input vector of length n and return an output vector of length m
@@ -37,7 +44,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 	fcur = f(x)
 	f_calls += 1
 	residual = sse(fcur)
-	
+
 	# Maintain a trace of the system.
 	tr = OptimizationTrace()
 	if show_trace
@@ -108,7 +115,7 @@ function levenberg_marquardt(f::Function, g::Function, x0; tolX=1e-8, tolG=1e-12
 		elseif norm(delta_x) < tolX*(tolX + norm(x))
 			x_converged = true
 		end
-		converged = g_converged | x_converged   
+		converged = g_converged | x_converged
 	end
 
 	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sse(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)
