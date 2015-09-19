@@ -1,5 +1,5 @@
-function backtracking_linesearch!{T}(d::Union(DifferentiableFunction,
-                                              TwiceDifferentiableFunction),
+@compat function backtracking_linesearch!{T}(d::Union{DifferentiableFunction,
+                                              TwiceDifferentiableFunction},
                                      x::Vector{T},
                                      s::Vector,
                                      x_scratch::Vector,

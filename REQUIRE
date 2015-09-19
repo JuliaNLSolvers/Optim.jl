@@ -1,4 +1,4 @@
 julia 0.3
 Calculus
 DualNumbers
-Compat
+Compat 0.7.1

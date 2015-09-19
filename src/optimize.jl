@@ -578,7 +578,7 @@ function optimize(f::Function,
     end
 end
 
-function optimize{T <: FloatingPoint}(f::Function,
+function optimize{T <: AbstractFloat}(f::Function,
                                       lower::T,
                                       upper::T;
                                       method::Symbol = :brent,

@@ -1,8 +1,8 @@
 # TODO: Optimize for fg! calls
 # TODO: Implement safeguards
 
-function interpolating_linesearch!{T}(d::Union(DifferentiableFunction,
-                                               TwiceDifferentiableFunction),
+@compat function interpolating_linesearch!{T}(d::Union{DifferentiableFunction,
+                                               TwiceDifferentiableFunction},
                                       x::Vector,
                                       p::Vector,
                                       x_new::Vector,

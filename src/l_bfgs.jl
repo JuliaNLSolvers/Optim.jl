@@ -82,8 +82,8 @@ macro lbfgstrace()
     end
 end
 
-function l_bfgs{T}(d::Union(DifferentiableFunction,
-                            TwiceDifferentiableFunction),
+@compat function l_bfgs{T}(d::Union{DifferentiableFunction,
+                            TwiceDifferentiableFunction},
                    initial_x::Vector{T};
                    m::Integer = 10,
                    xtol::Real = 1e-32,
