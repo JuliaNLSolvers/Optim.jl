@@ -105,7 +105,7 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-function fminbox{T<:FloatingPoint}(df::DifferentiableFunction,
+function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
                     initial_x::Array{T},
                     l::Array{T},
                     u::Array{T};
