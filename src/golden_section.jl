@@ -18,7 +18,7 @@ macro goldensectiontrace()
     end
 end
 
-function golden_section{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
+function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                                             rel_tol::T = sqrt(eps(T)),
                                             abs_tol::T = eps(T),
                                             iterations::Integer = 1_000,

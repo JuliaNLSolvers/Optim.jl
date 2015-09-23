@@ -46,7 +46,7 @@ pexamples["SqrdistBox"] = ConstrainedProblem("SqrdistBox",
                                             sqrdist_hessian!,
                                             constraints,
                                             [0.0, 0.0],
-                                            {[2.0, 2.0]},
+                                            Any[[2.0, 2.0]],
                                             true,
                                             true)
 
@@ -58,7 +58,7 @@ pexamples["SqrdistLwr"] = ConstrainedProblem("SqrdistLwr",
                                             sqrdist_hessian!,
                                             constraints,
                                             [0.0, 0.0],
-                                            {[2.0, 2.0]},
+                                            Any[[2.0, 2.0]],
                                             true,
                                             true)
 
@@ -70,7 +70,7 @@ pexamples["SqrdistLwr"] = ConstrainedProblem("SqrdistLwr",
                                             sqrdist_hessian!,
                                             constraints,
                                             [0.0, 0.0],
-                                            {[5.0, 3.0]},
+                                            Any[[5.0, 3.0]],
                                             true,
                                             true)
 

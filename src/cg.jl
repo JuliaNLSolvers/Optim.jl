@@ -1,8 +1,8 @@
 # Preconditioners
 #  * Empty preconditioner
-cg_precondfwd(out::Array, P::Nothing, A::Array) = copy!(out, A)
-cg_precondfwddot(A::Array, P::Nothing, B::Array) = dot(A, B)
-cg_precondinvdot(A::Array, P::Nothing, B::Array) = dot(A, B)
+cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
+cg_precondfwddot(A::Array, P::Void, B::Array) = dot(A, B)
+cg_precondinvdot(A::Array, P::Void, B::Array) = dot(A, B)
 
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
@@ -101,8 +101,8 @@ macro cgtrace()
     end
 end
 
-function cg{T}(df::Union(DifferentiableFunction,
-                         TwiceDifferentiableFunction),
+function cg{T}(df::Union{DifferentiableFunction,
+                         TwiceDifferentiableFunction},
                initial_x::Array{T};
                constraints::AbstractConstraints = ConstraintsNone(),
                interior::Bool = false,

@@ -18,8 +18,8 @@ macro gdtrace()
     end
 end
 
-function gradient_descent{T}(d::Union(DifferentiableFunction,
-                                      TwiceDifferentiableFunction),
+function gradient_descent{T}(d::Union{DifferentiableFunction,
+                                      TwiceDifferentiableFunction},
                              initial_x::Array{T};
                              xtol::Real = 1e-32,
                              ftol::Real = 1e-8,

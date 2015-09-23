@@ -40,7 +40,7 @@ examples["Exponential"] = OptimizationProblem("Exponential",
                                               exponential_gradient!,
                                               exponential_hessian!,
                                               [0.0, 0.0],
-                                              {[2.0, 3.0]},
+                                              Any[[2.0, 3.0]],
                                               true,
                                               true)
 
@@ -78,7 +78,7 @@ examples["Fletcher-Powell"] = OptimizationProblem("Fletcher-Powell",
                                                   fletcher_powell_gradient!,
                                                   fletcher_powell_hessian!,
                                                   [0.0, 0.0, 0.0],
-                                                  {[0.0, 0.0, 0.0]}, # TODO: Fix
+                                                  Any[[0.0, 0.0, 0.0]], # TODO: Fix
                                                   false,
                                                   false)
 
@@ -109,7 +109,7 @@ examples["Himmelbrau"] = OptimizationProblem("Himmelbrau",
                                              himmelbrau_gradient!,
                                              himmelbrau_hessian!,
                                              [0.0, 0.0],
-                                             {[1.0, 0.0]}, # TODO: Fix
+                                             Any[[1.0, 0.0]], # TODO: Fix
                                              true,
                                              false)
 ##########################################################################
@@ -138,7 +138,7 @@ examples["Hosaki"] = OptimizationProblem("Hosaki",
                                          hosaki_gradient!,
                                          hosaki_hessian!,
                                          [0.0, 0.0],
-                                         {[4.0, 2.0]},
+                                         Any[[4.0, 2.0]],
                                          false,
                                          false)
 
@@ -180,7 +180,7 @@ examples["Large Polynomial"] = OptimizationProblem("Large Polynomial",
                                                    large_polynomial_gradient!,
                                                    large_polynomial_hessian!,
                                                    zeros(250),
-                                                   {float([1:250;])},
+                                                   Any[float([1:250;])],
                                                    true,
                                                    true)
 
@@ -220,7 +220,7 @@ examples["Parabola"] = OptimizationProblem("Parabola",
                                            parabola_gradient!,
                                            parabola_hessian!,
                                            [0.0, 0.0, 0.0, 0.0, 0.0],
-                                           {[1.0, 2.0, 3.0, 5.0, 8.0]},
+                                           Any[[1.0, 2.0, 3.0, 5.0, 8.0]],
                                            true,
                                            true)
 
@@ -257,7 +257,7 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
                                              polynomial_gradient!,
                                              polynomial_hessian!,
                                              [0.0, 0.0, 0.0],
-                                             {[10.0, 7.0, 108.0]},
+                                             Any[[10.0, 7.0, 108.0]],
                                              true,
                                              true)
 
@@ -303,7 +303,7 @@ examples["Powell"] = OptimizationProblem("Powell",
                                          powell_gradient!,
                                          powell_hessian!,
                                          [3.0, -1.0, 0.0, 1.0],
-                                         {[0.0, 0.0, 0.0, 0.0]}, # TODO: Fix
+                                         Any[[0.0, 0.0, 0.0, 0.0]], # TODO: Fix
                                          true,
                                          true)
 
@@ -334,7 +334,7 @@ examples["Rosenbrock"] = OptimizationProblem("Rosenbrock",
                                              rosenbrock_gradient!,
                                              rosenbrock_hessian!,
                                              [0.0, 0.0],
-                                             {[1.0, 1.0]},
+                                             Any[[1.0, 1.0]],
                                              true,
                                              true)
 

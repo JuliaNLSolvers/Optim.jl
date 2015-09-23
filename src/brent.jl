@@ -18,7 +18,7 @@ macro brenttrace()
     end
 end
 
-function brent{T <: FloatingPoint}(f::Function, x_lower::T, x_upper::T;
+function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                                    rel_tol::T = sqrt(eps(T)),
                                    abs_tol::T = eps(T),
                                    iterations::Integer = 1_000,

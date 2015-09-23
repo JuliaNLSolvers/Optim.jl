@@ -152,16 +152,16 @@ function combined_h!(x, H, objective_h!::Function, constraints::AbstractConstrai
     barrier_h!(x, H, constraints)
 end
 
-# combined_f(x, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
+# combined_f(x, objective::Union{DifferentiableFunction,TwiceDifferentiableFunction}, constraints::AbstractConstraints, t) =
 #     combined_f(x, objective.f, constraints, t)
 #
-# combined_g!(x, g, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
+# combined_g!(x, g, objective::Union{DifferentiableFunction,TwiceDifferentiableFunction}, constraints::AbstractConstraints, t) =
 #     combined_g!(x, g, objective.g, constraints, t)
 #
-# combined_fg!(x, g, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
+# combined_fg!(x, g, objective::Union{DifferentiableFunction,TwiceDifferentiableFunction}, constraints::AbstractConstraints, t) =
 #     combined_fg!(x, g, objective.fg!, constraints, t)
 #
-# combined_h!(x, H, objective::Union(DifferentiableFunction,TwiceDifferentiableFunction), constraints::AbstractConstraints, t) =
+# combined_h!(x, H, objective::Union{DifferentiableFunction,TwiceDifferentiableFunction}, constraints::AbstractConstraints, t) =
 #     combined_h!(x, H, objective.h!, constraints, t)
 
 
@@ -289,7 +289,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
 end
 
 
-function interior{T}(objective::Union(DifferentiableFunction, TwiceDifferentiableFunction),
+function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiableFunction},
                      initial_x::Array{T},
                      constraints::AbstractConstraints;
                      method = :cg, t = convert(T,NaN), mu = 10, eps_gap = 1e-12,

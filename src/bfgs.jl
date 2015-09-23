@@ -23,8 +23,8 @@ macro bfgstrace()
     end
 end
 
-function bfgs{T}(d::Union(DifferentiableFunction,
-                          TwiceDifferentiableFunction),
+function bfgs{T}(d::Union{DifferentiableFunction,
+                          TwiceDifferentiableFunction},
                  initial_x::Vector{T};
                  initial_invH::Matrix = eye(length(initial_x)),
                  xtol::Real = 1e-32,

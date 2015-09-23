@@ -15,8 +15,8 @@ immutable ConstraintsBox{T,N} <: AbstractConstraints
     end
 end
 ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(l, u)
-ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Nothing) = ConstraintsBox{T,N}(l, fill(convert(T,Inf), size(l)))
-ConstraintsBox{T,N}(l::Nothing, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(fill(-convert(T,Inf),size(u)), u)
+ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::Void) = ConstraintsBox{T,N}(l, fill(convert(T,Inf), size(l)))
+ConstraintsBox{T,N}(l::Void, u::AbstractArray{T,N}) = ConstraintsBox{T,N}(fill(-convert(T,Inf),size(u)), u)
 
 immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     A::M
@@ -35,12 +35,12 @@ immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
         new(A, l, u, scratch1, scratch2, scratch3)
     end
 end
-ConstraintsL{T}(A::AbstractMatrix, l::Union(Vector{T},Matrix{T}), u::Union(Vector{T},Matrix{T})) = ConstraintsL{T,typeof(A),ndims(l)}(A, l, u)
-ConstraintsL{T}(A::AbstractMatrix, l::Union(Vector{T},Matrix{T}), u::Nothing) = ConstraintsL(A, l, infs(T, size(l)))
-ConstraintsL{T}(A::AbstractMatrix, l::Nothing, u::Union(Vector{T},Matrix{T})) = ConstraintsL(A, -infs(T,size(u)), u)
+ConstraintsL{T}(A::AbstractMatrix, l::Union{Vector{T},Matrix{T}}, u::Union{Vector{T},Matrix{T}}) = ConstraintsL{T,typeof(A),ndims(l)}(A, l, u)
+ConstraintsL{T}(A::AbstractMatrix, l::Union{Vector{T},Matrix{T}}, u::Void) = ConstraintsL(A, l, infs(T, size(l)))
+ConstraintsL{T}(A::AbstractMatrix, l::Void, u::Union{Vector{T},Matrix{T}}) = ConstraintsL(A, -infs(T,size(u)), u)
 
 # Generic constraints
-immutable ConstraintsNL{T,F<:Union(Function,DifferentiableFunction,TwiceDifferentiableFunction)} <: AbstractConstraints
+immutable ConstraintsNL{T,F<:Union{Function,DifferentiableFunction,TwiceDifferentiableFunction}} <: AbstractConstraints
     funcs::Vector{F}
     lower::Vector{T}
     upper::Vector{T}
