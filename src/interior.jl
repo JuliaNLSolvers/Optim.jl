@@ -177,7 +177,7 @@ linlsq(A::Matrix, b::Vector) =
                                 (x,g) -> linlsq_fg!(x, g, A, b, similar(b)),
                                 (x,H) -> linlsq_h!(x, H, A, b))
 
-dummy_f (x)   = (Base.show_backtrace(STDOUT, backtrace()); error("No f"))
+dummy_f(x)    = (Base.show_backtrace(STDOUT, backtrace()); error("No f"))
 dummy_g!(x,g) = (Base.show_backtrace(STDOUT, backtrace()); error("No g!"))
 
 function linlsq_fg!{T}(x::AbstractArray{T}, g, A, b, scratch)
@@ -336,8 +336,8 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
     local results
     iteration, f_calls, g_calls = 0, 0, 0
     while m/t > eps_gap || iteration == 0
-        df = DifferentiableFunction( x    -> combined_f  (x, objective.f, constraints, t),
-                                    (x,g) -> combined_g! (x, g, objective.g!, constraints, t),
+        df = DifferentiableFunction( x    ->   combined_f(x, objective.f, constraints, t),
+                                    (x,g) ->  combined_g!(x, g, objective.g!, constraints, t),
                                     (x,g) -> combined_fg!(x, g, objective.fg!, constraints, t))
         results = optimize(df, x, method=method, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations, store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace)
         copy!(x, results.minimum)

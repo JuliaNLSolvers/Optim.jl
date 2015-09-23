@@ -1,7 +1,9 @@
+isdefined(Base, :__precompile__) && __precompile__()
+
 module Optim
     using Calculus
     using Compat
-    
+
     import Base.dot,
            Base.length,
            Base.push!,
