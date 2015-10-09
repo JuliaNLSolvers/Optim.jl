@@ -102,8 +102,16 @@ end
 function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" r.method
-    @printf io " * Starting Point: [%s]\n" join(r.initial_x, ",")
-    @printf io " * Minimum: [%s]\n" join(r.minimum, ",")
+    if length(join(r.initial_x, ",")) < 40
+        @printf io " * Starting Point: [%s]\n" join(r.initial_x, ",")
+    else
+        @printf io " * Starting Point: [%s, ...]\n" join(r.initial_x[1:2], ",")
+    end
+    if length(join(r.minimum, ",")) < 40
+        @printf io " * Minimum: [%s]\n" join(r.minimum, ",")
+    else
+        @printf io " * Minimum: [%s, ...]\n" join(r.minimum[1:2], ",")
+    end
     @printf io " * Value of Function at Minimum: %f\n" r.f_minimum
     @printf io " * Iterations: %d\n" r.iterations
     @printf io " * Convergence: %s\n" converged(r)
