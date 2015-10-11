@@ -25,7 +25,7 @@ macro bfgstrace()
     end
 end
 
-@compat function bfgs{T}(d::Union{DifferentiableFunction,
+function bfgs{T}(d::Union{DifferentiableFunction,
                           TwiceDifferentiableFunction},
                  initial_x::Vector{T};
                  initial_invH::Matrix = eye(length(initial_x)),
@@ -109,14 +109,14 @@ end
         end
 
         # Refresh the line search cache
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)
             for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = _dot(gr, s)
+            dphi0 = vecdot(gr, s)
         end
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
@@ -160,13 +160,13 @@ end
         end
 
         # Update the inverse Hessian approximation using Sherman-Morrison
-        dx_dgr = _dot(dx, dgr)
+        dx_dgr = vecdot(dx, dgr)
         if dx_dgr == 0.0
             break
         end
         A_mul_B!(u, invH, dgr)
 
-        c1 = (dx_dgr + _dot(dgr, u)) / (dx_dgr * dx_dgr)
+        c1 = (dx_dgr + vecdot(dgr, u)) / (dx_dgr * dx_dgr)
         c2 = 1 / dx_dgr
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
@@ -182,7 +182,7 @@ end
     return MultivariateOptimizationResults("BFGS",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

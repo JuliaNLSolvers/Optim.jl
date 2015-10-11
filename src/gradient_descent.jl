@@ -20,7 +20,7 @@ macro gdtrace()
     end
 end
 
-@compat function gradient_descent{T}(d::Union{DifferentiableFunction,
+function gradient_descent{T}(d::Union{DifferentiableFunction,
                                       TwiceDifferentiableFunction},
                              initial_x::Array{T};
                              xtol::Real = 1e-32,
@@ -89,7 +89,7 @@ end
         end
 
         # Refresh the line search cache
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -128,7 +128,7 @@ end
     return MultivariateOptimizationResults("Gradient Descent",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

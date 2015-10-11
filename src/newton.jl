@@ -92,7 +92,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
         @inbounds s[:] = -(H \ gr)
 
         # Refresh the line search cache
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -134,7 +134,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
     return MultivariateOptimizationResults("Newton's Method",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

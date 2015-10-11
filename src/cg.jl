@@ -1,8 +1,8 @@
 # Preconditioners
 #  * Empty preconditioner
-@compat cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
-@compat cg_precondfwddot(A::Array, P::Void, B::Array) = _dot(A, B)
-@compat cg_precondinvdot(A::Array, P::Void, B::Array) = _dot(A, B)
+cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
+cg_precondfwddot(A::Array, P::Void, B::Array) = vecdot(A, B)
+cg_precondinvdot(A::Array, P::Void, B::Array) = vecdot(A, B)
 
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
@@ -103,7 +103,7 @@ macro cgtrace()
     end
 end
 
-@compat function cg{T}(df::Union{DifferentiableFunction,
+function cg{T}(df::Union{DifferentiableFunction,
                          TwiceDifferentiableFunction},
                initial_x::Array{T};
                xtol::Real = convert(T,1e-32),
@@ -195,12 +195,12 @@ end
         iteration += 1
 
         # Reset the search direction if it becomes corrupted
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         if dphi0 >= 0
             for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = _dot(gr, s)
+            dphi0 = vecdot(gr, s)
             if dphi0 < 0
                 break
             end
@@ -258,14 +258,14 @@ end
         #  Calculate the beta factor (HZ2012)
         precondprep(P, x)
         dPd = cg_precondinvdot(s, P, s)
-        etak::T = eta * _dot(s, gr_previous) / dPd
+        etak::T = eta * vecdot(s, gr_previous) / dPd
         for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
-        ydots = _dot(y, s)
+        ydots = vecdot(y, s)
         cg_precondfwd(pgr, P, gr)
-        betak = (_dot(y, pgr) - cg_precondfwddot(y, P, y) *
-                 _dot(gr, s) / ydots) / ydots
+        betak = (vecdot(y, pgr) - cg_precondfwddot(y, P, y) *
+                 vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]
@@ -277,7 +277,7 @@ end
     return MultivariateOptimizationResults("Conjugate Gradient",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

@@ -95,7 +95,7 @@ function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                                          initial_lower,
                                          initial_upper,
                                          x_minimum,
-                                         @compat(Float64(f_minimum)),
+                                         Float64(f_minimum),
                                          it,
                                          converged,
                                          rel_tol,
