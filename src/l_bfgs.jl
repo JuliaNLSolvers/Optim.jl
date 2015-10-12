@@ -11,15 +11,15 @@ function twoloop!(s::Vector,
                   dx_history::Matrix,
                   dgr_history::Matrix,
                   m::Integer,
-                  iteration::Integer,
+                  pseudo_iteration::Integer,
                   alpha::Vector,
                   q::Vector)
     # Count number of parameters
     n = length(s)
 
     # Determine lower and upper bounds for loops
-    lower = iteration - m
-    upper = iteration - 1
+    lower = pseudo_iteration - m
+    upper = pseudo_iteration - 1
 
     # Copy gr into q for backward pass
     copy!(q, gr)
@@ -102,6 +102,7 @@ end
 
     # Count the total number of iterations
     iteration = 0
+    pseudo_iteration = 0
 
     # Track calls to function and gradient
     f_calls, g_calls = 0, 0
@@ -155,13 +156,21 @@ end
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
+        pseudo_iteration += 1
 
         # Determine the L-BFGS search direction
-        twoloop!(s, gr, rho, dx_history, dgr_history, m, iteration,
+        twoloop!(s, gr, rho, dx_history, dgr_history, m, pseudo_iteration,
                  twoloop_alpha, twoloop_q)
 
         # Refresh the line search cache
         dphi0 = _dot(gr, s)
+        if dphi0 > 0.0
+            pseudo_iteration = 1
+            for i in 1:n
+                @inbounds s[i] = -gr[i]
+            end
+            dphi0 = _dot(gr, s)
+        end
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -197,9 +206,9 @@ end
             # TODO: Introduce a formal error? There was a warning here previously
             break
         end
-        dx_history[:, mod1(iteration, m)] = dx
-        dgr_history[:, mod1(iteration, m)] = dgr
-        rho[mod1(iteration, m)] = rho_iteration
+        dx_history[:, mod1(pseudo_iteration, m)] = dx
+        dgr_history[:, mod1(pseudo_iteration, m)] = dgr
+        rho[mod1(pseudo_iteration, m)] = rho_iteration
 
         x_converged,
         f_converged,
