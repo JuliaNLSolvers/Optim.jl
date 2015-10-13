@@ -30,7 +30,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds alpha[i] = rho[i] * _dot(dx_history[:, i], q)
+        @inbounds alpha[i] = rho[i] * vecdot(dx_history[:, i], q)
         for j in 1:n
             @inbounds q[j] -= alpha[i] * dgr_history[j, i]
         end
@@ -45,7 +45,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * _dot(dgr_history[:, i], s)
+        @inbounds beta = rho[i] * vecdot(dgr_history[:, i], s)
         for j in 1:n
             @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
@@ -82,7 +82,7 @@ macro lbfgstrace()
     end
 end
 
-@compat function l_bfgs{T}(d::Union{DifferentiableFunction,
+function l_bfgs{T}(d::Union{DifferentiableFunction,
                             TwiceDifferentiableFunction},
                    initial_x::Vector{T};
                    m::Integer = 10,
@@ -163,7 +163,7 @@ end
                  twoloop_alpha, twoloop_q)
 
         # Refresh the line search cache
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         if dphi0 > 0.0
             pseudo_iteration = 1
             for i in 1:n
@@ -171,6 +171,7 @@ end
             end
             dphi0 = _dot(gr, s)
         end
+
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -201,7 +202,7 @@ end
         end
 
         # Update the L-BFGS history of positions and gradients
-        rho_iteration = 1 / _dot(dx, dgr)
+        rho_iteration = 1 / vecdot(dx, dgr)
         if isinf(rho_iteration)
             # TODO: Introduce a formal error? There was a warning here previously
             break
@@ -228,7 +229,7 @@ end
     return MultivariateOptimizationResults("L-BFGS",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

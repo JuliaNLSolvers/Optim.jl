@@ -97,7 +97,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         end
 
         # Refresh the line search cache
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
@@ -143,7 +143,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     return MultivariateOptimizationResults("Accelerated Gradient Descent",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
                                            iteration == iterations,
                                            x_converged,

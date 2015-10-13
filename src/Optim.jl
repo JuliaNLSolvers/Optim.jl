@@ -16,9 +16,6 @@ module Optim
            OptimizationState,
            OptimizationTrace
 
-    # Utils
-    include("utils.jl")
-
     # Types
     include("types.jl")
 

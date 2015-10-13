@@ -1,4 +1,4 @@
-function levenberg_marquardt(f::Function, g::Function, x0; 
+function levenberg_marquardt(f::Function, g::Function, x0;
 	tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
 	lambda::Real = 10.0, show_trace::Bool = false)
 	# finds argmin sum(f(x).^2) using the Levenberg-Marquardt algorithm
@@ -38,11 +38,11 @@ function levenberg_marquardt(f::Function, g::Function, x0;
 	fcur = f(x)
 	f_calls += 1
 	residual = sumabs2(fcur)
-	
+
 	# Maintain a trace of the system.
 	tr = OptimizationTrace()
 	if show_trace
-		d = @compat Dict("lambda" => lambda)
+		d = Dict("lambda" => lambda)
 		os = OptimizationState(iterCt, sumabs2(fcur), NaN, d)
 		push!(tr, os)
 		println(os)
@@ -101,7 +101,7 @@ function levenberg_marquardt(f::Function, g::Function, x0;
 		# show state
 		if show_trace
 			gradnorm = norm(J'*fcur, Inf)
-			d = @compat Dict("g(x)" => gradnorm, "dx" => delta_x, "lambda" => lambda)
+			d = Dict("g(x)" => gradnorm, "dx" => delta_x, "lambda" => lambda)
 			os = OptimizationState(iterCt, sumabs2(fcur), gradnorm, d)
 			push!(tr, os)
 			println(os)
@@ -115,7 +115,7 @@ function levenberg_marquardt(f::Function, g::Function, x0;
 		elseif norm(delta_x) < tolX*(tolX + norm(x))
 			x_converged = true
 		end
-		converged = g_converged | x_converged   
+		converged = g_converged | x_converged
 	end
 
 	MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sumabs2(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)

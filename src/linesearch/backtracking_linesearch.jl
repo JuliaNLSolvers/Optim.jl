@@ -1,4 +1,4 @@
-@compat function backtracking_linesearch!{T}(d::Union{DifferentiableFunction,
+function backtracking_linesearch!{T}(d::Union{DifferentiableFunction,
                                               TwiceDifferentiableFunction},
                                      x::Vector{T},
                                      s::Vector,
@@ -28,7 +28,7 @@
     g_calls += 1
 
     # Store angle between search direction and gradient
-    gxp = _dot(gr_scratch, s)
+    gxp = vecdot(gr_scratch, s)
 
     # Tentatively move a distance of alpha in the direction of s
     for i in 1:n
