@@ -53,17 +53,71 @@ type UnivariateOptimizationResults{T} <: OptimizationResults
     f_calls::Int
 end
 
-immutable DifferentiableFunction
+# Interface for evaluating the value and the gradient of
+# a differentiable function
+abstract DifferentiableFunction
+
+# Implementation of DifferentialFunction based on Function objects
+immutable SimpleDifferentiableFunction <: DifferentiableFunction
     f::Function
     g!::Function
     fg!::Function
 end
 
-immutable TwiceDifferentiableFunction
+evalf(df::SimpleDifferentiableFunction, x) = df.f(x)
+evalg!(df::SimpleDifferentiableFunction, x, grad) = df.g!(x, grad)
+evalfg!(df::SimpleDifferentiableFunction, x, grad) = df.fg!(x, grad)
+
+Base.convert(::Type{DifferentiableFunction}, f::Function, g!::Function, fg!::Function) = SimpleDifferentiableFunction(f, g!, fg!)
+
+if VERSION >= v"0.4-"
+# Callable wrapper of DifferentiableFunction
+# that evaluates the function properties specified by WHAT parameter
+immutable DifferentiableFunctionEval{WHAT, DF<:DifferentiableFunction}
+    df::DF
+end
+
+# "function"-like object that evaluates f(x)
+evalf_func{DF<:DifferentiableFunction}(df::DF) = DifferentiableFunctionEval{:F, DF}(df)
+# "function"-like object that evaluates the gradient of f(x)
+evalg!_func{DF<:DifferentiableFunction}(df::DF) = DifferentiableFunctionEval{:G!, DF}(df)
+# "function"-like object that evaluates the value and gradient of f(x)
+evalfg!_func{DF<:DifferentiableFunction}(df::DF) = DifferentiableFunctionEval{:FG!, DF}(df)
+
+Base.call(dfevalf::DifferentiableFunctionEval{:F}, x) = evalf(dfevalf.df, x)
+Base.call(dfevalf::DifferentiableFunctionEval{:G!}, x, grad) = evalfg!(dfevalf.df, x, grad)
+Base.call(dfevalf::DifferentiableFunctionEval{:FG!}, x, grad) = evalfg!(dfevalf.df, x, grad)
+end
+
+# Interface for evaluating the value, gradient and Hessian of
+# a twice differentiable function
+abstract TwiceDifferentiableFunction <: DifferentiableFunction
+
+# Implementation of TwoceDifferentialFunction based on Function objects
+immutable SimpleTwiceDifferentiableFunction <: TwiceDifferentiableFunction
     f::Function
     g!::Function
     fg!::Function
     h!::Function
+end
+
+Base.convert(::Type{TwiceDifferentiableFunction}, f::Function, g!::Function, fg!::Function, h!::Function) = SimpleTwiceDifferentiableFunction(f, g!, fg!, h!)
+
+evalf(df::SimpleTwiceDifferentiableFunction, x) = df.f(x)
+evalg!(df::SimpleTwiceDifferentiableFunction, x, grad) = df.g!(x, grad)
+evalfg!(df::SimpleTwiceDifferentiableFunction, x, grad) = df.fg!(x, grad)
+evalh!(df::SimpleTwiceDifferentiableFunction, x, hessian) = df.h!(x, hessian)
+
+if VERSION >= v"0.4-"
+# Callable wrapper of TwiceDifferentiableFunction
+# that evaluates the function properties specified by WHAT parameter
+# (only :H as all other properties are already handled by DifferentiableFunctionEval)
+immutable TwiceDifferentiableFunctionEval{WHAT, DF<:TwiceDifferentiableFunction}
+    df::DF
+end
+
+evalh!_func{DF<:TwiceDifferentiableFunction}(df::DF) = TwiceDifferentiableFunctionEval{:H!, DF}(df)
+Base.call(dfevalf::TwiceDifferentiableFunctionEval{:H!}, x, hessian) = evalh!(dfevalf.df, x, hessian)
 end
 
 function Base.show(io::IO, t::OptimizationState)

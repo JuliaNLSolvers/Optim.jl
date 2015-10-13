@@ -23,7 +23,7 @@
     n = length(x)
 
     # Store f(x) in f_x
-    f_x = d.fg!(x, gr_scratch)
+    f_x = evalfg!(d, x, gr_scratch)
     f_calls += 1
     g_calls += 1
 
@@ -36,7 +36,7 @@
     end
 
     # Backtrack until we satisfy sufficient decrease condition
-    f_x_scratch = d.f(x_scratch)
+    f_x_scratch = evalf(d, x_scratch)
     f_calls += 1
     while f_x_scratch > f_x + c1 * alpha * gxp
         # Increment the number of steps we've had to perform
@@ -56,7 +56,7 @@
         end
 
         # Evaluate f(x) at proposed position
-        f_x_scratch = d.f(x_scratch)
+        f_x_scratch = evalf(d, x_scratch)
         f_calls += 1
     end
 

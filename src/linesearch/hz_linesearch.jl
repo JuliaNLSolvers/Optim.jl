@@ -101,14 +101,14 @@ end
     alphatest = min(alphatest, alphamax)
 
     # Use xtmp here
-    phitest = d.f(x + alphatest * s)
+    phitest = evalf(d, x + alphatest * s)
     f_calls += 1
 
     iterfinite = 1
     while !isfinite(phitest)
         alphatest = psi3 * alphatest
         # Use xtmp here
-        phitest = d.f(x + alphatest * s)
+        phitest = evalf(d, x + alphatest * s)
         f_calls += 1
         lsr.nfailures += 1
         iterfinite += 1
@@ -594,14 +594,14 @@ end
     end
     gphi = convert(eltype(g), NaN)
     if calc_grad
-        val = df.fg!(xtmp, g)
+        val = evalfg!(df, xtmp, g)
         f_calls += 1
         g_calls += 1
         if isfinite(val)
             gphi = _dot(g, s)
         end
     else
-        val = df.f(xtmp)
+        val = evalf(df, xtmp)
         f_calls += 1
     end
     return val, gphi, f_calls, g_calls
