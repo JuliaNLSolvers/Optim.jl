@@ -203,6 +203,11 @@ linlsq_h!(x, H, A, b) = At_mul_B!(H, A, A)
 ## Interior point methods
 ##
 #########################
+# Follows the notation of
+# H. Hindi (2006), "A Tutorial on Convex Optimization II: Duality and
+#     Interior Point Methods," Proc. 2006 American Control Conference.
+# particularly his "Algorithm: Barrier method."
+
 function interior_newton{T}(objective::TwiceDifferentiableFunction,
                             initial_x::Vector{T},
                             constraints::AbstractConstraints;
@@ -301,8 +306,8 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
                      show_trace::Bool = false,
                      extended_trace::Bool = false)
     if isnan(t)
-        vo, vc, go, gc = gnorm(objective, constraints, initial_x)
-        if isfinite(vo) && isfinite(vc) && go < grtol
+        vo, vc, gogo, gogc = gnorm(objective, constraints, initial_x)
+        if isfinite(vo) && isfinite(vc) && sqrt(gogo) < grtol
             return MultivariateOptimizationResults("Interior",
                                     initial_x,
                                     initial_x,
@@ -319,10 +324,10 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
                                     0,
                                     0)
         end
-        if gc == 0
+        if gogc == 0
             t = one(T)  # FIXME: bounds constraints, starting at exact center. This is probably not the right guess.
         else
-            t = gc/(convert(T,0.1)*go)
+            t = convert(T, 10*abs(gogc)/gogo)
         end
     end
     if method == :newton
@@ -352,6 +357,18 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
     results
 end
 
+"""
+`vo, vc, gogo, gogc = gnorm(objective, constraints, initial_x)`
+computes the values `vo`, `vc` of the `objective` and `constraints` at
+position `initial_x`, as well as their gradients. `gogo` is the dot
+product of the objective gradient with itself; `gogc` is the dot
+product of the objective gradient and the constraint gradient.
+
+The latter two can be used to initialize the tradeoff between
+objective and constraints so that the total gradient `t*go + gc` is
+still a descent direction for the objective. This ensures that the
+barrier penalty will not push the solution out of the starting basin.
+"""
 function gnorm(objective, constraints, initial_x)
     go = similar(initial_x)
     gc = similar(initial_x)
