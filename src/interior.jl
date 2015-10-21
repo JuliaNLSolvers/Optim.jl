@@ -344,7 +344,7 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
         df = DifferentiableFunction( x    ->   combined_f(x, objective.f, constraints, t),
                                     (x,g) ->  combined_g!(x, g, objective.g!, constraints, t),
                                     (x,g) -> combined_fg!(x, g, objective.fg!, constraints, t))
-        results = optimize(df, x, method=method, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations, store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace)
+        results = optimize(df, x, method=method, constraints=constraints, interior=true, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations, store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace)
         copy!(x, results.minimum)
         iteration += results.iterations
         f_calls += results.f_calls

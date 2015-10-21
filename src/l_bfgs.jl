@@ -83,6 +83,8 @@ end
 function l_bfgs{T}(d::Union{DifferentiableFunction,
                             TwiceDifferentiableFunction},
                    initial_x::Vector{T};
+                   constraints::AbstractConstraints = ConstraintsNone(),
+                   interior::Bool = false,
                    m::Integer = 10,
                    xtol::Real = 1e-32,
                    ftol::Real = 1e-8,
@@ -158,12 +160,26 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
 
         # Refresh the line search cache
         dphi0 = dot(gr, s)
+        if dphi0 > 0
+            iteration = 1
+            for i = 1:n
+                @inbounds s[i] = -gr[i]
+            end
+            dphi0 = dot(gr, s)
+        end
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
+        alphamax = interior ? toedge(x, s, constraints) : convert(T,Inf)
+
+        # Pick the initial step size (HZ #I1-I2)
+        alpha, mayterminate, f_update, g_update =
+          alphatry(alpha, d, x, s, x_ls, gr_ls, lsr, constraints, alphamax)
+        f_calls, g_calls = f_calls + f_update, g_calls + g_update
+
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate, constraints, alphamax)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
