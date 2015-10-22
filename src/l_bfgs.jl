@@ -150,6 +150,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
 
     # Iterate until convergence
     converged = false
+    converged_iteration = typemin(Int)
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
@@ -160,21 +161,28 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
 
         # Refresh the line search cache
         dphi0 = dot(gr, s)
-        if dphi0 > 0
+        if dphi0 >= 0
+            # The search direction is not a descent direction. Something
+            # is wrong, so restart the search-direction algorithm.
+            # See also the "restart" below.
             iteration = 1
             for i = 1:n
                 @inbounds s[i] = -gr[i]
             end
             dphi0 = dot(gr, s)
         end
+        dphi0 == 0 && break   # we're at a stationary point
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
         alphamax = interior ? toedge(x, s, constraints) : convert(T,Inf)
 
-        # Pick the initial step size (HZ #I1-I2)
+        # Pick the initial step size (HZ #I1-I2). Even though we might
+        # guess alpha=1 for l_bfgs most of the time, testing suggests
+        # this is still usually a good idea (fewer total function and
+        # gradient evaluations).
         alpha, mayterminate, f_update, g_update =
-          alphatry(alpha, d, x, s, x_ls, gr_ls, lsr, constraints, alphamax)
+            alphatry(alpha, d, x, s, x_ls, gr_ls, lsr, constraints, alphamax)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Determine the distance of movement along the search line
@@ -226,8 +234,28 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
                                        grtol)
 
         @lbfgstrace
+
+        # If we think we've converged, restart and make sure we don't
+        # have another long descent. This should catch the case where
+        # dphi < 0 "by a hair," meaning that the chosen search direction
+        # happened to be nearly orthogonoal to the gradient.
+        if converged
+            if iteration <= 3 || converged_iteration >= 0
+                if iteration <= max(m, 3)
+                    break  # we converged quickly after previous restart
+                end
+                converged_iteration += iteration
+            else
+                converged_iteration = iteration
+            end
+            converged = false
+            iteration = 0  # the next search direction will be -gr
+        end
     end
 
+    if converged_iteration >= 0
+        iteration += converged_iteration
+    end
     return MultivariateOptimizationResults("L-BFGS",
                                            initial_x,
                                            x,
