@@ -1,3 +1,5 @@
+abstract Optimizer
+
 immutable OptimizationState
     iteration::Int
     value::Float64
