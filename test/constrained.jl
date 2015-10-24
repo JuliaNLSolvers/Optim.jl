@@ -49,9 +49,3 @@ objective.fg!(results.minimum, g)
 for i = 1:N
     @test abs(g[i]) < 3e-3 || (results.minimum[i] < -boxl+1e-3 && g[i] > 0) || (results.minimum[i] > boxl-1e-3 && g[i] < 0)
 end
-
-# nnls
-A = [1.0 2.0; 3.0 4.0]
-b = [1.0,1.0]
-results = Optim.nnls(A, b)
-@test norm(results.minimum - [0,0.3]) < 1e-6
