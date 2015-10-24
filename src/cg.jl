@@ -103,22 +103,25 @@ macro cgtrace()
     end
 end
 
-function cg{T}(df::Union{DifferentiableFunction,
-                         TwiceDifferentiableFunction},
-               initial_x::Array{T};
-               xtol::Real = convert(T,1e-32),
-               ftol::Real = convert(T,1e-8),
-               grtol::Real = convert(T,1e-8),
-               iterations::Integer = 1_000,
-               store_trace::Bool = false,
-               show_trace::Bool = false,
-               extended_trace::Bool = false,
-               callback = nothing,
-               show_every = 1,
-               linesearch!::Function = hz_linesearch!,
-               eta::Real = convert(T,0.4),
-               P::Any = nothing,
-               precondprep::Function = (P, x) -> nothing)
+immutable ConjugateGradient <: Optimizer end
+
+function optimize{T}(df::DifferentiableFunction,
+                     initial_x::Array{T},
+                     ::ConjugateGradient;
+                     xtol::Real = convert(T,1e-32),
+                     ftol::Real = convert(T,1e-8),
+                     grtol::Real = convert(T,1e-8),
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     extended_trace::Bool = false,
+                     callback = nothing,
+                     show_every = 1,
+                     linesearch!::Function = hz_linesearch!,
+                     eta::Real = convert(T,0.4),
+                     P::Any = nothing,
+                     precondprep::Function = (P, x) -> nothing,
+                     nargs...)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -281,11 +284,11 @@ function cg{T}(df::Union{DifferentiableFunction,
                                            iteration,
                                            iteration == iterations,
                                            x_converged,
-                                           xtol,
+                                           Float64(xtol),
                                            f_converged,
-                                           ftol,
+                                           Float64(ftol),
                                            gr_converged,
-                                           grtol,
+                                           Float64(grtol),
                                            tr,
                                            f_calls,
                                            g_calls)

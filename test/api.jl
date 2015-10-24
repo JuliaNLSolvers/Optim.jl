@@ -25,20 +25,20 @@ d3 = TwiceDifferentiableFunction(rosenbrock,
 	                             rosenbrock_gradient!,
 	                             rosenbrock_hessian!)
 
-Optim.bfgs(d1, [0.0, 0.0])
-Optim.bfgs(d2, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = :bfgs)
+Optim.optimize(d2, [0.0, 0.0], method = :bfgs)
 
-Optim.gradient_descent(d1, [0.0, 0.0])
-Optim.gradient_descent(d2, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = :gradient_descent)
+Optim.optimize(d2, [0.0, 0.0], method = :gradient_descent)
 
-Optim.l_bfgs(d1, [0.0, 0.0])
-Optim.l_bfgs(d2, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = :l_bfgs)
+Optim.optimize(d2, [0.0, 0.0], method = :l_bfgs)
 
-Optim.nelder_mead(rosenbrock, [0.0, 0.0])
+Optim.optimize(rosenbrock, [0.0, 0.0], method = :nelder_mead)
 
-Optim.newton(d3, [0.0, 0.0])
+Optim.optimize(d3, [0.0, 0.0], method = :newton)
 
-Optim.simulated_annealing(rosenbrock, [0.0, 0.0])
+Optim.optimize(rosenbrock, [0.0, 0.0], method = :simulated_annealing)
 
 optimize(rosenbrock,
 	     [0.0, 0.0],

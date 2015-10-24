@@ -31,17 +31,21 @@ macro satrace()
     end
 end
 
-function simulated_annealing{T}(cost::Function,
-                                initial_x::Array{T};
-                                neighbor!::Function = default_neighbor!,
-                                temperature::Function = log_temperature,
-                                keep_best::Bool = true,
-                                iterations::Integer = 100_000,
-                                store_trace::Bool = false,
-                                show_trace::Bool = false,
-                                callback = nothing,
-                                show_every = 1,
-                                extended_trace::Bool = false)
+immutable SimulatedAnnealing <: Optimizer end
+
+function optimize{T}(cost::Function,
+                     initial_x::Array{T},
+                     ::SimulatedAnnealing;
+                     neighbor!::Function = default_neighbor!,
+                     temperature::Function = log_temperature,
+                     keep_best::Bool = true,
+                     iterations::Integer = 100_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     callback = nothing,
+                     show_every = 1,
+                     extended_trace::Bool = false,
+                     nargs...)
     # Maintain current and proposed state
     x, x_proposal = copy(initial_x), copy(initial_x)
 

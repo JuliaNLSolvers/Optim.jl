@@ -5,7 +5,7 @@ module TestTypes
 
     prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     f_prob = prob.f
-    res = Optim.nelder_mead(f_prob, prob.initial_x)
+    res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead())
 
     io = IOBuffer()
     show(io, res)

@@ -14,7 +14,21 @@ module Optim
            DifferentiableFunction,
            TwiceDifferentiableFunction,
            OptimizationState,
-           OptimizationTrace
+           OptimizationTrace,
+
+           Optimizer,
+           AcceleratedGradientDescent,
+           BFGS,
+           Brent,
+           ConjugateGradient,
+           Fminbox,
+           GoldenSection,
+           GradientDescent,
+           LBFGS,
+           MomentumGradientDescent,
+           NelderMead,
+           Newton,
+           SimulatedAnnealing
 
     # Types
     include("types.jl")

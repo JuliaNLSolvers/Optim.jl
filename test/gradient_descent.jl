@@ -10,7 +10,7 @@ initial_x = [0.0]
 
 d = DifferentiableFunction(f_gd, g_gd)
 
-results = Optim.gradient_descent(d, initial_x)
+results = Optim.optimize(d, initial_x, method=GradientDescent())
 @assert isempty(results.trace.states)
 @assert results.gr_converged
 @assert norm(results.minimum - [5.0]) < 0.01
@@ -28,7 +28,7 @@ end
 
 d = DifferentiableFunction(f_gd, g_gd)
 
-results = Optim.gradient_descent(d, [1.0, 1.0])
+results = Optim.optimize(d, [1.0, 1.0], method=GradientDescent())
 @assert isempty(results.trace.states)
 @assert results.gr_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01

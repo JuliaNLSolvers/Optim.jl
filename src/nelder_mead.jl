@@ -41,19 +41,23 @@ macro nmtrace()
     end
 end
 
-function nelder_mead{T}(f::Function,
-                        initial_x::Vector{T};
-                        a::Real = 1.0,
-                        g::Real = 2.0,
-                        b::Real = 0.5,
-                        ftol::Real = 1e-8,
-                        initial_step::Vector{T} = ones(T,length(initial_x)),
-                        iterations::Integer = 1_000,
-                        store_trace::Bool = false,
-                        show_trace::Bool = false,
-                        callback = nothing,
-                        show_every = 1,
-                        extended_trace::Bool = false)
+immutable NelderMead <: Optimizer end
+
+function optimize{T}(f::Function,
+                     initial_x::Vector{T},
+                     ::NelderMead;
+                     a::Real = 1.0,
+                     g::Real = 2.0,
+                     b::Real = 0.5,
+                     ftol::Real = 1e-8,
+                     initial_step::Vector{T} = ones(T,length(initial_x)),
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     callback = nothing,
+                     show_every = 1,
+                     extended_trace::Bool = false,
+                     nargs...)
     # Set up a simplex of points around starting value
     m = length(initial_x)
     if m == 1

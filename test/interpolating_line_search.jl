@@ -22,4 +22,4 @@ alpha, f_update, g_update = Optim.interpolating_linesearch!(d, x, p, x_new, gr_n
 alpha, f_update, g_update = Optim.mt_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
 alpha, f_update, g_update = Optim.hz_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
 
-Optim.l_bfgs(d, [0.0, 0.0])
+Optim.optimize(d, [0.0, 0.0], method=LBFGS())

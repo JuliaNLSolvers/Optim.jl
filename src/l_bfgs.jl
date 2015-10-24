@@ -82,20 +82,23 @@ macro lbfgstrace()
     end
 end
 
-function l_bfgs{T}(d::Union{DifferentiableFunction,
-                            TwiceDifferentiableFunction},
-                   initial_x::Vector{T};
-                   m::Integer = 10,
-                   xtol::Real = 1e-32,
-                   ftol::Real = 1e-8,
-                   grtol::Real = 1e-8,
-                   iterations::Integer = 1_000,
-                   store_trace::Bool = false,
-                   show_trace::Bool = false,
-                   extended_trace::Bool = false,
-                   callback = nothing,
-                   show_every = 1,
-                   linesearch!::Function = hz_linesearch!)
+immutable LBFGS <: Optimizer end
+
+function optimize{T}(d::DifferentiableFunction,
+                     initial_x::Vector{T},
+                     ::LBFGS;
+                     m::Integer = 10,
+                     xtol::Real = 1e-32,
+                     ftol::Real = 1e-8,
+                     grtol::Real = 1e-8,
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     extended_trace::Bool = false,
+                     callback = nothing,
+                     show_every = 1,
+                     linesearch!::Function = hz_linesearch!,
+                     nargs...)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)

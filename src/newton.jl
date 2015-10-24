@@ -21,18 +21,22 @@ macro newtontrace()
     end
 end
 
-function newton{T}(d::TwiceDifferentiableFunction,
-                   initial_x::Vector{T};
-                   xtol::Real = 1e-32,
-                   ftol::Real = 1e-8,
-                   grtol::Real = 1e-8,
-                   iterations::Integer = 1_000,
-                   store_trace::Bool = false,
-                   show_trace::Bool = false,
-                   extended_trace::Bool = false,
-                   callback = nothing,
-                   show_every = 1,
-                   linesearch!::Function = hz_linesearch!)
+immutable Newton <: Optimizer end
+
+function optimize{T}(d::TwiceDifferentiableFunction,
+                     initial_x::Vector{T},
+                     ::Newton;
+                     xtol::Real = 1e-32,
+                     ftol::Real = 1e-8,
+                     grtol::Real = 1e-8,
+                     iterations::Integer = 1_000,
+                     store_trace::Bool = false,
+                     show_trace::Bool = false,
+                     extended_trace::Bool = false,
+                     callback = nothing,
+                     show_every = 1,
+                     linesearch!::Function = hz_linesearch!,
+                     nargs...)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)

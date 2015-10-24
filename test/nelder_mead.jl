@@ -3,7 +3,7 @@ using Optim
 # Test Optim.nelder_mead for all functions except Large Polynomials in Optim.UnconstrainedProblems.examples
 for (name, prob) in Optim.UnconstrainedProblems.examples
 	f_prob = prob.f
-	res = Optim.nelder_mead(f_prob, prob.initial_x)
+	res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead())
 	if name != "Large Polynomial" # FIX THIS!
 		@assert norm(res.minimum - prob.solutions) < 1e-2
 	end
@@ -19,13 +19,13 @@ end
 
 initial_x = [0.0, 0.0]
 
-results = Optim.nelder_mead(f, initial_x)
+results = Optim.optimize(f, initial_x, method=NelderMead())
 
 @assert results.f_converged
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 @assert length(results.trace.states) == 0
 
-results = Optim.nelder_mead(rosenbrock, initial_x)
+results = Optim.optimize(rosenbrock, initial_x, method=NelderMead())
 
 @assert results.f_converged
 @assert norm(results.minimum - [1.0, 1.0]) < 0.01
