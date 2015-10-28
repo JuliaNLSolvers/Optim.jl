@@ -82,6 +82,9 @@ module Optim
     include("golden_section.jl")
     include("brent.jl")
 
+    # Backward compatibility
+    include("deprecate.jl")
+
     # End-User Facing Wrapper Functions
     include("optimize.jl")
 

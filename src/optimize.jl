@@ -1,37 +1,6 @@
-function getOptimizer(method::Optimizer)
-    method
-end
 
-function getOptimizer(method::Symbol)
-    T = if method == :gradient_descent
-      GradientDescent
-    elseif method == :momentum_gradient_descent
-      MomentumGradientDescent
-    elseif method == :cg
-      ConjugateGradient
-    elseif method == :bfgs
-      BFGS
-    elseif method == :l_bfgs
-      LBFGS
-    elseif method == :newton
-      Newton
-    elseif method == :nelder_mead
-      NelderMead
-    elseif method == :simulated_annealing
-      SimulatedAnnealing
-    elseif method == :brent
-      Brent
-    elseif method == :golden_section
-      GoldenSection
-    elseif method == :accelerated_gradient_descent
-      AcceleratedGradientDescent
-    elseif method == :fminbox
-      Fminbox
-    else
-      throw(ArgumentError("Unknown method $method"))
-    end
-    warn("Specifying the method using symbols is deprecated. Use \"method = $(T)()\" instead")
-    T()
+function get_optimizer(method::Optimizer)
+    method
 end
 
 function optimize(f::Function,
@@ -80,7 +49,7 @@ function optimize(d::DifferentiableFunction,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method;
              show_every = show_every,
              show_trace = show_trace,
@@ -104,7 +73,7 @@ function optimize(d::TwiceDifferentiableFunction,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method;
              show_every = show_every,
              show_trace = show_trace,
@@ -130,7 +99,7 @@ function optimize(f::Function,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, method;
              show_every = show_every,
@@ -156,7 +125,7 @@ function optimize(f::Function,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     d = DifferentiableFunction(f, g!)
     optimize(d, initial_x, method;
              show_every = show_every,
@@ -181,7 +150,7 @@ function optimize(f::Function,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     optimize(f, initial_x, method;
              show_every = show_every,
              show_trace = show_trace,
@@ -209,7 +178,7 @@ function optimize{T <: AbstractFloat}(f::Function,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = getOptimizer(method)::Optimizer
+    method = get_optimizer(method)::Optimizer
     optimize(f, Float64(lower), Float64(upper), method;
              rel_tol = rel_tol,
              abs_tol = abs_tol,
