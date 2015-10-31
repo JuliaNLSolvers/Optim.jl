@@ -32,8 +32,7 @@ function optimize{T <: AbstractFloat}(
         show_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        extended_trace::Bool = false,
-        nargs...)
+        extended_trace::Bool = false)
 
     if !(x_lower < x_upper)
         error("x_lower must be less than x_upper")

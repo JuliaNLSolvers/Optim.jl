@@ -1,85 +1,57 @@
-
 function get_optimizer(method::Optimizer)
     method
 end
 
 function optimize(f::Function,
-                  initial_x::Array,
-                  method::Optimizer;
+                  initial_x::Array;
+                  method = NelderMead(),
+                  xtol::Real = 1e-32,
+                  ftol::Real = 1e-8,
+                  grtol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
+                  show_trace::Bool = false,
+                  extended_trace::Bool = false,
+                  show_every::Integer = 1,
                   autodiff::Bool = false,
-                  nargs...)
-    if !autodiff
-        d = DifferentiableFunction(f)
-    else
-        d = Optim.autodiff(f, eltype(initial_x), length(initial_x))
-    end
-    optimize(d, initial_x, method;
-             nargs...)
-end
-
-function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer;
-                  nargs...)
-    dn = DifferentiableFunction(d.f, d.g!, d.fg!)
-    optimize(dn, initial_x, method;
-             nargs...)
-end
-
-function optimize(d::DifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer;
-                  nargs...)
-    optimize(d.f, initial_x, method;
-             nargs...)
-end
-
-function optimize(d::DifferentiableFunction,
-                  initial_x::Array;
-                  method = LBFGS(),
-                  show_trace::Bool = false,
-                  extended_trace::Bool = false,
-                  callback = nothing,
-                  show_every = 1,
-                  nargs...)
-    show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
-    if show_trace
+                  callback = nothing)
+    options = OptimizationOptions(;
+        xtol = xtol, ftol = ftol, grtol = grtol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every,
+        autodiff = autodiff)
+    if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
     method = get_optimizer(method)::Optimizer
-    optimize(d, initial_x, method;
-             show_every = show_every,
-             show_trace = show_trace,
-             extended_trace = extended_trace,
-             callback = callback,
-             nargs...)
+    optimize(f, initial_x, method, options)
 end
 
-function optimize(d::TwiceDifferentiableFunction,
+function optimize(f::Function,
+                  g!::Function,
                   initial_x::Array;
                   method = LBFGS(),
+                  xtol::Real = 1e-32,
+                  ftol::Real = 1e-8,
+                  grtol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  callback = nothing,
-                  show_every = 1,
-                  nargs...)
-    show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
-    if show_trace
+                  show_every::Integer = 1,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        xtol = xtol, ftol = ftol, grtol = grtol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every)
+    if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
     method = get_optimizer(method)::Optimizer
-    optimize(d, initial_x, method;
-             show_every = show_every,
-             show_trace = show_trace,
-             extended_trace = extended_trace,
-             callback = callback,
-             nargs...)
+    d = DifferentiableFunction(f, g!)
+    optimize(d, initial_x, method, options)
 end
 
 function optimize(f::Function,
@@ -87,76 +59,101 @@ function optimize(f::Function,
                   h!::Function,
                   initial_x::Array;
                   method = Newton(),
+                  xtol::Real = 1e-32,
+                  ftol::Real = 1e-8,
+                  grtol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  callback = nothing,
-                  show_every = 1,
-                  nargs...)
-    show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
-    if show_trace
+                  show_every::Integer = 1,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        xtol = xtol, ftol = ftol, grtol = grtol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every)
+    if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
     method = get_optimizer(method)::Optimizer
     d = TwiceDifferentiableFunction(f, g!, h!)
-    optimize(d, initial_x, method;
-             show_every = show_every,
-             show_trace = show_trace,
-             extended_trace = extended_trace,
-             callback = callback,
-             nargs...)
+    optimize(d, initial_x, method, options)
 end
 
 function optimize(f::Function,
-                  g!::Function,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    if !options.autodiff
+        d = DifferentiableFunction(f)
+    else
+        d = Optim.autodiff(f, eltype(initial_x), length(initial_x))
+    end
+    optimize(d, initial_x, method, options)
+end
+
+function optimize(d::DifferentiableFunction,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    optimize(d.f, initial_x, method, options)
+end
+
+function optimize(d::TwiceDifferentiableFunction,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    dn = DifferentiableFunction(d.f, d.g!, d.fg!)
+    optimize(dn, initial_x, method, options)
+end
+
+function optimize(d::DifferentiableFunction,
                   initial_x::Array;
                   method = LBFGS(),
+                  xtol::Real = 1e-32,
+                  ftol::Real = 1e-8,
+                  grtol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  callback = nothing,
-                  show_every = 1,
-                  nargs...)
-    show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
-    if show_trace
+                  show_every::Integer = 1,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        xtol = xtol, ftol = ftol, grtol = grtol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every)
+    if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
     method = get_optimizer(method)::Optimizer
-    d = DifferentiableFunction(f, g!)
-    optimize(d, initial_x, method;
-             show_every = show_every,
-             show_trace = show_trace,
-             extended_trace = extended_trace,
-             callback = callback,
-             nargs...)
+    optimize(d, initial_x, method, options)
 end
 
-function optimize(f::Function,
+function optimize(d::TwiceDifferentiableFunction,
                   initial_x::Array;
-                  method = NelderMead(),
+                  method = Newton(),
+                  xtol::Real = 1e-32,
+                  ftol::Real = 1e-8,
+                  grtol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
-                  callback = nothing,
-                  show_every = 1,
-                  nargs...)
-    show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
-    if show_trace
+                  show_every::Integer = 1,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        xtol = xtol, ftol = ftol, grtol = grtol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every)
+    if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
     method = get_optimizer(method)::Optimizer
-    optimize(f, initial_x, method;
-             show_every = show_every,
-             show_trace = show_trace,
-             extended_trace = extended_trace,
-             callback = callback,
-             nargs...)
+    optimize(d, initial_x, method, options)
 end
 
 function optimize{T <: AbstractFloat}(f::Function,

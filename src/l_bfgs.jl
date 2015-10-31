@@ -63,7 +63,7 @@ macro lbfgstrace()
     quote
         if tracing
             dt = Dict()
-            if extended_trace
+            if o.extended_trace
                 dt["x"] = copy(x)
                 dt["g(x)"] = copy(gr)
                 dt["Current step size"] = alpha
@@ -74,31 +74,26 @@ macro lbfgstrace()
                     f_x,
                     grnorm,
                     dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
         end
     end
 end
 
-immutable LBFGS <: Optimizer end
+immutable LBFGS <: Optimizer
+    m::Int
+    linesearch!::Function
+end
+
+LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!) =
+  LBFGS(Int(m), linesearch!)
 
 function optimize{T}(d::DifferentiableFunction,
                      initial_x::Vector{T},
-                     ::LBFGS;
-                     m::Integer = 10,
-                     xtol::Real = 1e-32,
-                     ftol::Real = 1e-8,
-                     grtol::Real = 1e-8,
-                     iterations::Integer = 1_000,
-                     store_trace::Bool = false,
-                     show_trace::Bool = false,
-                     extended_trace::Bool = false,
-                     callback = nothing,
-                     show_every = 1,
-                     linesearch!::Function = hz_linesearch!,
-                     nargs...)
+                     mo::LBFGS,
+                     o::OptimizationOptions)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -117,8 +112,8 @@ function optimize{T}(d::DifferentiableFunction,
     gr, gr_previous = Array(T, n), Array(T, n)
 
     # Store a history of changes in position and gradient
-    rho = Array(T, m)
-    dx_history, dgr_history = Array(T, n, m), Array(T, n, m)
+    rho = Array(T, mo.m)
+    dx_history, dgr_history = Array(T, n, mo.m), Array(T, n, mo.m)
 
     # The current search direction
     s = Array(T, n)
@@ -144,11 +139,11 @@ function optimize{T}(d::DifferentiableFunction,
     dx, dgr = Array(T, n), Array(T, n)
 
     # Buffers for use by twoloop!
-    twoloop_q, twoloop_alpha = Array(T, n), Array(T, m)
+    twoloop_q, twoloop_alpha = Array(T, n), Array(T, mo.m)
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @lbfgstrace
 
     # Assess multiple types of convergence
@@ -156,13 +151,13 @@ function optimize{T}(d::DifferentiableFunction,
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration < iterations
+    while !converged && iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
         pseudo_iteration += 1
 
         # Determine the L-BFGS search direction
-        twoloop!(s, gr, rho, dx_history, dgr_history, m, pseudo_iteration,
+        twoloop!(s, gr, rho, dx_history, dgr_history, mo.m, pseudo_iteration,
                  twoloop_alpha, twoloop_q)
 
         # Refresh the line search cache
@@ -180,7 +175,7 @@ function optimize{T}(d::DifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -210,9 +205,9 @@ function optimize{T}(d::DifferentiableFunction,
             # TODO: Introduce a formal error? There was a warning here previously
             break
         end
-        dx_history[:, mod1(pseudo_iteration, m)] = dx
-        dgr_history[:, mod1(pseudo_iteration, m)] = dgr
-        rho[mod1(pseudo_iteration, m)] = rho_iteration
+        dx_history[:, mod1(pseudo_iteration, mo.m)] = dx
+        dgr_history[:, mod1(pseudo_iteration, mo.m)] = dgr
+        rho[mod1(pseudo_iteration, mo.m)] = rho_iteration
 
         x_converged,
         f_converged,
@@ -222,9 +217,9 @@ function optimize{T}(d::DifferentiableFunction,
                                        f_x,
                                        f_x_previous,
                                        gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
+                                       o.xtol,
+                                       o.ftol,
+                                       o.grtol)
 
         @lbfgstrace
     end
@@ -234,13 +229,13 @@ function optimize{T}(d::DifferentiableFunction,
                                            x,
                                            Float64(f_x),
                                            iteration,
-                                           iteration == iterations,
+                                           iteration == o.iterations,
                                            x_converged,
-                                           xtol,
+                                           o.xtol,
                                            f_converged,
-                                           ftol,
+                                           o.ftol,
                                            gr_converged,
-                                           grtol,
+                                           o.grtol,
                                            tr,
                                            f_calls,
                                            g_calls)

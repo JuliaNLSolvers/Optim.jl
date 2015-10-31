@@ -1,5 +1,39 @@
 abstract Optimizer
 
+immutable OptimizationOptions{TCallback <: Union{Void, Function}}
+    xtol::Float64
+    ftol::Float64
+    grtol::Float64
+    iterations::Int
+    store_trace::Bool
+    show_trace::Bool
+    extended_trace::Bool
+    autodiff::Bool
+    show_every::Int
+    callback::TCallback
+end
+
+function OptimizationOptions(;
+        xtol::Real = 1e-32,
+        ftol::Real = 1e-8,
+        grtol::Real = 1e-8,
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        extended_trace::Bool = false,
+        autodiff::Bool = false,
+        show_every::Integer = 1,
+        callback = nothing)
+    show_every = show_every > 0 ? show_every: 1
+    if extended_trace && callback == nothing
+        show_trace = true
+    end
+    OptimizationOptions{typeof(callback)}(
+        Float64(xtol), Float64(ftol), Float64(grtol), Int(iterations),
+        store_trace, show_trace, extended_trace, autodiff, Int(show_every),
+        callback)
+end
+
 immutable OptimizationState
     iteration::Int
     value::Float64

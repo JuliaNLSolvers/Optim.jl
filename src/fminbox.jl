@@ -127,7 +127,7 @@ function optimize{T<:AbstractFloat}(
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
         precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
-        optimizer = ConjugateGradient(),
+        optimizer = ConjugateGradient,
         nargs...)
 
     x = copy(initial_x)
@@ -176,9 +176,9 @@ function optimize{T<:AbstractFloat}(
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        resultsnew = optimize(dfbox, x; method=optimizer, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
-                                         store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace,
-                                         linesearch! = linesearch!, eta=eta, P=P, precondprep=pcp)
+        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep = pcp),
+                              OptimizationOptions(xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
+                                                  store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace))
         if first == true
             results = resultsnew
         else

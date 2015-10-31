@@ -84,7 +84,7 @@ macro cgtrace()
     quote
         if tracing
             dt = Dict()
-            if extended_trace
+            if o.extended_trace
                 dt["x"] = copy(x)
                 dt["g(x)"] = copy(gr)
                 dt["Current step size"] = alpha
@@ -95,33 +95,33 @@ macro cgtrace()
                     f_x,
                     grnorm,
                     dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
         end
     end
 end
 
-immutable ConjugateGradient <: Optimizer end
+immutable ConjugateGradient{T} <: Optimizer
+    eta::Float64
+    P::T
+    precondprep::Function
+    linesearch!::Function
+end
+
+function ConjugateGradient(;
+                           linesearch!::Function = hz_linesearch!,
+                           eta::Real = 0.4,
+                           P::Any = nothing,
+                           precondprep::Function = (P, x) -> nothing)
+    ConjugateGradient{typeof(P)}(Float64(eta), P, precondprep, linesearch!)
+end
 
 function optimize{T}(df::DifferentiableFunction,
                      initial_x::Array{T},
-                     ::ConjugateGradient;
-                     xtol::Real = convert(T,1e-32),
-                     ftol::Real = convert(T,1e-8),
-                     grtol::Real = convert(T,1e-8),
-                     iterations::Integer = 1_000,
-                     store_trace::Bool = false,
-                     show_trace::Bool = false,
-                     extended_trace::Bool = false,
-                     callback = nothing,
-                     show_every = 1,
-                     linesearch!::Function = hz_linesearch!,
-                     eta::Real = convert(T,0.4),
-                     P::Any = nothing,
-                     precondprep::Function = (P, x) -> nothing,
-                     nargs...)
+                     cg::ConjugateGradient,
+                     o::OptimizationOptions)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -168,7 +168,7 @@ function optimize{T}(df::DifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @cgtrace
 
     # Output messages
@@ -182,8 +182,8 @@ function optimize{T}(df::DifferentiableFunction,
     end
 
     # Determine the intial search direction
-    precondprep(P, x)
-    cg_precondfwd(s, P, gr)
+    cg.precondprep(cg.P, x)
+    cg_precondfwd(s, cg.P, gr)
     for i in 1:n
         @inbounds s[i] = -s[i]
     end
@@ -193,7 +193,7 @@ function optimize{T}(df::DifferentiableFunction,
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration < iterations
+    while !converged && iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
@@ -222,7 +222,7 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          cg.linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -248,9 +248,9 @@ function optimize{T}(df::DifferentiableFunction,
                                        f_x,
                                        f_x_previous,
                                        gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
+                                       o.xtol,
+                                       o.ftol,
+                                       o.grtol)
 
         # Check sanity of function and gradient
         if !isfinite(f_x)
@@ -259,15 +259,15 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
-        precondprep(P, x)
-        dPd = cg_precondinvdot(s, P, s)
-        etak::T = eta * vecdot(s, gr_previous) / dPd
+        cg.precondprep(cg.P, x)
+        dPd = cg_precondinvdot(s, cg.P, s)
+        etak::T = cg.eta * vecdot(s, gr_previous) / dPd
         for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = vecdot(y, s)
-        cg_precondfwd(pgr, P, gr)
-        betak = (vecdot(y, pgr) - cg_precondfwddot(y, P, y) *
+        cg_precondfwd(pgr, cg.P, gr)
+        betak = (vecdot(y, pgr) - cg_precondfwddot(y, cg.P, y) *
                  vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         for i in 1:n
@@ -282,13 +282,13 @@ function optimize{T}(df::DifferentiableFunction,
                                            x,
                                            Float64(f_x),
                                            iteration,
-                                           iteration == iterations,
+                                           iteration == o.iterations,
                                            x_converged,
-                                           Float64(xtol),
+                                           o.xtol,
                                            f_converged,
-                                           Float64(ftol),
+                                           o.ftol,
                                            gr_converged,
-                                           Float64(grtol),
+                                           o.grtol,
                                            tr,
                                            f_calls,
                                            g_calls)
