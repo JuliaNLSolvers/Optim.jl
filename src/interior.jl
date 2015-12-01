@@ -244,7 +244,30 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
         combined_h!(x, H, objective.h!, constraints, t)
         @newtontrace
-        cH = cholfact!(H)
+        # To ensure descent, the Hessian must be positive-definite.
+        # As needed, add positive elements to the diagonal.
+        # cH = cholfact!(H)
+        A = copy(H)
+        retry = true
+        λ = sqrt(eps(eltype(H)))
+        while retry
+            retry = false
+            C, info = Base.LinAlg.LAPACK.potrf!('U', A)
+            if info != 0
+                copy!(A, H)
+                for i = 1:size(H,1)
+                    h = abs(H[i,i])
+                    if h > 0
+                        A[i,i] = (1+λ)*h
+                    else
+                        A[i,i] = λ
+                    end
+                end
+                λ *= 10
+                retry = true
+            end
+        end
+        cH = Base.LinAlg.Cholesky(A, :U)
         s = -(cH\gr)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dot(s,gr))
