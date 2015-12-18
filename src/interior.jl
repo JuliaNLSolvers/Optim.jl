@@ -239,6 +239,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                 (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
     iteration, f_calls, g_calls = 0, 0, 0
     f_x = f_x_previous = convert(T,Inf)
+    x_converged = f_converged = gr_converged = converged = true
     while m/t > eps_gap && iteration < iterations
         f_x_previous = f_x
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
@@ -281,24 +282,24 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_calls += _f_calls
         g_calls += _g_calls
         f_x /= t
-        if alphamax >= 1
+        x_converged,
+        f_converged,
+        gr_converged,
+        converged = assess_convergence(x,
+                                       x_previous,
+                                       f_x,
+                                       f_x_previous,
+                                       gr,
+                                       xtol,
+                                       ftol,
+                                       grtol)
+        if alphamax >= 1 || converged
             t *= mu
             df = DifferentiableFunction(dummy_f,
                                         dummy_g!,
                                         (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
         end
     end
-    x_converged,
-    f_converged,
-    gr_converged,
-    converged = assess_convergence(x,
-                                   x_previous,
-                                   f_x,
-                                   f_x_previous,
-                                   gr,
-                                   xtol,
-                                   ftol,
-                                   grtol)
     MultivariateOptimizationResults("Interior/Newton",
                                     initial_x,
                                     x,
