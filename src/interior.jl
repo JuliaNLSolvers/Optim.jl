@@ -240,6 +240,9 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
     iteration, f_calls, g_calls = 0, 0, 0
     f_x = f_x_previous = convert(T,Inf)
     x_converged = f_converged = gr_converged = converged = true
+    if m/t < eps_gap
+        f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
+    end
     while m/t > eps_gap && iteration < iterations
         f_x_previous = f_x
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
