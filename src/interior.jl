@@ -248,31 +248,9 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
         combined_h!(x, H, objective.h!, constraints, t)
         @newtontrace
-        # To ensure descent, the Hessian must be positive-definite.
-        # As needed, add positive elements to the diagonal.
         # cH = cholfact!(H)
-        A = copy(H)
-        retry = true
-        λ = sqrt(eps(eltype(H)))
-        while retry
-            retry = false
-            C, info = Base.LinAlg.LAPACK.potrf!('U', A)
-            if info != 0
-                copy!(A, H)
-                for i = 1:size(H,1)
-                    h = abs(H[i,i])
-                    if h > 0
-                        A[i,i] = (1+λ)*h
-                    else
-                        A[i,i] = λ
-                    end
-                end
-                λ *= 10
-                retry = true
-            end
-        end
-        cH = Base.LinAlg.Cholesky(A, :U)
-        s = -(cH\gr)
+        # To ensure descent, the Hessian must be positive-definite.
+        s = newtonstep(H, gr)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dot(s,gr))
         alphamax = toedge(x, s, constraints)
@@ -408,4 +386,27 @@ function gnorm(objective, constraints, initial_x)
         gcm += abs(gc[i])
     end
     vo, vc, gom, gcm
+end
+
+function newtonstep(H, gr)
+    A = copy(H)
+    # Direct use of potrf means we don't have to compute the Cholesky
+    # decomposition twice (once in `isposdef` and again by `cholfact`)
+    _, info = Base.LinAlg.LAPACK.potrf!('L', A)
+    if info == 0
+        cH = Base.LinAlg.Cholesky(A, :L)
+        return -(cH\gr)
+    end
+    D, V = eig(H)   # very expensive, but see Optim #153
+    Dabs = abs(D)
+    Dmax = maximum(Dabs)
+    if Dmax == 0
+        return -gr
+    end
+    δ = sqrt(eps(eltype(D)))
+    reliable = Dabs .> δ*Dmax
+    Dinv = similar(D)
+    Dinv[reliable] = 1./Dabs[reliable]
+    Dinv[!reliable] = 1/Dmax
+    return -(V*(Dinv .* (V'*gr)))
 end
