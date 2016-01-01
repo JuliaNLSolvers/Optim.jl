@@ -30,8 +30,8 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds alpha[i] = rho[i] * vecdot(dx_history[:, i], q)
-        for j in 1:n
+        @inbounds alpha[i] = rho[i] * vecdot(slice(dx_history, :, i), q)
+        @simd for j in 1:n
             @inbounds q[j] -= alpha[i] * dgr_history[j, i]
         end
     end
@@ -45,16 +45,14 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * vecdot(dgr_history[:, i], s)
-        for j in 1:n
+        @inbounds beta = rho[i] * vecdot(slice(dgr_history, :, i), s)
+        @simd for j in 1:n
             @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
     end
 
     # Negate search direction
-    for i in 1:n
-        @inbounds s[i] = -1.0 * s[i]
-    end
+    scale!(s, -1)
 
     return
 end
@@ -166,7 +164,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
         dphi0 = vecdot(gr, s)
         if dphi0 > 0.0
             pseudo_iteration = 1
-            for i in 1:n
+            @simd for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
             dphi0 = _dot(gr, s)
@@ -184,7 +182,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
         copy!(x_previous, x)
 
         # Update current position
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds dx[i] = alpha * s[i]
             @inbounds x[i] = x[i] + dx[i]
         end
@@ -197,7 +195,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         # Measure the change in the gradient
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds dgr[i] = gr[i] - gr_previous[i]
         end
 

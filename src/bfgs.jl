@@ -104,16 +104,14 @@ function bfgs{T}(d::Union{DifferentiableFunction,
         # Set the search direction
         # Search direction is the negative gradient divided by the approximate Hessian
         A_mul_B!(s, invH, gr)
-        for i in 1:n
-            @inbounds s[i] = -s[i]
-        end
+        scale!(s, -1)
 
         # Refresh the line search cache
         dphi0 = vecdot(gr, s)
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)
-            for i in 1:n
+            @simd for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
             dphi0 = vecdot(gr, s)
@@ -130,7 +128,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
         copy!(x_previous, x)
 
         # Update current position
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds dx[i] = alpha * s[i]
             @inbounds x[i] = x[i] + dx[i]
         end
@@ -155,7 +153,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
                                        grtol)
 
         # Measure the change in the gradient
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds dgr[i] = gr[i] - gr_previous[i]
         end
 
@@ -171,7 +169,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         for i in 1:n
-            for j in 1:n
+            @simd for j in 1:n
                 @inbounds invH[i, j] += c1 * dx[i] * dx[j] - c2 * (u[i] * dx[j] + u[j] * dx[i])
             end
         end
