@@ -193,7 +193,8 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
         copy!(gr_previous, gr)
 
         # Update the function value and gradient
-        f_x_previous, f_x = NaN, d.fg!(x, gr)
+        f_x_previous = f_x
+        f_x = d.fg!(x, gr)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         # Measure the change in the gradient
