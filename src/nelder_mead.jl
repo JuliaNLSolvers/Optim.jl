@@ -61,7 +61,7 @@ function nelder_mead{T}(f::Function,
     end
     n = m + 1
     p = repmat(initial_x, 1, n)
-    for i in 1:m
+    @simd for i in 1:m
         @inbounds p[i, i] += initial_step[i]
     end
 
@@ -85,11 +85,13 @@ function nelder_mead{T}(f::Function,
     tracing = show_trace || store_trace || extended_trace || callback != nothing
     @nmtrace
 
-    # Cache p_bar, y_bar, p_star and p_star_star
+    # Cache p_bar, y_bar, p_star, p_star_star, p_l, p_h
     p_bar = Array(T, m)
     y_bar = Array(T, m)
     p_star = Array(T, m)
     p_star_star = Array(T, m)
+    p_l = Array(T, m)
+    p_h = Array(T, m)
 
     # Iterate until convergence or exhaustion
     f_converged = false
@@ -99,27 +101,26 @@ function nelder_mead{T}(f::Function,
 
         # Find p_l and p_h, the minimum and maximum values of f() among p
         y_l, l = findmin(y)
-        @inbounds p_l = p[:, l]
+        copy!(p_l, slice(p, :, l))
         y_h, h = findmax(y)
-        @inbounds p_h = p[:, h]
+        copy!(p_h, slice(p, :, h))
 
         # Compute the centroid of the non-maximal points
         # Also cache function values of all non-maximal points
         fill!(p_bar, 0.0)
+
         tmpindex = 0
         for i in 1:n
             if i != h
                 tmpindex += 1
                 @inbounds y_bar[tmpindex] = y[i]
-                @inbounds p_bar[:] += p[:, i]
+                LinAlg.axpy!(1, slice(p, :, i), p_bar)
             end
         end
-        for j in 1:m
-            @inbounds p_bar[j] /= m
-        end
+        scale!(p_bar, 1/m)
 
         # Compute a reflection
-        for j in 1:m
+        @simd for j in 1:m
             @inbounds p_star[j] = (1 + a) * p_bar[j] - a * p_h[j]
         end
         y_star = f(p_star)
@@ -127,31 +128,31 @@ function nelder_mead{T}(f::Function,
 
         if y_star < y_l
             # Compute an expansion
-            for j in 1:m
+            @simd for j in 1:m
                 @inbounds p_star_star[j] = g * p_star[j] + (1 - g) * p_bar[j]
             end
             y_star_star = f(p_star_star)
             f_calls += 1
 
             if y_star_star < y_l
-                @inbounds p_h[:] = p_star_star
-                @inbounds p[:, h] = p_star_star
+                copy!(p_h, p_star_star)
+                copy!(slice(p, :, h), p_star_star)
                 @inbounds y[h] = y_star_star
             else
-                p_h = p_star
-                @inbounds p[:, h] = p_star
+                copy!(p_h, p_star)
+                copy!(slice(p, :, h), p_star)
                 @inbounds y[h] = y_star
             end
         else
             if dominates(y_star, y_bar)
                 if y_star < y_h
-                    @inbounds p_h[:] = p_star
-                    @inbounds p[:, h] = p_h
+                    copy!(p_h, p_star)
+                    copy!(slice(p, :, h), p_h)
                     @inbounds y[h] = y_star
                 end
 
                 # Compute a contraction
-                for j in 1:m
+                @simd for j in 1:m
                     @inbounds p_star_star[j] = b * p_h[j] + (1 - b) * p_bar[j]
                 end
                 y_star_star = f(p_star_star)
@@ -159,19 +160,19 @@ function nelder_mead{T}(f::Function,
 
                 if y_star_star > y_h
                     for i = 1:n
-                        for j in 1:m
+                        @simd for j in 1:m
                             @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
                         end
                         @inbounds y[i] = f(p[:, i])
                     end
                 else
-                    @inbounds p_h[:] = p_star_star
-                    @inbounds p[:, h] = p_h
+                    copy!(p_h, p_star_star)
+                    copy!(slice(p, :, h), p_h)
                     @inbounds y[h] = y_star_star
                 end
             else
-                @inbounds p_h[:] = p_star
-                @inbounds p[:, h] = p_h
+                copy!(p_h, p_star)
+                copy!(slice(p, :, h), p_h)
                 @inbounds y[h] = y_star
             end
         end

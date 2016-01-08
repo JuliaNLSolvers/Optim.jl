@@ -92,7 +92,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
         iteration += 1
 
         # Search direction is always the negative gradient
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds s[i] = -gr[i]
         end
 
@@ -108,7 +108,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
 
         # Make one move in the direction of the gradient
         copy!(y_previous, y)
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds y[i] = x_previous[i] + alpha * s[i]
         end
 
@@ -117,7 +117,7 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
 
         # Update current position with Nesterov correction
         scaling = (iteration - 1) / (iteration + 2)
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds x[i] = y[i] + scaling * (y[i] - y_previous[i])
         end
 

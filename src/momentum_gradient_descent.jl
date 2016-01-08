@@ -85,7 +85,7 @@ function momentum_gradient_descent{T}(d::DifferentiableFunction,
         iteration += 1
 
         # Search direction is always the negative gradient
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds s[i] = -gr[i]
         end
 
@@ -100,7 +100,7 @@ function momentum_gradient_descent{T}(d::DifferentiableFunction,
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Update current position
-        for i in 1:n
+        @simd for i in 1:n
             # Need to move x into x_previous while using x_previous and creating "x_new"
             @inbounds tmp = x_previous[i]
             @inbounds x_previous[i] = x[i]
