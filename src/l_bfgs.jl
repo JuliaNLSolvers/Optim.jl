@@ -167,7 +167,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
             @simd for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = _dot(gr, s)
+            dphi0 = vecdot(gr, s)
         end
 
         clear!(lsr)
