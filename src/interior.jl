@@ -248,8 +248,6 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
         combined_h!(x, H, objective.h!, constraints, t)
         @newtontrace
-        # cH = cholfact!(H)
-        # To ensure descent, the Hessian must be positive-definite.
         s = newtonstep(H, gr)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dot(s,gr))
@@ -388,25 +386,4 @@ function gnorm(objective, constraints, initial_x)
     vo, vc, gom, gcm
 end
 
-function newtonstep(H, gr)
-    A = copy(H)
-    # Direct use of potrf means we don't have to compute the Cholesky
-    # decomposition twice (once in `isposdef` and again by `cholfact`)
-    _, info = Base.LinAlg.LAPACK.potrf!('L', A)
-    if info == 0
-        cH = Base.LinAlg.Cholesky(A, :L)
-        return -(cH\gr)
-    end
-    D, V = eig(H)   # very expensive, but see Optim #153
-    Dabs = abs(D)
-    Dmax = maximum(Dabs)
-    if Dmax == 0
-        return -gr
-    end
-    δ = sqrt(eps(eltype(D)))
-    reliable = Dabs .> δ*Dmax
-    Dinv = similar(D)
-    Dinv[reliable] = 1./Dabs[reliable]
-    Dinv[!reliable] = 1/Dmax
-    return -(V*(Dinv .* (V'*gr)))
-end
+newtonstep(H, gr) = cholfact(Positive, H)\(-gr)
