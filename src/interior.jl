@@ -248,7 +248,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         F, Hd = ldltfact!(Positive, H)
         s = F\(-gr)
         sgr = vecdot(s, gr)
-        if !(sgr <= 0)
+        if !(sgr <= 0) || isinf(sgr)
             # Presumably due to numeric instability
             converged = x_converged = f_converged = gr_converged = false
             break
