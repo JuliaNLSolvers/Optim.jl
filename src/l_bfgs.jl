@@ -160,7 +160,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
                  twoloop_alpha, twoloop_q)
 
         # Refresh the line search cache
-        dphi0 = dot(gr, s)
+        dphi0 = vecdot(gr, s)
         if dphi0 >= 0
             # The search direction is not a descent direction. Something
             # is wrong, so restart the search-direction algorithm.
@@ -169,7 +169,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
             for i = 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = dot(gr, s)
+            dphi0 = vecdot(gr, s)
         end
         dphi0 == 0 && break   # we're at a stationary point
         clear!(lsr)
@@ -212,7 +212,7 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
         end
 
         # Update the L-BFGS history of positions and gradients
-        rho_iteration = 1 / dot(dx, dgr)
+        rho_iteration = 1 / vecdot(dx, dgr)
         if isinf(rho_iteration)
             # TODO: Introduce a formal error? There was a warning here previously
             break

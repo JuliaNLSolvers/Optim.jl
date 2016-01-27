@@ -1,7 +1,7 @@
 # phi = (galpha, alpha) -> linefunc(galpha, alpha, func, x, d, xtmp, g)
 
 # Dot product of two "vectors", even if they don't have a vector shape
-function dot(x::Array, y::Array)
+function vecdot(x::Array, y::Array)
     d = x[1] * y[1]
     for i = 2:length(x)
         d += x[i] * y[i]
@@ -10,7 +10,7 @@ function dot(x::Array, y::Array)
 end
 
 # Vector-norm-squared, even if it doesn't have a vector shape
-norm2(x::Array) = dot(x, x)
+vecnorm2(x::Array) = vecdot(x, x)
 
 # Display flags are represented as a bitfield
 # (not exported, but can use via OptimizeMod.ITER, for example)
@@ -612,7 +612,7 @@ function linefunc!{T}(df::Union{DifferentiableFunction,
         f_calls += 1
         g_calls += 1
         if isfinite(val)
-            gphi = dot(g, s)
+            gphi = vecdot(g, s)
         end
     else
         val = df.f(xtmp)

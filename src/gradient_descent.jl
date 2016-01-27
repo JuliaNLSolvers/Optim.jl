@@ -85,7 +85,7 @@ function gradient_descent{T}(d::Union{DifferentiableFunction,
         end
 
         # Refresh the line search cache
-        dphi0 = dot(gr, s)
+        dphi0 = vecdot(gr, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 

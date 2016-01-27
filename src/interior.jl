@@ -251,7 +251,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         F, Hd = ldltfact!(Positive, H)
         s = F\(-gr)
         clear!(lsr)
-        push!(lsr, zero(T), f_x, dot(s,gr))
+        push!(lsr, zero(T), f_x, vecdot(s,gr))
         alphamax = toedge(x, s, constraints)
         alpha = alphamax < 1 ? 0.9*alphamax : 1.0
         alpha, _f_calls, _g_calls =
