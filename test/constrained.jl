@@ -1,4 +1,4 @@
-import Optim
+using Optim
 using Base.Test
 
 # Quadratic objective function
@@ -55,3 +55,17 @@ A = [1.0 2.0; 3.0 4.0]
 b = [1.0,1.0]
 results = Optim.nnls(A, b)
 @test norm(results.minimum - [0,0.3]) < 1e-6
+
+# 1d newton
+let f(x) = (z = x[1]; -2z^2 + z^4),
+    g!(x, gr) = (z = x[1]; gr[1] = -4z + 4z^3; x),
+    h!(x, H) = (z = x[1]; H[1,1] = -4 + 12z^2; H),
+    objective = TwiceDifferentiableFunction(f, g!, (x,gr) -> (g!(x, gr); f(x)), h!),
+    constr = ConstraintsBox([-0.9],[0.9])
+
+    for x0 in (0.1,0.2,0.3,0.5,0.7)
+        x = [x0]
+        soln = interior(objective, x, constr, method=:newton)
+        @test_approx_eq_eps soln.minimum[1] 0.9 1e-6
+    end
+end

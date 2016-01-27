@@ -211,7 +211,7 @@ linlsq_h!(x, H, A, b) = At_mul_B!(H, A, A)
 function interior_newton{T}(objective::TwiceDifferentiableFunction,
                             initial_x::Vector{T},
                             constraints::AbstractConstraints;
-                            t = one(T), mu = 10, eps_gap = 1e-12,
+                            t = one(T), mu = 10, eps_gap = convert(T,NaN),
                             xtol::Real = convert(T,1e-32),
                             ftol::Real = convert(T,1e-8),
                             grtol::Real = convert(T,1e-8),
@@ -237,18 +237,19 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
     df = DifferentiableFunction(dummy_f,
                                 dummy_g!,
                                 (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
-    iteration, f_calls, g_calls = 0, 0, 0
+    iteration, iter_t, f_calls, g_calls = 0, 0, 0, 0
     f_x = f_x_previous = convert(T,Inf)
     x_converged = f_converged = gr_converged = converged = true
     if m/t < eps_gap
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
     end
-    while m/t > eps_gap && iteration < iterations
+#    while m/t > eps_gap && iteration < iterations
+    while iteration < iterations
         f_x_previous = f_x
         f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
         combined_h!(x, H, objective.h!, constraints, t)
-        @newtontrace
-        s = newtonstep(H, gr)
+        F, Hd = ldltfact!(Positive, H)
+        s = F\(-gr)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dot(s,gr))
         alphamax = toedge(x, s, constraints)
@@ -258,9 +259,11 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         copy!(x_previous, x)
         step!(x, x, s, alpha, constraints)
         iteration += 1
+        iter_t += 1
         f_calls += _f_calls
         g_calls += _g_calls
         f_x /= t
+        @newtontrace
         x_converged,
         f_converged,
         gr_converged,
@@ -272,8 +275,20 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                        xtol,
                                        ftol,
                                        grtol)
-        if alphamax >= 1 || converged
+        # It's time to change the barrier penalty if we're
+        # sufficiently "in the basin." That means (1) the Hessian is
+        # positive (semi)definite (all(Hd .> 0)) and that the Hessian
+        # step is accepted (alpha is approximately 1).  The latter
+        # suggests that the Hessian is a reliable predictor of the
+        # function shape, and that within a few iterations we'd be at
+        # the minimum.
+        if (alpha >= 0.9 && all(Hd .>= 0)) || converged
+            if iter_t == 1 && converged
+                # if changing t didn't change the solution, quit now
+                break
+            end
             t *= mu
+            iter_t = 0
             df = DifferentiableFunction(dummy_f,
                                         dummy_g!,
                                         (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
@@ -300,7 +315,7 @@ end
 function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiableFunction},
                      initial_x::Array{T},
                      constraints::AbstractConstraints;
-                     method = :cg, t = convert(T,NaN), mu = 10, eps_gap = 1e-12,
+                     method = :cg, t = convert(T,NaN), mu = 10, eps_gap = convert(T,NaN),
                      xtol::Real = 1e-32,
                      ftol::Real = 1e-8,
                      grtol::Real = 1e-8,
@@ -333,8 +348,11 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
             t = convert(T, 10*abs(gogc)/gogo)
         end
     end
+    if isnan(eps_gap)
+        eps_gap = (cbrt(eps(T)))^2/t
+    end
     if method == :newton
-        return iterior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap) # FIXME
+        return interior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap) # FIXME
     end
     if !feasible(initial_x, constraints)
         error("Initial guess must be feasible")
@@ -385,5 +403,3 @@ function gnorm(objective, constraints, initial_x)
     end
     vo, vc, gom, gcm
 end
-
-newtonstep(H, gr) = cholfact(Positive, H)\(-gr)
