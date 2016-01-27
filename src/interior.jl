@@ -239,10 +239,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                 (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
     iteration, iter_t, f_calls, g_calls = 0, 0, 0, 0
     f_x = f_x_previous = convert(T,Inf)
-    x_converged = f_converged = gr_converged = converged = true
-    if m/t < eps_gap
-        f_x = combined_fg!(x, gr, objective.fg!, constraints, t)
-    end
+    x_converged = f_converged = gr_converged = converged = false
 #    while m/t > eps_gap && iteration < iterations
     while iteration < iterations
         f_x_previous = f_x
@@ -250,8 +247,16 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         combined_h!(x, H, objective.h!, constraints, t)
         F, Hd = ldltfact!(Positive, H)
         s = F\(-gr)
+        sgr = vecdot(s, gr)
+        if !(sgr <= 0)
+            # Presumably due to numeric instability
+            converged = x_converged = f_converged = gr_converged = false
+            break
+        end
         clear!(lsr)
-        push!(lsr, zero(T), f_x, vecdot(s,gr))
+        push!(lsr, zero(T), f_x, sgr)
+        f_x /= t
+        @newtontrace
         alphamax = toedge(x, s, constraints)
         alpha = alphamax < 1 ? 0.9*alphamax : 1.0
         alpha, _f_calls, _g_calls =
@@ -262,8 +267,6 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         iter_t += 1
         f_calls += _f_calls
         g_calls += _g_calls
-        f_x /= t
-        @newtontrace
         x_converged,
         f_converged,
         gr_converged,
@@ -274,7 +277,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                        gr,
                                        xtol,
                                        ftol,
-                                       grtol)
+                                       t*grtol)
         # It's time to change the barrier penalty if we're
         # sufficiently "in the basin." That means (1) the Hessian is
         # positive (semi)definite (all(Hd .> 0)) and that the Hessian
@@ -352,7 +355,7 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
         eps_gap = (cbrt(eps(T)))^2/t
     end
     if method == :newton
-        return interior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap) # FIXME
+        return interior_newton(objective, initial_x, constraints; t=t, mu=mu, eps_gap=eps_gap, xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations, store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace)
     end
     if !feasible(initial_x, constraints)
         error("Initial guess must be feasible")
