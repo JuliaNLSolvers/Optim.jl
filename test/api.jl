@@ -25,95 +25,95 @@ d3 = TwiceDifferentiableFunction(rosenbrock,
 	                             rosenbrock_gradient!,
 	                             rosenbrock_hessian!)
 
-Optim.optimize(d1, [0.0, 0.0], method = :bfgs)
-Optim.optimize(d2, [0.0, 0.0], method = :bfgs)
+Optim.optimize(d1, [0.0, 0.0], method = BFGS())
+Optim.optimize(d2, [0.0, 0.0], method = BFGS())
 
-Optim.optimize(d1, [0.0, 0.0], method = :gradient_descent)
-Optim.optimize(d2, [0.0, 0.0], method = :gradient_descent)
+Optim.optimize(d1, [0.0, 0.0], method = GradientDescent())
+Optim.optimize(d2, [0.0, 0.0], method = GradientDescent())
 
-Optim.optimize(d1, [0.0, 0.0], method = :l_bfgs)
-Optim.optimize(d2, [0.0, 0.0], method = :l_bfgs)
+Optim.optimize(d1, [0.0, 0.0], method = LBFGS())
+Optim.optimize(d2, [0.0, 0.0], method = LBFGS())
 
-Optim.optimize(rosenbrock, [0.0, 0.0], method = :nelder_mead)
+Optim.optimize(rosenbrock, [0.0, 0.0], method = NelderMead())
 
-Optim.optimize(d3, [0.0, 0.0], method = :newton)
+Optim.optimize(d3, [0.0, 0.0], method = Newton())
 
-Optim.optimize(rosenbrock, [0.0, 0.0], method = :simulated_annealing)
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = :bfgs)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = :bfgs)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = :bfgs)
+Optim.optimize(rosenbrock, [0.0, 0.0], method = SimulatedAnnealing())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :gradient_descent)
+	     method = BFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :gradient_descent)
+	     method = BFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :gradient_descent)
+	     method = BFGS())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = GradientDescent())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = GradientDescent())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = GradientDescent())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = LBFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = LBFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = LBFGS())
+
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     method = NelderMead())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     [0.0, 0.0],
+	     method = NelderMead())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     rosenbrock_hessian!,
+	     [0.0, 0.0],
+	     method = NelderMead())
 
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :newton)
+	     method = Newton())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :bfgs,
+	           method = BFGS(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -121,7 +121,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :gradient_descent,
+	           method = GradientDescent(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -129,7 +129,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :l_bfgs,
+	           method = LBFGS(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -137,7 +137,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :nelder_mead,
+	           method = NelderMead(),
 	           ftol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -145,7 +145,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :newton,
+	           method = Newton(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -153,7 +153,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :simulated_annealing,
+	           method = SimulatedAnnealing(),
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)

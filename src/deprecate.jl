@@ -17,3 +17,16 @@ function get_optimizer(method::Symbol)
     warn("Specifying the method using symbols is deprecated. Use \"method = $(T)()\" instead")
     T()
 end
+
+@deprecate bfgs{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunction},
+                   initial_x::Vector{T};
+                   initial_invH::Matrix = eye(length(initial_x)),
+                   linesearch!::Function = hz_linesearch!,
+                   nargs...) optimize(d, initial_x, BFGS(linesearch! = linesearch!), OptimizationOptions(nargs...), initial_invH = initial_invH)
+
+
+@deprecate l_bfgs{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunction},
+                   initial_x::Vector{T};
+                   m::Integer = 10,
+                   linesearch!::Function = hz_linesearch!,
+                   nargs...) optimize(d, initial_x, LBFGS(m = m, linesearch! = linesearch!), OptimizationOptions(nargs...))
