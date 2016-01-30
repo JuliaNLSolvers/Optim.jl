@@ -1,18 +1,18 @@
 using Optim
 
-function f(x::Vector)
+function f_1(x::Vector)
     (x[1] - 5.0)^4
 end
 
-function g!(x::Vector, storage::Vector)
+function g!_1(x::Vector, storage::Vector)
     storage[1] = 4.0 * (x[1] - 5.0)^3
 end
 
-function h!(x::Vector, storage::Matrix)
+function h!_1(x::Vector, storage::Matrix)
     storage[1, 1] = 12.0 * (x[1] - 5.0)^2
 end
 
-d = TwiceDifferentiableFunction(f, g!, h!)
+d = TwiceDifferentiableFunction(f_1, g!_1, h!_1)
 
 results = Optim.newton(d, [0.0])
 @assert length(results.trace.states) == 0
@@ -21,23 +21,23 @@ results = Optim.newton(d, [0.0])
 
 eta = 0.9
 
-function f(x::Vector)
+function f_2(x::Vector)
   (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
 end
 
-function g!(x::Vector, storage::Vector)
+function g!_2(x::Vector, storage::Vector)
   storage[1] = x[1]
   storage[2] = eta * x[2]
 end
 
-function h!(x::Vector, storage::Matrix)
+function h!_2(x::Vector, storage::Matrix)
   storage[1, 1] = 1.0
   storage[1, 2] = 0.0
   storage[2, 1] = 0.0
   storage[2, 2] = eta
 end
 
-d = TwiceDifferentiableFunction(f, g!, h!)
+d = TwiceDifferentiableFunction(f_2, g!_2, h!_2)
 results = Optim.newton(d, [127.0, 921.0])
 @assert length(results.trace.states) == 0
 @assert results.gr_converged

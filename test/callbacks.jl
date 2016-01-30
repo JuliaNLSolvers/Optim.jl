@@ -1,12 +1,4 @@
 
-function cb(tr::OptimizationTrace)
-    @test tr.states[end].iteration % 3 == 0
-end
-
-function cb(os::OptimizationState)
-    @test os.iteration % 3 == 0
-end
-
 for method in (:nelder_mead,
                :simulated_annealing)
     ot_run = false
