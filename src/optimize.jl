@@ -216,7 +216,8 @@ function optimize(f::Function,
                   callback = nothing,
                   show_every = 1,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH = nothing)
+                  bfgs_initial_invH = nothing,
+                  neighbor!::Function = default_neighbor!)
     show_every = show_every > 0 ? show_every: 1
     if extended_trace && callback == nothing
         show_trace = true
@@ -242,7 +243,8 @@ function optimize(f::Function,
                             show_trace = show_trace,
                             show_every = show_every,
                             callback = callback,
-                            extended_trace = extended_trace)
+                            extended_trace = extended_trace,
+                            neighbor! = neighbor!)
     elseif method == :gradient_descent
         d = DifferentiableFunction(f, g!)
         gradient_descent(d,
@@ -350,7 +352,8 @@ function optimize(f::Function,
                   callback = nothing,
                   show_every = 1,
                   linesearch!::Function = hz_linesearch!,
-                  bfgs_initial_invH = nothing)
+                  bfgs_initial_invH = nothing,
+                  neighbor!::Function = default_neighbor!)
     show_every = show_every > 0 ? show_every: 1
     if extended_trace && callback == nothing
         show_trace = true
@@ -376,7 +379,8 @@ function optimize(f::Function,
                             show_trace = show_trace,
                             show_every = show_every,
                             callback = callback,
-                            extended_trace = extended_trace)
+                            extended_trace = extended_trace,
+                            neighbor! = neighbor!)
     elseif method == :gradient_descent
         d = DifferentiableFunction(f, g!)
         gradient_descent(d,
@@ -470,7 +474,8 @@ function optimize(f::Function,
                   show_every = 1,
                   linesearch!::Function = hz_linesearch!,
                   autodiff::Bool = false,
-                  bfgs_initial_invH = nothing)
+                  bfgs_initial_invH = nothing,
+                  neighbor!::Function = default_neighbor!)
     show_every = show_every > 0 ? show_every: 1
     if extended_trace && callback == nothing
         show_trace = true
@@ -496,7 +501,8 @@ function optimize(f::Function,
                             show_trace = show_trace,
                             show_every = show_every,
                             callback = callback,
-                            extended_trace = extended_trace)
+                            extended_trace = extended_trace,
+                            neighbor! = neighbor!)
     end
     # otherwise we need a gradient:
     if !autodiff
