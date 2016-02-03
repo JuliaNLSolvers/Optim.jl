@@ -98,7 +98,7 @@ function newton{T}(d::TwiceDifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          linesearch!(d, x, s, x_ls, gr_ls, lsr, one(T), mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
