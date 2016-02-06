@@ -211,7 +211,7 @@ function optimize{T<:AbstractFloat}(
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
 
-        x_converged, f_converged, g_converged, converged = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
+        results.x_converged, results.f_converged, results.g_converged, converged = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
 
     end
     results.method = "Fminbox with $(method(results))"
