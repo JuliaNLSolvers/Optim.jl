@@ -36,30 +36,30 @@ end
                 eta::Real = convert(T,0.4),
                 P::Any = nothing,
                 precondprep::Function = (P, x) -> nothing,
-                nargs...) optimize(d, initial_x, ConjugateGradient(eta = eta, precondprep = precondprep, P = P, linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, ConjugateGradient(eta = eta, precondprep = precondprep, P = P, linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate gradient_descent{T}(df::Union{DifferentiableFunction, TwiceDifferentiableFunction},
                 initial_x::Array{T};
                 linesearch!::Function = hz_linesearch!,
-                nargs...) optimize(d, initial_x, GradientDescent(linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, GradientDescent(linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate momentum_gradient_descent{T}(df::Union{DifferentiableFunction,
                                                   TwiceDifferentiableFunction},
                 initial_x::Array{T};
                 linesearch!::Function = hz_linesearch!,
                 mu::Real = 0.01,
-                nargs...) optimize(d, initial_x, MomentumGradientDescent(mu = mu, linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, MomentumGradientDescent(mu = mu, linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate accelerated_gradient_descent{T}(df::Union{DifferentiableFunction,
                                                      TwiceDifferentiableFunction},
                 initial_x::Array{T};
                 linesearch!::Function = hz_linesearch!,
-                nargs...) optimize(d, initial_x, AcceleratedGradientDescent(linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, AcceleratedGradientDescent(linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate newton{T}(df::TwiceDifferentiableFunction,
                 initial_x::Array{T};
                 linesearch!::Function = hz_linesearch!,
-                nargs...) optimize(d, initial_x, Newton(linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, Newton(linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                 nargs...) optimize(f, x_lower, x_upper, Brent(); nargs...)

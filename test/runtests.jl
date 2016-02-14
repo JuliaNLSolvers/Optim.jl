@@ -25,6 +25,7 @@ my_tests = [
     "array.jl",
     "constrained.jl",
     "callbacks.jl",
+    "deprecate.jl"
 ]
 
 println("Running tests:")
