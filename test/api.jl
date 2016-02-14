@@ -44,6 +44,9 @@ optimize(rosenbrock,
 	     [0.0, 0.0],
 	     method = BFGS())
 optimize(rosenbrock,
+	     [0.0, 0.0],
+	     BFGS())
+optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
 	     method = BFGS())
@@ -56,6 +59,9 @@ optimize(rosenbrock,
 optimize(rosenbrock,
 	     [0.0, 0.0],
 	     method = GradientDescent())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     GradientDescent())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
@@ -69,6 +75,9 @@ optimize(rosenbrock,
 optimize(rosenbrock,
 	     [0.0, 0.0],
 	     method = LBFGS())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     LBFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
@@ -82,6 +91,9 @@ optimize(rosenbrock,
 optimize(rosenbrock,
 	     [0.0, 0.0],
 	     method = NelderMead())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     NelderMead())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
@@ -101,6 +113,9 @@ optimize(rosenbrock,
 optimize(rosenbrock,
 	     [0.0, 0.0],
 	     method = SimulatedAnnealing())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     SimulatedAnnealing())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],

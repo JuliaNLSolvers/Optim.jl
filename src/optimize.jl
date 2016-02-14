@@ -81,6 +81,12 @@ function optimize(f::Function,
     optimize(d, initial_x, method, options)
 end
 
+function optimize(d,
+                  initial_x::Array,
+                  method::Optimizer)
+    optimize(d, initial_x, method, OptimizationOptions())
+end
+
 function optimize(f::Function,
                   initial_x::Array,
                   method::Optimizer,
