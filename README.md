@@ -52,7 +52,7 @@ Note that the functions we're using to calculate the gradient (and later the Hes
 
 Returning to our optimization, you simply pass `g!` together with `f` from before to use the exact gradient:
 
-```jl  
+```jl
 optimize(f, g!, [0.0, 0.0], method = LBFGS())
 ```
 
@@ -78,7 +78,7 @@ optimize(f, g!, h!, [0.0, 0.0], method = Newton())
 Like gradients, the Hessian function will be ignored if you use a method that does not require it:
 
 ```jl
-    optimize(f, g!, h!, [0.0, 0.0], method = LBFGS())
+optimize(f, g!, h!, [0.0, 0.0], method = LBFGS())
 ```
 
 Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.
@@ -122,7 +122,7 @@ The section above described the basic API for the Optim package, although it is 
 Requires only a function handle:
 * `NelderMead()`
 * `SimulatedAnnealing()`
- 
+
 Requires a function and gradient (will be approximated if omitted):
 * `BFGS()`
 * `LBFGS()`
@@ -141,7 +141,7 @@ Special methods for univariate optimization:
 * `Brent()`
 * `GoldenSection()`
 
-In addition to the `method` keyword, you can alter the behavior of the Optim package by using the following keywords in a `OptimizationOptions` constructor:
+In addition to the `method` keyword, you can alter the behavior of the Optim package by using the following keywords:
 
 * `xtol`: What is the threshold for determining convergence? Defaults to `1e-32`.
 * `ftol`: What is the threshold for determining convergence? Defaults to `1e-32`.
@@ -159,6 +159,18 @@ Thus, one might construct a complex call to `optimize` like:
 res = optimize(f, g!,
                [0.0, 0.0],
                method = GradientDescent(),
+               grtol = 1e-12,
+               iterations = 10,
+               store_trace = true,
+               show_trace = false)
+```
+
+It is also possible to call the type-stable low-level interface directly using `OptimizationOptions`:
+
+```jl
+res = optimize(f, g!,
+               [0.0, 0.0],
+               GradientDescent(),
                OptimizationOptions(grtol = 1e-12,
                                    iterations = 10,
                                    store_trace = true,
@@ -216,7 +228,7 @@ By defining a `DifferentiableFunction` that estimates function values and gradie
 ```
 
 At the moment, the performance bottleneck for many problems is the simplistic backtracking line search we are using in Optim. As this step becomes more efficient, we expect that the gains from using a function that evaluates the main function and its gradient simultaneously will grow.
-    
+
 ## Conjugate gradients, box minimization, and nonnegative least squares
 
 There is a separate suite of tools that implement the nonlinear conjugate gradient method, and there are some additional algorithms built on top of it. Unfortunately, currently these algorithms use a different API. These differences in API are intended to enhance performance. Rather than providing one function for the function value and another for the gradient, here you combine them into a single function. The function must be written to take the gradient as the first input. When the gradient is desired, that first input will be a vector; otherwise, the value `nothing` indicates that the gradient is not needed. Let's demonstrate this for the Rosenbrock Function:
@@ -241,7 +253,7 @@ More subtly, it does not require the allocation of a new vector to store the gra
 ```
 g = [-2.0*d1 - 400.0*d2*x[1], 200.0*d2]
 ```
-    
+
 Internally within `rosenbrock!` this will appear to work, but the value is not passed back to the calling function and the memory locations for the original `g` may contain random values. Perhaps the easiest way to catch this type of error is to check, within `rosenbrock!`, that the pointer is still the same as it was on entry:
 
 ```jl
