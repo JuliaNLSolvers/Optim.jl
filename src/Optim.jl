@@ -17,7 +17,6 @@ module Optim
            OptimizationState,
            OptimizationTrace,
 
-           Optimizer,
            AcceleratedGradientDescent,
            BFGS,
            Brent,

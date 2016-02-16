@@ -25,6 +25,18 @@ d3 = TwiceDifferentiableFunction(rosenbrock,
 	                             rosenbrock_gradient!,
 	                             rosenbrock_hessian!)
 
+Optim.optimize(f3, [0.0, 0.0], BFGS())
+Optim.optimize(f3, g3!, [0.0, 0.0], BFGS())
+Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS())
+Optim.optimize(d2, [0.0, 0.0], BFGS())
+Optim.optimize(d3, [0.0, 0.0], BFGS())
+
+Optim.optimize(f3, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(f3, g3!, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(d2, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(d3, [0.0, 0.0], BFGS(), OptimizationOptions())
+
 Optim.optimize(d1, [0.0, 0.0], method = BFGS())
 Optim.optimize(d2, [0.0, 0.0], method = BFGS())
 

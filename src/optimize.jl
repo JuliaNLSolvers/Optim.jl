@@ -44,8 +44,7 @@ function optimize(f::Function,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
     method = get_optimizer(method)::Optimizer
-    d = DifferentiableFunction(f, g!)
-    optimize(d, initial_x, method, options)
+    optimize(f, g!, initial_x, method, options)
 end
 
 function optimize(f::Function,
@@ -68,41 +67,7 @@ function optimize(f::Function,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
     method = get_optimizer(method)::Optimizer
-    d = TwiceDifferentiableFunction(f, g!, h!)
-    optimize(d, initial_x, method, options)
-end
-
-function optimize(d,
-                  initial_x::Array,
-                  method::Optimizer)
-    optimize(d, initial_x, method, OptimizationOptions())
-end
-
-function optimize(f::Function,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::OptimizationOptions)
-    if !options.autodiff
-        d = DifferentiableFunction(f)
-    else
-        d = Optim.autodiff(f, eltype(initial_x), length(initial_x))
-    end
-    optimize(d, initial_x, method, options)
-end
-
-function optimize(d::DifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::OptimizationOptions)
-    optimize(d.f, initial_x, method, options)
-end
-
-function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::OptimizationOptions)
-    dn = DifferentiableFunction(d.f, d.g!, d.fg!)
-    optimize(dn, initial_x, method, options)
+    optimize(f, g!, h!, initial_x, method, options)
 end
 
 function optimize(d::DifferentiableFunction,
@@ -145,6 +110,59 @@ function optimize(d::TwiceDifferentiableFunction,
         callback = callback, show_every = show_every)
     method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method, options)
+end
+
+function optimize(d,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions = OptimizationOptions())
+    optimize(d, initial_x, method, options)
+end
+
+function optimize(f::Function,
+                  g!::Function,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions = OptimizationOptions())
+    d = DifferentiableFunction(f, g!)
+    optimize(d, initial_x, method, options)
+end
+
+function optimize(f::Function,
+                  g!::Function,
+                  h!::Function,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions = OptimizationOptions())
+    d = TwiceDifferentiableFunction(f, g!, h!)
+    optimize(d, initial_x, method, options)
+end
+
+function optimize(f::Function,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    if !options.autodiff
+        d = DifferentiableFunction(f)
+    else
+        d = Optim.autodiff(f, eltype(initial_x), length(initial_x))
+    end
+    optimize(d, initial_x, method, options)
+end
+
+function optimize(d::DifferentiableFunction,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    optimize(d.f, initial_x, method, options)
+end
+
+function optimize(d::TwiceDifferentiableFunction,
+                  initial_x::Array,
+                  method::Optimizer,
+                  options::OptimizationOptions)
+    dn = DifferentiableFunction(d.f, d.g!, d.fg!)
+    optimize(dn, initial_x, method, options)
 end
 
 function optimize{T <: AbstractFloat}(f::Function,
