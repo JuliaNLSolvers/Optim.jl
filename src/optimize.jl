@@ -21,9 +21,6 @@ function optimize(f::Function,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every,
         autodiff = autodiff)
-    if options.show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
     method = get_optimizer(method)::Optimizer
     optimize(f, initial_x, method, options)
 end
@@ -46,9 +43,6 @@ function optimize(f::Function,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    if options.show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
     method = get_optimizer(method)::Optimizer
     d = DifferentiableFunction(f, g!)
     optimize(d, initial_x, method, options)
@@ -73,9 +67,6 @@ function optimize(f::Function,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    if options.show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
     method = get_optimizer(method)::Optimizer
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, method, options)
@@ -131,9 +122,6 @@ function optimize(d::DifferentiableFunction,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    if options.show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
     method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method, options)
 end
@@ -155,9 +143,6 @@ function optimize(d::TwiceDifferentiableFunction,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    if options.show_trace
-        @printf "Iter     Function value   Gradient norm \n"
-    end
     method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method, options)
 end

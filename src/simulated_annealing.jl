@@ -46,6 +46,9 @@ function optimize{T}(cost::Function,
                      initial_x::Array{T},
                      mo::SimulatedAnnealing,
                      o::OptimizationOptions)
+    # Print header if show_trace is set
+    print_header(o)
+
     # Maintain current and proposed state
     x, x_proposal = copy(initial_x), copy(initial_x)
 

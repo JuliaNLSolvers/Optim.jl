@@ -54,6 +54,9 @@ function optimize{T}(f::Function,
                      nm::NelderMead,
                      o::OptimizationOptions;
                      initial_step::Vector{T} = ones(T,length(initial_x)))
+    # Print header if show_trace is set
+    print_header(o)
+
     # Set up a simplex of points around starting value
     m = length(initial_x)
     if m == 1

@@ -34,6 +34,12 @@ function OptimizationOptions(;
         callback)
 end
 
+function print_header(options::OptimizationOptions)
+    if options.show_trace
+        @printf "Iter     Function value   Gradient norm \n"
+    end
+end
+
 immutable OptimizationState
     iteration::Int
     value::Float64

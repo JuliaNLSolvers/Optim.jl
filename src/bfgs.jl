@@ -37,6 +37,8 @@ function optimize{T}(d::DifferentiableFunction,
                      mo::BFGS,
                      o::OptimizationOptions;
                      initial_invH::Matrix = eye(length(initial_x)))
+    # Print header if show_trace is set
+    print_header(o)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
