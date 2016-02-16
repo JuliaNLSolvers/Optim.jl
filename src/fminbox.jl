@@ -68,8 +68,8 @@ function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T
     val_each[1] = valfunc
     val_each[2] = valbarrier
     if calc_grad
-        for i = 1:length(g)
-            g[i] = gfunc[i] + mu*gbarrier[i]
+        @simd for i = 1:length(g)
+            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
     end
     return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
@@ -79,9 +79,9 @@ function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
     alphamax = convert(T, Inf)
     for i = 1:length(x)
         if d[i] < 0
-            alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
+            @inbounds alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
         elseif d[i] > 0
-            alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
+            @inbounds alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
         end
     end
     epsilon = eps(max(alphamax, one(T)))
@@ -94,7 +94,7 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox(P, x, l, u, mu)
-    for i = 1:length(x)
+    @inbounds @simd for i = 1:length(x)
         xi = x[i]
         li = l[i]
         ui = u[i]
@@ -193,8 +193,8 @@ function optimize{T<:AbstractFloat}(
         mu *= mufactor
 
         # Test for convergence
-        for i = 1:length(x)
-            g[i] = gfunc[i] + mu*gbarrier[i]
+        @simd for i = 1:length(x)
+            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
         x_converged, f_converged, gr_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, xtol, ftol, grtol)
         if converged

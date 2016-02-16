@@ -84,7 +84,7 @@ function optimize{T}(d::DifferentiableFunction,
         iteration += 1
 
         # Search direction is always the negative gradient
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds s[i] = -gr[i]
         end
 
@@ -101,10 +101,8 @@ function optimize{T}(d::DifferentiableFunction,
         # Maintain a record of previous position
         copy!(x_previous, x)
 
-        # Update current position
-        for i in 1:n
-            @inbounds x[i] = x[i] + alpha * s[i]
-        end
+        # Update current position # x = x + alpha * s
+        LinAlg.axpy!(alpha, s, x)
 
         # Update the function value and gradient
         f_x_previous, f_x = f_x, d.fg!(x, gr)

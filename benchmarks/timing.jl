@@ -21,11 +21,11 @@ algorithms = [:gradient_descent,
               :simulated_annealing]
 
 # Print out a header line for the TSV-formatted report
-println(join({"Problem",
+println(join(["Problem",
               "Algorithm",
               "AverageRunTimeInMilliseconds",
               "Iterations",
-              "Error"},
+              "Error"],
               "\t"))
 
 for (name, problem) in Optim.UnconstrainedProblems.examples
@@ -74,17 +74,17 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.initial_x,
                            method = algorithm,
                            grtol = 1e-16)
-        errors = min(map(sol -> norm(results.minimum - sol), problem.solutions))
+        errors = minimum(map(sol -> norm(results.minimum - sol), problem.solutions))
 
         # Count iterations
         iterations = results.iterations
 
         # Print out results.
-        println(join({problem.name,
+        println(join([problem.name,
                       results.method,
                       run_time,
                       iterations,
-                      errors},
+                      errors],
                       "\t"))
     end
 end

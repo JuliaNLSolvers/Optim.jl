@@ -43,8 +43,8 @@ function interpolating_linesearch!{T}(d::Union{DifferentiableFunction,
 
     while a_i < a_max
         # Update x_new
-        for index in 1:n
-            x_new[index] = x[index] + a_i * p[index]
+        @simd for index in 1:n
+            @inbounds x_new[index] = x[index] + a_i * p[index]
         end
 
         # Evaluate phi(a_i)
@@ -124,8 +124,8 @@ function zoom(a_lo::Real,
         iteration += 1
 
         # Cache phi_a_lo
-        for index in 1:n
-            x_new[index] = x[index] + a_lo * p[index]
+        @simd for index in 1:n
+            @inbounds x_new[index] = x[index] + a_lo * p[index]
         end
         phi_a_lo = f(x_new)
         g!(x_new, gr_new)
@@ -134,8 +134,8 @@ function zoom(a_lo::Real,
         phiprime_a_lo = vecdot(gr_new, p)
 
         # Cache phi_a_hi
-        for index in 1:n
-            x_new[index] = x[index] + a_hi * p[index]
+        @simd for index in 1:n
+            @inbounds x_new[index] = x[index] + a_hi * p[index]
         end
         phi_a_hi = f(x_new)
         g!(x_new, gr_new)
@@ -156,8 +156,8 @@ function zoom(a_lo::Real,
         end
 
         # Update x_new
-        for index in 1:n
-            x_new[index] = x[index] + a_j * p[index]
+        @simd for index in 1:n
+            @inbounds x_new[index] = x[index] + a_j * p[index]
         end
 
         # Evaluate phi(a_j)

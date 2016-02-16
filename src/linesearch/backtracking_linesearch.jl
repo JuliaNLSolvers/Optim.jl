@@ -31,8 +31,8 @@ function backtracking_linesearch!{T}(d::Union{DifferentiableFunction,
     gxp = vecdot(gr_scratch, s)
 
     # Tentatively move a distance of alpha in the direction of s
-    for i in 1:n
-        x_scratch[i] = x[i] + alpha * s[i]
+    @simd for i in 1:n
+        @inbounds x_scratch[i] = x[i] + alpha * s[i]
     end
 
     # Backtrack until we satisfy sufficient decrease condition
@@ -51,8 +51,8 @@ function backtracking_linesearch!{T}(d::Union{DifferentiableFunction,
         alpha *= rho
 
         # Update proposed position
-        for i in 1:n
-            x_scratch[i] = x[i] + alpha * s[i]
+        @simd for i in 1:n
+            @inbounds x_scratch[i] = x[i] + alpha * s[i]
         end
 
         # Evaluate f(x) at proposed position

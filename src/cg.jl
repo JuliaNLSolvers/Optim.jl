@@ -6,21 +6,21 @@ cg_precondinvdot(A::Array, P::Void, B::Array) = vecdot(A, B)
 
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds out[i] = p[i] * A[i]
     end
     return out
 end
 function cg_precondfwddot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds s += A[i] * p[i] * B[i]
     end
     return s
 end
 function cg_precondinvdot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds s += A[i] * B[i] / p[i]
     end
     return s
@@ -186,9 +186,7 @@ function optimize{T}(df::DifferentiableFunction,
     # Determine the intial search direction
     cg.precondprep(cg.P, x)
     cg_precondfwd(s, cg.P, gr)
-    for i in 1:n
-        @inbounds s[i] = -s[i]
-    end
+    scale!(s, -1)
 
     # Assess multiple types of convergence
     x_converged, f_converged, gr_converged = false, false, false
@@ -202,7 +200,7 @@ function optimize{T}(df::DifferentiableFunction,
         # Reset the search direction if it becomes corrupted
         dphi0 = vecdot(gr, s)
         if dphi0 >= 0
-            for i in 1:n
+            @simd for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
             dphi0 = vecdot(gr, s)
@@ -230,10 +228,8 @@ function optimize{T}(df::DifferentiableFunction,
         # Maintain a record of previous position
         copy!(x_previous, x)
 
-        # Update current position
-        for i in 1:n
-            @inbounds x[i] = x[i] + alpha * s[i]
-        end
+        # Update current position # x = x + alpha * s
+        LinAlg.axpy!(alpha, s, x)
 
         # Maintain a record of the previous gradient
         copy!(gr_previous, gr)
@@ -264,7 +260,7 @@ function optimize{T}(df::DifferentiableFunction,
         cg.precondprep(cg.P, x)
         dPd = cg_precondinvdot(s, cg.P, s)
         etak::T = cg.eta * vecdot(s, gr_previous) / dPd
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = vecdot(y, s)
@@ -272,7 +268,7 @@ function optimize{T}(df::DifferentiableFunction,
         betak = (vecdot(y, pgr) - cg_precondfwddot(y, cg.P, y) *
                  vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]
         end
 
