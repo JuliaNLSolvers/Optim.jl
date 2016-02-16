@@ -1,16 +1,8 @@
 
-function cb(tr::OptimizationTrace)
-    @test tr.states[end].iteration % 3 == 0
-end
-
-function cb(os::OptimizationState)
-    @test os.iteration % 3 == 0
-end
-
 for method in (NelderMead(),
                SimulatedAnnealing())
     ot_run = false
-    function cb(tr::OptimizationTrace)
+    cb = tr -> begin
         @test tr.states[end].iteration % 3 == 0
         ot_run = true
     end
@@ -18,7 +10,7 @@ for method in (NelderMead(),
     @test ot_run == true
 
     os_run = false
-    function cb(os::OptimizationState)
+    cb = os -> begin
         @test os.iteration % 3 == 0
         os_run = true
     end
@@ -31,7 +23,7 @@ for method in (BFGS(),
                GradientDescent(),
                MomentumGradientDescent())
     ot_run = false
-    function cb(tr::OptimizationTrace)
+    cb = tr -> begin
         @test tr.states[end].iteration % 3 == 0
         ot_run = true
     end
@@ -39,7 +31,7 @@ for method in (BFGS(),
     @test ot_run == true
 
     os_run = false
-    function cb(os::OptimizationState)
+    cb = os -> begin
         @test os.iteration % 3 == 0
         os_run = true
     end
@@ -49,7 +41,7 @@ end
 
 for method in (Newton(),)
     ot_run = false
-    function cb(tr::OptimizationTrace)
+    cb = tr -> begin
         @test tr.states[end].iteration % 3 == 0
         ot_run = true
     end
@@ -57,7 +49,7 @@ for method in (Newton(),)
     @test ot_run == true
 
     os_run = false
-    function cb(os::OptimizationState)
+    cb = os -> begin
         @test os.iteration % 3 == 0
         os_run = true
     end
