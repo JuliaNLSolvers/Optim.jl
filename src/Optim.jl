@@ -13,8 +13,22 @@ module Optim
     export optimize,
            DifferentiableFunction,
            TwiceDifferentiableFunction,
+           OptimizationOptions,
            OptimizationState,
-           OptimizationTrace
+           OptimizationTrace,
+
+           AcceleratedGradientDescent,
+           BFGS,
+           Brent,
+           ConjugateGradient,
+           Fminbox,
+           GoldenSection,
+           GradientDescent,
+           LBFGS,
+           MomentumGradientDescent,
+           NelderMead,
+           Newton,
+           SimulatedAnnealing
 
     # Types
     include("types.jl")
@@ -56,7 +70,6 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
-    include("nnls.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")
@@ -68,6 +81,9 @@ module Optim
     # Univariate methods
     include("golden_section.jl")
     include("brent.jl")
+
+    # Backward compatibility
+    include("deprecate.jl")
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")

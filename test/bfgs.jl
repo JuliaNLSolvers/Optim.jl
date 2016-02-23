@@ -8,13 +8,13 @@ end
 d2 = DifferentiableFunction(f2, g2)
 initial_x = [100.0, 100.0]
 
-results = Optim.bfgs(d2, initial_x)
+results = Optim.optimize(d2, initial_x, method=BFGS())
 @assert length(results.trace.states) == 0
 @assert results.gr_converged
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01
 
 d2 = Optim.autodiff(f2, Float64, 2)
-results = Optim.bfgs(d2, initial_x)
+results = Optim.optimize(d2, initial_x, method=BFGS())
 @assert length(results.trace.states) == 0
 @assert results.gr_converged
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01

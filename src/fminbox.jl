@@ -105,25 +105,30 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
-                    initial_x::Array{T},
-                    l::Array{T},
-                    u::Array{T};
-                    xtol::T = eps(T),
-                    ftol::T = sqrt(eps(T)),
-                    grtol::T = sqrt(eps(T)),
-                    iterations::Integer = 1_000,
-                    store_trace::Bool = false,
-                    show_trace::Bool = false,
-                    extended_trace::Bool = false,
-                    callback = nothing,
-                    show_every = 1,
-                    linesearch!::Function = hz_linesearch!,
-                    eta::Real = convert(T,0.4),
-                    mu0::T = convert(T, NaN),
-                    mufactor::T = convert(T, 0.001),
-                    precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
-                    optimizer = cg)
+immutable Fminbox <: Optimizer end
+
+function optimize{T<:AbstractFloat}(
+        df::DifferentiableFunction,
+        initial_x::Array{T},
+        l::Array{T},
+        u::Array{T},
+        ::Fminbox;
+        xtol::T = eps(T),
+        ftol::T = sqrt(eps(T)),
+        grtol::T = sqrt(eps(T)),
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        extended_trace::Bool = false,
+        callback = nothing,
+        show_every = 1,
+        linesearch!::Function = hz_linesearch!,
+        eta::Real = convert(T,0.4),
+        mu0::T = convert(T, NaN),
+        mufactor::T = convert(T, 0.001),
+        precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
+        optimizer = ConjugateGradient,
+        nargs...)
 
     x = copy(initial_x)
     fbarrier = (x, gbarrier) -> barrier_box(x, gbarrier, l, u)
@@ -171,9 +176,9 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        resultsnew = optimizer(dfbox, x; xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
-                                         store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace,
-                                         linesearch! = linesearch!, eta=eta, P=P, precondprep=pcp)
+        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep = pcp),
+                              OptimizationOptions(xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
+                                                  store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace))
         if first == true
             results = resultsnew
         else

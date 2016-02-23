@@ -6,7 +6,7 @@ macro bfgstrace()
     quote
         if tracing
             dt = Dict()
-            if extended_trace
+            if o.extended_trace
                 dt["x"] = copy(x)
                 dt["g(x)"] = copy(gr)
                 dt["~inv(H)"] = copy(invH)
@@ -17,28 +17,28 @@ macro bfgstrace()
                     f_x,
                     grnorm,
                     dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
         end
     end
 end
 
-function bfgs{T}(d::Union{DifferentiableFunction,
-                          TwiceDifferentiableFunction},
-                 initial_x::Vector{T};
-                 initial_invH::Matrix = eye(length(initial_x)),
-                 xtol::Real = 1e-32,
-                 ftol::Real = 1e-8,
-                 grtol::Real = 1e-8,
-                 iterations::Integer = 1_000,
-                 store_trace::Bool = false,
-                 show_trace::Bool = false,
-                 extended_trace::Bool = false,
-                 callback = nothing,
-                 show_every = 1,
-                 linesearch!::Function = hz_linesearch!)
+immutable BFGS <: Optimizer
+    linesearch!::Function
+end
+
+BFGS(; linesearch!::Function = hz_linesearch!) =
+  BFGS(linesearch!)
+
+function optimize{T}(d::DifferentiableFunction,
+                     initial_x::Vector{T},
+                     mo::BFGS,
+                     o::OptimizationOptions;
+                     initial_invH::Matrix = eye(length(initial_x)))
+    # Print header if show_trace is set
+    print_header(o)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -89,7 +89,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @bfgstrace
 
     # Assess multiple types of convergence
@@ -97,7 +97,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration < iterations
+    while !converged && iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
@@ -121,7 +121,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -148,9 +148,9 @@ function bfgs{T}(d::Union{DifferentiableFunction,
                                        f_x,
                                        f_x_previous,
                                        gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
+                                       o.xtol,
+                                       o.ftol,
+                                       o.grtol)
 
         # Measure the change in the gradient
         @simd for i in 1:n
@@ -182,13 +182,13 @@ function bfgs{T}(d::Union{DifferentiableFunction,
                                            x,
                                            Float64(f_x),
                                            iteration,
-                                           iteration == iterations,
+                                           iteration == o.iterations,
                                            x_converged,
-                                           xtol,
+                                           o.xtol,
                                            f_converged,
-                                           ftol,
+                                           o.ftol,
                                            gr_converged,
-                                           grtol,
+                                           o.grtol,
                                            tr,
                                            f_calls,
                                            g_calls)

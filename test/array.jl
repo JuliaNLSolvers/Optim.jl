@@ -12,7 +12,7 @@ module TestArray
         return
     end
 
-    res = optimize(f, g!, eye(2), method = :gradient_descent)
+    res = optimize(f, g!, eye(2), method = GradientDescent())
 
     @test norm(vec(res.minimum - [10.0 0.0; 0.0 5.0])) < 10e-8
 

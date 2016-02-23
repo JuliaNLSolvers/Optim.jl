@@ -20,15 +20,19 @@ macro brenttrace()
     end
 end
 
-function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
-                                   rel_tol::T = sqrt(eps(T)),
-                                   abs_tol::T = eps(T),
-                                   iterations::Integer = 1_000,
-                                   store_trace::Bool = false,
-                                   show_trace::Bool = false,
-                                   callback = nothing,
-                                   show_every = 1,
-                                   extended_trace::Bool = false)
+immutable Brent <: Optimizer end
+
+function optimize{T <: AbstractFloat}(
+        f::Function, x_lower::T, x_upper::T,
+        ::Brent;
+        rel_tol::T = sqrt(eps(T)),
+        abs_tol::T = eps(T),
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        callback = nothing,
+        show_every = 1,
+        extended_trace::Bool = false)
 
     if !(x_lower < x_upper)
         error("x_lower must be less than x_upper")
