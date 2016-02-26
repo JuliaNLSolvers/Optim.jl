@@ -1,4 +1,5 @@
 using Optim
+using Base.Test
 
 function f_1(x::Vector)
     (x[1] - 5.0)^4
@@ -13,6 +14,9 @@ function h!_1(x::Vector, storage::Matrix)
 end
 
 d = TwiceDifferentiableFunction(f_1, g!_1, h!_1)
+
+@test_throws ArgumentError Optim.optimize(f_1, [0.0], method=Newton())
+@test_throws ArgumentError Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], method=Newton())
 
 results = Optim.optimize(d, [0.0], method=Newton())
 @assert length(results.trace.states) == 0
