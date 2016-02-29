@@ -169,8 +169,8 @@ function samin(obj_fn, x, lb, ub; nt=5, ns=5, rt=0.5, maxevals=1e6, neps=5, func
                                 println("SAMIN results")
                                 println("NO CONVERGENCE: MAXEVALS exceeded")
                                 @printf("\n     Obj. value:  %16.5f\n\n", fopt)
-                                println("       parameter      search width")
-                                if(verbosity > 2)
+                                if(verbosity >=2)
+                                    println("       parameter      search width")
                                     for i=1:n
                                         @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                                     end
@@ -217,8 +217,8 @@ function samin(obj_fn, x, lb, ub; nt=5, ns=5, rt=0.5, maxevals=1e6, neps=5, func
             println("out of bounds trials: ", lnobds)
             println("new minima this temperature: ", nnew)
             println()
-            println("       parameter      search width")
             if (verbosity > 2)
+                println("       parameter      search width")
                 for i=1:n
                     @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                 end
@@ -270,7 +270,7 @@ function samin(obj_fn, x, lb, ub; nt=5, ns=5, rt=0.5, maxevals=1e6, neps=5, func
                     println("       parameter      search width")
                     for i=1:n
                         @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
-                    end
+                    end    
                     println("================================================")
                 end
             end
