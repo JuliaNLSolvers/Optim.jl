@@ -95,9 +95,13 @@ function optimize{T}(d::TwiceDifferentiableFunction,
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Search direction is always the negative gradient divided by H
-        # TODO: Do this calculation in place
-        @inbounds s[:] = -(H \ gr)
+        # Search direction is always the negative gradient divided by
+        # a matrix encoding the absolute values of the curvatures
+        # represented by H. It deviates from the usual "add a scaled
+        # identity matrix" version of the modified Newton method. More
+        # information can be found in the discussion at issue #153.
+        F, Hd = ldltfact!(Positive, H)
+        s[:] = -(F\gr)
 
         # Refresh the line search cache
         dphi0 = vecdot(gr, s)

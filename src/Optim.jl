@@ -2,6 +2,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Optim
     using Calculus
+    using PositiveFactorizations
     using Compat
 
     import Base.length,
