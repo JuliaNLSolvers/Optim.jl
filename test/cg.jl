@@ -5,7 +5,7 @@ for (name, prob) in Optim.UnconstrainedProblems.examples
 	if prob.isdifferentiable
 		df = DifferentiableFunction(prob.f, prob.g!)
 		res = Optim.optimize(df, prob.initial_x, method=ConjugateGradient())
-			@assert norm(res.minimum - prob.solutions) < 1e-2
+			@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
 	end
 end
 
@@ -23,5 +23,5 @@ B = rand(2,2)
 df = Optim.DifferentiableFunction(X -> objective(X, B), (X, G) -> objective_gradient!(X, G, B))
 results = Optim.optimize(df, rand(2,2), method=ConjugateGradient())
 @assert Optim.converged(results)
-@assert results.f_minimum < 1e-8
+@assert Optim.minimum(results) < 1e-8
 end

@@ -45,9 +45,9 @@ x0 = (rand(N)-0.5)*boxl
 results = Optim.optimize(objective, x0, l, u, Fminbox())
 @test Optim.converged(results)
 g = similar(x0)
-objective.fg!(results.minimum, g)
+objective.fg!(Optim.minimizer(results), g)
 for i = 1:N
-    @test abs(g[i]) < 3e-3 || (results.minimum[i] < -boxl+1e-3 && g[i] > 0) || (results.minimum[i] > boxl-1e-3 && g[i] < 0)
+    @test abs(g[i]) < 3e-3 || (Optim.minimizer(results)[i] < -boxl+1e-3 && g[i] > 0) || (Optim.minimizer(results)[i] > boxl-1e-3 && g[i] < 0)
 end
 
 # tests for #180

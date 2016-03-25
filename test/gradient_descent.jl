@@ -11,9 +11,9 @@ initial_x = [0.0]
 d = DifferentiableFunction(f_gd_1, g_gd_1)
 
 results = Optim.optimize(d, initial_x, method=GradientDescent())
-@assert isempty(results.trace.states)
-@assert results.gr_converged
-@assert norm(results.minimum - [5.0]) < 0.01
+@test_throws ErrorException Optim.x_trace(results)
+@assert Optim.g_converged(results)
+@assert norm(Optim.minimizer(results) - [5.0]) < 0.01
 
 eta = 0.9
 
@@ -29,6 +29,6 @@ end
 d = DifferentiableFunction(f_gd_2, g_gd_2)
 
 results = Optim.optimize(d, [1.0, 1.0], method=GradientDescent())
-@assert isempty(results.trace.states)
-@assert results.gr_converged
-@assert norm(results.minimum - [0.0, 0.0]) < 0.01
+@test_throws ErrorException Optim.x_trace(results)
+@assert Optim.g_converged(results)
+@assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
