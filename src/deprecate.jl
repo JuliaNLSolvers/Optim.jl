@@ -85,4 +85,3 @@ end
 @deprecate fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
                     initial_x::Array{T}, l::Array{T}, u::Array{T};
                     optimizer = cg, nargs...) optimize(df, initial_x, l, u, Fminbox(); optimizer = get_optimizer(symbol(optimizer)), nargs...)
-

@@ -278,10 +278,20 @@ x0 = [2.0, 2.0]
 results = optimize(d4, x0, l, u, Fminbox())  # d4 from rosenbrock example
 ```
 
-This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `cg` for convergence at each step.
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `ConjugateGradient` for convergence at each step.
 
-This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `cg` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner (see `nnls` for an example).
+This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
 
+There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control `ConjugateGradient`. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `OptimizationOptions` type using the keyword `optimizer_o`.
+
+For example, the following restricts the optimization to 2 major iterations
+```julia
+results = optimize(objective, x0, l, u, Fminbox(); iterations = 2)
+```
+In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
+```julia
+results = Optim.optimize(objective, x0, l, u, Fminbox(); optimizer_o = OptimizationOptions(iterations = 2))
+```
 ### Linear programming
 
 For linear programming and extensions, see the [JuMP](https://github.com/JuliaOpt/JuMP.jl) and [MathProgBase](https://github.com/JuliaOpt/MathProgBase.jl) packages.

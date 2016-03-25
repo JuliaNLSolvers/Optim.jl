@@ -190,7 +190,7 @@ function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimiz
     a.x_converged = b.x_converged
     a.f_converged = b.f_converged
     a.gr_converged = b.gr_converged
-    append!(a.trace, b.trace)
+    append!(a.trace.states, b.trace.states)
     a.f_calls += b.f_calls
     a.g_calls += b.g_calls
 end
