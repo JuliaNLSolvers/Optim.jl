@@ -88,6 +88,7 @@ type UnivariateOptimizationResults{T} <: OptimizationResults
     minimum::T
     f_minimum::Float64
     iterations::Int
+    iteration_converged::Bool
     converged::Bool
     rel_tol::Float64
     abs_tol::Float64
