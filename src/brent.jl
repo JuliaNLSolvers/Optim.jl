@@ -8,7 +8,7 @@ macro brenttrace()
                 dt["x_upper"] = x_upper
             end
             update!(tr,
-                    it,
+                    iteration,
                     f_minimum,
                     NaN,
                     dt,
@@ -57,7 +57,7 @@ function optimize{T <: AbstractFloat}(
     f_minimum_old = f_minimum
     f_minimum_old_old = f_minimum
 
-    it = 0
+    iteration = 0
     converged = false
 
     # Trace the history of states visited
@@ -65,7 +65,7 @@ function optimize{T <: AbstractFloat}(
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 
-    while it < iterations
+    while iteration < iterations
 
         p = zero(T)
         q = zero(T)
@@ -79,7 +79,7 @@ function optimize{T <: AbstractFloat}(
             break
         end
 
-        it += 1
+        iteration += 1
 
         if abs(step_old) > tolx
             # Compute parabola interpolation
@@ -159,7 +159,8 @@ function optimize{T <: AbstractFloat}(
                                          initial_upper,
                                          x_minimum,
                                          Float64(f_minimum),
-                                         it,
+                                         iteration,
+                                         iteration == iterations,
                                          converged,
                                          rel_tol,
                                          abs_tol,

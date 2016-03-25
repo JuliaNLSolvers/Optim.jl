@@ -184,3 +184,71 @@ res = optimize(f3, g3!, h3!,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
+
+let
+    res = optimize(f3, g3!, h3!,
+    	           [0.0, 0.0],
+    	           method = BFGS(),
+    	           grtol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+   @test Optim.method(res) == "BFGS"
+   @test Optim.minimum(res) ≈ 0.055119582904897345
+   @test Optim.minimizer(res) ≈ [0.7731690866149542; 0.5917345966396391]
+   @test Optim.iterations(res) == 10
+   @test Optim.f_calls(res) == 48
+   @test Optim.g_calls(res) == 48
+   @test Optim.converged(res) == false
+   @test Optim.x_converged(res) == false
+   @test Optim.f_converged(res) == false
+   @test Optim.g_converged(res) == false
+   @test Optim.x_tol(res) == 1e-32
+   @test Optim.f_tol(res) == 1e-8
+   @test Optim.g_tol(res) == 1e-12
+   @test Optim.iteration_limit_reached(res) == true
+   @test Optim.initial_state(res) == [0.0; 0.0]
+   # just testing if it runs
+   Optim.trace(res)
+   Optim.f_trace(res)
+   Optim.g_norm_trace(res)
+   @test_throws ErrorException Optim.x_trace(res)
+   @test_throws ErrorException Optim.lower_bound(res)
+   @test_throws ErrorException Optim.upper_bound(res)
+   @test_throws ErrorException Optim.rel_tol(res)
+   @test_throws ErrorException Optim.abs_tol(res)
+end
+
+let
+    f(x) = 2x^2+3x+1
+    res = optimize(f, -2.0, 1.0, method = GoldenSection())
+    @test Optim.method(res) == "Golden Section Search"
+    @test Optim.minimum(res) ≈ -0.125
+    @test Optim.minimizer(res) ≈ -0.749999994377939
+    @test Optim.iterations(res) == 38
+    @test Optim.iteration_limit_reached(res) == false
+    @test_throws ErrorException Optim.trace(res)
+    @test_throws ErrorException Optim.x_trace(res)
+    @test_throws ErrorException Optim.x_lower_trace(res)
+    @test_throws ErrorException Optim.x_upper_trace(res)
+    @test_throws ErrorException Optim.f_trace(res)
+    @test Optim.lower_bound(res) == -2.0
+    @test Optim.upper_bound(res) == 1.0
+    @test Optim.rel_tol(res) ≈ 1.4901161193847656e-8
+    @test Optim.abs_tol(res) ≈ 2.220446049250313e-16
+    @test_throws ErrorException Optim.initial_state(res)
+    @test_throws ErrorException Optim.g_norm_trace(res)
+    @test_throws ErrorException Optim.g_calls(res)
+    @test_throws ErrorException Optim.x_converged(res)
+    @test_throws ErrorException Optim.f_converged(res)
+    @test_throws ErrorException Optim.g_converged(res)
+    @test_throws ErrorException Optim.x_tol(res)
+    @test_throws ErrorException Optim.f_tol(res)
+    @test_throws ErrorException Optim.g_tol(res)
+    res = optimize(f, -2.0, 1.0, method = GoldenSection(), store_trace = true, extended_trace = true)
+
+    # Right now, these just "test" if they run
+    Optim.x_trace(res)
+    Optim.x_lower_trace(res)
+    Optim.x_upper_trace(res)
+end

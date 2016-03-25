@@ -33,6 +33,9 @@ module Optim
     # Types
     include("types.jl")
 
+    # API
+    include("api.jl")
+
     # Automatic differentiation utilities
     include("autodiff.jl")
 

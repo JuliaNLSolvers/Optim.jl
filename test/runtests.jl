@@ -3,6 +3,7 @@
 #
 
 using Optim
+using Base.Test
 
 my_tests = [
     "types.jl",
