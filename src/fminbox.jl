@@ -68,8 +68,8 @@ function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T
     val_each[1] = valfunc
     val_each[2] = valbarrier
     if calc_grad
-        for i = 1:length(g)
-            g[i] = gfunc[i] + mu*gbarrier[i]
+        @simd for i = 1:length(g)
+            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
     end
     return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
@@ -79,9 +79,9 @@ function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
     alphamax = convert(T, Inf)
     for i = 1:length(x)
         if d[i] < 0
-            alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
+            @inbounds alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
         elseif d[i] > 0
-            alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
+            @inbounds alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
         end
     end
     epsilon = eps(max(alphamax, one(T)))
@@ -94,7 +94,7 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox(P, x, l, u, mu)
-    for i = 1:length(x)
+    @inbounds @simd for i = 1:length(x)
         xi = x[i]
         li = l[i]
         ui = u[i]
@@ -105,25 +105,33 @@ end
 const PARAMETERS_MU = one64<<display_nextbit
 display_nextbit += 1
 
-function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
-                    initial_x::Array{T},
-                    l::Array{T},
-                    u::Array{T};
-                    xtol::T = eps(T),
-                    ftol::T = sqrt(eps(T)),
-                    grtol::T = sqrt(eps(T)),
-                    iterations::Integer = 1_000,
-                    store_trace::Bool = false,
-                    show_trace::Bool = false,
-                    extended_trace::Bool = false,
-                    callback = nothing,
-                    show_every = 1,
-                    linesearch!::Function = hz_linesearch!,
-                    eta::Real = convert(T,0.4),
-                    mu0::T = convert(T, NaN),
-                    mufactor::T = convert(T, 0.001),
-                    precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
-                    optimizer = cg)
+immutable Fminbox <: Optimizer end
+
+function optimize{T<:AbstractFloat}(
+        df::DifferentiableFunction,
+        initial_x::Array{T},
+        l::Array{T},
+        u::Array{T},
+        ::Fminbox;
+        xtol::T = eps(T),
+        ftol::T = sqrt(eps(T)),
+        grtol::T = sqrt(eps(T)),
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        extended_trace::Bool = false,
+        callback = nothing,
+        show_every = 1,
+        linesearch!::Function = hz_linesearch!,
+        eta::Real = convert(T,0.4),
+        mu0::T = convert(T, NaN),
+        mufactor::T = convert(T, 0.001),
+        precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
+        optimizer = ConjugateGradient,
+        optimizer_o = OptimizationOptions(store_trace = store_trace,
+                                          show_trace = show_trace,
+                                          extended_trace = extended_trace),
+        nargs...)
 
     x = copy(initial_x)
     fbarrier = (x, gbarrier) -> barrier_box(x, gbarrier, l, u)
@@ -156,12 +164,18 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
     g = similar(x)
     valboth = Array(T, 2)
     fval_all = Array(Vector{T}, 0)
-    fcount_all = 0
+
+    # Count the total number of outer iterations
+    iteration = 0
+
     xold = similar(x)
     converged = false
     local results
     first = true
-    while true
+    while !converged && iteration < iterations
+        # Increment the number of steps we've had to perform
+        iteration += 1
+
         copy!(xold, x)
         # Optimize with current setting of mu
         funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, valboth, fb, mu)
@@ -171,11 +185,11 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        resultsnew = optimizer(dfbox, x; xtol=xtol, ftol=ftol, grtol=grtol, iterations=iterations,
-                                         store_trace=store_trace, show_trace=show_trace, extended_trace=extended_trace,
-                                         linesearch! = linesearch!, eta=eta, P=P, precondprep=pcp)
-        if first == true
+        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep = pcp),
+                              optimizer_o)
+        if first
             results = resultsnew
+            first = false
         else
             append!(results, resultsnew)
         end
@@ -188,15 +202,16 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
         mu *= mufactor
 
         # Test for convergence
-        for i = 1:length(x)
-            g[i] = gfunc[i] + mu*gbarrier[i]
+        @simd for i = 1:length(x)
+            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
+
         x_converged, f_converged, gr_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, xtol, ftol, grtol)
-        if converged
-            break
-        end
+
     end
+    results.method = "Fminbox with $(results.method)"
+    results.iterations = iteration
     results.initial_x = initial_x
+    results.f_minimum = df.f(results.minimum)
     results
 end
-export fminbox

@@ -1,4 +1,4 @@
-julia 0.3
+julia 0.4
 Calculus
-DualNumbers
-Compat 0.7.1
+DualNumbers 0.2
+PositiveFactorizations

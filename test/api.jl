@@ -25,95 +25,122 @@ d3 = TwiceDifferentiableFunction(rosenbrock,
 	                             rosenbrock_gradient!,
 	                             rosenbrock_hessian!)
 
-Optim.bfgs(d1, [0.0, 0.0])
-Optim.bfgs(d2, [0.0, 0.0])
+Optim.optimize(f3, [0.0, 0.0], BFGS())
+Optim.optimize(f3, g3!, [0.0, 0.0], BFGS())
+Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS())
+Optim.optimize(d2, [0.0, 0.0], BFGS())
+Optim.optimize(d3, [0.0, 0.0], BFGS())
 
-Optim.gradient_descent(d1, [0.0, 0.0])
-Optim.gradient_descent(d2, [0.0, 0.0])
+Optim.optimize(f3, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(f3, g3!, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(d2, [0.0, 0.0], BFGS(), OptimizationOptions())
+Optim.optimize(d3, [0.0, 0.0], BFGS(), OptimizationOptions())
 
-Optim.l_bfgs(d1, [0.0, 0.0])
-Optim.l_bfgs(d2, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = BFGS())
+Optim.optimize(d2, [0.0, 0.0], method = BFGS())
 
-Optim.nelder_mead(rosenbrock, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = GradientDescent())
+Optim.optimize(d2, [0.0, 0.0], method = GradientDescent())
 
-Optim.newton(d3, [0.0, 0.0])
+Optim.optimize(d1, [0.0, 0.0], method = LBFGS())
+Optim.optimize(d2, [0.0, 0.0], method = LBFGS())
 
-Optim.simulated_annealing(rosenbrock, [0.0, 0.0])
+Optim.optimize(rosenbrock, [0.0, 0.0], method = NelderMead())
 
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = :bfgs)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = :bfgs)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = :bfgs)
+Optim.optimize(d3, [0.0, 0.0], method = Newton())
 
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = :gradient_descent)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = :gradient_descent)
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = :gradient_descent)
+Optim.optimize(rosenbrock, [0.0, 0.0], method = SimulatedAnnealing())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = BFGS())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     BFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = BFGS())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :l_bfgs)
+	     method = BFGS())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = GradientDescent())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     GradientDescent())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = GradientDescent())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :nelder_mead)
+	     method = GradientDescent())
+
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     method = LBFGS())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     LBFGS())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     [0.0, 0.0],
+	     method = LBFGS())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     rosenbrock_hessian!,
+	     [0.0, 0.0],
+	     method = LBFGS())
+
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     method = NelderMead())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     NelderMead())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     [0.0, 0.0],
+	     method = NelderMead())
+optimize(rosenbrock,
+	     rosenbrock_gradient!,
+	     rosenbrock_hessian!,
+	     [0.0, 0.0],
+	     method = NelderMead())
 
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :newton)
+	     method = Newton())
 
 optimize(rosenbrock,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
+optimize(rosenbrock,
+	     [0.0, 0.0],
+	     SimulatedAnnealing())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
 optimize(rosenbrock,
 	     rosenbrock_gradient!,
 	     rosenbrock_hessian!,
 	     [0.0, 0.0],
-	     method = :simulated_annealing)
+	     method = SimulatedAnnealing())
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :bfgs,
+	           method = BFGS(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -121,7 +148,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :gradient_descent,
+	           method = GradientDescent(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -129,7 +156,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :l_bfgs,
+	           method = LBFGS(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -137,7 +164,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :nelder_mead,
+	           method = NelderMead(),
 	           ftol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -145,7 +172,7 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :newton,
+	           method = Newton(),
 	           grtol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
@@ -153,7 +180,75 @@ res = optimize(f3, g3!, h3!,
 
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
-	           method = :simulated_annealing,
+	           method = SimulatedAnnealing(),
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
+
+let
+    res = optimize(f3, g3!, h3!,
+    	           [0.0, 0.0],
+    	           method = BFGS(),
+    	           grtol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+   @test Optim.method(res) == "BFGS"
+   @test Optim.minimum(res) ≈ 0.055119582904897345
+   @test Optim.minimizer(res) ≈ [0.7731690866149542; 0.5917345966396391]
+   @test Optim.iterations(res) == 10
+   @test Optim.f_calls(res) == 48
+   @test Optim.g_calls(res) == 48
+   @test Optim.converged(res) == false
+   @test Optim.x_converged(res) == false
+   @test Optim.f_converged(res) == false
+   @test Optim.g_converged(res) == false
+   @test Optim.x_tol(res) == 1e-32
+   @test Optim.f_tol(res) == 1e-8
+   @test Optim.g_tol(res) == 1e-12
+   @test Optim.iteration_limit_reached(res) == true
+   @test Optim.initial_state(res) == [0.0; 0.0]
+   # just testing if it runs
+   Optim.trace(res)
+   Optim.f_trace(res)
+   Optim.g_norm_trace(res)
+   @test_throws ErrorException Optim.x_trace(res)
+   @test_throws ErrorException Optim.lower_bound(res)
+   @test_throws ErrorException Optim.upper_bound(res)
+   @test_throws ErrorException Optim.rel_tol(res)
+   @test_throws ErrorException Optim.abs_tol(res)
+end
+
+let
+    f(x) = 2x^2+3x+1
+    res = optimize(f, -2.0, 1.0, method = GoldenSection())
+    @test Optim.method(res) == "Golden Section Search"
+    @test Optim.minimum(res) ≈ -0.125
+    @test Optim.minimizer(res) ≈ -0.749999994377939
+    @test Optim.iterations(res) == 38
+    @test Optim.iteration_limit_reached(res) == false
+    @test_throws ErrorException Optim.trace(res)
+    @test_throws ErrorException Optim.x_trace(res)
+    @test_throws ErrorException Optim.x_lower_trace(res)
+    @test_throws ErrorException Optim.x_upper_trace(res)
+    @test_throws ErrorException Optim.f_trace(res)
+    @test Optim.lower_bound(res) == -2.0
+    @test Optim.upper_bound(res) == 1.0
+    @test Optim.rel_tol(res) ≈ 1.4901161193847656e-8
+    @test Optim.abs_tol(res) ≈ 2.220446049250313e-16
+    @test_throws ErrorException Optim.initial_state(res)
+    @test_throws ErrorException Optim.g_norm_trace(res)
+    @test_throws ErrorException Optim.g_calls(res)
+    @test_throws ErrorException Optim.x_converged(res)
+    @test_throws ErrorException Optim.f_converged(res)
+    @test_throws ErrorException Optim.g_converged(res)
+    @test_throws ErrorException Optim.x_tol(res)
+    @test_throws ErrorException Optim.f_tol(res)
+    @test_throws ErrorException Optim.g_tol(res)
+    res = optimize(f, -2.0, 1.0, method = GoldenSection(), store_trace = true, extended_trace = true)
+
+    # Right now, these just "test" if they run
+    Optim.x_trace(res)
+    Optim.x_lower_trace(res)
+    Optim.x_upper_trace(res)
+end

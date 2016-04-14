@@ -3,6 +3,7 @@
 #
 
 using Optim
+using Base.Test
 
 my_tests = [
     "types.jl",
@@ -25,6 +26,7 @@ my_tests = [
     "array.jl",
     "constrained.jl",
     "callbacks.jl",
+    "deprecate.jl"
 ]
 
 println("Running tests:")

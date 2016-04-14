@@ -2,6 +2,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Optim
     using Calculus
+    using PositiveFactorizations
     using Compat
 
     import Base.length,
@@ -13,14 +14,28 @@ module Optim
     export optimize,
            DifferentiableFunction,
            TwiceDifferentiableFunction,
+           OptimizationOptions,
            OptimizationState,
-           OptimizationTrace
+           OptimizationTrace,
 
-    # Utils
-    include("utils.jl")
+           AcceleratedGradientDescent,
+           BFGS,
+           Brent,
+           ConjugateGradient,
+           Fminbox,
+           GoldenSection,
+           GradientDescent,
+           LBFGS,
+           MomentumGradientDescent,
+           NelderMead,
+           Newton,
+           SimulatedAnnealing
 
     # Types
     include("types.jl")
+
+    # API
+    include("api.jl")
 
     # Automatic differentiation utilities
     include("autodiff.jl")
@@ -59,7 +74,6 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
-    include("nnls.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")
@@ -71,6 +85,9 @@ module Optim
     # Univariate methods
     include("golden_section.jl")
     include("brent.jl")
+
+    # Backward compatibility
+    include("deprecate.jl")
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")

@@ -1,26 +1,26 @@
 # Preconditioners
 #  * Empty preconditioner
-@compat cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
-@compat cg_precondfwddot(A::Array, P::Void, B::Array) = _dot(A, B)
-@compat cg_precondinvdot(A::Array, P::Void, B::Array) = _dot(A, B)
+cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
+cg_precondfwddot(A::Array, P::Void, B::Array) = vecdot(A, B)
+cg_precondinvdot(A::Array, P::Void, B::Array) = vecdot(A, B)
 
 # Diagonal preconditioner
 function cg_precondfwd(out::Array, p::Vector, A::Array)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds out[i] = p[i] * A[i]
     end
     return out
 end
 function cg_precondfwddot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds s += A[i] * p[i] * B[i]
     end
     return s
 end
 function cg_precondinvdot{T}(A::Array{T}, p::Vector, B::Array)
     s = zero(T)
-    for i in 1:length(A)
+    @simd for i in 1:length(A)
         @inbounds s += A[i] * B[i] / p[i]
     end
     return s
@@ -84,7 +84,7 @@ macro cgtrace()
     quote
         if tracing
             dt = Dict()
-            if extended_trace
+            if o.extended_trace
                 dt["x"] = copy(x)
                 dt["g(x)"] = copy(gr)
                 dt["Current step size"] = alpha
@@ -95,30 +95,35 @@ macro cgtrace()
                     f_x,
                     grnorm,
                     dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
         end
     end
 end
 
-@compat function cg{T}(df::Union{DifferentiableFunction,
-                         TwiceDifferentiableFunction},
-               initial_x::Array{T};
-               xtol::Real = convert(T,1e-32),
-               ftol::Real = convert(T,1e-8),
-               grtol::Real = convert(T,1e-8),
-               iterations::Integer = 1_000,
-               store_trace::Bool = false,
-               show_trace::Bool = false,
-               extended_trace::Bool = false,
-               callback = nothing,
-               show_every = 1,
-               linesearch!::Function = hz_linesearch!,
-               eta::Real = convert(T,0.4),
-               P::Any = nothing,
-               precondprep::Function = (P, x) -> nothing)
+immutable ConjugateGradient{T} <: Optimizer
+    eta::Float64
+    P::T
+    precondprep::Function
+    linesearch!::Function
+end
+
+function ConjugateGradient(;
+                           linesearch!::Function = hz_linesearch!,
+                           eta::Real = 0.4,
+                           P::Any = nothing,
+                           precondprep::Function = (P, x) -> nothing)
+    ConjugateGradient{typeof(P)}(Float64(eta), P, precondprep, linesearch!)
+end
+
+function optimize{T}(df::DifferentiableFunction,
+                     initial_x::Array{T},
+                     cg::ConjugateGradient,
+                     o::OptimizationOptions)
+    # Print header if show_trace is set
+    print_header(o)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -165,7 +170,7 @@ end
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @cgtrace
 
     # Output messages
@@ -179,28 +184,26 @@ end
     end
 
     # Determine the intial search direction
-    precondprep(P, x)
-    cg_precondfwd(s, P, gr)
-    for i in 1:n
-        @inbounds s[i] = -s[i]
-    end
+    cg.precondprep(cg.P, x)
+    cg_precondfwd(s, cg.P, gr)
+    scale!(s, -1)
 
     # Assess multiple types of convergence
     x_converged, f_converged, gr_converged = false, false, false
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration < iterations
+    while !converged && iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
         # Reset the search direction if it becomes corrupted
-        dphi0 = _dot(gr, s)
+        dphi0 = vecdot(gr, s)
         if dphi0 >= 0
-            for i in 1:n
+            @simd for i in 1:n
                 @inbounds s[i] = -gr[i]
             end
-            dphi0 = _dot(gr, s)
+            dphi0 = vecdot(gr, s)
             if dphi0 < 0
                 break
             end
@@ -219,16 +222,14 @@ end
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          cg.linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
         copy!(x_previous, x)
 
-        # Update current position
-        for i in 1:n
-            @inbounds x[i] = x[i] + alpha * s[i]
-        end
+        # Update current position # x = x + alpha * s
+        LinAlg.axpy!(alpha, s, x)
 
         # Maintain a record of the previous gradient
         copy!(gr_previous, gr)
@@ -245,9 +246,9 @@ end
                                        f_x,
                                        f_x_previous,
                                        gr,
-                                       xtol,
-                                       ftol,
-                                       grtol)
+                                       o.xtol,
+                                       o.ftol,
+                                       o.grtol)
 
         # Check sanity of function and gradient
         if !isfinite(f_x)
@@ -256,18 +257,18 @@ end
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
-        precondprep(P, x)
-        dPd = cg_precondinvdot(s, P, s)
-        etak::T = eta * _dot(s, gr_previous) / dPd
-        for i in 1:n
+        cg.precondprep(cg.P, x)
+        dPd = cg_precondinvdot(s, cg.P, s)
+        etak::T = cg.eta * vecdot(s, gr_previous) / dPd
+        @simd for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
-        ydots = _dot(y, s)
-        cg_precondfwd(pgr, P, gr)
-        betak = (_dot(y, pgr) - cg_precondfwddot(y, P, y) *
-                 _dot(gr, s) / ydots) / ydots
+        ydots = vecdot(y, s)
+        cg_precondfwd(pgr, cg.P, gr)
+        betak = (vecdot(y, pgr) - cg_precondfwddot(y, cg.P, y) *
+                 vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
-        for i in 1:n
+        @simd for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]
         end
 
@@ -277,15 +278,15 @@ end
     return MultivariateOptimizationResults("Conjugate Gradient",
                                            initial_x,
                                            x,
-                                           @compat(Float64(f_x)),
+                                           Float64(f_x),
                                            iteration,
-                                           iteration == iterations,
+                                           iteration == o.iterations,
                                            x_converged,
-                                           xtol,
+                                           o.xtol,
                                            f_converged,
-                                           ftol,
+                                           o.ftol,
                                            gr_converged,
-                                           grtol,
+                                           o.grtol,
                                            tr,
                                            f_calls,
                                            g_calls)

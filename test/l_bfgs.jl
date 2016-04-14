@@ -12,7 +12,7 @@ initial_x = [10.0, 10.0]
 m = 10
 store_trace, show_trace = false, false
 
-results = Optim.l_bfgs(d, initial_x)
-@assert length(results.trace.states) == 0
-@assert results.gr_converged
-@assert norm(results.minimum - [309.0 / 5.0, 17.0]) < 0.01
+results = Optim.optimize(d, initial_x, method=LBFGS())
+@test_throws ErrorException Optim.x_trace(results)
+@assert Optim.g_converged(results)
+@assert norm(Optim.minimizer(results) - [309.0 / 5.0, 17.0]) < 0.01

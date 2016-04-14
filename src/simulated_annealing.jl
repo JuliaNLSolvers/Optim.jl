@@ -14,7 +14,7 @@ macro satrace()
     quote
         if tracing
             dt = Dict()
-            if extended_trace
+            if o.extended_trace
                 dt["x"] = copy(x)
             end
             grnorm = NaN
@@ -23,25 +23,32 @@ macro satrace()
                     f_x,
                     grnorm,
                     dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
         end
     end
 end
 
-function simulated_annealing{T}(cost::Function,
-                                initial_x::Array{T};
-                                neighbor!::Function = default_neighbor!,
-                                temperature::Function = log_temperature,
-                                keep_best::Bool = true,
-                                iterations::Integer = 100_000,
-                                store_trace::Bool = false,
-                                show_trace::Bool = false,
-                                callback = nothing,
-                                show_every = 1,
-                                extended_trace::Bool = false)
+immutable SimulatedAnnealing <: Optimizer
+    neighbor!::Function
+    temperature::Function
+    keep_best::Bool # not used!?
+end
+
+SimulatedAnnealing(; neighbor!::Function = default_neighbor!,
+                     temperature::Function = log_temperature,
+                     keep_best::Bool = true) =
+  SimulatedAnnealing(neighbor!, temperature, keep_best)
+
+function optimize{T}(cost::Function,
+                     initial_x::Array{T},
+                     mo::SimulatedAnnealing,
+                     o::OptimizationOptions)
+    # Print header if show_trace is set
+    print_header(o)
+
     # Maintain current and proposed state
     x, x_proposal = copy(initial_x), copy(initial_x)
 
@@ -64,19 +71,19 @@ function simulated_annealing{T}(cost::Function,
 
     # Trace the history of states visited
     tr = OptimizationTrace()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @satrace
 
     # We always perform a fixed number of iterations
-    while iteration < iterations
+    while iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
         # Determine the temperature for current iteration
-        t = temperature(iteration)
+        t = mo.temperature(iteration)
 
         # Randomly generate a neighbor of our current state
-        neighbor!(x, x_proposal)
+        mo.neighbor!(x, x_proposal)
 
         # Evaluate the cost function at the proposed state
         f_proposal = cost(x_proposal)
@@ -107,9 +114,9 @@ function simulated_annealing{T}(cost::Function,
     return MultivariateOptimizationResults("Simulated Annealing",
                                            initial_x,
                                            best_x,
-                                           @compat(Float64(best_f_x)),
-                                           iterations,
-                                           iteration == iterations,
+                                           Float64(best_f_x),
+                                           iteration,
+                                           iteration == o.iterations,
                                            false,
                                            NaN,
                                            false,

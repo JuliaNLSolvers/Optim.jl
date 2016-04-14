@@ -8,7 +8,7 @@ macro brenttrace()
                 dt["x_upper"] = x_upper
             end
             update!(tr,
-                    it,
+                    iteration,
                     f_minimum,
                     NaN,
                     dt,
@@ -20,15 +20,19 @@ macro brenttrace()
     end
 end
 
-function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
-                                   rel_tol::T = sqrt(eps(T)),
-                                   abs_tol::T = eps(T),
-                                   iterations::Integer = 1_000,
-                                   store_trace::Bool = false,
-                                   show_trace::Bool = false,
-                                   callback = nothing,
-                                   show_every = 1,
-                                   extended_trace::Bool = false)
+immutable Brent <: Optimizer end
+
+function optimize{T <: AbstractFloat}(
+        f::Function, x_lower::T, x_upper::T,
+        ::Brent;
+        rel_tol::T = sqrt(eps(T)),
+        abs_tol::T = eps(T),
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        callback = nothing,
+        show_every = 1,
+        extended_trace::Bool = false)
 
     if !(x_lower < x_upper)
         error("x_lower must be less than x_upper")
@@ -53,7 +57,7 @@ function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
     f_minimum_old = f_minimum
     f_minimum_old_old = f_minimum
 
-    it = 0
+    iteration = 0
     converged = false
 
     # Trace the history of states visited
@@ -61,7 +65,7 @@ function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 
-    while it < iterations
+    while iteration < iterations
 
         p = zero(T)
         q = zero(T)
@@ -75,7 +79,7 @@ function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
             break
         end
 
-        it += 1
+        iteration += 1
 
         if abs(step_old) > tolx
             # Compute parabola interpolation
@@ -154,8 +158,9 @@ function brent{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                                          initial_lower,
                                          initial_upper,
                                          x_minimum,
-                                         @compat(Float64(f_minimum)),
-                                         it,
+                                         Float64(f_minimum),
+                                         iteration,
+                                         iteration == iterations,
                                          converged,
                                          rel_tol,
                                          abs_tol,

@@ -77,7 +77,7 @@ end
 
 # Code used to use phi, a 1-parameter function induced by f and s
 # Need to pass s as an explicit parameter
-@compat function alphatry{T}(alpha::T,
+function alphatry{T}(alpha::T,
                      d::Union{DifferentiableFunction,
                               TwiceDifferentiableFunction},
                      x::Array,
@@ -154,7 +154,7 @@ end
     return alpha, mayterminate, f_calls, g_calls
 end
 
-@compat function hz_linesearch!{T}(df::Union{DifferentiableFunction,
+function hz_linesearch!{T}(df::Union{DifferentiableFunction,
                                      TwiceDifferentiableFunction},
                            x::Array{T},
                            s::Array,
@@ -386,7 +386,7 @@ function secant(lsr::LineSearchResults, ia::Integer, ib::Integer)
     return secant(lsr.alpha[ia], lsr.alpha[ib], lsr.slope[ia], lsr.slope[ib])
 end
 # phi
-@compat function secant2!{T}(df::Union{DifferentiableFunction,
+function secant2!{T}(df::Union{DifferentiableFunction,
                               TwiceDifferentiableFunction},
                      x::Array,
                      s::Array,
@@ -480,7 +480,7 @@ end
 # Given a third point, pick the best two that retain the bracket
 # around the minimum (as defined by HZ, eq. 29)
 # b will be the upper bound, and a the lower bound
-@compat function update!(df::Union{DifferentiableFunction,
+function update!(df::Union{DifferentiableFunction,
                            TwiceDifferentiableFunction},
                  x::Array,
                  s::Array,
@@ -531,7 +531,7 @@ end
 end
 
 # HZ, stage U3 (with theta=0.5)
-@compat function bisect!{T}(df::Union{DifferentiableFunction,
+function bisect!{T}(df::Union{DifferentiableFunction,
                               TwiceDifferentiableFunction},
                     x::Array,
                     s::Array,
@@ -579,7 +579,7 @@ end
 end
 
 # Define one-parameter function for line searches
-@compat function linefunc!(df::Union{DifferentiableFunction,
+function linefunc!(df::Union{DifferentiableFunction,
                             TwiceDifferentiableFunction},
                    x::Array,
                    s::Array,
@@ -598,7 +598,7 @@ end
         f_calls += 1
         g_calls += 1
         if isfinite(val)
-            gphi = _dot(g, s)
+            gphi = vecdot(g, s)
         end
     else
         val = df.f(xtmp)

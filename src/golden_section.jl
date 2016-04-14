@@ -8,7 +8,7 @@ macro goldensectiontrace()
                 dt["x_upper"] = x_upper
             end
             update!(tr,
-                    it,
+                    iteration,
                     f_minimum,
                     NaN,
                     dt,
@@ -20,15 +20,19 @@ macro goldensectiontrace()
     end
 end
 
-function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
-                                            rel_tol::T = sqrt(eps(T)),
-                                            abs_tol::T = eps(T),
-                                            iterations::Integer = 1_000,
-                                            store_trace::Bool = false,
-                                            show_trace::Bool = false,
-                                            callback = nothing,
-                                            show_every = 1,
-                                            extended_trace::Bool = false)
+immutable GoldenSection <: Optimizer end
+
+function optimize{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T,
+                                      ::GoldenSection;
+                                      rel_tol::T = sqrt(eps(T)),
+                                      abs_tol::T = eps(T),
+                                      iterations::Integer = 1_000,
+                                      store_trace::Bool = false,
+                                      show_trace::Bool = false,
+                                      callback = nothing,
+                                      show_every = 1,
+                                      extended_trace::Bool = false,
+                                      nargs...)
     if !(x_lower < x_upper)
         error("x_lower must be less than x_upper")
     end
@@ -43,7 +47,7 @@ function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
     f_minimum = f(x_minimum)
     f_calls = 1 # Number of calls to f
 
-    it = 0
+    iteration = 0
     converged = false
 
     # Trace the history of states visited
@@ -51,7 +55,7 @@ function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @goldensectiontrace
 
-    while it < iterations
+    while iteration < iterations
 
         tolx = rel_tol * abs(x_minimum) + abs_tol
 
@@ -62,7 +66,7 @@ function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
             break
         end
 
-        it += 1
+        iteration += 1
 
         if x_upper - x_minimum > x_minimum - x_lower
             x_new = x_minimum + golden_ratio*(x_upper - x_minimum)
@@ -95,8 +99,9 @@ function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;
                                          initial_lower,
                                          initial_upper,
                                          x_minimum,
-                                         @compat(Float64(f_minimum)),
-                                         it,
+                                         Float64(f_minimum),
+                                         iteration,
+                                         iteration == iterations,
                                          converged,
                                          rel_tol,
                                          abs_tol,
