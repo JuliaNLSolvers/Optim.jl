@@ -35,8 +35,7 @@ end
                 linesearch!::Function = hz_linesearch!,
                 eta::Real = convert(T,0.4),
                 P::Any = nothing,
-                precondprep::Function = (P, x) -> nothing,
-                nargs...) optimize(df, initial_x, ConjugateGradient(eta = eta, precondprep = precondprep, P = P, linesearch! = linesearch!), OptimizationOptions(;nargs...))
+                nargs...) optimize(df, initial_x, ConjugateGradient(eta = eta, P = P, linesearch! = linesearch!), OptimizationOptions(;nargs...))
 
 @deprecate gradient_descent{T}(df::Union{DifferentiableFunction, TwiceDifferentiableFunction},
                 initial_x::Array{T};

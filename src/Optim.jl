@@ -59,6 +59,9 @@ module Optim
     include(joinpath("linesearch", "mt_linesearch.jl"))
     include(joinpath("linesearch", "hz_linesearch.jl"))
 
+    # preconditioning functionality
+    include("precon.jl")
+
     # Gradient Descent
     include("gradient_descent.jl")
     include("accelerated_gradient_descent.jl")
