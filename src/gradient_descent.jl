@@ -1,3 +1,5 @@
+
+
 macro gdtrace()
     quote
         if tracing
@@ -20,12 +22,15 @@ macro gdtrace()
     end
 end
 
-immutable GradientDescent <: Optimizer
+immutable GradientDescent{T} <: Optimizer
     linesearch!::Function
+    P::T
+    precondprep!::Function
 end
 
-GradientDescent(; linesearch!::Function = hz_linesearch!) =
-  GradientDescent(linesearch!)
+GradientDescent(; linesearch!::Function = hz_linesearch!,
+                P = nothing, precondprep! = (P, x) -> nothing) =
+                    GradientDescent(linesearch!, P, precondprep!)
 
 function optimize{T}(d::DifferentiableFunction,
                      initial_x::Array{T},
@@ -83,9 +88,11 @@ function optimize{T}(d::DifferentiableFunction,
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        # Search direction is always the negative gradient
+        # Search direction is always the negative preconditioned gradient
+        mo.precondprep!(mo.P, x)
+        precondfwd!(s, mo.P, gr)
         @simd for i in 1:n
-            @inbounds s[i] = -gr[i]
+            @inbounds s[i] = -s[i]
         end
 
         # Refresh the line search cache
