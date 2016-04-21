@@ -1,30 +1,3 @@
-# Preconditioners
-#  * Empty preconditioner
-cg_precondfwd(out::Array, P::Void, A::Array) = copy!(out, A)
-cg_precondfwddot(A::Array, P::Void, B::Array) = vecdot(A, B)
-cg_precondinvdot(A::Array, P::Void, B::Array) = vecdot(A, B)
-
-# Diagonal preconditioner
-function cg_precondfwd(out::Array, p::Vector, A::Array)
-    @simd for i in 1:length(A)
-        @inbounds out[i] = p[i] * A[i]
-    end
-    return out
-end
-function cg_precondfwddot{T}(A::Array{T}, p::Vector, B::Array)
-    s = zero(T)
-    @simd for i in 1:length(A)
-        @inbounds s += A[i] * p[i] * B[i]
-    end
-    return s
-end
-function cg_precondinvdot{T}(A::Array{T}, p::Vector, B::Array)
-    s = zero(T)
-    @simd for i in 1:length(A)
-        @inbounds s += A[i] * B[i] / p[i]
-    end
-    return s
-end
 
 #
 # Conjugate gradient
@@ -106,7 +79,7 @@ end
 immutable ConjugateGradient{T} <: Optimizer
     eta::Float64
     P::T
-    precondprep::Function
+    precondprep!::Function
     linesearch!::Function
 end
 
@@ -114,8 +87,10 @@ function ConjugateGradient(;
                            linesearch!::Function = hz_linesearch!,
                            eta::Real = 0.4,
                            P::Any = nothing,
-                           precondprep::Function = (P, x) -> nothing)
-    ConjugateGradient{typeof(P)}(Float64(eta), P, precondprep, linesearch!)
+                           precondprep! = (P, x) -> nothing)
+    ConjugateGradient{typeof(P)}(Float64(eta),
+                                 P, precondprep!,
+                                 linesearch!)
 end
 
 function optimize{T}(df::DifferentiableFunction,
@@ -184,8 +159,8 @@ function optimize{T}(df::DifferentiableFunction,
     end
 
     # Determine the intial search direction
-    cg.precondprep(cg.P, x)
-    cg_precondfwd(s, cg.P, gr)
+    cg.precondprep!(cg.P, x)
+    precondfwd!(s, cg.P, gr)
     scale!(s, -1)
 
     # Assess multiple types of convergence
@@ -257,15 +232,15 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
-        cg.precondprep(cg.P, x)
-        dPd = cg_precondinvdot(s, cg.P, s)
+        cg.precondprep!(cg.P, x)
+        dPd = precondinvdot(s, cg.P, s)
         etak::T = cg.eta * vecdot(s, gr_previous) / dPd
         @simd for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = vecdot(y, s)
-        cg_precondfwd(pgr, cg.P, gr)
-        betak = (vecdot(y, pgr) - cg_precondfwddot(y, cg.P, y) *
+        precondfwd!(pgr, cg.P, gr)
+        betak = (vecdot(y, pgr) - precondfwddot(y, cg.P, y) *
                  vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         @simd for i in 1:n

@@ -13,7 +13,8 @@ function twoloop!(s::Vector,
                   m::Integer,
                   pseudo_iteration::Integer,
                   alpha::Vector,
-                  q::Vector)
+                  q::Vector,
+                  precon)
     # Count number of parameters
     n = length(s)
 
@@ -37,7 +38,10 @@ function twoloop!(s::Vector,
     end
 
     # Copy q into s for forward pass
-    copy!(s, q)
+    # UNPRECONDITIONED: copy!(s, q)
+    # this is equivalent to choosing Id as the preconditioner / initial guess
+    # PRECONDITIONING: (preconditioner update was done outside!)
+    precondfwd!(s, precon, q)
 
     # Forward pass
     for index in lower:1:upper
@@ -80,13 +84,16 @@ macro lbfgstrace()
     end
 end
 
-immutable LBFGS <: Optimizer
+immutable LBFGS{T} <: Optimizer
     m::Int
     linesearch!::Function
+    P::T
+    precondprep!::Function
 end
 
-LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!) =
-  LBFGS(Int(m), linesearch!)
+LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!,
+      P=nothing, precondprep! = (P, x) -> nothing) =
+    LBFGS(Int(m), linesearch!, P, precondprep!)
 
 function optimize{T}(d::DifferentiableFunction,
                      initial_x::Vector{T},
@@ -156,9 +163,12 @@ function optimize{T}(d::DifferentiableFunction,
         iteration += 1
         pseudo_iteration += 1
 
+        # update the preconditioner
+        mo.precondprep!(mo.P, x)
+        
         # Determine the L-BFGS search direction
         twoloop!(s, gr, rho, dx_history, dgr_history, mo.m, pseudo_iteration,
-                 twoloop_alpha, twoloop_q)
+                 twoloop_alpha, twoloop_q, mo.P)
 
         # Refresh the line search cache
         dphi0 = vecdot(gr, s)
