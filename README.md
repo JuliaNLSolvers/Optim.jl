@@ -1,3 +1,5 @@
+*This it the development branch of Optim.jl. Please visit [this branch](https://github.com/JuliaOpt/Optim.jl/tree/v0.4.5) to find the README.md belonging to the latest official release of Optim.jl*
+
 Optim.jl
 ========
 
