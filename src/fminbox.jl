@@ -93,7 +93,7 @@ end
 
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
-function precondprepbox(P, x, l, u, mu)
+function precondprepbox!(P, x, l, u, mu)
     @inbounds @simd for i = 1:length(x)
         xi = x[i]
         li = l[i]
@@ -126,7 +126,7 @@ function optimize{T<:AbstractFloat}(
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
-        precondprep = (P, x, l, u, mu) -> precondprepbox(P, x, l, u, mu),
+        precondprep! = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
         optimizer = ConjugateGradient,
         optimizer_o = OptimizationOptions(store_trace = store_trace,
                                           show_trace = show_trace,
@@ -184,8 +184,8 @@ function optimize{T<:AbstractFloat}(
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
-        pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep = pcp),
+        pcp = (P, x) -> precondprep!(P, x, l, u, mu)
+        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp),
                               optimizer_o)
         if first
             results = resultsnew
