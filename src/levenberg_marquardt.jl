@@ -43,6 +43,7 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
 	m = length(fcur)
 	n = length(x)
 	JJ = Matrix{T}(n, n)
+	Jm_buff = Vector{T}(m)
 	Jf_buff = Vector{T}(n)
 	x_buff = Vector{T}(n)
 
@@ -85,9 +86,9 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
 
 		# if the linear assumption is valid, our new residual should be:
 		# predicted_residual = sumabs2(J*delta_x + fcur)
-		A_mul_B!(Jf_buff, J, delta_x)
-		LinAlg.axpy!(1, fcur, Jf_buff)
-		predicted_residual = sumabs2(Jf_buff)
+		A_mul_B!(Jm_buff, J, delta_x)
+		LinAlg.axpy!(1, fcur, Jm_buff)
+		predicted_residual = sumabs2(Jm_buff)
 		# check for numerical problems in solving for delta_x by ensuring that the predicted residual is smaller
 		# than the current residual
 		if predicted_residual > residual + 2max(eps(predicted_residual),eps(residual))
