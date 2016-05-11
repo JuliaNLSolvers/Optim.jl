@@ -140,12 +140,12 @@ function optimize{T <: AbstractFloat}(
             else
                 x_upper = x_new
             end
-            if x_new <= x_minimum_old || x_minimum_old == x_minimum
+            if f_new <= f_minimum_old || x_minimum_old == x_minimum
                 x_minimum_old_old = x_minimum_old
                 f_minimum_old_old = f_minimum_old
                 x_minimum_old = x_new
                 f_minimum_old = f_new
-            elseif x_new <= x_minimum_old_old || x_minimum_old_old == x_minimum || x_minimum_old_old == x_minimum_old
+            elseif f_new <= f_minimum_old_old || x_minimum_old_old == x_minimum || x_minimum_old_old == x_minimum_old
                 x_minimum_old_old = x_new
                 f_minimum_old_old = f_new
             end
