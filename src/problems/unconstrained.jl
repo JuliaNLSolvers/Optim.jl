@@ -8,7 +8,7 @@ module UnconstrainedProblems
 ### [2] Fletcher & Powell: A rapidly convergent descent method for minimization,
 
 immutable OptimizationProblem
-    name::ASCIIString
+    name::String
     f::Function
     g!::Function
     h!::Function
@@ -18,7 +18,7 @@ immutable OptimizationProblem
     istwicedifferentiable::Bool
 end
 
-examples = Dict{ASCIIString, OptimizationProblem}()
+examples = Dict{String, OptimizationProblem}()
 
 ##########################################################################
 ###

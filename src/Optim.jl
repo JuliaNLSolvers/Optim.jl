@@ -4,6 +4,7 @@ module Optim
     using Calculus
     using PositiveFactorizations
     using Compat
+    import Compat.String
 
     import Base.length,
            Base.push!,

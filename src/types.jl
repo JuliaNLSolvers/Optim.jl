@@ -64,7 +64,7 @@ OptimizationTrace() = OptimizationTrace(Array(OptimizationState, 0))
 abstract OptimizationResults
 
 type MultivariateOptimizationResults{T,N} <: OptimizationResults
-    method::ASCIIString
+    method::String
     initial_x::Array{T,N}
     minimum::Array{T,N}
     f_minimum::Float64
@@ -82,7 +82,7 @@ type MultivariateOptimizationResults{T,N} <: OptimizationResults
 end
 
 type UnivariateOptimizationResults{T} <: OptimizationResults
-    method::ASCIIString
+    method::String
     initial_lower::T
     initial_upper::T
     minimum::T
