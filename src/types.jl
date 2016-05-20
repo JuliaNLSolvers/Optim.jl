@@ -110,7 +110,7 @@ immutable TwiceDifferentiableFunction
 end
 
 function Base.show(io::IO, t::OptimizationState)
-    @printf io "%6d   %14e   %14e\n" t.iteration t.value t.gradnorm
+    @printf io "%6d   %14.8e   %14.8e\n" t.iteration t.value t.gradnorm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
             @printf io " * %s: %s\n" key value
