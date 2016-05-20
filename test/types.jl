@@ -25,4 +25,13 @@ module TestTypes
     @test startswith(lines[11], "   * Reached Maximum Number of Iterations: ")
     @test startswith(lines[12], " * Objective Function Calls: ")
     @test startswith(lines[13], " * Gradient Calls: ")
+
+    let
+        fake_state = Optim.OptimizationState(0,0.12345678987654321,0.1234456678987654321,Dict())
+        io = IOBuffer()
+        show(io, fake_state)
+        s = takebuf_string(io)
+        lines = split(s, '\n')
+        @test lines[1] == "     0   1.23456790e-01   1.23445668e-01"
+    end
 end
