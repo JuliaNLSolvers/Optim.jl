@@ -30,8 +30,8 @@ macro nmtrace()
             grnorm = NaN
             update!(tr,
                     iteration,
-                    f_x,
-                    grnorm,
+                    Base.minimum(y), # best point in the simplex
+                    f_x, # f_x is used more like a grnorm for nelder_mead
                     dt,
                     o.store_trace,
                     o.show_trace,
