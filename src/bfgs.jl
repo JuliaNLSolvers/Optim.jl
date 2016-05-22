@@ -88,7 +88,7 @@ function optimize{T}(d::DifferentiableFunction,
     I = eye(size(invH)...)
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @bfgstrace
 

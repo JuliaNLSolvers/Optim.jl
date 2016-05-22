@@ -148,7 +148,7 @@ function optimize{T}(d::DifferentiableFunction,
     twoloop_q, twoloop_alpha = Array(T, n), Array(T, mo.m)
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @lbfgstrace
 
@@ -164,7 +164,7 @@ function optimize{T}(d::DifferentiableFunction,
 
         # update the preconditioner
         mo.precondprep!(mo.P, x)
-        
+
         # Determine the L-BFGS search direction
         twoloop!(s, gr, rho, dx_history, dgr_history, mo.m, pseudo_iteration,
                  twoloop_alpha, twoloop_q, mo.P)

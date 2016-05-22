@@ -1,4 +1,4 @@
-function update!(tr::OptimizationTrace,
+function update!{T}(tr::OptimizationTrace{T},
                  iteration::Integer,
                  f_x::Real,
                  grnorm::Real,
@@ -7,7 +7,7 @@ function update!(tr::OptimizationTrace,
                  show_trace::Bool,
                  show_every::Int = 1,
                  callback = nothing)
-    os = OptimizationState(iteration, f_x, grnorm, dt)
+    os = OptimizationState{T}(iteration, f_x, grnorm, dt)
     if store_trace
         push!(tr, os)
     end

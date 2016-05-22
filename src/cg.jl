@@ -144,7 +144,7 @@ function optimize{T}(df::DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(cg) # TODO fix cg -> mo
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @cgtrace
 

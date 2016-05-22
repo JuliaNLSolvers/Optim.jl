@@ -61,7 +61,7 @@ function optimize{T <: AbstractFloat}(
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(Brent()) #TODO why not mo::Brent in method signature?
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 
