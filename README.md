@@ -364,11 +364,36 @@ In addition to the `iterations`, `store_trace`, `show_trace` and
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
 
-## State of the Library
+## Preconditioning 
+
+The `GradientDescent`, `ConjugateGradient` and `LBFGS` methods support preconditioning. A preconditioner
+can be thought of as a change of coordinates under which the hessian is better conditioned. With a 
+"good" preconditioner substantially improved convergence is possible.
+
+This functionality is invoked via (`Optimiser` ∈ {`GradientDescent`, `ConjugateGradient`, `LBFGS`})
+```jl
+df = DifferentiableFunction( . . . )
+mo = Optimiser(P = initmyP(params); precondprep! = (P, x) -> updatemyP(P, x, params))
+results = optimize(df, x0, method=mo )
+```
+The optimisers then use `precondprep!` to update the preconditioner after each update of the
+state `x`. Further, to apply the preconditioner, they employ the the following three methods:
+* `pprecondfwd!(out, P, A)` : apply `P` to a vector `A` and store in `out` 
+* `precondfwddot(A, P, B)` : take the inner product between `B` and `pprecondfwd!(out, P, A)`
+* `precondinvdot(A, P, B)` : the dual inner product
+
+Precisely what these operations mean, depends on how `P` is stored. Commonly, we store a matrix `P` which 
+approximates the hessian in some vague sense. In this case,
+* `pprecondfwd!(out, P, A) = copy!(out, P \ A)`
+* `precondfwddot(A, P, B) = dot(A, P \ B)`
+* `precondinvdot(A, P, B) = dot(A, P * B)`
+
+
+# State of the Library
 
 The current API calls for the user to use the `optimize` function with the appropriate `method` as shown above. Below is the old (deprecated) syntax.
 
-### Existing Functions (deprecated)
+## Existing Functions (deprecated)
 * Gradient Descent: `gradient_descent()`
 * Newton's Method: `newton()`
 * BFGS: `bfgs()`
@@ -383,11 +408,11 @@ The current API calls for the user to use the `optimize` function with the appro
 * Brent's method: `brent()`
 * Golden Section search: `golden_section()`
 
-### Planned Functions
+## Planned Functions
 * Linear conjugate gradients
 * L-BFGS-B (note that this functionality is already available in fminbox)
 
-### Citations
+# Citations
 
 W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
 
