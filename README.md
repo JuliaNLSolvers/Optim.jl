@@ -364,30 +364,36 @@ In addition to the `iterations`, `store_trace`, `show_trace` and
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
 
-## Preconditioning 
+## Preconditioning
 
 The `GradientDescent`, `ConjugateGradient` and `LBFGS` methods support preconditioning. A preconditioner
-can be thought of as a change of coordinates under which the hessian is better conditioned. With a 
+can be thought of as a change of coordinates under which the Hessian is better conditioned. With a
 "good" preconditioner substantially improved convergence is possible.
 
-This functionality is invoked via (`Optimiser` ∈ {`GradientDescent`, `ConjugateGradient`, `LBFGS`})
+An example of this is shown below (`Optimizer` ∈ {`GradientDescent`, `ConjugateGradient`, `LBFGS`}).
 ```jl
-df = DifferentiableFunction( . . . )
-mo = Optimiser(P = initmyP(params); precondprep! = (P, x) -> updatemyP(P, x, params))
-results = optimize(df, x0, method=mo )
+using ForwardDiff
+plap(U; n=length(U)) = (n-1) * sum( (0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
+plap1 = ForwardDiff.gradient(plap)
+precond(n) = spdiagm( ( -ones(n-1), 2*ones(n), -ones(n-1) ), (-1,0,1), n, n) * (n+1)
+df = DifferentiableFunction( X->plap([0;X;0]),
+                             (X, G)->copy!(G, (plap1([0;X;0]))[2:end-1]) )
+result = Optim.optimize(df, zeros(100), method=ConjugateGradient(P = nothing) )
+result = Optim.optimize(df, zeros(100), method=ConjugateGradient(P = precond(100)) )
 ```
-The optimisers then use `precondprep!` to update the preconditioner after each update of the
+Benchmarking shows that using preconditioning provides an approximate speedup factor of 15 in this case.
+
+The optimizers then use `precondprep!` to update the preconditioner after each update of the
 state `x`. Further, to apply the preconditioner, they employ the the following three methods:
-* `pprecondfwd!(out, P, A)` : apply `P` to a vector `A` and store in `out` 
+* `pprecondfwd!(out, P, A)` : apply `P` to a vector `A` and store in `out`
 * `precondfwddot(A, P, B)` : take the inner product between `B` and `pprecondfwd!(out, P, A)`
 * `precondinvdot(A, P, B)` : the dual inner product
 
-Precisely what these operations mean, depends on how `P` is stored. Commonly, we store a matrix `P` which 
-approximates the hessian in some vague sense. In this case,
+Precisely what these operations mean, depends on how `P` is stored. Commonly, we store a matrix `P` which
+approximates the Hessian in some vague sense. In this case,
 * `pprecondfwd!(out, P, A) = copy!(out, P \ A)`
 * `precondfwddot(A, P, B) = dot(A, P \ B)`
 * `precondinvdot(A, P, B) = dot(A, P * B)`
-
 
 # State of the Library
 
