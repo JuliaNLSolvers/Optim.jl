@@ -3,6 +3,8 @@
 Optim.jl
 ========
 
+[![Join the chat at https://gitter.im/JuliaOpt/Optim.jl](https://badges.gitter.im/JuliaOpt/Optim.jl.svg)](https://gitter.im/JuliaOpt/Optim.jl?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Optim](http://pkg.julialang.org/badges/Optim_0.3.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.3)
 [![Optim](http://pkg.julialang.org/badges/Optim_0.4.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.4)
 
