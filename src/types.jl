@@ -150,7 +150,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     else
         @printf io " * Minimizer: [%s, ...]\n" join(minimizer(r)[1:2], ",")
     end
-    @printf io " * Minimum: %f\n" minimum(r)
+    @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: %s\n" converged(r)
     if r.method == "Nelder-Mead"
@@ -172,8 +172,8 @@ function Base.show(io::IO, r::UnivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" method(r)
     @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
-    @printf io " * Minimizer: %f\n" minimizer(r)
-    @printf io " * Minimum: %f\n" minimum(r)
+    @printf io " * Minimizer: %e\n" minimizer(r)
+    @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(r) abs_tol(r) converged(r)
     @printf io " * Objective Function Calls: %d" f_calls(r)
