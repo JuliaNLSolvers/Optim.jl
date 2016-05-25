@@ -24,7 +24,7 @@ immutable Brent <: Optimizer end
 
 function optimize{T <: AbstractFloat}(
         f::Function, x_lower::T, x_upper::T,
-        ::Brent;
+        mo::Brent;
         rel_tol::T = sqrt(eps(T)),
         abs_tol::T = eps(T),
         iterations::Integer = 1_000,
@@ -61,7 +61,7 @@ function optimize{T <: AbstractFloat}(
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace(Brent()) #TODO why not mo::Brent in method signature?
+    tr = OptimizationTrace(mo)
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 

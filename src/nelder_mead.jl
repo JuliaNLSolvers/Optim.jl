@@ -77,11 +77,11 @@ end
 
 function optimize{T}(f::Function,
                      initial_x::Vector{T},
-                     nm::NelderMead,
+                     mo::NelderMead,
                      o::OptimizationOptions;
                      initial_step::Vector{T} = ones(T,length(initial_x)))
     # Print header if show_trace is set
-    print_header(nm, o)
+    print_header(mo, o)
 
     # Set up a simplex of points around starting value
     m = length(initial_x)
@@ -112,7 +112,7 @@ function optimize{T}(f::Function,
     step_type = "initial"
 
     # Maintain a trace
-    tr = OptimizationTrace(nm) # TODO change to mo
+    tr = OptimizationTrace(mo)
     tracing = o.show_trace || o.store_trace || o.extended_trace || o.callback != nothing
     @nmtrace
 
@@ -152,7 +152,7 @@ function optimize{T}(f::Function,
 
         # Compute a reflection
         @simd for j in 1:m
-            @inbounds p_star[j] = (1 + nm.a) * p_bar[j] - nm.a * p_h[j]
+            @inbounds p_star[j] = (1 + mo.a) * p_bar[j] - mo.a * p_h[j]
         end
         y_star = f(p_star)
         f_calls += 1
@@ -160,7 +160,7 @@ function optimize{T}(f::Function,
         if y_star < y_l
             # Compute an expansion
             @simd for j in 1:m
-                @inbounds p_star_star[j] = nm.g * p_star[j] + (1 - nm.g) * p_bar[j]
+                @inbounds p_star_star[j] = mo.g * p_star[j] + (1 - mo.g) * p_bar[j]
             end
             y_star_star = f(p_star_star)
             f_calls += 1
@@ -186,7 +186,7 @@ function optimize{T}(f::Function,
 
                 # Compute a contraction
                 @simd for j in 1:m
-                    @inbounds p_star_star[j] = nm.b * p_h[j] + (1 - nm.b) * p_bar[j]
+                    @inbounds p_star_star[j] = mo.b * p_h[j] + (1 - mo.b) * p_bar[j]
                 end
                 y_star_star = f(p_star_star)
                 f_calls += 1
