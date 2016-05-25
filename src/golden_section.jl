@@ -23,7 +23,7 @@ end
 immutable GoldenSection <: Optimizer end
 
 function optimize{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T,
-                                      ::GoldenSection;
+                                      mo::GoldenSection;
                                       rel_tol::T = sqrt(eps(T)),
                                       abs_tol::T = eps(T),
                                       iterations::Integer = 1_000,
@@ -51,7 +51,7 @@ function optimize{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T,
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @goldensectiontrace
 

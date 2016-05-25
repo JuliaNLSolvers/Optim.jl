@@ -1,3 +1,5 @@
+immutable LevenbergMarquardt <: Optimizer end
+
 function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
     lambda::Real = 10.0, show_trace::Bool = false)
@@ -47,7 +49,7 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
     m_buffer = Vector{T}(m)
 
     # Maintain a trace of the system.
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(LevenbergMarquardt())
     if show_trace
         d = Dict("lambda" => lambda)
         os = OptimizationState(iterCt, sumabs2(fcur), NaN, d)

@@ -25,13 +25,13 @@ macro nmtrace()
         if tracing
             dt = Dict()
             if o.extended_trace
-                dt["x"] = copy(x)
+                dt["centroid"] = centroid(p)
+                dt["step_type"] = step_type
             end
-            grnorm = NaN
             update!(tr,
                     iteration,
+                    Base.minimum(y),
                     f_x,
-                    grnorm,
                     dt,
                     o.store_trace,
                     o.show_trace,
@@ -49,13 +49,39 @@ end
 
 NelderMead(; a::Real = 1.0, g::Real = 2.0, b::Real = 0.5) = NelderMead(a, g, b)
 
+function print_header(mo::NelderMead, options::OptimizationOptions)
+    if options.show_trace
+        @printf "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
+        @printf "------   --------------    --------------\n"
+    end
+end
+
+function Base.show(io::IO, t::OptimizationTrace{NelderMead})
+    @printf io "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
+    @printf io "------   --------------    --------------\n"
+    for state in t.states
+        show(io, state)
+    end
+    return
+end
+
+function Base.show(io::IO, t::OptimizationState{NelderMead})
+    @printf io "%6d   %14e    %14e\n" t.iteration t.value t.gradnorm
+    if !isempty(t.metadata)
+        for (key, value) in t.metadata
+            @printf io " * %s: %s\n" key value
+        end
+    end
+    return
+end
+
 function optimize{T}(f::Function,
                      initial_x::Vector{T},
-                     nm::NelderMead,
+                     mo::NelderMead,
                      o::OptimizationOptions;
                      initial_step::Vector{T} = ones(T,length(initial_x)))
     # Print header if show_trace is set
-    print_header(o)
+    print_header(mo, o)
 
     # Set up a simplex of points around starting value
     m = length(initial_x)
@@ -83,8 +109,10 @@ function optimize{T}(f::Function,
     # Count iterations
     iteration = 0
 
+    step_type = "initial"
+
     # Maintain a trace
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = o.show_trace || o.store_trace || o.extended_trace || o.callback != nothing
     @nmtrace
 
@@ -124,7 +152,7 @@ function optimize{T}(f::Function,
 
         # Compute a reflection
         @simd for j in 1:m
-            @inbounds p_star[j] = (1 + nm.a) * p_bar[j] - nm.a * p_h[j]
+            @inbounds p_star[j] = (1 + mo.a) * p_bar[j] - mo.a * p_h[j]
         end
         y_star = f(p_star)
         f_calls += 1
@@ -132,7 +160,7 @@ function optimize{T}(f::Function,
         if y_star < y_l
             # Compute an expansion
             @simd for j in 1:m
-                @inbounds p_star_star[j] = nm.g * p_star[j] + (1 - nm.g) * p_bar[j]
+                @inbounds p_star_star[j] = mo.g * p_star[j] + (1 - mo.g) * p_bar[j]
             end
             y_star_star = f(p_star_star)
             f_calls += 1
@@ -141,10 +169,12 @@ function optimize{T}(f::Function,
                 copy!(p_h, p_star_star)
                 copy!(slice(p, :, h), p_star_star)
                 @inbounds y[h] = y_star_star
+                step_type = "expansion"
             else
                 copy!(p_h, p_star)
                 copy!(slice(p, :, h), p_star)
                 @inbounds y[h] = y_star
+                step_type = "reflection"
             end
         else
             if dominates(y_star, y_bar)
@@ -156,7 +186,7 @@ function optimize{T}(f::Function,
 
                 # Compute a contraction
                 @simd for j in 1:m
-                    @inbounds p_star_star[j] = nm.b * p_h[j] + (1 - nm.b) * p_bar[j]
+                    @inbounds p_star_star[j] = mo.b * p_h[j] + (1 - mo.b) * p_bar[j]
                 end
                 y_star_star = f(p_star_star)
                 f_calls += 1
@@ -168,15 +198,18 @@ function optimize{T}(f::Function,
                         end
                         @inbounds y[i] = f(p[:, i])
                     end
+                    step_type = "shrink"
                 else
                     copy!(p_h, p_star_star)
                     copy!(slice(p, :, h), p_h)
                     @inbounds y[h] = y_star_star
+                    step_type = "contraction"
                 end
             else
                 copy!(p_h, p_star)
                 copy!(slice(p, :, h), p_h)
                 @inbounds y[h] = y_star
+                step_type = "reflection"
             end
         end
 
@@ -189,12 +222,19 @@ function optimize{T}(f::Function,
         end
     end
 
-    minimum = centroid(p)
+    minimizer = centroid(p)
+    min = f(minimizer)
+    f_calls += 1
+    y_min, iy_min = findmin(y)
+    if min > y_min
+        minimizer[:] = p[:, iy_min]
+        min = y_min
+    end
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           minimum,
-                                           Float64(f(minimum)),
+                                           minimizer,
+                                           Float64(min),
                                            iteration,
                                            iteration == o.iterations,
                                            false,

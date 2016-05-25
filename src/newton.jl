@@ -82,7 +82,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @newtontrace
 

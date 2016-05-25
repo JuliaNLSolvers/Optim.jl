@@ -1,5 +1,4 @@
 abstract Optimizer
-
 immutable OptimizationOptions{TCallback <: Union{Void, Function}}
     xtol::Float64
     ftol::Float64
@@ -40,7 +39,7 @@ function print_header(options::OptimizationOptions)
     end
 end
 
-immutable OptimizationState
+immutable OptimizationState{T <: Optimizer}
     iteration::Int
     value::Float64
     gradnorm::Float64
@@ -55,11 +54,11 @@ function OptimizationState(i::Integer, f::Real, g::Real)
     OptimizationState(int(i), Float64(f), Float64(g), Dict())
 end
 
-immutable OptimizationTrace
-    states::Vector{OptimizationState}
+immutable OptimizationTrace{T<:Optimizer}
+    states::Vector{OptimizationState{T}}
 end
 
-OptimizationTrace() = OptimizationTrace(Array(OptimizationState, 0))
+OptimizationTrace{T}(m::T) = OptimizationTrace(Array{OptimizationState{T}}(0))
 
 abstract OptimizationResults
 
@@ -151,15 +150,21 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     else
         @printf io " * Minimizer: [%s, ...]\n" join(minimizer(r)[1:2], ",")
     end
-    @printf io " * Minimum: %f\n" minimum(r)
+    @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: %s\n" converged(r)
-    @printf io "   * |x - x'| < %.1e: %s\n" x_tol(r) x_converged(r)
-    @printf io "   * |f(x) - f(x')| / |f(x)| < %.1e: %s\n" f_tol(r) f_converged(r)
-    @printf io "   * |g(x)| < %.1e: %s\n" g_tol(r) g_converged(r)
+    if r.method == "Nelder-Mead"
+        @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" f_tol(r) f_converged(r)
+    else
+        @printf io "   * |x - x'| < %.1e: %s\n" x_tol(r) x_converged(r)
+        @printf io "   * |f(x) - f(x')| / |f(x)| < %.1e: %s\n" f_tol(r) f_converged(r)
+        @printf io "   * |g(x)| < %.1e: %s\n" g_tol(r) g_converged(r)
+    end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
     @printf io " * Objective Function Calls: %d\n" f_calls(r)
-    @printf io " * Gradient Calls: %d" g_calls(r)
+    if !(r.method in ("Nelder-Mead", "Simulated Annealing"))
+        @printf io " * Gradient Calls: %d" g_calls(r)
+    end
     return
 end
 
@@ -167,8 +172,8 @@ function Base.show(io::IO, r::UnivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" method(r)
     @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
-    @printf io " * Minimizer: %f\n" minimizer(r)
-    @printf io " * Minimum: %f\n" minimum(r)
+    @printf io " * Minimizer: %e\n" minimizer(r)
+    @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(r) abs_tol(r) converged(r)
     @printf io " * Objective Function Calls: %d" f_calls(r)

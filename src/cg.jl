@@ -95,7 +95,7 @@ end
 
 function optimize{T}(df::DifferentiableFunction,
                      initial_x::Array{T},
-                     cg::ConjugateGradient,
+                     mo::ConjugateGradient,
                      o::OptimizationOptions)
     # Print header if show_trace is set
     print_header(o)
@@ -144,7 +144,7 @@ function optimize{T}(df::DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Trace the history of states visited
-    tr = OptimizationTrace()
+    tr = OptimizationTrace(mo)
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @cgtrace
 
@@ -159,8 +159,8 @@ function optimize{T}(df::DifferentiableFunction,
     end
 
     # Determine the intial search direction
-    cg.precondprep!(cg.P, x)
-    precondfwd!(s, cg.P, gr)
+    mo.precondprep!(mo.P, x)
+    precondfwd!(s, mo.P, gr)
     scale!(s, -1)
 
     # Assess multiple types of convergence
@@ -197,7 +197,7 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          cg.linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -232,15 +232,15 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
-        cg.precondprep!(cg.P, x)
-        dPd = precondinvdot(s, cg.P, s)
-        etak::T = cg.eta * vecdot(s, gr_previous) / dPd
+        mo.precondprep!(mo.P, x)
+        dPd = precondinvdot(s, mo.P, s)
+        etak::T = mo.eta * vecdot(s, gr_previous) / dPd
         @simd for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = vecdot(y, s)
-        precondfwd!(pgr, cg.P, gr)
-        betak = (vecdot(y, pgr) - precondfwddot(y, cg.P, y) *
+        precondfwd!(pgr, mo.P, gr)
+        betak = (vecdot(y, pgr) - precondfwddot(y, mo.P, y) *
                  vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         @simd for i in 1:n
