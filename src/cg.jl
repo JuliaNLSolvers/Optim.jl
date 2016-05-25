@@ -126,6 +126,7 @@ function optimize{T}(df::DifferentiableFunction,
 
     # Intermediate value in CG calculation
     y = similar(x)
+    py = similar(x)
 
     # Store f(x) in f_x
     f_x = df.fg!(x, gr)
@@ -159,9 +160,11 @@ function optimize{T}(df::DifferentiableFunction,
     end
 
     # Determine the intial search direction
+    #    if we don't precondition, then this is an extra superfluous copy
+    #    TODO: consider allowing a reference for pgr instead of a copy
     mo.precondprep!(mo.P, x)
-    precondfwd!(s, mo.P, gr)
-    scale!(s, -1)
+    A_ldiv_B!(pgr, mo.P, gr)
+    scale!(copy!(s, pgr), -1)
 
     # Assess multiple types of convergence
     x_converged, f_converged, gr_converged = false, false, false
@@ -176,7 +179,7 @@ function optimize{T}(df::DifferentiableFunction,
         dphi0 = vecdot(gr, s)
         if dphi0 >= 0
             @simd for i in 1:n
-                @inbounds s[i] = -gr[i]
+                @inbounds s[i] = -pgr[i]
             end
             dphi0 = vecdot(gr, s)
             if dphi0 < 0
@@ -232,16 +235,26 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
+        # -----------------
+        # Comment on py: one could replace the computation of py with
+        #    ydotpgrprev = vecdot(y, pgr)
+        #    vecdot(y, py)  >>>  vecdot(y, pgr) - ydotpgrprev
+        # but I am worried about round-off here, so instead we make an
+        # extra copy, which is probably minimal overhead.
+        # -----------------
         mo.precondprep!(mo.P, x)
-        dPd = precondinvdot(s, mo.P, s)
+        dPd = dot(s, mo.P, s)
         etak::T = mo.eta * vecdot(s, gr_previous) / dPd
         @simd for i in 1:n
             @inbounds y[i] = gr[i] - gr_previous[i]
         end
         ydots = vecdot(y, s)
-        precondfwd!(pgr, mo.P, gr)
-        betak = (vecdot(y, pgr) - precondfwddot(y, mo.P, y) *
-                 vecdot(gr, s) / ydots) / ydots
+        copy!(py, pgr)        # below, store pgr - pgr_previous in py
+        A_ldiv_B!(pgr, mo.P, gr)
+        @simd for i in 1:n     # py = pgr - py
+           @inbounds py[i] = pgr[i] - py[i]
+        end
+        betak = (vecdot(y, pgr) - vecdot(y, py) * vecdot(gr, s) / ydots) / ydots
         beta = max(betak, etak)
         @simd for i in 1:n
             @inbounds s[i] = beta * s[i] - pgr[i]

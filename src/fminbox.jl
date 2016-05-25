@@ -98,7 +98,7 @@ function precondprepbox!(P, x, l, u, mu)
         xi = x[i]
         li = l[i]
         ui = u[i]
-        P[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2) + 1) # +1 like identity far from edges
+        P.diag[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2) + 1) # +1 like identity far from edges
     end
 end
 
@@ -138,7 +138,7 @@ function optimize{T<:AbstractFloat}(
     fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
-    P = Array(T, length(initial_x))
+    P = InverseDiagonal(Array(T, length(initial_x)))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
