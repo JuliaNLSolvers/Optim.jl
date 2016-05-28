@@ -7,7 +7,7 @@ macro newtontrace()
                 dt["g(x)"] = copy(gr)
                 dt["h(x)"] = copy(H)
             end
-            grnorm = norm(gr, Inf)
+            grnorm = vecnorm(gr, Inf)
             update!(tr,
                     iteration,
                     f_x,

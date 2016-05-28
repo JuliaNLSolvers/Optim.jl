@@ -9,7 +9,7 @@ macro mgdtrace()
                 dt["x"] = copy(x)
                 dt["g(x)"] = copy(gr)
             end
-            grnorm = norm(gr, Inf)
+            grnorm = vecnorm(gr, Inf)
             update!(tr,
                     iteration,
                     f_x,
