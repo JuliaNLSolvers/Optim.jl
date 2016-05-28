@@ -68,7 +68,7 @@ function alphainit{T}(alpha::Real,
             if x_max != 0.0
                 alpha = psi0 * x_max / gr_max
             elseif f_x != 0.0
-                alpha = psi0 * abs(f_x) / norm(gr)
+                alpha = psi0 * abs(f_x) / vecnorm(gr)
             end
         end
     end

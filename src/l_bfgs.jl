@@ -69,7 +69,7 @@ macro lbfgstrace()
                 dt["g(x)"] = copy(gr)
                 dt["Current step size"] = alpha
             end
-            grnorm = norm(gr, Inf)
+            grnorm = vecnorm(gr, Inf)
             update!(tr,
                     iteration,
                     f_x,

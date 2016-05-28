@@ -11,7 +11,7 @@ macro bfgstrace()
                 dt["g(x)"] = copy(gr)
                 dt["~inv(H)"] = copy(invH)
             end
-            grnorm = norm(gr, Inf)
+            grnorm = vecnorm(gr, Inf)
             update!(tr,
                     iteration,
                     f_x,
