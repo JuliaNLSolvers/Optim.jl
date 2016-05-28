@@ -217,6 +217,15 @@ let
    @test_throws ErrorException Optim.upper_bound(res)
    @test_throws ErrorException Optim.rel_tol(res)
    @test_throws ErrorException Optim.abs_tol(res)
+
+   res_extended = Optim.optimize(f3, g3!, [0.0, 0.0], method=BFGS(), store_trace = true, extended_trace = true)
+   @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
+   @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
+   @test haskey(Optim.trace(res_extended)[1].metadata,"x")
+
+   res_extended_nm = Optim.optimize(f3, g3!, [0.0, 0.0], method=NelderMead(), store_trace = true, extended_trace = true)
+   @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
+   @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
 end
 
 let
