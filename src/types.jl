@@ -46,14 +46,6 @@ immutable OptimizationState{T <: Optimizer}
     metadata::Dict
 end
 
-function OptimizationState(i::Integer, f::Real)
-    OptimizationState(int(i), Float64(f), NaN, Dict())
-end
-
-function OptimizationState(i::Integer, f::Real, g::Real)
-    OptimizationState(int(i), Float64(f), Float64(g), Dict())
-end
-
 immutable OptimizationTrace{T<:Optimizer}
     states::Vector{OptimizationState{T}}
 end
