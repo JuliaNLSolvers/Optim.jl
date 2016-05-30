@@ -133,6 +133,7 @@ function optimize{T<:AbstractFloat}(
                                           extended_trace = extended_trace),
         nargs...)
 
+    optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (x, gbarrier) -> barrier_box(x, gbarrier, l, u)
     fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
@@ -185,8 +186,18 @@ function optimize{T<:AbstractFloat}(
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep!(P, x, l, u, mu)
-        resultsnew = optimize(dfbox, x, optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp),
-                              optimizer_o)
+        if optimizer == ConjugateGradient
+            _optimizer = optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+        elseif optimizer in (LBFGS, GradientDescent)
+            _optimizer = optimizer(linesearch! = linesearch!, P = P, precondprep! = pcp)
+        elseif optimizer in (NelderMead, SimulatedAnnealing)
+            _optimizer = optimizer()
+        elseif optimizer == Newton
+            _optimizer = ConjugateGradient(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+        else
+            _optimizer = optimizer(linesearch! = linesearch!)
+        end
+        resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first
             results = resultsnew
             first = false

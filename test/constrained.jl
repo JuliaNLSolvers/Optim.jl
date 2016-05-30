@@ -42,8 +42,10 @@ end
 l = fill(-boxl, N)
 u = fill(boxl, N)
 x0 = (rand(N)-0.5)*boxl
-results = Optim.optimize(objective, x0, l, u, Fminbox())
-@test Optim.converged(results)
+for _optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS)
+    results = Optim.optimize(objective, x0, l, u, Fminbox(), optimizer = _optimizer)
+    @test Optim.converged(results)
+end
 g = similar(x0)
 objective.fg!(Optim.minimizer(results), g)
 for i = 1:N

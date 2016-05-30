@@ -327,11 +327,11 @@ x0 = [2.0, 2.0]
 results = optimize(d4, x0, l, u, Fminbox())  # d4 from rosenbrock example
 ```
 
-This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using `ConjugateGradient` for convergence at each step.
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed. This means that the keyword should be passed as `optimizer = GradientDescent` not `optimizer = GradientDescent()`, as you usually would.
 
-This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` with preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
+This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` or `LBFGS` with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
 
-There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control `ConjugateGradient`. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `OptimizationOptions` type using the keyword `optimizer_o`.
+There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `OptimizationOptions` type using the keyword `optimizer_o`.
 
 For example, the following restricts the optimization to 2 major iterations
 ```julia
