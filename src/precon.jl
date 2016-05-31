@@ -1,64 +1,66 @@
 
 
-# Standard Preconditioners
+# Some Boiler-plate code for preconditioning
 #
 # Meaning of P:
-#    P^{-1} ≈ ∇²E, so the preconditioned gradient is P ∇E
-#    this means all functionality can be implemented by
-#       P * x        >>> precondfwd!
-#       <x|P|y>      >>> precondfwddot
-#      <x|P^{-1}|y>  >>> precondinvdot
-# and finally an update function >>>>> precondprep!
-#     for now, this is passed as an argument to the optimisers (TODO?)
-
-# # default preconditioner update:
-# precondprep!(P, x) = nothing
+#    P ≈ ∇²E, so the preconditioned gradient is P^{-1} ∇E
+#    P can be an arbitrary type but at a minimum it MUST provide:
+#        A_ldiv_B!(x, P, b) ->  x = P \ b
+#        dot(x, P, b)  ->  x' P b
+#
+#    If `dot` is not provided, then Optim.jl will try to define it via
+#        dot(x, P, b) = vecdot(x, A_mul_B!(similar(x), P, y))
+#
+#    finally the preconditioner can be updated after each x-update using
+#        precondprep!
+#    but this is passed as an argument at the moment!
+#
 
 
 #####################################################
-#  [1] Empty preconditioner
+#  [0] Defaults and aliases for easier reading of the code
+#      these can also be over-written if necessary.
 
-# out =  P * A
-precondfwd!(out::Array, P::Void, A::Array) = copy!(out, A)
-# A' * P * B
-precondfwddot(A::Array, P::Void, B::Array) = vecdot(A, B)
-# A' * P^{-1} B
-precondinvdot(A::Array, P::Void, B::Array) = vecdot(A, B)
-# ????? update the preconditioner ?????
-precondprep!(P::Void, x) = nothing
+# an inner product w.r.t. a metric P (=preconditioner)
+Base.dot(x, P, y) = vecdot(x, A_mul_B!(similar(x), P, y))
+
+# default preconditioner update
+precondprep!(P, x) = nothing
+
+
+#####################################################
+#  [1] Empty preconditioner = Identity
+#
+
+# out =  P^{-1} * A
+Base.A_ldiv_B!(out, ::Void, A) = copy!(out, A)
+# A' * P B
+Base.dot(A, ::Void, B) = vecdot(A, B)
 
 
 #####################################################
 #  [2] Diagonal preconditioner
-
-function precondfwd!(out::Array, p::Vector, A::Array)
-    @simd for i in 1:length(A)
-        @inbounds out[i] = p[i] * A[i]
-    end
-    return out
-end
-function precondfwddot{T}(A::Array{T}, p::Vector, B::Array)
-    s = zero(T)
-    @simd for i in 1:length(A)
-        @inbounds s += A[i] * p[i] * B[i]
-    end
-    return s
-end
-function precondinvdot{T}(A::Array{T}, p::Vector, B::Array)
-    s = zero(T)
-    @simd for i in 1:length(A)
-        @inbounds s += A[i] * B[i] / p[i]
-    end
-    return s
-end
-
-
+#      P = Diag(d)
+#      unfortunately, Base does not implement
+#      A_ldiv_B!(a, P, b) or A_mul_B! for this type, so we do it by hand
+#      TODO: maybe implement this in Base
+Base.A_ldiv_B!(out::Array, P::Diagonal, A::Array) = copy!(out, A ./ P.diag)
+Base.dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
 
 #####################################################
-#  [3] Matrix Preconditioner
+#  [3] Inverse Diagonal preconditioner
+#      here, P is stored by the entries of its inverse
+#      TODO: maybe implement this in Base?
+type InverseDiagonal
+   diag
+end
+Base.A_ldiv_B!(out::Array, P::InverseDiagonal, A::Array) = copy!(out, A .* P.diag)
+Base.dot(A::Array, P::InverseDiagonal, B::Vector) = vecdot(A, B ./ P.diag)
+
+#####################################################
+#  [4] Matrix Preconditioner
 #  the assumption here is that P is given by its inverse, which is typical
-
-precondfwd!(out::Vector, P::AbstractMatrix, A::Vector) = copy!(out, P \ A)
-precondfwddot(A::Vector, P::AbstractMatrix, B::Vector) = dot(A, P \ B)
-precondinvdot(A::Vector, P::AbstractMatrix, B::Vector) = dot(A, P * B)
-
+#     > A_ldiv_B! is about to be moved to Base, so we need a temporary hack
+#     > A_mul_B! is already in Base, which defines `dot`
+#  nothing to do!
+Base.A_ldiv_B!(x, P::AbstractMatrix, b) = copy!(x, P \ b)

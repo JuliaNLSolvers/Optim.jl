@@ -90,7 +90,7 @@ function optimize{T}(d::DifferentiableFunction,
 
         # Search direction is always the negative preconditioned gradient
         mo.precondprep!(mo.P, x)
-        precondfwd!(s, mo.P, gr)
+        A_ldiv_B!(s, mo.P, gr)
         @simd for i in 1:n
             @inbounds s[i] = -s[i]
         end

@@ -372,7 +372,7 @@ The `GradientDescent`, `ConjugateGradient` and `LBFGS` methods support precondit
 can be thought of as a change of coordinates under which the Hessian is better conditioned. With a
 "good" preconditioner substantially improved convergence is possible.
 
-An example of this is shown below (`Optimizer` ∈ {`GradientDescent`, `ConjugateGradient`, `LBFGS`}).
+An example of this is
 ```jl
 using ForwardDiff
 plap(U; n=length(U)) = (n-1) * sum( (0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
@@ -383,19 +383,36 @@ df = DifferentiableFunction( X->plap([0;X;0]),
 result = Optim.optimize(df, zeros(100), method=ConjugateGradient(P = nothing) )
 result = Optim.optimize(df, zeros(100), method=ConjugateGradient(P = precond(100)) )
 ```
+
 Benchmarking shows that using preconditioning provides an approximate speedup factor of 15 in this case.
 
-The optimizers then use `precondprep!` to update the preconditioner after each update of the
-state `x`. Further, to apply the preconditioner, they employ the the following three methods:
-* `pprecondfwd!(out, P, A)` : apply `P` to a vector `A` and store in `out`
-* `precondfwddot(A, P, B)` : take the inner product between `B` and `pprecondfwd!(out, P, A)`
-* `precondinvdot(A, P, B)` : the dual inner product
+A preconditioner can be of any type as long as the following two methods are
+implemented:
+
+* `A_ldiv_B!(pgr, P, gr)` : apply `P` to a vector `gr` and store in `pgr`
+      (intuitively, `pgr = P \ gr`)
+* `dot(x, P, y)` : the inner product induced by `P`
+      (intuitively, `dot(x, P * y)`)
 
 Precisely what these operations mean, depends on how `P` is stored. Commonly, we store a matrix `P` which
 approximates the Hessian in some vague sense. In this case,
-* `pprecondfwd!(out, P, A) = copy!(out, P \ A)`
-* `precondfwddot(A, P, B) = dot(A, P \ B)`
-* `precondinvdot(A, P, B) = dot(A, P * B)`
+
+* `A_ldiv_B!(pgr, P, gr) = copy!(pgr, P \ A)`
+* `dot(x, P, y) = dot(x, P * y)`
+
+Finally, it is possible to update the preconditioner as the state variable `x`
+changes. This is done through  `precondprep!` which is passed to the
+optimisers as kw-argument, e.g.,
+```jl
+   method=ConjugateGradient(P = precond(100), precondprep! = precond(100))
+```
+though in this case it would always return the same matrix.
+(See `fminbox.jl` for a more natural example.)
+
+Apart from preconditioning with matrices, `Optim.jl` provides
+a type `InverseDiagonal`, which represents a diagonal matrix by
+its inverse elements.
+
 
 # State of the Library
 

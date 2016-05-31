@@ -40,7 +40,7 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    precondfwd!(s, precon, q)
+    A_ldiv_B!(s, precon, q)
 
     # Forward pass
     for index in lower:1:upper
