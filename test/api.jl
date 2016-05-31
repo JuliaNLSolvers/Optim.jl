@@ -193,6 +193,14 @@ let
     	           iterations = 10,
     	           store_trace = true,
     	           show_trace = false)
+   res_ext = optimize(f3, g3!, h3!,
+                      [0.0, 0.0],
+                      method = BFGS(),
+                      grtol = 1e-12,
+                      iterations = 10,
+                      store_trace = true,
+                      show_trace = false,
+                      extended_trace = true)
    @test Optim.method(res) == "BFGS"
    @test Optim.minimum(res) ≈ 0.055119582904897345
    @test Optim.minimizer(res) ≈ [0.7731690866149542; 0.5917345966396391]
@@ -208,11 +216,14 @@ let
    @test Optim.g_tol(res) == 1e-12
    @test Optim.iteration_limit_reached(res) == true
    @test Optim.initial_state(res) == [0.0; 0.0]
+   @test haskey(Optim.trace(res_ext)[1].metadata,"x")
    # just testing if it runs
    Optim.trace(res)
    Optim.f_trace(res)
    Optim.g_norm_trace(res)
    @test_throws ErrorException Optim.x_trace(res)
+   @test_throws ErrorException Optim.x_lower_trace(res)
+   @test_throws ErrorException Optim.x_upper_trace(res)
    @test_throws ErrorException Optim.lower_bound(res)
    @test_throws ErrorException Optim.upper_bound(res)
    @test_throws ErrorException Optim.rel_tol(res)
