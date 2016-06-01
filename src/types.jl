@@ -1,8 +1,8 @@
 abstract Optimizer
 immutable OptimizationOptions{TCallback <: Union{Void, Function}}
-    xtol::Float64
-    ftol::Float64
-    grtol::Float64
+    x_tol::Float64
+    f_tol::Float64
+    g_tol::Float64
     iterations::Int
     store_trace::Bool
     show_trace::Bool
@@ -13,9 +13,9 @@ immutable OptimizationOptions{TCallback <: Union{Void, Function}}
 end
 
 function OptimizationOptions(;
-        xtol::Real = 1e-32,
-        ftol::Real = 1e-8,
-        grtol::Real = 1e-8,
+        x_tol::Real = 1e-32,
+        f_tol::Real = 1e-8,
+        g_tol::Real = 1e-8,
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,
@@ -28,7 +28,7 @@ function OptimizationOptions(;
         show_trace = true
     end
     OptimizationOptions{typeof(callback)}(
-        Float64(xtol), Float64(ftol), Float64(grtol), Int(iterations),
+        Float64(x_tol), Float64(f_tol), Float64(g_tol), Int(iterations),
         store_trace, show_trace, extended_trace, autodiff, Int(show_every),
         callback)
 end
@@ -42,7 +42,7 @@ end
 immutable OptimizationState{T <: Optimizer}
     iteration::Int
     value::Float64
-    gradnorm::Float64
+    g_norm::Float64
     metadata::Dict
 end
 
@@ -62,11 +62,11 @@ type MultivariateOptimizationResults{T,N} <: OptimizationResults
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool
-    xtol::Float64
+    x_tol::Float64
     f_converged::Bool
-    ftol::Float64
-    gr_converged::Bool
-    grtol::Float64
+    f_tol::Float64
+    g_converged::Bool
+    g_tol::Float64
     trace::OptimizationTrace
     f_calls::Int
     g_calls::Int
@@ -101,7 +101,7 @@ immutable TwiceDifferentiableFunction
 end
 
 function Base.show(io::IO, t::OptimizationState)
-    @printf io "%6d   %14e   %14e\n" t.iteration t.value t.gradnorm
+    @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
             @printf io " * %s: %s\n" key value
@@ -179,7 +179,7 @@ function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimiz
     a.iteration_converged = iteration_limit_reached(b)
     a.x_converged = x_converged(b)
     a.f_converged = f_converged(b)
-    a.gr_converged = g_converged(b)
+    a.g_converged = g_converged(b)
     append!(a.trace.states, b.trace.states)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)

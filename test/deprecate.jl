@@ -31,7 +31,7 @@ d = DifferentiableFunction(dep_fgd, dep_ggd!)
 
 results = Optim.gradient_descent(d, initial_x)
 @assert isempty(results.trace.states)
-@assert results.gr_converged
+@assert results.g_converged
 @assert norm(results.minimum - [5.0]) < 0.01
 
 # BFGS
@@ -48,13 +48,13 @@ initial_x = [100.0, 100.0]
 
 results = Optim.bfgs(d2, initial_x)
 @assert length(results.trace.states) == 0
-@assert results.gr_converged
+@assert results.g_converged
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01
 
 d2 = Optim.autodiff(f2, Float64, 2)
 results = Optim.bfgs(d2, initial_x)
 @assert length(results.trace.states) == 0
-@assert results.gr_converged
+@assert results.g_converged
 @assert norm(results.minimum - [0.0, 2.0]) < 0.01
 
 # Brent
@@ -108,7 +108,7 @@ store_trace, show_trace = false, false
 
 results = Optim.l_bfgs(d, initial_x)
 @assert length(results.trace.states) == 0
-@assert results.gr_converged
+@assert results.g_converged
 @assert norm(results.minimum - [309.0 / 5.0, 17.0]) < 0.01
 
 # Nelder Mead
@@ -143,7 +143,7 @@ d = TwiceDifferentiableFunction(dep_f1, dep_g1!, dep_h1!)
 
 results = Optim.newton(d, [0.0])
 @assert length(results.trace.states) == 0
-@assert results.gr_converged
+@assert results.g_converged
 @assert norm(results.minimum - [5.0]) < 0.01
 
 # Simulated Annealing

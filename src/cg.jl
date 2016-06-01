@@ -59,14 +59,14 @@ macro cgtrace()
             dt = Dict()
             if o.extended_trace
                 dt["x"] = copy(x)
-                dt["g(x)"] = copy(gr)
+                dt["g(x)"] = copy(g)
                 dt["Current step size"] = alpha
             end
-            grnorm = vecnorm(gr, Inf)
+            g_norm = vecnorm(g, Inf)
             update!(tr,
                     iteration,
                     f_x,
-                    grnorm,
+                    g_norm,
                     dt,
                     o.store_trace,
                     o.show_trace,
@@ -112,31 +112,31 @@ function optimize{T}(df::DifferentiableFunction,
     # Count number of parameters
     n = length(x)
 
-    # Maintain current gradient in gr and previous gradient in gr_previous
-    gr, gr_previous = similar(x), similar(x)
+    # Maintain current gradient in g and previous gradient in g_previous
+    g, g_previous = similar(x), similar(x)
 
-    # Maintain the preconditioned gradient in pgr
-    pgr = similar(x)
+    # Maintain the preconditioned gradient in pg
+    pg = similar(x)
 
     # The current search direction
     s = similar(x)
 
     # Buffers for use in line search
-    x_ls, gr_ls = similar(x), similar(x)
+    x_ls, g_ls = similar(x), similar(x)
 
     # Intermediate value in CG calculation
     y = similar(x)
     py = similar(x)
 
     # Store f(x) in f_x
-    f_x = df.fg!(x, gr)
+    f_x = df.fg!(x, g)
     @assert typeof(f_x) == T
     f_x_previous = convert(T, NaN)
     f_calls, g_calls = f_calls + 1, g_calls + 1
-    copy!(gr_previous, gr)
+    copy!(g_previous, g)
 
     # Keep track of step-sizes
-    alpha = alphainit(one(T), x, gr, f_x)
+    alpha = alphainit(one(T), x, g, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -153,21 +153,21 @@ function optimize{T}(df::DifferentiableFunction,
     if !isfinite(f_x)
         error("Must have finite starting value")
     end
-    if !all(isfinite(gr))
-        @show gr
-        @show find(!isfinite(gr))
+    if !all(isfinite(g))
+        @show g
+        @show find(!isfinite(g))
         error("Gradient must have all finite values at starting point")
     end
 
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
-    #    TODO: consider allowing a reference for pgr instead of a copy
+    #    TODO: consider allowing a reference for pg instead of a copy
     mo.precondprep!(mo.P, x)
-    A_ldiv_B!(pgr, mo.P, gr)
-    scale!(copy!(s, pgr), -1)
+    A_ldiv_B!(pg, mo.P, g)
+    scale!(copy!(s, pg), -1)
 
     # Assess multiple types of convergence
-    x_converged, f_converged, gr_converged = false, false, false
+    x_converged, f_converged, g_converged = false, false, false
 
     # Iterate until convergence
     converged = false
@@ -176,12 +176,12 @@ function optimize{T}(df::DifferentiableFunction,
         iteration += 1
 
         # Reset the search direction if it becomes corrupted
-        dphi0 = vecdot(gr, s)
+        dphi0 = vecdot(g, s)
         if dphi0 >= 0
             @simd for i in 1:n
-                @inbounds s[i] = -pgr[i]
+                @inbounds s[i] = -pg[i]
             end
-            dphi0 = vecdot(gr, s)
+            dphi0 = vecdot(g, s)
             if dphi0 < 0
                 break
             end
@@ -195,12 +195,12 @@ function optimize{T}(df::DifferentiableFunction,
 
         # Pick the initial step size (HZ #I1-I2)
         alpha, mayterminate, f_update, g_update =
-          alphatry(alpha, df, x, s, x_ls, gr_ls, lsr)
+          alphatry(alpha, df, x, s, x_ls, g_ls, lsr)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          mo.linesearch!(df, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(df, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -210,23 +210,23 @@ function optimize{T}(df::DifferentiableFunction,
         LinAlg.axpy!(alpha, s, x)
 
         # Maintain a record of the previous gradient
-        copy!(gr_previous, gr)
+        copy!(g_previous, g)
 
         # Update the function value and gradient
-        f_x_previous, f_x = f_x, df.fg!(x, gr)
+        f_x_previous, f_x = f_x, df.fg!(x, g)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         x_converged,
         f_converged,
-        gr_converged,
+        g_converged,
         converged = assess_convergence(x,
                                        x_previous,
                                        f_x,
                                        f_x_previous,
-                                       gr,
-                                       o.xtol,
-                                       o.ftol,
-                                       o.grtol)
+                                       g,
+                                       o.x_tol,
+                                       o.f_tol,
+                                       o.g_tol)
 
         # Check sanity of function and gradient
         if !isfinite(f_x)
@@ -237,27 +237,27 @@ function optimize{T}(df::DifferentiableFunction,
         #  Calculate the beta factor (HZ2012)
         # -----------------
         # Comment on py: one could replace the computation of py with
-        #    ydotpgrprev = vecdot(y, pgr)
-        #    vecdot(y, py)  >>>  vecdot(y, pgr) - ydotpgrprev
+        #    ydotpgprev = vecdot(y, pg)
+        #    vecdot(y, py)  >>>  vecdot(y, pg) - ydotpgprev
         # but I am worried about round-off here, so instead we make an
         # extra copy, which is probably minimal overhead.
         # -----------------
         mo.precondprep!(mo.P, x)
         dPd = dot(s, mo.P, s)
-        etak::T = mo.eta * vecdot(s, gr_previous) / dPd
+        etak::T = mo.eta * vecdot(s, g_previous) / dPd
         @simd for i in 1:n
-            @inbounds y[i] = gr[i] - gr_previous[i]
+            @inbounds y[i] = g[i] - g_previous[i]
         end
         ydots = vecdot(y, s)
-        copy!(py, pgr)        # below, store pgr - pgr_previous in py
-        A_ldiv_B!(pgr, mo.P, gr)
-        @simd for i in 1:n     # py = pgr - py
-           @inbounds py[i] = pgr[i] - py[i]
+        copy!(py, pg)        # below, store pg - pg_previous in py
+        A_ldiv_B!(pg, mo.P, g)
+        @simd for i in 1:n     # py = pg - py
+           @inbounds py[i] = pg[i] - py[i]
         end
-        betak = (vecdot(y, pgr) - vecdot(y, py) * vecdot(gr, s) / ydots) / ydots
+        betak = (vecdot(y, pg) - vecdot(y, py) * vecdot(g, s) / ydots) / ydots
         beta = max(betak, etak)
         @simd for i in 1:n
-            @inbounds s[i] = beta * s[i] - pgr[i]
+            @inbounds s[i] = beta * s[i] - pg[i]
         end
 
         @cgtrace
@@ -270,11 +270,11 @@ function optimize{T}(df::DifferentiableFunction,
                                            iteration,
                                            iteration == o.iterations,
                                            x_converged,
-                                           o.xtol,
+                                           o.x_tol,
                                            f_converged,
-                                           o.ftol,
-                                           gr_converged,
-                                           o.grtol,
+                                           o.f_tol,
+                                           g_converged,
+                                           o.g_tol,
                                            tr,
                                            f_calls,
                                            g_calls)

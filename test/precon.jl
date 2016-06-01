@@ -29,7 +29,7 @@ for N in (10, 50, 250)
         for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
             results = Optim.optimize(df, copy(x0),
                                      method=Optimiser(P = P),
-                                     ftol = 1e-32, grtol = GRTOL )
+                                     f_tol = 1e-32, g_tol = GRTOL )
             println(Optimiser, wwo,
                     " preconditioning : g_calls = ", results.g_calls,
                     ", f_calls = ", results.f_calls)

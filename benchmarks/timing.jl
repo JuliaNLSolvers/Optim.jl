@@ -52,7 +52,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.h!,
                            problem.initial_x,
                            method = algorithm,
-                           grtol = 1e-16)
+                           g_tol = 1e-16)
 
         # Run each algorithm 1,000 times
         n = 1_000
@@ -64,7 +64,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                                problem.h!,
                                problem.initial_x,
                                method = algorithm,
-                               grtol = 1e-16)
+                               g_tol = 1e-16)
         end
 
         # Estimate error in discovered solution
@@ -73,7 +73,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.h!,
                            problem.initial_x,
                            method = algorithm,
-                           grtol = 1e-16)
+                           g_tol = 1e-16)
         errors = minimum(map(sol -> norm(results.minimum - sol), problem.solutions))
 
         # Count iterations

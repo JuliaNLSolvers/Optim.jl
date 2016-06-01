@@ -18,7 +18,7 @@ end
 
 function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
     n = length(x)
-    calc_grad = !(g === nothing)
+    calc_g = !(g === nothing)
 
     v = zero(T)
     for i = 1:n
@@ -29,11 +29,11 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
                 return convert(T, Inf)
             end
             v -= log(dx)
-            if calc_grad
+            if calc_g
                 g[i] = -one(T)/dx
             end
         else
-            if calc_grad
+            if calc_g
                 g[i] = zero(T)
             end
         end
@@ -44,7 +44,7 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
                 return convert(T, Inf)
             end
             v -= log(dx)
-            if calc_grad
+            if calc_g
                 g[i] += one(T)/dx
             end
         end
@@ -63,11 +63,11 @@ function function_barrier{T}(x::Array{T}, gfunc, gbarrier, f::Function, fbarrier
 end
 
 function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T}, fb::Function, mu::T)
-    calc_grad = !(g === nothing)
+    calc_g = !(g === nothing)
     valfunc, valbarrier = fb(x, gfunc, gbarrier)
     val_each[1] = valfunc
     val_each[2] = valbarrier
-    if calc_grad
+    if calc_g
         @simd for i = 1:length(g)
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
@@ -113,9 +113,9 @@ function optimize{T<:AbstractFloat}(
         l::Array{T},
         u::Array{T},
         ::Fminbox;
-        xtol::T = eps(T),
-        ftol::T = sqrt(eps(T)),
-        grtol::T = sqrt(eps(T)),
+        x_tol::T = eps(T),
+        f_tol::T = sqrt(eps(T)),
+        g_tol::T = sqrt(eps(T)),
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,
@@ -217,7 +217,7 @@ function optimize{T<:AbstractFloat}(
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
 
-        x_converged, f_converged, gr_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, xtol, ftol, grtol)
+        x_converged, f_converged, g_converged, converged = assess_convergence(x, xold, results.f_minimum, fval0, g, x_tol, f_tol, g_tol)
 
     end
     results.method = "Fminbox with $(results.method)"

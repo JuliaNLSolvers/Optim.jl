@@ -5,9 +5,9 @@ end
 function optimize(f::Function,
                   initial_x::Array;
                   method = NelderMead(),
-                  xtol::Real = 1e-32,
-                  ftol::Real = 1e-8,
-                  grtol::Real = 1e-8,
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-8,
+                  g_tol::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -16,7 +16,7 @@ function optimize(f::Function,
                   autodiff::Bool = false,
                   callback = nothing)
     options = OptimizationOptions(;
-        xtol = xtol, ftol = ftol, grtol = grtol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every,
@@ -29,9 +29,9 @@ function optimize(f::Function,
                   g!::Function,
                   initial_x::Array;
                   method = LBFGS(),
-                  xtol::Real = 1e-32,
-                  ftol::Real = 1e-8,
-                  grtol::Real = 1e-8,
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-8,
+                  g_tol::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -39,7 +39,7 @@ function optimize(f::Function,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        xtol = xtol, ftol = ftol, grtol = grtol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -52,9 +52,9 @@ function optimize(f::Function,
                   h!::Function,
                   initial_x::Array;
                   method = Newton(),
-                  xtol::Real = 1e-32,
-                  ftol::Real = 1e-8,
-                  grtol::Real = 1e-8,
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-8,
+                  g_tol::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -62,7 +62,7 @@ function optimize(f::Function,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        xtol = xtol, ftol = ftol, grtol = grtol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -73,9 +73,9 @@ end
 function optimize(d::DifferentiableFunction,
                   initial_x::Array;
                   method = LBFGS(),
-                  xtol::Real = 1e-32,
-                  ftol::Real = 1e-8,
-                  grtol::Real = 1e-8,
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-8,
+                  g_tol::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -83,7 +83,7 @@ function optimize(d::DifferentiableFunction,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        xtol = xtol, ftol = ftol, grtol = grtol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -94,9 +94,9 @@ end
 function optimize(d::TwiceDifferentiableFunction,
                   initial_x::Array;
                   method = Newton(),
-                  xtol::Real = 1e-32,
-                  ftol::Real = 1e-8,
-                  grtol::Real = 1e-8,
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-8,
+                  g_tol::Real = 1e-8,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -104,7 +104,7 @@ function optimize(d::TwiceDifferentiableFunction,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        xtol = xtol, ftol = ftol, grtol = grtol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)

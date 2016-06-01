@@ -66,7 +66,7 @@ function Base.show(io::IO, t::OptimizationTrace{NelderMead})
 end
 
 function Base.show(io::IO, t::OptimizationState{NelderMead})
-    @printf io "%6d   %14e    %14e\n" t.iteration t.value t.gradnorm
+    @printf io "%6d   %14e    %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
             @printf io " * %s: %s\n" key value
@@ -217,7 +217,7 @@ function optimize{T}(f::Function,
 
         @nmtrace
 
-        if f_x <= o.ftol
+        if f_x <= o.f_tol
             f_converged = true
         end
     end
@@ -240,7 +240,7 @@ function optimize{T}(f::Function,
                                            false,
                                            NaN,
                                            f_converged,
-                                           o.ftol,
+                                           o.f_tol,
                                            false,
                                            NaN,
                                            tr,
