@@ -90,6 +90,20 @@ module Optim
     include("golden_section.jl")
     include("brent.jl")
 
+    const methods = Dict{Symbol, Type}(
+        :gradient_descent => GradientDescent,
+        :momentum_gradient_descent => MomentumGradientDescent,
+        :cg => ConjugateGradient,
+        :bfgs => BFGS,
+        :l_bfgs => LBFGS,
+        :newton => Newton,
+        :nelder_mead => NelderMead,
+        :simulated_annealing => SimulatedAnnealing,
+        :brent => Brent,
+        :golden_section => GoldenSection,
+        :accelerated_gradient_descent => AcceleratedGradientDescent,
+        :fminbox => Fminbox)
+
     # Backward compatibility
     include("deprecate.jl")
 
