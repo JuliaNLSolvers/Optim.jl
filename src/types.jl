@@ -14,7 +14,7 @@ end
 
 function OptimizationOptions(;
         x_tol::Real = 1e-32,
-        f_tol::Real = 1e-8,
+        f_tol::Real = 1e-32,
         g_tol::Real = 1e-8,
         iterations::Integer = 1_000,
         store_trace::Bool = false,

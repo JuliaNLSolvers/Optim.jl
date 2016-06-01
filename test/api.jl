@@ -212,7 +212,7 @@ let
    @test Optim.f_converged(res) == false
    @test Optim.g_converged(res) == false
    @test Optim.x_tol(res) == 1e-32
-   @test Optim.f_tol(res) == 1e-8
+   @test Optim.f_tol(res) == 1e-32
    @test Optim.g_tol(res) == 1e-12
    @test Optim.iteration_limit_reached(res) == true
    @test Optim.initial_state(res) == [0.0; 0.0]

@@ -121,7 +121,7 @@ initial_x = [0.0, 0.0]
 
 results = Optim.nelder_mead(dep_f_nm, initial_x)
 
-@assert results.f_converged
+@assert results.g_converged
 @assert norm(results.minimum - [100.0, 0.0]) < 0.01
 @assert length(results.trace.states) == 0
 
@@ -154,4 +154,3 @@ end
 
 results = Optim.simulated_annealing(f_s, [0.0])
 @assert norm(results.minimum - [5.0]) < 0.1
-
