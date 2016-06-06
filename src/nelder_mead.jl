@@ -30,7 +30,7 @@ macro nmtrace()
             end
             update!(tr,
                     iteration,
-                    Base.minimum(y),
+                    y_min_new,
                     f_x,
                     dt,
                     o.store_trace,
@@ -66,7 +66,7 @@ function Base.show(io::IO, t::OptimizationTrace{NelderMead})
 end
 
 function Base.show(io::IO, t::OptimizationState{NelderMead})
-    @printf io "%6d   %14e    %14e\n" t.iteration t.value t.gradnorm
+    @printf io "%6d   %14e    %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
             @printf io " * %s: %s\n" key value
@@ -104,6 +104,8 @@ function optimize{T}(f::Function,
     end
     f_calls += n
 
+    y_min_new = Base.minimum(y)
+
     f_x_previous, f_x = NaN, nmobjective(y, m, n)
 
     # Count iterations
@@ -125,8 +127,10 @@ function optimize{T}(f::Function,
     p_h = Array(T, m)
 
     # Iterate until convergence or exhaustion
+    x_converged = false
     f_converged = false
-    while !f_converged && iteration < o.iterations
+    g_converged = false
+    while !g_converged && !f_converged && iteration < o.iterations
         # Augment the iteration counter
         iteration += 1
 
@@ -215,13 +219,12 @@ function optimize{T}(f::Function,
 
         f_x_previous, f_x = f_x, nmobjective(y, m, n)
 
+        y_min_new = Base.minimum(y)
         @nmtrace
-
-        if f_x <= o.ftol
-            f_converged = true
+        if f_x <= o.g_tol
+            g_converged = true
         end
     end
-
     minimizer = centroid(p)
     min = f(minimizer)
     f_calls += 1
@@ -237,12 +240,12 @@ function optimize{T}(f::Function,
                                            Float64(min),
                                            iteration,
                                            iteration == o.iterations,
-                                           false,
+                                           x_converged,
                                            NaN,
                                            f_converged,
-                                           o.ftol,
-                                           false,
                                            NaN,
+                                           g_converged,
+                                           o.g_tol,
                                            tr,
                                            f_calls,
                                            0)

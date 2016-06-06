@@ -1,6 +1,6 @@
 # Translation from our variables to Nocedal and Wright's
 # JMW's dx <=> NW's s
-# JMW's dgr <=> NW' y
+# JMW's dg <=> NW' y
 
 macro bfgstrace()
     quote
@@ -8,14 +8,14 @@ macro bfgstrace()
             dt = Dict()
             if o.extended_trace
                 dt["x"] = copy(x)
-                dt["g(x)"] = copy(gr)
+                dt["g(x)"] = copy(g)
                 dt["~inv(H)"] = copy(invH)
             end
-            grnorm = vecnorm(gr, Inf)
+            g_norm = vecnorm(g, Inf)
             update!(tr,
                     iteration,
                     f_x,
-                    grnorm,
+                    g_norm,
                     dt,
                     o.store_trace,
                     o.show_trace,
@@ -52,8 +52,8 @@ function optimize{T}(d::DifferentiableFunction,
     # Count number of parameters
     n = length(x)
 
-    # Maintain current gradient in gr and previous gradient in gr_previous
-    gr, gr_previous = Array(T, n), Array(T, n)
+    # Maintain current gradient in g and previous gradient in g_previous
+    g, g_previous = Array(T, n), Array(T, n)
 
     # Store the approximate inverse Hessian in invH
     invH = copy(initial_invH)
@@ -65,15 +65,15 @@ function optimize{T}(d::DifferentiableFunction,
     u = Array(T, n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, g_ls = Array(T, n), Array(T, n)
 
     # Store f(x) in f_x
-    f_x_previous, f_x = NaN, d.fg!(x, gr)
+    f_x_previous, f_x = NaN, d.fg!(x, g)
     f_calls, g_calls = f_calls + 1, g_calls + 1
-    copy!(gr_previous, gr)
+    copy!(g_previous, g)
 
     # Keep track of step-sizes
-    alpha = alphainit(one(T), x, gr, f_x)
+    alpha = alphainit(one(T), x, g, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -82,7 +82,7 @@ function optimize{T}(d::DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Maintain record of changes in position and gradient
-    dx, dgr = Array(T, n), Array(T, n)
+    dx, dg = Array(T, n), Array(T, n)
 
     # Maintain a cached copy of the identity matrix
     I = eye(size(invH)...)
@@ -93,7 +93,7 @@ function optimize{T}(d::DifferentiableFunction,
     @bfgstrace
 
     # Assess multiple types of convergence
-    x_converged, f_converged, gr_converged = false, false, false
+    x_converged, f_converged, g_converged = false, false, false
 
     # Iterate until convergence
     converged = false
@@ -103,25 +103,25 @@ function optimize{T}(d::DifferentiableFunction,
 
         # Set the search direction
         # Search direction is the negative gradient divided by the approximate Hessian
-        A_mul_B!(s, invH, gr)
+        A_mul_B!(s, invH, g)
         scale!(s, -1)
 
         # Refresh the line search cache
-        dphi0 = vecdot(gr, s)
+        dphi0 = vecdot(g, s)
         # If invH is not positive definite, reset it to I
         if dphi0 > 0.0
             copy!(invH, I)
             @simd for i in 1:n
-                @inbounds s[i] = -gr[i]
+                @inbounds s[i] = -g[i]
             end
-            dphi0 = vecdot(gr, s)
+            dphi0 = vecdot(g, s)
         end
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          mo.linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(d, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -134,38 +134,38 @@ function optimize{T}(d::DifferentiableFunction,
         end
 
         # Maintain a record of the previous gradient
-        copy!(gr_previous, gr)
+        copy!(g_previous, g)
 
         # Update the function value and gradient
-        f_x_previous, f_x = f_x, d.fg!(x, gr)
+        f_x_previous, f_x = f_x, d.fg!(x, g)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         x_converged,
         f_converged,
-        gr_converged,
+        g_converged,
         converged = assess_convergence(x,
                                        x_previous,
                                        f_x,
                                        f_x_previous,
-                                       gr,
-                                       o.xtol,
-                                       o.ftol,
-                                       o.grtol)
+                                       g,
+                                       o.x_tol,
+                                       o.f_tol,
+                                       o.g_tol)
 
         # Measure the change in the gradient
         @simd for i in 1:n
-            @inbounds dgr[i] = gr[i] - gr_previous[i]
+            @inbounds dg[i] = g[i] - g_previous[i]
         end
 
         # Update the inverse Hessian approximation using Sherman-Morrison
-        dx_dgr = vecdot(dx, dgr)
-        if dx_dgr == 0.0
+        dx_dg = vecdot(dx, dg)
+        if dx_dg == 0.0
             break
         end
-        A_mul_B!(u, invH, dgr)
+        A_mul_B!(u, invH, dg)
 
-        c1 = (dx_dgr + vecdot(dgr, u)) / (dx_dgr * dx_dgr)
-        c2 = 1 / dx_dgr
+        c1 = (dx_dg + vecdot(dg, u)) / (dx_dg * dx_dg)
+        c2 = 1 / dx_dg
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         for i in 1:n
@@ -184,11 +184,11 @@ function optimize{T}(d::DifferentiableFunction,
                                            iteration,
                                            iteration == o.iterations,
                                            x_converged,
-                                           o.xtol,
+                                           o.x_tol,
                                            f_converged,
-                                           o.ftol,
-                                           gr_converged,
-                                           o.grtol,
+                                           o.f_tol,
+                                           g_converged,
+                                           o.g_tol,
                                            tr,
                                            f_calls,
                                            g_calls)

@@ -141,7 +141,7 @@ optimize(rosenbrock,
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
 	           method = BFGS(),
-	           grtol = 1e-12,
+	           g_tol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
@@ -149,7 +149,7 @@ res = optimize(f3, g3!, h3!,
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
 	           method = GradientDescent(),
-	           grtol = 1e-12,
+	           g_tol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
@@ -157,7 +157,7 @@ res = optimize(f3, g3!, h3!,
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
 	           method = LBFGS(),
-	           grtol = 1e-12,
+	           g_tol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
@@ -165,7 +165,7 @@ res = optimize(f3, g3!, h3!,
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
 	           method = NelderMead(),
-	           ftol = 1e-12,
+	           f_tol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
@@ -173,7 +173,7 @@ res = optimize(f3, g3!, h3!,
 res = optimize(f3, g3!, h3!,
 	           [0.0, 0.0],
 	           method = Newton(),
-	           grtol = 1e-12,
+	           g_tol = 1e-12,
 	           iterations = 10,
 	           store_trace = true,
 	           show_trace = false)
@@ -189,14 +189,14 @@ let
     res = optimize(f3, g3!, h3!,
     	           [0.0, 0.0],
     	           method = BFGS(),
-    	           grtol = 1e-12,
+    	           g_tol = 1e-12,
     	           iterations = 10,
     	           store_trace = true,
     	           show_trace = false)
    res_ext = optimize(f3, g3!, h3!,
                       [0.0, 0.0],
                       method = BFGS(),
-                      grtol = 1e-12,
+                      g_tol = 1e-12,
                       iterations = 10,
                       store_trace = true,
                       show_trace = false,
@@ -212,7 +212,7 @@ let
    @test Optim.f_converged(res) == false
    @test Optim.g_converged(res) == false
    @test Optim.x_tol(res) == 1e-32
-   @test Optim.f_tol(res) == 1e-8
+   @test Optim.f_tol(res) == 1e-32
    @test Optim.g_tol(res) == 1e-12
    @test Optim.iteration_limit_reached(res) == true
    @test Optim.initial_state(res) == [0.0; 0.0]

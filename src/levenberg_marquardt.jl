@@ -124,9 +124,9 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
         # show state
         if show_trace
             At_mul_B!(n_buffer, J, fcur)
-            gradnorm = norm(n_buffer, Inf)
-            d = @compat Dict("g(x)" => gradnorm, "dx" => delta_x, "lambda" => lambda)
-            os = OptimizationState(iterCt, sumabs2(fcur), gradnorm, d)
+            g_norm = norm(n_buffer, Inf)
+            d = @compat Dict("g(x)" => g_norm, "dx" => delta_x, "lambda" => lambda)
+            os = OptimizationState(iterCt, sumabs2(fcur), g_norm, d)
             push!(tr, os)
             println(os)
         end

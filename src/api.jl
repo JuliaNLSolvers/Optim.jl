@@ -31,7 +31,7 @@ end
 
 f_trace(r::OptimizationResults) = [state.value for state in trace(r).states]
 g_norm_trace(r::OptimizationResults) = error("g_norm_trace is not implemented for $(method(r)).")
-g_norm_trace(r::MultivariateOptimizationResults) = [state.gradnorm for state in trace(r).states]
+g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r).states]
 
 f_calls(r::OptimizationResults) = r.f_calls
 
@@ -39,20 +39,20 @@ g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(method
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
 
 converged(r::UnivariateOptimizationResults) = r.converged
-converged(r::MultivariateOptimizationResults) = r.x_converged || r.f_converged || r.gr_converged
+converged(r::MultivariateOptimizationResults) = r.x_converged || r.f_converged || r.g_converged
 x_converged(r::OptimizationResults) = error("x_converged is not implemented for $(method(r)).")
 x_converged(r::MultivariateOptimizationResults) = r.x_converged
 f_converged(r::OptimizationResults) = error("f_converged is not implemented for $(method(r)).")
 f_converged(r::MultivariateOptimizationResults) = r.f_converged
 g_converged(r::OptimizationResults) = error("g_converged is not implemented for $(method(r)).")
-g_converged(r::MultivariateOptimizationResults) = r.gr_converged
+g_converged(r::MultivariateOptimizationResults) = r.g_converged
 
 x_tol(r::OptimizationResults) = error("x_tol is not implemented for $(method(r)).")
-x_tol(r::MultivariateOptimizationResults) = r.xtol
+x_tol(r::MultivariateOptimizationResults) = r.x_tol
 f_tol(r::OptimizationResults) = error("f_tol is not implemented for $(method(r)).")
-f_tol(r::MultivariateOptimizationResults) = r.ftol
+f_tol(r::MultivariateOptimizationResults) = r.f_tol
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(method(r)).")
-g_tol(r::MultivariateOptimizationResults) = r.grtol
+g_tol(r::MultivariateOptimizationResults) = r.g_tol
 
 
 initial_state(r::OptimizationResults) = error("initial_state is not implemented for $(method(r)).")

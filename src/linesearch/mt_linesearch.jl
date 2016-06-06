@@ -16,7 +16,7 @@
 #     uncertainty is initially chosen so that it contains a
 #     minimizer of the modified function
 #
-#          f(x + stp * s) - f(x) - ftol * stp * (gradf(x)' * s).
+#          f(x + stp * s) - f(x) - f_tol * stp * (gradf(x)' * s).
 #
 #     If a step is obtained for which the modified function
 #     has a nonpositive function value and nonnegative derivative,
@@ -26,13 +26,13 @@
 #     The algorithm is designed to find a step which satisfies
 #     the sufficient decrease condition
 #
-#           f(x + stp * s) <= f(x) + ftol * stp * (gradf(x)' * s),
+#           f(x + stp * s) <= f(x) + f_tol * stp * (gradf(x)' * s),
 #
 #     and the curvature condition
 #
 #           abs(gradf(x + stp * s)' * s)) <= gtol * abs(gradf(x)' * s).
 #
-#     If ftol is less than gtol and if, for example, the function
+#     If f_tol is less than gtol and if, for example, the function
 #     is bounded below, then there is always a step which satisfies
 #     both conditions. If no step can be found which satisfies both
 #     conditions, then the algorithm usually stops when rounding
@@ -41,7 +41,7 @@
 #
 #     The subroutine statement is
 #
-#        subroutine cvsrch(fcn,n,x,f,g,s,stp,ftol,gtol,xtol,
+#        subroutine cvsrch(fcn,n,x,f,g,s,stp,f_tol,gtol,x_tol,
 #                          stpmin,stpmax,maxfev,info,nfev,wa)
 #
 #     where
@@ -84,13 +84,13 @@
 #    initial estimate of a satisfactory step. On output
 #    stp contains the final estimate.
 #
-#  ftol and gtol are nonnegative input variables. Termination
+#  f_tol and gtol are nonnegative input variables. Termination
 #    occurs when the sufficient decrease condition and the
 #    directional derivative condition are satisfied.
 #
-#	xtol is a nonnegative input variable. Termination occurs
+#	x_tol is a nonnegative input variable. Termination occurs
 #    when the relative width of the interval of uncertainty
-#	  is at most xtol.
+#	  is at most x_tol.
 #
 #	stpmin and stpmax are nonnegative input variables which
 #	  specify lower and upper bounds for the step.
@@ -107,7 +107,7 @@
 #              directional derivative condition hold.
 #
 #	  info = 2  Relative width of the interval of uncertainty
-#		         is at most xtol.
+#		         is at most x_tol.
 #
 #	  info = 3  Number of calls to fcn has reached maxfev.
 #
@@ -143,9 +143,9 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
                          mayterminate::Bool;
                          n::Integer = length(x),
                          stp::Real = 1.0,
-                         ftol::Real = 1e-4,
+                         f_tol::Real = 1e-4,
                          gtol::Real = 0.9,
-                         xtol::Real = 1e-8,
+                         x_tol::Real = 1e-8,
                          stpmin::Real = 1e-16,
                          stpmax::Real = 65536.0,
                          maxfev::Integer = 100)
@@ -165,8 +165,8 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
    # Check the input parameters for errors.
    #
 
-   if n <= 0 || stp <= 0.0 || ftol < 0.0 || gtol < 0.0 ||
-      xtol < 0.0 || stpmin < 0.0 || stpmax < stpmin || maxfev <= 0
+   if n <= 0 || stp <= 0.0 || f_tol < 0.0 || gtol < 0.0 ||
+      x_tol < 0.0 || stpmin < 0.0 || stpmax < stpmin || maxfev <= 0
       throw(ArgumentError("Invalid parameters to mure_thuente_line_search"))
    end
 
@@ -188,7 +188,7 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
    stage1 = true
    nfev = 0
    finit = f
-   dgtest = ftol * dginit
+   dgtest = f_tol * dginit
    width = stpmax - stpmin
    width1 = 2 * width
    copy!(new_x, x)
@@ -240,7 +240,7 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
 
       if (bracketed && (stp <= stmin || stp >= stmax)) ||
            nfev >= maxfev-1 || info_cstep == 0 ||
-           (bracketed && stmax - stmin <= xtol * stmax)
+           (bracketed && stmax - stmin <= x_tol * stmax)
          stp = stx
       end
 
@@ -277,7 +277,7 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
       if nfev >= maxfev
          info = 3
       end
-      if bracketed && stmax - stmin <= xtol * stmax
+      if bracketed && stmax - stmin <= x_tol * stmax
          info = 2
       end
       if f <= ftest1 && abs(dg) <= -gtol * dginit
@@ -297,7 +297,7 @@ function mt_linesearch!{T}(fcn::Union{DifferentiableFunction,
       # function has a nonpositive value and nonnegative derivative.
       #
 
-      if stage1 && f <= ftest1 && dg >= min(ftol, gtol) * dginit
+      if stage1 && f <= ftest1 && dg >= min(f_tol, gtol) * dginit
          stage1 = false
       end
 

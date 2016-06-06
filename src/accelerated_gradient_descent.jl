@@ -12,13 +12,13 @@ macro agdtrace()
             dt = Dict()
             if o.extended_trace
                 dt["x"] = copy(x)
-                dt["g(x)"] = copy(gr)
+                dt["g(x)"] = copy(g)
             end
-            grnorm = vecnorm(gr, Inf)
+            g_norm = vecnorm(g, Inf)
             update!(tr,
                     iteration,
                     f_x,
-                    grnorm,
+                    g_norm,
                     dt,
                     o.store_trace,
                     o.show_trace,
@@ -57,21 +57,21 @@ function optimize{T}(d::DifferentiableFunction,
     # Count number of parameters
     n = length(x)
 
-    # Maintain current gradient in gr
-    gr = Array(T, n)
+    # Maintain current gradient in g
+    g = Array(T, n)
 
     # The current search direction
     s = Array(T, n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, g_ls = Array(T, n), Array(T, n)
 
     # Store f(x) in f_x
-    f_x_previous, f_x = NaN, d.fg!(x, gr)
+    f_x_previous, f_x = NaN, d.fg!(x, g)
     f_calls, g_calls = f_calls + 1, g_calls + 1
 
     # Keep track of step-sizes
-    alpha = alphainit(one(T), x, gr, f_x)
+    alpha = alphainit(one(T), x, g, f_x)
 
     # TODO: How should this flag be set?
     mayterminate = false
@@ -85,7 +85,7 @@ function optimize{T}(d::DifferentiableFunction,
     @agdtrace
 
     # Assess types of convergence
-    x_converged, f_converged, gr_converged = false, false, false
+    x_converged, f_converged, g_converged = false, false, false
 
     # Iterate until convergence
     converged = false
@@ -95,17 +95,17 @@ function optimize{T}(d::DifferentiableFunction,
 
         # Search direction is always the negative gradient
         @simd for i in 1:n
-            @inbounds s[i] = -gr[i]
+            @inbounds s[i] = -g[i]
         end
 
         # Refresh the line search cache
-        dphi0 = vecdot(gr, s)
+        dphi0 = vecdot(g, s)
         clear!(lsr)
         push!(lsr, zero(T), f_x, dphi0)
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          mo.linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(d, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Make one move in the direction of the gradient
@@ -124,20 +124,20 @@ function optimize{T}(d::DifferentiableFunction,
         end
 
         # Update the function value and gradient
-        f_x_previous, f_x = f_x, d.fg!(x, gr)
+        f_x_previous, f_x = f_x, d.fg!(x, g)
         f_calls, g_calls = f_calls + 1, g_calls + 1
 
         x_converged,
         f_converged,
-        gr_converged,
+        g_converged,
         converged = assess_convergence(x,
                                        x_previous,
                                        f_x,
                                        f_x_previous,
-                                       gr,
-                                       o.xtol,
-                                       o.ftol,
-                                       o.grtol)
+                                       g,
+                                       o.x_tol,
+                                       o.f_tol,
+                                       o.g_tol)
 
         @agdtrace
     end
@@ -149,11 +149,11 @@ function optimize{T}(d::DifferentiableFunction,
                                            iteration,
                                            iteration == o.iterations,
                                            x_converged,
-                                           o.xtol,
+                                           o.x_tol,
                                            f_converged,
-                                           o.ftol,
-                                           gr_converged,
-                                           o.grtol,
+                                           o.f_tol,
+                                           g_converged,
+                                           o.g_tol,
                                            tr,
                                            f_calls,
                                            g_calls)

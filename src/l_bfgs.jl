@@ -125,7 +125,7 @@ function optimize{T}(d::DifferentiableFunction,
     s = Array(T, n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, g_ls = Array(T, n), Array(T, n)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)
@@ -153,7 +153,7 @@ function optimize{T}(d::DifferentiableFunction,
     @lbfgstrace
 
     # Assess multiple types of convergence
-    x_converged, f_converged, gr_converged = false, false, false
+    x_converged, f_converged, g_converged = false, false, false
 
     # Iterate until convergence
     converged = false
@@ -184,7 +184,7 @@ function optimize{T}(d::DifferentiableFunction,
 
         # Determine the distance of movement along the search line
         alpha, f_update, g_update =
-          mo.linesearch!(d, x, s, x_ls, gr_ls, lsr, alpha, mayterminate)
+          mo.linesearch!(d, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
         f_calls, g_calls = f_calls + f_update, g_calls + g_update
 
         # Maintain a record of previous position
@@ -221,15 +221,15 @@ function optimize{T}(d::DifferentiableFunction,
 
         x_converged,
         f_converged,
-        gr_converged,
+        g_converged,
         converged = assess_convergence(x,
                                        x_previous,
                                        f_x,
                                        f_x_previous,
                                        gr,
-                                       o.xtol,
-                                       o.ftol,
-                                       o.grtol)
+                                       o.x_tol,
+                                       o.f_tol,
+                                       o.g_tol)
 
         @lbfgstrace
     end
@@ -241,11 +241,11 @@ function optimize{T}(d::DifferentiableFunction,
                                            iteration,
                                            iteration == o.iterations,
                                            x_converged,
-                                           o.xtol,
+                                           o.x_tol,
                                            f_converged,
-                                           o.ftol,
-                                           gr_converged,
-                                           o.grtol,
+                                           o.f_tol,
+                                           g_converged,
+                                           o.g_tol,
                                            tr,
                                            f_calls,
                                            g_calls)

@@ -21,12 +21,12 @@ initial_x = [0.0, 0.0]
 
 results = Optim.optimize(f_nm, initial_x, method=NelderMead())
 
-@assert Optim.f_converged(results)
+@assert Optim.g_converged(results)
 @assert norm(Optim.minimizer(results) - [100.0, 0.0]) < 0.01
 @test_throws ErrorException Optim.x_trace(results)
 
 results = Optim.optimize(rosenbrock_nm, initial_x, method=NelderMead())
 
-@assert Optim.f_converged(results)
+@assert Optim.g_converged(results)
 @assert norm(Optim.minimizer(results) - [1.0, 1.0]) < 0.01
 @test_throws ErrorException Optim.x_trace(results)
