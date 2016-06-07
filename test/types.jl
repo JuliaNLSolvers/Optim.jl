@@ -21,7 +21,7 @@ module TestTypes
         @test startswith(lines[6], " * Iterations: ")
         @test startswith(lines[7], " * Convergence: ")
         if res.method == "Nelder-Mead"
-            @test startswith(lines[8], "   *  √(Σ(yᵢ-ȳ)²)/n < ")
+            @test startswith(lines[8], "   *  √(Σ(yᵢ-ȳ)²)/n < 1.0e-08: ")
             @test startswith(lines[9], "   * Reached Maximum Number of Iterations: ")
             @test startswith(lines[10], " * Objective Function Calls: ")
         elseif res.method == "Simulated Annealing"
