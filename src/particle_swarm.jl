@@ -1,17 +1,22 @@
 using Distributions
 
-immutable ParticleSwarm <: Optimizer end
+immutable ParticleSwarm <: Optimizer
+  xmin::Array
+  xmax::Array
+  nParticles::Int
+end
 
-function particle_swarm{T}(cost_function::Function,
-                           initial_x::Vector{T},
-                           xmin::Vector{T},
-                           xmax::Vector{T};
-                           nParticles::Int = length(initial_x)
-                           maxIter::Int = 200,
-                           showTrace::Bool = false)
+function optimize{T}(cost_function::Function,
+                     initial_x::Vector{T},
+                     mo::ParticleSwarm,
+                     o::OptimizationOptions)
 
 
+  print_header(o)
   nDim = length(initial_x)
+  nParticles = mo.nParticles
+  xmin = copy(mo.xmin)
+  xmax = copy(mo.xmax)
   c1 = 2.0
   c2 = 2.0
   w = 1.0
@@ -41,7 +46,7 @@ function particle_swarm{T}(cost_function::Function,
       end
       X[j,i] = initial_x[j] + dx[j] * rand()
       X_best[j,i] = X[j,i]
-      V[i,j] = abs(X[i,j]) * (rand() * 2.0 - 1.0)
+      V[j,i] = abs(X[j,i]) * (rand() * 2.0 - 1.0)
     end
   end
 
@@ -49,13 +54,14 @@ function particle_swarm{T}(cost_function::Function,
     X[j,1] = initial_x[j]
     X_best[j,1] = initial_x[j]
   end
-  tr = OptimizationTrace()
+  tr = OptimizationTrace(mo)
+  #tr = 0
   doLimitSearchSpace = false
   if length(xmin) >= 1
     doLimitSearchSpace = true
   end
 
-  while (iteration <= nIterations)
+  while (iteration <= o.iterations)
     if doLimitSearchSpace
       limit_X!(X, xmin, xmax, nParticles, nDim)
     end
@@ -66,10 +72,15 @@ function particle_swarm{T}(cost_function::Function,
       for i=1:nParticles
         best_score[i] = score[i]
       end
-      best_score_global = minimum(score)
+      best_score_global = Base.minimum(score)
     end
-    best_score_global = housekeeping!(score, best_score, X, X_best, best_point,
-                                best_score_global, nParticles)
+    best_score_global = housekeeping!(score,
+                                      best_score,
+                                      X,
+                                      X_best,
+                                      best_point,
+                                      best_score_global,
+                                      nParticles)
 
     # Elitist Learning:
     # find a new solution named 'xlearn' which is the current best
@@ -84,7 +95,7 @@ function particle_swarm{T}(cost_function::Function,
     end
     random_index = rand(1:nDim)
     random_value = randn()
-    sigma_learn = 1 - (1 - 0.1) * iteration / nIterations
+    sigma_learn = 1 - (1 - 0.1) * iteration / o.iterations
     dist = Normal(0, sigma_learn)
     if doLimitSearchSpace
       xlearn[random_index] = xlearn[random_index] + (xmax[random_index] - xmin[random_index]) / 3.0 * rand(dist)
@@ -128,7 +139,7 @@ function particle_swarm{T}(cost_function::Function,
                                          best_point,
                                          best_score_global,
                                          iteration,
-                                         iteration == nIterations,
+                                         iteration == iteration,
                                          false,
                                          NaN,
                                          f_converged,
@@ -217,8 +228,8 @@ function get_swarm_state(X, score, best_point, previous_state)
     d[i] = sqrt(dd)
   end
   dg = d[iBest]
-  dmin = minimum(d)
-  dmax = maximum(d)
+  dmin = Base.minimum(d)
+  dmax = Base.maximum(d)
 
   f = (dg - dmin) / (dmax - dmin)
   mu = zeros(Float64, 4)
