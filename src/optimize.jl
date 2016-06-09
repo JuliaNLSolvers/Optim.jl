@@ -4,6 +4,29 @@ end
 
 function optimize(f::Function,
                   initial_x::Array;
+                  method = ParticleSwarm(),
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-32,
+                  g_tol::Real = 1e-8,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
+                  show_trace::Bool = false,
+                  extended_trace::Bool = false,
+                  show_every::Integer = 1,
+                  autodiff::Bool = false,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every,
+        autodiff = autodiff)
+    method = get_optimizer(method)::Optimizer
+    optimize(f, initial_x, method, options)
+end
+
+function optimize(f::Function,
+                  initial_x::Array;
                   method = NelderMead(),
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
