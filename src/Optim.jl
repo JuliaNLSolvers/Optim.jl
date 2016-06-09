@@ -30,7 +30,8 @@ module Optim
            MomentumGradientDescent,
            NelderMead,
            Newton,
-           SimulatedAnnealing
+           SimulatedAnnealing,
+           ParticleSwarm
 
     # Types
     include("types.jl")
@@ -85,6 +86,7 @@ module Optim
     # Heuristic Optimization Methods
     include("nelder_mead.jl")
     include("simulated_annealing.jl")
+    include("particle_swarm.jl")
 
     # Univariate methods
     include("golden_section.jl")
@@ -99,6 +101,7 @@ module Optim
         :newton => Newton,
         :nelder_mead => NelderMead,
         :simulated_annealing => SimulatedAnnealing,
+        :particle_swarm => ParticleSwarm,
         :brent => Brent,
         :golden_section => GoldenSection,
         :accelerated_gradient_descent => AcceleratedGradientDescent,
