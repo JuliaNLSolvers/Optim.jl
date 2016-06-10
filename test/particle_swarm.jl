@@ -12,16 +12,16 @@ end
 x0 = [0.0]
 xmax = [100.0]
 xmin = [-100.0]
-nParticles = 4
+n_particles = 4
 
-res = Optim.optimize(f_s, x0, method=ParticleSwarm(xmin, xmax, nParticles),
+res = Optim.optimize(f_s, x0, method=ParticleSwarm(xmin, xmax, n_particles),
                      iterations=100)
 @assert norm(Optim.minimizer(res) - [5.0]) < 0.1
 
 x0 = [0.0, 0.0]
 xmin = [-20., -20.]
 xmax = [20., 20.]
-nParticles = 5
-res = Optim.optimize(rosenbrock_s, x0, method=ParticleSwarm(xmin, xmax, nParticles),
+n_particles = 5
+res = Optim.optimize(rosenbrock_s, x0, method=ParticleSwarm(xmin, xmax, n_particles),
                          iterations=300)
 @assert norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1

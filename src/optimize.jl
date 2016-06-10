@@ -21,8 +21,6 @@ function optimize(f::Function,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every,
         autodiff = autodiff)
-    method = get_optimizer(method)::Optimizer
-    optimize(f, initial_x, method, options)
 end
 
 function optimize(f::Function,
