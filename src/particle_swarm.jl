@@ -4,6 +4,27 @@ immutable ParticleSwarm{T} <: Optimizer
     n_particles::Int
 end
 
+macro swarmtrace()
+    quote
+        if tracing
+            dt = Dict()
+            if o.extended_trace
+                dt["x"] = copy(best_point)
+            end
+            grnorm = NaN
+            update!(tr,
+                    iteration,
+                    best_score_global,
+                    grnorm,
+                    dt,
+                    o.store_trace,
+                    o.show_trace,
+                    o.show_every,
+                    o.callback)
+        end
+    end
+end
+
 function optimize{T}(cost_function::Function,
                      initial_x::Vector{T},
                      mo::ParticleSwarm,
@@ -45,7 +66,7 @@ function optimize{T}(cost_function::Function,
     iteration = 0
     f_calls = 0
     current_state = 0
-    best_score_global = 0.0
+    best_score_global = cost_function(initial_x)
 
     for i in 1:n_particles
         for j in 1:n_dim
@@ -72,6 +93,8 @@ function optimize{T}(cost_function::Function,
         do_limit_search_space = true
     end
 
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
+    @swarmtrace
     while iteration <= o.iterations
         if do_limit_search_space
             limit_X!(X, xmin, xmax, n_particles, n_dim)
@@ -145,6 +168,7 @@ function optimize{T}(cost_function::Function,
         update_swarm!(X, X_best, best_point, n_dim, n_particles, V, w, c1, c2)
 
         iteration += 1
+        @swarmtrace
     end
 
     f_converged = true
