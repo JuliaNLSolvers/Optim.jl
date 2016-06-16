@@ -6,17 +6,17 @@ This means that all you need to do to install Optim, is to run
 Pkg.add("Optim")
 ```
 ## What
-Optim is a package, written entirely in Julia, for optimizing functions of
+Optim is a Julia package for optimizing functions of
 various kinds. While there is some support for box constrained optimization, most
 of the solvers tries to find an $x$ that minimizes a function $f(x)$ without any constraints.
- That is the main focus is on unconstrained optimization.
+ Thus, the main focus is on unconstrained optimization.
 
 ## Why
 There are many solvers available from both free and commercial sources, and many
 of them are accessible from Julia. Few of them are written in Julia.
 Performance-wise this is rarely a problem, as they are often written in either
 Fortran or C. However, solvers written directly in Julia
-does come with some advantages when Julia is the main language used.
+does come with some advantages.
 
 When writing Julia software (packages) that require something to be optimized, the programmer
 can either choose to write their own optimization routine, or use one of the many

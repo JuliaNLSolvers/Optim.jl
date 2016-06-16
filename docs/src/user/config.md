@@ -37,13 +37,13 @@ Special methods for univariate optimization:
 ### General Options
 In addition to the solver, you can alter the behavior of the Optim package by using the following keywords:
 
-* `x_tol`: What is the threshold for determining convergence? Defaults to `1e-32`.
-* `f_tol`: What is the threshold for determining convergence? Defaults to `1e-32`.
-* `g_tol`: What is the threshold for determining convergence? Defaults to `1e-8`.
+* `x_tol`: What is the threshold for determining convergence in the input vector? Defaults to `1e-32`.
+* `f_tol`: What is the threshold for determining convergence in the objective value? Defaults to `1e-32`.
+* `g_tol`: What is the threshold for determining convergence in the gradient? Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `STDOUT`? Defaults to `false`.
-* `extended_trace`: Also save the current `x` and the gradient at `x`.
+* `extended_trace`: Save additional information. Solver dependent.
 * `autodiff`: When only an objective function is provided, use automatic differentiation to compute exact numerical gradients. If not, finite differencing will be used. This functionality is experimental. Defaults to `false`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
 

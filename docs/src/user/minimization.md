@@ -1,9 +1,9 @@
 ## Minimizing a function
-To show how the Optim package can be used, we'll implement the
+To show how the Optim package can be used, we implement the
 [Rosenbrock function](http://en.wikipedia.org/wiki/Rosenbrock_function),
 a classic problem in numerical optimization. We'll assume that you've already
 installed the Optim package using Julia's package manager.
-First, we'll load Optim and define the Rosenbrock function:
+First, we load Optim and define the Rosenbrock function:
 ```jl
 using Optim
 f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2

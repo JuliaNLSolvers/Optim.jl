@@ -12,12 +12,11 @@ The constructor takes one keyword
 Newton's method for optimization has a long history, and is in some sense the
 gold standard in unconstrained optimization of smooth functions, at least from a theoretical viewpoint.
 The main benefit is that it has a quadratic rate of convergence near a local optimum. The main
-cost is that the user has to provide a Hessian. This can be difficult, complicated, or simply annoying.
-Tools such as automatic differentiation can help, and it obviously requires that the function is
-twice differentiable in the inputs.
+disadvantage is that the user has to provide a Hessian. This can be difficult, complicated, or simply annoying.
+It can also be computationally expensive to calculate it.
 
 Newton's method for optimization consists of applying Newton's method for solving
-systems of equations, where the systems here are the first order conditions, saying
+systems of equations, where the equations are the first order conditions, saying
 that the gradient should equal the zero vector.
 
 $ \nabla f(x) = 0 $
@@ -34,13 +33,13 @@ This is equivalent to minimizing a quadratic model, $m_k$ around the current $x_
 
 $ m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s} $
 
-For functions where $H(x_n)$ is difficult, or computationally expensive, to optain, we might
+For functions where $H(x_n)$ is difficult, or computationally expensive to obtain, we might
 replace the Hessian with another positive definite matrix that approximates it.
 Such methods are called Quasi-Newton methods; see (L-)BFGS and Gradient Descent.
 
 In a sufficiently small neighborhood around the minimizer, Newton's method has
-quadratic convergence, but globally it might have slower convergence,or it might
-even diverge. Make ensure convergence, a line search is performed for each $\textbf{s}$.
+quadratic convergence, but globally it might have slower convergence, or it might
+even diverge. To ensure convergence, a line search is performed for each $\textbf{s}$.
 This amounts to replacing the step formula above with
 
 $ x_{n+1} = x_n - \alpha \textbf{s}$

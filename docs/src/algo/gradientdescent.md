@@ -11,9 +11,9 @@ steps according to
 
 $ x_{n+1} = x_n - P^{-1}\nabla f(x_n)$
 
-where $P$ is the Hessian in Newton's method, but is generally just a positive definite
-matrix. In Gradient Descent, $P$ is simply an appropriately dimensioned identity matrix.
-This means that we go in the exact opposite direction of the gradient. This means
+where $P$ is a positive definite matrix. If $P$ is the Hessian, we get Newton's method.
+In Gradient Descent, $P$ is simply an appropriately dimensioned identity matrix,
+such that we go in the exact opposite direction of the gradient. This means
 that we do not use the curvature information from the Hessian, or an approximation
 of it. While it does seem quite logical to go in the opposite direction of the fastest
 increase in objective value, the procedure can be very slow if the problem is ill-conditioned.

@@ -2,7 +2,7 @@
 
 The `GradientDescent`, `ConjugateGradient` and `LBFGS` methods support preconditioning. A preconditioner
 can be thought of as a change of coordinates under which the Hessian is better conditioned. With a
-"good" preconditioner substantially improved convergence is possible.
+good preconditioner substantially improved convergence is possible.
 
 A preconditioner `P`can be of any type as long as the following two methods are
 implemented:
@@ -20,7 +20,7 @@ approximates the Hessian in some vague sense. In this case,
 
 Finally, it is possible to update the preconditioner as the state variable `x`
 changes. This is done through  `precondprep!` which is passed to the
-optimisers as kw-argument, e.g.,
+optimizers as kw-argument, e.g.,
 ```jl
    method=ConjugateGradient(P = precond(100), precondprep! = precond(100))
 ```
