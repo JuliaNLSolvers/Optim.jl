@@ -34,6 +34,9 @@ A planned feature along these lines is to allow for user controlled choice of so
 for various steps in the algorithm, entirely based on dispatch, and not predefined
 possibilities chosen by the developers of Optim.
 
+Being a Julia package also means that Optim has access to the automatic differentiation
+features through the packages in [JuliaDiff](http://www.juliadiff.org/).
+
 ## But...
 Optim is a work in progress. There are still some rough edges to be sanded down,
 and features we want to implement. There are also planned breaking changes that
