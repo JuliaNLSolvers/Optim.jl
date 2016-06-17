@@ -13,3 +13,5 @@ script:
     - julia -e 'Pkg.clone(pwd()); Pkg.test("Optim", coverage=true)'
 after_success:
     - julia -e 'cd(Pkg.dir("Optim")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+    - julia -e 'Pkg.add("Documenter")'
+    - julia -e 'cd(Pkg.dir("Optim")); include(joinpath("docs", "make.jl"))'

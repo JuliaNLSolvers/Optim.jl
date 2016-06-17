@@ -35,10 +35,11 @@ pages:
             - Gradient Free:
                 - Nelder Mead: 'algo/nelder_mead.md'
                 - Simulated Annealing: 'algo/simulated_annealing.md'
-                - Univariate:
-                    - Brent's Method: 'algo/brent.md'
+#                - Univariate:
+#                    - Brent's Method: 'algo/brent.md'
+#                    - Golden Section: 'algo/goldensection.md'
             - Gradient Required:
-                - 'Conjugate Gradient': 'algo/conjugategradient.md'
+#                - 'Conjugate Gradient': 'algo/conjugategradient.md'
                 - 'Gradient Descent': 'algo/gradientdescent.md'
                 - '(L-)BFGS': 'algo/lbfgs.md'
             - Hessian Required:
@@ -46,6 +47,5 @@ pages:
         - Linesearch: 'algo/linesearch.md'
         - Preconditioners: 'algo/precondition.md'
     - 'Contributing':
-        - 'Structure': 'dev/index.md'
         - 'Contributing': 'dev/contributing.md'
     - License: 'LICENSE.md'

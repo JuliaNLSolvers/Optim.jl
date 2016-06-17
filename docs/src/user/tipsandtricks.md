@@ -94,7 +94,8 @@ Below, we use the gradients and objective functions from [mastsif](http://www.cu
 We only show the first five iterations of an attempt to minimize the function using
 Gradient Descent.
 ```jlcon
-julia> @time optimize(f, x0, GradientDescent(), OptimizationOptions(show_trace=true, iterations = 5))
+julia> @time optimize(f, x0, GradientDescent(),
+                      OptimizationOptions(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02
      1     1.018734e+03     2.704951e+01
@@ -117,7 +118,8 @@ Results of Optimization Algorithm
  * Objective Function Calls: 23
  * Gradient Calls: 23
 
-julia> @time optimize(f, g!, x0, GradientDescent(), OptimizationOptions(show_trace=true, iterations = 5))
+julia> @time optimize(f, g!, x0, GradientDescent(),
+                      OptimizationOptions(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02
      1     1.018769e+03     2.704998e+01
