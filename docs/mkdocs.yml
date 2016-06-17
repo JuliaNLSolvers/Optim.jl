@@ -40,8 +40,7 @@ pages:
             - Gradient Required:
                 - 'Conjugate Gradient': 'algo/conjugategradient.md'
                 - 'Gradient Descent': 'algo/gradientdescent.md'
-                - 'BFGS': 'algo/bfgs.md'
-                - 'L-BFGS': 'algo/lbfgs.md'
+                - '(L-)BFGS': 'algo/lbfgs.md'
             - Hessian Required:
                 - Newton: 'algo/newton.md'
         - Linesearch: 'algo/linesearch.md'

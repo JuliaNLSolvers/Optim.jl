@@ -11,11 +11,18 @@ Our current implementation of the Nelder-Mead algorithm follows the original imp
 very closely, see Nelder and Mead (1965). This means that there is scope for improvement, but
 also that it should be quite clear what is going on in the code relative to the original paper.
 
-The stopping rule is the same as in the original paper, and is basically the standard
-error of the function values at the vertices. This means that setting the `f_tol` keyword
-does not put a restriction on `f()` exactly, but on this standard error measure instead.
+Instead of using gradient information, we keep track of the function value at a number
+of points in the search space. Together, the points form a simplex. Given a simplex,
+we can perform one of four actions: reflect, expand, contract, or shrink. Basically,
+the goal is to iteratively replace the worst point with a better point. More information
+can be found in Nelder and Mead (1965) or Gao and
 
-Upon (non-)convergence, we return a minimizer which is either the centroid or one of the vertices.
+The stopping rule is the same as in the original paper, and is basically the standard
+error of the function values at the vertices. The to set the tolerance level for this
+convergence criterior, set the `g_tol` level as described in the Configurable Options
+section.
+
+When the solver finishes, we return a minimizer which is either the centroid or one of the vertices.
 This adds a function evaluation, as we choose the minimizer according to point with
 the smallest function value. Even if the function value at the centroid can be returned
 as the minimum, we do not trace it during the optimization iterations. This is to avoid
@@ -27,4 +34,5 @@ run-time of the algorithm.
 ## Example
 
 ## References
-Nelder, John A.; R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.
+Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.
+Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]
