@@ -182,7 +182,7 @@ function optimize{T}(df::DifferentiableFunction,
                 @inbounds s[i] = -pg[i]
             end
             dphi0 = vecdot(g, s)
-            if dphi0 < 0
+            if dphi0 >= 0
                 break
             end
         end
