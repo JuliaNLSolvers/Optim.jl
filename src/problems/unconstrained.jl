@@ -281,7 +281,7 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
 ### Powell (d=4)
 ###
 ### Problem 35 in [1]
-### Difficuly since the hessian is singular at the optimum
+### Difficult since the hessian is singular at the optimum
 ##########################################################################
 
 function powell(x::Vector)
@@ -300,7 +300,7 @@ function powell_hessian!(x::Vector, storage::Matrix)
     storage[1, 1] = 2.0 + 120.0 * (x[1] - x[4])^2
     storage[1, 2] = 20.0
     storage[1, 3] = 0.0
-    storage[1, 4] = 0.0
+    storage[1, 4] = -120.0 * (x[1] - x[4])^2
     storage[2, 1] = 20.0
     storage[2, 2] = 200.0 + 12.0 * (x[2] - 2.0 * x[3])^2
     storage[2, 3] = -24.0 * (x[2] - 2.0 * x[3])^2
@@ -309,7 +309,7 @@ function powell_hessian!(x::Vector, storage::Matrix)
     storage[3, 2] = -24.0 * (x[2] - 2.0 * x[3])^2
     storage[3, 3] = 10.0 + 48.0 * (x[2] - 2.0 * x[3])^2
     storage[3, 4] = -10.0
-    storage[4, 1] = 0.0
+    storage[4, 1] = -120.0 * (x[1] - x[4])^2
     storage[4, 2] = 0.0
     storage[4, 3] = -10.0
     storage[4, 4] = 10.0 + 120.0 * (x[1] - x[4])^2
