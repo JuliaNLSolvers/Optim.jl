@@ -1,3 +1,5 @@
 benchmarks/graphs/*
 *~
 *.kate-swp
+docs/build/
+docs/site/
