@@ -1,0 +1,51 @@
+site_name:        Optim.jl
+repo_url:         https://github.com/JuliaOpt/Optim.jl/
+site_description: Pure Julia implementations of optimization algorithms.
+site_author:      JuliaOpt
+
+theme: readthedocs
+
+
+extra:
+  palette:
+    primary: 'indigo'
+    accent:  'blue'
+
+markdown_extensions:
+  - codehilite
+  - extra
+  - tables
+  - fenced_code
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - assets/mathjaxhelper.js
+
+docs_dir: 'build'
+
+pages:
+    - Home: 'index.md'
+    - General information:
+        - Minimizing a function: 'user/minimization.md'
+        - Configurable Options: 'user/config.md'
+        - Tips and tricks: 'user/tipsandtricks.md'
+        - Planned Changes: 'user/planned.md'
+    - Algorithms:
+        - Solvers:
+            - Gradient Free:
+                - Nelder Mead: 'algo/nelder_mead.md'
+                - Simulated Annealing: 'algo/simulated_annealing.md'
+#                - Univariate:
+#                    - Brent's Method: 'algo/brent.md'
+#                    - Golden Section: 'algo/goldensection.md'
+            - Gradient Required:
+#                - 'Conjugate Gradient': 'algo/conjugategradient.md'
+                - 'Gradient Descent': 'algo/gradientdescent.md'
+                - '(L-)BFGS': 'algo/lbfgs.md'
+            - Hessian Required:
+                - Newton: 'algo/newton.md'
+        - Linesearch: 'algo/linesearch.md'
+        - Preconditioners: 'algo/precondition.md'
+    - 'Contributing':
+        - 'Contributing': 'dev/contributing.md'
+    - License: 'LICENSE.md'
