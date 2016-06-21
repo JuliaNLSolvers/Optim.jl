@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaOpt">
+  
+  <title>Newton - Optim.jl</title>
+  
+
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Newton";
+    var mkdocs_page_input_path = "algo/newton.md";
+    var mkdocs_page_url = "/algo/newton/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script> 
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+  <script src="../../assets/mathjaxhelper.js"></script>
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>General information</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/minimization/">Minimizing a function</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/config/">Configurable Options</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/planned/">Planned Changes</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Algorithms</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Solvers</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Free</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../nelder_mead/">Nelder Mead</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../gradientdescent/">Gradient Descent</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lbfgs/">(L-)BFGS</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Hessian Required</span></li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Newton</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#newtons-method">Newton's Method</a></li>
+                
+                    <li><a class="toctree-l4" href="#constructor">Constructor</a></li>
+                
+                    <li><a class="toctree-l4" href="#description">Description</a></li>
+                
+                    <li><a class="toctree-l4" href="#example">Example</a></li>
+                
+                    <li><a class="toctree-l4" href="#references">References</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../linesearch/">Linesearch</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../precondition/">Preconditioners</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Contributing</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../dev/contributing/">Contributing</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../LICENSE/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Hessian Required &raquo;</li>
+        
+      
+    
+    <li>Newton</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github"> Edit on GitHub</a>
+        
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Newton's-Method-1'></a></p>
+<h1 id="newtons-method">Newton's Method</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">Newton</span><span class="p">(;</span> <span class="n">linesearch!</span> <span class="o">=</span> <span class="n">hz_linesearch!</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The constructor takes one keyword</p>
+<ul>
+<li><code>linesearch! = a(d, x, p, x_new, g_new, lsr, c, mayterminate)</code>, a function performing line search, see the line search section.</li>
+</ul>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Newton's method for optimization has a long history, and is in some sense the gold standard in unconstrained optimization of smooth functions, at least from a theoretical viewpoint. The main benefit is that it has a quadratic rate of convergence near a local optimum. The main disadvantage is that the user has to provide a Hessian. This can be difficult, complicated, or simply annoying. It can also be computationally expensive to calculate it.</p>
+<p>Newton's method for optimization consists of applying Newton's method for solving systems of equations, where the equations are the first order conditions, saying that the gradient should equal the zero vector.</p>
+<p>$ \nabla f(x) = 0 $</p>
+<p>A second order Taylor expansion of the left-hand side leads to the iterative scheme</p>
+<p>$ x_{n+1} = x_n - H(x_n)^{-1}\nabla f(x_n)$</p>
+<p>where the inverse is not calculated directly, but the step size is instead calculated by solving</p>
+<p>$ H(x) \textbf{s} = \nabla f(x_n) $.</p>
+<p>This is equivalent to minimizing a quadratic model, $m_k$ around the current $x_n$</p>
+<p>$ m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s} $</p>
+<p>For functions where $H(x_n)$ is difficult, or computationally expensive to obtain, we might replace the Hessian with another positive definite matrix that approximates it. Such methods are called Quasi-Newton methods; see (L-)BFGS and Gradient Descent.</p>
+<p>In a sufficiently small neighborhood around the minimizer, Newton's method has quadratic convergence, but globally it might have slower convergence, or it might even diverge. To ensure convergence, a line search is performed for each $\textbf{s}$. This amounts to replacing the step formula above with</p>
+<p>$ x_{n+1} = x_n - \alpha \textbf{s}$</p>
+<p>and finding a scalar $\alpha$ such that we get sufficient descent; see the line search section for more information.</p>
+<p>Additionally, if the function is locally concave, the step taken in the formulas above will go in a direction of ascent,  as the Hessian will not be positive (semi)definite. To avoid this, we use a specialized method to calculate the step direction. If the Hessian is positive semidefinite then the method used is standard, but if it is not, a correction is made using the functionality in <a href="https://github.com/timholy/PositiveFactorizations.jl">PositiveFactorizations.jl</a>.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>show the example from the issue</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../linesearch/" class="btn btn-neutral float-right" title="Linesearch">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../lbfgs/" class="btn btn-neutral" title="(L-)BFGS"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../lbfgs/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../linesearch/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
