@@ -8,5 +8,5 @@ using Documenter, OptimDoc
 makedocs()
 
 deploydocs(
-    repo = "github.com/pkofod/OptimDoc.jl.git"
+    repo = "github.com/JuliaOpt/Optim.jl.git"
 )

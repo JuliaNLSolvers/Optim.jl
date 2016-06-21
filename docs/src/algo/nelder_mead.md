@@ -15,19 +15,19 @@ Instead of using gradient information, we keep track of the function value at a 
 of points in the search space. Together, the points form a simplex. Given a simplex,
 we can perform one of four actions: reflect, expand, contract, or shrink. Basically,
 the goal is to iteratively replace the worst point with a better point. More information
-can be found in Nelder and Mead (1965) or Gao and
+can be found in Nelder and Mead (1965) or Gao and Han (2010).
 
 The stopping rule is the same as in the original paper, and is basically the standard
-error of the function values at the vertices. The to set the tolerance level for this
-convergence criterior, set the `g_tol` level as described in the Configurable Options
+error of the function values at the vertices. To set the tolerance level for this
+convergence criterion, set the `g_tol` level as described in the Configurable Options
 section.
 
 When the solver finishes, we return a minimizer which is either the centroid or one of the vertices.
-This adds a function evaluation, as we choose the minimizer according to point with
-the smallest function value. Even if the function value at the centroid can be returned
+The function value at the centroid adds a function evaluation, as we need to evaluate the objection
+at the centroid to choose the smallest function value. Howeever, even if the function value at the centroid can be returned
 as the minimum, we do not trace it during the optimization iterations. This is to avoid
-too many evaluations of `f()` which can be expensive for many applications of the Nelder-Mead
-algorithm. Typically, there should be no more than twice as many `f_calls` than `iterations`,
+too many evaluations of the objective function which can be computationally expensive.
+Typically, there should be no more than twice as many `f_calls` than `iterations`,
 and adding an evaluation at the centroid when `tracing` could considerably increase the total
 run-time of the algorithm.
 
