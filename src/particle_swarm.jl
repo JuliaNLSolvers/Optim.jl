@@ -2,7 +2,10 @@ immutable ParticleSwarm{T} <: Optimizer
     xmin::Vector{T}
     xmax::Vector{T}
     n_particles::Int
+    do_limit_search_space::Bool
 end
+
+ParticleSwarm() = ParticleSwarm([], [], 0, false)
 
 macro swarmtrace()
     quote
@@ -47,9 +50,24 @@ function optimize{T}(cost_function::Function,
     =#
     print_header(o)
     n_dim = length(initial_x)
-    n_particles = mo.n_particles
     xmin = copy(mo.xmin)
     xmax = copy(mo.xmax)
+
+    # do some checks on input parameters
+    @assert length(xmin) == length(xmax) "xmin and xmax must be of same length."
+    if length(xmin) > 0
+        @assert length(xmin) == length(initial_x) "limits must be of same length as x_initial."
+        @assert mo.do_limit_search_space == true "if do_limit_search_space == true you have to provide xmin and xmax."
+        @assert all(xmax .> xmin) "xmax must be greater than xmin"
+    elseif length(xmin) == 0
+        @assert mo.do_limit_search_space == false "if xmin and xmax not provided do_limit_search_space must be set to false."
+    end
+
+    if mo.n_particles > 0
+        n_particles = mo.n_particles
+    else
+        n_particles = length(initial_x)
+    end
     c1 = 2.0
     c2 = 2.0
     w = 1.0
@@ -68,18 +86,31 @@ function optimize{T}(cost_function::Function,
     current_state = 0
     best_score_global = cost_function(initial_x)
 
-    for i in 1:n_particles
-        for j in 1:n_dim
-            if i == 1
-                if abs(initial_x[i]) > 0.0
-                    dx[j] = abs(initial_x[i])
-                else
-                    dx[j] = 1.0
-                end
+    # if search space is limited, spread the initial population
+    # uniformly over the whole search space
+    if mo.do_limit_search_space
+        for i in 1:n_particles
+            for j in 1:n_dim
+                ww = xmax[j] - xmin[j]
+                X[j, i] = xmin[j] + ww * rand()
+                X_best[j, i] = X[j, i]
+                V[j, i] = ww * (rand() * 2.0 - 1.0) / 10.0
             end
-            X[j, i] = initial_x[j] + dx[j] * rand()
-            X_best[j, i] = X[j, i]
-            V[j, i] = abs(X[j, i]) * (rand() * 2.0 - 1.0)
+        end
+    else
+        for i in 1:n_particles
+            for j in 1:n_dim
+                if i == 1
+                    if abs(initial_x[i]) > 0.0
+                        dx[j] = abs(initial_x[i])
+                    else
+                        dx[j] = 1.0
+                    end
+                end
+                X[j, i] = initial_x[j] + dx[j] * rand()
+                X_best[j, i] = X[j, i]
+                V[j, i] = abs(X[j, i]) * (rand() * 2.0 - 1.0)
+            end
         end
     end
 
@@ -88,15 +119,11 @@ function optimize{T}(cost_function::Function,
         X_best[j, 1] = initial_x[j]
     end
     tr = OptimizationTrace(mo)
-    do_limit_search_space = true
-    if length(xmin) >= 1
-        do_limit_search_space = true
-    end
 
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @swarmtrace
     while iteration <= o.iterations
-        if do_limit_search_space
+        if mo.do_limit_search_space
             limit_X!(X, xmin, xmax, n_particles, n_dim)
         end
         compute_cost!(cost_function, n_particles, X, score)
@@ -136,13 +163,13 @@ function optimize{T}(cost_function::Function,
         # proper solution is -> "r3 = rand(Normal(0, sigma_learn))"
         r3 = randn() * sigma_learn
 
-        if do_limit_search_space
+        if mo.do_limit_search_space
             xlearn[random_index] = xlearn[random_index] + (xmax[random_index] - xmin[random_index]) / 3.0 * r3
         else
             xlearn[random_index] = xlearn[random_index] + xlearn[random_index] * r3
         end
 
-        if do_limit_search_space
+        if mo.do_limit_search_space
             if xlearn[random_index] < xmin[random_index]
                 xlearn[random_index] = xmin[random_index]
             elseif xlearn[random_index] > xmax[random_index]
