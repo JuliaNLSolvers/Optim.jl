@@ -2,10 +2,11 @@ immutable ParticleSwarm{T} <: Optimizer
     xmin::Vector{T}
     xmax::Vector{T}
     n_particles::Int
-    do_limit_search_space::Bool
 end
 
-ParticleSwarm() = ParticleSwarm([], [], 0, false)
+ParticleSwarm() = ParticleSwarm([], [], 0)
+ParticleSwarm(N) = ParticleSwarm([], [], N)
+ParticleSwarm(xmin, xmax) = ParticleSwarm(xmin, xmax, 0)
 
 macro swarmtrace()
     quote
@@ -56,17 +57,23 @@ function optimize{T}(cost_function::Function,
     # do some checks on input parameters
     @assert length(xmin) == length(xmax) "xmin and xmax must be of same length."
     if length(xmin) > 0
+        const limit_search_space = true
         @assert length(xmin) == length(initial_x) "limits must be of same length as x_initial."
-        @assert mo.do_limit_search_space == true "if do_limit_search_space == true you have to provide xmin and xmax."
         @assert all(xmax .> xmin) "xmax must be greater than xmin"
-    elseif length(xmin) == 0
-        @assert mo.do_limit_search_space == false "if xmin and xmax not provided do_limit_search_space must be set to false."
+    else
+        const limit_search_space = false
     end
 
     if mo.n_particles > 0
-        n_particles = mo.n_particles
+        if mo.n_particles < 3
+          warn("Number of particles is set to 3 (minimum required)")
+          const n_particles = 3
+        else
+          const n_particles = mo.n_particles
+        end
     else
-        n_particles = length(initial_x)
+      # user did not define number of particles
+      const n_particles = maximum([3, length(initial_x)])
     end
     c1 = 2.0
     c2 = 2.0
@@ -79,7 +86,7 @@ function optimize{T}(cost_function::Function,
     score = zeros(T, n_particles)
     best_point = zeros(T, n_dim)
     best_score = zeros(T, n_particles)
-    xlearn = zeros(T, n_dim)
+    x_learn = zeros(T, n_dim)
 
     iteration = 0
     f_calls = 0
@@ -88,7 +95,7 @@ function optimize{T}(cost_function::Function,
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
-    if mo.do_limit_search_space
+    if limit_search_space
         for i in 1:n_particles
             for j in 1:n_dim
                 ww = xmax[j] - xmin[j]
@@ -123,16 +130,14 @@ function optimize{T}(cost_function::Function,
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @swarmtrace
     while iteration <= o.iterations
-        if mo.do_limit_search_space
+        if limit_search_space
             limit_X!(X, xmin, xmax, n_particles, n_dim)
         end
         compute_cost!(cost_function, n_particles, X, score)
         f_calls += n_particles
 
         if iteration == 0
-            for i in 1:n_particles
-                best_score[i] = score[i]
-            end
+            copy!(best_score, score)
             best_score_global = Base.minimum(score)
         end
         best_score_global = housekeeping!(score,
@@ -144,47 +149,44 @@ function optimize{T}(cost_function::Function,
                                           n_particles)
 
         # Elitist Learning:
-        # find a new solution named 'xlearn' which is the current best
+        # find a new solution named 'x_learn' which is the current best
         # solution with one randomly picked variable being modified.
-        # Replace the current worst solution in X with xlearn
-        # if xlearn presents the new best solution.
-        # In all other cases discard xlearn.
+        # Replace the current worst solution in X with x_learn
+        # if x_learn presents the new best solution.
+        # In all other cases discard x_learn.
         # This helps jumping out of local minima.
         worst_score, i_worst = findmax(score)
         for k in 1:n_dim
-            xlearn[k] = best_point[k]
+            x_learn[k] = best_point[k]
         end
         random_index = rand(1:n_dim)
         random_value = randn()
         sigma_learn = 1 - (1 - 0.1) * iteration / o.iterations
 
-        # this is a quick and dirty fix (and mathematically wrong)
-        # to get rid of the Distributions dependency
-        # proper solution is -> "r3 = rand(Normal(0, sigma_learn))"
         r3 = randn() * sigma_learn
 
-        if mo.do_limit_search_space
-            xlearn[random_index] = xlearn[random_index] + (xmax[random_index] - xmin[random_index]) / 3.0 * r3
+        if limit_search_space
+            x_learn[random_index] = x_learn[random_index] + (xmax[random_index] - xmin[random_index]) / 3.0 * r3
         else
-            xlearn[random_index] = xlearn[random_index] + xlearn[random_index] * r3
+            x_learn[random_index] = x_learn[random_index] + x_learn[random_index] * r3
         end
 
-        if mo.do_limit_search_space
-            if xlearn[random_index] < xmin[random_index]
-                xlearn[random_index] = xmin[random_index]
-            elseif xlearn[random_index] > xmax[random_index]
-                xlearn[random_index] = xmax[random_index]
+        if limit_search_space
+            if x_learn[random_index] < xmin[random_index]
+                x_learn[random_index] = xmin[random_index]
+            elseif x_learn[random_index] > xmax[random_index]
+                x_learn[random_index] = xmax[random_index]
             end
         end
 
-        score_learn = cost_function(xlearn)
+        score_learn = cost_function(x_learn)
         f_calls += 1
         if score_learn < best_score_global
             best_score_global = score_learn * 1.0
             for j in 1:n_dim
-                X_best[j, i_worst] = xlearn[j]
-                X[j, i_worst] = xlearn[j]
-                best_point[j] = xlearn[j]
+                X_best[j, i_worst] = x_learn[j]
+                X[j, i_worst] = x_learn[j]
+                best_point[j] = x_learn[j]
             end
             score[i_worst] = score_learn
             best_score[i_worst] = score_learn
