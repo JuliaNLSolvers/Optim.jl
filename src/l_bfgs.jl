@@ -31,7 +31,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds alpha[i] = rho[i] * vecdot(slice(dx_history, :, i), q)
+        @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
         @simd for j in 1:n
             @inbounds q[j] -= alpha[i] * dgr_history[j, i]
         end
@@ -48,7 +48,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * vecdot(slice(dgr_history, :, i), s)
+        @inbounds beta = rho[i] * vecdot(view(dgr_history, :, i), s)
         @simd for j in 1:n
             @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
