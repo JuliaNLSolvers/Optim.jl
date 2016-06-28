@@ -2,4 +2,4 @@ julia 0.4
 Calculus
 DualNumbers 0.2
 PositiveFactorizations
-Compat 0.7.16
+Compat 0.8.4
