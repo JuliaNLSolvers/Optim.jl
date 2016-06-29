@@ -70,6 +70,37 @@ function optimize(f::Function,
     optimize(f, g!, h!, initial_x, method, options)
 end
 
+function optimize(f::Function,
+                  g!::Function,
+                  h!::Function,
+                  initial_x::Array;
+                  method = NewtonTrustRegion(),
+                  x_tol::Real = 1e-32,
+                  f_tol::Real = 1e-32,
+                  g_tol::Real = 1e-8,
+                  initial_delta::Real=1.0,
+                  delta_hat::Real = 100.0,
+                  eta::Real = 0.1,
+                  rho_lower::Real = 0.25,
+                  rho_upper::Real = 0.75,
+                  iterations::Integer = 1_000,
+                  store_trace::Bool = false,
+                  show_trace::Bool = false,
+                  extended_trace::Bool = false,
+                  show_every::Integer = 1,
+                  callback = nothing)
+    options = OptimizationOptions(;
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        initial_delta = initial_delta, delta_hat = delta_hat,
+        eta = eta, rho_lower = rho_lower, rho_upper = rho_upper,
+        iterations = iterations, store_trace = store_trace,
+        show_trace = show_trace, extended_trace = extended_trace,
+        callback = callback, show_every = show_every)
+    method = get_optimizer(method)::Optimizer
+    optimize(f, g!, h!, initial_x, method, options)
+end
+
+
 function optimize(d::DifferentiableFunction,
                   initial_x::Array;
                   method = LBFGS(),

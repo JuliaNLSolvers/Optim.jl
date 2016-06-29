@@ -1,4 +1,4 @@
-__precompile__(true)
+VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
 
 module Optim
     using Calculus
@@ -32,6 +32,7 @@ module Optim
            MomentumGradientDescent,
            NelderMead,
            Newton,
+           NewtonTrustRegion,
            SimulatedAnnealing,
            ParticleSwarm
 
@@ -40,6 +41,9 @@ module Optim
 
     # API
     include("api.jl")
+
+    # Automatic differentiation utilities
+    include("autodiff.jl")
 
     # Maxdiff
     include("utilities/maxdiff.jl")
@@ -73,6 +77,7 @@ module Optim
 
     # Newton and Quasi-Newton Methods
     include("newton.jl")
+    include("newton_trust_region.jl")
     include("bfgs.jl")
     include("l_bfgs.jl")
 
@@ -98,6 +103,7 @@ module Optim
         :bfgs => BFGS,
         :l_bfgs => LBFGS,
         :newton => Newton,
+        :newton_tr => NewtonTrustRegion,
         :nelder_mead => NelderMead,
         :simulated_annealing => SimulatedAnnealing,
         :particle_swarm => ParticleSwarm,
