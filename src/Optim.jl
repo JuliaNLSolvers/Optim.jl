@@ -30,6 +30,7 @@ module Optim
            MomentumGradientDescent,
            NelderMead,
            Newton,
+           NewtonTrustRegion,
            SimulatedAnnealing
 
     # Types
@@ -73,6 +74,7 @@ module Optim
 
     # Newton and Quasi-Newton Methods
     include("newton.jl")
+    include("newton_trust_region.jl")
     include("bfgs.jl")
     include("l_bfgs.jl")
 
@@ -97,6 +99,7 @@ module Optim
         :bfgs => BFGS,
         :l_bfgs => LBFGS,
         :newton => Newton,
+        :newton_tr => NewtonTrustRegion,
         :nelder_mead => NelderMead,
         :simulated_annealing => SimulatedAnnealing,
         :brent => Brent,
