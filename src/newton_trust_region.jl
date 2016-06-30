@@ -201,20 +201,32 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
 end
 
 
-immutable NewtonTR <: Optimizer
+immutable NewtonTrustRegion <: Optimizer
+  initial_delta::Real
+  delta_hat::Real
+  eta::Real
+  rho_lower::Real
+  rho_upper::Real
 end
 
+NewtonTrustRegion(; initial_delta::Real=1.0,
+                    delta_hat::Real = 100.0,
+                    eta::Real = 0.1,
+                    rho_lower::Real = 0.25,
+                    rho_upper::Real = 0.75) =
+  NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
-function newton_tr{T}(d::TwiceDifferentiableFunction,
-                       initial_x::Vector{T},
-                       mo::NewtonTR,
-                       o::OptimizationOptions)
 
-    @assert(o.delta_hat > 0, "delta_hat must be strictly positive")
-    @assert(0 < o.initial_delta < o.delta_hat, "delta must be in (0, delta_hat)")
-    @assert(0 <= o.eta < 0.25, "eta must be in [0, 0.25)")
-    @assert(o.rho_lower < o.rho_upper, "must have rho_lower < rho_upper")
-    @assert(o.rho_lower >= 0.)
+function optimize{T}(d::TwiceDifferentiableFunction,
+                     initial_x::Vector{T},
+                     mo::NewtonTrustRegion,
+                     o::OptimizationOptions)
+
+    @assert(mo.delta_hat > 0, "delta_hat must be strictly positive")
+    @assert(0 < mo.initial_delta < mo.delta_hat, "delta must be in (0, delta_hat)")
+    @assert(0 <= mo.eta < 0.25, "eta must be in [0, 0.25)")
+    @assert(mo.rho_lower < mo.rho_upper, "must have rho_lower < rho_upper")
+    @assert(mo.rho_lower >= 0.)
 
     # Maintain current state in x and previous state in x_previous
     x, x_previous = copy(initial_x), copy(initial_x)
@@ -247,14 +259,14 @@ function newton_tr{T}(d::TwiceDifferentiableFunction,
     d.h!(x, H)
 
     # Keep track of trust region sizes
-    delta = copy(o.initial_delta)
+    delta = copy(mo.initial_delta)
 
     # Record whether the point is interior in the trace.
     interior = false
 
     # Trace the history of states visited
     tr = OptimizationTrace(mo)
-    tracing = store_trace || show_trace || extended_trace
+    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @newton_tr_trace
 
     # Assess multiple types of convergence
@@ -262,7 +274,7 @@ function newton_tr{T}(d::TwiceDifferentiableFunction,
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration <= iterations
+    while !converged && iteration <= o.iterations
         # Find the next step direction.
         m, interior = solve_tr_subproblem!(gr, H, delta, s)
 
@@ -292,20 +304,20 @@ function newton_tr{T}(d::TwiceDifferentiableFunction,
           # This can happen if the trust region radius is too large and the
           # Hessian is not positive definite.  We should shrink the trust
           # region.
-          rho = o.rho_lower - 1.0
+          rho = mo.rho_lower - 1.0
         else
           rho = f_x_diff / (0 - m)
         end
 
-        if rho < o.rho_lower
+        if rho < mo.rho_lower
             delta *= 0.25
-        elseif (rho > o.rho_upper) && (!interior)
-            delta = min(2 * delta, o.delta_hat)
+        elseif (rho > mo.rho_upper) && (!interior)
+            delta = min(2 * delta, mo.delta_hat)
         else
           # else leave delta unchanged.
         end
 
-        if rho > o.eta
+        if rho > mo.eta
             # Accept the point and check convergence
 
             x_converged,
