@@ -325,10 +325,13 @@ end
 A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available:
 
 ```jl
+function f(x::Vector)
+    return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+end
 l = [1.25, -2.1]
 u = [Inf, Inf]
 x0 = [2.0, 2.0]
-results = optimize(d4, x0, l, u, Fminbox())  # d4 from rosenbrock example
+results = optimize(DifferentiableFunction(f), x0, l, u, Fminbox(), optimizer = GradientDescent)
 ```
 
 This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed. This means that the keyword should be passed as `optimizer = GradientDescent` not `optimizer = GradientDescent()`, as you usually would.
@@ -339,11 +342,11 @@ There are two iterations parameters: an outer iterations parameter used to contr
 
 For example, the following restricts the optimization to 2 major iterations
 ```julia
-results = optimize(objective, x0, l, u, Fminbox(); iterations = 2)
+results = optimize(DifferentiableFunction(f), x0, l, u, Fminbox(); optimizer = GradientDescent, iterations = 2)
 ```
 In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
 ```julia
-results = Optim.optimize(objective, x0, l, u, Fminbox(); optimizer_o = OptimizationOptions(iterations = 2))
+results = Optim.optimize(DifferentiableFunction(f), x0, l, u, Fminbox(); optimizer = GradientDescent, optimizer_o = OptimizationOptions(iterations = 2))
 ```
 ### Linear programming
 
