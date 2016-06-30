@@ -14,6 +14,7 @@ my_tests = [
     "l_bfgs.jl",
     "levenberg_marquardt.jl",
     "newton.jl",
+    "newton_trust_region.jl",
     "cg.jl",
     "nelder_mead.jl",
     "optimize.jl",
