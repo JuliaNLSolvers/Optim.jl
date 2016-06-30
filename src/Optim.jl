@@ -5,6 +5,7 @@ module Optim
     using PositiveFactorizations
     using Compat
     import Compat.String
+    import Compat.view
 
     import Base.length,
            Base.push!,

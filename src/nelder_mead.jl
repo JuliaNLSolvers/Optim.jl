@@ -136,9 +136,9 @@ function optimize{T}(f::Function,
 
         # Find p_l and p_h, the minimum and maximum values of f() among p
         y_l, l = findmin(y)
-        copy!(p_l, slice(p, :, l))
+        copy!(p_l, view(p, :, l))
         y_h, h = findmax(y)
-        copy!(p_h, slice(p, :, h))
+        copy!(p_h, view(p, :, h))
 
         # Compute the centroid of the non-maximal points
         # Also cache function values of all non-maximal points
@@ -149,7 +149,7 @@ function optimize{T}(f::Function,
             if i != h
                 tmpindex += 1
                 @inbounds y_bar[tmpindex] = y[i]
-                LinAlg.axpy!(1, slice(p, :, i), p_bar)
+                LinAlg.axpy!(1, view(p, :, i), p_bar)
             end
         end
         scale!(p_bar, 1/m)
@@ -171,12 +171,12 @@ function optimize{T}(f::Function,
 
             if y_star_star < y_l
                 copy!(p_h, p_star_star)
-                copy!(slice(p, :, h), p_star_star)
+                copy!(view(p, :, h), p_star_star)
                 @inbounds y[h] = y_star_star
                 step_type = "expansion"
             else
                 copy!(p_h, p_star)
-                copy!(slice(p, :, h), p_star)
+                copy!(view(p, :, h), p_star)
                 @inbounds y[h] = y_star
                 step_type = "reflection"
             end
@@ -184,7 +184,7 @@ function optimize{T}(f::Function,
             if dominates(y_star, y_bar)
                 if y_star < y_h
                     copy!(p_h, p_star)
-                    copy!(slice(p, :, h), p_h)
+                    copy!(view(p, :, h), p_h)
                     @inbounds y[h] = y_star
                 end
 
@@ -205,13 +205,13 @@ function optimize{T}(f::Function,
                     step_type = "shrink"
                 else
                     copy!(p_h, p_star_star)
-                    copy!(slice(p, :, h), p_h)
+                    copy!(view(p, :, h), p_h)
                     @inbounds y[h] = y_star_star
                     step_type = "contraction"
                 end
             else
                 copy!(p_h, p_star)
-                copy!(slice(p, :, h), p_h)
+                copy!(view(p, :, h), p_h)
                 @inbounds y[h] = y_star
                 step_type = "reflection"
             end
