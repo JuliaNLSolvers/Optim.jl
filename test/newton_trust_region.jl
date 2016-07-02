@@ -87,8 +87,6 @@ m, interior, lambda = Optim.solve_tr_subproblem!(gr, H, delta, s)
 
 #######################################
 # Next, test on actual optimization problems.
-using Optim
-using Base.Test
 
 function f(x::Vector)
     (x[1] - 5.0)^4
