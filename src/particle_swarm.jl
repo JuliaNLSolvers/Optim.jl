@@ -200,8 +200,8 @@ function optimize{T}(cost_function::Function,
         @swarmtrace
     end
 
-    f_converged = true
-    ftol = 1e-2
+    f_converged = false
+    ftol = NaN
 
     return MultivariateOptimizationResults("Particle-Swarm",
                                            initial_x,
