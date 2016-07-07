@@ -109,25 +109,25 @@ results = Optim.optimize(d, [0.0], method=NewtonTrustRegion())
 
 eta = 0.9
 
-function f(x::Vector)
-  (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
+function f_2(x::Vector)
+  0.5 * (x[1]^2 + eta * x[2]^2)
 end
 
-function g!(x::Vector, storage::Vector)
+function g!_2(x::Vector, storage::Vector)
   storage[1] = x[1]
   storage[2] = eta * x[2]
 end
 
-function h!(x::Vector, storage::Matrix)
+function h!_2(x::Vector, storage::Matrix)
   storage[1, 1] = 1.0
   storage[1, 2] = 0.0
   storage[2, 1] = 0.0
   storage[2, 2] = eta
 end
 
-d = TwiceDifferentiableFunction(f, g!, h!)
-results = Optim.optimize(d, [127.0, 921.0], method=NewtonTrustRegion())
-@assert length(results.trace.states) == 0
+d = TwiceDifferentiableFunction(f_2, g!_2, h!_2)
+
+results = Optim.optimize(d, Float64[127, 921], method=NewtonTrustRegion())
 @assert results.g_converged
 @assert norm(results.minimum - [0.0, 0.0]) < 0.01
 
