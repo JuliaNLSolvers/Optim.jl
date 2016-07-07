@@ -171,7 +171,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
             for iter in 1:max_iters
                 lambda_previous = lambda
 
-                R = chol(H_ridged)
+                R = chol(Hermitian(H_ridged))
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = vecdot(s, s)
