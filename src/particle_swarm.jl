@@ -41,7 +41,7 @@ function optimize{T}(cost_function::Function,
     In each iteration the cost function is evaluated for all
     particles. For the next iteration all particles "move"
     towards their own historically best and the global historically
-    best solution. The weighing constants c1 and c2 define how much
+    best solution. The weighing coefficients c1 and c2 define how much
     towards the global or individual best solution they are pulled.
 
     In each iteration there is a check for an additional special
@@ -57,23 +57,23 @@ function optimize{T}(cost_function::Function,
     # do some checks on input parameters
     @assert length(xmin) == length(xmax) "xmin and xmax must be of same length."
     if length(xmin) > 0
-        const limit_search_space = true
+        limit_search_space = true
         @assert length(xmin) == length(initial_x) "limits must be of same length as x_initial."
         @assert all(xmax .> xmin) "xmax must be greater than xmin"
     else
-        const limit_search_space = false
+        limit_search_space = false
     end
 
     if mo.n_particles > 0
         if mo.n_particles < 3
           warn("Number of particles is set to 3 (minimum required)")
-          const n_particles = 3
+          n_particles = 3
         else
-          const n_particles = mo.n_particles
+          n_particles = mo.n_particles
         end
     else
       # user did not define number of particles
-      const n_particles = maximum([3, length(initial_x)])
+       n_particles = maximum([3, length(initial_x)])
     end
     c1 = 2.0
     c2 = 2.0
@@ -208,7 +208,7 @@ function optimize{T}(cost_function::Function,
                                            best_point,
                                            best_score_global,
                                            iteration,
-                                           iteration == iteration,
+                                           iteration == o.iterations,
                                            false,
                                            NaN,
                                            f_converged,
