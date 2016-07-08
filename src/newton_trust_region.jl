@@ -90,11 +90,8 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
     @assert (n, n) == size(H)
     @assert max_iters >= 1
 
-    # symmetrizing H...this shouldn't be necessary, but currently the
-    # eigenvalues are only sorted if H is perfectly symmetric.
-    # (Julia issue #17093)
-    H += H'
-    H /= 2.
+    # Note that currently the eigenvalues are only sorted if H is perfectly
+    # symmetric.  (Julia issue #17093)
     H_eig = eigfact(Symmetric(H))
     min_H_ev, max_H_ev = H_eig[:values][1], H_eig[:values][n]
     H_ridged = copy(H)
@@ -204,12 +201,12 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
 end
 
 
-immutable NewtonTrustRegion <: Optimizer
-  initial_delta::Real
-  delta_hat::Real
-  eta::Real
-  rho_lower::Real
-  rho_upper::Real
+immutable NewtonTrustRegion{T <: Real} <: Optimizer
+    initial_delta::T
+    delta_hat::T
+    eta::T
+    rho_lower::T
+    rho_upper::T
 end
 
 NewtonTrustRegion(; initial_delta::Real=1.0,
