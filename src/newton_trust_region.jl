@@ -171,7 +171,10 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
             for iter in 1:max_iters
                 lambda_previous = lambda
 
-                R = chol(Hermitian(H_ridged))
+                # Version 0.5 requires an exactly symmetric matrix, but
+                # version 0.4 does not have this function signature for chol().
+                R = VERSION < v"0.5-" ?
+                  chol(H_ridged): chol(Hermitian(H_ridged))
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = vecdot(s, s)
