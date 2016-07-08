@@ -35,30 +35,30 @@ end
 #  lambda_1_multiplicity: The number of times the lowest eigenvalue is repeated,
 #                         which is only correct if hard_case is true.
 function check_hard_case_candidate(H_eigv, qg)
-  @assert length(H_eigv) == length(qg)
-  if H_eigv[1] >= 0
-    # The hard case is only when the smallest eigenvalue is negative.
-    return false, 1
-  end
-  hard_case = true
-  lambda_index = 1
-  hard_case_check_done = false
-  while !hard_case_check_done
-    if lambda_index > length(H_eigv)
-      hard_case_check_done = true
-    elseif abs(H_eigv[1] - H_eigv[lambda_index]) > 1e-10
-      # The eigenvalues are reported in order.
-      hard_case_check_done = true
-    else
-      if abs(qg[lambda_index]) > 1e-10
-        hard_case_check_done = true
-        hard_case = false
-      end
-      lambda_index += 1
+    @assert length(H_eigv) == length(qg)
+    if H_eigv[1] >= 0
+        # The hard case is only when the smallest eigenvalue is negative.
+        return false, 1
     end
-  end
+    hard_case = true
+    lambda_index = 1
+    hard_case_check_done = false
+    while !hard_case_check_done
+        if lambda_index > length(H_eigv)
+            hard_case_check_done = true
+        elseif abs(H_eigv[1] - H_eigv[lambda_index]) > 1e-10
+            # The eigenvalues are reported in order.
+            hard_case_check_done = true
+        else
+            if abs(qg[lambda_index]) > 1e-10
+                hard_case_check_done = true
+                hard_case = false
+            end
+            lambda_index += 1
+        end
+    end
 
-  hard_case, lambda_index - 1
+    hard_case, lambda_index - 1
 end
 
 # Choose a point in the trust region for the next step using
@@ -295,18 +295,18 @@ function optimize{T}(d::TwiceDifferentiableFunction,
         # the predicted and actual function values.  (Algorithm 4.1 in N&W)
         f_x_diff = f_x_previous - f_x
         if m == 0
-          # This should only happen if the step is zero, in which case
-          # we should accept the step and assess_convergence().
-          @assert(f_x_diff == 0,
-                  "m == 0 but the actual function change ($f_x_diff) is nonzero")
-          rho = 1.0
+            # This should only happen if the step is zero, in which case
+            # we should accept the step and assess_convergence().
+            @assert(f_x_diff == 0,
+                    "m == 0 but the actual function change ($f_x_diff) is nonzero")
+            rho = 1.0
         elseif m > 0
-          # This can happen if the trust region radius is too large and the
-          # Hessian is not positive definite.  We should shrink the trust
-          # region.
-          rho = mo.rho_lower - 1.0
+            # This can happen if the trust region radius is too large and the
+            # Hessian is not positive definite.  We should shrink the trust
+            # region.
+            rho = mo.rho_lower - 1.0
         else
-          rho = f_x_diff / (0 - m)
+            rho = f_x_diff / (0 - m)
         end
 
         if rho < mo.rho_lower
@@ -314,7 +314,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
         elseif (rho > mo.rho_upper) && (!interior)
             delta = min(2 * delta, mo.delta_hat)
         else
-          # else leave delta unchanged.
+            # else leave delta unchanged.
         end
 
         if rho > mo.eta
@@ -332,8 +332,8 @@ function optimize{T}(d::TwiceDifferentiableFunction,
                                            o.f_tol,
                                            o.g_tol)
             if !converged
-              # Only compute the next Hessian if we haven't converged
-              d.h!(x, H)
+                # Only compute the next Hessian if we haven't converged
+                d.h!(x, H)
             end
         else
             # The improvement is too small and we won't take it.
