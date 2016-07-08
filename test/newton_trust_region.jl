@@ -39,30 +39,30 @@ m, interior, lambda = Optim.solve_tr_subproblem!(gr, H, delta, s)
 
 # Test the checking
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([-1., 2., 3.], [0., 1., 1.])
+    Optim.check_hard_case_candidate([-1., 2., 3.], [0., 1., 1.])
 @assert hard_case
 @assert lambda_1_multiplicity == 1
 
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([-1., -1., 3.], [0., 0., 1.])
+    Optim.check_hard_case_candidate([-1., -1., 3.], [0., 0., 1.])
 @assert hard_case
 @assert lambda_1_multiplicity == 2
 
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 0.])
+    Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 0.])
 @assert hard_case
 @assert lambda_1_multiplicity == 3
 
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([1., 2., 3.], [0., 1., 1.])
+    Optim.check_hard_case_candidate([1., 2., 3.], [0., 1., 1.])
 @assert !hard_case
 
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 1.])
+    Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 1.])
 @assert !hard_case
 
 hard_case, lambda_1_multiplicity =
-  Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
+    Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
 @assert !hard_case
 
 
@@ -110,19 +110,19 @@ results = Optim.optimize(d, [0.0], method=NewtonTrustRegion())
 eta = 0.9
 
 function f_2(x::Vector)
-  0.5 * (x[1]^2 + eta * x[2]^2)
+    0.5 * (x[1]^2 + eta * x[2]^2)
 end
 
 function g!_2(x::Vector, storage::Vector)
-  storage[1] = x[1]
-  storage[2] = eta * x[2]
+    storage[1] = x[1]
+    storage[2] = eta * x[2]
 end
 
 function h!_2(x::Vector, storage::Matrix)
-  storage[1, 1] = 1.0
-  storage[1, 2] = 0.0
-  storage[2, 1] = 0.0
-  storage[2, 2] = eta
+    storage[1, 1] = 1.0
+    storage[1, 2] = 0.0
+    storage[2, 1] = 0.0
+    storage[2, 2] = eta
 end
 
 d = TwiceDifferentiableFunction(f_2, g!_2, h!_2)
@@ -134,9 +134,9 @@ results = Optim.optimize(d, Float64[127, 921], method=NewtonTrustRegion())
 # Test Optim.newton for all twice differentiable functions in
 # Optim.UnconstrainedProblems.examples
 for (name, prob) in Optim.UnconstrainedProblems.examples
-	if prob.istwicedifferentiable
-		ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
-		res = Optim.optimize(ddf, prob.initial_x, method=NewtonTrustRegion())
-		@assert norm(res.minimum - prob.solutions) < 1e-2
-	end
+    if prob.istwicedifferentiable
+        ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
+        res = Optim.optimize(ddf, prob.initial_x, method=NewtonTrustRegion())
+        @assert norm(res.minimum - prob.solutions) < 1e-2
+    end
 end
