@@ -4,6 +4,7 @@ module Optim
     using Calculus
     using PositiveFactorizations
     using Compat
+    using ForwardDiff
     import Compat.String
     import Compat.view
 
@@ -38,9 +39,6 @@ module Optim
 
     # API
     include("api.jl")
-
-    # Automatic differentiation utilities
-    include("autodiff.jl")
 
     # Maxdiff
     include("utilities/maxdiff.jl")
