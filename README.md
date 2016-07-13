@@ -132,7 +132,7 @@ Optim.method(res)
 which will return `"L-BFGS"`. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using
 ```jl
 Optim.minimizer(res)
-# returns [0.766667, 2.1]     
+# returns [0.766667, 2.1]
 
 Optim.minimum(res)
 # returns 0.16666666666666652
@@ -186,6 +186,7 @@ Requires a function and gradient (will be approximated if omitted):
 
 Requires a function, a gradient, and a hessian (cannot be omitted):
 * `Newton()`
+* `NewtonTrustRegion()`
 
 Box constrained minimization:
 * `Fminbox()`
