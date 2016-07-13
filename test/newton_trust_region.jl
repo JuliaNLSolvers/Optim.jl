@@ -147,5 +147,6 @@ for (name, prob) in Optim.UnconstrainedProblems.examples
         ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
         res = Optim.optimize(ddf, prob.initial_x, method=NewtonTrustRegion())
         @assert norm(res.minimum - prob.solutions) < 1e-2
+        @assert res.f_converged || res.x_converged || res.g_converged
     end
 end
