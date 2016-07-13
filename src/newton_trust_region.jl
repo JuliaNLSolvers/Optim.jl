@@ -280,7 +280,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
     # Record attributes of the subproblem in the trace.
     hard_case = false
     reached_subproblem_solution = true
-    interior = false
+    interior = true
     lambda = NaN
 
     # Trace the history of states visited
@@ -317,11 +317,9 @@ function optimize{T}(d::TwiceDifferentiableFunction,
         # Update the trust region size based on the discrepancy between
         # the predicted and actual function values.  (Algorithm 4.1 in N&W)
         f_x_diff = f_x_previous - f_x
-        if m == 0
-            # This should only happen if the step is zero, in which case
+        if abs(m) <= eps(T)
+            # This should only happen when the step is very small, in which case
             # we should accept the step and assess_convergence().
-            @assert(f_x_diff == 0,
-                    "m == 0 but the actual function change ($f_x_diff) is nonzero")
             rho = 1.0
         elseif m > 0
             # This can happen if the trust region radius is too large and the
@@ -342,7 +340,6 @@ function optimize{T}(d::TwiceDifferentiableFunction,
 
         if rho > mo.eta
             # Accept the point and check convergence
-
             x_converged,
             f_converged,
             g_converged,
