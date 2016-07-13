@@ -21,16 +21,22 @@ true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
 
 # An interior solution
 delta = sqrt(s_norm2) + 1.0
-m, interior, lambda = Optim.solve_tr_subproblem!(gr, H, delta, s)
+m, interior, lambda, hard_case, reached_solution =
+    Optim.solve_tr_subproblem!(gr, H, delta, s)
 @assert interior
+@assert !hard_case
+@assert reached_solution
 @assert abs(m - true_m) < 1e-12
 @assert norm(s - true_s) < 1e-12
 @assert abs(lambda) < 1e-12
 
 # A boundary solution
 delta = 0.5 * sqrt(s_norm2)
-m, interior, lambda = Optim.solve_tr_subproblem!(gr, H, delta, s)
+m, interior, lambda, hard_case, reached_solution =
+    Optim.solve_tr_subproblem!(gr, H, delta, s)
 @assert !interior
+@assert !hard_case
+@assert reached_solution
 @assert m > true_m
 @assert abs(norm(s) - delta) < 1e-12
 @assert lambda > 0
@@ -79,8 +85,11 @@ s_norm2 = dot(true_s, true_s)
 true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
 
 delta = 0.5 * sqrt(s_norm2)
-m, interior, lambda = Optim.solve_tr_subproblem!(gr, H, delta, s)
+m, interior, lambda, hard_case, reached_solution =
+    Optim.solve_tr_subproblem!(gr, H, delta, s)
 @assert !interior
+@assert hard_case
+@assert reached_solution
 @assert abs(lambda + L[1]) < 1e-4
 @assert abs(norm(s) - delta) < 1e-12
 

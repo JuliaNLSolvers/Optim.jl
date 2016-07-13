@@ -8,6 +8,9 @@ macro newton_tr_trace()
                 dt["h(x)"] = copy(H)
                 dt["delta"] = copy(delta)
                 dt["interior"] = interior
+                dt["hard case"] = hard_case
+                dt["reached_subproblem_solution"] = reached_subproblem_solution
+                dt["lambda"] = lambda
             end
             grnorm = norm(gr, Inf)
             update!(tr,
@@ -77,6 +80,9 @@ end
 #  m - The numeric value of the quadratic minimization.
 #  interior - A boolean indicating whether the solution was interior
 #  lambda - The chosen regularizing quantity
+#  hard_case - Whether or not it was a "hard case" as described by N&W
+#  reached_solution - Whether or not a solution was reached (as opposed to
+#      terminating early due to max_iters)
 function solve_tr_subproblem!{T}(gr::Vector{T},
                                  H::Matrix{T},
                                  delta::T,
@@ -111,9 +117,16 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
         p_sum
     end
 
+    # These values describe the outcome of the subproblem.  They will be
+    # set below and returned at the end.
+    interior = true
+    hard_case = false
+    reached_solution = true
+
     if min_H_ev >= 1e-8 && p_sq_norm(0.0, 1) <= delta_sq
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
+        reached_solution = true
         s[:] = -(H_eig[:vectors] ./ H_eig[:values]') * H_eig[:vectors]' * gr
         lambda = 0.0
     else
@@ -143,6 +156,8 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
                 lambda = lambda_lb + 0.01 * (max_H_ev - lambda_lb)
             else
                 hard_case = true
+                reached_solution = true
+
                 tau = sqrt(delta_sq - p_lambda2)
 
                 # I don't think it matters which eigenvector we pick so take
@@ -165,6 +180,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
                 H_ridged[i, i] = H[i, i] + lambda
             end
 
+            reached_solution = false
             for iter in 1:max_iters
                 lambda_previous = lambda
 
@@ -188,6 +204,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
                 end
 
                 if abs(lambda - lambda_previous) < tolerance
+                    reached_solution = true
                     break
                 end
             end
@@ -196,7 +213,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
 
     m = vecdot(gr, s) + 0.5 * vecdot(s, H_ridged * s)
 
-    return m, interior, lambda
+    return m, interior, lambda, hard_case, reached_solution
 end
 
 
@@ -231,7 +248,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
     x, x_previous = copy(initial_x), copy(initial_x)
 
     # Count the total number of iterations
-    iteration = 1
+    iteration = 0
 
     # Track calls to function and gradient
     f_calls, g_calls = 0, 0
@@ -260,8 +277,11 @@ function optimize{T}(d::TwiceDifferentiableFunction,
     # Keep track of trust region sizes
     delta = copy(mo.initial_delta)
 
-    # Record whether the point is interior in the trace.
+    # Record attributes of the subproblem in the trace.
+    hard_case = false
+    reached_subproblem_solution = true
     interior = false
+    lambda = NaN
 
     # Trace the history of states visited
     tr = OptimizationTrace(mo)
@@ -273,9 +293,13 @@ function optimize{T}(d::TwiceDifferentiableFunction,
 
     # Iterate until convergence
     converged = false
-    while !converged && iteration <= o.iterations
+    while !converged && iteration < o.iterations
+        # Increment the number of steps we've had to perform
+        iteration += 1
+
         # Find the next step direction.
-        m, interior = solve_tr_subproblem!(gr, H, delta, s)
+        m, interior, lambda, hard_case, reached_subproblem_solution =
+            solve_tr_subproblem!(gr, H, delta, s)
 
         # Maintain a record of previous position
         copy!(x_previous, x)
@@ -350,9 +374,6 @@ function optimize{T}(d::TwiceDifferentiableFunction,
 
         end
 
-        # Increment the number of steps we've had to perform
-        iteration += 1
-
         @newton_tr_trace
     end
 
@@ -361,7 +382,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
                                            x,
                                            Float64(f_x),
                                            iteration,
-                                           iteration == iterations,
+                                           iteration == o.iterations,
                                            x_converged,
                                            o.x_tol,
                                            f_converged,
