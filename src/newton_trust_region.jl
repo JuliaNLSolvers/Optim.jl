@@ -225,7 +225,7 @@ immutable NewtonTrustRegion{T <: Real} <: Optimizer
     rho_upper::T
 end
 
-NewtonTrustRegion(; initial_delta::Real=1.0,
+NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
                     eta::Real = 0.1,
                     rho_lower::Real = 0.25,
@@ -240,7 +240,7 @@ function optimize{T}(d::TwiceDifferentiableFunction,
 
     @assert(mo.delta_hat > 0, "delta_hat must be strictly positive")
     @assert(0 < mo.initial_delta < mo.delta_hat, "delta must be in (0, delta_hat)")
-    @assert(0 <= mo.eta < 0.25, "eta must be in [0, 0.25)")
+    @assert(0 <= mo.eta < mo.rho_lower, "eta must be in [0, rho_lower)")
     @assert(mo.rho_lower < mo.rho_upper, "must have rho_lower < rho_upper")
     @assert(mo.rho_lower >= 0.)
 
