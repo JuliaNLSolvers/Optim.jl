@@ -48,7 +48,6 @@ Finally, we only accept a point if its decrease is appreciable compared to the q
 ```julia
 using Optim
 prob = Optim.UnconstrainedProblems.examples["Rosenbrock"];
-ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
 res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=NewtonTrustRegion())
 ```
 
