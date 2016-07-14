@@ -15,10 +15,11 @@ end
 
 d = TwiceDifferentiableFunction(f_1, g!_1, h!_1)
 
-@test_throws ArgumentError Optim.optimize(f_1, [0.0], method=Newton())
-@test_throws ArgumentError Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], method=Newton())
+# Need to specify autodiff!
+@test_throws ErrorException Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], Newton())
+Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], Newton(), OptimizationOptions(autodiff = true))
 
-results = Optim.optimize(d, [0.0], method=Newton())
+results = Optim.optimize(d, [0.0], Newton())
 @test_throws ErrorException Optim.x_trace(results)
 @assert Optim.g_converged(results)
 @assert norm(Optim.minimizer(results) - [5.0]) < 0.01
@@ -61,4 +62,17 @@ let
     ddf = TwiceDifferentiableFunction(prob.f, prob.g!, prob.h!)
     res = optimize(ddf, [0., 0.], Newton())
     @assert norm(res.minimum - prob.solutions) < 1e-10
+end
+
+
+for (name, prob) in Optim.UnconstrainedProblems.examples
+	if prob.istwicedifferentiable
+		ddf = DifferentiableFunction(prob.f, prob.g!)
+		res = Optim.optimize(ddf, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+		res = Optim.optimize(ddf.f, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+	end
 end
