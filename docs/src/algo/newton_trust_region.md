@@ -29,9 +29,9 @@ Here, $p$ is the step to take at iteration $k$, so that $x_{k+1} = x_k + p$.   I
 
 If the trust region size, $\Delta_k$, is large enough that the minimizer of the quadratic approximation $m_k(p)$ has $||p|| \le \Delta_k$, then the step is the same as an ordinary Newton step.  However, if the unconstrained quadratic minimizer lies outside the trust region, then the minimizer to the constrained problem will occur on the boundary, i.e. we will have $||p|| = \Delta_k$.  It turns out that when the Cholesky decomposition of $B_k$ can be computed, the optimal $p$ can be found numerically with relative ease.  ([1], section 4.3)  This is the method currently used in ```Optim.jl```.
 
-It makes sense to adapt the trust region size, $\Delta_k$, as one moves through the space and assesses the quality of the quadratic fit.  This adaptation is controlled by the parameters $\eta$, $\rho_{lower}$, and $\rho_{upper}$, which are parameters to the ```NewtonTrustRegion``` optimization module.  For each step, we calculate
+It makes sense to adapt the trust region size, $\Delta_k$, as one moves through the space and assesses the quality of the quadratic fit.  This adaptation is controlled by the parameters $\eta$, $\rho_{lower}$, and $\rho_{upper}$, which are parameters to the ```NewtonTrustRegion``` optimization method.  For each step, we calculate
 
-$\rho_k := \frac{f(x_{k+1}) - f(x_k)}{m_k}$
+$\rho_k := \frac{f(x_{k+1}) - f(x_k)}{m_k(p) - m_k(0)}$
 
 Intuitively, $\rho_k$ measures the quality of the quadratic approximation: if $\rho_k \approx 1$, then our quadratic approximation is reasonable.  If  $p$ was on the boundary and $\rho_k > \rho_{upper}$, then perhaps we can benefit from larger steps.  In this case, for the next iteration we grow the trust region geometrically up to a maximum of $\hat\Delta$:
 

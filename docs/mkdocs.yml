@@ -44,6 +44,7 @@ pages:
                 - '(L-)BFGS': 'algo/lbfgs.md'
             - Hessian Required:
                 - Newton: 'algo/newton.md'
+                - Newton with Trust Region: 'algo/newton_trust_region.md'
         - Linesearch: 'algo/linesearch.md'
         - Preconditioners: 'algo/precondition.md'
     - 'Contributing':
