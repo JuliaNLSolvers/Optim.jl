@@ -267,8 +267,8 @@
 <p>The <code>GradientDescent</code>, <code>ConjugateGradient</code> and <code>LBFGS</code> methods support preconditioning. A preconditioner can be thought of as a change of coordinates under which the Hessian is better conditioned. With a good preconditioner substantially improved convergence is possible.</p>
 <p>A preconditioner <code>P</code>can be of any type as long as the following two methods are implemented:</p>
 <ul>
-<li><code>A_ldiv_B!(pgr, P, gr)</code> : apply <code>P</code> to a vector <code>gr</code> and store in <code>pgr</code>       (intuitively, <code>pgr = P \ gr</code>)</li>
-<li><code>dot(x, P, y)</code> : the inner product induced by <code>P</code>       (intuitively, <code>dot(x, P * y)</code>)</li>
+<li><code>A_ldiv_B!(pgr, P, gr)</code> : apply <code>P</code> to a vector <code>gr</code> and store in <code>pgr</code>     (intuitively, <code>pgr = P \ gr</code>)</li>
+<li><code>dot(x, P, y)</code> : the inner product induced by <code>P</code>     (intuitively, <code>dot(x, P * y)</code>)</li>
 </ul>
 <p>Precisely what these operations mean, depends on how <code>P</code> is stored. Commonly, we store a matrix <code>P</code> which approximates the Hessian in some vague sense. In this case,</p>
 <ul>
