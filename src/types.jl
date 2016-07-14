@@ -111,8 +111,9 @@ function Base.show(io::IO, t::OptimizationState)
 end
 
 Base.push!(t::OptimizationTrace, s::OptimizationState) = push!(t.states, s)
-
 Base.getindex(t::OptimizationTrace, i::Integer) = getindex(t.states, i)
+Base.endof(t::OptimizationTrace) = endof(t.states)
+Base.length(t::OptimizationTrace) = length(t.states)
 
 function Base.setindex!(t::OptimizationTrace,
                         s::OptimizationState,

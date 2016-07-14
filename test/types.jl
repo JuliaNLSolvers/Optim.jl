@@ -3,6 +3,12 @@ module TestTypes
     using Compat
     using Optim
 
+    trace = OptimizationTrace(NelderMead())
+    push!(trace,OptimizationState{NelderMead}(1,1.0,1.0,Dict()))
+    push!(trace,OptimizationState{NelderMead}(2,1.0,1.0,Dict()))
+    @test length(trace) == 2
+    @test trace[end].iteration == 2
+
     prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     f_prob = prob.f
     for g_free in (NelderMead(), SimulatedAnnealing())
