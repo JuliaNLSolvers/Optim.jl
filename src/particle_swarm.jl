@@ -1,12 +1,10 @@
 immutable ParticleSwarm{T} <: Optimizer
-    xmin::Vector{T}
-    xmax::Vector{T}
+    x_min::Vector{T}
+    x_max::Vector{T}
     n_particles::Int
 end
 
-ParticleSwarm() = ParticleSwarm([], [], 0)
-ParticleSwarm(N) = ParticleSwarm([], [], N)
-ParticleSwarm(xmin, xmax) = ParticleSwarm(xmin, xmax, 0)
+ParticleSwarm(; x_min = [], x_max = [], n_particles = 0) = ParticleSwarm(x_min, x_max, n_particles)
 
 macro swarmtrace()
     quote
@@ -51,15 +49,15 @@ function optimize{T}(cost_function::Function,
     =#
     print_header(o)
     n_dim = length(initial_x)
-    xmin = copy(mo.xmin)
-    xmax = copy(mo.xmax)
+    x_min = copy(mo.x_min)
+    x_max = copy(mo.x_max)
 
     # do some checks on input parameters
-    @assert length(xmin) == length(xmax) "xmin and xmax must be of same length."
-    if length(xmin) > 0
+    @assert length(x_min) == length(x_max) "x_min and x_max must be of same length."
+    if length(x_min) > 0
         limit_search_space = true
-        @assert length(xmin) == length(initial_x) "limits must be of same length as x_initial."
-        @assert all(xmax .> xmin) "xmax must be greater than xmin"
+        @assert length(x_min) == length(initial_x) "limits must be of same length as x_initial."
+        @assert all(x_max .> x_min) "x_max must be greater than x_min"
     else
         limit_search_space = false
     end
@@ -98,8 +96,8 @@ function optimize{T}(cost_function::Function,
     if limit_search_space
         for i in 1:n_particles
             for j in 1:n_dim
-                ww = xmax[j] - xmin[j]
-                X[j, i] = xmin[j] + ww * rand()
+                ww = x_max[j] - x_min[j]
+                X[j, i] = x_min[j] + ww * rand()
                 X_best[j, i] = X[j, i]
                 V[j, i] = ww * (rand() * 2.0 - 1.0) / 10.0
             end
@@ -131,7 +129,7 @@ function optimize{T}(cost_function::Function,
     @swarmtrace
     while iteration <= o.iterations
         if limit_search_space
-            limit_X!(X, xmin, xmax, n_particles, n_dim)
+            limit_X!(X, x_min, x_max, n_particles, n_dim)
         end
         compute_cost!(cost_function, n_particles, X, score)
         f_calls += n_particles
@@ -166,16 +164,16 @@ function optimize{T}(cost_function::Function,
         r3 = randn() * sigma_learn
 
         if limit_search_space
-            x_learn[random_index] = x_learn[random_index] + (xmax[random_index] - xmin[random_index]) / 3.0 * r3
+            x_learn[random_index] = x_learn[random_index] + (x_max[random_index] - x_min[random_index]) / 3.0 * r3
         else
             x_learn[random_index] = x_learn[random_index] + x_learn[random_index] * r3
         end
 
         if limit_search_space
-            if x_learn[random_index] < xmin[random_index]
-                x_learn[random_index] = xmin[random_index]
-            elseif x_learn[random_index] > xmax[random_index]
-                x_learn[random_index] = xmax[random_index]
+            if x_learn[random_index] < x_min[random_index]
+                x_learn[random_index] = x_min[random_index]
+            elseif x_learn[random_index] > x_max[random_index]
+                x_learn[random_index] = x_max[random_index]
             end
         end
 
@@ -429,14 +427,14 @@ function housekeeping!(score, best_score, X, X_best, best_point,
     return best_score_global
 end
 
-function limit_X!(X, xmin, xmax, n_particles, n_dim)
+function limit_X!(X, x_min, x_max, n_particles, n_dim)
     # limit X values to boundaries
     for i in 1:n_particles
         for j in 1:n_dim
-            if X[j, i] < xmin[j]
-              	X[j, i] = xmin[j]
-            elseif X[j, i] > xmax[j]
-              	X[j, i] = xmax[j]
+            if X[j, i] < x_min[j]
+              	X[j, i] = x_min[j]
+            elseif X[j, i] > x_max[j]
+              	X[j, i] = x_max[j]
             end
         end
     end
