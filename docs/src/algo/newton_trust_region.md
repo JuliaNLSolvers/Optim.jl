@@ -27,7 +27,7 @@ $\underset{p\in\mathbb{R}^n}\min m_k(p) = f_k + g_k^T p + \frac{1}{2}p^T B_k p \
 
 Here, $p$ is the step to take at iteration $k$, so that $x_{k+1} = x_k + p$.   In the definition of $m_k(p)$, $f_k = f(x_k)$ is the value at the previous location, $g_k=\nabla f(x_k)$ is the gradient at the previous location, $B_k = \nabla^2 f(x_k)$ is the Hessian matrix at the previous iterate, and $||\cdot||$ is the Euclidian norm.
 
-If the trust region size, $\Delta_k$, is large enough that the minimizer of the quadratic approximation $m_k(p)$ has $||p|| \le \Delta_k$, then the step is the same as an ordinary Newton step.  However, if the unconstrained quadratic minimizer lies outside the trust region, then the minimizer to the constrained problem will occur on the boundary, i.e. we will have $||p|| = \Delta_k$.  It turns out that when the Cholesky decomposition of $B_k$ can be computed, the optimal $p$ can be found numerically with relative ease.  ([1], section 4.3)  This is the method currently used in ```Optim.jl```.
+If the trust region size, $\Delta_k$, is large enough that the minimizer of the quadratic approximation $m_k(p)$ has $||p|| \le \Delta_k$, then the step is the same as an ordinary Newton step.  However, if the unconstrained quadratic minimizer lies outside the trust region, then the minimizer to the constrained problem will occur on the boundary, i.e. we will have $||p|| = \Delta_k$.  It turns out that when the Cholesky decomposition of $B_k$ can be computed, the optimal $p$ can be found numerically with relative ease.  ([1], section 4.3)  This is the method currently used in Optim.
 
 It makes sense to adapt the trust region size, $\Delta_k$, as one moves through the space and assesses the quality of the quadratic fit.  This adaptation is controlled by the parameters $\eta$, $\rho_{lower}$, and $\rho_{upper}$, which are parameters to the ```NewtonTrustRegion``` optimization method.  For each step, we calculate
 
@@ -35,12 +35,10 @@ $\rho_k := \frac{f(x_{k+1}) - f(x_k)}{m_k(p) - m_k(0)}$
 
 Intuitively, $\rho_k$ measures the quality of the quadratic approximation: if $\rho_k \approx 1$, then our quadratic approximation is reasonable.  If  $p$ was on the boundary and $\rho_k > \rho_{upper}$, then perhaps we can benefit from larger steps.  In this case, for the next iteration we grow the trust region geometrically up to a maximum of $\hat\Delta$:
 
-$\rho_k > \rho_{upper} \Rightarrow \Delta_{k+1} = \min(2 \Delta_k, \hat\Delta) $.
-
+$\rho_k > \rho_{upper} \Rightarrow \Delta_{k+1} = \min(2 \Delta_k, \hat\Delta)$.
 Conversely, if $\rho_k < \rho_{lower}$, then we shrink the trust region geometrically:
 
 $\rho_k < \rho_{lower} \Rightarrow \Delta_{k+1} = 0.25 \Delta_k$.
-
 Finally, we only accept a point if its decrease is appreciable compared to the quadratic approximation.  Specifically, a step is only accepted $\rho_k > \eta$.  As long as we choose $\eta$ to be less than $\rho_{lower}$, we will shrink the trust region whenever we reject a step.  Eventually, if the objective function is locally quadratic, $\Delta_k$ will become small enough that a quadratic approximation will be accurate enough to make progress again.
 
 ## Example
