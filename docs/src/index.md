@@ -1,10 +1,5 @@
 # Optim.jl
-## How
-Optim is registered in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl).
-This means that all you need to do to install Optim, is to run
-```julia
-Pkg.add("Optim")
-```
+
 ## What
 Optim is a Julia package for optimizing functions of
 various kinds. While there is some support for box constrained optimization, most
@@ -36,6 +31,13 @@ possibilities chosen by the developers of Optim.
 
 Being a Julia package also means that Optim has access to the automatic differentiation
 features through the packages in [JuliaDiff](http://www.juliadiff.org/).
+
+## How
+Optim is registered in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl).
+This means that all you need to do to install Optim, is to run
+```julia
+Pkg.add("Optim")
+```
 
 ## But...
 Optim is a work in progress. There are still some rough edges to be sanded down,
