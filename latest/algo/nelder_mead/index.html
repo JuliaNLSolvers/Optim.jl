@@ -127,8 +127,6 @@
                 
                     <li><a class="toctree-l4" href="#description">Description</a></li>
                 
-                    <li><a class="toctree-l4" href="#example">Example</a></li>
-                
                     <li><a class="toctree-l4" href="#references">References</a></li>
                 
             
@@ -282,23 +280,66 @@
 <p>Nelder-Mead is currently the standard algorithm when no derivatives are provided.</p>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">NelderMead</span><span class="p">(;</span> <span class="n">a</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-             <span class="n">g</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-             <span class="n">b</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">NelderMead</span><span class="p">(;</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">AdaptiveParameters</span><span class="p">(),</span>
+             <span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">AffineSimplexer</span><span class="p">())</span>
 </pre></div>
 
 
+<p>The keywords in the constructor are used to control the following parts of the solver:</p>
+<ul>
+<li><code>parameters</code> is a an instance of either <code>AdaptiveParameters</code> or <code>FixedParameters</code>, and is</li>
+</ul>
+<p>used to generate parameters for the Nelder-Mead Algorithm. * <code>initial_simplex</code> is an instance of <code>AffineSimplexer</code>. See more details below.</p>
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
-<p>Our current implementation of the Nelder-Mead algorithm follows the original implementation very closely, see Nelder and Mead (1965). This means that there is scope for improvement, but also that it should be quite clear what is going on in the code relative to the original paper.</p>
-<p>Instead of using gradient information, we keep track of the function value at a number of points in the search space. Together, the points form a simplex. Given a simplex, we can perform one of four actions: reflect, expand, contract, or shrink. Basically, the goal is to iteratively replace the worst point with a better point. More information can be found in Nelder and Mead (1965) or Gao and Han (2010).</p>
-<p>The stopping rule is the same as in the original paper, and is basically the standard error of the function values at the vertices. To set the tolerance level for this convergence criterion, set the <code>g_tol</code> level as described in the Configurable Options section.</p>
-<p>When the solver finishes, we return a minimizer which is either the centroid or one of the vertices. The function value at the centroid adds a function evaluation, as we need to evaluate the objection at the centroid to choose the smallest function value. Howeever, even if the function value at the centroid can be returned as the minimum, we do not trace it during the optimization iterations. This is to avoid too many evaluations of the objective function which can be computationally expensive. Typically, there should be no more than twice as many <code>f_calls</code> than <code>iterations</code>, and adding an evaluation at the centroid when <code>tracing</code> could considerably increase the total run-time of the algorithm.</p>
-<p><a id='Example-1'></a></p>
-<h2 id="example">Example</h2>
+<p>Our current implementation of the Nelder-Mead algorithm is based on Nelder and Mead (1965) and Gao and Han (2010). Gradient free methods can be a bit sensitive to starting values and tuning parameters, so it is a good idea to be careful with the defaults provided in Optim.</p>
+<p>Instead of using gradient information, Nelder-Mead is a direct search method. It keeps track of the function value at a number of points in the search space. Together, the points form a simplex. Given a simplex, we can perform one of four actions: reflect, expand, contract, or shrink. Basically, the goal is to iteratively replace the worst point with a better point. More information can be found in Nelder and Mead (1965), Lagarias, et al (1998) or Gao and Han (2010).</p>
+<p>The stopping rule is the same as in the original paper, and is the standard error of the function values at the vertices. To set the tolerance level for this convergence criterion, set the <code>g_tol</code> level as described in the Configurable Options section.</p>
+<p>When the solver finishes, we return a minimizer which is either the centroid or one of the vertices. The function value at the centroid adds a function evaluation, as we need to evaluate the objection at the centroid to choose the smallest function value. However, even if the function value at the centroid can be returned as the minimum, we do not trace it during the optimization iterations. This is to avoid too many evaluations of the objective function which can be computationally expensive. Typically, there should be no more than twice as many <code>f_calls</code> than <code>iterations</code>.  Adding an evaluation at the centroid when tracing could considerably increase the total run-time of the algorithm.</p>
+<p><a id='Specifying-the-initial-simplex-1'></a></p>
+<h3 id="specifying-the-initial-simplex">Specifying the initial simplex</h3>
+<p>The default choice of <code>initial_simplex</code> is <code>AffineSimplexer()</code>. A simplex is represented by an $n+1$ dimensional vector of $n$ dimensional vectors. It is used together  with the initial <code>x</code> to create the initial simplex. To construct the $i$th vertex, it simply multiplies entry $i$ in the initial vector with a constant <code>b</code>, and adds a constant <code>a</code>. This means that the $i$th of the $n$ additional vertices is of the form</p>
+<p>$ (x_0^1, x_0^2, \ldots, x_0^i, \ldots, 0,0) + (0, 0, \ldots, x_0^i\cdot b+a,\ldots, 0,0) $</p>
+<p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
+<p>If a specific simplex is wanted, it is possible to construct the $n+1$ vector of $n$ dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="k">immutable</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
+<span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">S</span><span class="p">::</span><span class="n">MySimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">(</span><span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">MySimplexer</span><span class="p">()))</span>
+</pre></div>
+
+
+<p>Say we want to implement the initial simplex as in Matlab's <code>fminsearch</code>. This is very close to the <code>AffineSimplexer</code> above, but with a small twist. Instead of always adding the <code>a</code>, a constant is only added to entries that are zero. If the entry is non-zero, five percent of the level is added. This might be implemented (by the user) as</p>
+<div class="codehilite"><pre><span></span><span class="k">immutable</span> <span class="n">MatlabSimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span>
+    <span class="n">a</span><span class="p">::</span><span class="kt">Float64</span>
+    <span class="n">b</span><span class="p">::</span><span class="kt">Float64</span>
+<span class="k">end</span>
+<span class="n">MatlabSimplexer</span><span class="p">(;</span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.00025</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">=</span> <span class="n">MatlabSimplexer</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+<span class="k">function</span><span class="nf"> Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}(</span><span class="n">A</span><span class="p">::</span><span class="n">MatlabSimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">::</span><span class="n">Array</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">})</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
+    <span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">Array</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}[</span><span class="n">initial_x</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">:</span><span class="n">n</span>
+        <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">zero</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">?</span> <span class="n">S</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="p">:</span> <span class="n">S</span><span class="o">.</span><span class="n">a</span>
+    <span class="k">end</span>
+    <span class="n">initial_simplex</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p><a id='The-parameters-of-Nelder-Mead-1'></a></p>
+<h3 id="the-parameters-of-nelder-mead">The parameters of Nelder-Mead</h3>
+<p>The different types of steps in the algorithm are governed by four parameters: $\alpha$ for the reflection, $\beta$ for the expansion, $\gamma$ for the contraction, and $\delta$ for the shrink step. We default to the adaptive parameters scheme in Gao and Han (2010). These are based on the dimensionality of the problem, and are given by</p>
+<p>$ \alpha = 1, \quad \beta = 1+2/n,\quad \gamma =0.75 + 1/2n,\quad \delta = 1-1/n $</p>
+<p>It is also possible to specify the original parameters from Nelder and Mead (1965)</p>
+<p>$ \alpha = 1,\quad \beta = 2, \quad\gamma = 1/2, \quad\delta = 1/2 $</p>
+<p>by specifying <code>parameters  = Optim.FixedParameters()</code>. For specifying custom values, <code>parameters  = Optim.FixedParameters(α = a, β = b, γ = g, δ = d)</code> is used, where a, b, g, d are the chosen values. If another parameter specification is wanted, it is possible to create a custom sub-type of<code>Optim.NMParameters</code>, and add a method to the <code>parameters</code> function. It should take the new type as the first positional argument, and the dimensionality of <code>x</code> as the second positional argument, and return a 4-tuple of parameters. However, it will often be easier to simply supply the wanted parameters to <code>FixedParameters</code>.</p>
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
-<p>Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308. Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]</p>
+<p>Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.</p>
+<p>Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on optimization 9.1 (1998): 112-147.</p>
+<p>Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]</p>
               
             </div>
           </div>
