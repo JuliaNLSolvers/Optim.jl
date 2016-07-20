@@ -1,23 +1,34 @@
 immutable LevenbergMarquardt <: Optimizer end
 
+"""
+    `levenberg_marquardt(f, g, x0; <keyword arguments>`
+
+Returns the argmin over x of `sum(f(x).^2)` using the Levenberg-Marquardt algorithm, and an
+estimate of the Jacobian of `f` at x.
+
+The function `f` should take an input vector of length n and return an output vector of length m.
+The function `g` is the Jacobian of f, and should be an m x n matrix.
+`x0` is an initial guess for the solution.
+
+Implements box constraints as described in Kanzow, Yamashita, Fukushima (2004; J Comp & Applied Math).
+
+# Keyword arguments
+* `tolX::Real=1e-8`: search tolerance in x
+* `tolG::Real=1e-12`: search tolerance in gradient
+* `maxIter::Integer=100`: maximum number of iterations
+* `lambda::Real=10.0`: (inverse of) initial trust region radius
+* `show_trace::Bool=false`: print a status summary on each iteration if true
+* `lower,upper=[]`: bound solution to these limits
+"""
 function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
-    lambda::Real = 10.0, show_trace::Bool = false)
-    # finds argmin sum(f(x).^2) using the Levenberg-Marquardt algorithm
-    #          x
-    # The function f should take an input vector of length n and return an output vector of length m
-    # The function g is the Jacobian of f, and should be an m x n matrix
-    # x0 is an initial guess for the solution
-    # fargs is a tuple of additional arguments to pass to f
-    # available options:
-    #   tolX - search tolerance in x
-    #   tolG - search tolerance in gradient
-    #   maxIter - maximum number of iterations
-    #   lambda - (inverse of) initial trust region radius
-    #   show_trace - print a status summary on each iteration if true
-    # returns: x, J
-    #   x - least squares solution for x
-    #   J - estimate of the Jacobian of f at x
+    lambda::Real = 10.0, show_trace::Bool = false, lower::Vector{T} = Array(T,0), upper::Vector{T} = Array(T,0))
+
+    # check parameters
+    ((isempty(lower) || length(lower)==length(x0)) && (isempty(upper) || length(upper)==length(x0))) ||
+            throw(ArgumentError("Bounds must either be empty or of the same length as the number of parameters."))
+    ((isempty(lower) || all(x0 .>= lower)) && (isempty(upper) || all(x0 .<= upper))) ||
+            throw(ArgumentError("Initial guess must be within bounds."))
 
     # other constants
     const MAX_LAMBDA = 1e16 # minimum trust region radius
@@ -84,6 +95,23 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
         At_mul_B!(n_buffer, J, fcur)
         scale!(n_buffer, -1)
         delta_x = JJ \ n_buffer
+
+        # apply box constraints
+        if !isempty(lower) || !isempty(upper)
+            @simd for i in 1:n
+                @inbounds n_buffer[i] = x[i] + delta_x[i]
+            end
+        end
+        if !isempty(lower)
+            @simd for i in 1:n
+               @inbounds delta_x[i] = max(n_buffer[i], lower[i]) - x[i]
+            end
+        end
+        if !isempty(upper)
+            @simd for i in 1:n
+               @inbounds delta_x[i] = min(n_buffer[i], upper[i]) - x[i]
+            end
+        end
 
         # if the linear assumption is valid, our new residual should be:
         # predicted_residual = sumabs2(J*delta_x + fcur)
