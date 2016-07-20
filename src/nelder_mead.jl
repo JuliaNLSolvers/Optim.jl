@@ -1,22 +1,66 @@
-centroid(p::Matrix) = reshape(mean(p, 2), size(p, 1))
+abstract Simplexer
 
-function dominates(x::Vector, y::Vector)
-    for i in 1:length(x)
-        @inbounds if x[i] <= y[i]
-            return false
-        end
+immutable AffineSimplexer <: Simplexer
+    a::Float64
+    b::Float64
+end
+AffineSimplexer(;a = 0.025, b = 0.5) = AffineSimplexer(a, b)
+
+function simplexer{T, N}(S::AffineSimplexer, initial_x::Array{T, N})
+    n = length(initial_x)
+    initial_simplex = Array{T, N}[copy(initial_x) for i = 1:n+1]
+    for j = 1:n
+        initial_simplex[j+1][j] = (1+S.b) * initial_simplex[j+1][j] + S.a
     end
-    return true
+    initial_simplex
 end
 
-function dominates(x::Real, y::Vector)
-    for i in 1:length(y)
-        @inbounds if x <= y[i]
-            return false
+abstract NMParameters
+
+immutable AdaptiveParameters <: NMParameters
+    α::Float64
+    β::Float64
+    γ::Float64
+    δ::Float64
+end
+
+AdaptiveParameters(;  α = 1.0, β = 1.0, γ = 0.75 , δ = 1.0) = AdaptiveParameters(α, β, γ, δ)
+parameters(P::AdaptiveParameters, n::Integer) = (P.α, P.β + 2/n, P.γ - 1/2n, P.δ - 1/n)
+
+immutable FixedParameters <: NMParameters
+    α::Float64
+    β::Float64
+    γ::Float64
+    δ::Float64
+end
+
+FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
+parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
+
+
+immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
+    initial_simplex::Ts
+    parameters::Tp
+end
+
+NelderMead(; initial_simplex = AffineSimplexer(), parameters = AdaptiveParameters()) = NelderMead(initial_simplex, parameters)
+
+# centroid except h-th vertex
+function centroid!{T}(c::Array{T}, simplex, h=0)
+    n = length(c)
+    fill!(c, zero(T))
+    @inbounds for i in 1:n+1
+        if i != h
+            xi = simplex[i]
+            @simd for j in 1:n
+                c[j] += xi[j]
+            end
         end
     end
-    return true
+    scale!(c, 1/n)
 end
+
+centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
 
 nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
 
@@ -25,12 +69,12 @@ macro nmtrace()
         if tracing
             dt = Dict()
             if o.extended_trace
-                dt["centroid"] = centroid(p)
+                dt["centroid"] = x_centroid
                 dt["step_type"] = step_type
             end
             update!(tr,
                     iteration,
-                    y_min_new,
+                    f_lowest,
                     f_x,
                     dt,
                     o.store_trace,
@@ -40,14 +84,6 @@ macro nmtrace()
         end
     end
 end
-
-immutable NelderMead <: Optimizer
-    a::Float64
-    g::Float64
-    b::Float64
-end
-
-NelderMead(; a::Real = 1.0, g::Real = 2.0, b::Real = 0.5) = NelderMead(a, g, b)
 
 function print_header(mo::NelderMead, options::OptimizationOptions)
     if options.show_trace
@@ -78,166 +114,175 @@ end
 function optimize{T}(f::Function,
                      initial_x::Vector{T},
                      mo::NelderMead,
-                     o::OptimizationOptions;
-                     initial_step::Vector{T} = ones(T,length(initial_x)))
+                     o::OptimizationOptions)
+
     # Print header if show_trace is set
     print_header(mo, o)
 
-    # Set up a simplex of points around starting value
+    # Set up a simplex of points
     m = length(initial_x)
     if m == 1
         error("Use optimize(f, scalar, scalar) for 1D problems")
     end
     n = m + 1
-    p = repmat(initial_x, 1, n)
-    @simd for i in 1:m
-        @inbounds p[i, i] += initial_step[i]
+    simplex = simplexer(mo.initial_simplex, initial_x)
+    f_simplex = zeros(T, n)
+    @inbounds for i in 1:length(simplex)
+        f_simplex[i] = f(simplex[i])
     end
+
+    # Get the indeces that correspond to the ordering of the f values
+    # at the vertices. i_order[1] is the index in the simplex of the vertex
+    # with the lowest function value, and i_order[end] is the index in the
+    # simplex of the vertex with the highest function value
+    i_order = sortperm(f_simplex)
+    x_centroid = centroid(simplex,  i_order[n])
 
     # Count function calls
-    f_calls = 0
+    f_calls = n
 
-    # Maintain a record of the value of f() at n points
-    y = Array(Float64, n)
-    for i in 1:n
-        @inbounds y[i] = f(p[:, i])
-    end
-    f_calls += n
-
-    y_min_new = Base.minimum(y)
-
-    f_x_previous, f_x = NaN, nmobjective(y, m, n)
-
+    # Setup parameters
+    α, β, γ, δ = parameters(mo.parameters, m)
     # Count iterations
     iteration = 0
 
     step_type = "initial"
 
     # Maintain a trace
+    f_x_previous, f_x = NaN, nmobjective(f_simplex, m, n)
+    f_lowest = f_simplex[i_order[1]]
     tr = OptimizationTrace(mo)
     tracing = o.show_trace || o.store_trace || o.extended_trace || o.callback != nothing
     @nmtrace
 
-    # Cache p_bar, y_bar, p_star, p_star_star, p_l, p_h
-    p_bar = Array(T, m)
-    y_bar = Array(T, m)
-    p_star = Array(T, m)
-    p_star_star = Array(T, m)
-    p_l = Array(T, m)
-    p_h = Array(T, m)
+    # Cache x_centroid, y_bar, x_reflect, x_expand, x_lowest, x_highest
+    x_reflect = Array(T, m)
+    x_expand = Array(T, m)
+    x_cache = Array(T, m)
+
+    x_lowest = Array(T, m)
+    x_second_highest = Array(T, m)
+    x_highest = Array(T, m)
 
     # Iterate until convergence or exhaustion
     x_converged = false
     f_converged = false
     g_converged = false
+
     while !g_converged && !f_converged && iteration < o.iterations
         # Augment the iteration counter
+        shrink = false
         iteration += 1
 
-        # Find p_l and p_h, the minimum and maximum values of f() among p
-        y_l, l = findmin(y)
-        copy!(p_l, view(p, :, l))
-        y_h, h = findmax(y)
-        copy!(p_h, view(p, :, h))
+        centroid!(x_centroid, simplex,  i_order[n])
+        copy!(x_lowest, simplex[i_order[1]])
+        copy!(x_second_highest, simplex[i_order[m]])
+        copy!(x_highest, simplex[ i_order[n]])
 
-        # Compute the centroid of the non-maximal points
-        # Also cache function values of all non-maximal points
-        fill!(p_bar, 0.0)
-
-        tmpindex = 0
-        for i in 1:n
-            if i != h
-                tmpindex += 1
-                @inbounds y_bar[tmpindex] = y[i]
-                LinAlg.axpy!(1, view(p, :, i), p_bar)
-            end
-        end
-        scale!(p_bar, 1/m)
-
+        f_lowest = f_simplex[i_order[1]]
+        f_second_highest = f_simplex[i_order[m]]
+        f_highest = f_simplex[ i_order[n]]
         # Compute a reflection
-        @simd for j in 1:m
-            @inbounds p_star[j] = (1 + mo.a) * p_bar[j] - mo.a * p_h[j]
+        @inbounds for j in 1:m
+            x_reflect[j] = x_centroid[j] + α * (x_centroid[j]-x_highest[j])
         end
-        y_star = f(p_star)
-        f_calls += 1
 
-        if y_star < y_l
+        f_reflect = f(x_reflect)
+        f_calls += 1
+        if f_reflect < f_lowest
             # Compute an expansion
-            @simd for j in 1:m
-                @inbounds p_star_star[j] = mo.g * p_star[j] + (1 - mo.g) * p_bar[j]
+            @inbounds for j in 1:m
+                x_cache[j] = x_centroid[j] + β *(x_reflect[j] - x_centroid[j])
             end
-            y_star_star = f(p_star_star)
+            f_expand = f(x_cache)
             f_calls += 1
 
-            if y_star_star < y_l
-                copy!(p_h, p_star_star)
-                copy!(view(p, :, h), p_star_star)
-                @inbounds y[h] = y_star_star
+            if f_expand < f_reflect
+                copy!(simplex[ i_order[n]], x_cache)
+                @inbounds f_simplex[ i_order[n]] = f_expand
                 step_type = "expansion"
             else
-                copy!(p_h, p_star)
-                copy!(view(p, :, h), p_star)
-                @inbounds y[h] = y_star
+                copy!(simplex[ i_order[n]], x_reflect)
+                @inbounds f_simplex[ i_order[n]] = f_reflect
                 step_type = "reflection"
             end
+            # shift all order indeces, and wrap the last one around to the first
+            i_highest = i_order[n]
+            @inbounds for i = n:-1:2
+                i_order[i] = i_order[i-1]
+            end
+            i_order[1] = i_highest
+        elseif f_reflect < f_second_highest
+            copy!(simplex[ i_order[n]], x_reflect)
+            @inbounds f_simplex[ i_order[n]] = f_reflect
+            step_type = "reflection"
+            sortperm!(i_order, f_simplex)
         else
-            if dominates(y_star, y_bar)
-                if y_star < y_h
-                    copy!(p_h, p_star)
-                    copy!(view(p, :, h), p_h)
-                    @inbounds y[h] = y_star
-                end
-
-                # Compute a contraction
+            if f_reflect < f_highest
+                # Outside contraction
                 @simd for j in 1:m
-                    @inbounds p_star_star[j] = mo.b * p_h[j] + (1 - mo.b) * p_bar[j]
+                    @inbounds x_cache[j] = x_centroid[j] + γ * (x_reflect[j]-x_centroid[j])
                 end
-                y_star_star = f(p_star_star)
-                f_calls += 1
+                f_outside_contraction = f(x_cache)
+                if f_outside_contraction < f_reflect
+                    copy!(simplex[ i_order[n]], x_cache)
+                    @inbounds f_simplex[ i_order[n]] = f_outside_contraction
+                    step_type = "outside contraction"
+                    sortperm!(i_order, f_simplex)
 
-                if y_star_star > y_h
-                    for i = 1:n
-                        @simd for j in 1:m
-                            @inbounds p[j, i] = (p[j, i] + p_l[j]) / 2.0
-                        end
-                        @inbounds y[i] = f(p[:, i])
-                    end
-                    step_type = "shrink"
                 else
-                    copy!(p_h, p_star_star)
-                    copy!(view(p, :, h), p_h)
-                    @inbounds y[h] = y_star_star
-                    step_type = "contraction"
+                    shrink = true
                 end
-            else
-                copy!(p_h, p_star)
-                copy!(view(p, :, h), p_h)
-                @inbounds y[h] = y_star
-                step_type = "reflection"
+            else # f_reflect > f_highest
+                # Inside constraction
+                @simd for j in 1:m
+                    @inbounds x_cache[j] = x_centroid[j] - γ *(x_reflect[j] - x_centroid[j])
+                end
+                f_inside_contraction = f(x_cache)
+                if f_inside_contraction < f_highest
+                    copy!(simplex[ i_order[n]], x_cache)
+                    @inbounds f_simplex[ i_order[n]] = f_inside_contraction
+                    step_type = "inside contraction"
+                    sortperm!(i_order, f_simplex)
+                else
+                    shrink = true
+                end
             end
         end
 
-        f_x_previous, f_x = f_x, nmobjective(y, m, n)
+        if shrink
+            for i = 2:n
+                ord = i_order[i]
+                copy!(simplex[ord], x_lowest + δ*(simplex[ord]-x_lowest))
+                f_simplex[ord] = f(simplex[ord])
+            end
+            step_type = "shrink"
+            sortperm!(i_order, f_simplex)
+        end
 
-        y_min_new = Base.minimum(y)
+        f_x_previous, f_x = f_x, nmobjective(f_simplex, m, n)
+
         @nmtrace
         if f_x <= o.g_tol
             g_converged = true
         end
     end
-    minimizer = centroid(p)
-    min = f(minimizer)
+
+    sortperm!(i_order, f_simplex)
+    x_centroid_min = centroid(simplex,  i_order[n])
+    f_centroid_min = f(x_centroid)
     f_calls += 1
-    y_min, iy_min = findmin(y)
-    if min > y_min
-        minimizer[:] = p[:, iy_min]
-        min = y_min
+    f_min, i_f_min = findmin(f_simplex)
+    x_min = simplex[i_f_min]
+    if f_centroid_min < f_min
+        x_min = x_centroid_min
+        f_min = f_centroid_min
     end
 
     return MultivariateOptimizationResults("Nelder-Mead",
                                            initial_x,
-                                           minimizer,
-                                           Float64(min),
+                                           x_min,
+                                           Float64(f_min),
                                            iteration,
                                            iteration == o.iterations,
                                            x_converged,

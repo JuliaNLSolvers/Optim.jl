@@ -3,9 +3,11 @@ module TestTypes
     using Compat
     using Optim
 
-    trace = OptimizationTrace(NelderMead())
-    push!(trace,OptimizationState{NelderMead}(1,1.0,1.0,Dict()))
-    push!(trace,OptimizationState{NelderMead}(2,1.0,1.0,Dict()))
+    solver = NelderMead()
+    T = typeof(solver)
+    trace = OptimizationTrace(solver)
+    push!(trace,OptimizationState{T}(1,1.0,1.0,Dict()))
+    push!(trace,OptimizationState{T}(2,1.0,1.0,Dict()))
     @test length(trace) == 2
     @test trace[end].iteration == 2
 
