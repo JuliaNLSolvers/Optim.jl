@@ -4,6 +4,7 @@
 
 using Optim
 using Base.Test
+using Compat
 
 my_tests = [
     "types.jl",
