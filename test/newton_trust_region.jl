@@ -77,7 +77,7 @@ L = zeros(Float64, n) + 0.1
 L[1] = -1.
 H = U * diagm(L) * U'
 H = 0.5 * (H' + H)
-@assert issym(H)
+@assert issymmetric(H)
 gr = U[:,2][:]
 @assert abs(dot(gr, U[:,1][:])) < 1e-12
 true_s = -H \ gr
