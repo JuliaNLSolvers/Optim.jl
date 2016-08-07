@@ -25,14 +25,14 @@ while !outbox
     A = randn(N,N)
     AtA = A'*A
     b = randn(N)
-    x0 = randn(N)
-    tmp = similar(x0)
+    initial_x = randn(N)
+    tmp = similar(initial_x)
     func = (x, g) -> quadratic!(x, g, AtA, A'*b, tmp)
     objective = Optim.DifferentiableFunction(x->func(x, nothing), (x,g)->func(x,g), func)
-    results = Optim.optimize(objective, x0, method=ConjugateGradient())
+    results = Optim.optimize(objective, initial_x, method=ConjugateGradient())
     results = Optim.optimize(objective, results.minimum, method=ConjugateGradient())  # restart to ensure high-precision convergence
     @test Optim.converged(results)
-    g = similar(x0)
+    g = similar(initial_x)
     @test func(results.minimum, g) + dot(b,b)/2 < 1e-8
     @test norm(g) < 1e-4
     outbox = any(abs(results.minimum) .> boxl)
@@ -41,12 +41,12 @@ end
 # fminbox
 l = fill(-boxl, N)
 u = fill(boxl, N)
-x0 = (rand(N)-0.5)*boxl
+initial_x = (rand(N)-0.5)*boxl
 for _optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS)
-    results = Optim.optimize(objective, x0, l, u, Fminbox(), optimizer = _optimizer)
+    results = Optim.optimize(objective, initial_x, l, u, Fminbox(), optimizer = _optimizer)
     @test Optim.converged(results)
 
-    g = similar(x0)
+    g = similar(initial_x)
     objective.fg!(Optim.minimizer(results), g)
     for i = 1:N
         @test abs(g[i]) < 3e-3 || (Optim.minimizer(results)[i] < -boxl+1e-3 && g[i] > 0) || (Optim.minimizer(results)[i] > boxl-1e-3 && g[i] < 0)
@@ -54,11 +54,11 @@ for _optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS)
 end
 
 # tests for #180
-results = Optim.optimize(objective, x0, l, u, Fminbox(); iterations = 2)
+results = Optim.optimize(objective, initial_x, l, u, Fminbox(); iterations = 2)
 @test results.iterations == 2
 @test results.f_minimum == objective.f(results.minimum)
 
 # might fail if changes are made to Optim.jl
 # TODO: come up with a better test
-results = Optim.optimize(objective, x0, l, u, Fminbox(); optimizer_o = OptimizationOptions(iterations = 2))
+results = Optim.optimize(objective, initial_x, l, u, Fminbox(); optimizer_o = OptimizationOptions(iterations = 2))
 @test results.iterations == 470

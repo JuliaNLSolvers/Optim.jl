@@ -78,12 +78,12 @@ end
 and then the following
 ```julia
 using Optim
-x0 = ...
+initial_x = ...
 buffer = Array(...) # Preallocate an appropriate buffer
-last_x = similar(x0)
-df = TwiceDifferentiableFunction(x -> f(x, buffer, x0),
+last_x = similar(initial_x)
+df = TwiceDifferentiableFunction(x -> f(x, buffer, initial_x),
                                 (x, stor) -> g!(x, stor, buffer, last_x))
-optimize(df, x0)
+optimize(df, initial_x)
 ```
 ## Provide gradients
 As mentioned in the general introduction, passing analytical gradients can have an
@@ -94,7 +94,7 @@ Below, we use the gradients and objective functions from [mastsif](http://www.cu
 We only show the first five iterations of an attempt to minimize the function using
 Gradient Descent.
 ```jlcon
-julia> @time optimize(f, x0, GradientDescent(),
+julia> @time optimize(f, initial_x, GradientDescent(),
                       OptimizationOptions(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02
@@ -118,7 +118,7 @@ Results of Optimization Algorithm
  * Objective Function Calls: 23
  * Gradient Calls: 23
 
-julia> @time optimize(f, g!, x0, GradientDescent(),
+julia> @time optimize(f, g!, initial_x, GradientDescent(),
                       OptimizationOptions(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02

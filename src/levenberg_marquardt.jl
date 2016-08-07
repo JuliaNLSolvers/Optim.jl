@@ -1,14 +1,14 @@
 immutable LevenbergMarquardt <: Optimizer end
 
 """
-    `levenberg_marquardt(f, g, x0; <keyword arguments>`
+    `levenberg_marquardt(f, g, initial_x; <keyword arguments>`
 
 Returns the argmin over x of `sum(f(x).^2)` using the Levenberg-Marquardt algorithm, and an
 estimate of the Jacobian of `f` at x.
 
 The function `f` should take an input vector of length n and return an output vector of length m.
 The function `g` is the Jacobian of f, and should be an m x n matrix.
-`x0` is an initial guess for the solution.
+`initial_x` is an initial guess for the solution.
 
 Implements box constraints as described in Kanzow, Yamashita, Fukushima (2004; J Comp & Applied Math).
 
@@ -20,14 +20,14 @@ Implements box constraints as described in Kanzow, Yamashita, Fukushima (2004; J
 * `show_trace::Bool=false`: print a status summary on each iteration if true
 * `lower,upper=[]`: bound solution to these limits
 """
-function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
+function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVector{T};
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
     lambda::Real = 10.0, show_trace::Bool = false, lower::Vector{T} = Array(T,0), upper::Vector{T} = Array(T,0))
 
     # check parameters
-    ((isempty(lower) || length(lower)==length(x0)) && (isempty(upper) || length(upper)==length(x0))) ||
+    ((isempty(lower) || length(lower)==length(initial_x)) && (isempty(upper) || length(upper)==length(initial_x))) ||
             throw(ArgumentError("Bounds must either be empty or of the same length as the number of parameters."))
-    ((isempty(lower) || all(x0 .>= lower)) && (isempty(upper) || all(x0 .<= upper))) ||
+    ((isempty(lower) || all(initial_x .>= lower)) && (isempty(upper) || all(initial_x .<= upper))) ||
             throw(ArgumentError("Initial guess must be within bounds."))
 
     # other constants
@@ -43,8 +43,8 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
     g_converged = false
     need_jacobian = true
     iterCt = 0
-    x = copy(x0)
-    delta_x = copy(x0)
+    x = copy(initial_x)
+    delta_x = copy(initial_x)
     f_calls = 0
     g_calls = 0
 
@@ -171,5 +171,5 @@ function levenberg_marquardt{T}(f::Function, g::Function, x0::AbstractVector{T};
         converged = g_converged | x_converged
     end
 
-    MultivariateOptimizationResults("Levenberg-Marquardt", x0, x, sumabs2(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)
+    MultivariateOptimizationResults("Levenberg-Marquardt", initial_x, x, sumabs2(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)
 end
