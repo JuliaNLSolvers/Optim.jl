@@ -1,7 +1,4 @@
-module TestArray
-    using Optim
-    using Base.Test
-
+let
     f(X) = (10 - X[1, 1])^2 + (0 - X[1, 2])^2 + (0 - X[2, 1])^2 + (5 - X[2, 2])^2
 
     function g!(X, S)

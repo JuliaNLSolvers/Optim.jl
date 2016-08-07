@@ -1,8 +1,4 @@
-module TestTypes
-    using Base.Test
-    using Compat
-    using Optim
-
+let
     solver = NelderMead()
     T = typeof(solver)
     trace = OptimizationTrace(solver)

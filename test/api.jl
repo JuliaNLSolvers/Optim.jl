@@ -1,206 +1,132 @@
-function rosenbrock(x::Vector)
-    return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-end
-
-function rosenbrock_gradient!(x::Vector, storage::Vector)
-    storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
-    storage[2] = 200.0 * (x[2] - x[1]^2)
-end
-
-function rosenbrock_hessian!(x::Vector, storage::Matrix)
-    storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
-    storage[1, 2] = -400.0 * x[1]
-    storage[2, 1] = -400.0 * x[1]
-    storage[2, 2] = 200.0
-end
-
-f3 = rosenbrock
-g3! = rosenbrock_gradient!
-h3! = rosenbrock_hessian!
-
-d1 = DifferentiableFunction(rosenbrock)
-d2 = DifferentiableFunction(rosenbrock,
-	                        rosenbrock_gradient!)
-d3 = TwiceDifferentiableFunction(rosenbrock,
-	                             rosenbrock_gradient!,
-	                             rosenbrock_hessian!)
-
-Optim.optimize(f3, [0.0, 0.0], BFGS())
-Optim.optimize(f3, g3!, [0.0, 0.0], BFGS())
-Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS())
-Optim.optimize(d2, [0.0, 0.0], BFGS())
-Optim.optimize(d3, [0.0, 0.0], BFGS())
-
-Optim.optimize(f3, [0.0, 0.0], BFGS(), OptimizationOptions())
-Optim.optimize(f3, g3!, [0.0, 0.0], BFGS(), OptimizationOptions())
-Optim.optimize(f3, g3!, h3!, [0.0, 0.0], BFGS(), OptimizationOptions())
-Optim.optimize(d2, [0.0, 0.0], BFGS(), OptimizationOptions())
-Optim.optimize(d3, [0.0, 0.0], BFGS(), OptimizationOptions())
-
-Optim.optimize(d1, [0.0, 0.0], method = BFGS())
-Optim.optimize(d2, [0.0, 0.0], method = BFGS())
-
-Optim.optimize(d1, [0.0, 0.0], method = GradientDescent())
-Optim.optimize(d2, [0.0, 0.0], method = GradientDescent())
-
-Optim.optimize(d1, [0.0, 0.0], method = LBFGS())
-Optim.optimize(d2, [0.0, 0.0], method = LBFGS())
-
-Optim.optimize(rosenbrock, [0.0, 0.0], method = NelderMead())
-
-Optim.optimize(d3, [0.0, 0.0], method = Newton())
-
-Optim.optimize(rosenbrock, [0.0, 0.0], method = SimulatedAnnealing())
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = BFGS())
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     BFGS())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = BFGS())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = BFGS())
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = GradientDescent())
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     GradientDescent())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = GradientDescent())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = GradientDescent())
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = LBFGS())
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     LBFGS())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = LBFGS())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = LBFGS())
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = NelderMead())
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     NelderMead())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = NelderMead())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = NelderMead())
-
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = Newton())
-
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     method = SimulatedAnnealing())
-optimize(rosenbrock,
-	     [0.0, 0.0],
-	     SimulatedAnnealing())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     [0.0, 0.0],
-	     method = SimulatedAnnealing())
-optimize(rosenbrock,
-	     rosenbrock_gradient!,
-	     rosenbrock_hessian!,
-	     [0.0, 0.0],
-	     method = SimulatedAnnealing())
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = BFGS(),
-	           g_tol = 1e-12,
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = GradientDescent(),
-	           g_tol = 1e-12,
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = LBFGS(),
-	           g_tol = 1e-12,
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = NelderMead(),
-	           f_tol = 1e-12,
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = Newton(),
-	           g_tol = 1e-12,
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
-res = optimize(f3, g3!, h3!,
-	           [0.0, 0.0],
-	           method = SimulatedAnnealing(),
-	           iterations = 10,
-	           store_trace = true,
-	           show_trace = false)
-
+# Test multivariate optimization
 let
-    res = optimize(f3, g3!, h3!,
-    	           [0.0, 0.0],
+    rosenbrock = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+    f = rosenbrock.f
+    g! = rosenbrock.g!
+    h! = rosenbrock.h!
+    initial_x = rosenbrock.initial_x
+
+    d1 = DifferentiableFunction(f)
+    d2 = DifferentiableFunction(f, g!)
+    d3 = TwiceDifferentiableFunction(f, g!, h!)
+
+    Optim.optimize(f, initial_x, BFGS())
+    Optim.optimize(f, g!, initial_x, BFGS())
+    Optim.optimize(f, g!, h!, initial_x, BFGS())
+    Optim.optimize(d2, initial_x, BFGS())
+    Optim.optimize(d3, initial_x, BFGS())
+
+    Optim.optimize(f, initial_x, BFGS(), OptimizationOptions())
+    Optim.optimize(f, g!, initial_x, BFGS(), OptimizationOptions())
+    Optim.optimize(f, g!, h!, initial_x, BFGS(), OptimizationOptions())
+    Optim.optimize(d2, initial_x, BFGS(), OptimizationOptions())
+    Optim.optimize(d3, initial_x, BFGS(), OptimizationOptions())
+
+    Optim.optimize(d1, initial_x, method = BFGS())
+    Optim.optimize(d2, initial_x, method = BFGS())
+
+    Optim.optimize(d1, initial_x, method = GradientDescent())
+    Optim.optimize(d2, initial_x, method = GradientDescent())
+
+    Optim.optimize(d1, initial_x, method = LBFGS())
+    Optim.optimize(d2, initial_x, method = LBFGS())
+
+    Optim.optimize(f, initial_x, method = NelderMead())
+
+    Optim.optimize(d3, initial_x, method = Newton())
+
+    Optim.optimize(f, initial_x, method = SimulatedAnnealing())
+
+    optimize(f, initial_x, method = BFGS())
+    optimize(f, initial_x, BFGS())
+    optimize(f, g!, initial_x, method = BFGS())
+    optimize(f, g!, h!, initial_x, method = BFGS())
+
+    optimize(f, initial_x, method = GradientDescent())
+    optimize(f, initial_x, GradientDescent())
+    optimize(f, g!, initial_x, method = GradientDescent())
+    optimize(f, g!, h!, initial_x, method = GradientDescent())
+
+    optimize(f, initial_x, method = LBFGS())
+    optimize(f, initial_x, LBFGS())
+    optimize(f, g!, initial_x, method = LBFGS())
+    optimize(f, g!, h!, initial_x, method = LBFGS())
+
+    optimize(f, initial_x, method = NelderMead())
+    optimize(f, initial_x, NelderMead())
+    optimize(f, g!, initial_x, method = NelderMead())
+    optimize(f, g!, h!, initial_x, method = NelderMead())
+
+    optimize(f, g!, h!, initial_x, method = Newton())
+
+    optimize(f, initial_x, method = SimulatedAnnealing())
+    optimize(f, initial_x, SimulatedAnnealing())
+    optimize(f, g!, initial_x, method = SimulatedAnnealing())
+    optimize(f, g!, h!, initial_x, method = SimulatedAnnealing())
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
     	           method = BFGS(),
     	           g_tol = 1e-12,
     	           iterations = 10,
     	           store_trace = true,
     	           show_trace = false)
-   res_ext = optimize(f3, g3!, h3!,
-                      [0.0, 0.0],
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = GradientDescent(),
+    	           g_tol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = LBFGS(),
+    	           g_tol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = NelderMead(),
+    	           f_tol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = Newton(),
+    	           g_tol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = SimulatedAnnealing(),
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = BFGS(),
+    	           g_tol = 1e-12,
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
+   res_ext = optimize(f, g!, h!,
+                      initial_x,
                       method = BFGS(),
                       g_tol = 1e-12,
                       iterations = 10,
                       store_trace = true,
                       show_trace = false,
                       extended_trace = true)
+
    @test Optim.method(res) == "BFGS"
    @test Optim.minimum(res) ≈ 0.055119582904897345
    @test Optim.minimizer(res) ≈ [0.7731690866149542; 0.5917345966396391]
@@ -217,6 +143,7 @@ let
    @test Optim.iteration_limit_reached(res) == true
    @test Optim.initial_state(res) == [0.0; 0.0]
    @test haskey(Optim.trace(res_ext)[1].metadata,"x")
+
    # just testing if it runs
    Optim.trace(res)
    Optim.f_trace(res)
@@ -229,16 +156,17 @@ let
    @test_throws ErrorException Optim.rel_tol(res)
    @test_throws ErrorException Optim.abs_tol(res)
 
-   res_extended = Optim.optimize(f3, g3!, [0.0, 0.0], method=BFGS(), store_trace = true, extended_trace = true)
+   res_extended = Optim.optimize(f, g!, initial_x, method=BFGS(), store_trace = true, extended_trace = true)
    @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"x")
 
-   res_extended_nm = Optim.optimize(f3, g3!, [0.0, 0.0], method=NelderMead(), store_trace = true, extended_trace = true)
+   res_extended_nm = Optim.optimize(f, g!, initial_x, method=NelderMead(), store_trace = true, extended_trace = true)
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
 end
 
+# Test univariate API
 let
     f(x) = 2x^2+3x+1
     res = optimize(f, -2.0, 1.0, method = GoldenSection())

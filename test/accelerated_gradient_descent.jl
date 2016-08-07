@@ -1,16 +1,17 @@
-using Optim
+# TODO expand tests here
+let
+    f(x) = x[1]^4
+    function g!(x, storage)
+        storage[1] = 4 * x[1]^3
+        return
+    end
 
-f(x) = x[1]^4
-function g!(x, storage)
-    storage[1] = 4 * x[1]^3
-    return
+    d = DifferentiableFunction(f, g!)
+
+    initial_x = [1.0]
+
+    Optim.optimize(d, initial_x,
+                   method = AcceleratedGradientDescent()
+                   show_trace = true,
+                   iterations = 10)
 end
-
-d = DifferentiableFunction(f, g!)
-
-initial_x = [1.0]
-
-Optim.optimize(d, initial_x,
-               method = AcceleratedGradientDescent()
-               show_trace = true,
-               iterations = 10)
