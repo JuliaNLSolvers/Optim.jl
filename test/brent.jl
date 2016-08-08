@@ -1,6 +1,8 @@
-f_b(x) = 2x^2+3x+1
+let
+    for (name, prob) in Optim.UnivariateProblems.examples
+        results = optimize(prob.f, prob.bounds..., method = Brent())
 
-results = optimize(f_b, -2.0, 1.0, method = Brent())
-
-@assert Optim.converged(results)
-@assert abs(Optim.minimizer(results)+0.75) < 1e-7
+        @assert Optim.converged(results)
+        @assert norm(Optim.minimizer(results) - prob.minimizers) < 1e-7
+    end
+end
