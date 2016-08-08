@@ -22,12 +22,12 @@ GRTOL = 1e-6
 println("Test a basic preconditioning example")
 for N in (10, 50, 250)
     println("N = ", N)
-    x0 = zeros(N)
-    Plap = precond(x0)
+    initial_x = zeros(N)
+    Plap = precond(initial_x)
     ID = nothing
     for Optimiser in (GradientDescent, ConjugateGradient, LBFGS)
         for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
-            results = Optim.optimize(df, copy(x0),
+            results = Optim.optimize(df, copy(initial_x),
                                      method=Optimiser(P = P),
                                      f_tol = 1e-32, g_tol = GRTOL )
             println(Optimiser, wwo,
