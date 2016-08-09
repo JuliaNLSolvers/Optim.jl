@@ -46,15 +46,11 @@ immutable OptimizationState{T <: Optimizer}
     metadata::Dict
 end
 
-immutable OptimizationTrace{T<:Optimizer}
-    states::Vector{OptimizationState{T}}
-end
-
-OptimizationTrace{T}(m::T) = OptimizationTrace(Array{OptimizationState{T}}(0))
+typealias OptimizationTrace{T} Vector{OptimizationState{T}}
 
 abstract OptimizationResults
 
-type MultivariateOptimizationResults{T,N} <: OptimizationResults
+type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     method::String
     initial_x::Array{T,N}
     minimum::Array{T,N}
@@ -67,12 +63,12 @@ type MultivariateOptimizationResults{T,N} <: OptimizationResults
     f_tol::Float64
     g_converged::Bool
     g_tol::Float64
-    trace::OptimizationTrace
+    trace::OptimizationTrace{M}
     f_calls::Int
     g_calls::Int
 end
 
-type UnivariateOptimizationResults{T} <: OptimizationResults
+type UnivariateOptimizationResults{T,M} <: OptimizationResults
     method::String
     initial_lower::T
     initial_upper::T
@@ -83,7 +79,7 @@ type UnivariateOptimizationResults{T} <: OptimizationResults
     converged::Bool
     rel_tol::Float64
     abs_tol::Float64
-    trace::OptimizationTrace
+    trace::OptimizationTrace{M}
     f_calls::Int
 end
 
@@ -110,21 +106,10 @@ function Base.show(io::IO, t::OptimizationState)
     return
 end
 
-Base.push!(t::OptimizationTrace, s::OptimizationState) = push!(t.states, s)
-Base.getindex(t::OptimizationTrace, i::Integer) = getindex(t.states, i)
-Base.endof(t::OptimizationTrace) = endof(t.states)
-Base.length(t::OptimizationTrace) = length(t.states)
-
-function Base.setindex!(t::OptimizationTrace,
-                        s::OptimizationState,
-                        i::Integer)
-    setindex!(t.states, s, i)
-end
-
-function Base.show(io::IO, t::OptimizationTrace)
+function Base.show(io::IO, tr::OptimizationTrace)
     @printf io "Iter     Function value   Gradient norm \n"
     @printf io "------   --------------   --------------\n"
-    for state in t.states
+    for state in tr
         show(io, state)
     end
     return
@@ -181,7 +166,7 @@ function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimiz
     a.x_converged = x_converged(b)
     a.f_converged = f_converged(b)
     a.g_converged = g_converged(b)
-    append!(a.trace.states, b.trace.states)
+    append!(a.trace, b.trace)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)
 end

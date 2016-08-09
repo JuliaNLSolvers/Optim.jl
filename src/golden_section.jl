@@ -51,7 +51,7 @@ function optimize{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T,
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace(mo)
+    tr = OptimizationTrace{typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @goldensectiontrace
 

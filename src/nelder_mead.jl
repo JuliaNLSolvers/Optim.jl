@@ -151,7 +151,7 @@ function optimize{T}(f::Function,
     # Maintain a trace
     f_x_previous, f_x = NaN, nmobjective(f_simplex, m, n)
     f_lowest = f_simplex[i_order[1]]
-    tr = OptimizationTrace(mo)
+    tr = OptimizationTrace{typeof(mo)}()
     tracing = o.show_trace || o.store_trace || o.extended_trace || o.callback != nothing
     @nmtrace
 

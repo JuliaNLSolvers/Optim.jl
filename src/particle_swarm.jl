@@ -123,7 +123,7 @@ function optimize{T}(cost_function::Function,
         X[j, 1] = initial_x[j]
         X_best[j, 1] = initial_x[j]
     end
-    tr = OptimizationTrace(mo)
+    tr = OptimizationTrace{typeof(mo)}()
 
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @swarmtrace
