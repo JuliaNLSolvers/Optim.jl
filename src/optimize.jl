@@ -1,7 +1,3 @@
-function get_optimizer(method::Optimizer)
-    method
-end
-
 function optimize(f::Function,
                   initial_x::Array;
                   method = NelderMead(),
@@ -21,7 +17,6 @@ function optimize(f::Function,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every,
         autodiff = autodiff)
-    method = get_optimizer(method)::Optimizer
     optimize(f, initial_x, method, options)
 end
 
@@ -43,7 +38,6 @@ function optimize(f::Function,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    method = get_optimizer(method)::Optimizer
     optimize(f, g!, initial_x, method, options)
 end
 
@@ -66,7 +60,6 @@ function optimize(f::Function,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    method = get_optimizer(method)::Optimizer
     optimize(f, g!, h!, initial_x, method, options)
 end
 
@@ -87,7 +80,6 @@ function optimize(d::DifferentiableFunction,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method, options)
 end
 
@@ -108,7 +100,6 @@ function optimize(d::TwiceDifferentiableFunction,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
-    method = get_optimizer(method)::Optimizer
     optimize(d, initial_x, method, options)
 end
 
@@ -243,7 +234,6 @@ function optimize{T <: AbstractFloat}(f::Function,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    method = get_optimizer(method)::Optimizer
     optimize(f, Float64(lower), Float64(upper), method;
              rel_tol = rel_tol,
              abs_tol = abs_tol,
