@@ -1,4 +1,6 @@
-benchmarks/graphs/*
+*.so
+*.d
+benchmarks/**/*.png
 *~
 *.kate-swp
 docs/build/
