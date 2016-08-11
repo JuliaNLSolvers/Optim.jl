@@ -1,4 +1,4 @@
-## Minimizing a function
+## Minimizing a multivariate function
 To show how the Optim package can be used, we implement the
 [Rosenbrock function](http://en.wikipedia.org/wiki/Rosenbrock_function),
 a classic problem in numerical optimization. We'll assume that you've already
@@ -67,6 +67,55 @@ Note that Optim will not generate approximate Hessians using finite differencing
 because of the potentially low accuracy of approximations to the Hessians. Other
 than Newton's method, none of the algorithms provided by the Optim package employ
 exact Hessians.
+
+## Box minimization
+
+A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available:
+
+```jl
+function f(x::Vector)
+    return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+end
+lower = [1.25, -2.1]
+upper = [Inf, Inf]
+initial_x = [2.0, 2.0]
+results = optimize(DifferentiableFunction(f), initial_x, lower, upper, Fminbox(), optimizer = GradientDescent)
+```
+
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed. This means that the keyword should be passed as `optimizer = GradientDescent` not `optimizer = GradientDescent()`, as you usually would.
+
+This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` or `LBFGS` with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
+
+There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `OptimizationOptions` type using the keyword `optimizer_o`.
+
+For example, the following restricts the optimization to 2 major iterations
+```julia
+results = optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimizer = GradientDescent, iterations = 2)
+```
+In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
+```julia
+results = Optim.optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimizer = GradientDescent, optimizer_o = OptimizationOptions(iterations = 2))
+```
+## Minimizing a univariate function
+
+Minimization of univariate functions without derivatives is available through
+the `optimize` interface:
+
+```jl
+f_univariate(x) = 2x^2+3x+1
+optimize(f_univariate, -2.0, 1.0)
+```
+
+Two methods are available:
+
+* Brent's method, the default (can be explicitly selected with `Brent()`).
+* Golden section search, available with `GoldenSection()`.
+
+In addition to the `iterations`, `store_trace`, `show_trace` and
+`extended_trace` options, the following options are also available:
+
+* `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
+* `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
 
 ## Obtaining results
 After we have our results in `res`, we can use the API for getting optimization results.
