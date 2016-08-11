@@ -15,7 +15,7 @@ min_dim = 1
 max_dim = 100
 n = length(default_solvers)
 m = length(cutest_problems)
-f = open(join([pkgdir, "benchmarks", version_sha, "cutest_benchmark.csv"], "/"), "w")
+f = open(join([version_dir, "cutest_benchmark.csv"], "/"), "w")
 write(f, join(["Problem", "Optimizer", "Converged", "Time", "Minimum", "Iterations", "f_calls", "g_calls", "f_hat", "f_error", "x_error"], ","))
 write(f, "\n")
 @showprogress 1 "Benchmarking..." for p in cutest_problems

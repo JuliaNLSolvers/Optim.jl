@@ -108,8 +108,9 @@ dff = join(df, dff_agg, on = :Problem)
 df[:error] = (dff[:Minimum]-dff[:Minimum_minimum])=#
 tau = 10.0.^(-32:10)
 
+str = version_dir*"/cutest_benchmark.csv"
+df = readtable(str)
 f_profiles = profiles(default_names, df, tau, :f_error)
-x_profiles = profiles(default_names, df, tau, :x_error)
 f_err = plot(tau, hcat(f_profiles...),
         label = hcat(default_names...),
         lc=[:black :red :green :black :red :green :black :red :green :black :red :green],
@@ -118,6 +119,7 @@ f_err = plot(tau, hcat(f_profiles...),
         ylims = (0,1),
         line = :steppre, xscale=:log, xlabel = "Error level", ylabel = "Proportion of problems",
         title = "Measure: f-f*")
+savefig("f_err_cutest")
 
 x_profiles = profiles(default_names, df, tau, :x_error)
 x_err = plot(tau, hcat(x_profiles...),
@@ -128,4 +130,28 @@ x_err = plot(tau, hcat(x_profiles...),
         ylims = (0,1),
         line = :steppre, xscale=:log, xlabel = "Error level", ylabel = "Proportion of problems",
         title = "Measure: sup-norm of x-x*.")
-savefig("f_err")
+savefig("x_err_cutest")
+
+str = version_dir*"/optim_benchmark.csv"
+df = readtable(str)
+f_profiles = profiles(default_names, df, tau, :f_error)
+f_err = plot(tau, hcat(f_profiles...),
+        label = hcat(default_names...),
+        lc=[:black :red :green :black :red :green :black :red :green :black :red :green],
+        ls=[:solid  :solid :solid :dash :dash :dash :dashdot :dashdot :dashdot :dot :dot :dot],
+        size =(800,400),
+        ylims = (0,1),
+        line = :steppre, xscale=:log, xlabel = "Error level", ylabel = "Proportion of problems",
+        title = "Measure: f-f*")
+savefig("f_err_optim")
+
+x_profiles = profiles(default_names, df, tau, :x_error)
+x_err = plot(tau, hcat(x_profiles...),
+        label = hcat(default_names...),
+        lc=[:black :red :green :black :red :green :black :red :green :black :red :green],
+        ls=[:solid  :solid :solid :dash :dash :dash :dashdot :dashdot :dashdot :dot :dot :dot],
+        size =(800,400),
+        ylims = (0,1),
+        line = :steppre, xscale=:log, xlabel = "Error level", ylabel = "Proportion of problems",
+        title = "Measure: sup-norm of x-x*.")
+savefig("x_err_optim")
