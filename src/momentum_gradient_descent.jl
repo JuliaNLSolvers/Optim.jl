@@ -78,10 +78,12 @@ function optimize{T}(d::DifferentiableFunction,
     @mgdtrace
 
     # Assess multiple types of convergence
-    x_converged, f_converged, g_converged = false, false, false
+    x_converged, f_converged = false, false
+    g_converged = vecnorm(gr, Inf) < o.g_tol
 
     # Iterate until convergence
-    converged = false
+    converged = g_converged
+
     while !converged && iteration < o.iterations
         # Increment the number of steps we've had to perform
         iteration += 1
