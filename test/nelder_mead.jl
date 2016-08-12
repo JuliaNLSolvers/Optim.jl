@@ -11,3 +11,14 @@ let
 		@assert norm(res.minimum - prob.solutions) < 1e-2
 	end
 end
+
+
+# Test that deprecated syntax runs
+let
+	dep_prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(a = 1.0))
+	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(g = 2.0))
+	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(b = 0.5))
+	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(initial_simplex = Optim.AffineSimplexer()))
+	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(parameters = Optim.AdaptiveParameters()))
+end

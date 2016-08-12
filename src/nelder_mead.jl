@@ -43,7 +43,24 @@ immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     parameters::Tp
 end
 
-NelderMead(; initial_simplex = AffineSimplexer(), parameters = AdaptiveParameters()) = NelderMead(initial_simplex, parameters)
+
+function NelderMead(; kwargs...)
+    KW = Dict(kwargs)
+    if haskey(KW, :a) || haskey(KW, :g) || haskey(KW, :b)
+        a, g, b = 1.0, 2.0, 0.5
+        haskey(KW, :a) && (a = KW[:a])
+        haskey(KW, :g) && (g = KW[:g])
+        haskey(KW, :b) && (b = KW[:b])
+        return NelderMead(a, g, b)
+    elseif haskey(KW, :initial_simplex) || haskey(KW, :parameters)
+        initial_simplex, parameters = AffineSimplexer(), AdaptiveParameters()
+        haskey(KW, :initial_simplex) && (initial_simplex = KW[:initial_simplex])
+        haskey(KW, :parameters) && (parameters = KW[:parameters])
+        return NelderMead(initial_simplex, parameters)
+    else
+        return NelderMead(AffineSimplexer(), AdaptiveParameters())
+    end
+end
 
 # centroid except h-th vertex
 function centroid!{T}(c::Array{T}, simplex, h=0)
