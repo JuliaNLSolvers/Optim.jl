@@ -3,35 +3,35 @@ minimizer(r::OptimizationResults) = r.minimum
 minimum(r::OptimizationResults) = r.f_minimum
 iterations(r::OptimizationResults) = r.iterations
 iteration_limit_reached(r::OptimizationResults) = r.iteration_converged
-trace(r::OptimizationResults) = length(r.trace.states) > 0 ? r.trace : error("No trace in optimization results. To get a trace, run optimize() with store_trace = true.")
+trace(r::OptimizationResults) = length(r.trace) > 0 ? r.trace : error("No trace in optimization results. To get a trace, run optimize() with store_trace = true.")
 
 function x_trace(r::UnivariateOptimizationResults)
 	tr = trace(r)
-	!haskey(tr.states[1].metadata, "x_minimum") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
-    [state.metadata["x_minimum"] for state in tr.states]
+	!haskey(tr[1].metadata, "x_minimum") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    [ state.metadata["x_minimum"] for state in tr ]
 end
 function x_lower_trace(r::UnivariateOptimizationResults)
 	tr = trace(r)
-	!haskey(tr.states[1].metadata, "x_lower") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
-    [state.metadata["x_lower"] for state in tr.states]
+	!haskey(tr[1].metadata, "x_lower") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    [ state.metadata["x_lower"] for state in tr ]
 end
 x_lower_trace(r::MultivariateOptimizationResults) = error("x_lower_trace is not implemented for $(method(r)).")
 function x_upper_trace(r::UnivariateOptimizationResults)
 	tr = trace(r)
-	!haskey(tr.states[1].metadata, "x_upper") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
-    [state.metadata["x_upper"] for state in tr.states]
+	!haskey(tr[1].metadata, "x_upper") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    [ state.metadata["x_upper"] for state in tr ]
 end
 x_upper_trace(r::MultivariateOptimizationResults) = error("x_upper_trace is not implemented for $(method(r)).")
 
 function x_trace(r::MultivariateOptimizationResults)
 	tr = trace(r)
-	!haskey(tr.states[1].metadata, "x") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
-    [state.metadata["x"] for state in tr.states]
+	!haskey(tr[1].metadata, "x") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    [ state.metadata["x"] for state in tr ]
 end
 
-f_trace(r::OptimizationResults) = [state.value for state in trace(r).states]
+f_trace(r::OptimizationResults) = [ state.value for state in trace(r) ]
 g_norm_trace(r::OptimizationResults) = error("g_norm_trace is not implemented for $(method(r)).")
-g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r).states]
+g_norm_trace(r::MultivariateOptimizationResults) = [ state.g_norm for state in trace(r) ]
 
 f_calls(r::OptimizationResults) = r.f_calls
 

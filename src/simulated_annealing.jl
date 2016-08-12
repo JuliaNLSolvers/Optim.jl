@@ -70,7 +70,7 @@ function optimize{T}(cost::Function,
     best_f_x = f_x
 
     # Trace the history of states visited
-    tr = OptimizationTrace(mo)
+    tr = OptimizationTrace{typeof(mo)}()
     tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
     @satrace
 

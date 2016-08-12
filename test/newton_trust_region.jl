@@ -109,7 +109,7 @@ let
     d = TwiceDifferentiableFunction(f, g!, h!)
 
     results = Optim.optimize(d, [0.0], method=NewtonTrustRegion())
-    @assert length(results.trace.states) == 0
+    @assert length(results.trace) == 0
     @assert results.g_converged
     @assert norm(results.minimum - [5.0]) < 0.01
 

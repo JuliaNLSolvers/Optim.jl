@@ -61,7 +61,7 @@ function optimize{T <: AbstractFloat}(
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace(mo)
+    tr = OptimizationTrace{typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 

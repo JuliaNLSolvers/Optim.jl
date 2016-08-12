@@ -1,7 +1,7 @@
 let
     solver = NelderMead()
     T = typeof(solver)
-    trace = OptimizationTrace(solver)
+    trace = OptimizationTrace{T}()
     push!(trace,OptimizationState{T}(1,1.0,1.0,Dict()))
     push!(trace,OptimizationState{T}(2,1.0,1.0,Dict()))
     @test length(trace) == 2
