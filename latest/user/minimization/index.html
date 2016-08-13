@@ -75,7 +75,13 @@
         
             <ul>
             
-                <li class="toctree-l3"><a href="#minimizing-a-function">Minimizing a function</a></li>
+                <li class="toctree-l3"><a href="#minimizing-a-multivariate-function">Minimizing a multivariate function</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#box-minimization">Box minimization</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#minimizing-a-univariate-function">Minimizing a univariate function</a></li>
                 
             
                 <li class="toctree-l3"><a href="#obtaining-results">Obtaining results</a></li>
@@ -193,6 +199,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../algo/linesearch/">Linesearch</a>
         
     </li>
@@ -270,8 +283,8 @@
           <div role="main">
             <div class="section">
               
-                <p><a id='Minimizing-a-function-1'></a></p>
-<h2 id="minimizing-a-function">Minimizing a function</h2>
+                <p><a id='Minimizing-a-multivariate-function-1'></a></p>
+<h2 id="minimizing-a-multivariate-function">Minimizing a multivariate function</h2>
 <p>To show how the Optim package can be used, we implement the <a href="http://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a>, a classic problem in numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager. First, we load Optim and define the Rosenbrock function:</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
 <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
@@ -337,6 +350,50 @@
 
 
 <p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
+<p><a id='Box-minimization-1'></a></p>
+<h2 id="box-minimization">Box minimization</h2>
+<p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available:</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> f</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="n">Vector</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="k">end</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.25</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.1</span><span class="p">]</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="nb">Inf</span><span class="p">,</span> <span class="nb">Inf</span><span class="p">]</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">(),</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">)</span>
+</pre></div>
+
+
+<p>This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen <code>optimizer</code> for convergence at each step. Notice that the <code>Optimizer</code> type, not an instance should be passed. This means that the keyword should be passed as <code>optimizer = GradientDescent</code> not <code>optimizer = GradientDescent()</code>, as you usually would.</p>
+<p>This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use <code>ConjugateGradient</code> or <code>LBFGS</code> with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.</p>
+<p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an <code>OptimizationOptions</code> type using the keyword <code>optimizer_o</code>.</p>
+<p>For example, the following restricts the optimization to 2 major iterations</p>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+
+
+<p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient</code> optimization to 2</p>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">optimizer_o</span> <span class="o">=</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+
+<p><a id='Minimizing-a-univariate-function-1'></a></p>
+<h2 id="minimizing-a-univariate-function">Minimizing a univariate function</h2>
+<p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
+<div class="codehilite"><pre><span></span><span class="n">f_univariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">f_univariate</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Two methods are available:</p>
+<ul>
+<li>Brent's method, the default (can be explicitly selected with <code>Brent()</code>).</li>
+<li>Golden section search, available with <code>GoldenSection()</code>.</li>
+</ul>
+<p>In addition to the <code>iterations</code>, <code>store_trace</code>, <code>show_trace</code> and <code>extended_trace</code> options, the following options are also available:</p>
+<ul>
+<li><code>rel_tol</code>: The relative tolerance used for determining convergence. Defaults to <code>sqrt(eps(T))</code>.</li>
+<li><code>abs_tol</code>: The absolute tolerance used for determining convergence. Defaults to <code>eps(T)</code>.</li>
+</ul>
 <p><a id='Obtaining-results-1'></a></p>
 <h2 id="obtaining-results">Obtaining results</h2>
 <p>After we have our results in <code>res</code>, we can use the API for getting optimization results. This consists of a collection of functions. They are not exported, so they have to be prefixed by <code>Optim.</code>. Say we do the following optimization:</p>

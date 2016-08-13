@@ -194,6 +194,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../../algo/linesearch/">Linesearch</a>
         
     </li>
@@ -345,12 +352,12 @@
 
 <p>and then the following</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
-<span class="n">x0</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">buffer</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
-<span class="n">last_x</span> <span class="o">=</span> <span class="n">similar</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">TwiceDifferentiableFunction</span><span class="p">(</span><span class="n">x</span> <span class="o">-&gt;</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">x0</span><span class="p">),</span>
+<span class="n">last_x</span> <span class="o">=</span> <span class="n">similar</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">TwiceDifferentiableFunction</span><span class="p">(</span><span class="n">x</span> <span class="o">-&gt;</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">),</span>
                                 <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">))</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span>
 </pre></div>
 
 
@@ -358,7 +365,7 @@
 <h2 id="provide-gradients">Provide gradients</h2>
 <p>As mentioned in the general introduction, passing analytical gradients can have an impact on performance. To show an example of this, consider the separable extension of the Rosenbrock function in dimension 5000, see <a href="ftp://ftp.numerical.rl.ac.uk/pub/cutest/sif/SROSENBR.SIF">SROSENBR</a> in CUTEst.</p>
 <p>Below, we use the gradients and objective functions from <a href="http://www.cuter.rl.ac.uk/Problems/mastsif.shtml">mastsif</a> through <a href="https://github.com/JuliaOptimizers/CUTEst.jl">CUTEst.jl</a>. We only show the first five iterations of an attempt to minimize the function using Gradient Descent.</p>
-<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
 
 <span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
@@ -383,7 +390,7 @@
 <span class="go"> * Objective Function Calls: 23</span>
 <span class="go"> * Gradient Calls: 23</span>
 
-<span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+<span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
 
 <span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
