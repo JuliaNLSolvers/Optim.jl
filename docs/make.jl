@@ -10,5 +10,6 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/JuliaOpt/Optim.jl.git"
+    repo = "github.com/JuliaOpt/Optim.jl.git",
+    julia = "0.5"
 )
