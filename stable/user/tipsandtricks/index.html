@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaOpt">
+  
+  <title>Tips and tricks - Optim.jl</title>
+  
+
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Tips and tricks";
+    var mkdocs_page_input_path = "user/tipsandtricks.md";
+    var mkdocs_page_url = "/user/tipsandtricks/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script> 
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+  <script src="../../assets/mathjaxhelper.js"></script>
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>General information</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../minimization/">Minimizing a function</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../config/">Configurable Options</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Tips and tricks</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#dealing-with-constant-parameters">Dealing with constant parameters</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#avoid-repeating-computations">Avoid repeating computations</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#provide-gradients">Provide gradients</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../planned/">Planned Changes</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Algorithms</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Solvers</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Free</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Hessian Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/newton/">Newton</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/linesearch/">Linesearch</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/precondition/">Preconditioners</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Contributing</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../dev/contributing/">Contributing</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../LICENSE/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>General information &raquo;</li>
+        
+      
+    
+    <li>Tips and tricks</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github"> Edit on GitHub</a>
+        
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Dealing-with-constant-parameters-1'></a></p>
+<h2 id="dealing-with-constant-parameters">Dealing with constant parameters</h2>
+<p>In many applications, there may be factors that are relevant to the function evaluations, but are fixed throughout the optimization. An obvious example is using data in a likelihood function, but it could also be parameters we wish to hold constant.</p>
+<p>Consider a squared error loss function that depends on some data <code>x</code> and <code>y</code>, and parameters <code>betas</code>. As far as the solver is concerned, there should only be one input argument to the function we want to minimize, call it <code>sqerror</code>.</p>
+<p>The problem is that we want to optimize a function <code>sqerror</code> that really depends on three inputs, and two of them are constant throught the optimization procedure. To do this, we need to define the variables <code>x</code> and <code>y</code></p>
+<div class="codehilite"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]</span>
+<span class="n">y</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">]</span>
+</pre></div>
+
+
+<p>We then simply define a function in three variables</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">length</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">pred_i</span> <span class="o">=</span> <span class="n">betas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">betas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">err</span> <span class="o">+=</span> <span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pred_i</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="n">err</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>and then optimize the following anonymous function</p>
+<div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">b</span> <span class="o">-&gt;</span> <span class="n">sqerror</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+
+
+<p>Alternatively, we can define a closure <code>sqerror(betas)</code> that is aware of the variables we just defined</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">)</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">length</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">pred_i</span> <span class="o">=</span> <span class="n">betas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">betas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">err</span> <span class="o">+=</span> <span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pred_i</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+    <span class="k">end</span>
+    <span class="k">return</span> <span class="n">err</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>We can then optimize the <code>sqerror</code> function just like any other function</p>
+<div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">sqerror</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+
+
+<p><a id='Avoid-repeating-computations-1'></a></p>
+<h2 id="avoid-repeating-computations">Avoid repeating computations</h2>
+<p>Say you are optimizing a function</p>
+<div class="codehilite"><pre><span></span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">2</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+</pre></div>
+
+
+<p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused. The trick here is essentially the same as above. We use a closure or an anonymous function. Basically, we define</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> calculate_common</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">last_x</span>
+        <span class="n">copy!</span><span class="p">(</span><span class="n">last_x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="c">#do whatever common calculations and save to buffer</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">function</span><span class="nf"> f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
+    <span class="n">calculate_common!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
+    <span class="n">f_body</span> <span class="c"># depends on buffer</span>
+<span class="k">end</span>
+
+<span class="k">function</span><span class="nf"> g</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
+    <span class="n">calculate_common!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
+    <span class="n">g_body!</span> <span class="c"># depends on buffer</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>and then the following</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
+<span class="n">last_x</span> <span class="o">=</span> <span class="n">similar</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">TwiceDifferentiableFunction</span><span class="p">(</span><span class="n">x</span> <span class="o">-&gt;</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">),</span>
+                                <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">))</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span>
+</pre></div>
+
+
+<p><a id='Provide-gradients-1'></a></p>
+<h2 id="provide-gradients">Provide gradients</h2>
+<p>As mentioned in the general introduction, passing analytical gradients can have an impact on performance. To show an example of this, consider the separable extension of the Rosenbrock function in dimension 5000, see <a href="ftp://ftp.numerical.rl.ac.uk/pub/cutest/sif/SROSENBR.SIF">SROSENBR</a> in CUTEst.</p>
+<p>Below, we use the gradients and objective functions from <a href="http://www.cuter.rl.ac.uk/Problems/mastsif.shtml">mastsif</a> through <a href="https://github.com/JuliaOptimizers/CUTEst.jl">CUTEst.jl</a>. We only show the first five iterations of an attempt to minimize the function using Gradient Descent.</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+
+<span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
+<span class="go">Iter     Function value   Gradient norm</span>
+<span class="go">     0     4.850000e+04     2.116000e+02</span>
+<span class="go">     1     1.018734e+03     2.704951e+01</span>
+<span class="go">     2     3.468449e+00     5.721261e-01</span>
+<span class="go">     3     2.966899e+00     2.638790e-02</span>
+<span class="go">     4     2.511859e+00     5.237768e-01</span>
+<span class="go">     5     2.107853e+00     1.020287e-01</span>
+<span class="go"> 21.731129 seconds (1.61 M allocations: 63.434 MB, 0.03% gc time)</span>
+<span class="go">Results of Optimization Algorithm</span>
+<span class="go"> * Algorithm: Gradient Descent</span>
+<span class="go"> * Starting Point: [1.2,1.0, ...]</span>
+<span class="go"> * Minimizer: [1.0287767703731154,1.058769439356144, ...]</span>
+<span class="go"> * Minimum: 2.107853e+00</span>
+<span class="go"> * Iterations: 5</span>
+<span class="go"> * Convergence: false</span>
+<span class="go">   * |x - x&#39;| &lt; 1.0e-32: false</span>
+<span class="go">   * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false</span>
+<span class="go">   * |g(x)| &lt; 1.0e-08: false</span>
+<span class="go">   * Reached Maximum Number of Iterations: true</span>
+<span class="go"> * Objective Function Calls: 23</span>
+<span class="go"> * Gradient Calls: 23</span>
+
+<span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+
+<span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
+<span class="go">Iter     Function value   Gradient norm</span>
+<span class="go">     0     4.850000e+04     2.116000e+02</span>
+<span class="go">     1     1.018769e+03     2.704998e+01</span>
+<span class="go">     2     3.468488e+00     5.721481e-01</span>
+<span class="go">     3     2.966900e+00     2.638792e-02</span>
+<span class="go">     4     2.511828e+00     5.237919e-01</span>
+<span class="go">     5     2.107802e+00     1.020415e-01</span>
+<span class="go">  0.009889 seconds (915 allocations: 270.266 KB)</span>
+<span class="go">Results of Optimization Algorithm</span>
+<span class="go"> * Algorithm: Gradient Descent</span>
+<span class="go"> * Starting Point: [1.2,1.0, ...]</span>
+<span class="go"> * Minimizer: [1.0287763814102757,1.05876866832087, ...]</span>
+<span class="go"> * Minimum: 2.107802e+00</span>
+<span class="go"> * Iterations: 5</span>
+<span class="go"> * Convergence: false</span>
+<span class="go">   * |x - x&#39;| &lt; 1.0e-32: false</span>
+<span class="go">   * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false</span>
+<span class="go">   * |g(x)| &lt; 1.0e-08: false</span>
+<span class="go">   * Reached Maximum Number of Iterations: true</span>
+<span class="go"> * Objective Function Calls: 23</span>
+<span class="go"> * Gradient Calls: 23</span>
+</pre></div>
+
+
+<p>The objective has obtained a value that is very similar between the two runs, but the run with the analytical gradient is way faster.  It is possible that the finite differences code can be improved, but generally the optimization will be slowed down by all the function evaluations required to do the central finite differences calculations.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../planned/" class="btn btn-neutral float-right" title="Planned Changes">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../config/" class="btn btn-neutral" title="Configurable Options"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../config/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../planned/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
