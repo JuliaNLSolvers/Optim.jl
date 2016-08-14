@@ -39,6 +39,10 @@ function print_header(options::OptimizationOptions)
     end
 end
 
+function print_header(method::Optimizer)
+        @printf "Iter     Function value   Gradient norm \n"
+end
+
 immutable OptimizationState{T <: Optimizer}
     iteration::Int
     value::Float64
@@ -81,6 +85,10 @@ type UnivariateOptimizationResults{T,M} <: OptimizationResults
     abs_tol::Float64
     trace::OptimizationTrace{M}
     f_calls::Int
+end
+
+immutable NonDifferentiableFunction
+    f::Function
 end
 
 immutable DifferentiableFunction

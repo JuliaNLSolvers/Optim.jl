@@ -1,3 +1,4 @@
+# Multivariate optimization
 function optimize(f::Function,
                   initial_x::Array;
                   method = NelderMead(),
@@ -128,10 +129,12 @@ function optimize(f::Function,
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, method, options)
 end
-
+typealias FirstOrderSolver Union{AcceleratedGradientDescent, GradientDescent,
+                                 MomentumGradientDescent, BFGS, LBFGS}
+typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
 function optimize{T}(f::Function,
                   initial_x::Array{T},
-                  method::Optimizer,
+                  method::Union{FirstOrderSolver, SecondOrderSolver},
                   options::OptimizationOptions)
     if !options.autodiff
         d = DifferentiableFunction(f)
@@ -200,21 +203,70 @@ function optimize(d::DifferentiableFunction,
     optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
 
-function optimize(d::DifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::OptimizationOptions)
-    optimize(d.f, initial_x, method, options)
+# Iterative method boiler plate
+#This will just be replaced by ::Optimizer once they're all converted
+typealias Refactored Union{GradientDescent, LBFGS, BFGS, NelderMead}
+#typealias ObjectiveObject Union{NonDifferentiableFunction, DifferentiableFunction, TwiceDifferentiableFunction}
+
+function after_while!(d, state, method, options)
+    nothing
 end
 
-function optimize(d::TwiceDifferentiableFunction,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::OptimizationOptions)
-    dn = DifferentiableFunction(d.f, d.g!, d.fg!)
-    optimize(dn, initial_x, method, options)
+function optimize{T}(d, initial_x::Array{T}, method::Refactored, options::OptimizationOptions)
+    if length(initial_x) == 1 && typeof(method) <: NelderMead
+        error("Use optimize(f, scalar, scalar) for 1D problems")
+    end
+
+    options.show_trace && print_header(method)
+
+    state = initialize_state(method, options, d, initial_x)
+
+    tr = OptimizationTrace{typeof(method)}()
+    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+
+    x_converged, f_converged = false, false
+    g_converged = if typeof(method) <: NelderMead
+        nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
+        else
+            vecnorm(state.g, Inf) < options.g_tol
+        end
+
+    converged = g_converged
+    iteration = 0
+    trace!(tr, state, iteration, method, options)
+    while !converged && iteration < options.iterations# && stopped
+        iteration += 1
+        update!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+
+#        stopped = option.callback(state)
+
+        x_converged, f_converged,
+        g_converged, converged = assess_convergence(state, options)
+
+        tracing && trace!(tr, state, iteration, method, options)
+     end
+
+     # This should just have a clean fallback
+     typeof(method) <: NelderMead && after_while!(d, state, method, options)
+
+     return MultivariateOptimizationResults(method_string(method),
+                                            initial_x,
+                                            state.x,
+                                            Float64(state.f_x),
+                                            iteration,
+                                            iteration == options.iterations,
+                                            x_converged,
+                                            options.x_tol,
+                                            f_converged,
+                                            options.f_tol,
+                                            g_converged,
+                                            options.g_tol,
+                                            tr,
+                                            state.f_calls,
+                                            state.g_calls)
 end
 
+# Univariate OptimizationOptions
 function optimize{T <: AbstractFloat}(f::Function,
                                       lower::T,
                                       upper::T;

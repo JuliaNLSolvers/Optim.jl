@@ -48,8 +48,6 @@ module Optim
     # Tracing
     include("utilities/update.jl")
 
-    # Convergence
-    include("utilities/assess_convergence.jl")
 
     # Grid Search
     include("grid_search.jl")
@@ -86,8 +84,8 @@ module Optim
 
     # Heuristic Optimization Methods
     include("nelder_mead.jl")
-    include("simulated_annealing.jl")
-    include("particle_swarm.jl")
+    #include("simulated_annealing.jl")
+    #include("particle_swarm.jl")
 
     # Univariate methods
     include("golden_section.jl")
@@ -98,6 +96,9 @@ module Optim
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")
+
+    # Convergence
+    include("utilities/assess_convergence.jl")
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))

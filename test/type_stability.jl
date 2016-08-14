@@ -28,8 +28,8 @@ let
                                      rosenbrock_gradient!,
                                      rosenbrock_hessian!)
 
-    for method in (NelderMead(),
-                   SimulatedAnnealing())
+    for method in (NelderMead(),)
+                  # SimulatedAnnealing())
         optimize(rosenbrock, [0.0,0,.0], method = method)
         optimize(rosenbrock, Float32[0.0, 0.0], method = method)
     end
