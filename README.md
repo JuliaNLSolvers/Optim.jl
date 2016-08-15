@@ -33,7 +33,8 @@ Results of Optimization Algorithm
  * Objective Function Calls: 157
  * Gradient Calls: 157
 ```
-For more details and options, see the documentation.
+For more details and options, see the documentation ([stable](https://juliaopt.github.io/Optim.jl/stable) | [latest](https://juliaopt.github.io/Optim.jl/latest)).
+
 # Installation
 
 The package is registered in `METADATA.jl` and can be installed with `Pkg.add`.
