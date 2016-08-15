@@ -28,13 +28,6 @@ end
 Newton(; linesearch!::Function = hz_linesearch!) =
   Newton(linesearch!)
 
-function optimize(d::Function,
-                  initial_x::Array,
-                  method::Newton,
-                  options::OptimizationOptions)
-    throw(ArgumentError("Newton's method without a user supplied gradient and hessian is currently not supported."))
-end
-
 function optimize{T}(d::TwiceDifferentiableFunction,
                      initial_x::Vector{T},
                      mo::Newton,

@@ -150,7 +150,7 @@ end
 
 function optimize{T}(f::Function,
                   initial_x::Array{T},
-                  method::Newton,
+                  method::Union{Newton, NewtonTrustRegion},
                   options::OptimizationOptions)
     if !options.autodiff
         error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
@@ -172,7 +172,7 @@ end
 function optimize(f::Function,
                   g!::Function,
                   initial_x::Array,
-                  method::Newton,
+                  method::Union{Newton, NewtonTrustRegion},
                   options::OptimizationOptions)
     if !options.autodiff
         error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
@@ -190,7 +190,7 @@ end
 
 function optimize(d::DifferentiableFunction,
                   initial_x::Array,
-                  method::Newton,
+                  method::Union{Newton, NewtonTrustRegion},
                   options::OptimizationOptions)
     if !options.autodiff
         error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
