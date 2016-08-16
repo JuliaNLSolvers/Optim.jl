@@ -73,25 +73,6 @@ LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!,
 
 method_string(method::LBFGS) = "L-BFGS"
 
-function trace!(tr, state, iteration, method::LBFGS, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["x"] = copy(x)
-        dt["g(x)"] = copy(gr)
-        dt["Current step size"] = alpha
-    end
-    g_norm = vecnorm(state.g, Inf)
-    update!(tr,
-            iteration,
-            state.f_x,
-            g_norm,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
-end
-
 type LBFGSState{T}
     n::Int64
     x::Array{T}

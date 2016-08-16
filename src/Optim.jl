@@ -100,6 +100,9 @@ module Optim
     # Convergence
     include("utilities/assess_convergence.jl")
 
+    # Traces
+    include("utilities/trace.jl")
+
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
     include(joinpath("problems", "univariate.jl"))

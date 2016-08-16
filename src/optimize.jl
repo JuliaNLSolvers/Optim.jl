@@ -205,7 +205,7 @@ end
 
 # Iterative method boiler plate
 #This will just be replaced by ::Optimizer once they're all converted
-typealias Refactored Union{GradientDescent, LBFGS, BFGS, NelderMead}
+typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, LBFGS, BFGS, NelderMead}
 #typealias ObjectiveObject Union{NonDifferentiableFunction, DifferentiableFunction, TwiceDifferentiableFunction}
 
 function after_while!(d, state, method, options)
@@ -247,7 +247,7 @@ function optimize{T}(d, initial_x::Array{T}, method::Refactored, options::Optimi
      end
 
      # This should just have a clean fallback
-     typeof(method) <: NelderMead && after_while!(d, state, method, options)
+     after_while!(d, state, method, options)
 
      return MultivariateOptimizationResults(method_string(method),
                                             initial_x,

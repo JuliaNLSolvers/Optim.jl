@@ -10,25 +10,6 @@ GradientDescent(; linesearch!::Function = hz_linesearch!,
 
 method_string(method::GradientDescent) = "Gradient Descent"
 
-function trace!(tr, state, iteration, method::GradientDescent, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(state.g)
-        dt["Current step size"] = state.alpha
-    end
-    g_norm = vecnorm(state.g, Inf)
-    update!(tr,
-            iteration,
-            state.f_x,
-            g_norm,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
-end
-
 type GradientDescentState{T}
     n::Int64
     x::Array{T}
