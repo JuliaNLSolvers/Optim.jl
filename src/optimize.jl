@@ -205,7 +205,7 @@ end
 
 # Iterative method boiler plate
 #This will just be replaced by ::Optimizer once they're all converted
-typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, LBFGS, BFGS, NelderMead}
+typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient, LBFGS, BFGS, NelderMead}
 #typealias ObjectiveObject Union{NonDifferentiableFunction, DifferentiableFunction, TwiceDifferentiableFunction}
 
 function after_while!(d, state, method, options)

@@ -1,4 +1,4 @@
-function trace!(tr, state, iteration, method::Union{LBFGS, AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent}, options)
+function trace!(tr, state, iteration, method::Union{LBFGS, AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient}, options)
     dt = Dict()
     if options.extended_trace
         dt["x"] = copy(state.x)
