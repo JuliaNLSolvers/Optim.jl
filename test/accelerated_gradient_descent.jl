@@ -11,7 +11,7 @@ let
     initial_x = [1.0]
 
     Optim.optimize(d, initial_x,
-                   method = AcceleratedGradientDescent()
+                   method = AcceleratedGradientDescent(),
                    show_trace = true,
                    iterations = 10)
 end

@@ -18,6 +18,7 @@ AcceleratedGradientDescent(; linesearch!::Function = hz_linesearch!) =
 
   type AcceleratedGradientDescentState{T}
       n::Int64
+      iteration::Int64
       x::Array{T}
       x_previous::Array{T}
       y::Array{T}
@@ -40,6 +41,7 @@ function initialize_state{T}(method::AcceleratedGradientDescent, options, d, ini
     f_x = d.fg!(initial_x, g)
 
     AcceleratedGradientDescentState(length(initial_x),
+                         0,
                          copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain current state in state.x_previous
                          copy(initial_x), # Maintain intermediary current state in state.y
@@ -58,7 +60,7 @@ function initialize_state{T}(method::AcceleratedGradientDescent, options, d, ini
 end
 
 function update!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
-
+    state.iteration += 1
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
         @inbounds state.s[i] = -state.g[i]
@@ -84,8 +86,8 @@ function update!{T}(d, state::AcceleratedGradientDescentState{T}, method::Accele
     copy!(state.x_previous, state.x)
 
     # Update current position with Nesterov correction
-    scaling = (iteration - 1) / (iteration + 2)
-    @simd for i in 1:n
+    scaling = (state.iteration - 1) / (state.iteration + 2)
+    @simd for i in 1:state.n
         @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
     end
 
