@@ -11,7 +11,7 @@ macro swarmtrace()
         if tracing
             dt = Dict()
             if o.extended_trace
-                dt["x"] = copy(best_point)
+                dt["x"] = copy(x)
             end
             grnorm = NaN
             update!(tr,
@@ -82,7 +82,7 @@ function optimize{T}(cost_function::Function,
     X_best = Array{T}(n_dim, n_particles)
     dx = zeros(T, n_dim)
     score = zeros(T, n_particles)
-    best_point = zeros(T, n_dim)
+    x = zeros(T, n_dim)
     best_score = zeros(T, n_particles)
     x_learn = zeros(T, n_dim)
 
@@ -142,7 +142,7 @@ function optimize{T}(cost_function::Function,
                                           best_score,
                                           X,
                                           X_best,
-                                          best_point,
+                                          x,
                                           best_score_global,
                                           n_particles)
 
@@ -155,7 +155,7 @@ function optimize{T}(cost_function::Function,
         # This helps jumping out of local minima.
         worst_score, i_worst = findmax(score)
         for k in 1:n_dim
-            x_learn[k] = best_point[k]
+            x_learn[k] = x[k]
         end
         random_index = rand(1:n_dim)
         random_value = randn()
@@ -184,15 +184,15 @@ function optimize{T}(cost_function::Function,
             for j in 1:n_dim
                 X_best[j, i_worst] = x_learn[j]
                 X[j, i_worst] = x_learn[j]
-                best_point[j] = x_learn[j]
+                x[j] = x_learn[j]
             end
             score[i_worst] = score_learn
             best_score[i_worst] = score_learn
         end
 
-        current_state, f = get_swarm_state(X, score, best_point, current_state)
+        current_state, f = get_swarm_state(X, score, x, current_state)
         w, c1, c2 = update_swarm_params!(c1, c2, w, current_state, f)
-        update_swarm!(X, X_best, best_point, n_dim, n_particles, V, w, c1, c2)
+        update_swarm!(X, X_best, x, n_dim, n_particles, V, w, c1, c2)
 
         iteration += 1
         @swarmtrace
@@ -203,7 +203,7 @@ function optimize{T}(cost_function::Function,
 
     return MultivariateOptimizationResults("Particle-Swarm",
                                            initial_x,
-                                           best_point,
+                                           x,
                                            best_score_global,
                                            iteration,
                                            iteration == o.iterations,
