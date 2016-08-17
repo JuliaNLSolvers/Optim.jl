@@ -96,7 +96,7 @@ In contrast, the following sets the maximum number of iterations for each `Conju
 ```julia
 results = Optim.optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimizer = GradientDescent, optimizer_o = OptimizationOptions(iterations = 2))
 ```
-## Minimizing a univariate function
+## Minimizing a univariate function on a bounded interval
 
 Minimization of univariate functions without derivatives is available through
 the `optimize` interface:
@@ -173,3 +173,16 @@ Defined for multivariate optimization:
 * `f_converged(res)`
 * `g_converged(res)`
 * `initial_state(res)`
+
+## Notes on convergence flags and checks
+Currently, it is possible to access a minimizer using `Optim.minimizer(result)` even if
+all convergence flags are `false`. This means that the user has to be a bit careful when using
+the output from the solvers. It is advised to include checks for convergence if the minimizer
+or minimum is used to carry out further calculations.
+
+A related note is that first and second order methods makes a convergence check
+on the gradient before entering the optimization loop. This is done to prevent
+line search errors if `initial_x` is a stationary point. Notice, that this is only
+a first order check. If `initial_x` is any type of stationary point, `g_converged`
+will be true. This includes local minima, saddle points, and local maxima. If `iterations` is `0`
+and `g_converged` is `true`, the user needs to keep this point in mind.

@@ -87,9 +87,9 @@ function optimize{T}(cost_function::Function,
     x_learn = zeros(T, n_dim)
 
     iteration = 0
-    f_calls = 0
     current_state = 0
     best_score_global = cost_function(initial_x)
+    f_calls = 1
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space

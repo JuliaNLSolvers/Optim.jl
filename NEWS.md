@@ -1,3 +1,9 @@
+# Optim v0.6.1 release notes
+* Assess convergence in *g* before iterating to avoid line search errors if `initial_x` is a stationary point
+* Fix trace bug in LevenbergMarquardt.
+* Add ForwardDiff AD functionality to NewtonTrustRegion
+* Make documentation even more noticable in README.md
+
 # Optim v0.6.0 release notes
 
 * Various bug fixes
