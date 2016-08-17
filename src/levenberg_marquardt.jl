@@ -60,10 +60,10 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
     m_buffer = Vector{T}(m)
 
     # Maintain a trace of the system.
-    tr = OptimizationTrace{typeof(LevenbergMarquardt())}()
+    tr = OptimizationTrace{LevenbergMarquardt}()
     if show_trace
         d = Dict("lambda" => lambda)
-        os = OptimizationState(iterCt, sumabs2(fcur), NaN, d)
+        os = OptimizationState{LevenbergMarquardt}(iterCt, sumabs2(fcur), NaN, d)
         push!(tr, os)
         println(os)
     end
@@ -154,7 +154,7 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
             At_mul_B!(n_buffer, J, fcur)
             g_norm = norm(n_buffer, Inf)
             d = @compat Dict("g(x)" => g_norm, "dx" => delta_x, "lambda" => lambda)
-            os = OptimizationState(iterCt, sumabs2(fcur), g_norm, d)
+            os = OptimizationState{LevenbergMarquardt}(iterCt, sumabs2(fcur), g_norm, d)
             push!(tr, os)
             println(os)
         end

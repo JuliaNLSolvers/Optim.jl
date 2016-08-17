@@ -54,7 +54,6 @@ let
         @assert norm(Optim.minimizer(results) - [1.0, 2.0]) < 0.05
     end
 
-    # tests for box constraints, PR #196
     let
         srand(12345)
 
@@ -66,6 +65,7 @@ let
         f_lsq = p -> model(xdata,p)-ydata
         g_lsq = Calculus.jacobian(f_lsq)
 
+        # tests for box constraints, PR #196
         @test_throws ArgumentError Optim.levenberg_marquardt(f_lsq, g_lsq, [15.0, 15.0, 15.0], lower=[5.0, 11.0])
         @test_throws ArgumentError Optim.levenberg_marquardt(f_lsq, g_lsq, [5.0, 5.0, 5.0], upper=[15.0, 9.0])
         @test_throws ArgumentError Optim.levenberg_marquardt(f_lsq, g_lsq, [15.0, 10.0, 15.0], lower=[5.0, 11.0, 5.0])
@@ -82,5 +82,8 @@ let
         Optim.minimizer(results)
         @test Optim.converged(results)
         @test all(Optim.minimizer(results) .<= upper)
+
+        # tests for PR #267
+        Optim.levenberg_marquardt(f_lsq, g_lsq, [15.0, 15.0, 15.0], show_trace=true)
     end
 end
