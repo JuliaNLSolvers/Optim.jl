@@ -21,7 +21,7 @@ my_tests = [
     "nelder_mead.jl",
     "optimize.jl",
 #    "simulated_annealing.jl",
-#    "particle_swarm.jl",
+    "particle_swarm.jl",
     "interpolating_line_search.jl",
     "api.jl",
     "golden_section.jl",

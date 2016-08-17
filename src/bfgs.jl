@@ -11,26 +11,6 @@ method_string(method::BFGS) = "BFGS"
 BFGS(; linesearch!::Function = hz_linesearch!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch!, initial_invH)
 
-function trace!(tr, state, iteration, method::BFGS, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(state.g)
-        dt["~inv(H)"] = copy(state.invH)
-        dt["Current step size"] = state.alpha
-    end
-    g_norm = vecnorm(state.g, Inf)
-    update!(tr,
-            iteration,
-            state.f_x,
-            g_norm,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
-end
-
 type BFGSState{T}
     n::Int64
     x::Array{T}

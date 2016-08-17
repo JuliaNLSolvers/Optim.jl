@@ -82,23 +82,6 @@ centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
 
 nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
 
-function trace!(tr, state, iteration, method::NelderMead, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["centroid"] = state.x_centroid
-        dt["step_type"] = state.step_type
-    end
-    update!(tr,
-            iteration,
-            state.f_lowest,
-            state.f_x,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
-end
-
 function print_header(method::NelderMead)
     @printf "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
     @printf "------   --------------    --------------\n"
@@ -147,7 +130,9 @@ type NelderMeadState{T, N}
     f_calls::Int64
     g_calls::Int64
 end
+
 initialize_state(method::NelderMead, options, d, initial_x::Array) = initialize_state(method, options, d.f, initial_x)
+
 function initialize_state{T}(method::NelderMead, options, f::Function, initial_x::Array{T})
     m = length(initial_x)
     n = m + 1

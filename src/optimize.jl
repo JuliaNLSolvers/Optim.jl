@@ -205,7 +205,7 @@ end
 
 # Iterative method boiler plate
 #This will just be replaced by ::Optimizer once they're all converted
-typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient, LBFGS, BFGS, NelderMead}
+typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient, LBFGS, BFGS, NelderMead, ParticleSwarm}
 
 function after_while!(d, state, method, options)
     nothing
@@ -226,6 +226,8 @@ function optimize{T}(d, initial_x::Array{T}, method::Refactored, options::Optimi
     x_converged, f_converged = false, false
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
+        elseif  typeof(method) <: ParticleSwarm
+            g_converged = false
         else
             vecnorm(state.g, Inf) < options.g_tol
         end

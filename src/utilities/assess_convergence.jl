@@ -56,3 +56,8 @@ function assess_convergence(state::NelderMeadState, options)
     g_converged = state.f_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged
 end
+
+
+function assess_convergence(state::ParticleSwarmState, options)
+    false, false, false, false
+end
