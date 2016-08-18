@@ -84,7 +84,7 @@ module Optim
 
     # Heuristic Optimization Methods
     include("nelder_mead.jl")
-    #include("simulated_annealing.jl")
+    include("simulated_annealing.jl")
     include("particle_swarm.jl")
 
     # Univariate methods

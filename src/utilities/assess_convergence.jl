@@ -58,6 +58,6 @@ function assess_convergence(state::NelderMeadState, options)
 end
 
 
-function assess_convergence(state::ParticleSwarmState, options)
+function assess_convergence(state::Union{ParticleSwarmState, SimulatedAnnealingState}, options)
     false, false, false, false
 end

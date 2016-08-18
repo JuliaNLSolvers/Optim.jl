@@ -20,7 +20,7 @@ my_tests = [
     "cg.jl",
     "nelder_mead.jl",
     "optimize.jl",
-#    "simulated_annealing.jl",
+    "simulated_annealing.jl",
     "particle_swarm.jl",
     "interpolating_line_search.jl",
     "api.jl",

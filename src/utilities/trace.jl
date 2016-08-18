@@ -16,7 +16,7 @@ function trace!(tr, state, iteration, method::NelderMead, options)
 end
 
 
-function trace!(tr, state, iteration, method::ParticleSwarm, options)
+function trace!(tr, state, iteration, method::Union{ParticleSwarm, SimulatedAnnealing}, options)
     dt = Dict()
     if options.extended_trace
         dt["x"] = copy(state.x)
