@@ -81,12 +81,15 @@
                 <li class="toctree-l3"><a href="#box-minimization">Box minimization</a></li>
                 
             
-                <li class="toctree-l3"><a href="#minimizing-a-univariate-function">Minimizing a univariate function</a></li>
+                <li class="toctree-l3"><a href="#minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</a></li>
                 
             
                 <li class="toctree-l3"><a href="#obtaining-results">Obtaining results</a></li>
                 
                     <li><a class="toctree-l4" href="#complete-list-of-functions">Complete list of functions</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</a></li>
                 
             
             </ul>
@@ -376,8 +379,8 @@
 </pre></div>
 
 
-<p><a id='Minimizing-a-univariate-function-1'></a></p>
-<h2 id="minimizing-a-univariate-function">Minimizing a univariate function</h2>
+<p><a id='Minimizing-a-univariate-function-on-a-bounded-interval-1'></a></p>
+<h2 id="minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</h2>
 <p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
 <div class="codehilite"><pre><span></span><span class="n">f_univariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span>
 <span class="n">optimize</span><span class="p">(</span><span class="n">f_univariate</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
@@ -452,6 +455,10 @@
 <li><code>g_converged(res)</code></li>
 <li><code>initial_state(res)</code></li>
 </ul>
+<p><a id='Notes-on-convergence-flags-and-checks-1'></a></p>
+<h2 id="notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</h2>
+<p>Currently, it is possible to access a minimizer using <code>Optim.minimizer(result)</code> even if all convergence flags are <code>false</code>. This means that the user has to be a bit careful when using the output from the solvers. It is advised to include checks for convergence if the minimizer or minimum is used to carry out further calculations.</p>
+<p>A related note is that first and second order methods makes a convergence check on the gradient before entering the optimization loop. This is done to prevent line search errors if <code>initial_x</code> is a stationary point. Notice, that this is only a first order check. If <code>initial_x</code> is any type of stationary point, <code>g_converged</code> will be true. This includes local minima, saddle points, and local maxima. If <code>iterations</code> is <code>0</code> and <code>g_converged</code> is <code>true</code>, the user needs to keep this point in mind.</p>
               
             </div>
           </div>
