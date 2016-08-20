@@ -8,8 +8,7 @@ let
     d2 = DifferentiableFunction(f, g!)
     d3 = TwiceDifferentiableFunction(f, g!, h!)
 
-    for method in (NelderMead(),)
-                   #SimulatedAnnealing())
+    for method in (NelderMead(), SimulatedAnnealing())
         ot_run = false
         cb = tr -> begin
             @test tr[end].iteration % 3 == 0

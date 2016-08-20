@@ -9,7 +9,7 @@ let
 
     prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     f_prob = prob.f
-    for g_free in (NelderMead(),)#, SimulatedAnnealing())
+    for g_free in (NelderMead(), SimulatedAnnealing())
         res = Optim.optimize(f_prob, prob.initial_x, method=g_free)
 
         io = IOBuffer()

@@ -29,7 +29,7 @@ let
                                      rosenbrock_hessian!)
 
     for method in (NelderMead(),)
-                  # SimulatedAnnealing())
+                   SimulatedAnnealing())
         optimize(rosenbrock, [0.0,0,.0], method = method)
         optimize(rosenbrock, Float32[0.0, 0.0], method = method)
     end
@@ -38,7 +38,7 @@ let
                    ConjugateGradient(),
                    GradientDescent(),
                    MomentumGradientDescent(),
-    #                :accelerated_gradient_descent,
+                   AcceleratedGradientDescent(),
                    LBFGS())
         optimize(d2, [0.0,0,.0], method = method)
         optimize(d2, Float32[0.0, 0.0], method = method)

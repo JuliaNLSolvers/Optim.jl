@@ -187,7 +187,7 @@ function optimize{T<:AbstractFloat}(
             _optimizer = optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
         elseif optimizer in (LBFGS, GradientDescent)
             _optimizer = optimizer(linesearch! = linesearch!, P = P, precondprep! = pcp)
-        elseif optimizer in (NelderMead,)# SimulatedAnnealing)
+        elseif optimizer in (NelderMead, SimulatedAnnealing)
             _optimizer = optimizer()
         elseif optimizer == Newton
             _optimizer = ConjugateGradient(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)

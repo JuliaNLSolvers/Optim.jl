@@ -35,7 +35,7 @@ let
 
     Optim.optimize(d3, initial_x, method = Newton())
 
-#    Optim.optimize(f, initial_x, method = SimulatedAnnealing())
+   Optim.optimize(f, initial_x, method = SimulatedAnnealing())
 
     optimize(f, initial_x, method = BFGS())
     optimize(f, initial_x, BFGS())
@@ -59,10 +59,10 @@ let
 
     optimize(f, g!, h!, initial_x, method = Newton())
 
-#    optimize(f, initial_x, method = SimulatedAnnealing())
-#    optimize(f, initial_x, SimulatedAnnealing())
-#    optimize(f, g!, initial_x, method = SimulatedAnnealing())
-#    optimize(f, g!, h!, initial_x, method = SimulatedAnnealing())
+    optimize(f, initial_x, method = SimulatedAnnealing())
+    optimize(f, initial_x, SimulatedAnnealing())
+    optimize(f, g!, initial_x, method = SimulatedAnnealing())
+    optimize(f, g!, h!, initial_x, method = SimulatedAnnealing())
 
     res = optimize(f, g!, h!,
     	           initial_x,
@@ -104,12 +104,12 @@ let
     	           store_trace = true,
     	           show_trace = false)
 
-#    res = optimize(f, g!, h!,
-#    	           initial_x,
-#    	           method = SimulatedAnnealing(),
-#    	           iterations = 10,
-#    	           store_trace = true,
-#    	           show_trace = false)
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           method = SimulatedAnnealing(),
+    	           iterations = 10,
+    	           store_trace = true,
+    	           show_trace = false)
 
     res = optimize(f, g!, h!,
     	           initial_x,
