@@ -1,32 +1,4 @@
-macro newton_tr_trace()
-    quote
-        if tracing
-            dt = Dict()
-            if o.extended_trace
-                dt["x"] = copy(x)
-                dt["g(x)"] = copy(gr)
-                dt["h(x)"] = copy(H)
-                dt["delta"] = copy(delta)
-                dt["interior"] = interior
-                dt["hard case"] = hard_case
-                dt["reached_subproblem_solution"] = reached_subproblem_solution
-                dt["lambda"] = lambda
-            end
-            grnorm = norm(gr, Inf)
-            update!(tr,
-                    iteration,
-                    f_x,
-                    grnorm,
-                    dt,
-                    o.store_trace,
-                    o.show_trace,
-                    o.show_every,
-                    o.callback)
-        end
-    end
-end
-
-
+#
 # Check whether we are in the "hard case".
 #
 # Args:
@@ -216,7 +188,6 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
     return m, interior, lambda, hard_case, reached_solution
 end
 
-
 immutable NewtonTrustRegion{T <: Real} <: Optimizer
     initial_delta::T
     delta_hat::T
@@ -230,164 +201,132 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     eta::Real = 0.1,
                     rho_lower::Real = 0.25,
                     rho_upper::Real = 0.75) =
-  NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
+                    NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
 
-function optimize{T}(d::TwiceDifferentiableFunction,
-                     initial_x::Vector{T},
-                     mo::NewtonTrustRegion,
-                     o::OptimizationOptions)
+method_string(method::NewtonTrustRegion) = "Newton (Trust Region)"
 
-    @assert(mo.delta_hat > 0, "delta_hat must be strictly positive")
-    @assert(0 < mo.initial_delta < mo.delta_hat, "delta must be in (0, delta_hat)")
-    @assert(0 <= mo.eta < mo.rho_lower, "eta must be in [0, rho_lower)")
-    @assert(mo.rho_lower < mo.rho_upper, "must have rho_lower < rho_upper")
-    @assert(mo.rho_lower >= 0.)
+type NewtonTrustRegionState{T}
+    n::Int64
+    x::Array{T}
+    x_previous::Array{T}
+    g::Array{T}
+    g_previous::Array{T}
+    f_x::T
+    f_x_previous::T
+    s::Array{T}
+    x_ls::Array{T}
+    g_ls::Array{T}
+    H
+    hard_case
+    reached_subproblem_solution
+    interior
+    delta::T
+    lambda
+    eta
+    rho
+    alpha::T
+    mayterminate::Bool
+    f_calls::Int64
+    g_calls::Int64
+    h_calls::Int64
+    lsr
+    d
+end
 
-    # Maintain current state in x and previous state in x_previous
-    x, x_previous = copy(initial_x), copy(initial_x)
+  function initialize_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
+          n = length(initial_x)
+        # Maintain current gradient in gr
+        @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
+        @assert(0 < method.initial_delta < method.delta_hat, "delta must be in (0, delta_hat)")
+        @assert(0 <= method.eta < method.rho_lower, "eta must be in [0, rho_lower)")
+        @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
+        @assert(method.rho_lower >= 0.)
+        # Keep track of trust region sizes
+        delta = copy(method.initial_delta)
 
-    # Count the total number of iterations
-    iteration = 0
+        # Record attributes of the subproblem in the trace.
+        hard_case = false
+        reached_subproblem_solution = true
+        interior = true
+        lambda = NaN
+        g = Array(T, n)
+        f_x_previous, f_x = NaN, d.fg!(initial_x, g)
+        f_calls, g_calls = 1, 1
+        H = Array(T, n, n)
+        d.h!(initial_x, H)
+        h_calls = 1
 
-    # Track calls to function and gradient
-    f_calls, g_calls = 0, 0
-
-    # Count number of parameters
-    n = length(x)
-
-    # Maintain current gradient in gr
-    gr = Array(T, n)
-
-    # The current search direction
-    s = Array(T, n)
-
-    # Store f(x), the function value, in f_x
-    f_x_previous, f_x = NaN, d.fg!(x, gr)
-
-    # We need to store the previous gradient in case we reject a step.
-    gr_previous = copy(gr)
-
-    f_calls, g_calls = f_calls + 1, g_calls + 1
-
-    # Store the hessian in H
-    H = Array(T, n, n)
-    d.h!(x, H)
-
-    # Keep track of trust region sizes
-    delta = copy(mo.initial_delta)
-
-    # Record attributes of the subproblem in the trace.
-    hard_case = false
-    reached_subproblem_solution = true
-    interior = true
-    lambda = NaN
-
-    # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
-    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
-    @newton_tr_trace
-
-    # Assess multiple types of convergence
-    x_converged, f_converged = false, false
-    g_converged = vecnorm(gr, Inf) < o.g_tol
-
-    # Iterate until convergence
-    converged = g_converged
-    while !converged && iteration < o.iterations
-        # Increment the number of steps we've had to perform
-        iteration += 1
-
-        # Find the next step direction.
-        m, interior, lambda, hard_case, reached_subproblem_solution =
-            solve_tr_subproblem!(gr, H, delta, s)
-
-        # Maintain a record of previous position
-        copy!(x_previous, x)
-
-        # Update current position
-        for i in 1:n
-            @inbounds x[i] = x[i] + s[i]
-        end
-
-        # Update the function value and gradient
-        copy!(gr_previous, gr)
-        f_x_previous, f_x = f_x, d.fg!(x, gr)
-        f_calls, g_calls = f_calls + 1, g_calls + 1
-
-        # Update the trust region size based on the discrepancy between
-        # the predicted and actual function values.  (Algorithm 4.1 in N&W)
-        f_x_diff = f_x_previous - f_x
-        if abs(m) <= eps(T)
-            # This should only happen when the step is very small, in which case
-            # we should accept the step and assess_convergence().
-            rho = 1.0
-        elseif m > 0
-            # This can happen if the trust region radius is too large and the
-            # Hessian is not positive definite.  We should shrink the trust
-            # region.
-            rho = mo.rho_lower - 1.0
-        else
-            rho = f_x_diff / (0 - m)
-        end
-
-        if rho < mo.rho_lower
-            delta *= 0.25
-        elseif (rho > mo.rho_upper) && (!interior)
-            delta = min(2 * delta, mo.delta_hat)
-        else
-            # else leave delta unchanged.
-        end
-
-        if rho > mo.eta
-            # Accept the point and check convergence
-            x_converged,
-            f_converged,
-            g_converged,
-            converged = assess_convergence(x,
-                                           x_previous,
-                                           f_x,
-                                           f_x_previous,
-                                           gr,
-                                           o.x_tol,
-                                           o.f_tol,
-                                           o.g_tol)
-            if !converged
-                # Only compute the next Hessian if we haven't converged
-                d.h!(x, H)
-            end
-        else
-            # The improvement is too small and we won't take it.
-
-            # If you reject an interior solution, make sure that the next
-            # delta is smaller than the current step.  Otherwise you waste
-            # steps reducing delta by constant factors while each solution
-            # will be the same.
-            x_diff = x - x_previous
-            delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
-
-            f_x = f_x_previous
-            copy!(x, x_previous)
-            copy!(gr, gr_previous)
-
-        end
-
-        @newton_tr_trace
+        NewtonTrustRegionState(length(initial_x),
+                             copy(initial_x), # Maintain current state in state.x
+                             copy(initial_x), # Maintain current state in state.x_previous
+                             g, # Store current gradient in state.g
+                             copy(g), # Store previous gradient in state.g_previous
+                             f_x, # Store current f in state.f_x
+                             T(NaN), # Store previous f in state.f_x_previous
+                             similar(initial_x), # Maintain current search direction in state.s
+                             similar(initial_x), # Buffer of x for line search in state.x_ls
+                             similar(initial_x), # Buffer of g for line search in state.g_ls
+                             H,
+                             hard_case,
+                             reached_subproblem_solution,
+                             interior,
+                             T(delta),
+                             lambda,
+                             method.eta, # eta
+                             0., # state.rho
+                             alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
+                             false, # state.mayterminate
+                             f_calls, # Track f calls in state.f_calls
+                             g_calls, # Track g calls in state.g_calls
+                             h_calls,
+                             LineSearchResults(T),
+                             d) # Maintain a cache for line search results in state.lsr
     end
 
-    return MultivariateOptimizationResults("Newton's Method with Trust Region",
-                                           initial_x,
-                                           x,
-                                           Float64(f_x),
-                                           iteration,
-                                           iteration == o.iterations,
-                                           x_converged,
-                                           o.x_tol,
-                                           f_converged,
-                                           o.f_tol,
-                                           g_converged,
-                                           o.g_tol,
-                                           tr,
-                                           f_calls,
-                                           g_calls)
+
+function update!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
+
+
+    # Find the next step direction.
+    m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
+        solve_tr_subproblem!(state.g, state.H, state.delta, state.s)
+
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+
+    # Update current position
+    for i in 1:state.n
+        @inbounds state.x[i] = state.x[i] + state.s[i]
+    end
+
+    # Update the function value and gradient
+    copy!(state.g_previous, state.g)
+    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
+    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+
+    # Update the trust region size based on the discrepancy between
+    # the predicted and actual function values.  (Algorithm 4.1 in N&W)
+    f_x_diff = state.f_x_previous - state.f_x
+    if abs(m) <= eps(T)
+        # This should only happen when the step is very small, in which case
+        # we should accept the step and assess_convergence().
+        state.rho = 1.0
+    elseif m > 0
+        # This can happen if the trust region radius is too large and the
+        # Hessian is not positive definite.  We should shrink the trust
+        # region.
+        state.rho = method.rho_lower - 1.0
+    else
+        state.rho = f_x_diff / (0 - m)
+    end
+
+    if state.rho < method.rho_lower
+        state.delta *= 0.25
+    elseif (state.rho > method.rho_upper) && (!state.interior)
+        state.delta = min(2 * state.delta, method.delta_hat)
+    else
+        # else leave delta unchanged.
+    end
+    false
 end

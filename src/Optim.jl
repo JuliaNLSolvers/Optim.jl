@@ -42,6 +42,9 @@ module Optim
     # API
     include("api.jl")
 
+    # Generic stuff
+    include("utilities/generic.jl")
+
     # Maxdiff
     include("utilities/maxdiff.jl")
 

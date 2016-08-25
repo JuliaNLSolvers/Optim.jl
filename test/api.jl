@@ -118,6 +118,7 @@ let
     	           iterations = 10,
     	           store_trace = true,
     	           show_trace = false)
+                   
    res_ext = optimize(f, g!, h!,
                       initial_x,
                       method = BFGS(),
