@@ -204,15 +204,11 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
 
-method_string(method::NewtonTrustRegion) = "Newton (Trust Region)"
-
 type NewtonTrustRegionState{T}
-    n::Int64
-    x::Array{T}
+    @add_generic_fields()
     x_previous::Array{T}
     g::Array{T}
     g_previous::Array{T}
-    f_x::T
     f_x_previous::T
     s::Array{T}
     x_ls::Array{T}
@@ -225,11 +221,6 @@ type NewtonTrustRegionState{T}
     lambda
     eta
     rho
-    alpha::T
-    mayterminate::Bool
-    f_calls::Int64
-    g_calls::Int64
-    h_calls::Int64
     lsr
     d
 end
@@ -257,12 +248,17 @@ end
         d.h!(initial_x, H)
         h_calls = 1
 
-        NewtonTrustRegionState(length(initial_x),
+        NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
+                             length(initial_x),
                              copy(initial_x), # Maintain current state in state.x
+                             f_x, # Store current f in state.f_x
+                             f_calls, # Track f calls in state.f_calls
+                             g_calls, # Track g calls in state.g_calls
+                             h_calls,
+                             0., # Elapsed time
                              copy(initial_x), # Maintain current state in state.x_previous
                              g, # Store current gradient in state.g
                              copy(g), # Store previous gradient in state.g_previous
-                             f_x, # Store current f in state.f_x
                              T(NaN), # Store previous f in state.f_x_previous
                              similar(initial_x), # Maintain current search direction in state.s
                              similar(initial_x), # Buffer of x for line search in state.x_ls
@@ -275,11 +271,6 @@ end
                              lambda,
                              method.eta, # eta
                              0., # state.rho
-                             alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
-                             false, # state.mayterminate
-                             f_calls, # Track f calls in state.f_calls
-                             g_calls, # Track g calls in state.g_calls
-                             h_calls,
                              LineSearchResults(T),
                              d) # Maintain a cache for line search results in state.lsr
     end

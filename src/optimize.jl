@@ -233,7 +233,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 
      after_while!(d, state, method, options)
 
-     return MultivariateOptimizationResults(method_string(method),
+     return MultivariateOptimizationResults(state.method_string,
                                             initial_x,
                                             state.x,
                                             Float64(state.f_x),

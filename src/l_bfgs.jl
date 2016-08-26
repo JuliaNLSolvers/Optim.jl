@@ -71,11 +71,8 @@ LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!,
       P=nothing, precondprep! = (P, x) -> nothing) =
     LBFGS(Int(m), linesearch!, P, precondprep!)
 
-method_string(method::LBFGS) = "L-BFGS"
-
 type LBFGSState{T}
-    n::Int64
-    x::Array{T}
+    @add_generic_fields()
     x_previous::Array{T}
     g::Array{T}
     g_previous::Array{T}
@@ -86,7 +83,6 @@ type LBFGSState{T}
     dg::Array{T}
     s::Array{T}
     u::Array{T}
-    f_x::T
     f_x_previous::T
     x_ls::Array{T}
     g_ls::Array{T}
@@ -95,8 +91,6 @@ type LBFGSState{T}
     twoloop_alpha
     mayterminate::Bool
     pseudo_iteration::Int64
-    f_calls::Int64
-    g_calls::Int64
     lsr
 end
 
@@ -106,8 +100,14 @@ function initialize_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     f_x = d.fg!(initial_x, g)
     # Maintain a cache for line search results
     # Trace the history of states visited
-    LBFGSState(n,
+    LBFGSState("L-BFGS",
+              n,
               copy(initial_x), # Maintain current state in state.x
+              f_x, # Store current f in state.f_x
+              1, # Track f calls in state.f_calls
+              1, # Track g calls in state.g_calls
+              0, # Track h calls in state.h_calls
+              0., # Elapsed
               copy(initial_x), # Maintain current state in state.x_previous
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
@@ -118,7 +118,6 @@ function initialize_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               Array{T}(n), # Buffer for new entry in state.dg_history
               Array{T}(n), # Store current search direction in state.s
               Array{T}(n), # Buffer stored in state.u
-              f_x, # Store current f in state.f_x
               T(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Buffer of x for line search in state.x_ls
               similar(initial_x), # Buffer of g for line search in state.g_ls
@@ -127,8 +126,6 @@ function initialize_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               Array{T}(method.m), #Buffer for use by twoloop
               false, # state.mayterminate
               0,
-              1, # Track f calls in state.f_calls
-              1, # Track g calls in state.g_calls
               LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
 end
 

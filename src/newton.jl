@@ -2,17 +2,13 @@ immutable Newton <: Optimizer
     linesearch!::Function
 end
 
-method_string(method::Newton) = "Newton's Method"
-
 Newton(; linesearch!::Function = hz_linesearch!) =
   Newton(linesearch!)
 
   type NewtonState{T}
-      n::Int64
-      x::Array{T}
+      @add_generic_fields()
       x_previous::Array{T}
       g::Array{T}
-      f_x::T
       f_x_previous::T
       s::Array{T}
       x_ls::Array{T}
@@ -22,9 +18,6 @@ Newton(; linesearch!::Function = hz_linesearch!) =
       Hd
       alpha::T
       mayterminate::Bool
-      f_calls::Int64
-      g_calls::Int64
-      h_calls::Int64
       lsr
   end
 
@@ -40,24 +33,26 @@ function initialize_state{T}(method::Newton, options, d, initial_x::Array{T})
       d.h!(initial_x, H)
       h_calls = 1
 
-      NewtonState(length(initial_x),
-                           copy(initial_x), # Maintain current state in state.x
-                           copy(initial_x), # Maintain current state in state.x_previous
-                           g, # Store current gradient in state.g
-                           f_x, # Store current f in state.f_x
-                           T(NaN), # Store previous f in state.f_x_previous
-                           similar(initial_x), # Maintain current search direction in state.s
-                           similar(initial_x), # Buffer of x for line search in state.x_ls
-                           similar(initial_x), # Buffer of g for line search in state.g_ls
-                           H,
-                           copy(H),
-                           copy(H),
-                           alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
-                           false, # state.mayterminate
-                           f_calls, # Track f calls in state.f_calls
-                           g_calls, # Track g calls in state.g_calls
-                           h_calls,
-                           LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
+      NewtonState("Newton's Method",
+                  length(initial_x),
+                  copy(initial_x), # Maintain current state in state.x
+                  f_x, # Store current f in state.f_x
+                  f_calls, # Track f calls in state.f_calls
+                  g_calls, # Track g calls in state.g_calls
+                  h_calls,
+                  0., # Elapsed time
+                  copy(initial_x), # Maintain current state in state.x_previous
+                  g, # Store current gradient in state.g
+                  T(NaN), # Store previous f in state.f_x_previous
+                  similar(initial_x), # Maintain current search direction in state.s
+                  similar(initial_x), # Buffer of x for line search in state.x_ls
+                  similar(initial_x), # Buffer of g for line search in state.g_ls
+                  H,
+                  copy(H),
+                  copy(H),
+                  alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
+                  false, # state.mayterminate
+                  LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
   end
 
   function update!{T}(d, state::NewtonState{T}, method::Newton)

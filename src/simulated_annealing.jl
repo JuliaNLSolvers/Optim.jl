@@ -21,19 +21,13 @@ SimulatedAnnealing(; neighbor!::Function = default_neighbor!,
                      keep_best::Bool = true) =
   SimulatedAnnealing(neighbor!, temperature, keep_best)
 
-method_string(method::SimulatedAnnealing) = "Simulated Annealing"
-
 type SimulatedAnnealingState{T}
-  n::Int64
-  iteration::Int64
-  x_current::Array{T}
-  x_proposal
-  x
-  f_x
-  f_x_current::T
-  f_proposal::T
-  f_calls::Int64
-  g_calls::Int64
+    @add_generic_fields()
+    iteration::Int64
+    x_current::Array{T}
+    x_proposal
+    f_x_current::T
+    f_proposal::T
 end
 
 initialize_state(method::SimulatedAnnealing, options, d, initial_x::Array) = initialize_state(method, options, d.f, initial_x)
@@ -49,8 +43,7 @@ function initialize_state{T}(method::SimulatedAnnealing, options, f::Function, i
     # Store the best state ever visited
     best_x = copy(initial_x)
     best_f_x = f_x
-    iteration = 1
-    SimulatedAnnealingState(n, 1, copy(initial_x), copy(initial_x), best_x, best_f_x, f_x, f_x, f_calls, 0)
+    SimulatedAnnealingState("Simulated Annealing", n, copy(initial_x), f_x, f_calls, 0, 0, 0., 1, copy(initial_x), best_x, best_f_x, f_x)
 end
 
 update!(d, state::SimulatedAnnealingState, method::SimulatedAnnealing) = update!(d.f, state, method)

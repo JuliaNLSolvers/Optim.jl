@@ -6,15 +6,9 @@ end
 
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, upper, n_particles)
 
-method_string(method::ParticleSwarm) = "Particle Swarm"
-
 type ParticleSwarmState{T}
-    n::Int64
+    @add_generic_fields()
     iteration::Int64
-    x::Array{T}
-    f_x::T
-    f_calls::Int64
-    g_calls::Int64
     lower
     upper
     c1::T # Weight variable; currently not exposed to users
@@ -126,11 +120,14 @@ function initialize_state{T}(method::ParticleSwarm, options, f::Function, initia
         X[j, 1] = initial_x[j]
         X_best[j, 1] = initial_x[j]
     end
-    ParticleSwarmState(n,
-        0,
+    ParticleSwarmState("Particle Swarm",
+        n,
         x,
         f_x,
-        f_calls,
+        f_calls, # f call
+        0, # g calls
+        0, # h calls
+        0., # Elapsed
         0,
         lower,
         upper,

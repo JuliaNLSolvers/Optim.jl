@@ -6,31 +6,25 @@ immutable BFGS <: Optimizer
     initial_invH::Function
 end
 
-method_string(method::BFGS) = "BFGS"
-
 BFGS(; linesearch!::Function = hz_linesearch!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch!, initial_invH)
 
 type BFGSState{T}
-    n::Int64
-    x::Array{T}
+    @add_generic_fields()
     x_previous::Array{T}
     g::Array{T}
     g_previous::Array{T}
+    f_x_previous::T
     dx::Array{T}
     dg::Array{T}
     s::Array{T}
     u::Array{T}
     I::Array{T}
     invH::Array{T}
-    f_x::T
-    f_x_previous::T
     x_ls::Array{T}
     g_ls::Array{T}
     alpha::T
     mayterminate::Bool
-    f_calls::Int64
-    g_calls::Int64
     lsr
 end
 
@@ -41,25 +35,28 @@ function initialize_state{T}(method::BFGS, options, d, initial_x::Array{T})
     invH = method.initial_invH(initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
-    BFGSState(n,
+    BFGSState("BFGS",
+              n,
               copy(initial_x), # Maintain current state in state.x
+              f_x, # Store current f in state.f_x
+              1, # Track f calls in state.f_calls
+              1, # Track g calls in state.g_calls
+              0, # Track h calls in state.h_calls
+              0., # Time elapsed
               copy(initial_x), # Maintain current state in state.x_previous
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
+              T(NaN), # Store previous f in state.f_x_previous
               Array{T}(n), # Store changes in position in state.dx
               Array{T}(n), # Store changes in gradient in state.dg
               Array{T}(n), # Store current search direction in state.s
               Array{T}(n), # Buffer stored in state.u
               eye(T, size(invH)...),
               invH, # Store current invH in state.invH
-              f_x, # Store current f in state.f_x
-              T(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Buffer of x for line search in state.x_ls
               similar(initial_x), # Buffer of g for line search in state.g_ls
               alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
               false, # state.mayterminate
-              1, # Track f calls in state.f_calls
-              1, # Track g calls in state.g_calls
               LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
 end
 
