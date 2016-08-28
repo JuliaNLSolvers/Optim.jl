@@ -211,8 +211,6 @@ type NewtonTrustRegionState{T}
     g_previous::Array{T}
     f_x_previous::T
     s::Array{T}
-    x_ls::Array{T}
-    g_ls::Array{T}
     H
     hard_case
     reached_subproblem_solution
@@ -221,59 +219,55 @@ type NewtonTrustRegionState{T}
     lambda
     eta
     rho
-    lsr
     d
 end
 
-  function initialize_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
-          n = length(initial_x)
-        # Maintain current gradient in gr
-        @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
-        @assert(0 < method.initial_delta < method.delta_hat, "delta must be in (0, delta_hat)")
-        @assert(0 <= method.eta < method.rho_lower, "eta must be in [0, rho_lower)")
-        @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
-        @assert(method.rho_lower >= 0.)
-        # Keep track of trust region sizes
-        delta = copy(method.initial_delta)
+function initialize_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
+      n = length(initial_x)
+    # Maintain current gradient in gr
+    @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
+    @assert(0 < method.initial_delta < method.delta_hat, "delta must be in (0, delta_hat)")
+    @assert(0 <= method.eta < method.rho_lower, "eta must be in [0, rho_lower)")
+    @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
+    @assert(method.rho_lower >= 0.)
+    # Keep track of trust region sizes
+    delta = copy(method.initial_delta)
 
-        # Record attributes of the subproblem in the trace.
-        hard_case = false
-        reached_subproblem_solution = true
-        interior = true
-        lambda = NaN
-        g = Array(T, n)
-        f_x_previous, f_x = NaN, d.fg!(initial_x, g)
-        f_calls, g_calls = 1, 1
-        H = Array(T, n, n)
-        d.h!(initial_x, H)
-        h_calls = 1
+    # Record attributes of the subproblem in the trace.
+    hard_case = false
+    reached_subproblem_solution = true
+    interior = true
+    lambda = NaN
+    g = Array(T, n)
+    f_x_previous, f_x = NaN, d.fg!(initial_x, g)
+    f_calls, g_calls = 1, 1
+    H = Array(T, n, n)
+    d.h!(initial_x, H)
+    h_calls = 1
 
-        NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
-                             length(initial_x),
-                             copy(initial_x), # Maintain current state in state.x
-                             f_x, # Store current f in state.f_x
-                             f_calls, # Track f calls in state.f_calls
-                             g_calls, # Track g calls in state.g_calls
-                             h_calls,
-                             0., # Elapsed time
-                             copy(initial_x), # Maintain current state in state.x_previous
-                             g, # Store current gradient in state.g
-                             copy(g), # Store previous gradient in state.g_previous
-                             T(NaN), # Store previous f in state.f_x_previous
-                             similar(initial_x), # Maintain current search direction in state.s
-                             similar(initial_x), # Buffer of x for line search in state.x_ls
-                             similar(initial_x), # Buffer of g for line search in state.g_ls
-                             H,
-                             hard_case,
-                             reached_subproblem_solution,
-                             interior,
-                             T(delta),
-                             lambda,
-                             method.eta, # eta
-                             0., # state.rho
-                             LineSearchResults(T),
-                             d) # Maintain a cache for line search results in state.lsr
-    end
+    NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
+                         length(initial_x),
+                         copy(initial_x), # Maintain current state in state.x
+                         f_x, # Store current f in state.f_x
+                         f_calls, # Track f calls in state.f_calls
+                         g_calls, # Track g calls in state.g_calls
+                         h_calls,
+                         0., # Elapsed time
+                         copy(initial_x), # Maintain current state in state.x_previous
+                         g, # Store current gradient in state.g
+                         copy(g), # Store previous gradient in state.g_previous
+                         T(NaN), # Store previous f in state.f_x_previous
+                         similar(initial_x), # Maintain current search direction in state.s
+                         H,
+                         hard_case,
+                         reached_subproblem_solution,
+                         interior,
+                         T(delta),
+                         lambda,
+                         method.eta, # eta
+                         0., # state.rho
+                         d) # Maintain a cache for line search results in state.lsr
+end
 
 
 function update!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)

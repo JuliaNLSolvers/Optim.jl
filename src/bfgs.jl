@@ -17,15 +17,11 @@ type BFGSState{T}
     f_x_previous::T
     dx::Array{T}
     dg::Array{T}
-    s::Array{T}
     u::Array{T}
     I::Array{T}
     invH::Array{T}
-    x_ls::Array{T}
-    g_ls::Array{T}
-    alpha::T
-    mayterminate::Bool
-    lsr
+    s::Array{T}
+    @add_linesearch_fields()
 end
 
 function initialize_state{T}(method::BFGS, options, d, initial_x::Array{T})
@@ -49,15 +45,11 @@ function initialize_state{T}(method::BFGS, options, d, initial_x::Array{T})
               T(NaN), # Store previous f in state.f_x_previous
               Array{T}(n), # Store changes in position in state.dx
               Array{T}(n), # Store changes in gradient in state.dg
-              Array{T}(n), # Store current search direction in state.s
               Array{T}(n), # Buffer stored in state.u
               eye(T, size(invH)...),
               invH, # Store current invH in state.invH
-              similar(initial_x), # Buffer of x for line search in state.x_ls
-              similar(initial_x), # Buffer of g for line search in state.g_ls
-              alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
-              false, # state.mayterminate
-              LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
+              Array{T}(n), # Store current search direction in state.s
+              @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 

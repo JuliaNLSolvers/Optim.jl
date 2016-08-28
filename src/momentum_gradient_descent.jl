@@ -15,11 +15,7 @@ type MomentumGradientDescentState{T}
     g::Array{T}
     f_x_previous::T
     s::Array{T}
-    x_ls::Array{T}
-    g_ls::Array{T}
-    alpha::T
-    mayterminate::Bool
-    lsr
+    @add_linesearch_fields()
 end
 
 function initialize_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
@@ -38,11 +34,7 @@ function initialize_state{T}(method::MomentumGradientDescent, options, d, initia
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         similar(initial_x), # Buffer of x for line search in state.x_ls
-                         similar(initial_x), # Buffer of g for line search in state.g_ls
-                         alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
-                         false, # state.mayterminate
-                         LineSearchResults(T)) # Maintain a cache for line search results in state.lsr
+                         @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)

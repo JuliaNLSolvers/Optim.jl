@@ -1,3 +1,7 @@
+typealias FirstOrderSolver Union{AcceleratedGradientDescent, GradientDescent,
+                                 MomentumGradientDescent, BFGS, LBFGS}
+typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
+
 # Multivariate optimization
 function optimize(f::Function,
                   initial_x::Array;
@@ -129,9 +133,7 @@ function optimize(f::Function,
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, method, options)
 end
-typealias FirstOrderSolver Union{AcceleratedGradientDescent, GradientDescent,
-                                 MomentumGradientDescent, BFGS, LBFGS}
-typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
+
 function optimize{T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::Function,
                   initial_x::Array{T},
                   method::M,
