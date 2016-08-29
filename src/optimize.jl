@@ -203,7 +203,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 
     options.show_trace && print_header(method)
 
-    state = initialize_state(method, options, d, initial_x)
+    state = initial_state(method, options, d, initial_x)
 
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing

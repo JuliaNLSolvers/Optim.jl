@@ -85,7 +85,7 @@ type ConjugateGradientState{T}
 end
 
 
-function initialize_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
     g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
     pg = copy(g)
@@ -122,7 +122,7 @@ function initialize_state{T}(method::ConjugateGradient, options, d, initial_x::A
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
                          -copy(pg), # Maintain current search direction in state.s
-                         @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)

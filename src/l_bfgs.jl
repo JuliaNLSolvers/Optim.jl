@@ -90,7 +90,7 @@ type LBFGSState{T}
     @add_linesearch_fields()
 end
 
-function initialize_state{T}(method::LBFGS, options, d, initial_x::Array{T})
+function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     g = Array(T, n)
     f_x = d.fg!(initial_x, g)
@@ -118,7 +118,7 @@ function initialize_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               Array{T}(method.m), #Buffer for use by twoloop
               0,
               Array{T}(n), # Store current search direction in state.s
-              @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update!{T}(d, state::LBFGSState{T}, method::LBFGS)

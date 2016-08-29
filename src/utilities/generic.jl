@@ -22,7 +22,7 @@ macro add_linesearch_fields()
     end
 end
 
-macro initialize_linesearch()
+macro initial_linesearch()
     quote
         (similar(initial_x), # Buffer of x for line search in state.x_ls
         similar(initial_x), # Buffer of g for line search in state.g_ls

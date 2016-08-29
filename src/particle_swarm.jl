@@ -26,9 +26,9 @@ type ParticleSwarmState{T}
     iterations
 end
 
-initialize_state(method::ParticleSwarm, options, d, initial_x::Array) = initialize_state(method, options, d.f, initial_x)
+initial_state(method::ParticleSwarm, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
 
-function initialize_state{T}(method::ParticleSwarm, options, f::Function, initial_x::Array{T})
+function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x::Array{T})
 
     #=
     Variable X represents the whole swarm of solutions with

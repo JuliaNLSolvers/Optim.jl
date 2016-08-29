@@ -24,7 +24,7 @@ type BFGSState{T}
     @add_linesearch_fields()
 end
 
-function initialize_state{T}(method::BFGS, options, d, initial_x::Array{T})
+function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     g = Array(T, n)
     f_x = d.fg!(initial_x, g)
@@ -49,7 +49,7 @@ function initialize_state{T}(method::BFGS, options, d, initial_x::Array{T})
               eye(T, size(invH)...),
               invH, # Store current invH in state.invH
               Array{T}(n), # Store current search direction in state.s
-              @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 

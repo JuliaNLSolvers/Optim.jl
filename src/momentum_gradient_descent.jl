@@ -18,7 +18,7 @@ type MomentumGradientDescentState{T}
     @add_linesearch_fields()
 end
 
-function initialize_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
+function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
     g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
 
@@ -34,7 +34,7 @@ function initialize_state{T}(method::MomentumGradientDescent, options, d, initia
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)

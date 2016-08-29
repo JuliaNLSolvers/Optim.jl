@@ -30,9 +30,9 @@ type SimulatedAnnealingState{T}
     f_proposal::T
 end
 
-initialize_state(method::SimulatedAnnealing, options, d, initial_x::Array) = initialize_state(method, options, d.f, initial_x)
+initial_state(method::SimulatedAnnealing, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
 
-function initialize_state{T}(method::SimulatedAnnealing, options, f::Function, initial_x::Array{T})
+function initial_state{T}(method::SimulatedAnnealing, options, f::Function, initial_x::Array{T})
     # Count number of parameters
     n = length(initial_x)
 

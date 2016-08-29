@@ -16,17 +16,17 @@ AcceleratedGradientDescent(; linesearch!::Function = hz_linesearch!) =
 
 type AcceleratedGradientDescentState{T}
     @add_generic_fields()
-    iteration::Int64
     x_previous::Array{T}
-    y::Array{T}
-    y_previous::Array{T}
     g::Array{T}
     f_x_previous::T
+    iteration::Int64
+    y::Array{T}
+    y_previous::Array{T}
     s::Array{T}
     @add_linesearch_fields()
 end
 
-function initialize_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
+function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
     g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
 
@@ -38,14 +38,14 @@ function initialize_state{T}(method::AcceleratedGradientDescent, options, d, ini
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
                          0., # Elapsed time
-                         0, # Iterations
                          copy(initial_x), # Maintain current state in state.x_previous
-                         copy(initial_x), # Maintain intermediary current state in state.y
-                         copy(initial_x), # Maintain intermediary state in state.y_previous
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
+                         0, # Iteration
+                         copy(initial_x), # Maintain intermediary current state in state.y
+                         copy(initial_x), # Maintain intermediary state in state.y_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)

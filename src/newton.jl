@@ -17,7 +17,7 @@ type NewtonState{T}
     @add_linesearch_fields()
 end
 
-function initialize_state{T}(method::Newton, options, d, initial_x::Array{T})
+function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
         n = length(initial_x)
       # Maintain current gradient in gr
       g = Array(T, n)
@@ -44,7 +44,7 @@ function initialize_state{T}(method::Newton, options, d, initial_x::Array{T})
                   copy(H),
                   copy(H),
                   similar(initial_x), # Maintain current search direction in state.s
-                  @initialize_linesearch()...) # Maintain a cache for line search results in state.lsr
+                  @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
   end
 
   function update!{T}(d, state::NewtonState{T}, method::Newton)

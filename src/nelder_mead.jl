@@ -128,9 +128,9 @@ type NelderMeadState{T, N}
     step_type::String
 end
 
-initialize_state(method::NelderMead, options, d, initial_x::Array) = initialize_state(method, options, d.f, initial_x)
+initial_state(method::NelderMead, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
 
-function initialize_state{T}(method::NelderMead, options, f::Function, initial_x::Array{T})
+function initial_state{T}(method::NelderMead, options, f::Function, initial_x::Array{T})
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)

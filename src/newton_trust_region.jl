@@ -222,7 +222,7 @@ type NewtonTrustRegionState{T}
     d
 end
 
-function initialize_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
+function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
       n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.delta_hat > 0, "delta_hat must be strictly positive")

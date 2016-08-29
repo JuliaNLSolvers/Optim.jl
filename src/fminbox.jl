@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
+function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
     if isnan(mu0)
         gbarriernorm = sum(abs(gbarrier))
         if gbarriernorm > 0
