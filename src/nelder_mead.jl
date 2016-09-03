@@ -255,12 +255,12 @@ function update!{T}(f::Function, state::NelderMeadState{T}, method::NelderMead)
 
     if shrink
         for i = 2:m
-            ord = i_order[i]
-            copy!(simplex[ord], x_lowest + δ*(simplex[ord]-x_lowest))
-            f_simplex[ord] = f(simplex[ord])
+            ord = state.i_order[i]
+            copy!(state.simplex[ord], state.x_lowest + state.δ*(state.simplex[ord]-state.x_lowest))
+            state.f_simplex[ord] = f(state.simplex[ord])
         end
         step_type = "shrink"
-        sortperm!(i_order, f_simplex)
+        sortperm!(state.i_order, state.f_simplex)
     end
 
     state.f_x_previous, state.f_x = state.f_x, nmobjective(state.f_simplex, n, m)
