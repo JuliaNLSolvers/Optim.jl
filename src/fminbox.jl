@@ -155,7 +155,7 @@ function optimize{T<:AbstractFloat}(
         end
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
-    valfunc = df.fg!(x, gfunc)  # is this used??
+    df.g!(x, gfunc)
     mu = isnan(mu0) ? initialize_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
     if show_trace > 0
         println("######## fminbox ########")
