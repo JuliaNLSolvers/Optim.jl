@@ -62,11 +62,9 @@ function function_barrier{T}(x::Array{T}, gfunc, gbarrier, f::Function, fbarrier
     return vfunc, vbarrier
 end
 
-function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, val_each::Vector{T}, fb::Function, mu::T)
+function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, fb::Function, mu::T)
     calc_g = !(g === nothing)
     valfunc, valbarrier = fb(x, gfunc, gbarrier)
-    val_each[1] = valfunc
-    val_each[2] = valbarrier
     if calc_g
         @simd for i = 1:length(g)
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
@@ -163,7 +161,6 @@ function optimize{T<:AbstractFloat}(
     end
 
     g = similar(x)
-    valboth = Array(T, 2)
     fval_all = Array(Vector{T}, 0)
 
     # Count the total number of outer iterations
@@ -179,7 +176,7 @@ function optimize{T<:AbstractFloat}(
 
         copy!(xold, x)
         # Optimize with current setting of mu
-        funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, valboth, fb, mu)
+        funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, fb, mu)
         fval0 = funcc(x, nothing)
         dfbox = DifferentiableFunction(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc)
         if show_trace > 0
