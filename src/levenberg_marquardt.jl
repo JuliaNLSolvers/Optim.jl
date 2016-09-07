@@ -97,19 +97,14 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
         delta_x = JJ \ n_buffer
 
         # apply box constraints
-        if !isempty(lower) || !isempty(upper)
-            @simd for i in 1:n
-                @inbounds n_buffer[i] = x[i] + delta_x[i]
-            end
-        end
         if !isempty(lower)
             @simd for i in 1:n
-               @inbounds delta_x[i] = max(n_buffer[i], lower[i]) - x[i]
+               @inbounds delta_x[i] = max(x[i] + delta_x[i], lower[i]) - x[i]
             end
         end
         if !isempty(upper)
             @simd for i in 1:n
-               @inbounds delta_x[i] = min(n_buffer[i], upper[i]) - x[i]
+               @inbounds delta_x[i] = min(x[i] + delta_x[i], upper[i]) - x[i]
             end
         end
 
