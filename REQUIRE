@@ -3,3 +3,4 @@ Calculus
 ForwardDiff 0.2.0 0.3.0
 PositiveFactorizations
 Compat 0.8.4
+LineSearches

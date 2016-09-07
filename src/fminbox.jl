@@ -100,9 +100,6 @@ function precondprepbox!(P, x, l, u, mu)
     end
 end
 
-const PARAMETERS_MU = one64<<display_nextbit
-display_nextbit += 1
-
 immutable Fminbox <: Optimizer end
 
 function optimize{T<:AbstractFloat}(
