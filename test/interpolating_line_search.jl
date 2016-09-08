@@ -21,7 +21,7 @@ let
 	alpha, f_update, g_update = Optim.backtracking_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
 	alpha, f_update, g_update = Optim.interpolating_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
 	alpha, f_update, g_update = Optim.mt_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
-	alpha, f_update, g_update = Optim.hz_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
+	alpha, f_update, g_update = Optim.LineSearches.hz_linesearch!(d, x, p, x_new, gr_new, lsr, alpha, mayterminate)
 
 	Optim.optimize(d, [0.0, 0.0], method=LBFGS())
 end

@@ -17,7 +17,7 @@ macro add_linesearch_fields()
         g_ls::Array{T}
         alpha::T
         mayterminate::Bool
-        lsr::LineSearchResults
+        lsr::LineSearches.LineSearchResults
     end
 end
 
@@ -25,8 +25,8 @@ macro initial_linesearch()
     quote
         (similar(initial_x), # Buffer of x for line search in state.x_ls
         similar(initial_x), # Buffer of g for line search in state.g_ls
-        alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
+        LineSearches.alphainit(one(T), initial_x, g, f_x), # Keep track of step size in state.alpha
         false, # state.mayterminate
-        LineSearchResults(T))
+        LineSearches.LineSearchResults(T))
     end
 end

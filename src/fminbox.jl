@@ -117,7 +117,7 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        linesearch!::Function = hz_linesearch!,
+        linesearch!::Function = LineSearches.hz_linesearch!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
