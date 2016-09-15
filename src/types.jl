@@ -94,15 +94,13 @@ immutable NonDifferentiableFunction
     f::Function
 end
 
-immutable DifferentiableFunction <: LineSearches.AbstractDifferentiableFunction
+immutable DifferentiableFunction
     f::Function
     g!::Function
     fg!::Function
 end
 
-abstract AbstractTwiceDifferentiableFunction <: LineSearches.AbstractDifferentiableFunction
-
-immutable TwiceDifferentiableFunction <: AbstractTwiceDifferentiableFunction
+immutable TwiceDifferentiableFunction
     f::Function
     g!::Function
     fg!::Function
