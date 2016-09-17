@@ -207,35 +207,41 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+    stopped = false
 
     x_converged, f_converged = false, false
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
-            g_converged = false
-        else
-            vecnorm(state.g, Inf) < options.g_tol
-        end
+        g_converged = false
+    else
+        vecnorm(state.g, Inf) < options.g_tol
+    end
 
     converged = g_converged
     iteration = 0
     trace!(tr, state, iteration, method, options)
-    while !converged && iteration < options.iterations# && stopped
-        iteration += 1
-        update!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
 
-#        stopped = option.callback(state)
+    while !converged && !stopped && iteration < options.iterations
+        iteration += 1
+
+        update!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
 
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
 
-        tracing && trace!(tr, state, iteration, method, options)
+        # If tracing update trace with trace!. If a callback is provided, it
+        # should have boolean return value that controls the variable stopped.
+        # This allows for early stopping controlled by the callback.
+        if tracing
+            stopped = trace!(tr, state, iteration, method, options)
+        end
 
-     end
+    end # while
 
-     after_while!(d, state, method, options)
+    after_while!(d, state, method, options)
 
-     return MultivariateOptimizationResults(state.method_string,
+    return MultivariateOptimizationResults(state.method_string,
                                             initial_x,
                                             state.x,
                                             Float64(state.f_x),

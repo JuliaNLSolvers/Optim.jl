@@ -18,10 +18,12 @@ function update!{T}(tr::OptimizationTrace{T},
     end
     if callback != nothing && (iteration % show_every == 0)
         if store_trace
-            callback(tr)
+            stopped = callback(tr)
         else
-            callback(os)
+            stopped = callback(os)
         end
+    else
+        stopped = false
     end
-    return
+    stopped
 end
