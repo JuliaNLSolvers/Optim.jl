@@ -359,7 +359,7 @@ function hz_linesearch!{T}(df::Union{DifferentiableFunction,
         end
         iter += 1
     end
-    error("Linesearch failed to converge")
+    error("Linesearch failed to converge, reached maximum iterations $linesearchmax")
 end
 
 # Check Wolfe & approximate Wolfe
