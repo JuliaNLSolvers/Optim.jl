@@ -188,13 +188,7 @@ function optimize(d::DifferentiableFunction,
     optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
 
-# Iterative method boiler plate
-#This will just be replaced by ::Optimizer once they're all converted
-typealias Refactored Union{AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient, LBFGS, BFGS, NelderMead, ParticleSwarm, SimulatedAnnealing, Newton}
-
-function after_while!(d, state, method, options)
-    nothing
-end
+after_while!(d, state, method, options) = nothing
 
 function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::OptimizationOptions)
     if length(initial_x) == 1 && typeof(method) <: NelderMead
