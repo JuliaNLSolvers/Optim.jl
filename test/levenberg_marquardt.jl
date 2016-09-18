@@ -38,6 +38,14 @@ let
 
     @assert norm(Optim.minimizer(results) - [1.0, 1.0]) < 0.01
 
+    # check estimate is within the bound PR #278
+     result = Optim.levenberg_marquardt(frb, grb, [150.0, 150.0]; lower = [10.0, 10.0], upper = [200.0, 200.0])
+     @test Optim.minimizer(result)[1] >= 10.0
+     @test Optim.minimizer(result)[2] >= 10.0
+
+
+
+
     # tests for #178, taken from LsqFit.jl, but stripped
     let
         srand(12345)
