@@ -46,8 +46,8 @@ function initial_state{T}(method::SimulatedAnnealing, options, f::Function, init
     SimulatedAnnealingState("Simulated Annealing", n, copy(initial_x), f_x, f_calls, 0, 0, 0., 1, copy(initial_x), best_x, best_f_x, f_x)
 end
 
-update!(d, state::SimulatedAnnealingState, method::SimulatedAnnealing) = update!(d.f, state, method)
-function update!{T}(f::Function, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
+update_state!(d, state::SimulatedAnnealingState, method::SimulatedAnnealing) = update_state!(d.f, state, method)
+function update_state!{T}(f::Function, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)

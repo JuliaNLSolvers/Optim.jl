@@ -10,6 +10,7 @@ immutable OptimizationOptions{TCallback <: Union{Void, Function}}
     autodiff::Bool
     show_every::Int
     callback::TCallback
+    time_limit::Float64
 end
 
 function OptimizationOptions(;
@@ -22,7 +23,8 @@ function OptimizationOptions(;
         extended_trace::Bool = false,
         autodiff::Bool = false,
         show_every::Integer = 1,
-        callback = nothing)
+        callback = nothing,
+        time_limit = NaN)
     show_every = show_every > 0 ? show_every: 1
     if extended_trace && callback == nothing
         show_trace = true
@@ -30,7 +32,7 @@ function OptimizationOptions(;
     OptimizationOptions{typeof(callback)}(
         Float64(x_tol), Float64(f_tol), Float64(g_tol), Int(iterations),
         store_trace, show_trace, extended_trace, autodiff, Int(show_every),
-        callback)
+        callback, time_limit)
 end
 
 function print_header(options::OptimizationOptions)

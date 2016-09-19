@@ -121,7 +121,7 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update!{T}(d, state::LBFGSState{T}, method::LBFGS)
+function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     n = state.n
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
@@ -162,14 +162,14 @@ function update!{T}(d, state::LBFGSState{T}, method::LBFGS)
         @inbounds state.x[i] = state.x[i] + state.dx[i]
     end
 
-    # Maintain a record of the previous gradient
-    copy!(state.g_previous, state.g)
-
-    # Update the function value and gradient
+    # Save old f and g values to prepare for update_g! call
     state.f_x_previous = state.f_x
-    state.f_x = d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+    copy!(state.g_previous, state.g)
+    false
+end
 
+
+function update_h!(d, state, method::LBFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
         @inbounds state.dg[i] = state.g[i] - state.g_previous[i]
@@ -185,5 +185,4 @@ function update!{T}(d, state::LBFGSState{T}, method::LBFGS)
     state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = state.dg
     state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
 
-    false
 end

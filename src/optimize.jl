@@ -1,4 +1,4 @@
-typealias FirstOrderSolver Union{AcceleratedGradientDescent, GradientDescent,
+typealias FirstOrderSolver Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
                                  MomentumGradientDescent, BFGS, LBFGS}
 typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
 
@@ -188,20 +188,37 @@ function optimize(d::DifferentiableFunction,
     optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
 
+update_g!(d, state, method) = nothing
+
+function update_g!{M<:Union{FirstOrderSolver, Newton}}(d, state, method::M)
+    # Update the function value and gradient
+    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
+    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+end
+
+update_h!(d, state, method) = nothing
+
+# Update the Hessian
+function update_h!(d, state, method::SecondOrderSolver)
+    d.h!(state.x, state.H)
+    state.h_calls += 1
+end
+
 after_while!(d, state, method, options) = nothing
 
 function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::OptimizationOptions)
+    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("Use optimize(f, scalar, scalar) for 1D problems")
     end
 
-    options.show_trace && print_header(method)
 
     state = initial_state(method, options, d, initial_x)
 
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
-    stopped = false
+    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
     x_converged, f_converged = false, false
     g_converged = if typeof(method) <: NelderMead
@@ -214,22 +231,29 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 
     converged = g_converged
     iteration = 0
+
+    options.show_trace && print_header(method)
     trace!(tr, state, iteration, method, options)
 
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
-
+        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+        update_g!(d, state, method)
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
+        # We don't use the Hessian for anything if we have declared convergence,
+        # so we might as well not make the (expensive) update if converged == true
+        !converged && update_h!(d, state, method)
 
-        # If tracing update trace with trace!. If a callback is provided, it
-        # should have boolean return value that controls the variable stopped.
+        # If tracing, update trace with trace!. If a callback is provided, it
+        # should have boolean return value that controls the variable stopped_by_callback.
         # This allows for early stopping controlled by the callback.
         if tracing
-            stopped = trace!(tr, state, iteration, method, options)
+            stopped_by_callback = trace!(tr, state, iteration, method, options)
         end
+        stopped_by_time_limit = time()-t0>options.time_limit ? true : false
+        stopped = stopped_by_callback || stopped_by_time_limit ? true : false
 
     end # while
 

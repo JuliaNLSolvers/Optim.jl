@@ -146,8 +146,8 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
         options.iterations)
 end
 
-update!(d, state::ParticleSwarmState, method::ParticleSwarm) = update!(d.f, state, method)
-function update!{T}(f::Function, state::ParticleSwarmState{T}, method::ParticleSwarm)
+update_state!(d, state::ParticleSwarmState, method::ParticleSwarm) = update_state!(d.f, state, method)
+function update_state!{T}(f::Function, state::ParticleSwarmState{T}, method::ParticleSwarm)
     if state.limit_search_space
         limit_X!(state.X, state.lower, state.upper, state.n_particles, state.n)
     end

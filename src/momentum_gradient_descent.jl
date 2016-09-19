@@ -37,7 +37,7 @@ function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
+function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
         @inbounds state.s[i] = -state.g[i]
@@ -60,10 +60,5 @@ function update!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumG
         @inbounds state.x_previous[i] = state.x[i]
         @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
     end
-
-    # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
-
     false # don't force break
 end

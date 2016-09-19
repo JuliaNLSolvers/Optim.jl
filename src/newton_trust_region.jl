@@ -270,7 +270,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
 end
 
 
-function update!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
+function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
 
 
     # Find the next step direction.
@@ -313,5 +313,21 @@ function update!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegi
     else
         # else leave delta unchanged.
     end
+
+    if state.rho <= state.eta
+        # The improvement is too small and we won't take it.
+
+        # If you reject an interior solution, make sure that the next
+        # delta is smaller than the current step.  Otherwise you waste
+        # steps reducing delta by constant factors while each solution
+        # will be the same.
+        x_diff = state.x - state.x_previous
+        delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
+
+        state.f_x = state.f_x_previous
+        copy!(state.x, state.x_previous)
+        copy!(state.g, state.g_previous)
+    end
+
     false
 end

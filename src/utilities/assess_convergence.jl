@@ -79,23 +79,6 @@ function assess_convergence(state::NewtonTrustRegionState, options)
                                        options.x_tol,
                                        options.f_tol,
                                        options.g_tol)
-        if !converged
-            # Only compute the next Hessian if we haven't converged
-            state.d.h!(state.x, state.H)
-        end
-    else
-        # The improvement is too small and we won't take it.
-
-        # If you reject an interior solution, make sure that the next
-        # delta is smaller than the current step.  Otherwise you waste
-        # steps reducing delta by constant factors while each solution
-        # will be the same.
-        x_diff = state.x - state.x_previous
-        delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
-
-        state.f_x = state.f_x_previous
-        copy!(state.x, state.x_previous)
-        copy!(state.g, state.g_previous)
     end
     x_converged, f_converged, g_converged, converged
 end

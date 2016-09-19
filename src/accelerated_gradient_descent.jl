@@ -48,7 +48,7 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
+function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
     state.iteration += 1
     # Search direction is always the negative gradient
     @simd for i in 1:state.n

@@ -36,7 +36,7 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
+function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
     # Search direction is always the negative preconditioned gradient
     method.precondprep!(method.P, state.x)
     A_ldiv_B!(state.s, method.P, state.g)
@@ -59,9 +59,5 @@ function update!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
 
     # Update current position # x = x + alpha * s
     LinAlg.axpy!(state.alpha, state.s, state.x)
-
-    # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
     false # don't force break
 end

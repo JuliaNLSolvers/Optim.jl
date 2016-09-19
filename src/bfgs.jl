@@ -53,7 +53,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
 end
 
 
-function update!{T}(d, state::BFGSState{T}, method::BFGS)
+function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
 
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
@@ -89,11 +89,10 @@ function update!{T}(d, state::BFGSState{T}, method::BFGS)
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, state.g)
+    false # don't force stop
+end
 
-    # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
-
+function update_h!(d, state, mehtod::BFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
         @inbounds state.dg[i] = state.g[i] - state.g_previous[i]
@@ -115,5 +114,4 @@ function update!{T}(d, state::BFGSState{T}, method::BFGS)
             @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
         end
     end
-    false # don't force stop
 end

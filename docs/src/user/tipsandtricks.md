@@ -151,19 +151,11 @@ by all the function evaluations required to do the central finite differences ca
 Sometimes it might be of interest to stop the optimizer early. The simplest way to
 do this is to set the `iterations` keyword in `OptimizationOptions` to some number.
 This will prevent the iteration counter exceeding some limit, with the standard value
-being 1000. However, sometimes we want more control over early stopping. In that case
-callbacks can be useful. Callbacks are functions passed to `OptimizationOptions` using
-the callback keyword.
+being 1000. Alternatively, it is possible to put a soft limit on the run time of
+the optimization procedure by setting the `time_limit` keyword in the `OptimizationOptions`
+constructor.
 ```julia
-OptimizationOptions(callback = x -> rand()<0.5 ? true : false)
-```
-The above callback will make the procedure stop (`true`) if the uniform random number is below
-0.5, and allow the procedure to continue if it is above 0.5. A slightly more useful
-case is one where we do not want our precedure to run for too long. While we cannot enfore
-a strict time limit, we can make sure that the procedure stops if the run time so
-far as been above some limit.
-```julia
-using Julia
+using Optim
 problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
 
 f = problem.f
@@ -176,10 +168,10 @@ end
 
 start_time = time()
 
-optimize(slow, zeros(2), NelderMead(), OptimizationOptions(callback = x -> time()-start_time > 3 ? true : false))
+optimize(slow, zeros(2), NelderMead(), OptimizationOptions(time_limit = 3.0))
 ```
-This will stop after about three seconds. If it is more important that we stop before 3 seconds has
-elapsed, it is possible to construct a simple model for predicting how much
+This will stop after about three seconds. If it is more important that we stop before the limit
+is reached, it is possible to use a callback with a simple model for predicting how much
 time will have passed when the next iteration is over. Consider the following code
 ```julia
 using Optim

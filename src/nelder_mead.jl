@@ -172,8 +172,8 @@ NelderMeadState("Nelder-Mead",
           T(δ),
           "initial")
 end
-update!(d, state::NelderMeadState, method::NelderMead) = update!(d.f, state, method)
-function update!{T}(f::Function, state::NelderMeadState{T}, method::NelderMead)
+update_state!(d, state::NelderMeadState, method::NelderMead) = update_state!(d.f, state, method)
+function update_state!{T}(f::Function, state::NelderMeadState{T}, method::NelderMead)
     # Augment the iteration counter
     shrink = false
     n, m = state.n, state.m

@@ -125,7 +125,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
+function update_state!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Reset the search direction if it becomes corrupted
         dphi0 = vecdot(state.g, state.s)
         if dphi0 >= 0
@@ -200,3 +200,5 @@ function update!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradi
         end
         false
 end
+
+update_g!(d, state, method::ConjugateGradient) = nothing
