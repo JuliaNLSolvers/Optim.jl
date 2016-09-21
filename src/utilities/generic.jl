@@ -8,7 +8,6 @@ macro add_generic_fields()
         f_calls::Int64
         g_calls::Int64
         h_calls::Int64
-        elapsed::Float64
     end
 end
 

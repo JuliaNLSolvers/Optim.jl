@@ -72,6 +72,7 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     trace::OptimizationTrace{M}
     f_calls::Int
     g_calls::Int
+    h_calls::Int
 end
 
 type UnivariateOptimizationResults{T,M} <: OptimizationResults

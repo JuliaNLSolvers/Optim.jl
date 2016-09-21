@@ -37,7 +37,6 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          1, # Track f calls in state.f_calls
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
-                         0., # Elapsed time
                          copy(initial_x), # Maintain current state in state.x_previous
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous

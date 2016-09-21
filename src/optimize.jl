@@ -252,9 +252,14 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
         if tracing
             stopped_by_callback = trace!(tr, state, iteration, method, options)
         end
-        stopped_by_time_limit = time()-t0>options.time_limit ? true : false
-        stopped = stopped_by_callback || stopped_by_time_limit ? true : false
 
+        # Check time_limit; if none is provided it is NaN and the comparison
+        # will always return false.
+        stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
+
+        # Combine the two, so see if the stopped flag should be changed to true
+        # and stop the while loop
+        stopped = stopped_by_callback || stopped_by_time_limit ? true : false
     end # while
 
     after_while!(d, state, method, options)
@@ -273,7 +278,8 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
                                             options.g_tol,
                                             tr,
                                             state.f_calls,
-                                            state.g_calls)
+                                            state.g_calls,
+                                            state.h_calls)
 end
 
 # Univariate OptimizationOptions

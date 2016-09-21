@@ -153,7 +153,6 @@ NelderMeadState("Nelder-Mead",
           m,
           0,
           0,
-          0., # Elapsed
           m, # Number of vertices in the simplex
           simplex, # Maintain simplex in state.simplex
           centroid(simplex,  i_order[m]), # Maintain centroid in state.centroid

@@ -252,7 +252,6 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
                          f_calls, # Track f calls in state.f_calls
                          g_calls, # Track g calls in state.g_calls
                          h_calls,
-                         0., # Elapsed time
                          copy(initial_x), # Maintain current state in state.x_previous
                          g, # Store current gradient in state.g
                          copy(g), # Store previous gradient in state.g_previous

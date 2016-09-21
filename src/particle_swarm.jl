@@ -127,7 +127,6 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
         f_calls, # f call
         0, # g calls
         0, # h calls
-        0., # Elapsed
         0,
         lower,
         upper,
