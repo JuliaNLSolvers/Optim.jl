@@ -1,4 +1,45 @@
 let
+    # verify that solve_tr_subproblem! finds the minimum
+    n = 2
+    gr = [-0.74637,0.52388]
+    H = [0.945787 -3.07884; -3.07884 -1.27762]
+
+    s = zeros(n)
+    m, interior = Optim.solve_tr_subproblem!(gr, H, 1., s, max_iters=100)
+
+    for j in 1:10
+        bad_s = rand(n)
+        bad_s ./= norm(bad_s)  # boundary
+        model(s2) = (gr' * s2)[] + .5 * (s2' * H * s2)[]
+        @assert model(s) <= model(bad_s) + 1e-8
+    end
+end
+
+let
+    # random Hessians--verify that solve_tr_subproblem! finds the minimum
+    for i in 1:10000
+        n = rand(1:10)
+        gr = randn(n)
+        H = randn(n, n)
+        H += H'
+
+        s = zeros(n)
+        m, interior = Optim.solve_tr_subproblem!(gr, H, 1., s, max_iters=100)
+
+        model(s2) = (gr' * s2)[] + .5 * (s2' * H * s2)[]
+        @assert model(s) <= model(zeros(n)) + 1e-8  # origin
+
+        for j in 1:10
+            bad_s = rand(n)
+            bad_s ./= norm(bad_s)  # boundary
+            @assert model(s) <= model(bad_s) + 1e-8
+            bad_s .*= rand()  # interior
+            @assert model(s) <= model(bad_s) + 1e-8
+        end
+    end
+end
+
+let
     #######################################
     # First test the subproblem.
     srand(42)
