@@ -211,7 +211,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
         end
     end
 
-    m = vecdot(gr, s) + 0.5 * vecdot(s, H_ridged * s)
+    m = vecdot(gr, s) + 0.5 * vecdot(s, H * s)
 
     return m, interior, lambda, hard_case, reached_solution
 end
