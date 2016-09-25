@@ -139,7 +139,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
 
         # Solutions smaller than this lower bound on lambda are not allowed:
         # they don't ridge H enough to make H_ridge PSD.
-        lambda_lb = -min_H_ev + max(1e-4, abs(min_H_ev) * 1e-4)
+        lambda_lb = -min_H_ev + max(1e-8, 1e-8 * (max_H_ev - min_H_ev))
         lambda = lambda_lb
 
         hard_case = false
@@ -211,7 +211,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
         end
     end
 
-    m = vecdot(gr, s) + 0.5 * vecdot(s, H_ridged * s)
+    m = vecdot(gr, s) + 0.5 * vecdot(s, H * s)
 
     return m, interior, lambda, hard_case, reached_solution
 end
