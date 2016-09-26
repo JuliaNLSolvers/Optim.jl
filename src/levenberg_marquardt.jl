@@ -166,5 +166,5 @@ function levenberg_marquardt{T}(f::Function, g::Function, initial_x::AbstractVec
         converged = g_converged | x_converged
     end
 
-    MultivariateOptimizationResults("Levenberg-Marquardt", initial_x, x, sumabs2(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls)
+    MultivariateOptimizationResults("Levenberg-Marquardt", initial_x, x, sumabs2(fcur), iterCt, !converged, x_converged, 0.0, false, 0.0, g_converged, tolG, tr, f_calls, g_calls, 0)
 end
