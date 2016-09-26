@@ -6,7 +6,7 @@ immutable BFGS <: Optimizer
     initial_invH::Function
 end
 
-BFGS(; linesearch!::Function = hz_linesearch!, initial_invH = x -> eye(eltype(x), length(x))) =
+BFGS(; linesearch!::Function = LineSearches.hz_linesearch!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch!, initial_invH)
 
 type BFGSState{T}
