@@ -53,28 +53,6 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-macro cgtrace()
-    quote
-        if tracing
-            dt = Dict()
-            if o.extended_trace
-                dt["x"] = copy(x)
-                dt["g(x)"] = copy(g)
-                dt["Current step size"] = alpha
-            end
-            g_norm = vecnorm(g, Inf)
-            update!(tr,
-                    iteration,
-                    f_x,
-                    g_norm,
-                    dt,
-                    o.store_trace,
-                    o.show_trace,
-                    o.show_every,
-                    o.callback)
-        end
-    end
-end
 
 immutable ConjugateGradient{T} <: Optimizer
     eta::Float64
@@ -93,62 +71,25 @@ function ConjugateGradient(;
                                  linesearch!)
 end
 
-function optimize{T}(df::DifferentiableFunction,
-                     initial_x::Array{T},
-                     mo::ConjugateGradient,
-                     o::OptimizationOptions)
-    # Print header if show_trace is set
-    print_header(o)
+type ConjugateGradientState{T}
+    @add_generic_fields()
+    x_previous::Array{T}
+    g::Array{T}
+    g_previous::Array{T}
+    f_x_previous::T
+    y::Array{T}
+    py::Array{T}
+    pg::Array{T}
+    s::Array{T}
+    @add_linesearch_fields()
+end
 
-    # Maintain current state in x and previous state in x_previous
-    x, x_previous = copy(initial_x), copy(initial_x)
 
-    # Count the total number of iterations
-    iteration = 0
-
-    # Track calls to function and gradient
-    f_calls, g_calls = 0, 0
-
-    # Count number of parameters
-    n = length(x)
-
-    # Maintain current gradient in g and previous gradient in g_previous
-    g, g_previous = similar(x), similar(x)
-
-    # Maintain the preconditioned gradient in pg
-    pg = similar(x)
-
-    # The current search direction
-    s = similar(x)
-
-    # Buffers for use in line search
-    x_ls, g_ls = similar(x), similar(x)
-
-    # Intermediate value in CG calculation
-    y = similar(x)
-    py = similar(x)
-
-    # Store f(x) in f_x
-    f_x = df.fg!(x, g)
+function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+    g = similar(initial_x)
+    f_x = d.fg!(initial_x, g)
+    pg = copy(g)
     @assert typeof(f_x) == T
-    f_x_previous = convert(T, NaN)
-    f_calls, g_calls = f_calls + 1, g_calls + 1
-    copy!(g_previous, g)
-
-    # Keep track of step-sizes
-    alpha = alphainit(one(T), x, g, f_x)
-
-    # TODO: How should this flag be set?
-    mayterminate = false
-
-    # Maintain a cache for line search results
-    lsr = LineSearchResults(T)
-
-    # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
-    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
-    @cgtrace
-
     # Output messages
     if !isfinite(f_x)
         error("Must have finite starting value")
@@ -162,75 +103,71 @@ function optimize{T}(df::DifferentiableFunction,
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
-    mo.precondprep!(mo.P, x)
-    A_ldiv_B!(pg, mo.P, g)
-    scale!(copy!(s, pg), -1)
+    method.precondprep!(method.P, initial_x)
+    A_ldiv_B!(pg, method.P, g)
 
-    # Assess multiple types of convergence
-    x_converged, f_converged = false, false
-    g_converged = vecnorm(g, Inf) < o.g_tol
+    ConjugateGradientState("Conjugate Gradient",
+                         length(initial_x),
+                         copy(initial_x), # Maintain current state in state.x
+                         f_x, # Store current f in state.f_x
+                         1, # Track f calls in state.f_calls
+                         1, # Track g calls in state.g_calls
+                         0, # Track h calls in state.h_calls
+                         copy(initial_x), # Maintain current state in state.x_previous
+                         g, # Store current gradient in state.g
+                         copy(g), # Store previous gradient in state.g_previous
+                         T(NaN), # Store previous f in state.f_x_previous
+                         similar(initial_x), # Intermediate value in CG calculation
+                         similar(initial_x), # Preconditioned intermediate value in CG calculation
+                         pg, # Maintain the preconditioned gradient in pg
+                         -copy(pg), # Maintain current search direction in state.s
+                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+end
 
-    # Iterate until convergence
-    converged = g_converged
-    while !converged && iteration < o.iterations
-        # Increment the number of steps we've had to perform
-        iteration += 1
-
+function update_state!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Reset the search direction if it becomes corrupted
-        dphi0 = vecdot(g, s)
+        dphi0 = vecdot(state.g, state.s)
         if dphi0 >= 0
-            @simd for i in 1:n
-                @inbounds s[i] = -pg[i]
+            @simd for i in 1:state.n
+                @inbounds state.s[i] = -state.pg[i]
             end
-            dphi0 = vecdot(g, s)
+            dphi0 = vecdot(state.g, state.s)
             if dphi0 >= 0
-                break
+                return true
             end
         end
 
         # Refresh the line search cache
-        clear!(lsr)
-        @assert typeof(f_x) == T
+        clear!(state.lsr)
+        @assert typeof(state.f_x) == T
         @assert typeof(dphi0) == T
-        push!(lsr, zero(T), f_x, dphi0)
+        push!(state.lsr, zero(T), state.f_x, dphi0)
 
         # Pick the initial step size (HZ #I1-I2)
-        alpha, mayterminate, f_update, g_update =
-          alphatry(alpha, df, x, s, x_ls, g_ls, lsr)
-        f_calls, g_calls = f_calls + f_update, g_calls + g_update
+        state.alpha, state.mayterminate, f_update, g_update =
+          alphatry(state.alpha, df, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
+        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
         # Determine the distance of movement along the search line
-        alpha, f_update, g_update =
-          mo.linesearch!(df, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
-        f_calls, g_calls = f_calls + f_update, g_calls + g_update
+        state.alpha, f_update, g_update =
+          method.linesearch!(df, state.x, state.s, state.x_ls, state.g_ls, state.lsr, state.alpha, state.mayterminate)
+        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
         # Maintain a record of previous position
-        copy!(x_previous, x)
+        copy!(state.x_previous, state.x)
 
         # Update current position # x = x + alpha * s
-        LinAlg.axpy!(alpha, s, x)
+        LinAlg.axpy!(state.alpha, state.s, state.x)
 
         # Maintain a record of the previous gradient
-        copy!(g_previous, g)
+        copy!(state.g_previous, state.g)
 
         # Update the function value and gradient
-        f_x_previous, f_x = f_x, df.fg!(x, g)
-        f_calls, g_calls = f_calls + 1, g_calls + 1
-
-        x_converged,
-        f_converged,
-        g_converged,
-        converged = assess_convergence(x,
-                                       x_previous,
-                                       f_x,
-                                       f_x_previous,
-                                       g,
-                                       o.x_tol,
-                                       o.f_tol,
-                                       o.g_tol)
+        state.f_x_previous, state.f_x = state.f_x, df.fg!(state.x, state.g)
+        state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
 
         # Check sanity of function and gradient
-        if !isfinite(f_x)
+        if !isfinite(state.f_x)
             error("Function must finite function values")
         end
 
@@ -243,40 +180,24 @@ function optimize{T}(df::DifferentiableFunction,
         # but I am worried about round-off here, so instead we make an
         # extra copy, which is probably minimal overhead.
         # -----------------
-        mo.precondprep!(mo.P, x)
-        dPd = dot(s, mo.P, s)
-        etak::T = mo.eta * vecdot(s, g_previous) / dPd
-        @simd for i in 1:n
-            @inbounds y[i] = g[i] - g_previous[i]
+        method.precondprep!(method.P, state.x)
+        dPd = dot(state.s, method.P, state.s)
+        etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
+        @simd for i in 1:state.n
+            @inbounds state.y[i] = state.g[i] - state.g_previous[i]
         end
-        ydots = vecdot(y, s)
-        copy!(py, pg)        # below, store pg - pg_previous in py
-        A_ldiv_B!(pg, mo.P, g)
-        @simd for i in 1:n     # py = pg - py
-           @inbounds py[i] = pg[i] - py[i]
+        ydots = vecdot(state.y, state.s)
+        copy!(state.py, state.pg)        # below, store pg - pg_previous in py
+        A_ldiv_B!(state.pg, method.P, state.g)
+        @simd for i in 1:state.n     # py = pg - py
+           @inbounds state.py[i] = state.pg[i] - state.py[i]
         end
-        betak = (vecdot(y, pg) - vecdot(y, py) * vecdot(g, s) / ydots) / ydots
+        betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(state.g, state.s) / ydots) / ydots
         beta = max(betak, etak)
-        @simd for i in 1:n
-            @inbounds s[i] = beta * s[i] - pg[i]
+        @simd for i in 1:state.n
+            @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
-
-        @cgtrace
-    end
-
-    return MultivariateOptimizationResults("Conjugate Gradient",
-                                           initial_x,
-                                           x,
-                                           Float64(f_x),
-                                           iteration,
-                                           iteration == o.iterations,
-                                           x_converged,
-                                           o.x_tol,
-                                           f_converged,
-                                           o.f_tol,
-                                           g_converged,
-                                           o.g_tol,
-                                           tr,
-                                           f_calls,
-                                           g_calls)
+        false
 end
+
+update_g!(d, state, method::ConjugateGradient) = nothing

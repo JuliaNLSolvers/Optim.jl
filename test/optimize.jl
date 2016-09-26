@@ -37,8 +37,7 @@ let
     initial_invH = zeros(2,2)
     h1([127.0, 921.0],initial_invH)
     initial_invH = diagm(diag(initial_invH))
-    results = optimize(DifferentiableFunction(f1, g1), [127.0, 921.0], BFGS(), OptimizationOptions(),
-                       initial_invH = initial_invH)
+    results = optimize(DifferentiableFunction(f1, g1), [127.0, 921.0], BFGS(initial_invH = x -> initial_invH), OptimizationOptions())
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 end

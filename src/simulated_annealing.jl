@@ -10,27 +10,6 @@ function default_neighbor!(x::Array, x_proposal::Array)
     return
 end
 
-macro satrace()
-    quote
-        if tracing
-            dt = Dict()
-            if o.extended_trace
-                dt["x"] = copy(x)
-            end
-            grnorm = NaN
-            update!(tr,
-                    iteration,
-                    f_x,
-                    grnorm,
-                    dt,
-                    o.store_trace,
-                    o.show_trace,
-                    o.show_every,
-                    o.callback)
-        end
-    end
-end
-
 immutable SimulatedAnnealing <: Optimizer
     neighbor!::Function
     temperature::Function
@@ -42,88 +21,63 @@ SimulatedAnnealing(; neighbor!::Function = default_neighbor!,
                      keep_best::Bool = true) =
   SimulatedAnnealing(neighbor!, temperature, keep_best)
 
-function optimize{T}(cost::Function,
-                     initial_x::Array{T},
-                     mo::SimulatedAnnealing,
-                     o::OptimizationOptions)
-    # Print header if show_trace is set
-    print_header(o)
+type SimulatedAnnealingState{T}
+    @add_generic_fields()
+    iteration::Int64
+    x_current::Array{T}
+    x_proposal
+    f_x_current::T
+    f_proposal::T
+end
 
-    # Maintain current and proposed state
-    x, x_proposal = copy(initial_x), copy(initial_x)
+initial_state(method::SimulatedAnnealing, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
 
-    # Record the number of iterations we perform
-    iteration = 0
-
-    # Track calls to function and gradient
-    f_calls = 0
-
+function initial_state{T}(method::SimulatedAnnealing, options, f::Function, initial_x::Array{T})
     # Count number of parameters
-    n = length(x)
+    n = length(initial_x)
 
     # Store f(x) in f_x
-    f_x = cost(x)
-    f_calls += 1
+    f_x = f(initial_x)
+    f_calls = 1
 
     # Store the best state ever visited
-    best_x = copy(x)
+    best_x = copy(initial_x)
     best_f_x = f_x
+    SimulatedAnnealingState("Simulated Annealing", n, copy(initial_x), f_x, f_calls, 0, 0, 1, copy(initial_x), best_x, best_f_x, f_x)
+end
 
-    # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
-    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
-    @satrace
+update_state!(d, state::SimulatedAnnealingState, method::SimulatedAnnealing) = update_state!(d.f, state, method)
+function update_state!{T}(f::Function, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
 
-    # We always perform a fixed number of iterations
-    while iteration < o.iterations
-        # Increment the number of steps we've had to perform
-        iteration += 1
+    # Determine the temperature for current iteration
+    t = method.temperature(state.iteration)
 
-        # Determine the temperature for current iteration
-        t = mo.temperature(iteration)
+    # Randomly generate a neighbor of our current state
+    method.neighbor!(state.x_current, state.x_proposal)
 
-        # Randomly generate a neighbor of our current state
-        mo.neighbor!(x, x_proposal)
+    # Evaluate the cost function at the proposed state
+    state.f_proposal = f(state.x_proposal)
+    state.f_calls += 1
 
-        # Evaluate the cost function at the proposed state
-        f_proposal = cost(x_proposal)
-        f_calls += 1
+    if state.f_proposal <= state.f_x_current
+        # If proposal is superior, we always move to it
+        copy!(state.x_current, state.x_proposal)
+        state.f_x_current = state.f_proposal
 
-        if f_proposal <= f_x
-            # If proposal is superior, we always move to it
-            copy!(x, x_proposal)
-            f_x = f_proposal
-
-            # If the new state is the best state yet, keep a record of it
-            if f_proposal < best_f_x
-                best_f_x = f_proposal
-                copy!(best_x, x_proposal)
-            end
-        else
-            # If proposal is inferior, we move to it with probability p
-            p = exp(-(f_proposal - f_x) / t)
-            if rand() <= p
-                copy!(x, x_proposal)
-                f_x = f_proposal
-            end
+        # If the new state is the best state yet, keep a record of it
+        if state.f_proposal < state.f_x
+            state.f_x = state.f_proposal
+            copy!(state.x, state.x_proposal)
         end
-
-        @satrace
+    else
+        # If proposal is inferior, we move to it with probability p
+        p = exp(-(state.f_proposal - state.f_x_current) / t)
+        if rand() <= p
+            copy!(state.x_current, state.x_proposal)
+            state.f_x_current = state.f_proposal
+        end
     end
 
-    return MultivariateOptimizationResults("Simulated Annealing",
-                                           initial_x,
-                                           best_x,
-                                           Float64(best_f_x),
-                                           iteration,
-                                           iteration == o.iterations,
-                                           false,
-                                           NaN,
-                                           false,
-                                           NaN,
-                                           false,
-                                           NaN,
-                                           tr,
-                                           f_calls,
-                                           0)
+    state.iteration += 1
+    false
 end

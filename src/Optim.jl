@@ -42,14 +42,15 @@ module Optim
     # API
     include("api.jl")
 
+    # Generic stuff
+    include("utilities/generic.jl")
+
     # Maxdiff
     include("utilities/maxdiff.jl")
 
     # Tracing
     include("utilities/update.jl")
 
-    # Convergence
-    include("utilities/assess_convergence.jl")
 
     # Grid Search
     include("grid_search.jl")
@@ -98,6 +99,12 @@ module Optim
 
     # End-User Facing Wrapper Functions
     include("optimize.jl")
+
+    # Convergence
+    include("utilities/assess_convergence.jl")
+
+    # Traces
+    include("utilities/trace.jl")
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))

@@ -35,7 +35,7 @@ let
 
     Optim.optimize(d3, initial_x, method = Newton())
 
-    Optim.optimize(f, initial_x, method = SimulatedAnnealing())
+   Optim.optimize(f, initial_x, method = SimulatedAnnealing())
 
     optimize(f, initial_x, method = BFGS())
     optimize(f, initial_x, BFGS())
@@ -118,6 +118,7 @@ let
     	           iterations = 10,
     	           store_trace = true,
     	           show_trace = false)
+                   
    res_ext = optimize(f, g!, h!,
                       initial_x,
                       method = BFGS(),

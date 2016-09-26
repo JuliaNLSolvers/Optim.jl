@@ -10,6 +10,7 @@ immutable OptimizationOptions{TCallback <: Union{Void, Function}}
     autodiff::Bool
     show_every::Int
     callback::TCallback
+    time_limit::Float64
 end
 
 function OptimizationOptions(;
@@ -22,7 +23,8 @@ function OptimizationOptions(;
         extended_trace::Bool = false,
         autodiff::Bool = false,
         show_every::Integer = 1,
-        callback = nothing)
+        callback = nothing,
+        time_limit = NaN)
     show_every = show_every > 0 ? show_every: 1
     if extended_trace && callback == nothing
         show_trace = true
@@ -30,13 +32,17 @@ function OptimizationOptions(;
     OptimizationOptions{typeof(callback)}(
         Float64(x_tol), Float64(f_tol), Float64(g_tol), Int(iterations),
         store_trace, show_trace, extended_trace, autodiff, Int(show_every),
-        callback)
+        callback, time_limit)
 end
 
 function print_header(options::OptimizationOptions)
     if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
+end
+
+function print_header(method::Optimizer)
+        @printf "Iter     Function value   Gradient norm \n"
 end
 
 immutable OptimizationState{T <: Optimizer}
@@ -66,6 +72,7 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     trace::OptimizationTrace{M}
     f_calls::Int
     g_calls::Int
+    h_calls::Int
 end
 
 type UnivariateOptimizationResults{T,M} <: OptimizationResults
@@ -81,6 +88,10 @@ type UnivariateOptimizationResults{T,M} <: OptimizationResults
     abs_tol::Float64
     trace::OptimizationTrace{M}
     f_calls::Int
+end
+
+immutable NonDifferentiableFunction
+    f::Function
 end
 
 immutable DifferentiableFunction

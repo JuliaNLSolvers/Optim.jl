@@ -43,7 +43,6 @@ immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     parameters::Tp
 end
 
-
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)
     if haskey(KW, :a) || haskey(KW, :g) || haskey(KW, :b)
@@ -81,38 +80,15 @@ centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
 
 nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
 
-macro nmtrace()
-    quote
-        if tracing
-            dt = Dict()
-            if o.extended_trace
-                dt["centroid"] = x_centroid
-                dt["step_type"] = step_type
-            end
-            update!(tr,
-                    iteration,
-                    f_lowest,
-                    f_x,
-                    dt,
-                    o.store_trace,
-                    o.show_trace,
-                    o.show_every,
-                    o.callback)
-        end
-    end
+function print_header(method::NelderMead)
+    @printf "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
+    @printf "------   --------------    --------------\n"
 end
 
-function print_header(mo::NelderMead, options::OptimizationOptions)
-    if options.show_trace
-        @printf "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
-        @printf "------   --------------    --------------\n"
-    end
-end
-
-function Base.show(io::IO, t::OptimizationTrace{NelderMead})
+function Base.show(io::IO, trace::OptimizationTrace{NelderMead})
     @printf io "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
     @printf io "------   --------------    --------------\n"
-    for state in t.states
+    for state in trace.states
         show(io, state)
     end
     return
@@ -128,187 +104,180 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-function optimize{T}(f::Function,
-                     initial_x::Vector{T},
-                     mo::NelderMead,
-                     o::OptimizationOptions)
+# f_x and f_x_previous should be renamed to nm_x, nm_x_previous and f_x should hold
+# f_lowest instead!
 
-    # Print header if show_trace is set
-    print_header(mo, o)
+type NelderMeadState{T, N}
+    @add_generic_fields()
+    m::Int64
+    simplex::Vector{Array{T,N}}
+    x_centroid::Array{T}
+    x_lowest::Array{T}
+    x_second_highest::Array{T}
+    x_highest::Array{T}
+    x_reflect::Array{T}
+    x_cache::Array{T}
+    f_simplex::Array{T}
+    f_x_previous::T
+    f_lowest::T
+    i_order::Vector{Int64}
+    α::T
+    β::T
+    γ::T
+    δ::T
+    step_type::String
+end
 
-    # Set up a simplex of points
-    m = length(initial_x)
-    if m == 1
-        error("Use optimize(f, scalar, scalar) for 1D problems")
-    end
-    n = m + 1
-    simplex = simplexer(mo.initial_simplex, initial_x)
-    f_simplex = zeros(T, n)
+initial_state(method::NelderMead, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
+
+function initial_state{T}(method::NelderMead, options, f::Function, initial_x::Array{T})
+    n = length(initial_x)
+    m = n + 1
+    simplex = simplexer(method.initial_simplex, initial_x)
+    f_simplex = zeros(T, m)
     @inbounds for i in 1:length(simplex)
         f_simplex[i] = f(simplex[i])
     end
-
     # Get the indeces that correspond to the ordering of the f values
     # at the vertices. i_order[1] is the index in the simplex of the vertex
     # with the lowest function value, and i_order[end] is the index in the
     # simplex of the vertex with the highest function value
     i_order = sortperm(f_simplex)
-    x_centroid = centroid(simplex,  i_order[n])
 
-    # Count function calls
-    f_calls = n
+    α, β, γ, δ = parameters(method.parameters, n)
 
-    # Setup parameters
-    α, β, γ, δ = parameters(mo.parameters, m)
-    # Count iterations
-    iteration = 0
+NelderMeadState("Nelder-Mead",
+          n, # Dimensionality of the problem
+          Array{T}(n), # Variable to hold final minimizer value for MultivariateOptimizationResults
+          T(nmobjective(f_simplex, n, m)), # Store Nelder Mead objective in state.f_x
+          m,
+          0,
+          0,
+          m, # Number of vertices in the simplex
+          simplex, # Maintain simplex in state.simplex
+          centroid(simplex,  i_order[m]), # Maintain centroid in state.centroid
+          Array{T}(n), # Store cache in state.x_lowest
+          Array{T}(n), # Store cache in state.x_second_highest
+          Array{T}(n), # Store cache in state.x_highest
+          Array{T}(n), # Store cache in state.x_reflect
+          Array{T}(n), # Store cache in state.x_cache
+          f_simplex, # Store objective values at the vertices in state.f_simplex
+          T(NaN), # Store previous f in state.f_x_previous
+          f_simplex[i_order[1]], # Store lowest f in state.f_lowest
+          i_order, # Store a vector of rankings of objective values
+          T(α),
+          T(β),
+          T(γ),
+          T(δ),
+          "initial")
+end
+update_state!(d, state::NelderMeadState, method::NelderMead) = update_state!(d.f, state, method)
+function update_state!{T}(f::Function, state::NelderMeadState{T}, method::NelderMead)
+    # Augment the iteration counter
+    shrink = false
+    n, m = state.n, state.m
+    centroid!(state.x_centroid, state.simplex,  state.i_order[m])
+    copy!(state.x_lowest, state.simplex[state.i_order[1]])
+    copy!(state.x_second_highest, state.simplex[state.i_order[n]])
+    copy!(state.x_highest, state.simplex[state.i_order[m]])
 
-    step_type = "initial"
+    f_lowest = state.f_simplex[state.i_order[1]]
+    f_second_highest = state.f_simplex[state.i_order[n]]
+    f_highest = state.f_simplex[state.i_order[m]]
+    # Compute a reflection
+    @inbounds for j in 1:n
+        state.x_reflect[j] = state.x_centroid[j] + state.α * (state.x_centroid[j]-state.x_highest[j])
+    end
 
-    # Maintain a trace
-    f_x_previous, f_x = NaN, nmobjective(f_simplex, m, n)
-    f_lowest = f_simplex[i_order[1]]
-    tr = OptimizationTrace{typeof(mo)}()
-    tracing = o.show_trace || o.store_trace || o.extended_trace || o.callback != nothing
-    @nmtrace
-
-    # Cache x_centroid, y_bar, x_reflect, x_expand, x_lowest, x_highest
-    x_reflect = Array(T, m)
-    x_expand = Array(T, m)
-    x_cache = Array(T, m)
-
-    x_lowest = Array(T, m)
-    x_second_highest = Array(T, m)
-    x_highest = Array(T, m)
-
-    # Iterate until convergence or exhaustion
-    x_converged = false
-    f_converged = false
-    g_converged = false
-
-    while !g_converged && !f_converged && iteration < o.iterations
-        # Augment the iteration counter
-        shrink = false
-        iteration += 1
-
-        centroid!(x_centroid, simplex,  i_order[n])
-        copy!(x_lowest, simplex[i_order[1]])
-        copy!(x_second_highest, simplex[i_order[m]])
-        copy!(x_highest, simplex[ i_order[n]])
-
-        f_lowest = f_simplex[i_order[1]]
-        f_second_highest = f_simplex[i_order[m]]
-        f_highest = f_simplex[ i_order[n]]
-        # Compute a reflection
-        @inbounds for j in 1:m
-            x_reflect[j] = x_centroid[j] + α * (x_centroid[j]-x_highest[j])
+    f_reflect = f(state.x_reflect)
+    state.f_calls += 1
+    if f_reflect < f_lowest
+        # Compute an expansion
+        @inbounds for j in 1:n
+            state.x_cache[j] = state.x_centroid[j] + state.β *(state.x_reflect[j] - state.x_centroid[j])
         end
+        f_expand = f(state.x_cache)
+        state.f_calls += 1
 
-        f_reflect = f(x_reflect)
-        f_calls += 1
-        if f_reflect < f_lowest
-            # Compute an expansion
-            @inbounds for j in 1:m
-                x_cache[j] = x_centroid[j] + β *(x_reflect[j] - x_centroid[j])
-            end
-            f_expand = f(x_cache)
-            f_calls += 1
-
-            if f_expand < f_reflect
-                copy!(simplex[ i_order[n]], x_cache)
-                @inbounds f_simplex[ i_order[n]] = f_expand
-                step_type = "expansion"
-            else
-                copy!(simplex[ i_order[n]], x_reflect)
-                @inbounds f_simplex[ i_order[n]] = f_reflect
-                step_type = "reflection"
-            end
-            # shift all order indeces, and wrap the last one around to the first
-            i_highest = i_order[n]
-            @inbounds for i = n:-1:2
-                i_order[i] = i_order[i-1]
-            end
-            i_order[1] = i_highest
-        elseif f_reflect < f_second_highest
-            copy!(simplex[ i_order[n]], x_reflect)
-            @inbounds f_simplex[ i_order[n]] = f_reflect
-            step_type = "reflection"
-            sortperm!(i_order, f_simplex)
+        if f_expand < f_reflect
+            copy!(state.simplex[state.i_order[m]], state.x_cache)
+            @inbounds state.f_simplex[state.i_order[m]] = f_expand
+            state.step_type = "expansion"
         else
-            if f_reflect < f_highest
-                # Outside contraction
-                @simd for j in 1:m
-                    @inbounds x_cache[j] = x_centroid[j] + γ * (x_reflect[j]-x_centroid[j])
-                end
-                f_outside_contraction = f(x_cache)
-                if f_outside_contraction < f_reflect
-                    copy!(simplex[ i_order[n]], x_cache)
-                    @inbounds f_simplex[ i_order[n]] = f_outside_contraction
-                    step_type = "outside contraction"
-                    sortperm!(i_order, f_simplex)
-
-                else
-                    shrink = true
-                end
-            else # f_reflect > f_highest
-                # Inside constraction
-                @simd for j in 1:m
-                    @inbounds x_cache[j] = x_centroid[j] - γ *(x_reflect[j] - x_centroid[j])
-                end
-                f_inside_contraction = f(x_cache)
-                if f_inside_contraction < f_highest
-                    copy!(simplex[ i_order[n]], x_cache)
-                    @inbounds f_simplex[ i_order[n]] = f_inside_contraction
-                    step_type = "inside contraction"
-                    sortperm!(i_order, f_simplex)
-                else
-                    shrink = true
-                end
-            end
+            copy!(state.simplex[state.i_order[m]], state.x_reflect)
+            @inbounds state.f_simplex[state.i_order[m]] = f_reflect
+            state.step_type = "reflection"
         end
-
-        if shrink
-            for i = 2:n
-                ord = i_order[i]
-                copy!(simplex[ord], x_lowest + δ*(simplex[ord]-x_lowest))
-                f_simplex[ord] = f(simplex[ord])
-            end
-            step_type = "shrink"
-            sortperm!(i_order, f_simplex)
+        # shift all order indeces, and wrap the last one around to the first
+        i_highest = state.i_order[m]
+        @inbounds for i = m:-1:2
+            state.i_order[i] = state.i_order[i-1]
         end
+        state.i_order[1] = i_highest
+    elseif f_reflect < f_second_highest
+        copy!(state.simplex[state.i_order[m]], state.x_reflect)
+        @inbounds state.f_simplex[state.i_order[m]] = f_reflect
+        state.step_type = "reflection"
+        sortperm!(state.i_order, state.f_simplex)
+    else
+        if f_reflect < f_highest
+            # Outside contraction
+            @simd for j in 1:n
+                @inbounds state.x_cache[j] = state.x_centroid[j] + state.γ * (state.x_reflect[j]-state.x_centroid[j])
+            end
+            f_outside_contraction = f(state.x_cache)
+            if f_outside_contraction < f_reflect
+                copy!(state.simplex[state.i_order[m]], state.x_cache)
+                @inbounds state.f_simplex[state.i_order[m]] = f_outside_contraction
+                state.step_type = "outside contraction"
+                sortperm!(state.i_order, state.f_simplex)
 
-        f_x_previous, f_x = f_x, nmobjective(f_simplex, m, n)
-
-        @nmtrace
-        if f_x <= o.g_tol
-            g_converged = true
+            else
+                shrink = true
+            end
+        else # f_reflect > f_highest
+            # Inside constraction
+            @simd for j in 1:n
+                @inbounds state.x_cache[j] = state.x_centroid[j] - γ *(state.x_reflect[j] - state.x_centroid[j])
+            end
+            f_inside_contraction = f(state.x_cache)
+            if f_inside_contraction < f_highest
+                copy!(state.simplex[ state.i_order[m]], state.x_cache)
+                @inbounds state.f_simplex[ state.i_order[m]] = f_inside_contraction
+                state.step_type = "inside contraction"
+                sortperm!(state.i_order, state.f_simplex)
+            else
+                shrink = true
+            end
         end
     end
 
-    sortperm!(i_order, f_simplex)
-    x_centroid_min = centroid(simplex,  i_order[n])
-    f_centroid_min = f(x_centroid)
-    f_calls += 1
-    f_min, i_f_min = findmin(f_simplex)
-    x_min = simplex[i_f_min]
+    if shrink
+        for i = 2:m
+            ord = state.i_order[i]
+            copy!(state.simplex[ord], state.x_lowest + state.δ*(state.simplex[ord]-state.x_lowest))
+            state.f_simplex[ord] = f(state.simplex[ord])
+        end
+        step_type = "shrink"
+        sortperm!(state.i_order, state.f_simplex)
+    end
+
+    state.f_x_previous, state.f_x = state.f_x, nmobjective(state.f_simplex, n, m)
+    false
+end
+
+after_while!(d, state, method::NelderMead, options) = after_while!(d.f, state, method::NelderMead, options)
+function after_while!(f::Function, state, method::NelderMead, options)
+    sortperm!(state.i_order, state.f_simplex)
+    x_centroid_min = centroid(state.simplex,  state.i_order[state.m])
+    f_centroid_min = f(state.x_centroid)
+    state.f_calls += 1
+    f_min, i_f_min = findmin(state.f_simplex)
+    x_min = state.simplex[i_f_min]
     if f_centroid_min < f_min
         x_min = x_centroid_min
         f_min = f_centroid_min
     end
-
-    return MultivariateOptimizationResults("Nelder-Mead",
-                                           initial_x,
-                                           x_min,
-                                           Float64(f_min),
-                                           iteration,
-                                           iteration == o.iterations,
-                                           x_converged,
-                                           NaN,
-                                           f_converged,
-                                           NaN,
-                                           g_converged,
-                                           o.g_tol,
-                                           tr,
-                                           f_calls,
-                                           0)
+    state.f_x = f_min
+    state.x[:] = x_min
 end

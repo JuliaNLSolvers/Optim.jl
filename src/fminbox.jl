@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
+function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
     if isnan(mu0)
         gbarriernorm = sum(abs(gbarrier))
         if gbarriernorm > 0
@@ -154,7 +154,7 @@ function optimize{T<:AbstractFloat}(
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
     df.g!(x, gfunc)
-    mu = isnan(mu0) ? initialize_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
+    mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
     if show_trace > 0
         println("######## fminbox ########")
         println("Initial mu = ", mu)

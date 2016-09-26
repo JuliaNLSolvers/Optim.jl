@@ -1,6 +1,6 @@
 # Notational note
 # JMW's dx_history <=> NW's S
-# JMW's dgr_history <=> NW's Y
+# JMW's dg_history <=> NW's Y
 
 # Here alpha is a cache that parallels betas
 # It is not the step-size
@@ -9,7 +9,7 @@ function twoloop!(s::Vector,
                   gr::Vector,
                   rho::Vector,
                   dx_history::Matrix,
-                  dgr_history::Matrix,
+                  dg_history::Matrix,
                   m::Integer,
                   pseudo_iteration::Integer,
                   alpha::Vector,
@@ -33,7 +33,7 @@ function twoloop!(s::Vector,
         i = mod1(index, m)
         @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
         @simd for j in 1:n
-            @inbounds q[j] -= alpha[i] * dgr_history[j, i]
+            @inbounds q[j] -= alpha[i] * dg_history[j, i]
         end
     end
 
@@ -48,7 +48,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * vecdot(view(dgr_history, :, i), s)
+        @inbounds beta = rho[i] * vecdot(view(dg_history, :, i), s)
         @simd for j in 1:n
             @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
         end
@@ -58,29 +58,6 @@ function twoloop!(s::Vector,
     scale!(s, -1)
 
     return
-end
-
-macro lbfgstrace()
-    quote
-        if tracing
-            dt = Dict()
-            if o.extended_trace
-                dt["x"] = copy(x)
-                dt["g(x)"] = copy(gr)
-                dt["Current step size"] = alpha
-            end
-            grnorm = vecnorm(gr, Inf)
-            update!(tr,
-                    iteration,
-                    f_x,
-                    grnorm,
-                    dt,
-                    o.store_trace,
-                    o.show_trace,
-                    o.show_every,
-                    o.callback)
-        end
-    end
 end
 
 immutable LBFGS{T} <: Optimizer
@@ -94,160 +71,117 @@ LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!,
       P=nothing, precondprep! = (P, x) -> nothing) =
     LBFGS(Int(m), linesearch!, P, precondprep!)
 
-function optimize{T}(d::DifferentiableFunction,
-                     initial_x::Vector{T},
-                     mo::LBFGS,
-                     o::OptimizationOptions)
-    # Print header if show_trace is set
-    print_header(o)
+type LBFGSState{T}
+    @add_generic_fields()
+    x_previous::Array{T}
+    g::Array{T}
+    g_previous::Array{T}
+    rho::Array{T}
+    dx_history::Array{T}
+    dg_history::Array{T}
+    dx::Array{T}
+    dg::Array{T}
+    u::Array{T}
+    f_x_previous::T
+    twoloop_q
+    twoloop_alpha
+    pseudo_iteration::Int64
+    s::Array{T}
+    @add_linesearch_fields()
+end
 
-    # Maintain current state in x and previous state in x_previous
-    x, x_previous = copy(initial_x), copy(initial_x)
-
-    # Count the total number of iterations
-    iteration = 0
-    pseudo_iteration = 0
-
-    # Track calls to function and gradient
-    f_calls, g_calls = 0, 0
-
-    # Count number of parameters
-    n = length(x)
-
-    # Maintain current gradient in gr and previous gradient in gr_previous
-    gr, gr_previous = Array(T, n), Array(T, n)
-
-    # Store a history of changes in position and gradient
-    rho = Array(T, mo.m)
-    dx_history, dgr_history = Array(T, n, mo.m), Array(T, n, mo.m)
-
-    # The current search direction
-    s = Array(T, n)
-
-    # Buffers for use in line search
-    x_ls, g_ls = Array(T, n), Array(T, n)
-
-    # Store f(x) in f_x
-    f_x_previous, f_x = NaN, d.fg!(x, gr)
-    f_calls, g_calls = f_calls + 1, g_calls + 1
-    copy!(gr_previous, gr)
-
-    # Keep track of step-sizes
-    alpha = alphainit(one(T), x, gr, f_x)
-
-    # TODO: How should this flag be set?
-    mayterminate = false
-
+function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
+    n = length(initial_x)
+    g = Array(T, n)
+    f_x = d.fg!(initial_x, g)
     # Maintain a cache for line search results
-    lsr = LineSearchResults(T)
-
-    # Buffers for new entries of dx_history and dgr_history
-    dx, dgr = Array(T, n), Array(T, n)
-
-    # Buffers for use by twoloop!
-    twoloop_q, twoloop_alpha = Array(T, n), Array(T, mo.m)
-
     # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
-    tracing = o.store_trace || o.show_trace || o.extended_trace || o.callback != nothing
-    @lbfgstrace
+    LBFGSState("L-BFGS",
+              n,
+              copy(initial_x), # Maintain current state in state.x
+              f_x, # Store current f in state.f_x
+              1, # Track f calls in state.f_calls
+              1, # Track g calls in state.g_calls
+              0, # Track h calls in state.h_calls
+              copy(initial_x), # Maintain current state in state.x_previous
+              g, # Store current gradient in state.g
+              copy(g), # Store previous gradient in state.g_previous
+              Array{T}(method.m), # state.rho
+              Array{T}(n, method.m), # Store changes in position in state.dx_history
+              Array{T}(n, method.m), # Store changes in gradient in state.dg_history
+              Array{T}(n), # Buffer for new entry in state.dx_history
+              Array{T}(n), # Buffer for new entry in state.dg_history
+              Array{T}(n), # Buffer stored in state.u
+              T(NaN), # Store previous f in state.f_x_previous
+              Array{T}(n), #Buffer for use by twoloop
+              Array{T}(method.m), #Buffer for use by twoloop
+              0,
+              Array{T}(n), # Store current search direction in state.s
+              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+end
 
-    # Assess multiple types of convergence
-    x_converged, f_converged = false, false
-    g_converged = vecnorm(gr, Inf) < o.g_tol
+function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
+    n = state.n
+    # Increment the number of steps we've had to perform
+    state.pseudo_iteration += 1
 
-    # Iterate until convergence
-    converged = g_converged
-    while !converged && iteration < o.iterations
-        # Increment the number of steps we've had to perform
-        iteration += 1
-        pseudo_iteration += 1
+    # update the preconditioner
+    method.precondprep!(method.P, state.x)
 
-        # update the preconditioner
-        mo.precondprep!(mo.P, x)
+    # Determine the L-BFGS search direction # FIXME just pass state and method?
+    twoloop!(state.s, state.g, state.rho, state.dx_history, state.dg_history,
+             method.m, state.pseudo_iteration,
+             state.twoloop_alpha, state.twoloop_q, method.P)
 
-        # Determine the L-BFGS search direction
-        twoloop!(s, gr, rho, dx_history, dgr_history, mo.m, pseudo_iteration,
-                 twoloop_alpha, twoloop_q, mo.P)
-
-        # Refresh the line search cache
-        dphi0 = vecdot(gr, s)
-        if dphi0 > 0.0
-            pseudo_iteration = 1
-            @simd for i in 1:n
-                @inbounds s[i] = -gr[i]
-            end
-            dphi0 = vecdot(gr, s)
-        end
-
-        clear!(lsr)
-        push!(lsr, zero(T), f_x, dphi0)
-
-        # Determine the distance of movement along the search line
-        alpha, f_update, g_update =
-          mo.linesearch!(d, x, s, x_ls, g_ls, lsr, alpha, mayterminate)
-        f_calls, g_calls = f_calls + f_update, g_calls + g_update
-
-        # Maintain a record of previous position
-        copy!(x_previous, x)
-
-        # Update current position
+    # Refresh the line search cache
+    dphi0 = vecdot(state.g, state.s)
+    if dphi0 > 0.0
+        state.pseudo_iteration = 1
         @simd for i in 1:n
-            @inbounds dx[i] = alpha * s[i]
-            @inbounds x[i] = x[i] + dx[i]
+            @inbounds state.s[i] = -state.g[i]
         end
-
-        # Maintain a record of the previous gradient
-        copy!(gr_previous, gr)
-
-        # Update the function value and gradient
-        f_x_previous = f_x
-        f_x = d.fg!(x, gr)
-        f_calls, g_calls = f_calls + 1, g_calls + 1
-
-        # Measure the change in the gradient
-        @simd for i in 1:n
-            @inbounds dgr[i] = gr[i] - gr_previous[i]
-        end
-
-        # Update the L-BFGS history of positions and gradients
-        rho_iteration = 1 / vecdot(dx, dgr)
-        if isinf(rho_iteration)
-            # TODO: Introduce a formal error? There was a warning here previously
-            break
-        end
-        dx_history[:, mod1(pseudo_iteration, mo.m)] = dx
-        dgr_history[:, mod1(pseudo_iteration, mo.m)] = dgr
-        rho[mod1(pseudo_iteration, mo.m)] = rho_iteration
-
-        x_converged,
-        f_converged,
-        g_converged,
-        converged = assess_convergence(x,
-                                       x_previous,
-                                       f_x,
-                                       f_x_previous,
-                                       gr,
-                                       o.x_tol,
-                                       o.f_tol,
-                                       o.g_tol)
-
-        @lbfgstrace
+        dphi0 = vecdot(state.g, state.s)
     end
 
-    return MultivariateOptimizationResults("L-BFGS",
-                                           initial_x,
-                                           x,
-                                           Float64(f_x),
-                                           iteration,
-                                           iteration == o.iterations,
-                                           x_converged,
-                                           o.x_tol,
-                                           f_converged,
-                                           o.f_tol,
-                                           g_converged,
-                                           o.g_tol,
-                                           tr,
-                                           f_calls,
-                                           g_calls)
+    clear!(state.lsr)
+    push!(state.lsr, zero(T), state.f_x, dphi0)
+
+    # Determine the distance of movement along the search line
+    state.alpha, f_update, g_update =
+      method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                     state.alpha, state.mayterminate)
+    state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+
+    # Update current position
+    @simd for i in 1:n
+        @inbounds state.dx[i] = state.alpha * state.s[i]
+        @inbounds state.x[i] = state.x[i] + state.dx[i]
+    end
+
+    # Save old f and g values to prepare for update_g! call
+    state.f_x_previous = state.f_x
+    copy!(state.g_previous, state.g)
+    false
+end
+
+
+function update_h!(d, state, method::LBFGS)
+    # Measure the change in the gradient
+    @simd for i in 1:state.n
+        @inbounds state.dg[i] = state.g[i] - state.g_previous[i]
+    end
+
+    # Update the L-BFGS history of positions and gradients
+    rho_iteration = 1 / vecdot(state.dx, state.dg)
+    if isinf(rho_iteration)
+        # TODO: Introduce a formal error? There was a warning here previously
+        return true
+    end
+    state.dx_history[:, mod1(state.pseudo_iteration, method.m)] = state.dx
+    state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = state.dg
+    state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
+
 end

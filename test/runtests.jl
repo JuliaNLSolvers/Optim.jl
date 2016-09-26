@@ -10,6 +10,7 @@ my_tests = [
     "types.jl",
     "bfgs.jl",
     "gradient_descent.jl",
+    "accelerated_gradient_descent.jl",
     "momentum_gradient_descent.jl",
     "grid_search.jl",
     "l_bfgs.jl",

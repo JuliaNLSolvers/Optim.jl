@@ -9,7 +9,7 @@ let
         return
     end
 
-    res = optimize(f, g!, eye(2), method = GradientDescent())
+    res = optimize(f, g!, eye(2), GradientDescent())
 
     @test norm(vec(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0])) < 10e-8
 

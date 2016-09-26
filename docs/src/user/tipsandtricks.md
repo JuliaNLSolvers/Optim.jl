@@ -146,3 +146,124 @@ The objective has obtained a value that is very similar between the two runs, bu
 the run with the analytical gradient is way faster.  It is possible that the finite
 differences code can be improved, but generally the optimization will be slowed down
 by all the function evaluations required to do the central finite differences calculations.
+
+## Early stopping
+Sometimes it might be of interest to stop the optimizer early. The simplest way to
+do this is to set the `iterations` keyword in `OptimizationOptions` to some number.
+This will prevent the iteration counter exceeding some limit, with the standard value
+being 1000. Alternatively, it is possible to put a soft limit on the run time of
+the optimization procedure by setting the `time_limit` keyword in the `OptimizationOptions`
+constructor.
+```julia
+using Optim
+problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+
+f = problem.f
+initial_x = problem.initial_x
+
+function slow(x)
+    sleep(0.1)
+    f(x)
+end
+
+start_time = time()
+
+optimize(slow, zeros(2), NelderMead(), OptimizationOptions(time_limit = 3.0))
+```
+This will stop after about three seconds. If it is more important that we stop before the limit
+is reached, it is possible to use a callback with a simple model for predicting how much
+time will have passed when the next iteration is over. Consider the following code
+```julia
+using Optim
+problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+
+f = problem.f
+initial_x = problem.initial_x
+
+function very_slow(x)
+    sleep(.5)
+    f(x)
+end
+
+start_time = time()
+time_to_setup = zeros(1)
+function advanced_time_control(x)
+    println(" * Iteration:       ", x.iteration)
+    so_far =  time()-start_time
+    println(" * Time so far:     ", so_far)
+    if x.iteration == 0
+        time_to_setup[:] = time()-start_time
+    else
+        expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
+        println(" * Next iteration ≈ ", expected_next_time)
+        println()
+        return expected_next_time < 13 ? false : true
+    end
+    println()
+    false
+end
+optimize(very_slow, zeros(2), NelderMead(), OptimizationOptions(callback = advanced_time_control))
+```
+It will try to predict the elapsed time after the next iteration is over, and stop now
+if it is expected to exceed the limit of 13 seconds. Running it, we get something like
+the following output
+```jlcon
+julia> optimize(very_slow, zeros(2), NelderMead(), OptimizationOptions(callback = advanced_time_control))
+ * Iteration:       0
+ * Time so far:     2.219298839569092
+
+ * Iteration:       1
+ * Time so far:     3.4006409645080566
+ * Next iteration ≈ 4.5429909229278564
+
+ * Iteration:       2
+ * Time so far:     4.403923988342285
+ * Next iteration ≈ 5.476739525794983
+
+ * Iteration:       3
+ * Time so far:     5.407265901565552
+ * Next iteration ≈ 6.4569235642751055
+
+ * Iteration:       4
+ * Time so far:     5.909044027328491
+ * Next iteration ≈ 6.821732044219971
+
+ * Iteration:       5
+ * Time so far:     6.912338972091675
+ * Next iteration ≈ 7.843148183822632
+
+ * Iteration:       6
+ * Time so far:     7.9156060218811035
+ * Next iteration ≈ 8.85849153995514
+
+ * Iteration:       7
+ * Time so far:     8.918903827667236
+ * Next iteration ≈ 9.870419979095459
+
+ * Iteration:       8
+ * Time so far:     9.922197818756104
+ * Next iteration ≈ 10.880185931921005
+
+ * Iteration:       9
+ * Time so far:     10.925468921661377
+ * Next iteration ≈ 11.888488478130764
+
+ * Iteration:       10
+ * Time so far:     11.92870283126831
+ * Next iteration ≈ 12.895747828483582
+
+ * Iteration:       11
+ * Time so far:     12.932114839553833
+ * Next iteration ≈ 13.902462200684981
+
+Results of Optimization Algorithm
+ * Algorithm: Nelder-Mead
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.23359374999999996,0.042187499999999996, ...]
+ * Minimum: 6.291677e-01
+ * Iterations: 11
+ * Convergence: false
+   *  √(Σ(yᵢ-ȳ)²)/n < 1.0e-08: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Function Calls: 24
+```
