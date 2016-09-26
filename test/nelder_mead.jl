@@ -9,7 +9,7 @@ let
 			# TODO do this only when a "run all" flag checked
 			# res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(initial_simplex = Optim.AffineSimplexer(1.,1.)), iterations = 450_000)
 		end
-		!(name == "Large Polynomial") && @assert norm(res.minimum - prob.solutions) < 1e-2
+		!(name == "Large Polynomial") && @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
 	end
 end
 

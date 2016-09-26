@@ -74,7 +74,7 @@ for (name, problem) in Optim.UnconstrainedProblems.examples
                            problem.initial_x,
                            method = algorithm,
                            g_tol = 1e-16)
-        errors = minimum(map(sol -> norm(results.minimum - sol), problem.solutions))
+        errors = minimum(map(sol -> norm(results.minimizer - sol), problem.solutions))
 
         # Count iterations
         iterations = results.iterations

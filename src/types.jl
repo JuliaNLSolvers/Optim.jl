@@ -59,8 +59,8 @@ abstract OptimizationResults
 type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     method::String
     initial_x::Array{T,N}
-    minimum::Array{T,N}
-    f_minimum::Float64
+    minimizer::Array{T,N}
+    minimum::Float64
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool
@@ -79,8 +79,8 @@ type UnivariateOptimizationResults{T,M} <: OptimizationResults
     method::String
     initial_lower::T
     initial_upper::T
-    minimum::T
-    f_minimum::Float64
+    minimizer::T
+    minimum::Float64
     iterations::Int
     iteration_converged::Bool
     converged::Bool
@@ -171,8 +171,8 @@ end
 
 function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimizationResults)
     a.iterations += iterations(b)
-    a.minimum = minimizer(b)
-    a.f_minimum = minimum(b)
+    a.minimizer = minimizer(b)
+    a.minimum = minimum(b)
     a.iteration_converged = iteration_limit_reached(b)
     a.x_converged = x_converged(b)
     a.f_converged = f_converged(b)

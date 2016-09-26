@@ -11,11 +11,11 @@ let
                       MomentumGradientDescent)
 
         res = optimize(f, g!, [0.], Optimizer())
-        @assert isapprox(res.minimum[1], 0.)
+        @assert isapprox(Optim.minimizer(res)[1], 0.)
     end
 
     for Optimizer in (Newton, NewtonTrustRegion)
         res = optimize(f, g!, h!, [0.], Optimizer())
-        @assert isapprox(res.minimum[1], 0.)
+        @assert isapprox(Optim.minimizer(res)[1], 0.)
     end
 end

@@ -1,3 +1,6 @@
+# Optim (unversioned) release notes
+* Make move to minimizer (the argmin) and minimum (objective at argmin) final: field names are now in sync with function based API.
+
 # Optim v0.6.1 release notes
 * Assess convergence in *g* before iterating to avoid line search errors if `initial_x` is a stationary point
 * Fix trace bug in LevenbergMarquardt.
