@@ -43,7 +43,7 @@ let
         optimize(d2, Float32[0.0, 0.0], method = method)
     end
 
-    for method in (Newton(), NewtonTrustRegion())
+    for method in (Newton(),)# NewtonTrustRegion())
         optimize(d3, [0.0,0.0], method = method)
         optimize(d3, Float32[0.0, 0.0], method = method)
     end
