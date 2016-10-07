@@ -98,6 +98,9 @@
                 <li class="toctree-l3"><a href="#provide-gradients">Provide gradients</a></li>
                 
             
+                <li class="toctree-l3"><a href="#early-stopping">Early stopping</a></li>
+                
+            
             </ul>
         
     </li>
@@ -418,6 +421,119 @@
 
 
 <p>The objective has obtained a value that is very similar between the two runs, but the run with the analytical gradient is way faster.  It is possible that the finite differences code can be improved, but generally the optimization will be slowed down by all the function evaluations required to do the central finite differences calculations.</p>
+<p><a id='Early-stopping-1'></a></p>
+<h2 id="early-stopping">Early stopping</h2>
+<p>Sometimes it might be of interest to stop the optimizer early. The simplest way to do this is to set the <code>iterations</code> keyword in <code>OptimizationOptions</code> to some number. This will prevent the iteration counter exceeding some limit, with the standard value being 1000. Alternatively, it is possible to put a soft limit on the run time of the optimization procedure by setting the <code>time_limit</code> keyword in the <code>OptimizationOptions</code> constructor.</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">f</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">initial_x</span>
+
+<span class="k">function</span><span class="nf"> slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+
+<span class="n">optimize</span><span class="p">(</span><span class="n">slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">time_limit</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">))</span>
+</pre></div>
+
+
+<p>This will stop after about three seconds. If it is more important that we stop before the limit is reached, it is possible to use a callback with a simple model for predicting how much time will have passed when the next iteration is over. Consider the following code</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">problem</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
+
+<span class="n">f</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">f</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">initial_x</span>
+
+<span class="k">function</span><span class="nf"> very_slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+<span class="n">time_to_setup</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">function</span><span class="nf"> advanced_time_control</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Iteration:       &quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span>
+    <span class="n">so_far</span> <span class="o">=</span>  <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span>
+    <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Time so far:     &quot;</span><span class="p">,</span> <span class="n">so_far</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">time_to_setup</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span>
+    <span class="k">else</span>
+        <span class="n">expected_next_time</span> <span class="o">=</span> <span class="n">so_far</span> <span class="o">+</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span><span class="o">-</span><span class="n">time_to_setup</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span>
+        <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Next iteration ≈ &quot;</span><span class="p">,</span> <span class="n">expected_next_time</span><span class="p">)</span>
+        <span class="n">println</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">expected_next_time</span> <span class="o">&lt;</span> <span class="mi">13</span> <span class="o">?</span> <span class="n">false</span> <span class="p">:</span> <span class="n">true</span>
+    <span class="k">end</span>
+    <span class="n">println</span><span class="p">()</span>
+    <span class="n">false</span>
+<span class="k">end</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
+</pre></div>
+
+
+<p>It will try to predict the elapsed time after the next iteration is over, and stop now if it is expected to exceed the limit of 13 seconds. Running it, we get something like the following output</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
+<span class="go"> * Iteration:       0</span>
+<span class="go"> * Time so far:     2.219298839569092</span>
+
+<span class="go"> * Iteration:       1</span>
+<span class="go"> * Time so far:     3.4006409645080566</span>
+<span class="go"> * Next iteration ≈ 4.5429909229278564</span>
+
+<span class="go"> * Iteration:       2</span>
+<span class="go"> * Time so far:     4.403923988342285</span>
+<span class="go"> * Next iteration ≈ 5.476739525794983</span>
+
+<span class="go"> * Iteration:       3</span>
+<span class="go"> * Time so far:     5.407265901565552</span>
+<span class="go"> * Next iteration ≈ 6.4569235642751055</span>
+
+<span class="go"> * Iteration:       4</span>
+<span class="go"> * Time so far:     5.909044027328491</span>
+<span class="go"> * Next iteration ≈ 6.821732044219971</span>
+
+<span class="go"> * Iteration:       5</span>
+<span class="go"> * Time so far:     6.912338972091675</span>
+<span class="go"> * Next iteration ≈ 7.843148183822632</span>
+
+<span class="go"> * Iteration:       6</span>
+<span class="go"> * Time so far:     7.9156060218811035</span>
+<span class="go"> * Next iteration ≈ 8.85849153995514</span>
+
+<span class="go"> * Iteration:       7</span>
+<span class="go"> * Time so far:     8.918903827667236</span>
+<span class="go"> * Next iteration ≈ 9.870419979095459</span>
+
+<span class="go"> * Iteration:       8</span>
+<span class="go"> * Time so far:     9.922197818756104</span>
+<span class="go"> * Next iteration ≈ 10.880185931921005</span>
+
+<span class="go"> * Iteration:       9</span>
+<span class="go"> * Time so far:     10.925468921661377</span>
+<span class="go"> * Next iteration ≈ 11.888488478130764</span>
+
+<span class="go"> * Iteration:       10</span>
+<span class="go"> * Time so far:     11.92870283126831</span>
+<span class="go"> * Next iteration ≈ 12.895747828483582</span>
+
+<span class="go"> * Iteration:       11</span>
+<span class="go"> * Time so far:     12.932114839553833</span>
+<span class="go"> * Next iteration ≈ 13.902462200684981</span>
+
+<span class="go">Results of Optimization Algorithm</span>
+<span class="go"> * Algorithm: Nelder-Mead</span>
+<span class="go"> * Starting Point: [0.0,0.0]</span>
+<span class="go"> * Minimizer: [0.23359374999999996,0.042187499999999996, ...]</span>
+<span class="go"> * Minimum: 6.291677e-01</span>
+<span class="go"> * Iterations: 11</span>
+<span class="go"> * Convergence: false</span>
+<span class="go">   *  √(Σ(yᵢ-ȳ)²)/n &lt; 1.0e-08: false</span>
+<span class="go">   * Reached Maximum Number of Iterations: false</span>
+<span class="go"> * Objective Function Calls: 24</span>
+</pre></div>
               
             </div>
           </div>
