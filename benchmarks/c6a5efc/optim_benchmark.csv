@@ -1,0 +1,100 @@
+Problem,Optimizer,Converged,Time,Minimum,Iterations,f_calls,g_calls
+Exponential,Accelerated Gradient Descent,true,2.5204e-5,2.713779714484968e15,2,14,14,0.0
+Fletcher-Powell,Accelerated Gradient Descent,true,6.1106e-5,2500.0025,1,77,77,0.0
+Rosenbrock,Accelerated Gradient Descent,true,2.2227e-5,1.1007255434915013,2,14,14,0.0
+Parabola,Accelerated Gradient Descent,true,1.3574e-5,0.0,1,4,4,0.0
+Hosaki,Accelerated Gradient Descent,true,1.8255e-5,-2.2313296535936153,2,8,8,0.0
+Large Polynomial,Accelerated Gradient Descent,true,5.9897e-5,0.0,1,4,4,0.0
+Polynomial,Accelerated Gradient Descent,true,2.6534e-5,2.88939279393292e6,4,19,19,0.0
+Powell,Accelerated Gradient Descent,true,2.1832e-5,76.55352544907792,3,13,13,0.0
+Himmelblau,Accelerated Gradient Descent,true,1.7842e-5,16.53826434974686,2,10,10,0.0
+Exponential,BFGS,true,8.2599e-5,2.0,11,47,47,0.0
+Fletcher-Powell,BFGS,true,7.4462e-5,2500.0025,1,78,78,0.0
+Rosenbrock,BFGS,true,0.000124172,0.0,22,93,93,0.0
+Parabola,BFGS,true,3.5709e-5,0.0,1,4,4,0.0
+Hosaki,BFGS,true,5.8342e-5,-2.3458115761012914,6,22,22,0.0
+Large Polynomial,BFGS,true,0.000843746,0.0,1,4,4,0.0
+Polynomial,BFGS,true,0.000553003,3.6016766082089914e-25,57,219,219,0.0
+Powell,BFGS,true,0.000593011,1.8962273675013842e-31,60,229,229,0.0
+Himmelblau,BFGS,true,0.000124511,0.0,8,34,34,0.0
+Exponential,L-BFGS,true,0.000136668,2.0,11,47,47,0.0
+Fletcher-Powell,L-BFGS,false,Inf,Inf,Inf,Inf,Inf,0.0
+Rosenbrock,L-BFGS,true,0.000245388,0.0,22,93,93,0.0
+Parabola,L-BFGS,true,2.3156e-5,0.0,1,4,4,0.0
+Hosaki,L-BFGS,true,7.3248e-5,-2.3458115761012914,6,22,22,0.0
+Large Polynomial,L-BFGS,true,9.6613e-5,0.0,1,4,4,0.0
+Polynomial,L-BFGS,true,0.000447554,4.3072718645328e-23,40,167,167,0.0
+Powell,L-BFGS,true,0.000665457,1.1535557763359023e-33,58,233,233,0.0
+Himmelblau,L-BFGS,true,0.000101874,0.0,8,34,34,0.0
+Exponential,Momentum Gradient Descent,true,0.000167981,2.0,15,51,33,0.0
+Fletcher-Powell,Momentum Gradient Descent,false,1.1324e-5,2500.0,1,1,1,0.0
+Rosenbrock,Momentum Gradient Descent,true,0.000218831,4.979684464207637e-30,24,95,71,0.0
+Parabola,Momentum Gradient Descent,true,4.0576e-5,0.0,3,12,9,0.0
+Hosaki,Momentum Gradient Descent,true,9.3543e-5,-2.345811576101292,9,31,22,0.0
+Large Polynomial,Momentum Gradient Descent,true,4.6023e-5,0.0,1,4,3,0.0
+Polynomial,Momentum Gradient Descent,true,0.000441345,6.690722106974319e-23,51,184,133,0.0
+Powell,Momentum Gradient Descent,false,0.003895797,1.86439570318145e-10,1000,3177,2177,0.0
+Himmelblau,Momentum Gradient Descent,true,7.5274e-5,0.0,14,52,38,0.0
+Exponential,Conjugate Gradient,true,3.7984e-5,2.0,6,32,32,0.0
+Fletcher-Powell,Conjugate Gradient,true,1.8914e-5,2499.9999999959277,2,7,7,0.0
+Rosenbrock,Conjugate Gradient,false,0.003185449,0.004154782481748961,1000,3532,3532,0.0
+Parabola,Conjugate Gradient,true,1.6087e-5,0.0,1,4,4,0.0
+Hosaki,Conjugate Gradient,true,7.5355e-5,-2.3458115761012754,16,57,57,0.0
+Large Polynomial,Conjugate Gradient,true,2.7261e-5,0.0,1,4,4,0.0
+Polynomial,Conjugate Gradient,false,0.003674775,4.2623937778552204e-11,1000,4502,4502,0.0
+Powell,Conjugate Gradient,false,0.002626959,9.60439007062724e-5,1000,3502,3502,0.0
+Himmelblau,Conjugate Gradient,true,6.2233e-5,0.0,19,70,70,0.0
+Exponential,Gradient Descent,true,4.1025e-5,2.000000000000021,9,43,43,0.0
+Fletcher-Powell,Gradient Descent,false,Inf,Inf,Inf,Inf,Inf,0.0
+Rosenbrock,Gradient Descent,true,0.002386226,2.726100282798474e-12,781,3136,3136,0.0
+Parabola,Gradient Descent,true,2.0185e-5,0.0,1,4,4,0.0
+Hosaki,Gradient Descent,true,6.4611e-5,-2.345811576101292,11,40,40,0.0
+Large Polynomial,Gradient Descent,true,7.2103e-5,0.0,1,4,4,0.0
+Polynomial,Gradient Descent,false,0.003282304,2.761380746911634e-16,1000,4299,4299,0.0
+Powell,Gradient Descent,false,0.003342609,1.3387438717019584e-8,1000,4034,4034,0.0
+Himmelblau,Gradient Descent,true,9.0532e-5,0.0,27,98,98,0.0
+Exponential,Nelder-Mead,true,0.000445269,2.0,76,96,0,0.0
+Fletcher-Powell,Nelder-Mead,true,0.000887259,4.7643524765824227e-17,138,159,0,0.0
+Rosenbrock,Nelder-Mead,true,0.000469464,1.5077971911720248e-16,90,120,0,0.0
+Parabola,Nelder-Mead,true,0.002461145,1.0904618714873539e-16,429,531,0,0.0
+Hosaki,Nelder-Mead,false,0.009244016,-2.3458115761013074,1000,1009,0,0.0
+Large Polynomial,Nelder-Mead,false,0.028502934,5.239559567164451e6,1000,2192,0,0.0
+Polynomial,Nelder-Mead,true,0.001328531,4.968121230598664e-16,295,411,0,0.0
+Powell,Nelder-Mead,true,0.001789087,2.930973769902355e-16,333,423,0,0.0
+Himmelblau,Nelder-Mead,true,0.000454801,1.8221455872747055e-17,64,69,0,0.0
+Exponential,Particle Swarm,false,0.000651417,2.0,1001,4004,0,0.0
+Fletcher-Powell,Particle Swarm,false,0.000848619,1.9270337507288504,1001,4004,0,0.0
+Rosenbrock,Particle Swarm,false,0.000838135,0.12409138390727244,1001,4004,0,0.0
+Parabola,Particle Swarm,false,0.001061459,0.0,1001,6006,0,0.0
+Hosaki,Particle Swarm,false,0.000597427,-Inf,1001,4004,0,0.0
+Large Polynomial,Particle Swarm,false,15.25905335,1.0175291518365722e6,1001,251251,0,0.0
+Polynomial,Particle Swarm,false,0.001628433,3.7889049426461435e-11,1001,4004,0,0.0
+Powell,Particle Swarm,false,0.002464782,3.0304330246457385e-5,1001,5005,0,0.0
+Himmelblau,Particle Swarm,false,0.001504539,0.0,1001,4004,0,0.0
+Exponential,Simulated Annealing,false,0.00054569,2.0006234691193443,1000,1001,0,0.0
+Fletcher-Powell,Simulated Annealing,false,0.00052728,0.11606162241232101,1000,1001,0,0.0
+Rosenbrock,Simulated Annealing,false,0.000403704,0.08777942501394376,1000,1001,0,0.0
+Parabola,Simulated Annealing,false,0.000472724,0.17411668603687788,1000,1001,0,0.0
+Hosaki,Simulated Annealing,false,0.000465728,-1.2376624588132741e103,1000,1001,0,0.0
+Large Polynomial,Simulated Annealing,false,0.004712065,3.6039860593916853e6,1000,1001,0,0.0
+Polynomial,Simulated Annealing,false,0.000452775,0.0008386165790611335,1000,1001,0,0.0
+Powell,Simulated Annealing,false,0.000460371,0.6819704286098748,1000,1001,0,0.0
+Himmelblau,Simulated Annealing,false,0.000435322,0.18938692354241227,1000,1001,0,0.0
+Exponential,Newton,true,0.000225876,2.0,20,75,75,0.0
+Fletcher-Powell,Newton,false,Inf,Inf,Inf,Inf,Inf,0.0
+Rosenbrock,Newton,true,0.000165735,0.0,14,57,57,0.0
+Parabola,Newton,true,2.6411e-5,0.0,1,5,5,0.0
+Hosaki,Newton,true,7.8981e-5,-2.345811576101292,5,19,19,0.0
+Large Polynomial,Newton,true,0.003878329,0.0,2,8,8,0.0
+Polynomial,Newton,true,5.043e-5,0.0,3,12,12,0.0
+Powell,Newton,true,0.000380792,2.9853179939819494e-28,33,114,114,0.0
+Himmelblau,Newton,true,8.0906e-5,0.0,6,27,27,0.0
+Exponential,Newton (Trust Region),true,0.001425022,2.0,48,49,49,0.0
+Fletcher-Powell,Newton (Trust Region),true,5.0807e-5,2500.0,27,28,28,0.0
+Rosenbrock,Newton (Trust Region),true,0.000533928,0.0,16,17,17,0.0
+Parabola,Newton (Trust Region),true,0.000174533,0.0,4,5,5,0.0
+Hosaki,Newton (Trust Region),true,0.000183614,-2.345811576101292,6,7,7,0.0
+Large Polynomial,Newton (Trust Region),true,0.301451406,0.0,29,30,30,0.0
+Polynomial,Newton (Trust Region),false,0.017708889,1.2094731826107428e-16,1000,1001,1001,0.0
+Powell,Newton (Trust Region),false,0.024656593,1.14280829365635e-18,1000,1001,1001,0.0
+Himmelblau,Newton (Trust Region),true,8.8217e-5,0.0,5,6,6,0.0
