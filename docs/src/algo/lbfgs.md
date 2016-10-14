@@ -2,14 +2,14 @@
 This page contains information about BFGS and its limited memory version L-BFGS.
 ## Constructors
 ```julia
-BFGS(; linesearch! = hz_linesearch!,
+BFGS(; linesearch! = LineSearches.hagerzhang!,
        P = nothing,
        precondprep! = (P, x) -> nothing)
 ```
 
 ```julia
 LBFGS(; m = 10,
-        linesearch! = hz_linesearch!,
+        linesearch! = LineSearches.hagerzhang!,
         P = nothing,
         precondprep! = (P, x) -> nothing)
 ```

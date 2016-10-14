@@ -6,7 +6,7 @@ immutable MomentumGradientDescent <: Optimizer
     linesearch!::Function
 end
 
-MomentumGradientDescent(; mu::Real = 0.01, linesearch!::Function = LineSearches.hz_linesearch!) =
+MomentumGradientDescent(; mu::Real = 0.01, linesearch!::Function = LineSearches.hagerzhang!) =
   MomentumGradientDescent(Float64(mu), linesearch!)
 
 type MomentumGradientDescentState{T}

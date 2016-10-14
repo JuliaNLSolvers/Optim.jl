@@ -67,7 +67,7 @@ immutable LBFGS{T} <: Optimizer
     precondprep!::Function
 end
 
-LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hz_linesearch!,
+LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hagerzhang!,
       P=nothing, precondprep! = (P, x) -> nothing) =
     LBFGS(Int(m), linesearch!, P, precondprep!)
 

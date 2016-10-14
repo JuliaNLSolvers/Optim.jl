@@ -11,7 +11,7 @@ immutable AcceleratedGradientDescent <: Optimizer
     linesearch!::Function
 end
 
-AcceleratedGradientDescent(; linesearch!::Function = LineSearches.hz_linesearch!) =
+AcceleratedGradientDescent(; linesearch!::Function = LineSearches.hagerzhang!) =
   AcceleratedGradientDescent(linesearch!)
 
 type AcceleratedGradientDescentState{T}

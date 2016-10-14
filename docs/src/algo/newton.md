@@ -1,7 +1,7 @@
 # Newton's Method
 ## Constructor
 ```julia
-Newton(; linesearch! = hz_linesearch!)
+Newton(; linesearch! = LineSearches.hagerzhang!)
 ```
 
 The constructor takes one keyword

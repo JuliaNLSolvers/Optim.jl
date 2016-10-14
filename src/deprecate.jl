@@ -17,3 +17,9 @@ for name in names(LineSearches)
     end
     eval(:(@deprecate $name LineSearches.$name))
 end
+
+@deprecate hz_linesearch! LineSearches.hagerzhang!
+@deprecate mt_linesearch! LineSearches.morethuente!
+@deprecate interpolating_linesearch! LineSearches.strongwolfe!
+@deprecate backtracking_linesearch! LineSearches.backtracking!
+@deprecate interpbacktracking_linesearch! LineSearches.interpbacktracking!

@@ -4,7 +4,7 @@ immutable GradientDescent{T} <: Optimizer
     precondprep!::Function
 end
 
-GradientDescent(; linesearch!::Function = LineSearches.hz_linesearch!,
+GradientDescent(; linesearch!::Function = LineSearches.hagerzhang!,
                 P = nothing, precondprep! = (P, x) -> nothing) =
                     GradientDescent(linesearch!, P, precondprep!)
 

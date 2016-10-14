@@ -61,7 +61,7 @@ immutable ConjugateGradient{T} <: Optimizer
 end
 
 function ConjugateGradient(;
-                           linesearch!::Function = LineSearches.hz_linesearch!,
+                           linesearch!::Function = LineSearches.hagerzhang!,
                            eta::Real = 0.4,
                            P::Any = nothing,
                            precondprep! = (P, x) -> nothing)
