@@ -59,7 +59,7 @@ let
         prob=Optim.UnconstrainedProblems.examples["Himmelblau"]
         ddf = TwiceDifferentiableFunction(prob.f, prob.g!, prob.h!)
         res = optimize(ddf, [0., 0.], Newton())
-        @assert norm(res.minimum - prob.solutions) < 1e-10
+        @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-10
     end
 
 

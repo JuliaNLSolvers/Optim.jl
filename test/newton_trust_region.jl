@@ -152,7 +152,7 @@ let
     results = Optim.optimize(d, [0.0], method=NewtonTrustRegion())
     @assert length(results.trace) == 0
     @assert results.g_converged
-    @assert norm(results.minimum - [5.0]) < 0.01
+    @assert norm(Optim.minimizer(results) - [5.0]) < 0.01
 
     eta = 0.9
 
@@ -176,7 +176,7 @@ let
 
     results = Optim.optimize(d, Float64[127, 921], method=NewtonTrustRegion())
     @assert results.g_converged
-    @assert norm(results.minimum - [0.0, 0.0]) < 0.01
+    @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
     # Test Optim.newton for all twice differentiable functions in
     # Optim.UnconstrainedProblems.examples
