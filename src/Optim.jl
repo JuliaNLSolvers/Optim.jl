@@ -5,6 +5,8 @@ module Optim
     using PositiveFactorizations
     using Compat
     using ForwardDiff
+    using LineSearches
+
     import Compat.String
     import Compat.view
 
@@ -54,13 +56,6 @@ module Optim
 
     # Grid Search
     include("grid_search.jl")
-
-    # Line Search Methods
-    include(joinpath("linesearch", "backtracking_linesearch.jl"))
-    include(joinpath("linesearch", "interpolating_linesearch.jl"))
-    include(joinpath("linesearch", "mt_cstep.jl"))
-    include(joinpath("linesearch", "mt_linesearch.jl"))
-    include(joinpath("linesearch", "hz_linesearch.jl"))
 
     # preconditioning functionality
     include("precon.jl")

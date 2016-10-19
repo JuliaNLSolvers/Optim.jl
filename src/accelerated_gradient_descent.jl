@@ -11,7 +11,7 @@ immutable AcceleratedGradientDescent <: Optimizer
     linesearch!::Function
 end
 
-AcceleratedGradientDescent(; linesearch!::Function = hz_linesearch!) =
+AcceleratedGradientDescent(; linesearch!::Function = LineSearches.hagerzhang!) =
   AcceleratedGradientDescent(linesearch!)
 
 type AcceleratedGradientDescentState{T}
@@ -56,7 +56,7 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
 
     # Refresh the line search cache
     dphi0 = vecdot(state.g, state.s)
-    clear!(state.lsr)
+    LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line

@@ -6,7 +6,7 @@ immutable BFGS <: Optimizer
     initial_invH::Function
 end
 
-BFGS(; linesearch!::Function = hz_linesearch!, initial_invH = x -> eye(eltype(x), length(x))) =
+BFGS(; linesearch!::Function = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch!, initial_invH)
 
 type BFGSState{T}
@@ -69,7 +69,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
         end
         dphi0 = vecdot(state.g, state.s)
     end
-    clear!(state.lsr)
+    LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line

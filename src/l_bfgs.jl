@@ -67,7 +67,7 @@ immutable LBFGS{T} <: Optimizer
     precondprep!::Function
 end
 
-LBFGS(; m::Integer = 10, linesearch!::Function = hz_linesearch!,
+LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hagerzhang!,
       P=nothing, precondprep! = (P, x) -> nothing) =
     LBFGS(Int(m), linesearch!, P, precondprep!)
 
@@ -143,7 +143,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
         dphi0 = vecdot(state.g, state.s)
     end
 
-    clear!(state.lsr)
+    LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line

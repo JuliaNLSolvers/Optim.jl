@@ -100,9 +100,6 @@ function precondprepbox!(P, x, l, u, mu)
     end
 end
 
-const PARAMETERS_MU = one64<<display_nextbit
-display_nextbit += 1
-
 immutable Fminbox <: Optimizer end
 
 function optimize{T<:AbstractFloat}(
@@ -120,7 +117,7 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        linesearch!::Function = hz_linesearch!,
+        linesearch!::Function = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),

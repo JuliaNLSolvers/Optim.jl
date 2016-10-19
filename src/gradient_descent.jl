@@ -4,7 +4,7 @@ immutable GradientDescent{T} <: Optimizer
     precondprep!::Function
 end
 
-GradientDescent(; linesearch!::Function = hz_linesearch!,
+GradientDescent(; linesearch!::Function = LineSearches.hagerzhang!,
                 P = nothing, precondprep! = (P, x) -> nothing) =
                     GradientDescent(linesearch!, P, precondprep!)
 
@@ -44,7 +44,7 @@ function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDes
     end
     # Refresh the line search cache
     dphi0 = vecdot(state.g, state.s)
-    clear!(state.lsr)
+    LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line

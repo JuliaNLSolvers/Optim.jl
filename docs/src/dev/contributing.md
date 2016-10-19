@@ -22,7 +22,7 @@ immutable Minim{T} <: Optimizer
     minim_parameter::T
 end
 
-Minim(; linesearch!::Function = hz_linesearch!, minim_parameter = 1.0) =
+Minim(; linesearch!::Function = LineSearches.hagerzhang!, minim_parameter = 1.0) =
   Minim(linesearch!, minim_parameter)
 
 type MinimState{T}

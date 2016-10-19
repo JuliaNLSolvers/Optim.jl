@@ -6,7 +6,7 @@ immutable MomentumGradientDescent <: Optimizer
     linesearch!::Function
 end
 
-MomentumGradientDescent(; mu::Real = 0.01, linesearch!::Function = hz_linesearch!) =
+MomentumGradientDescent(; mu::Real = 0.01, linesearch!::Function = LineSearches.hagerzhang!) =
   MomentumGradientDescent(Float64(mu), linesearch!)
 
 type MomentumGradientDescentState{T}
@@ -44,7 +44,7 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
 
     # Refresh the line search cache
     dphi0 = vecdot(state.g, state.s)
-    clear!(state.lsr)
+    LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line

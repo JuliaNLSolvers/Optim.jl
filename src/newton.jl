@@ -2,7 +2,7 @@ immutable Newton <: Optimizer
     linesearch!::Function
 end
 
-Newton(; linesearch!::Function = hz_linesearch!) =
+Newton(; linesearch!::Function = LineSearches.hagerzhang!) =
   Newton(linesearch!)
 
 type NewtonState{T}
@@ -58,7 +58,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
 
         # Refresh the line search cache
         dphi0 = vecdot(state.g, state.s)
-        clear!(state.lsr)
+        LineSearches.clear!(state.lsr)
         push!(state.lsr, zero(T), state.f_x, dphi0)
 
         # Determine the distance of movement along the search line

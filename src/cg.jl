@@ -1,4 +1,3 @@
-
 #
 # Conjugate gradient
 #
@@ -62,7 +61,7 @@ immutable ConjugateGradient{T} <: Optimizer
 end
 
 function ConjugateGradient(;
-                           linesearch!::Function = hz_linesearch!,
+                           linesearch!::Function = LineSearches.hagerzhang!,
                            eta::Real = 0.4,
                            P::Any = nothing,
                            precondprep! = (P, x) -> nothing)
@@ -138,14 +137,14 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         end
 
         # Refresh the line search cache
-        clear!(state.lsr)
+        LineSearches.clear!(state.lsr)
         @assert typeof(state.f_x) == T
         @assert typeof(dphi0) == T
         push!(state.lsr, zero(T), state.f_x, dphi0)
 
         # Pick the initial step size (HZ #I1-I2)
         state.alpha, state.mayterminate, f_update, g_update =
-          alphatry(state.alpha, df, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
+          LineSearches.alphatry(state.alpha, df, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
         state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
         # Determine the distance of movement along the search line
