@@ -48,6 +48,7 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
 end
 
 function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
+    lssuccess = true
     state.iteration += 1
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
@@ -60,9 +61,22 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line
-    state.alpha, f_update, g_update =
-      method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr, state.alpha, state.mayterminate)
-    state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    try
+        state.alpha, f_update, g_update =
+        method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                           state.alpha, state.mayterminate)
+        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    catch ex
+        if isa(ex, LineSearches.LineSearchException)
+            lssuccess = false
+            state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
+            state.alpha = max(ex.alpha, 1e-12)
+            #state.alpha = ex.alpha
+            Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
+        else
+            rethrow(ex)
+        end
+    end
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
@@ -83,5 +97,5 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
     state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
 
-    false # don't force break
+    (lssuccess == false) # break on linesearch error
 end

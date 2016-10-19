@@ -124,6 +124,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
 end
 
 function update_state!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
+        lssuccess = true
         # Reset the search direction if it becomes corrupted
         dphi0 = vecdot(state.g, state.s)
         if dphi0 >= 0
@@ -148,9 +149,22 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
         # Determine the distance of movement along the search line
-        state.alpha, f_update, g_update =
-          method.linesearch!(df, state.x, state.s, state.x_ls, state.g_ls, state.lsr, state.alpha, state.mayterminate)
-        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+        try
+            state.alpha, f_update, g_update =
+                method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                                   state.alpha, state.mayterminate)
+            state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+        catch ex
+            if isa(ex, LineSearches.LineSearchException)
+                lssuccess = false
+                state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
+                state.alpha = max(ex.alpha, 1e-12)
+                #state.alpha = ex.alpha
+                Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
+            else
+                rethrow(ex)
+            end
+        end
 
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
@@ -196,7 +210,7 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         @simd for i in 1:state.n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
-        false
+        (lssuccess == false) # break on linesearch error
 end
 
 update_g!(d, state, method::ConjugateGradient) = nothing

@@ -47,7 +47,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
   end
 
   function update_state!{T}(d, state::NewtonState{T}, method::Newton)
-
+        lssuccess = true
         # Search direction is always the negative gradient divided by
         # a matrix encoding the absolute values of the curvatures
         # represented by H. It deviates from the usual "add a scaled
@@ -62,14 +62,27 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
         push!(state.lsr, zero(T), state.f_x, dphi0)
 
         # Determine the distance of movement along the search line
-        state.alpha, f_update, g_update =
-          method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr, state.alpha, state.mayterminate)
-        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+        try
+            state.alpha, f_update, g_update =
+                method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                                   state.alpha, state.mayterminate)
+            state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+        catch ex
+            if isa(ex, LineSearches.LineSearchException)
+                lssuccess = false
+                state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
+                state.alpha = max(ex.alpha, 1e-12)
+                #state.alpha = ex.alpha
+                Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
+            else
+                rethrow(ex)
+            end
+        end
 
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
 
         # Update current position # x = x + alpha * s
         LinAlg.axpy!(state.alpha, state.s, state.x)
-        false
+        (lssuccess == false) # break on linesearch error
 end
