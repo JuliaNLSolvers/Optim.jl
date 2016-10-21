@@ -1,4 +1,4 @@
-import LineSearches
+
 
 # this implements the 1D p-laplacian (p = 4)
 #      F(u) = ∑_{i=1}^{N} h (W(u_i') - ∑_{i=1}^{N-1} h u_i
@@ -42,18 +42,4 @@ let
             end
         end
     end
-
-   #  N = 100
-   #  initial_x = zeros(N)
-   #  P = precond(initial_x)
-   #  for extrapolate in (false, true)
-   #     method = LBFGS(P=P, extrapolate=extrapolate,
-   #                  linesearch! = LineSearches.interpbacktrack_linesearch!)
-   #     results = Optim.optimize(df, copy(initial_x),
-   #                              method=method,
-   #                              f_tol = 1e-32, g_tol = GRTOL)
-   #     println("g_calls = ", results.g_calls,
-   #             ", f_calls = ", results.f_calls)
-   #  end
-
 end
