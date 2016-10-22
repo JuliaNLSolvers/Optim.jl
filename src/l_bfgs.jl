@@ -149,7 +149,8 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
-    # compute an initial guess for the linesearch
+    # compute an initial guess for the linesearch based on
+    # Nocedal/Wright, 2nd ed, (3.60)
     # TODO: this is a temporary fix, but should eventually be split off into
     #       a separate type and possibly live in LineSearches; see #294
     if method.extrapolate && state.pseudo_iteration > 1
