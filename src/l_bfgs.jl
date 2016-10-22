@@ -66,11 +66,13 @@ immutable LBFGS{T} <: Optimizer
     P::T
     precondprep!::Function
     extrapolate::Bool
+    snap2one::Tuple
 end
 
 LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hagerzhang!,
-      P=nothing, precondprep! = (P, x) -> nothing, extrapolate::Bool=false) =
-      LBFGS(Int(m), linesearch!, P, precondprep!, extrapolate)
+                        P=nothing, precondprep! = (P, x) -> nothing,
+                        extrapolate::Bool=false, snap2one = (0.75, Inf)) =
+      LBFGS(Int(m), linesearch!, P, precondprep!, extrapolate, snap2one)
 
 type LBFGSState{T}
     @add_generic_fields()
@@ -153,13 +155,10 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     if method.extrapolate && state.pseudo_iteration > 1
         alphaguess = 2.0 * (state.f_x - state.f_x_previous) / dphi0
         alphaguess = max(alphaguess, state.alpha/4.0)  # not too much reduction
-        alphaguess = min(alphaguess, 1.0)
-        if (alphaguess > 0.75 && alphaguess < 1/0.75)
+        # if alphaguess ≈ 1, then make it 1 (Newton-type behaviour)
+        if method.snap2one[1] < alphaguess < method.snap2one[2]
             alphaguess = 1.0
         end
-      #   if 0.75 < alphaguess < 1.3333  # if alphaguess ~ 1, then make it 1 (Newton)
-      #       alphaguess = 1.0
-      #   end
     else
         # without extrapolation use previous alpha (old behaviour)
         alphaguess = state.alpha
