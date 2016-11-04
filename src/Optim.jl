@@ -19,6 +19,8 @@ module Optim
     export optimize,
            DifferentiableFunction,
            TwiceDifferentiableFunction,
+           DifferentiableConstraintsFunction,
+           TwiceDifferentiableConstraintsFunction,
            OptimizationOptions,
            OptimizationState,
            OptimizationTrace,

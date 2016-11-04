@@ -228,3 +228,180 @@ function TwiceDifferentiableFunction(f::Function,
     end
     return TwiceDifferentiableFunction(f, g!, fg!, h!)
 end
+
+### Constraints
+#
+# Constraints are specified by the user as
+#    lx_i ≤   x[i]  ≤ ux_i  # variable (box) constraints
+#    lc_i ≤ c(x)[i] ≤ uc_i  # linear/nonlinear constraints
+# and become equality constraints with l_i = u_i. ±∞ are allowed for l
+# and u, in which case the relevant side(s) are unbounded.
+#
+# The user supplies functions to calculate c(x) and its derivatives.
+#
+# Of course we could unify the box-constraints into the
+# linear/nonlinear constraints, but that would force the user to
+# provide the variable-derivatives manually, which would be silly.
+#
+# This parametrization of the constraints gets "parsed" into a form
+# that speeds and simplifies the algorithm, at the cost of many
+# additional variables. See `parse_constraints` for details.
+
+immutable ConstraintBounds{T}
+    # Box-constraints on variables (i.e., directly on x)
+    eqx::Vector{Int} # index-vector of equality-constrained x (not actually variable...)
+    valx::Vector{T}  # value of equality-constrained x
+    ineqx::Vector{Int}  # index-vector of other inequality-constrained variables
+    σx::Vector{Int8}    # ±1, in constraints σ(v-b) ≥ 0 (sign depends on whether v>b or v<b)
+    bx::Vector{T}       # bound (upper or lower) on variable
+    iz::Vector{Int}     # index-vector of nonnegative or nonpositive variables
+    σz::Vector{Int8}    # ±1 depending on whether nonnegative or nonpositive
+    bz::Vector{T}       # all-zeros, convenience for evaluation of barrier penalty
+    # Linear/nonlinear constraint functions and bounds
+    eqc::Vector{Int}    # index-vector equality-constrained entries in c
+    valc::Vector{T}     # value of the equality-constraint
+    ineqc::Vector{Int}  # index-vector of inequality-constraints
+    σc::Vector{Int8}    # same as σx, bx except for the nonlinear constraints
+    bc::Vector{T}
+end
+function ConstraintBounds(lx, ux, lc, uc)
+    _cb(symmetrize(lx, ux)..., symmetrize(lc, uc)...)
+end
+function _cb{Tx,Tc}(lx::AbstractArray{Tx}, ux::AbstractArray{Tx}, lc::AbstractVector{Tc}, uc::AbstractVector{Tc})
+    T = promote_type(Tx,Tc)
+    ConstraintBounds{T}(parse_constraints(T, lx, ux, true)..., parse_constraints(T, lc, uc)...)
+end
+
+Base.eltype{T}(::Type{ConstraintBounds{T}}) = T
+Base.eltype(cb::ConstraintBounds) = eltype(typeof(cb))
+
+abstract AbstractConstraintsFunction
+
+immutable DifferentiableConstraintsFunction{F,J,T} <: AbstractConstraintsFunction
+    bounds::ConstraintBounds{T}
+    c!::F         # c!(x, storage) stores the value of the constraint-functions at x
+    jacobian!::J  # jacobian!(x, storage) stores the Jacobian of the constraint-functions
+end
+
+function DifferentiableConstraintsFunction(c!, jacobian!, lx, ux, lc, uc)
+    b = ConstraintBounds(lx, ux, lc, uc)
+    DifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), eltype(b)}(b, c!, jacobian!)
+end
+
+immutable TwiceDifferentiableConstraintsFunction{F,J,H,T,N} <: AbstractConstraintsFunction
+    bounds::ConstraintBounds{T}
+    c!::F
+    jacobian!::J
+    h!::H   # Hessian of the barrier terms
+end
+function TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, lx, ux, lc, uc)
+    b = ConstraintBounds(lx, ux, lc, uc)
+    TwiceDifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), typeof(h!), eltype(b)}(b, c!, jacobian!, h!)
+end
+
+## Utilities
+
+function symmetrize(l, u)
+    if isempty(l) && !isempty(u)
+        l = fill!(similar(u), -Inf)
+    end
+    if !isempty(l) && isempty(u)
+        u = fill!(similar(l), Inf)
+    end
+    # TODO: change to indices?
+    size(l) == size(u) || throw(DimensionMismatch("bounds arrays must be consistent, got sizes $(size(l)) and $(size(u))"))
+    _symmetrize(l, u)
+end
+_symmetrize{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) = l, u
+_symmetrize(l::Vector{Any}, u::Vector{Any}) = _symm(l, u)
+_symmetrize(l, u) = _symm(l, u)
+
+# Designed to ensure that bounds supplied as [] don't cause
+# unnecessary broadening of the eltype. Note this isn't type-stable; if
+# the user cares, it can be avoided by supplying the same concrete
+# type for both l and u.
+function _symm(l, u)
+    if isempty(l) && isempty(u)
+        if eltype(l) == Any
+            # prevent promotion from returning eltype Any
+            l = Array{Union{}}(0)
+        end
+        if eltype(u) == Any
+            u = Array{Union{}}(0)
+        end
+    end
+    promote(l, u)
+end
+
+"""
+    parse_constraints(T, l, u, split_signed=false) -> eq, val, ineq, σ, b, [iz, σz, bz]
+
+From user-supplied constraints of the form
+
+    l_i ≤  v_i  ≤ u_i
+
+(which include both inequality and equality constraints, the latter
+when `l_i == u_i`), convert into the following representation:
+
+    - `eq`, a vector of the indices for which `l[eq] == u[eq]`
+    - `val = l[eq] = u[eq]`
+    - `ineq`, `σ`, and `b` such that the inequality constraints can be written as
+             σ[k]*(v[ineq[k]] - b[k]) ≥ 0
+       where `σ[k] = ±1`.
+    - optionally (with `split_signed=true`), return an index-vector
+      `iz` of entries where one of `l`, `u` is zero, along with
+      whether the constraint is `≥ 0` (σz=+1) or `≤ 0` (σz=-1). Such
+      are removed from `ineq`, `σ`, and `b`. For coordinate variables
+      this can be used to reduce the number of slack variables needed,
+      since when one of the bounds is 0, the variable itself *is* a
+      slack variable.
+
+Note that since the same `v_i` might have both lower and upper bounds,
+`ineq` might have the same index twice (once with `σ`=-1 and once with `σ`=1).
+
+Supplying `±Inf` for elements of `l` and/or `u` implies that `v_i` is
+unbounded in the corresponding direction. In such cases there is no
+corresponding entry in `ineq`/`σ`/`b`.
+
+T is the element-type of the non-Int outputs
+"""
+function parse_constraints{T}(::Type{T}, l, u, split_signed::Bool=false)
+    size(l) == size(u) || throw(DimensionMismatch("l and u must be the same size, got $(size(l)) and $(size(u))"))
+    eq, ineq, iz = Int[], Int[], Int[]
+    val, b = T[], T[]
+    σ, σz = Array{Int8}(0), Array{Int8}(0)
+    for i = 1:length(l)
+        li, ui = l[i], u[i]
+        li <= ui || throw(ArgumentError("l must be smaller than u, got $li, $ui"))
+        if li == ui
+            push!(eq, i)
+            push!(val, ui)
+        else
+            if isfinite(li)
+                if split_signed && li == 0
+                    push!(iz, i)
+                    push!(σz, 1)
+                else
+                    push!(ineq, i)
+                    push!(σ, 1)
+                    push!(b, li)
+                end
+            end
+            ui = u[i]
+            if isfinite(ui)
+                if split_signed && ui == 0
+                    push!(iz, i)
+                    push!(σz, -1)
+                else
+                    push!(ineq, i)
+                    push!(σ, -1)
+                    push!(b, ui)
+                end
+            end
+        end
+    end
+    if split_signed
+        return eq, val, ineq, σ, b, iz, σz, zeros(T, length(iz))
+    end
+    eq, val, ineq, σ, b
+end
