@@ -275,6 +275,19 @@ end
 Base.eltype{T}(::Type{ConstraintBounds{T}}) = T
 Base.eltype(cb::ConstraintBounds) = eltype(typeof(cb))
 
+function Base.show(io::IO, cb::ConstraintBounds)
+    indent = "    "
+    print(io, "ConstraintBounds:")
+    print(io, "\n  Variables:")
+    showeq(io, indent, cb.eqx, cb.valx, 'x', :bracket)
+    showineq(io, indent, cb.ineqx, cb.σx, cb.bx, 'x', :bracket)
+    showineq(io, indent, cb.iz, cb.σz, cb.bz, 'x', :bracket)
+    print(io, "\n  Linear/nonlinear constraints:")
+    showeq(io, indent, cb.eqc, cb.valc, 'c', :subscript)
+    showineq(io, indent, cb.ineqc, cb.σc, cb.bc, 'c', :subscript)
+    nothing
+end
+
 abstract AbstractConstraintsFunction
 
 immutable DifferentiableConstraintsFunction{F,J,T} <: AbstractConstraintsFunction
@@ -405,3 +418,37 @@ function parse_constraints{T}(::Type{T}, l, u, split_signed::Bool=false)
     end
     eq, val, ineq, σ, b
 end
+
+### Compact printing of constraints
+
+immutable UnquotedString
+    str::AbstractString
+end
+Base.show(io::IO, uqstr::UnquotedString) = print(io, uqstr.str)
+
+Base.array_eltype_show_how(a::Vector{UnquotedString}) = false, ""
+
+function showeq(io, indent, eq, val, chr, style)
+    if !isempty(eq)
+        print(io, '\n', indent)
+        if style == :bracket
+            eqstrs = map((i,v) -> UnquotedString("$chr[$i]=$v"), eq, val)
+        else
+            eqstrs = map((i,v) -> UnquotedString("$(chr)_$i=$v"), eq, val)
+        end
+        Base.show_vector(IOContext(io, limit=true), eqstrs, "", "")
+    end
+end
+
+function showineq(io, indent, ineqs, σs, bs, chr, style)
+    if !isempty(ineqs)
+        print(io, '\n', indent)
+        if style == :bracket
+            ineqstrs = map((i,σ,b) -> UnquotedString(string("$chr[$i]", ineqstr(σ,b))), ineqs, σs, bs)
+        else
+            ineqstrs = map((i,σ,b) -> UnquotedString(string("$(chr)_$i", ineqstr(σ,b))), ineqs, σs, bs)
+        end
+        Base.show_vector(IOContext(io, limit=true), ineqstrs, "", "")
+    end
+end
+ineqstr(σ,b) = σ>0 ? "≥$b" : "≤$b"
