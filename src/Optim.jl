@@ -78,6 +78,7 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
+    include("interior.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")
