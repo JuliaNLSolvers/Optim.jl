@@ -17,7 +17,7 @@ end
 # not matching the equality constraints.  So we allow them to
 # differ, and require that the algorithm can cope with it.
 
-function (::Type{BarrierStateVars{T}}){T}(bounds::ConstraintBounds)
+@compat function (::Type{BarrierStateVars{T}}){T}(bounds::ConstraintBounds)
     slack_x = Array{T}(length(bounds.ineqx))
     slack_c = Array{T}(length(bounds.ineqc))
     λxE = Array{T}(length(bounds.eqx))
@@ -278,7 +278,7 @@ end
 function equality_grad_var!(gs, gx, ineq, σ, λ, J)
     gs[:] = gs + λ
     if !isempty(ineq)
-        gx[:] = gx - view(J, ineq, :)'*(λ.*σ)
+        gx[:] = gx - view5(J, ineq, :)'*(λ.*σ)
     end
     nothing
 end
@@ -293,7 +293,7 @@ end
 # violations of v = target
 function equality_grad_var!(gx, idx, λ, J)
     if !isempty(idx)
-        gx[:] = gx - view(J, idx, :)'*λ
+        gx[:] = gx - view5(J, idx, :)'*λ
     end
     nothing
 end
@@ -342,4 +342,10 @@ function unpack_vec!(x, vec::Vector, k::Int)
         x[i] = vec[k+=1]
     end
     k
+end
+
+if VERSION >= v"0.5.0"
+    view5(A, i, j) = view(A, i, j)
+else
+    view5(A, i, j) = A[i,j]
 end

@@ -428,6 +428,10 @@ Base.show(io::IO, uqstr::UnquotedString) = print(io, uqstr.str)
 
 Base.array_eltype_show_how(a::Vector{UnquotedString}) = false, ""
 
+if !isdefined(Base, :IOContext)
+    IOContext(io; kwargs...) = io
+end
+
 function showeq(io, indent, eq, val, chr, style)
     if !isempty(eq)
         print(io, '\n', indent)

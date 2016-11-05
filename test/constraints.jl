@@ -1,8 +1,24 @@
-using Optim, Base.Test
+using Optim
+if VERSION >= v"0.5.0-dev+7720"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
+
+if VERSION >= v"0.5.0-dev+2396"
+    macro inferred5(ex)
+        Expr(:macrocall, Symbol("@inferred"), esc(ex))
+    end
+else
+    macro inferred5(ex)
+        esc(ex)
+    end
+end
 
 @testset "Constraints" begin
     @testset "Bounds parsing" begin
-        b = @inferred(Optim.ConstraintBounds([0.0, 0.5, 2.0], [1.0, 1.0, 2.0], [5.0, 3.8], [5.0, 4.0]))
+        b = @inferred5(Optim.ConstraintBounds([0.0, 0.5, 2.0], [1.0, 1.0, 2.0], [5.0, 3.8], [5.0, 4.0]))
         @test b.eqx == [3]
         @test b.valx == [2.0]
         @test b.ineqx == [1,2,2]
@@ -27,7 +43,7 @@ ConstraintBounds:
     c_1=5.0
     c_2≥3.8,c_2≤4.0"""
 
-        b = @inferred(Optim.ConstraintBounds(Float64[], Float64[], [5.0, 3.8], [5.0, 4.0]))
+        b = @inferred5(Optim.ConstraintBounds(Float64[], Float64[], [5.0, 3.8], [5.0, 4.0]))
         for fn in (:eqx, :valx, :ineqx, :σx, :bx, :iz, :σz)
             @test isempty(getfield(b, fn))
         end
@@ -67,7 +83,7 @@ ConstraintBounds:
         μ = 0.2345678
         A = randn(3,3); H = A'*A
         d = DifferentiableFunction(x->(x'*H*x)[1]/2, (x,storage)->(storage[:] = H*x))
-        x = clamp.(randn(3), -0.99, 0.99)
+        x = broadcast(clamp, randn(3), -0.99, 0.99)
         gx = similar(x)
         cfun = x->Float64[]
         c = Float64[]
