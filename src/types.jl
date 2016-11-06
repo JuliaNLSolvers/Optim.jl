@@ -1,4 +1,6 @@
 abstract Optimizer
+abstract ConstrainedOptimizer <: Optimizer
+abstract IPOptimizer <: ConstrainedOptimizer
 immutable OptimizationOptions{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
@@ -248,6 +250,7 @@ end
 # additional variables. See `parse_constraints` for details.
 
 immutable ConstraintBounds{T}
+    nc::Int          # Number of linear/nonlinear constraints
     # Box-constraints on variables (i.e., directly on x)
     eqx::Vector{Int} # index-vector of equality-constrained x (not actually variable...)
     valx::Vector{T}  # value of equality-constrained x
@@ -269,11 +272,13 @@ function ConstraintBounds(lx, ux, lc, uc)
 end
 function _cb{Tx,Tc}(lx::AbstractArray{Tx}, ux::AbstractArray{Tx}, lc::AbstractVector{Tc}, uc::AbstractVector{Tc})
     T = promote_type(Tx,Tc)
-    ConstraintBounds{T}(parse_constraints(T, lx, ux, true)..., parse_constraints(T, lc, uc)...)
+    ConstraintBounds{T}(length(lc), parse_constraints(T, lx, ux, true)..., parse_constraints(T, lc, uc)...)
 end
 
 Base.eltype{T}(::Type{ConstraintBounds{T}}) = T
 Base.eltype(cb::ConstraintBounds) = eltype(typeof(cb))
+
+nconstraints(cb::ConstraintBounds) = cb.nc
 
 function Base.show(io::IO, cb::ConstraintBounds)
     indent = "    "
@@ -290,27 +295,33 @@ end
 
 abstract AbstractConstraintsFunction
 
+nconstraints(constraints::AbstractConstraintsFunction) = nconstraints(constraints.bounds)
+
 immutable DifferentiableConstraintsFunction{F,J,T} <: AbstractConstraintsFunction
-    bounds::ConstraintBounds{T}
     c!::F         # c!(x, storage) stores the value of the constraint-functions at x
     jacobian!::J  # jacobian!(x, storage) stores the Jacobian of the constraint-functions
+    bounds::ConstraintBounds{T}
 end
 
 function DifferentiableConstraintsFunction(c!, jacobian!, lx, ux, lc, uc)
     b = ConstraintBounds(lx, ux, lc, uc)
-    DifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), eltype(b)}(b, c!, jacobian!)
+    DifferentiableConstraintsFunction(c!, jacobian!, b)
 end
+DifferentiableConstraintsFunction(c!, jacobian!, bounds::ConstraintBounds) =
+    DifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), eltype(b)}(c!, jacobian!, b)
 
-immutable TwiceDifferentiableConstraintsFunction{F,J,H,T,N} <: AbstractConstraintsFunction
-    bounds::ConstraintBounds{T}
+immutable TwiceDifferentiableConstraintsFunction{F,J,H,T} <: AbstractConstraintsFunction
     c!::F
     jacobian!::J
     h!::H   # Hessian of the barrier terms
+    bounds::ConstraintBounds{T}
 end
 function TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, lx, ux, lc, uc)
     b = ConstraintBounds(lx, ux, lc, uc)
-    TwiceDifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), typeof(h!), eltype(b)}(b, c!, jacobian!, h!)
+    TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, b)
 end
+TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, bounds::ConstraintBounds) =
+    TwiceDifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), typeof(h!), eltype(b)}(c!, jacobian!, h!, b)
 
 ## Utilities
 

@@ -75,6 +75,44 @@ function Base.show(io::IO, b::BarrierStateVars)
     end
 end
 
+@compat Base.:(==)(v::BarrierStateVars, w::BarrierStateVars) =
+    v.slack_x == w.slack_x &&
+    v.slack_c == w.slack_c &&
+    v.λxE == w.λxE &&
+    v.λx == w.λx &&
+    v.λc == w.λc &&
+    v.λcE == w.λcE
+
+const bsv_seed = sizeof(UInt) == 64 ? 0x145b788192d1cde3 : 0x766a2810
+Base.hash(b::BarrierStateVars, u::UInt) =
+    hash(b.λcE, hash(b.λc, hash(b.λx, hash(b.λxE, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
+
+
+"""
+    BarrierLineSearch{T}
+
+Parameters for interior-point line search methods that use only the value
+"""
+immutable BarrierLineSearch{T}
+    c::Vector{T}                  # value of constraints-functions at trial point
+    bstate::BarrierStateVars{T}   # trial point for slack and λ variables
+end
+
+"""
+    BarrierLineSearchGrad{T}
+
+Parameters for interior-point line search methods that exploit the slope.
+"""
+immutable BarrierLineSearchGrad{T}
+    c::Vector{T}                  # value of constraints-functions at trial point
+    J::Matrix{T}                  # constraints-Jacobian at trial point
+    bstate::BarrierStateVars{T}   # trial point for slack and λ variables
+    bgrad::BarrierStateVars{T}    # trial point's gradient
+end
+
+# Fallbacks (for methods that don't need these)
+after_while!(d, constraints::AbstractConstraintsFunction, state, method, options) = nothing
+update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
 
 ## Computation of the Lagrangian and its gradient
 # This is in a parametrization that is also useful during linesearch
@@ -342,10 +380,4 @@ function unpack_vec!(x, vec::Vector, k::Int)
         x[i] = vec[k+=1]
     end
     k
-end
-
-if VERSION >= v"0.5.0"
-    view5(A, i, j) = view(A, i, j)
-else
-    view5(A, i, j) = A[i,j]
 end
