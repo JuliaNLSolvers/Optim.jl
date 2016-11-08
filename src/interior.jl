@@ -2,12 +2,14 @@ abstract AbstractBarrierState
 
 # These are used not only for the current state, but also for the step and the gradient
 immutable BarrierStateVars{T}
-    slack_x::Vector{T}    # values of slack variables for x
-    slack_c::Vector{T}    # values of slack variables for c
-    λxE::Vector{T}        # λ for equality constraints on x
-    λx::Vector{T}         # λ for equality constraints on slack_x
-    λc::Vector{T}         # λ for equality constraints on slack_c
-    λcE::Vector{T}        # λ for linear/nonlinear equality constraints
+    slack_x::Vector{T}     # values of slack variables for x
+    slack_c::Vector{T}     # values of slack variables for c
+    active_x::Vector{Bool} # active constraints for x (see solve_active_inequalities)
+    active_c::Vector{Bool} # active constraints for c
+    λxE::Vector{T}         # λ for equality constraints on x
+    λx::Vector{T}          # λ for equality constraints on slack_x
+    λc::Vector{T}          # λ for equality constraints on slack_c
+    λcE::Vector{T}         # λ for linear/nonlinear equality constraints
 end
 # Note on λxE:
 # We could just set equality-constrained variables to their
@@ -24,24 +26,27 @@ end
     λx = similar(slack_x)
     λc = similar(slack_c)
     λcE = Array{T}(length(bounds.eqc))
-    sv = BarrierStateVars{T}(slack_x, slack_c, λxE, λx, λc, λcE)
+    sv = BarrierStateVars{T}(slack_x, slack_c, fill(false, length(slack_x)),
+                             fill(false, length(slack_c)), λxE, λx, λc, λcE)
 end
 BarrierStateVars{T}(bounds::ConstraintBounds{T}) = BarrierStateVars{T}(bounds)
 
 function BarrierStateVars{T}(bounds::ConstraintBounds{T}, x)
     sv = BarrierStateVars(bounds)
-    setslack!(sv.slack_x, x, bounds.ineqx, bounds.σx, bounds.bx)
+    setslack!(sv.slack_x, sv.active_x, x, bounds.ineqx, bounds.σx, bounds.bx)
     sv
 end
 function BarrierStateVars{T}(bounds::ConstraintBounds{T}, x, c)
     sv = BarrierStateVars(bounds)
-    setslack!(sv.slack_x, x, bounds.ineqx, bounds.σx, bounds.bx)
-    setslack!(sv.slack_c, c, bounds.ineqc, bounds.σc, bounds.bc)
+    setslack!(sv.slack_x, sv.active_x, x, bounds.ineqx, bounds.σx, bounds.bx)
+    setslack!(sv.slack_c, sv.active_c, c, bounds.ineqc, bounds.σc, bounds.bc)
     sv
 end
-function setslack!(slack, v, ineq, σ, b)
+function setslack!(slack, active, v, ineq, σ, b)
     for i = 1:length(ineq)
-        slack[i] = σ[i]*(v[ineq[i]]-b[i])
+        dv = v[ineq[i]]-b[i]
+        slack[i] = σ[i]*dv
+        active[i] = dv == 0
     end
     slack
 end
@@ -49,6 +54,8 @@ end
 Base.similar(bstate::BarrierStateVars) =
     BarrierStateVars(similar(bstate.slack_x),
                      similar(bstate.slack_c),
+                     similar(bstate.active_x),
+                     similar(bstate.active_c),
                      similar(bstate.λxE),
                      similar(bstate.λx),
                      similar(bstate.λc),
@@ -57,6 +64,8 @@ Base.similar(bstate::BarrierStateVars) =
 function Base.fill!(b::BarrierStateVars, val)
     fill!(b.slack_x, val)
     fill!(b.slack_c, val)
+    fill!(b.active_x, false)
+    fill!(b.active_c, false)
     fill!(b.λxE, val)
     fill!(b.λx, val)
     fill!(b.λc, val)
@@ -110,6 +119,69 @@ immutable BarrierLineSearchGrad{T}
     bgrad::BarrierStateVars{T}    # trial point's gradient
 end
 
+function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α)
+    ls_update!(out.slack_x, base.slack_x, step.slack_x, α)
+    ls_update!(out.slack_c, base.slack_c, step.slack_c, α)
+    ls_update!(out.λxE, base.λxE, step.λxE, α)
+    ls_update!(out.λx, base.λx, step.λx, α)
+    ls_update!(out.λc, base.λc, step.λc, α)
+    ls_update!(out.λcE, base.λcE, step.λcE, α)
+    out
+end
+
+# Explicit solution for slack, λ when an inequality constraint is
+# "active." This is necessary (or at least helpful) when c-b == 0 due
+# to roundoff error, in which case the KKT equations don't have an
+# exact solution within the precision.  We punt on the ∂λ equation
+# (which reduces to the slack, which should be small anyway), and
+# focus on the ∂x and ∂slack equations (therefore setting slack and
+# λ). By setting these to their exact solutions, we blance the forces
+# due to the barrier.
+function solve_active_inequalities!(d, constraints, state)
+    x, c, bstate, bounds = state.x, state.constr_c, state.bstate, constraints.bounds
+    nactive, nchanged = tally_active!(bstate.active_x, 0, 0, x, bounds.ineqx, bounds.bx)
+    nx = nactive
+    nactive, nchanged = tally_active!(bstate.active_c, nactive, nchanged, c, bounds.ineqc, bounds.bc, )
+    if nactive == 0 || nchanged == 0
+        return nothing
+    end
+    # Calculate the necessary gradients
+    d.g!(state.x, state.g)
+    constraints.jacobian!(state.x, state.constr_J)
+    # Solve for the Lagrange multipliers
+    ic, ix = bounds.ineqc[bstate.active_c], bounds.ineqx[bstate.active_x]
+    Jx = view5(state.constr_J, ic, ix)
+    Jact = view5(state.constr_J, ic, :)
+    Cactive = [eye(eltype(Jx), nx, nx) Jx'; Jx Jact*Jact']
+    pactive = [view(state.g, ix); Jact*state.g]
+    λactive = (Cactive\pactive).*[bounds.σx[bstate.active_x]; bounds.σc[bstate.active_c]]
+    # Set the state
+    k = set_active_params!(bstate.slack_x, bstate.λx, bstate.active_x, λactive, state.μ, 0)
+    k = set_active_params!(bstate.slack_c, bstate.λc, bstate.active_c, λactive, state.μ, k)
+    k == length(λactive) || error("something is wrong")
+    nothing
+end
+
+function tally_active!(active, nactive, nchanged, c, ineq, b)
+    for (i,j) in enumerate(ineq)
+        isactive = c[j] == b[i]
+        nactive += isactive
+        nchanged += isactive != active[i]
+        active[i] = isactive
+    end
+    nactive, nchanged
+end
+
+function set_active_params!(slack, λ, active, λtarget, μ, k)
+    for i = 1:length(active)
+        active[i] || continue
+        λk = λtarget[k+=1]
+        λ[i] = λk
+        slack[i] = μ/λk
+    end
+    k
+end
+
 # Fallbacks (for methods that don't need these)
 after_while!(d, constraints::AbstractConstraintsFunction, state, method, options) = nothing
 update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
@@ -117,14 +189,14 @@ update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
 ## Computation of the Lagrangian and its gradient
 # This is in a parametrization that is also useful during linesearch
 
-function lagrangian(d, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars, μ, method)
+function lagrangian(d, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars, μ)
     f_x = d.f(x)
     L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) +
             equality_violation(bounds, x, c, bstate)
     f_x, L_xsλ
 end
 
-function lagrangian_g!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ, method)
+function lagrangian_g!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
     fill!(bgrad, 0)
     d.g!(x, gx)
     barrier_grad!(gx, bgrad, bounds, x, bstate, μ)
@@ -132,7 +204,7 @@ function lagrangian_g!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::
     nothing
 end
 
-function lagrangian_fg!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ, method)
+function lagrangian_fg!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
     fill!(bgrad, 0)
     f_x = d.fg!(x, gx)
     L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) +
@@ -143,22 +215,31 @@ function lagrangian_fg!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate:
 end
 
 ## Computation of Lagrangian and derivatives when passing all parameters as a single vector
-function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::AbstractArray, bstate::BarrierStateVars, μ, method)
+function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::AbstractArray, bstate::BarrierStateVars, μ)
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian(d, bounds, x, c, bstate, μ, method)
+    f_x, L_xsλ = lagrangian(d, bounds, x, c, bstate, μ)
     L_xsλ
 end
-function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::Function, bstate::BarrierStateVars, μ, method)
+function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::Function, bstate::BarrierStateVars, μ)
     # Use this version when using automatic differentiation
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian(d, bounds, x, c(x), bstate, μ, method)
+    f_x, L_xsλ = lagrangian(d, bounds, x, c(x), bstate, μ)
     L_xsλ
 end
-function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ, method)
+function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ, method)
+    f_x, L_xsλ = lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
     pack_vec!(storage, gx, bgrad)
     L_xsλ
+end
+
+# for line searches that don't use the gradient along the line
+function lagrangian_linefunc(α, d, constraints, state)
+    b_ls = state.b_ls
+    ls_update!(state.x_ls, state.x, state.s, α)
+    ls_update!(b_ls.bstate, state.bstate, state.bstep, α)
+    constraints.c!(state.x, b_ls.c)
+    lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)[2]
 end
 
 ## Computation of Lagrangian terms: barrier penalty
@@ -380,4 +461,15 @@ function unpack_vec!(x, vec::Vector, k::Int)
         x[i] = vec[k+=1]
     end
     k
+end
+
+## More utilities
+function estimate_maxstep(αmax, x, s)
+    for i = 1:length(s)
+        si = s[i]
+        if si < 0
+            αmax = min(αmax, -x[i]/si)
+        end
+    end
+    αmax
 end

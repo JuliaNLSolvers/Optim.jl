@@ -27,3 +27,10 @@ function update!{T}(tr::OptimizationTrace{T},
     end
     stopped
 end
+
+function ls_update!(out::AbstractArray, base::AbstractArray, step::AbstractArray, α)
+    length(out) == length(base) == length(step) || throw(DimensionMismatch("all arrays must have the same length, got $(length(out)), $(length(base)), $(length(step))"))
+    for i = 1:length(base)
+        out[i] = base[i]+α*step[i]
+    end
+end

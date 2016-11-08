@@ -80,6 +80,7 @@ module Optim
     include("fminbox.jl")
     include("interior.jl")
     include("ipnewton.jl")
+    include("iplinesearch.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")

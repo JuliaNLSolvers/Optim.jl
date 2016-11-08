@@ -2,7 +2,7 @@ immutable IPNewton <: IPOptimizer
     linesearch!::Function
 end
 
-IPNewton(; linesearch!::Function = backtrack_constrained!) =
+IPNewton(; linesearch!::Function = backtrack_constrained) =
   IPNewton(linesearch!)
 
 type IPNewtonState{T,N} <: AbstractBarrierState
@@ -15,14 +15,17 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     s::Array{T,N}  # step for x
     # Barrier penalty fields
     μ::T                  # coefficient of the barrier penalty
+    L::T                  # value of the Lagrangian (objective + barrier + equality)
     bstate::BarrierStateVars{T}   # value of slack and λ variables (current "position")
     bgrad::BarrierStateVars{T}    # gradient of slack and λ variables at current "position"
+    bstep::BarrierStateVars{T}    # search direction for slack and λ
     constr_c::Vector{T}   # value of the user-supplied constraints at x
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
     @add_linesearch_fields()
     b_ls::BarrierLineSearch{T}
     gf::Vector{T}
     Hf::Matrix{T}
+    stepf::Vector{T}
 end
 
 function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunction, constraints::TwiceDifferentiableConstraintsFunction, initial_x::Array{T})
@@ -49,10 +52,12 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
     constr_gtemp = Array{T}(n)
     gf = Array{T}(0)    # will be replaced
     Hf = Array{T}(0,0)  #   "
+    stepf = Array{T}(0)
     constraints.jacobian!(initial_x, constr_J)
     μ = T(1)
     bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
     bgrad = similar(bstate)
+    bstep = similar(bstate)
     b_ls = BarrierLineSearch(similar(constr_c), similar(bstate))
 
     state = IPNewtonState("Interior-point Newton's Method",
@@ -69,21 +74,32 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hd,
         similar(initial_x), # Maintain current x-search direction in state.s
         μ,
+        T(0),
         bstate,
         bgrad,
+        bstep,
         constr_c,
         constr_J,
         @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
         gf,
-        Hf)
+        Hf,
+        stepf)
+
     #    μ = initialize_μ_λ!(λv, λc, constraints, initial_x, g, constr_c, constr_J)
-    update_g!(d, constraints, state, method)
+    update_fg!(d, constraints, state, method)
     update_h!(d, constraints, state, method)
 end
 
+function update_fg!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
+    f_x, L = lagrangian_fg!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
+    state.f_x, state.L = f_x, L
+    state
+end
+
 function update_g!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
-    lagrangian_g!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ, method)
+    lagrangian_g!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
+    state
 end
 
 function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
@@ -148,4 +164,90 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
                 bgrad.λxE;
                 bgrad.λcE]
     state
+end
+
+function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
+    bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
+    solve_step!(state, constraints)
+    # If a step α=1 will not change any of the parameters, we can quit now.
+    # This prevents a futile linesearch.
+    if is_smaller_eps(state.x, state.s) &&
+        is_smaller_eps(bstate.slack_x, bstep.slack_x) &&
+        is_smaller_eps(bstate.slack_c, bstep.slack_c) &&
+        is_smaller_eps(bstate.λx, bstep.λx) &&
+        is_smaller_eps(bstate.λc, bstep.λc)
+        return false
+    end
+    qp = quadratic_parameters(bounds, state)
+
+    # Estimate αmax, the upper bound on distance of movement along the search line
+    αmax = convert(eltype(bstate), Inf)
+    αmax = estimate_maxstep(αmax, bstate.slack_x, bstep.slack_x)
+    αmax = estimate_maxstep(αmax, bstate.slack_c, bstep.slack_c)
+    αmax = estimate_maxstep(αmax,
+                            view(state.x, bounds.iz).*bounds.σz,
+                            view(state.s, bounds.iz).*bounds.σz)
+
+    # Determine the actual distance of movement along the search line
+    ϕ = α->lagrangian_linefunc(α, d, constraints, state)
+    state.alpha, f_update, g_update =
+        method.linesearch!(ϕ, T(1), αmax, qp)
+    state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+
+    # Update current position # x = x + alpha * s
+    ls_update!(state.x, state.x, state.s, state.alpha)
+    ls_update!(bstate, bstate, bstep, state.alpha)
+
+    # Evaluate the constraints at the new position
+    constraints.c!(state.x, state.constr_c)
+    constraints.jacobian!(state.x, state.constr_J)
+
+    # Test for active inequalities, solve immediately for the corresponding s and λ
+    solve_active_inequalities!(d, constraints, state)
+
+    false
+end
+
+function solve_step!(state::IPNewtonState, constraints)
+    # Solve the Newton step
+    step = -(state.Hf\state.gf)  # do *not* force posdef
+    x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
+    bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
+    k = unpack_vec!(s, step, 0)
+    k = unpack_vec!(bstep.λxE, step, k)
+    k = unpack_vec!(bstep.λcE, step, k)
+    k == length(step) || error("exhausted targets before step")
+    # Solve for the slack variable and λI updates
+    for (i, j) in enumerate(bounds.ineqx)
+        bstep.slack_x[i] = -bgrad.λx[i] + bounds.σx[i]*s[j]
+        bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
+    end
+    JI = view5(state.constr_J, bounds.ineqc, :)
+    bstep.slack_c[:] = -bgrad.λc + Diagonal(bounds.σc)*JI*s
+    for i = 1:length(bstep.λc)
+        bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
+    end
+    state.stepf = step
+    state
+end
+
+function is_smaller_eps(ref, step)
+    ise = true
+    for (r, s) in zip(ref, step)
+        ise &= (s == 0) | (abs(s) < eps(r))
+    end
+    ise
+end
+
+function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
+    slope = dot(state.stepf, state.gf)
+    # For the curvature, use the original hessian (before forcing
+    # positive-definiteness)
+    q = dot(state.s, state.H*state.s)
+    JE = view5(state.constr_J, bounds.eqc, :)
+    q -= 2*dot(state.s[bounds.eqx], state.bstep.λxE) + 2*dot(state.s, JE'*state.bstep.λcE)
+    state.L, slope, q
 end

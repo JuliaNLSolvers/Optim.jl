@@ -310,6 +310,17 @@ end
 DifferentiableConstraintsFunction(c!, jacobian!, bounds::ConstraintBounds) =
     DifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), eltype(b)}(c!, jacobian!, b)
 
+function DifferentiableConstraintsFunction(lx::AbstractArray, ux::AbstractArray)
+    bounds = ConstraintBounds(lx, ux, [], [])
+    DifferentiableConstraintsFunction(bounds)
+end
+
+function DifferentiableConstraintsFunction(bounds::ConstraintBounds)
+    c! = (x,c)->nothing
+    J! = (x,J)->nothing
+    DifferentiableConstraintsFunction(c!, J!, bounds)
+end
+
 immutable TwiceDifferentiableConstraintsFunction{F,J,H,T} <: AbstractConstraintsFunction
     c!::F
     jacobian!::J
@@ -322,6 +333,19 @@ function TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, lx, ux, lc, u
 end
 TwiceDifferentiableConstraintsFunction(c!, jacobian!, h!, bounds::ConstraintBounds) =
     TwiceDifferentiableConstraintsFunction{typeof(c!), typeof(jacobian!), typeof(h!), eltype(b)}(c!, jacobian!, h!, b)
+
+function TwiceDifferentiableConstraintsFunction(lx::AbstractArray, ux::AbstractArray)
+    bounds = ConstraintBounds(lx, ux, [], [])
+    TwiceDifferentiableConstraintsFunction(bounds)
+end
+
+function TwiceDifferentiableConstraintsFunction(bounds::ConstraintBounds)
+    c! = (x,c)->nothing
+    J! = (x,J)->nothing
+    h! = (x,λ,h)->nothing
+    TwiceDifferentiableConstraintsFunction(c!, J!, h!, bounds)
+end
+
 
 ## Utilities
 
