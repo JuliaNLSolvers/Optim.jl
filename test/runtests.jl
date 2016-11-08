@@ -27,6 +27,7 @@ my_tests = [
     "brent.jl",
     "type_stability.jl",
     "array.jl",
+    "constraints.jl",
     "constrained.jl",
     "callbacks.jl",
     "precon.jl",

@@ -1,5 +1,5 @@
-immutable IPNewton <: IPOptimizer
-    linesearch!::Function
+immutable IPNewton{F} <: IPOptimizer{F}
+    linesearch!::F
 end
 
 IPNewton(; linesearch!::Function = backtrack_constrained) =
@@ -192,7 +192,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
                             view(state.s, bounds.iz).*bounds.σz)
 
     # Determine the actual distance of movement along the search line
-    ϕ = α->lagrangian_linefunc(α, d, constraints, state)
+    ϕ = α->lagrangian_linefunc!(α, d, constraints, state, method)
     state.alpha, f_update, g_update =
         method.linesearch!(ϕ, T(1), αmax, qp)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update

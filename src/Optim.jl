@@ -78,9 +78,9 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
+    include("iplinesearch.jl")
     include("interior.jl")
     include("ipnewton.jl")
-    include("iplinesearch.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")

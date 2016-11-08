@@ -129,13 +129,97 @@ function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::Barrier
     out
 end
 
+function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constraints::AbstractConstraintsFunction, initial_x::Array{T}, method::M, options::OptimizationOptions)
+    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+
+    state = initial_state(method, options, d, constraints, initial_x)
+
+    tr = OptimizationTrace{typeof(method)}()
+    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
+
+    x_converged, f_converged = false, false
+    g_converged = vecnorm(state.g, Inf) < options.g_tol
+
+    converged = g_converged
+    iteration, iterationμ = 0, 0
+
+    options.show_trace && print_header(method)
+    trace!(tr, state, iteration, method, options)
+
+    while !converged && !stopped && iteration < options.iterations
+        iteration += 1
+        iterationμ += 1
+
+        update_state!(d, constraints, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+        update_asneeded_fg!(d, constraints, state, method)
+        x_converged, f_converged,
+        g_converged, converged = assess_convergence(state, options)
+
+        # If tracing, update trace with trace!. If a callback is provided, it
+        # should have boolean return value that controls the variable stopped_by_callback.
+        # This allows for early stopping controlled by the callback.
+        if tracing
+            stopped_by_callback = trace!(tr, state, iteration, method, options)
+        end
+
+        # Test whether we need to decrease the barrier penalty
+        if converged
+            if iterationμ > 1
+                # We did real work, so it's worth decreasing the barrier penalty further
+                shrink_μ!(d, constraints, state, method, options)
+                iterationμ = 0
+                converged = false
+            end
+        end
+
+        # We don't use the Hessian for anything if we have declared convergence,
+        # so we might as well not make the (expensive) update if converged == true
+        !converged && update_h!(d, constraints, state, method)
+
+        # Check time_limit; if none is provided it is NaN and the comparison
+        # will always return false.
+        stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
+
+        # Combine the two, so see if the stopped flag should be changed to true
+        # and stop the while loop
+        stopped = stopped_by_callback || stopped_by_time_limit ? true : false
+    end # while
+
+    after_while!(d, constraints, state, method, options)
+
+    return MultivariateOptimizationResults(state.method_string,
+                                            initial_x,
+                                            state.x,
+                                            Float64(state.f_x),
+                                            iteration,
+                                            iteration == options.iterations,
+                                            x_converged,
+                                            options.x_tol,
+                                            f_converged,
+                                            options.f_tol,
+                                            g_converged,
+                                            options.g_tol,
+                                            tr,
+                                            state.f_calls,
+                                            state.g_calls,
+                                            state.h_calls)
+end
+
+# Fallbacks (for methods that don't need these)
+after_while!(d, constraints::AbstractConstraintsFunction, state, method, options) = nothing
+update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
+update_asneeded_fg!(d, constraints, state, method) = update_fg!(d, constraints, state, method)
+update_asneeded_fg!(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)}) = update_g!(d, constraints, state, method)
+
+
 # Explicit solution for slack, λ when an inequality constraint is
 # "active." This is necessary (or at least helpful) when c-b == 0 due
 # to roundoff error, in which case the KKT equations don't have an
 # exact solution within the precision.  We punt on the ∂λ equation
 # (which reduces to the slack, which should be small anyway), and
 # focus on the ∂x and ∂slack equations (therefore setting slack and
-# λ). By setting these to their exact solutions, we blance the forces
+# λ). By setting these to their exact solutions, we balance the forces
 # due to the barrier.
 function solve_active_inequalities!(d, constraints, state)
     x, c, bstate, bounds = state.x, state.constr_c, state.bstate, constraints.bounds
@@ -154,7 +238,9 @@ function solve_active_inequalities!(d, constraints, state)
     Jact = view5(state.constr_J, ic, :)
     Cactive = [eye(eltype(Jx), nx, nx) Jx'; Jx Jact*Jact']
     pactive = [view(state.g, ix); Jact*state.g]
-    λactive = (Cactive\pactive).*[bounds.σx[bstate.active_x]; bounds.σc[bstate.active_c]]
+    Cactivep = cholfact(Positive, Cactive)
+    λactive = (Cactivep\pactive).*[bounds.σx[bstate.active_x]; bounds.σc[bstate.active_c]]
+    any(x->x<=0, λactive) && error("something may be wrong, λ is zero or negative. Perhaps Cactive is singular?")
     # Set the state
     k = set_active_params!(bstate.slack_x, bstate.λx, bstate.active_x, λactive, state.μ, 0)
     k = set_active_params!(bstate.slack_c, bstate.λc, bstate.active_c, λactive, state.μ, k)
@@ -227,7 +313,7 @@ function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1/
     # Solve for μ
     λtilde = 1./Δb
     μden = dot(λtilde, JIg)
-    if μden == 0
+    if μden == 0 && !isempty(Δb)
         μden = maximum(abs(λtilde).*abs(JIg))*length(Δb)
     end
     μ = β*dot(Pg, Pg)/abs(μden)
@@ -243,9 +329,6 @@ function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1/
 end
 initialize_μ_λ!(λx, λc, constraints::AbstractConstraintsFunction, x, g, c, J, args...) =
     initialize_μ_λ!(λx, λc, constraints.bounds, x, g, c, J, args...)
-# Fallbacks (for methods that don't need these)
-after_while!(d, constraints::AbstractConstraintsFunction, state, method, options) = nothing
-update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
 
 ## Computation of the Lagrangian and its gradient
 # This is in a parametrization that is also useful during linesearch
@@ -296,12 +379,26 @@ end
 
 # for line searches that don't use the gradient along the line
 function lagrangian_linefunc(α, d, constraints, state)
+    _lagrangian_linefunc(α, d, constraints, state)[2]
+end
+
+function _lagrangian_linefunc(α, d, constraints, state)
     b_ls = state.b_ls
     ls_update!(state.x_ls, state.x, state.s, α)
     ls_update!(b_ls.bstate, state.bstate, state.bstep, α)
     constraints.c!(state.x, b_ls.c)
-    lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)[2]
+    lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
 end
+
+function lagrangian_linefunc!(α, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
+    # For backtrack_constrained, the last evaluation is the one we
+    # keep, so it's safe to store the results in state
+    f_x, L = _lagrangian_linefunc(α, d, constraints, state)
+    state.f_x = f_x
+    state.L = L
+    L
+end
+lagrangian_linefunc!(α, d, constraints, state, method) = lagrangian_linefunc(α, d, constraints, state)
 
 ## Computation of Lagrangian terms: barrier penalty
 """
@@ -533,4 +630,9 @@ function estimate_maxstep(αmax, x, s)
         end
     end
     αmax
+end
+
+function shrink_μ!(d, constraints, state, method, options)
+    state.μ *= options.μfactor
+    update_fg!(d, constraints, state, method)
 end
