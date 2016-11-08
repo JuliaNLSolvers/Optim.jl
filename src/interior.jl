@@ -182,6 +182,67 @@ function set_active_params!(slack, λ, active, λtarget, μ, k)
     k
 end
 
+"""
+    initialize_μ_λE!(λxE, λcE, constraints, x, g, constr_c, constr_J, β=0.01) -> μ
+
+Pick μ and λ to ensure that the equality constraints are satisfied
+locally, and that the initial gradient including the barrier would be
+a descent direction for the problem without the barrier (μ = 0). This
+ensures that the search isn't pushed out of the basin of the
+user-supplied initial guess.
+
+`λv` and `λc` are the Lagrange multipliers for the variables and extra
+(non-variable) constraints; these are pre-allocated storage for the
+output, and their input values are not used. `constraints` is an
+`AbstractConstraintsFunction`, `x` is the position (must be a feasible
+interior point), `g` is the gradient of the objective at `x`, and
+`constr_c` and `constr_J` contain the values and Jacobian of the extra
+constraints evaluated at `x`. `β` (optional) specifies the fraction of
+the objective's gradient that may be diminished by the barrier.
+
+In addition to setting `λxE` and `λcE`, this returns `μ`, the value of
+the barrier penalty.
+"""
+function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1//100)
+    length(c) + length(bounds.iz) + length(bounds.ineqx) == 0 && return zero(eltype(x))
+    # Calculate the projection matrix
+    JEx = zeros(eltype(J), length(bounds.eqx), length(x))
+    for (i,j) in enumerate(bounds.eqx)
+        JEx[i,j] = 1
+    end
+    JEc = view5(J, bounds.eqc, :)
+    JE = vcat(JEx, JEc)
+    CE = JE*JE'
+    CEc = cholfact(Positive, CE)
+    Pg = g - JE'*(CEc \ (JE*g)) # the projected gradient of the objective (orthog to all == constr.)
+    # Calculate the barrier deviation and projection onto inequality normals
+    Δb = [x[bounds.iz]; x[bounds.ineqx] - bounds.bx; c[bounds.ineqc] - bounds.bc]
+    JIx = zeros(eltype(J), length(bounds.iz)+length(bounds.ineqx), length(x))
+    for (i,j) in enumerate([bounds.iz; bounds.ineqx])
+        JIx[i,j] = 1
+    end
+    JIc = view5(J, bounds.ineqc, :)
+    JI = vcat(JIx, JIc)
+    JIg = JI*Pg
+    # Solve for μ
+    λtilde = 1./Δb
+    μden = dot(λtilde, JIg)
+    if μden == 0
+        μden = maximum(abs(λtilde).*abs(JIg))*length(Δb)
+    end
+    μ = β*dot(Pg, Pg)/abs(μden)
+    μ = μden != 0 ? μ : oftype(μ, 1)
+    # Solve for λE
+    gb = g - μ*(JI'*λtilde)
+    Pgb = gb - JE'*(CEc \ (JE*gb))
+    λE = CEc \ (JE*Pgb)
+    k = unpack_vec!(λx, λE, 0)
+    k = unpack_vec!(λc, λE, k)
+    k == length(λE) || error("something is wrong")
+    μ
+end
+initialize_μ_λ!(λx, λc, constraints::AbstractConstraintsFunction, x, g, c, J, args...) =
+    initialize_μ_λ!(λx, λc, constraints.bounds, x, g, c, J, args...)
 # Fallbacks (for methods that don't need these)
 after_while!(d, constraints::AbstractConstraintsFunction, state, method, options) = nothing
 update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing

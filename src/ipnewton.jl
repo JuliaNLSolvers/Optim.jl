@@ -86,7 +86,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hf,
         stepf)
 
-    #    μ = initialize_μ_λ!(λv, λc, constraints, initial_x, g, constr_c, constr_J)
+    state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J)
     update_fg!(d, constraints, state, method)
     update_h!(d, constraints, state, method)
 end
@@ -94,11 +94,14 @@ end
 function update_fg!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
     f_x, L = lagrangian_fg!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
     state.f_x, state.L = f_x, L
+    state.f_calls += 1
+    state.g_calls += 1
     state
 end
 
 function update_g!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
     lagrangian_g!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
+    state.g_calls += 1
     state
 end
 
