@@ -71,8 +71,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
             if isa(ex, LineSearches.LineSearchException)
                 lssuccess = false
                 state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
-                state.alpha = max(ex.alpha, 1e-12)
-                #state.alpha = ex.alpha
+                state.alpha = ex.alpha
                 Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
             else
                 rethrow(ex)
