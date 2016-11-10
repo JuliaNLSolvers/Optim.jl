@@ -8,6 +8,7 @@ using Compat
 
 my_tests = [
     "types.jl",
+    "lsthrow.jl",
     "bfgs.jl",
     "gradient_descent.jl",
     "accelerated_gradient_descent.jl",
