@@ -3,8 +3,8 @@
 
     
     <url>
-     <loc>None/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -12,26 +12,26 @@
     
         
     <url>
-     <loc>None/user/minimization/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/user/minimization/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/user/config/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/user/config/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/user/tipsandtricks/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/user/tipsandtricks/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/user/planned/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/user/planned/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -40,45 +40,45 @@
     
         
     <url>
-     <loc>None</loc>
+     <loc></loc>
      <lastmod></lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/algo/autodiff/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/algo/autodiff/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/algo/linesearch/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/algo/linesearch/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/algo/precondition/</loc>
-     <lastmod>2016-10-19</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>None/dev/contributing/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/algo/precondition/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     
 
     
+        
     <url>
-     <loc>None/LICENSE/</loc>
-     <lastmod>2016-10-19</lastmod>
+     <loc>/dev/contributing/</loc>
+     <lastmod>2016-11-10</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+    <url>
+     <loc>/LICENSE/</loc>
+     <lastmod>2016-11-10</lastmod>
      <changefreq>daily</changefreq>
     </url>
     

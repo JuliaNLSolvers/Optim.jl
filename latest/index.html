@@ -7,35 +7,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Pure Julia implementations of optimization algorithms.">
   <meta name="author" content="JuliaOpt">
-  
-  <title>Optim.jl</title>
-  
-
   <link rel="shortcut icon" href="./img/favicon.ico">
-
-  
+  <title>Home - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="./css/theme.css" type="text/css" />
   <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="./css/highlight.css">
   <link href="./assets/Documenter.css" rel="stylesheet">
-
   
   <script>
     // Current page data
-    var mkdocs_page_name = "None";
+    var mkdocs_page_name = "Home";
     var mkdocs_page_input_path = "index.md";
     var mkdocs_page_url = "/";
   </script>
   
   <script src="./js/jquery-2.1.1.min.js"></script>
   <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script>
-  <script src="./js/theme.js"></script> 
-  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
-  <script src="./assets/mathjaxhelper.js"></script>
-
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
   
 </head>
 
@@ -55,7 +45,7 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
           
             <li>
     <li class="toctree-l1 current">
@@ -265,9 +255,8 @@
     <li>Home</li>
     <li class="wy-breadcrumbs-aside">
       
-        
-          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github"> Edit on GitHub</a>
-        
+        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -280,7 +269,7 @@
 <h1 id="optimjl">Optim.jl</h1>
 <p><a id='What-1'></a></p>
 <h2 id="what">What</h2>
-<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained optimization, most of the solvers tries to find an $x$ that minimizes a function $f(x)$ without any constraints.  Thus, the main focus is on unconstrained optimization.</p>
+<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>).</p>
 <p><a id='Why-1'></a></p>
 <h2 id="why">Why</h2>
 <p>There are many solvers available from both free and commercial sources, and many of them are accessible from Julia. Few of them are written in Julia. Performance-wise this is rarely a problem, as they are often written in either Fortran or C. However, solvers written directly in Julia does come with some advantages.</p>
@@ -324,10 +313,10 @@
       </div>
 
     </section>
-
+    
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
           <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
@@ -338,11 +327,14 @@
       
     </span>
 </div>
+    <script src="./js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="./assets/mathjaxhelper.js"></script>
 
 </body>
 </html>
 
 <!--
-MkDocs version : 0.15.3
-Build Date UTC : 2016-10-19 11:54:10.177379
+MkDocs version : 0.16.0
+Build Date UTC : 2016-11-10 21:03:31
 -->
