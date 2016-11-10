@@ -386,7 +386,7 @@ function _lagrangian_linefunc(α, d, constraints, state)
     b_ls = state.b_ls
     ls_update!(state.x_ls, state.x, state.s, α)
     ls_update!(b_ls.bstate, state.bstate, state.bstep, α)
-    constraints.c!(state.x, b_ls.c)
+    constraints.c!(state.x_ls, b_ls.c)
     lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
 end
 
