@@ -65,11 +65,14 @@ immutable LBFGS{T} <: Optimizer
     linesearch!::Function
     P::T
     precondprep!::Function
+    extrapolate::Bool
+    snap2one::Tuple
 end
 
 LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hagerzhang!,
-      P=nothing, precondprep! = (P, x) -> nothing) =
-    LBFGS(Int(m), linesearch!, P, precondprep!)
+                        P=nothing, precondprep! = (P, x) -> nothing,
+                        extrapolate::Bool=false, snap2one = (0.75, Inf)) =
+      LBFGS(Int(m), linesearch!, P, precondprep!, extrapolate, snap2one)
 
 type LBFGSState{T}
     @add_generic_fields()
@@ -146,10 +149,26 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     LineSearches.clear!(state.lsr)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
+    # compute an initial guess for the linesearch based on
+    # Nocedal/Wright, 2nd ed, (3.60)
+    # TODO: this is a temporary fix, but should eventually be split off into
+    #       a separate type and possibly live in LineSearches; see #294
+    if method.extrapolate && state.pseudo_iteration > 1
+        alphaguess = 2.0 * (state.f_x - state.f_x_previous) / dphi0
+        alphaguess = max(alphaguess, state.alpha/4.0)  # not too much reduction
+        # if alphaguess ≈ 1, then make it 1 (Newton-type behaviour)
+        if method.snap2one[1] < alphaguess < method.snap2one[2]
+            alphaguess = 1.0
+        end
+    else
+        # without extrapolation use previous alpha (old behaviour)
+        alphaguess = state.alpha
+    end
+
     # Determine the distance of movement along the search line
     state.alpha, f_update, g_update =
       method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                     state.alpha, state.mayterminate)
+                     alphaguess, state.mayterminate)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
     # Maintain a record of previous position

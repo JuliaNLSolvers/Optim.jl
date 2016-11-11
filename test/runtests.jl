@@ -30,7 +30,8 @@ my_tests = [
     "constrained.jl",
     "callbacks.jl",
     "precon.jl",
-    "initial_convergence.jl"
+    "initial_convergence.jl",
+    "extrapolate.jl"
 ]
 
 println("Running tests:")
