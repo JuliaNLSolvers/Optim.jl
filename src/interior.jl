@@ -582,6 +582,75 @@ function equality_grad_λ!(gλ, v, target, idx)
     nothing
 end
 
+"""
+    isfeasible(constraints, state) -> Bool
+    isfeasible(constraints, x, c) -> Bool
+    isfeasible(constraints, x) -> Bool
+    isfeasible(bounds, x, c) -> Bool
+
+Return `true` if point `x` is feasible, given the `constraints` which
+specify bounds `lx`, `ux`, `lc`, and `uc`. `x` is feasible if
+
+    lx[i] <= x[i] <= ux[i]
+    lc[i] <= c[i] <= uc[i]
+
+for all possible `i`.
+"""
+function isfeasible(bounds::ConstraintBounds, x, c)
+    isf = true
+    for (i,j) in enumerate(bounds.eqx)
+        isf &= x[j] == bounds.valx[i]
+    end
+    for (i,j) in enumerate(bounds.ineqx)
+        isf &= bounds.σx[i]*(x[j] - bounds.bx[i]) >= 0
+    end
+    for (i,j) in enumerate(bounds.iz)
+        isf &= bounds.σz[i]*x[j] >= 0
+    end
+    for (i,j) in enumerate(bounds.eqc)
+        isf &= c[j] == bounds.valc[i]
+    end
+    for (i,j) in enumerate(bounds.ineqc)
+        isf &= bounds.σc[i]*(c[j] - bounds.bc[i]) >= 0
+    end
+    isf
+end
+isfeasible(constraints, state::AbstractBarrierState) = isfeasible(constraints, state.x, state.constraints_c)
+isfeasible(constraints, x) = isfeasible(constraints, x, constraints.c!(x, Array{eltype(x)}(constraints.bounds.nc)))
+isfeasible(constraints::AbstractConstraintsFunction, x, c) = isfeasible(constraints.bounds, x, c)
+
+"""
+    isinterior(constraints, state) -> Bool
+    isinterior(constraints, x, c) -> Bool
+    isinterior(constraints, x) -> Bool
+    isinterior(bounds, x, c) -> Bool
+
+Return `true` if point `x` is on the interior of the allowed region,
+given the `constraints` which specify bounds `lx`, `ux`, `lc`, and
+`uc`. `x` is in the interior if
+
+    lx[i] < x[i] < ux[i]
+    lc[i] < c[i] < uc[i]
+
+for all possible `i`.
+"""
+function isinterior(bounds::ConstraintBounds, x, c)
+    isi = true
+    for (i,j) in enumerate(bounds.ineqx)
+        isi &= bounds.σx[i]*(x[j] - bounds.bx[i]) > 0
+    end
+    for (i,j) in enumerate(bounds.iz)
+        isi &= bounds.σz[i]*x[j] > 0
+    end
+    for (i,j) in enumerate(bounds.ineqc)
+        isi &= bounds.σc[i]*(c[j] - bounds.bc[i]) > 0
+    end
+    isi
+end
+isinterior(constraints, state::AbstractBarrierState) = isinterior(constraints, state.x, state.constraints_c)
+isinterior(constraints, x) = isinterior(constraints, x, constraints.c!(x, Array{eltype(x)}(constraints.bounds.nc)))
+isinterior(constraints::AbstractConstraintsFunction, x, c) = isinterior(constraints.bounds, x, c)
+
 ## Utilities for representing total state as single vector
 function pack_vec(x, b::BarrierStateVars)
     n = length(x)

@@ -17,6 +17,8 @@ module Optim
            Base.setindex!
 
     export optimize,
+           isfeasible,
+           isinterior,
            DifferentiableFunction,
            TwiceDifferentiableFunction,
            DifferentiableConstraintsFunction,
