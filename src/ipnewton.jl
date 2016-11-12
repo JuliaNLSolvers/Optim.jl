@@ -173,7 +173,7 @@ end
 
 function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
-    solve_step!(state, constraints)
+    state, dslackc = solve_step!(state, constraints)
     # If a step α=1 will not change any of the parameters, we can quit now.
     # This prevents a futile linesearch.
     if is_smaller_eps(state.x, state.s) &&
@@ -194,7 +194,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
                             view(state.s, bounds.iz).*bounds.σz)
 
     # Determine the actual distance of movement along the search line
-    ϕ = α->lagrangian_linefunc!(α, d, constraints, state, method)
+    ϕ = α->lagrangian_linefunc!(α, d, constraints, state, method, dslackc)
     state.alpha, f_update, g_update =
         method.linesearch!(ϕ, T(1), αmax, qp)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
@@ -204,10 +204,10 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
 
     # Update current position # x = x + alpha * s
     ls_update!(state.x, state.x, state.s, state.alpha)
-    ls_update!(bstate, bstate, bstep, state.alpha)
+    ls_update!(bstate, state.constr_c, bstate, bstep, state.alpha, constraints, state, dslackc)
 
     # Evaluate the constraints at the new position
-    constraints.c!(state.x, state.constr_c)
+#    constraints.c!(state.x, state.constr_c)  # already done in ls_update!
     constraints.jacobian!(state.x, state.constr_J)
 
     # Test for active inequalities, solve immediately for the corresponding s and λ
@@ -226,17 +226,19 @@ function solve_step!(state::IPNewtonState, constraints)
     k = unpack_vec!(bstep.λcE, step, k)
     k == length(step) || error("exhausted targets before step")
     # Solve for the slack variable and λI updates
+    # These are only used to estimate αmax, otherwise these are updated by exact formulas
     for (i, j) in enumerate(bounds.ineqx)
         bstep.slack_x[i] = -bgrad.λx[i] + bounds.σx[i]*s[j]
         bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
     end
     JI = view5(state.constr_J, bounds.ineqc, :)
-    bstep.slack_c[:] = -bgrad.λc + Diagonal(bounds.σc)*JI*s
+    dslackc = Diagonal(bounds.σc)*JI*s
+    bstep.slack_c[:] = -bgrad.λc + dslackc
     for i = 1:length(bstep.λc)
         bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
     end
     state.stepf = step
-    state
+    state, dslackc
 end
 
 function is_smaller_eps(ref, step)

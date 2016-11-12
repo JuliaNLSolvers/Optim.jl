@@ -299,7 +299,7 @@ ConstraintBounds:
         bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
         αmax = Optim.estimate_maxstep(Inf, state.x[bounds.iz].*bounds.σz,
                                       state.s[bounds.iz].*bounds.σz)
-        ϕ = α->Optim.lagrangian_linefunc(α, d, constraints, state)
+        ϕ = α->Optim.lagrangian_linefunc(α, d, constraints, state, Float64[])
         @test ϕ(0) ≈ qp[1]
         α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, qp)
         @test α > 1e-3

@@ -138,13 +138,38 @@ immutable BarrierLineSearchGrad{T}
     bgrad::BarrierStateVars{T}    # trial point's gradient
 end
 
-function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α)
-    ls_update!(out.slack_x, base.slack_x, step.slack_x, α)
-    ls_update!(out.slack_c, base.slack_c, step.slack_c, α)
+function ls_update!(out::BarrierStateVars, c, base::BarrierStateVars, step::BarrierStateVars, α, constraints, state, dslackc)
+    bounds = constraints.bounds
+    constraints.c!(state.x_ls, c)
+    xtarget = bounds.σx.*(state.x_ls[bounds.ineqx] - bounds.bx)
+    dslackx = bounds.σx.*state.s[bounds.ineqx]
+    ctarget = bounds.σc.*(c[bounds.ineqc] - bounds.bc)
+    ls_update!(out, base, step, α, state.μ, xtarget, dslackx, ctarget, dslackc)
+end
+
+function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α, μ, xtarget, dslackx, ctarget, dslackc)
     ls_update!(out.λxE, base.λxE, step.λxE, α)
-    ls_update!(out.λx, base.λx, step.λx, α)
-    ls_update!(out.λc, base.λc, step.λc, α)
     ls_update!(out.λcE, base.λcE, step.λcE, α)
+    # For the inequality terms, we use "exact" updating
+    _lsu_slack!(out.slack_x, xtarget, base.slack_x, dslackx, α)
+    _lsu_slack!(out.slack_c, ctarget, base.slack_c, dslackc, α)
+    _lsu_λ!(out.λx, out.slack_x, μ)
+    _lsu_λ!(out.λc, out.slack_c, μ)
+    out
+end
+function _lsu_slack!(out, target, slack, dslack, α)
+    for i = 1:length(out)
+        t = target[i]
+        # This handles the possible loss of precision at the boundary
+        # by using the gradient to extrapolate the change
+        out[i] = t != 0 ? t : slack[i]+α*dslack[i]
+    end
+    out
+end
+function _lsu_λ!(out, slack, μ)
+    for i = 1:length(out)
+        out[i] = μ/slack[i]
+    end
     out
 end
 
@@ -397,22 +422,21 @@ function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x
 end
 
 # for line searches that don't use the gradient along the line
-function lagrangian_linefunc(α, d, constraints, state)
-    _lagrangian_linefunc(α, d, constraints, state)[2]
+function lagrangian_linefunc(α, d, constraints, state, dslackc)
+    _lagrangian_linefunc(α, d, constraints, state, dslackc)[2]
 end
 
-function _lagrangian_linefunc(α, d, constraints, state)
-    b_ls = state.b_ls
+function _lagrangian_linefunc(α, d, constraints, state, dslackc)
+    b_ls, bounds = state.b_ls, constraints.bounds
     ls_update!(state.x_ls, state.x, state.s, α)
-    ls_update!(b_ls.bstate, state.bstate, state.bstep, α)
-    constraints.c!(state.x_ls, b_ls.c)
+    ls_update!(b_ls.bstate, b_ls.c, state.bstate, state.bstep, α, constraints, state, dslackc)
     lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
 end
 
-function lagrangian_linefunc!(α, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
+function lagrangian_linefunc!(α, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)}, dslackc)
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    f_x, L = _lagrangian_linefunc(α, d, constraints, state)
+    f_x, L = _lagrangian_linefunc(α, d, constraints, state, dslackc)
     state.f_x = f_x
     state.L = L
     L
