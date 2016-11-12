@@ -61,6 +61,17 @@ Base.similar(bstate::BarrierStateVars) =
                      similar(bstate.λc),
                      similar(bstate.λcE))
 
+Base.copy(bstate::BarrierStateVars) =
+    BarrierStateVars(copy(bstate.slack_x),
+                     copy(bstate.slack_c),
+                     copy(bstate.active_x),
+                     copy(bstate.active_c),
+                     copy(bstate.λxE),
+                     copy(bstate.λx),
+                     copy(bstate.λc),
+                     copy(bstate.λcE))
+
+
 function Base.fill!(b::BarrierStateVars, val)
     fill!(b.slack_x, val)
     fill!(b.slack_c, val)
@@ -96,6 +107,14 @@ const bsv_seed = sizeof(UInt) == 64 ? 0x145b788192d1cde3 : 0x766a2810
 Base.hash(b::BarrierStateVars, u::UInt) =
     hash(b.λcE, hash(b.λc, hash(b.λx, hash(b.λxE, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
 
+function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
+    dot(v.slack_x,w.slack_x) +
+        dot(v.slack_c, w.slack_c) +
+        dot(v.λxE, w.λxE) +
+        dot(v.λx, w.λx) +
+        dot(v.λc, w.λc) +
+        dot(v.λcE, w.λcE)
+end
 
 """
     BarrierLineSearch{T}

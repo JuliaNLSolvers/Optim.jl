@@ -34,6 +34,7 @@ module Optim
            Fminbox,
            GoldenSection,
            GradientDescent,
+           IPNewton,
            LBFGS,
            MomentumGradientDescent,
            NelderMead,
