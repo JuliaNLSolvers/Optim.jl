@@ -172,6 +172,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
 end
 
 function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
+    state.f_x_previous = state.f_x
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
     state, dslackc = solve_step!(state, constraints)
     # If a step α=1 will not change any of the parameters, we can quit now.
@@ -218,7 +219,12 @@ end
 
 function solve_step!(state::IPNewtonState, constraints)
     # Solve the Newton step
-    step = -(state.Hf\state.gf)  # do *not* force posdef
+    local step
+    try
+        step = -(state.Hf\state.gf)  # do *not* force posdef
+    catch
+        step = -(svdfact(state.Hf)\state.gf)
+    end
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
     k = unpack_vec!(s, step, 0)
