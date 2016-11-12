@@ -342,7 +342,7 @@ ConstraintBounds:
                 Optim.update_h!(d, constraints, state, method)
             end
             @test state.x[1] == σ
-            @test state.bstate.slack_x[1] ≈ μ/abs(F)
+            @test state.bstate.slack_x[1] < eps(float(σ))
             # x >= 1 using the linear/nonlinear constraints
             d = TwiceDifferentiableFunction(x->F*(x[1]-σ), (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
             constraints = TwiceDifferentiableConstraintsFunction(
@@ -358,7 +358,7 @@ ConstraintBounds:
                 Optim.update_h!(d, constraints, state, method)
             end
             @test state.x[1] == σ
-            @test state.bstate.slack_c[1] ≈ μ/abs(F)
+            @test state.bstate.slack_c[1] < eps(float(σ))
         end
     end
 end

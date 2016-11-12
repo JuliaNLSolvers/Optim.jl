@@ -212,7 +212,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     constraints.jacobian!(state.x, state.constr_J)
 
     # Test for active inequalities, solve immediately for the corresponding s and λ
-    solve_active_inequalities!(d, constraints, state)
+    # solve_active_inequalities!(d, constraints, state)
 
     false
 end
