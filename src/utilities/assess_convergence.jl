@@ -15,7 +15,7 @@ function assess_convergence(x::Array,
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(f_x - f_x_previous) / (abs(f_x) + f_tol) < f_tol || nextfloat(f_x) >= f_x_previous
+    if abs(f_x - f_x_previous) < min(f_tol * (abs(f_x) + f_tol), eps(abs(f_x)+abs(f_x_previous)))
         f_converged = true
     end
 
@@ -39,7 +39,7 @@ function assess_convergence(state, options)
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(state.f_x - state.f_x_previous) / (abs(state.f_x) + options.f_tol) < options.f_tol || nextfloat(state.f_x) >= state.f_x_previous
+    if abs(state.f_x - state.f_x_previous) < min(options.f_tol * (abs(state.f_x) + options.f_tol), eps(abs(state.f_x)+abs(state.f_x_previous))) || fconverged(state)
         f_converged = true
     end
 
@@ -79,6 +79,13 @@ function assess_convergence(state::NewtonTrustRegionState, options)
                                        options.x_tol,
                                        options.f_tol,
                                        options.g_tol)
+        f_converged = fconverged(state)
+        converged |= f_converged
     end
     x_converged, f_converged, g_converged, converged
 end
+
+# For monotonic-decreasing problems
+fconverged(state) = nextfloat(state.f_x) >= state.f_x_previous
+# Constrained problems are not monotonic, so we can't add a one-sided criterion
+fconverged(state::IPNewtonState) = false

@@ -182,7 +182,7 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
-    x_converged, f_converged = false, false
+    x_converged, f_converged, counter_f_tol = false, false, 0
     g_converged = vecnorm(state.g, Inf) < options.g_tol
 
     converged = g_converged
@@ -199,6 +199,15 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         update_asneeded_fg!(d, constraints, state, method)
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
+        # With equality constraints, optimization is not necessarily
+        # monotonic in the value of the function. If the function
+        # change is approximately canceled by a change in the equality
+        # violation, it's possible to spuriously satisfy the f_tol
+        # criterion. Consequently, we require that the f_tol condition
+        # be satisfied a certain number of times in a row before
+        # declaring convergence.
+        counter_f_tol = f_converged ? counter_f_tol+1 : 0
+        converged = x_converged | g_converged | (counter_f_tol > options.successive_f_tol)
 
         # If tracing, update trace with trace!. If a callback is provided, it
         # should have boolean return value that controls the variable stopped_by_callback.
