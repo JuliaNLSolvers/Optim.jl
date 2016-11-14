@@ -668,7 +668,12 @@ function isfeasible(bounds::ConstraintBounds, x, c)
     isf
 end
 isfeasible(constraints, state::AbstractBarrierState) = isfeasible(constraints, state.x, state.constraints_c)
-isfeasible(constraints, x) = isfeasible(constraints, x, constraints.c!(x, Array{eltype(x)}(constraints.bounds.nc)))
+function isfeasible(constraints, x)
+    # don't assume c! returns c (which means this is a little more awkward)
+    c = Array{eltype(x)}(constraints.bounds.nc)
+    constraints.c!(x, c)
+    isfeasible(constraints, x, c)
+end
 isfeasible(constraints::AbstractConstraintsFunction, x, c) = isfeasible(constraints.bounds, x, c)
 
 """
@@ -700,7 +705,11 @@ function isinterior(bounds::ConstraintBounds, x, c)
     isi
 end
 isinterior(constraints, state::AbstractBarrierState) = isinterior(constraints, state.x, state.constraints_c)
-isinterior(constraints, x) = isinterior(constraints, x, constraints.c!(x, Array{eltype(x)}(constraints.bounds.nc)))
+function isinterior(constraints, x)
+    c = Array{eltype(x)}(constraints.bounds.nc)
+    constraints.c!(x, c)
+    isinterior(constraints, x, c)
+end
 isinterior(constraints::AbstractConstraintsFunction, x, c) = isinterior(constraints.bounds, x, c)
 
 ## Utilities for representing total state as single vector
