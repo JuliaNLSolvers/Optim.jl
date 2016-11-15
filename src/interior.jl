@@ -116,6 +116,12 @@ function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
         dot(v.λcE, w.λcE)
 end
 
+function Base.vecnorm(b::BarrierStateVars, p::Real)
+    vecnorm(b.slack_x, p) + vecnorm(b.slack_c, p) +
+        vecnorm(b.λx, p) + vecnorm(b.λc, p) +
+        vecnorm(b.λxE, p) + vecnorm(b.λcE, p)
+end
+
 """
     BarrierLineSearch{T}
 
@@ -183,13 +189,16 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
     x_converged, f_converged, counter_f_tol = false, false, 0
-    g_converged = vecnorm(state.g, Inf) < options.g_tol
+    gnorm = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
+    g_converged = gnorm < options.g_tol
 
     converged = g_converged
     iteration, iterationμ = 0, 0
 
     options.show_trace && print_header(method)
     trace!(tr, state, iteration, method, options)
+
+    Δfmax = zero(state.f_x)
 
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
@@ -208,6 +217,7 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         # declaring convergence.
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged | g_converged | (counter_f_tol > options.successive_f_tol)
+        gnormnew = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
 
         # If tracing, update trace with trace!. If a callback is provided, it
         # should have boolean return value that controls the variable stopped_by_callback.
@@ -216,15 +226,21 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
             stopped_by_callback = trace!(tr, state, iteration, method, options)
         end
 
+        Δf = abs(state.f_x - state.f_x_previous)
+        Δfmax = max(Δfmax, abs(state.f_x - state.f_x_previous))
+
         # Test whether we need to decrease the barrier penalty
-        if converged
-            if iterationμ > 1
-                # We did real work, so it's worth decreasing the barrier penalty further
-                shrink_μ!(d, constraints, state, method, options)
-                iterationμ = 0
-                converged = false
-            end
+        if iterationμ > 1 && (converged || 100*gnormnew < gnorm || 100*Δf < Δfmax)
+            # Since iterationμ > 1 we must have accomplished real
+            # work, so it's worth trying to decrease the barrier
+            # penalty further.
+            shrink_μ!(d, constraints, state, method, options)
+            iterationμ = 0
+            converged = false
+            gnormnew = oftype(gnormnew, NaN)
+            Δfmax = zero(Δfmax)
         end
+        gnorm = gnormnew
 
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true
