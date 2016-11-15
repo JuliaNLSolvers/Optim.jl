@@ -86,9 +86,9 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hf,
         stepf)
 
-    state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J)
-    bstate.λx[:] = μ./bstate.slack_x
-    bstate.λc[:] = μ./bstate.slack_c
+    state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J, options.μ0)
+    bstate.λx[:] = state.μ./bstate.slack_x
+    bstate.λc[:] = state.μ./bstate.slack_c
     update_fg!(d, constraints, state, method)
     update_h!(d, constraints, state, method)
 end

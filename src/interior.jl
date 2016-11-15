@@ -338,7 +338,7 @@ function set_active_params!(slack, λ, active, λtarget, μ, k)
 end
 
 """
-    initialize_μ_λE!(λxE, λcE, constraints, x, g, constr_c, constr_J, β=0.01) -> μ
+    initialize_μ_λE!(λxE, λcE, constraints, x, g, constr_c, constr_J, μ0=:auto, β=0.01) -> μ
 
 Pick μ and λ to ensure that the equality constraints are satisfied
 locally, and that the initial gradient including the barrier would be
@@ -356,9 +356,9 @@ constraints evaluated at `x`. `β` (optional) specifies the fraction of
 the objective's gradient that may be diminished by the barrier.
 
 In addition to setting `λxE` and `λcE`, this returns `μ`, the value of
-the barrier penalty.
+the barrier penalty. You can manually specify μ by supplying μ0.
 """
-function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1//100)
+function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, μ0, β=1//100)
     length(c) + length(bounds.iz) + length(bounds.ineqx) == 0 && return zero(eltype(x))
     # Calculate the projection matrix
     JEx = zeros(eltype(J), length(bounds.eqx), length(x))
@@ -371,7 +371,6 @@ function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1/
     CEc = cholfact(Positive, CE)
     Pg = g - JE'*(CEc \ (JE*g)) # the projected gradient of the objective (orthog to all == constr.)
     # Calculate the barrier deviation and projection onto inequality normals
-    Δb = [x[bounds.iz]; x[bounds.ineqx] - bounds.bx; c[bounds.ineqc] - bounds.bc]
     JIx = zeros(eltype(J), length(bounds.iz)+length(bounds.ineqx), length(x))
     for (i,j) in enumerate([bounds.iz; bounds.ineqx])
         JIx[i,j] = 1
@@ -380,15 +379,21 @@ function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, β=1/
     JI = vcat(JIx, JIc)
     JIg = JI*Pg
     # Solve for μ
-    λtilde = 1./Δb
-    μden = dot(λtilde, JIg)
+    # Δb = [bounds.σz.*x[bounds.iz]; bounds.σx.*(x[bounds.ineqx] - bounds.bx); bounds.σc.*(c[bounds.ineqc] - bounds.bc)]
+    Δb = [x[bounds.iz]; x[bounds.ineqx] - bounds.bx; c[bounds.ineqc] - bounds.bc]
+    σ = [bounds.σz; bounds.σx; bounds.σc]
+    λtilde = σ./Δb
+    μden = dot(σ.*λtilde, JIg)
     if μden == 0 && !isempty(Δb)
         μden = maximum(abs(λtilde).*abs(JIg))*length(Δb)
     end
     μ = β*dot(Pg, Pg)/abs(μden)
     μ = μden != 0 ? μ : oftype(μ, 1)
+    if μ0 != :auto
+        μ = μ0
+    end
     # Solve for λE
-    gb = g - μ*(JI'*λtilde)
+    gb = g - μ*(JI'*(σ.*λtilde))
     Pgb = gb - JE'*(CEc \ (JE*gb))
     λE = CEc \ (JE*Pgb)
     k = unpack_vec!(λx, λE, 0)
