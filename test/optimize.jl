@@ -40,4 +40,18 @@ let
     results = optimize(DifferentiableFunction(f1, g1), [127.0, 921.0], BFGS(initial_invH = x -> initial_invH), OptimizationOptions())
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+
+    # Tests for PR #302
+    results = optimize(cos, 0, 2pi);
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
+    results = optimize(cos, 0.0, 2pi);
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
+    results = optimize(cos, 0, 2pi, Brent());
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
+    results = optimize(cos, 0.0, 2pi, Brent());
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
+    results = optimize(cos, 0, 2pi, method = Brent());
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
+    results = optimize(cos, 0.0, 2pi, method = Brent());
+    @assert norm(Optim.minimizer(results) - pi) < 0.01
 end

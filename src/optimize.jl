@@ -322,3 +322,15 @@ function optimize(f::Function,
              Float64(upper);
              kwargs...)
 end
+
+function optimize(f::Function,
+                  lower::Real,
+                  upper::Real,
+                  mo::Union{Brent, GoldenSection};
+                  kwargs...)
+    optimize(f,
+             Float64(lower),
+             Float64(upper),
+             mo;
+             kwargs...)
+end

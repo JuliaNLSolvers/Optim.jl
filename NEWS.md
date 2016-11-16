@@ -1,4 +1,5 @@
 # Optim (unversioned) release notes
+* Fix dispatch bug for univariate optimization.
 * The line search functionality has been separated into a new package
   [LineSearches.jl](https://github.com/anriseth/LineSearches.jl), see
   [277](https://github.com/JuliaOpt/Optim.jl/pull/277).
