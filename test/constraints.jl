@@ -94,7 +94,7 @@ ConstraintBounds:
         cfun = x->Float64[]
         c = Float64[]
         J = Array{Float64}(0,0)
-        options = OptimizationOptions()
+        options = OptimizationOptions(μ0 = μ)
         method = Optim.IPNewton()
         ## In the code, variable constraints are special-cased (for
         ## reasons of user-convenience and efficiency).  It's
@@ -277,6 +277,87 @@ ConstraintBounds:
         hp = full(cholfact(Positive, hxx))
         @test state.gf ≈ -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ*(bgrad.λc ./ bstate.slack_c.^2))
         @test state.Hf ≈ hp
+    end
+
+    @testset "IPNewton initialization" begin
+        method = IPNewton()
+        options = OptimizationOptions()
+        x = [1.0,0.1,0.3,0.4]
+        ## A linear objective function (hessian is zero)
+        f_g = [1.0,2.0,3.0,4.0]
+        d = TwiceDifferentiableFunction(x->dot(x, f_g), (x,g)->copy!(g, f_g), (x,h)->fill!(h, 0))
+        # Variable bounds
+        constraints = TwiceDifferentiableConstraintsFunction([0.5, 0.0, -Inf, -Inf], [Inf, Inf, 1.0, 0.8])
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        @test norm(f_g - state.g) ≈ 0.01*norm(f_g)
+        # Nonlinear inequalities
+        constraints = TwiceDifferentiableConstraintsFunction(
+            (x,c)->(c[1]=x[1]*x[2]; c[2]=3*x[3]+x[4]^2),
+            (x,J)->(J[:,:] = [x[2] x[1] 0 0; 0 0 3 2*x[4]]),
+            (x,λ,h)->(h[4,4] += λ[2]*2),
+            [], [], [0.05, 0.4], [0.15, 4.4])
+        @test isinterior(constraints, x)
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        @test norm(f_g - state.g) ≈ 0.01*norm(f_g)
+        # Mixed equalities and inequalities
+        constraints = TwiceDifferentiableConstraintsFunction(
+            (x,c)->(c[1]=x[1]*x[2]; c[2]=3*x[3]+x[4]^2),
+            (x,J)->(J[:,:] = [x[2] x[1] 0 0; 0 0 3 2*x[4]]),
+            (x,λ,h)->(h[4,4] += λ[2]*2),
+            [], [], [0.1, 0.4], [0.1, 4.4])
+        @test isfeasible(constraints, x)
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        J = zeros(2,4)
+        constraints.jacobian!(x, J)
+        eqnormal = J[1,:]; eqnormal = eqnormal/norm(eqnormal)
+        @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
+        Pfg = f_g - dot(f_g, eqnormal)*eqnormal
+        Pg = state.g - dot(state.g, eqnormal)*eqnormal
+        @test norm(Pfg - Pg) ≈ 0.01*norm(Pfg)
+        ## An objective function with a nonzero hessian
+        hd = [1.0, 100.0, 0.01, 2.0]   # diagonal terms of hessian
+        d = TwiceDifferentiableFunction(x->sum(hd.*x.^2)/2, (x,g)->copy!(g, hd.*x), (x,h)->copy!(h, Diagonal(hd)))
+        gx = d.g!(x, zeros(4))
+        hx = Diagonal(hd)
+        # Variable bounds
+        constraints = TwiceDifferentiableConstraintsFunction([0.5, 0.0, -Inf, -Inf], [Inf, Inf, 1.0, 0.8])
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        @test abs(dot(gx, state.g)/dot(gx,gx) - 1) <= 0.011
+        Optim.update_h!(d, constraints, state, method)
+        @test abs(dot(gx, state.H*gx)/dot(gx, hx*gx) - 1) <= 0.011
+        # Nonlinear inequalities
+        constraints = TwiceDifferentiableConstraintsFunction(
+            (x,c)->(c[1]=x[1]*x[2]; c[2]=3*x[3]+x[4]^2),
+            (x,J)->(J[:,:] = [x[2] x[1] 0 0; 0 0 3 2*x[4]]),
+            (x,λ,h)->(h[4,4] += λ[2]*2),
+            [], [], [0.05, 0.4], [0.15, 4.4])
+        @test isinterior(constraints, x)
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        @test abs(dot(gx, state.g)/dot(gx,gx) - 1) <= 0.011
+        Optim.update_h!(d, constraints, state, method)
+        @test abs(dot(gx, state.H*gx)/dot(gx, hx*gx) - 1) <= 0.011
+        # Mixed equalities and inequalities
+        constraints = TwiceDifferentiableConstraintsFunction(
+            (x,c)->(c[1]=x[1]*x[2]; c[2]=3*x[3]+x[4]^2),
+            (x,J)->(J[:,:] = [x[2] x[1] 0 0; 0 0 3 2*x[4]]),
+            (x,λ,h)->(h[4,4] += λ[2]*2),
+            [], [], [0.1, 0.4], [0.1, 4.4])
+        @test isfeasible(constraints, x)
+        state = Optim.initial_state(method, options, d, constraints, x)
+        Optim.update_fg!(d, constraints, state, method)
+        J = zeros(2,4)
+        constraints.jacobian!(x, J)
+        eqnormal = J[1,:]; eqnormal = eqnormal/norm(eqnormal)
+        @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
+        Pgx = gx - dot(gx, eqnormal)*eqnormal
+        @test abs(dot(Pgx, state.g)/dot(Pgx,Pgx) - 1) <= 0.011
+        Optim.update_h!(d, constraints, state, method)
+        @test abs(dot(Pgx, state.H*Pgx)/dot(Pgx, hx*Pgx) - 1) <= 0.011
     end
 
     @testset "IPNewton step" begin

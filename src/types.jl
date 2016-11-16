@@ -284,7 +284,7 @@ end
 # additional variables. See `parse_constraints` for details.
 
 immutable ConstraintBounds{T}
-    nc::Int          # Number of linear/nonlinear constraints
+    nc::Int          # Number of linear/nonlinear constraints supplied by user
     # Box-constraints on variables (i.e., directly on x)
     eqx::Vector{Int} # index-vector of equality-constrained x (not actually variable...)
     valx::Vector{T}  # value of equality-constrained x
@@ -312,7 +312,34 @@ end
 Base.eltype{T}(::Type{ConstraintBounds{T}}) = T
 Base.eltype(cb::ConstraintBounds) = eltype(typeof(cb))
 
+"""
+    nconstraints(bounds) -> nc
+
+The number of linear/nonlinear constraint functions supplied by the
+user. This does not include bounds-constraints on variables.
+
+See also: nconstraints_x.
+"""
 nconstraints(cb::ConstraintBounds) = cb.nc
+
+"""
+    nconstraints_x(bounds) -> nx
+
+The number of "meaningful" constraints (not `±Inf`) on the x coordinates.
+
+See also: nconstraints.
+"""
+function nconstraints_x(cb::ConstraintBounds)
+    mz = isempty(cb.iz) ? 0 : maximum(cb.iz)
+    mi = isempty(cb.ineqx) ? 0 : maximum(cb.ineqx)
+    me = isempty(cb.eqx) ? 0 : maximum(cb.eqx)
+    nmax = max(mz, mi, me)
+    hasconstraint = falses(nmax)
+    hasconstraint[cb.iz] = true
+    hasconstraint[cb.ineqx] = true
+    hasconstraint[cb.eqx] = true
+    sum(hasconstraint)
+end
 
 function Base.show(io::IO, cb::ConstraintBounds)
     indent = "    "

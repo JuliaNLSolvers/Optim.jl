@@ -86,9 +86,10 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hf,
         stepf)
 
-    state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J, options.μ0)
-    bstate.λx[:] = state.μ./bstate.slack_x
-    bstate.λc[:] = state.μ./bstate.slack_c
+    d.h!(initial_x, state.H)
+    # state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J, options.μ0)
+    Hinfo = (state.H, hessianI(initial_x, constraints, 1./bstate.slack_c, 1))
+    initialize_μ_λ!(state, constraints.bounds, Hinfo, options.μ0)
     update_fg!(d, constraints, state, method)
     update_h!(d, constraints, state, method)
 end
@@ -108,30 +109,22 @@ function update_g!(d, constraints::TwiceDifferentiableConstraintsFunction, state
 end
 
 function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
+    x = state.x
     μ, Hxx, J = state.μ, state.H, state.constr_J
-    d.h!(state.x, Hxx)
-    # Collect the values of the coefficients of the inequality constraints
     bounds = constraints.bounds
-    ineqc, σc, λc = bounds.ineqc, bounds.σc, state.bstate.λc
     m, n = size(J, 1), size(J, 2)
-    λ = zeros(eltype(bounds), m)
-    for i = 1:length(ineqc)
-        λ[ineqc[i]] -= λc[i]*σc[i]
-    end
-    # Add the weighted hessian terms from the nonlinear constraints
-    constraints.h!(state.x, λ, Hxx)
-    # Add the Jacobian terms
-    JI = view5(J, ineqc, :)
+
+    d.h!(state.x, Hxx)
+    hessianI!(Hxx, state.x, constraints, state.bstate.λc, μ)  # accumulate the inequality second derivatives
+    # Add the Jacobian terms (J'*S^{-2}*J)
+    JI = view5(J, bounds.ineqc, :)
     Sinv2 = Diagonal(1./state.bstate.slack_c.^2)
     HJ = JI'*Sinv2*JI
     for j = 1:n, i = 1:n
         Hxx[i,j] += μ*HJ[i,j]
     end
-    # Add the variable inequalities
-    iz, x = bounds.iz, state.x
-    for i in iz
-        Hxx[i,i] += μ/x[i]^2
-    end
+    # Add the variable inequalities portions of J'*S^{-2}*J
+    # The iz terms are already in Hxx (from hessianI!)
     ineqx, sx = bounds.ineqx, state.bstate.slack_x
     for (i,j) in enumerate(ineqx)
         Hxx[j,j] += μ/sx[i]^2
@@ -141,7 +134,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     Hp = full(Hpc)
     # Now add the equality constraint hessian terms
     eqc, λcE = bounds.eqc, state.bstate.λcE
-    fill!(λ, 0)
+    λ = zeros(eltype(x), nconstraints(bounds))
     for i = 1:length(eqc)
         λ[eqc[i]] -= λcE[i]
     end
@@ -161,7 +154,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
                 -JEc Jod zeros(eltype(JEc), size(JEc,1), size(JEc,1))]
     # Also form the total gradient
     bgrad = state.bgrad
-    gI = state.g + JI'*Diagonal(σc)*(bgrad.slack_c - μ*Sinv2*bgrad.λc)
+    gI = state.g + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ*Sinv2*bgrad.λc)
     for (i,j) in enumerate(ineqx)
         gI[j] += bounds.σx[i]*(bgrad.slack_x[i] - μ*bgrad.λx[i]/sx[i]^2)
     end

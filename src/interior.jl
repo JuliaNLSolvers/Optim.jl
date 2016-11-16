@@ -51,6 +51,12 @@ function setslack!(slack, active, v, ineq, σ, b)
     slack
 end
 
+slack(bstate::BarrierStateVars) = [bstate.slack_x; bstate.slack_c]
+lambdaI(bstate::BarrierStateVars) = [bstate.λx; bstate.λc]
+lambdaE(bstate::BarrierStateVars) = [bstate.λxE; bstate.λcE]
+lambdaI(state::AbstractBarrierState) = lambdaI(state.bstate)
+lambdaE(state::AbstractBarrierState) = lambdaE(state.bstate)
+
 Base.similar(bstate::BarrierStateVars) =
     BarrierStateVars(similar(bstate.slack_x),
                      similar(bstate.slack_c),
@@ -338,71 +344,182 @@ function set_active_params!(slack, λ, active, λtarget, μ, k)
 end
 
 """
-    initialize_μ_λE!(λxE, λcE, constraints, x, g, constr_c, constr_J, μ0=:auto, β=0.01) -> μ
+    initialize_μ_λ!(state, bounds, μ0=:auto, β=0.01)
+    initialize_μ_λ!(state, bounds, (Hobj,HcI), μ0=:auto, β=0.01)
 
 Pick μ and λ to ensure that the equality constraints are satisfied
-locally, and that the initial gradient including the barrier would be
-a descent direction for the problem without the barrier (μ = 0). This
-ensures that the search isn't pushed out of the basin of the
-user-supplied initial guess.
+locally (at the current `state.x`), and that the initial gradient
+including the barrier would be a descent direction for the problem
+without the barrier (μ = 0). This ensures that the search isn't pushed
+out of the basin of the user-supplied initial guess.
 
-`λv` and `λc` are the Lagrange multipliers for the variables and extra
-(non-variable) constraints; these are pre-allocated storage for the
-output, and their input values are not used. `constraints` is an
-`AbstractConstraintsFunction`, `x` is the position (must be a feasible
-interior point), `g` is the gradient of the objective at `x`, and
-`constr_c` and `constr_J` contain the values and Jacobian of the extra
-constraints evaluated at `x`. `β` (optional) specifies the fraction of
-the objective's gradient that may be diminished by the barrier.
+Upon entry, the objective function gradient, constraint values, and
+constraint jacobian must be set in `state.g`, `state.c`, and `state.J`
+respectively. If you also wish to ensure that the projection of
+Hessian is minimally-perturbed along the initial gradient, supply the
+hessian of the objective (`Hobj`) and
 
-In addition to setting `λxE` and `λcE`, this returns `μ`, the value of
-the barrier penalty. You can manually specify μ by supplying μ0.
+    HcI = ∑_i (σ_i/s_i)∇∇ c_{Ii}
+
+for the constraints. This can be obtained as
+
+    HcI = hessianI(state.x, constraints, 1./state.slack_c)
+
+You can manually specify `μ` by supplying a numerical value for
+`μ0`. Whether calculated algorithmically or specified manually, the
+values of `λ` are set using the chosen `μ`.
 """
-function initialize_μ_λ!(λx, λc, bounds::ConstraintBounds, x, g, c, J, μ0, β=1//100)
-    length(c) + length(bounds.iz) + length(bounds.ineqx) == 0 && return zero(eltype(x))
-    # Calculate the projection matrix
-    JEx = zeros(eltype(J), length(bounds.eqx), length(x))
-    for (i,j) in enumerate(bounds.eqx)
-        JEx[i,j] = 1
+function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Symbol,Number}, β=1//100)
+    if nconstraints(bounds) == 0 && nconstraints_x(bounds) == 0
+        state.μ = 0
+        fill!(state.bstate, 0)
+        return state
     end
+    gf = state.g  # must be pre-set to ∇f
+    # Calculate projection of ∇f into the subspace spanned by the
+    # equality constraint Jacobian
+    JE = jacobianE(state, bounds)
+    # QRF = qrfact(JE)
+    # Q = QRF[:Q]
+    # PEg = Q'*(Q*gf)   # in the subspace of JE
+    C = JE*JE'
+    Cc = cholfact(Positive, C)
+    Pperpg = gf-JE'*(Cc \ (JE*gf))   # in the nullspace of JE
+    # Set μ
+    JI = jacobianI(state, bounds)
+    xzi = xzinv(state.x, bounds)
+    if μ0 == :auto
+        # Calculate projections of the Lagrangian's gradient, and
+        # possibly hessian, along (∇f)_⟂
+        Dperp = dot(Pperpg, Pperpg)
+        σ, s = sigma(bounds), slack(state)
+        σdivs = σ./s
+        Δg = xzi + JI'*σdivs
+        PperpΔg = Δg - JE'*(Cc \ (JE*Δg))
+        DI = dot(PperpΔg, PperpΔg)
+        κperp, κI = hessian_projections(Hinfo, Pperpg, (JI*Pperpg)./s)
+        # Calculate μ and λI
+        μ = β * (κperp == 0 ? sqrt(Dperp/DI) : min(sqrt(Dperp/DI), abs(κperp/κI)))
+        if !isfinite(μ)
+            Δgtilde = abs(xzi) + JI'*(1./s)
+            PperpΔgtilde = Δgtilde - JE'*(Cc \ (JE*Δgtilde))
+            DItilde = dot(PperpΔgtilde, PperpΔgtilde)
+            μ = β*sqrt(Dperp/DItilde)
+        end
+        if !isfinite(μ) || μ == 0
+            μ = one(μ)
+        end
+    else
+        μ = convert(eltype(state.x), μ0)
+    end
+    state.μ = μ
+    # Set λI
+    state.bstate.λx[:] = μ./state.bstate.slack_x
+    state.bstate.λc[:] = μ./state.bstate.slack_c
+    # Calculate λE
+    λI = lambdaI(state)
+    ∇bI = gf - μ*xzi - JI'*λI
+#    qrregularize!(QRF)  # in case of any 0 eigenvalues
+    λE = Cc \ (JE*∇bI) + (cbar(bounds) - cE(state, bounds))/μ
+    k = unpack_vec!(state.bstate.λxE, λE, 0)
+    k = unpack_vec!(state.bstate.λcE, λE, k)
+    k == length(λE) || error("something is wrong")
+    state
+end
+function initialize_μ_λ!(state, bounds::ConstraintBounds, μ0::Union{Number,Symbol}, β=1//100)
+    initialize_μ_λ!(state, bounds, nothing, μ0, β)
+end
+
+function hessian_projections(Hinfo::Tuple{AbstractMatrix,AbstractMatrix}, Pperpg, y)
+    κperp = dot(Hinfo[1]*Pperpg, Pperpg)
+    κI = dot(Hinfo[2]*Pperpg, Pperpg) + dot(y,y)
+    κperp, κI
+end
+hessian_projections{T}(Hinfo::Void, Pperpg::AbstractVector{T}) = convert(T, Inf), zero(T)
+
+function jacobianE(state, bounds::ConstraintBounds)
+    J, x = state.constr_J, state.x
+    JEx = jacobianx(J, bounds.eqx)
     JEc = view5(J, bounds.eqc, :)
     JE = vcat(JEx, JEc)
-    CE = JE*JE'
-    CEc = cholfact(Positive, CE)
-    Pg = g - JE'*(CEc \ (JE*g)) # the projected gradient of the objective (orthog to all == constr.)
-    # Calculate the barrier deviation and projection onto inequality normals
-    JIx = zeros(eltype(J), length(bounds.iz)+length(bounds.ineqx), length(x))
-    for (i,j) in enumerate([bounds.iz; bounds.ineqx])
-        JIx[i,j] = 1
-    end
+end
+jacobianE(state, constraints) = jacobianE(state, constraints.bounds)
+
+function jacobianI(state, bounds::ConstraintBounds)
+    J, x = state.constr_J, state.x
+    JIx = jacobianx(J, bounds.ineqx)  # skip iz: there is no λIz, so don't put in JI
     JIc = view5(J, bounds.ineqc, :)
     JI = vcat(JIx, JIc)
-    JIg = JI*Pg
-    # Solve for μ
-    # Δb = [bounds.σz.*x[bounds.iz]; bounds.σx.*(x[bounds.ineqx] - bounds.bx); bounds.σc.*(c[bounds.ineqc] - bounds.bc)]
-    Δb = [x[bounds.iz]; x[bounds.ineqx] - bounds.bx; c[bounds.ineqc] - bounds.bc]
-    σ = [bounds.σz; bounds.σx; bounds.σc]
-    λtilde = σ./Δb
-    μden = dot(σ.*λtilde, JIg)
-    if μden == 0 && !isempty(Δb)
-        μden = maximum(abs(λtilde).*abs(JIg))*length(Δb)
-    end
-    μ = β*dot(Pg, Pg)/abs(μden)
-    μ = μden != 0 ? μ : oftype(μ, 1)
-    if μ0 != :auto
-        μ = μ0
-    end
-    # Solve for λE
-    gb = g - μ*(JI'*(σ.*λtilde))
-    Pgb = gb - JE'*(CEc \ (JE*gb))
-    λE = CEc \ (JE*Pgb)
-    k = unpack_vec!(λx, λE, 0)
-    k = unpack_vec!(λc, λE, k)
-    k == length(λE) || error("something is wrong")
-    μ
 end
-initialize_μ_λ!(λx, λc, constraints::AbstractConstraintsFunction, x, g, c, J, args...) =
-    initialize_μ_λ!(λx, λc, constraints.bounds, x, g, c, J, args...)
+jacobianI(state, constraints) = jacobianI(state, constraints.bounds)
+
+# TODO: when Optim supports sparse arrays, make a SparseMatrixCSC version
+function jacobianx(J::AbstractArray, indx)
+    Jx = zeros(eltype(J), length(indx), size(J, 2))
+    for (i,j) in enumerate(indx)
+        Jx[i,j] = 1
+    end
+    Jx
+end
+
+function sigma(bounds::ConstraintBounds)
+    [bounds.σx; bounds.σc]  # don't include σz
+end
+sigma(constraints) = sigma(constraints.bounds)
+
+slack(state) = slack(state.bstate)
+function xzinv(x, bounds::ConstraintBounds)
+    xzi = zero(x)
+    xzi[bounds.iz] = 1./x[bounds.iz]
+    xzi
+end
+
+cbar(bounds::ConstraintBounds) = [bounds.valx; bounds.valc]
+cbar(constraints) = cbar(constraints.bounds)
+cE(state, bounds::ConstraintBounds) = [state.x[bounds.eqx]; state.constr_c[bounds.eqc]]
+
+function hessianI!(h, x, constraints, λcI, μ)
+    λ = userλ(λcI, constraints)
+    constraints.h!(x, λ, h)
+    for i in constraints.bounds.iz
+        h[i,i] += μ/x[i]^2
+    end
+    h
+end
+
+"""
+   hessianI(x, constraints, λcI, μ) -> h
+
+Compute the hessian at `x` of the `λcI`-weighted sum of user-supplied
+constraint functions for just the inequalities.  This also includes
+contributions from any variables with bounds at 0, since those do not
+cause introduction of a slack variable. Other (nonzero) box
+constraints do not contribute to `h`, because the hessian of `x_i` is
+zero. (They contribute indirectly via their slack variables.)
+"""
+hessianI(x, constraints, λcI, μ) =
+    hessianI!(zeros(eltype(x), length(x), length(x)), x, constraints, λcI, μ)
+
+"""
+    userλ(λcI, bounds) -> λ
+
+Accumulates `λcI` into a vector `λ` ordered as the user-supplied
+constraint functions `c`. Upper and lower bounds are summed, weighted
+by `σ`. The resulting λ includes an overall negative sign so that this
+becomes the coefficient for the user-supplied hessian.
+
+This is relevant only for the inequalities. If you want the λ for just
+the equalities, you can use `λ[bounds.ceq] = λcE` for a zero-filled `λ`.
+"""
+function userλ(λcI, bounds::ConstraintBounds)
+    ineqc, σc = bounds.ineqc, bounds.σc
+    λ = zeros(eltype(bounds), nconstraints(bounds))
+    for i = 1:length(ineqc)
+        λ[ineqc[i]] -= λcI[i]*σc[i]
+    end
+    λ
+end
+userλ(λcI, constraints) = userλ(λcI, constraints.bounds)
 
 ## Computation of the Lagrangian and its gradient
 # This is in a parametrization that is also useful during linesearch
@@ -786,4 +903,14 @@ end
 function shrink_μ!(d, constraints, state, method, options)
     state.μ *= options.μfactor
     update_fg!(d, constraints, state, method)
+end
+
+function qrregularize!(QRF)
+    R = QRF[:R]
+    for i = 1:size(R, 1)
+        if R[i,i] == 0
+            R[i,i] = 1
+        end
+    end
+    QRF
 end
