@@ -233,7 +233,9 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         end
 
         Δf = abs(state.f_x - state.f_x_previous)
-        Δfmax = max(Δfmax, abs(state.f_x - state.f_x_previous))
+        if iterationμ > 1
+            Δfmax = max(Δfmax, abs(state.f_x - state.f_x_previous))
+        end
 
         # Test whether we need to decrease the barrier penalty
         if iterationμ > 1 && (converged || 100*gnormnew < gnorm || 100*Δf < Δfmax)

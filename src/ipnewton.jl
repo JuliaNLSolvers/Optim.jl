@@ -16,6 +16,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     # Barrier penalty fields
     μ::T                  # coefficient of the barrier penalty
     L::T                  # value of the Lagrangian (objective + barrier + equality)
+    L_previous::T
     bstate::BarrierStateVars{T}   # value of slack and λ variables (current "position")
     bgrad::BarrierStateVars{T}    # gradient of slack and λ variables at current "position"
     bstep::BarrierStateVars{T}    # search direction for slack and λ
@@ -74,7 +75,8 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hd,
         similar(initial_x), # Maintain current x-search direction in state.s
         μ,
-        T(0),
+        T(NaN),
+        T(NaN),
         bstate,
         bgrad,
         bstep,
@@ -165,7 +167,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
 end
 
 function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
-    state.f_x_previous = state.f_x
+    state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
     state, dslackc = solve_step!(state, constraints)
     # If a step α=1 will not change any of the parameters, we can quit now.

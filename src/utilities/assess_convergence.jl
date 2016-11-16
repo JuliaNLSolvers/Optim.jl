@@ -85,6 +85,17 @@ function assess_convergence(state::NewtonTrustRegionState, options)
     x_converged, f_converged, g_converged, converged
 end
 
+function assess_convergence(state::IPNewtonState, options)
+    assess_convergence(state.x,
+                       state.x_previous,
+                       state.L,
+                       state.L_previous,
+                       state.gf,
+                       options.x_tol,
+                       options.f_tol,
+                       options.g_tol)
+end
+
 # For monotonic-decreasing problems
 fconverged(state) = nextfloat(state.f_x) >= state.f_x_previous
 # Constrained problems are not monotonic, so we can't add a one-sided criterion

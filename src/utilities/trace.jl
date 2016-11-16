@@ -123,12 +123,14 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(state.g)
+        dt["gf(x)"] = copy(state.gf)
         dt["h(x)"] = copy(state.H)
+        dt["hf(x)"] = copy(state.Hf)
         dt["bstate"] = copy(state.bstate)
         dt["bgrad"] = copy(state.bgrad)
         dt["c"] = copy(state.constr_c)
     end
-    g_norm = vecnorm(state.g, Inf)
+    g_norm = vecnorm(state.gf, Inf)
     update!(tr,
             iteration,
             state.f_x,
