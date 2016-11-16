@@ -120,6 +120,7 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
     dt["Lagrangian"] = state.L
     dt["μ"] = state.μ
     if options.extended_trace
+        dt["α"] = state.alpha
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(state.g)
         dt["h(x)"] = copy(state.H)
