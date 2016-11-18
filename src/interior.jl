@@ -4,11 +4,9 @@ abstract AbstractBarrierState
 immutable BarrierStateVars{T}
     slack_x::Vector{T}     # values of slack variables for x
     slack_c::Vector{T}     # values of slack variables for c
-    active_x::Vector{Bool} # active constraints for x (see solve_active_inequalities)
-    active_c::Vector{Bool} # active constraints for c
-    λxE::Vector{T}         # λ for equality constraints on x
     λx::Vector{T}          # λ for equality constraints on slack_x
     λc::Vector{T}          # λ for equality constraints on slack_c
+    λxE::Vector{T}         # λ for equality constraints on x
     λcE::Vector{T}         # λ for linear/nonlinear equality constraints
 end
 # Note on λxE:
@@ -22,31 +20,29 @@ end
 @compat function (::Type{BarrierStateVars{T}}){T}(bounds::ConstraintBounds)
     slack_x = Array{T}(length(bounds.ineqx))
     slack_c = Array{T}(length(bounds.ineqc))
-    λxE = Array{T}(length(bounds.eqx))
     λx = similar(slack_x)
     λc = similar(slack_c)
+    λxE = Array{T}(length(bounds.eqx))
     λcE = Array{T}(length(bounds.eqc))
-    sv = BarrierStateVars{T}(slack_x, slack_c, fill(false, length(slack_x)),
-                             fill(false, length(slack_c)), λxE, λx, λc, λcE)
+    sv = BarrierStateVars{T}(slack_x, slack_c, λx, λc, λxE, λcE)
 end
 BarrierStateVars{T}(bounds::ConstraintBounds{T}) = BarrierStateVars{T}(bounds)
 
 function BarrierStateVars{T}(bounds::ConstraintBounds{T}, x)
     sv = BarrierStateVars(bounds)
-    setslack!(sv.slack_x, sv.active_x, x, bounds.ineqx, bounds.σx, bounds.bx)
+    setslack!(sv.slack_x, x, bounds.ineqx, bounds.σx, bounds.bx)
     sv
 end
 function BarrierStateVars{T}(bounds::ConstraintBounds{T}, x, c)
     sv = BarrierStateVars(bounds)
-    setslack!(sv.slack_x, sv.active_x, x, bounds.ineqx, bounds.σx, bounds.bx)
-    setslack!(sv.slack_c, sv.active_c, c, bounds.ineqc, bounds.σc, bounds.bc)
+    setslack!(sv.slack_x, x, bounds.ineqx, bounds.σx, bounds.bx)
+    setslack!(sv.slack_c, c, bounds.ineqc, bounds.σc, bounds.bc)
     sv
 end
-function setslack!(slack, active, v, ineq, σ, b)
+function setslack!(slack, v, ineq, σ, b)
     for i = 1:length(ineq)
         dv = v[ineq[i]]-b[i]
-        slack[i] = σ[i]*dv
-        active[i] = dv == 0
+        slack[i] = abs(σ[i]*dv)
     end
     slack
 end
@@ -60,32 +56,26 @@ lambdaE(state::AbstractBarrierState) = lambdaE(state.bstate)
 Base.similar(bstate::BarrierStateVars) =
     BarrierStateVars(similar(bstate.slack_x),
                      similar(bstate.slack_c),
-                     similar(bstate.active_x),
-                     similar(bstate.active_c),
-                     similar(bstate.λxE),
                      similar(bstate.λx),
                      similar(bstate.λc),
+                     similar(bstate.λxE),
                      similar(bstate.λcE))
 
 Base.copy(bstate::BarrierStateVars) =
     BarrierStateVars(copy(bstate.slack_x),
                      copy(bstate.slack_c),
-                     copy(bstate.active_x),
-                     copy(bstate.active_c),
-                     copy(bstate.λxE),
                      copy(bstate.λx),
                      copy(bstate.λc),
+                     copy(bstate.λxE),
                      copy(bstate.λcE))
 
 
 function Base.fill!(b::BarrierStateVars, val)
     fill!(b.slack_x, val)
     fill!(b.slack_c, val)
-    fill!(b.active_x, false)
-    fill!(b.active_c, false)
-    fill!(b.λxE, val)
     fill!(b.λx, val)
     fill!(b.λc, val)
+    fill!(b.λxE, val)
     fill!(b.λcE, val)
     b
 end
@@ -95,7 +85,7 @@ Base.eltype(sv::BarrierStateVars) = eltype(typeof(sv))
 
 function Base.show(io::IO, b::BarrierStateVars)
     print(io, "BarrierStateVars{$(eltype(b))}:")
-    for fn in fieldnames(b)
+    for fn in (:slack_x, :slack_c, :λx, :λc, :λxE, :λcE)
         print(io, "\n  $fn: ")
         show(io, getfield(b, fn))
     end
@@ -104,21 +94,21 @@ end
 @compat Base.:(==)(v::BarrierStateVars, w::BarrierStateVars) =
     v.slack_x == w.slack_x &&
     v.slack_c == w.slack_c &&
-    v.λxE == w.λxE &&
     v.λx == w.λx &&
     v.λc == w.λc &&
+    v.λxE == w.λxE &&
     v.λcE == w.λcE
 
 const bsv_seed = sizeof(UInt) == 64 ? 0x145b788192d1cde3 : 0x766a2810
 Base.hash(b::BarrierStateVars, u::UInt) =
-    hash(b.λcE, hash(b.λc, hash(b.λx, hash(b.λxE, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
+    hash(b.λcE, has(b.λxE, hash(b.λc, hash(b.λx, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
 
 function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.slack_x,w.slack_x) +
         dot(v.slack_c, w.slack_c) +
-        dot(v.λxE, w.λxE) +
         dot(v.λx, w.λx) +
         dot(v.λc, w.λc) +
+        dot(v.λxE, w.λxE) +
         dot(v.λcE, w.λcE)
 end
 
@@ -150,38 +140,13 @@ immutable BarrierLineSearchGrad{T}
     bgrad::BarrierStateVars{T}    # trial point's gradient
 end
 
-function ls_update!(out::BarrierStateVars, c, base::BarrierStateVars, step::BarrierStateVars, α, constraints, state, dslackc)
-    bounds = constraints.bounds
-    constraints.c!(state.x_ls, c)
-    xtarget = bounds.σx.*(state.x_ls[bounds.ineqx] - bounds.bx)
-    dslackx = bounds.σx.*state.s[bounds.ineqx]
-    ctarget = bounds.σc.*(c[bounds.ineqc] - bounds.bc)
-    ls_update!(out, base, step, α, state.μ, xtarget, dslackx, ctarget, dslackc)
-end
-
-function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α, μ, xtarget, dslackx, ctarget, dslackc)
+function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α, αI)
+    ls_update!(out.slack_x, base.slack_x, step.slack_x, α)
+    ls_update!(out.slack_c, base.slack_c, step.slack_c, α)
     ls_update!(out.λxE, base.λxE, step.λxE, α)
     ls_update!(out.λcE, base.λcE, step.λcE, α)
-    # For the inequality terms, we use "exact" updating
-    _lsu_slack!(out.slack_x, xtarget, base.slack_x, dslackx, α)
-    _lsu_slack!(out.slack_c, ctarget, base.slack_c, dslackc, α)
-    _lsu_λ!(out.λx, out.slack_x, μ)
-    _lsu_λ!(out.λc, out.slack_c, μ)
-    out
-end
-function _lsu_slack!(out, target, slack, dslack, α)
-    for i = 1:length(out)
-        t = target[i]
-        # This handles the possible loss of precision at the boundary
-        # by using the gradient to extrapolate the change
-        out[i] = t != 0 ? t : slack[i]+α*dslack[i]
-    end
-    out
-end
-function _lsu_λ!(out, slack, μ)
-    for i = 1:length(out)
-        out[i] = μ/slack[i]
-    end
+    ls_update!(out.λx, base.λx, step.λx, αI)
+    ls_update!(out.λc, base.λc, step.λc, αI)
     out
 end
 
@@ -289,62 +254,6 @@ update_h!(d, constraints::AbstractConstraintsFunction, state, method) = nothing
 update_asneeded_fg!(d, constraints, state, method) = update_fg!(d, constraints, state, method)
 update_asneeded_fg!(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)}) = update_g!(d, constraints, state, method)
 
-
-# Explicit solution for slack, λ when an inequality constraint is
-# "active." This is necessary (or at least helpful) when c-b == 0 due
-# to roundoff error, in which case the KKT equations don't have an
-# exact solution within the precision.  We punt on the ∂λ equation
-# (which reduces to the slack, which should be small anyway), and
-# focus on the ∂x and ∂slack equations (therefore setting slack and
-# λ). By setting these to their exact solutions, we balance the forces
-# due to the barrier.
-function solve_active_inequalities!(d, constraints, state)
-    x, c, bstate, bounds = state.x, state.constr_c, state.bstate, constraints.bounds
-    nactive, nchanged = tally_active!(bstate.active_x, 0, 0, x, bounds.ineqx, bounds.bx)
-    nx = nactive
-    nactive, nchanged = tally_active!(bstate.active_c, nactive, nchanged, c, bounds.ineqc, bounds.bc, )
-    if nactive == 0 || nchanged == 0
-        return nothing
-    end
-    # Calculate the necessary gradients
-    d.g!(state.x, state.g)
-    constraints.jacobian!(state.x, state.constr_J)
-    # Solve for the Lagrange multipliers
-    ic, ix = bounds.ineqc[bstate.active_c], bounds.ineqx[bstate.active_x]
-    Jx = view5(state.constr_J, ic, ix)
-    Jact = view5(state.constr_J, ic, :)
-    Cactive = [eye(eltype(Jx), nx, nx) Jx'; Jx Jact*Jact']
-    pactive = [view(state.g, ix); Jact*state.g]
-    Cactivep = cholfact(Positive, Cactive)
-    λactive = (Cactivep\pactive).*[bounds.σx[bstate.active_x]; bounds.σc[bstate.active_c]]
-    any(x->x<=0, λactive) && error("something may be wrong, λ is zero or negative. Perhaps Cactive is singular?")
-    # Set the state
-    k = set_active_params!(bstate.slack_x, bstate.λx, bstate.active_x, λactive, state.μ, 0)
-    k = set_active_params!(bstate.slack_c, bstate.λc, bstate.active_c, λactive, state.μ, k)
-    k == length(λactive) || error("something is wrong")
-    nothing
-end
-
-function tally_active!(active, nactive, nchanged, c, ineq, b)
-    for (i,j) in enumerate(ineq)
-        isactive = c[j] == b[i]
-        nactive += isactive
-        nchanged += isactive != active[i]
-        active[i] = isactive
-    end
-    nactive, nchanged
-end
-
-function set_active_params!(slack, λ, active, λtarget, μ, k)
-    for i = 1:length(active)
-        active[i] || continue
-        λk = λtarget[k+=1]
-        λ[i] = λk
-        slack[i] = μ/λk
-    end
-    k
-end
-
 """
     initialize_μ_λ!(state, bounds, μ0=:auto, β=0.01)
     initialize_μ_λ!(state, bounds, (Hobj,HcI), μ0=:auto, β=0.01)
@@ -389,21 +298,20 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
     Pperpg = gf-JE'*(Cc \ (JE*gf))   # in the nullspace of JE
     # Set μ
     JI = jacobianI(state, bounds)
-    xzi = xzinv(state.x, bounds)
     if μ0 == :auto
         # Calculate projections of the Lagrangian's gradient, and
         # possibly hessian, along (∇f)_⟂
         Dperp = dot(Pperpg, Pperpg)
         σ, s = sigma(bounds), slack(state)
         σdivs = σ./s
-        Δg = xzi + JI'*σdivs
+        Δg = JI'*σdivs
         PperpΔg = Δg - JE'*(Cc \ (JE*Δg))
         DI = dot(PperpΔg, PperpΔg)
         κperp, κI = hessian_projections(Hinfo, Pperpg, (JI*Pperpg)./s)
         # Calculate μ and λI
         μ = β * (κperp == 0 ? sqrt(Dperp/DI) : min(sqrt(Dperp/DI), abs(κperp/κI)))
         if !isfinite(μ)
-            Δgtilde = abs(xzi) + JI'*(1./s)
+            Δgtilde = JI'*(1./s)
             PperpΔgtilde = Δgtilde - JE'*(Cc \ (JE*Δgtilde))
             DItilde = dot(PperpΔgtilde, PperpΔgtilde)
             μ = β*sqrt(Dperp/DItilde)
@@ -420,7 +328,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
     state.bstate.λc[:] = μ./state.bstate.slack_c
     # Calculate λE
     λI = lambdaI(state)
-    ∇bI = gf - μ*xzi - JI'*λI
+    ∇bI = gf - JI'*λI
 #    qrregularize!(QRF)  # in case of any 0 eigenvalues
     λE = Cc \ (JE*∇bI) + (cbar(bounds) - cE(state, bounds))/μ
     k = unpack_vec!(state.bstate.λxE, λE, 0)
@@ -449,7 +357,7 @@ jacobianE(state, constraints) = jacobianE(state, constraints.bounds)
 
 function jacobianI(state, bounds::ConstraintBounds)
     J, x = state.constr_J, state.x
-    JIx = jacobianx(J, bounds.ineqx)  # skip iz: there is no λIz, so don't put in JI
+    JIx = jacobianx(J, bounds.ineqx)
     JIc = view5(J, bounds.ineqc, :)
     JI = vcat(JIx, JIc)
 end
@@ -470,11 +378,6 @@ end
 sigma(constraints) = sigma(constraints.bounds)
 
 slack(state) = slack(state.bstate)
-function xzinv(x, bounds::ConstraintBounds)
-    xzi = zero(x)
-    xzi[bounds.iz] = 1./x[bounds.iz]
-    xzi
-end
 
 cbar(bounds::ConstraintBounds) = [bounds.valx; bounds.valc]
 cbar(constraints) = cbar(constraints.bounds)
@@ -483,9 +386,6 @@ cE(state, bounds::ConstraintBounds) = [state.x[bounds.eqx]; state.constr_c[bound
 function hessianI!(h, x, constraints, λcI, μ)
     λ = userλ(λcI, constraints)
     constraints.h!(x, λ, h)
-    for i in constraints.bounds.iz
-        h[i,i] += μ/x[i]^2
-    end
     h
 end
 
@@ -571,26 +471,27 @@ function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x
 end
 
 # for line searches that don't use the gradient along the line
-function lagrangian_linefunc(α, d, constraints, state, dslackc)
-    _lagrangian_linefunc(α, d, constraints, state, dslackc)[2]
+function lagrangian_linefunc(α, αI, d, constraints, state)
+    _lagrangian_linefunc(α, αI, d, constraints, state)[2]
 end
 
-function _lagrangian_linefunc(α, d, constraints, state, dslackc)
+function _lagrangian_linefunc(α, αI, d, constraints, state)
     b_ls, bounds = state.b_ls, constraints.bounds
     ls_update!(state.x_ls, state.x, state.s, α)
-    ls_update!(b_ls.bstate, b_ls.c, state.bstate, state.bstep, α, constraints, state, dslackc)
+    ls_update!(b_ls.bstate, state.bstate, state.bstep, α, αI)
+    constraints.c!(state.x_ls, b_ls.c)
     lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
 end
 
-function lagrangian_linefunc!(α, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)}, dslackc)
+function lagrangian_linefunc!(α, αI, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    f_x, L = _lagrangian_linefunc(α, d, constraints, state, dslackc)
+    f_x, L = _lagrangian_linefunc(α, αI, d, constraints, state)
     state.f_x = f_x
     state.L = L
     L
 end
-lagrangian_linefunc!(α, d, constraints, state, method) = lagrangian_linefunc(α, d, constraints, state)
+lagrangian_linefunc!(α, αI, d, constraints, state, method) = lagrangian_linefunc(α, αI, d, constraints, state)
 
 ## Computation of Lagrangian terms: barrier penalty
 """
@@ -604,8 +505,7 @@ slack variables. `bounds` holds the parsed bounds.
 """
 function barrier_value(bounds::ConstraintBounds, x, sx, sc, μ)
     # bμ is the coefficient of μ in the barrier penalty
-    bμ = _bv(x, bounds.iz, bounds.σz) +      # coords constrained by 0
-         _bv(sx) +  # coords with other bounds
+    bμ = _bv(sx) +  # coords with other bounds
          _bv(sc)    # linear/nonlinear constr.
     μ*bμ
 end
@@ -642,7 +542,6 @@ The result is *added* to `gx`, `gsx`, and `gsc`, so these vectors
 need to be initialized appropriately.
 """
 function barrier_grad!(gx, gsx, gsc, bounds::ConstraintBounds, x, sx, sc, μ)
-    barrier_grad!(view(gx, bounds.iz), view(x, bounds.iz), μ)
     barrier_grad!(gsx, sx, μ)
     barrier_grad!(gsc, sc, μ)
     nothing
@@ -662,7 +561,7 @@ end
 
 """
     equality_violation([f=identity], bounds, x, c, bstate) -> val
-    equality_violation([f=identity], bounds, x, c, sx, sc, λxE, λx, λc, λcE) -> val
+    equality_violation([f=identity], bounds, x, c, sx, sc, λx, λc, λxE, λcE) -> val
 
 Compute the sum of `f(v_i)`, where `v_i = λ_i*(target - observed)`
 measures the difference between the current state and the
@@ -673,17 +572,17 @@ variables. `c` holds the values of the linear-nonlinear constraints,
 and the λ arguments hold the Lagrange multipliers for `x`, `sx`, `sc`, and
 `c` respectively.
 """
-function equality_violation(f, bounds::ConstraintBounds, x, c, sx, sc, λxE, λx, λc, λcE)
-    ev = equality_violation(f, x, bounds.valx, bounds.eqx, λxE) +
-         equality_violation(f, sx, x, bounds.ineqx, bounds.σx, bounds.bx, λx) +
+function equality_violation(f, bounds::ConstraintBounds, x, c, sx, sc, λx, λc, λxE, λcE)
+    ev = equality_violation(f, sx, x, bounds.ineqx, bounds.σx, bounds.bx, λx) +
          equality_violation(f, sc, c, bounds.ineqc, bounds.σc, bounds.bc, λc) +
+         equality_violation(f, x, bounds.valx, bounds.eqx, λxE) +
          equality_violation(f, c, bounds.valc, bounds.eqc, λcE)
 end
-equality_violation(bounds::ConstraintBounds, x, c, sx, sc, λxE, λx, λc, λcE) =
-    equality_violation(identity, bounds, x, c, sx, sc, λxE, λx, λc, λcE)
+equality_violation(bounds::ConstraintBounds, x, c, sx, sc, λx, λc, λxE, λcE) =
+    equality_violation(identity, bounds, x, c, sx, sc, λx, λc, λxE, λcE)
 function equality_violation(f, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars)
-    equality_violation(f, bounds, x, c,
-                       bstate.slack_x, bstate.slack_c, bstate.λxE, bstate.λx, bstate.λc, bstate.λcE)
+    equality_violation(f, bounds, x, c, bstate.slack_x, bstate.slack_c,
+                       bstate.λx, bstate.λc, bstate.λxE, bstate.λcE)
 end
 equality_violation(bounds::ConstraintBounds, x, c, bstate::BarrierStateVars) =
     equality_violation(identity, bounds, x, c, bstate)
@@ -719,20 +618,20 @@ end
 
 Compute the gradient of `equality_violation`, storing the result in `gx` (an array) and `gbstate::BarrierStateVars`.
 """
-function equality_grad!(gx, gsx, gsc, gλxE, gλx, gλc, gλcE, bounds::ConstraintBounds, x, c, J, sx, sc, λxE, λx, λc, λcE)
-    gx[bounds.eqx] = gx[bounds.eqx] - λxE
+function equality_grad!(gx, gsx, gsc, gλx, gλc, gλxE, gλcE, bounds::ConstraintBounds, x, c, J, sx, sc, λx, λc, λxE, λcE)
     equality_grad_var!(gsx, gx, bounds.ineqx, bounds.σx, λx)
     equality_grad_var!(gsc, gx, bounds.ineqc, bounds.σc, λc, J)
+    gx[bounds.eqx] = gx[bounds.eqx] - λxE
     equality_grad_var!(gx, bounds.eqc, λcE, J)
-    equality_grad_λ!(gλxE, x, bounds.valx, bounds.eqx)
     equality_grad_λ!(gλx, sx, x, bounds.ineqx, bounds.σx, bounds.bx)
     equality_grad_λ!(gλc, sc, c, bounds.ineqc, bounds.σc, bounds.bc)
+    equality_grad_λ!(gλxE, x, bounds.valx, bounds.eqx)
     equality_grad_λ!(gλcE, c, bounds.valc, bounds.eqc)
 end
 equality_grad!(gx, gb::BarrierStateVars, bounds::ConstraintBounds, x, c, J, b::BarrierStateVars) =
-    equality_grad!(gx, gb.slack_x, gb.slack_c, gb.λxE, gb.λx, gb.λc, gb.λcE,
+    equality_grad!(gx, gb.slack_x, gb.slack_c, gb.λx, gb.λc, gb.λxE, gb.λcE,
                    bounds, x, c, J,
-                   b.slack_x, b.slack_c, b.λxE, b.λx, b.λc, b.λcE)
+                   b.slack_x, b.slack_c, b.λx, b.λc, b.λxE, b.λcE)
 
 # violations of s = σ*(x-b)
 function equality_grad_var!(gs, gx, ineq, σ, λ)
@@ -796,9 +695,6 @@ function isfeasible(bounds::ConstraintBounds, x, c)
     for (i,j) in enumerate(bounds.ineqx)
         isf &= bounds.σx[i]*(x[j] - bounds.bx[i]) >= 0
     end
-    for (i,j) in enumerate(bounds.iz)
-        isf &= bounds.σz[i]*x[j] >= 0
-    end
     for (i,j) in enumerate(bounds.eqc)
         isf &= c[j] == bounds.valc[i]
     end
@@ -835,9 +731,6 @@ function isinterior(bounds::ConstraintBounds, x, c)
     isi = true
     for (i,j) in enumerate(bounds.ineqx)
         isi &= bounds.σx[i]*(x[j] - bounds.bx[i]) > 0
-    end
-    for (i,j) in enumerate(bounds.iz)
-        isi &= bounds.σz[i]*x[j] > 0
     end
     for (i,j) in enumerate(bounds.ineqc)
         isi &= bounds.σc[i]*(c[j] - bounds.bc[i]) > 0

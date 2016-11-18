@@ -34,7 +34,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
     mc = nconstraints(constraints)
     constr_c = Array{T}(mc)
     constraints.c!(initial_x, constr_c)
-#    isfeasible(constraints, initial_x, constr_c) || error("initial guess must be feasible")
+    isinterior(constraints, initial_x, constr_c) || (warn("initial guess is not an interior point"); Base.show_backtrace(STDOUT, backtrace()))
 
     # Allocate fields for the objective function
     n = length(initial_x)
@@ -89,7 +89,6 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         stepf)
 
     d.h!(initial_x, state.H)
-    # state.μ = initialize_μ_λ!(bstate.λxE, bstate.λcE, constraints, initial_x, g, constr_c, constr_J, options.μ0)
     Hinfo = (state.H, hessianI(initial_x, constraints, 1./bstate.slack_c, 1))
     initialize_μ_λ!(state, constraints.bounds, Hinfo, options.μ0)
     update_fg!(d, constraints, state, method)
@@ -113,29 +112,27 @@ end
 function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
     x = state.x
     μ, Hxx, J = state.μ, state.H, state.constr_J
-    bounds = constraints.bounds
+    bstate, bounds = state.bstate, constraints.bounds
     m, n = size(J, 1), size(J, 2)
 
-    d.h!(state.x, Hxx)
-    hessianI!(Hxx, state.x, constraints, state.bstate.λc, μ)  # accumulate the inequality second derivatives
-    # Add the Jacobian terms (J'*S^{-2}*J)
+    d.h!(state.x, Hxx)  # objective's Hessian
+    hessianI!(Hxx, state.x, constraints, bstate.λc, μ)  # accumulate the inequality second derivatives
+    # Add the Jacobian terms (J'*Hss*J)
     JI = view5(J, bounds.ineqc, :)
-    Sinv2 = Diagonal(1./state.bstate.slack_c.^2)
-    HJ = JI'*Sinv2*JI
+    Hssc = Diagonal(bstate.λc./bstate.slack_c)
+    HJ = JI'*Hssc*JI
     for j = 1:n, i = 1:n
-        Hxx[i,j] += μ*HJ[i,j]
+        Hxx[i,j] += HJ[i,j]
     end
-    # Add the variable inequalities portions of J'*S^{-2}*J
-    # The iz terms are already in Hxx (from hessianI!)
-    ineqx, sx = bounds.ineqx, state.bstate.slack_x
-    for (i,j) in enumerate(ineqx)
-        Hxx[j,j] += μ/sx[i]^2
+    # Add the variable inequalities portions of J'*Hssx*J
+    for (i,j) in enumerate(bounds.ineqx)
+        Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
     # Perform a positive factorization
     Hpc, state.Hd = ldltfact(Positive, Hxx)
     Hp = full(Hpc)
     # Now add the equality constraint hessian terms
-    eqc, λcE = bounds.eqc, state.bstate.λcE
+    eqc, λcE = bounds.eqc, bstate.λcE
     λ = zeros(eltype(x), nconstraints(bounds))
     for i = 1:length(eqc)
         λ[eqc[i]] -= λcE[i]
@@ -156,9 +153,9 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
                 -JEc Jod zeros(eltype(JEc), size(JEc,1), size(JEc,1))]
     # Also form the total gradient
     bgrad = state.bgrad
-    gI = state.g + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ*Sinv2*bgrad.λc)
-    for (i,j) in enumerate(ineqx)
-        gI[j] += bounds.σx[i]*(bgrad.slack_x[i] - μ*bgrad.λx[i]/sx[i]^2)
+    gI = state.g + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - Hssc*bgrad.λc)
+    for (i,j) in enumerate(bounds.ineqx)
+        gI[j] += -μ*bounds.σx[i]./bstate.slack_x[i] + bstate.λx[i]*(x[j]-bounds.bx[i])/bstate.slack_x[i]
     end
     state.gf = [gI;
                 bgrad.λxE;
@@ -169,7 +166,7 @@ end
 function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
     state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
-    state, dslackc = solve_step!(state, constraints)
+    state = solve_step!(state, constraints)
     # If a step α=1 will not change any of the parameters, we can quit now.
     # This prevents a futile linesearch.
     if is_smaller_eps(state.x, state.s) &&
@@ -182,17 +179,16 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     qp = quadratic_parameters(bounds, state)
 
     # Estimate αmax, the upper bound on distance of movement along the search line
-    αmax = convert(eltype(bstate), Inf)
+    αmax = αImax = convert(eltype(bstate), Inf)
     αmax = estimate_maxstep(αmax, bstate.slack_x, bstep.slack_x)
     αmax = estimate_maxstep(αmax, bstate.slack_c, bstep.slack_c)
-    αmax = estimate_maxstep(αmax,
-                            view(state.x, bounds.iz).*bounds.σz,
-                            view(state.s, bounds.iz).*bounds.σz)
+    αImax = estimate_maxstep(αImax, bstate.λx, bstep.λx)
+    αImax = estimate_maxstep(αImax, bstate.λc, bstep.λc)
 
     # Determine the actual distance of movement along the search line
-    ϕ = α->lagrangian_linefunc!(α, d, constraints, state, method, dslackc)
-    state.alpha, f_update, g_update =
-        method.linesearch!(ϕ, T(1), αmax, qp)
+    ϕ = (α,αI)->lagrangian_linefunc!(α, αI, d, constraints, state, method)
+    state.alpha, αI, f_update, g_update =
+        method.linesearch!(ϕ, T(1), αmax, αImax, qp)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
     # Maintain a record of previous position
@@ -200,14 +196,11 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
 
     # Update current position # x = x + alpha * s
     ls_update!(state.x, state.x, state.s, state.alpha)
-    ls_update!(bstate, state.constr_c, bstate, bstep, state.alpha, constraints, state, dslackc)
+    ls_update!(bstate, bstate, bstep, state.alpha, αI)
 
     # Evaluate the constraints at the new position
-#    constraints.c!(state.x, state.constr_c)  # already done in ls_update!
+    constraints.c!(state.x, state.constr_c)
     constraints.jacobian!(state.x, state.constr_J)
-
-    # Test for active inequalities, solve immediately for the corresponding s and λ
-    # solve_active_inequalities!(d, constraints, state)
 
     false
 end
@@ -227,19 +220,20 @@ function solve_step!(state::IPNewtonState, constraints)
     k = unpack_vec!(bstep.λcE, step, k)
     k == length(step) || error("exhausted targets before step")
     # Solve for the slack variable and λI updates
-    # These are only used to estimate αmax, otherwise these are updated by exact formulas
     for (i, j) in enumerate(bounds.ineqx)
         bstep.slack_x[i] = -bgrad.λx[i] + bounds.σx[i]*s[j]
-        bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
+        # bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
+        bstep.λx[i] = -bgrad.slack_x[i] - bstate.λx[i]*bstep.slack_x[i]/bstate.slack_x[i]
     end
     JI = view5(state.constr_J, bounds.ineqc, :)
-    dslackc = Diagonal(bounds.σc)*JI*s
-    bstep.slack_c[:] = -bgrad.λc + dslackc
+    SigmaJIΔx = Diagonal(bounds.σc)*(JI*state.s)
     for i = 1:length(bstep.λc)
-        bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
+        bstep.slack_c[i] = -bgrad.λc[i] + SigmaJIΔx[i]
+        # bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
+        bstep.λc[i] = -bgrad.slack_c[i] - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
     end
     state.stepf = step
-    state, dslackc
+    state
 end
 
 function is_smaller_eps(ref, step)

@@ -28,11 +28,9 @@ end
         b = @inferred5(Optim.ConstraintBounds([0.0, 0.5, 2.0], [1.0, 1.0, 2.0], [5.0, 3.8], [5.0, 4.0]))
         @test b.eqx == [3]
         @test b.valx == [2.0]
-        @test b.ineqx == [1,2,2]
-        @test b.σx == [-1,1,-1]
-        @test b.bx == [1.0,0.5,1.0]
-        @test b.iz == [1]
-        @test b.σz == [1]
+        @test b.ineqx == [1,1,2,2]
+        @test b.σx == [1,-1,1,-1]
+        @test b.bx == [0.0,1.0,0.5,1.0]
         @test b.eqc == [1]
         @test b.valc == [5]
         @test b.ineqc == [2,2]
@@ -44,14 +42,13 @@ end
 ConstraintBounds:
   Variables:
     x[3]=2.0
-    x[1]≤1.0,x[2]≥0.5,x[2]≤1.0
-    x[1]≥0.0
+    x[1]≥0.0,x[1]≤1.0,x[2]≥0.5,x[2]≤1.0
   Linear/nonlinear constraints:
     c_1=5.0
     c_2≥3.8,c_2≤4.0"""
 
         b = @inferred5(Optim.ConstraintBounds(Float64[], Float64[], [5.0, 3.8], [5.0, 4.0]))
-        for fn in (:eqx, :valx, :ineqx, :σx, :bx, :iz, :σz)
+        for fn in (:eqx, :valx, :ineqx, :σx, :bx)
             @test isempty(getfield(b, fn))
         end
         @test b.eqc == [1]
@@ -85,10 +82,11 @@ ConstraintBounds:
             ForwardDiff.gradient!(pcmp, ftot, p, ForwardDiff.Chunk{chunksize}())
             @test pcmp ≈ pgrad
         end
-        # Basic setup
+        # Basic setup (using two objectives, one equal to zero and the other a Gaussian)
         μ = 0.2345678
+        d0 = TwiceDifferentiableFunction(x->0.0, (x,g)->fill!(g, 0), (x,h)->fill!(h,0))
         A = randn(3,3); H = A'*A
-        d = TwiceDifferentiableFunction(x->(x'*H*x)[1]/2, (x,g)->(g[:] = H*x), (x,h)->(h[:,:]=H))
+        dg = TwiceDifferentiableFunction(x->(x'*H*x)[1]/2, (x,g)->(g[:] = H*x), (x,h)->(h[:,:]=H))
         x = broadcast(clamp, randn(3), -0.99, 0.99)
         gx = similar(x)
         cfun = x->Float64[]
@@ -109,41 +107,40 @@ ConstraintBounds:
         bounds = Optim.ConstraintBounds(Float64[], Float64[], Float64[], Float64[])
         bstate = Optim.BarrierStateVars(bounds, x)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
-        @test f_x == L == d.f(x)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, dg, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
+        @test f_x == L == dg.f(x)
         @test gx == H*x
         constraints = TwiceDifferentiableConstraintsFunction(
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, dg, constraints, x)
         @test state.gf ≈ gx
         @test state.Hf ≈ H
         ## Pure equality constraints on variables
-        d = TwiceDifferentiableFunction(x->0.0, (x,g)->fill!(g, 0), (x,h)->fill!(h,0))
         xbar = fill(0.2, length(x))
         bounds = Optim.ConstraintBounds(xbar, xbar, [], [])
         bstate = Optim.BarrierStateVars(bounds)
         rand!(bstate.λxE)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
         @test f_x == 0
         @test L ≈ dot(bstate.λxE, xbar-x)
         @test gx == -bstate.λxE
         @test bgrad.λxE == xbar-x
-        check_autodiff(d, bounds, x, cfun, bstate, μ)
+        check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraintsFunction(
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.λxE, bstate.λxE)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         @test state.gf ≈ [gx; xbar-x]
         n = length(x)
         @test state.Hf ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], xbar, xbar)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.λcE, bstate.λxE)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         @test state.gf ≈ [gx; xbar-x]
         n = length(x)
         @test state.Hf ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
@@ -151,23 +148,25 @@ ConstraintBounds:
         bounds = Optim.ConstraintBounds(zeros(length(x)), fill(Inf,length(x)), [], [])
         y = rand(length(x))
         bstate = Optim.BarrierStateVars(bounds, y)
+        rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, y, Float64[], Array{Float64}(0,0), bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, y, Float64[], Array{Float64}(0,0), bstate, μ)
         @test f_x == 0
         @test L ≈ -μ*sum(log, y)
-        @test gx == -μ./y
-        check_autodiff(d, bounds, y, cfun, bstate, μ)
+        @test bgrad.slack_x == -μ./y + bstate.λx
+        @test gx == -bstate.λx
+        check_autodiff(d0, bounds, y, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraintsFunction(
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
-        state = Optim.initial_state(method, options, d, constraints, y)
-        setstate!(state, μ, d, constraints, method)
+        state = Optim.initial_state(method, options, d0, constraints, y)
+        setstate!(state, μ, d0, constraints, method)
         @test state.gf ≈ -μ./y
         @test state.Hf ≈ μ*Diagonal(1./y.^2)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], zeros(length(x)), fill(Inf,length(x)))
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
-        state = Optim.initial_state(method, options, d, constraints, y)
-        setstate!(state, μ, d, constraints, method)
+        state = Optim.initial_state(method, options, d0, constraints, y)
+        setstate!(state, μ, d0, constraints, method)
         @test state.gf ≈ -μ./y
         @test state.Hf ≈ μ*Diagonal(1./y.^2)
         ## General inequality constraints on variables
@@ -177,7 +176,7 @@ ConstraintBounds:
         rand!(bstate.slack_x)  # intentionally displace from the correct value
         rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
         @test f_x == 0
         s = bounds.σx .* (x[bounds.ineqx] - bounds.bx)
         Ltarget = -μ*sum(log, bstate.slack_x) +
@@ -189,28 +188,34 @@ ConstraintBounds:
         end
         @test gx ≈ dx
         @test bgrad.slack_x == -μ./bstate.slack_x + bstate.λx
-        check_autodiff(d, bounds, x, cfun, bstate, μ)
+        check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraintsFunction(
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.slack_x, bstate.slack_x)
         copy!(state.bstate.λx, bstate.λx)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         gxs, hxs = zeros(length(x)), zeros(length(x))
-        s = state.bstate.slack_x
+        s, λ = state.bstate.slack_x, state.bstate.λx
         for (i,j) in enumerate(bounds.ineqx)
-            gxs[j] += -2*μ*bounds.σx[i]/s[i] + μ*(x[j]-bounds.bx[i])/s[i]^2
-            hxs[j] += μ/s[i]^2
+            # # Primal
+            # gxs[j] += -2*μ*bounds.σx[i]/s[i] + μ*(x[j]-bounds.bx[i])/s[i]^2
+            # hxs[j] += μ/s[i]^2
+            # Primal-dual
+            gstmp, gλtmp = -μ/s[i] + λ[i], s[i] - bounds.σx[i]*(x[j]-bounds.bx[i])
+            htmp = λ[i]/s[i]
+            hxs[j] += htmp
+            gxs[j] += bounds.σx[i]*(gstmp - λ[i]) - bounds.σx[i]*htmp*gλtmp
         end
         @test state.gf ≈ gxs
         @test state.Hf ≈ Diagonal(hxs)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], lb, ub)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.slack_c, bstate.slack_x)
         copy!(state.bstate.λc, bstate.λx)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         @test state.gf ≈ gxs
         @test state.Hf ≈ Diagonal(hxs)
         ## Nonlinear equality constraints
@@ -231,28 +236,28 @@ ConstraintBounds:
         bstate = Optim.BarrierStateVars(bounds, x, c)
         rand!(bstate.λcE)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
         @test f_x == 0
         @test L ≈ dot(bstate.λcE, cbar-c)
         @test gx ≈ -J'*bstate.λcE
         @test bgrad.λcE == cbar-c
-        check_autodiff(d, bounds, x, cfun, bstate, μ)
+        check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraintsFunction(cfun!, cJ!, ch!, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.λcE, bstate.λcE)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         heq = zeros(length(x), length(x))
         ch!(x, bstate.λcE, heq)
         @test state.gf ≈ [gx; cbar-c]
         @test state.Hf ≈ [eye(length(x))-heq -J';
                           -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
-        bounds = Optim.ConstraintBounds([], [], rand(length(c))-1, rand(length(c))+1)
+        bounds = Optim.ConstraintBounds([], [], -rand(length(c))-1, rand(length(c))+2)
         bstate = Optim.BarrierStateVars(bounds, x, c)
         rand!(bstate.slack_c)  # intentionally displace from the correct value
         rand!(bstate.λc)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
         @test f_x == 0
         Ltarget = -μ*sum(log, bstate.slack_c) +
             dot(bstate.λc, bstate.slack_c - bounds.σc.*(c[bounds.ineqc]-bounds.bc))
@@ -260,12 +265,12 @@ ConstraintBounds:
         @test gx ≈ -J[bounds.ineqc,:]'*(bstate.λc.*bounds.σc)
         @test bgrad.slack_c == -μ./bstate.slack_c + bstate.λc
         @test bgrad.λc == bstate.slack_c - bounds.σc .* (c[bounds.ineqc] - bounds.bc)
-        check_autodiff(d, bounds, x, cfun, bstate, μ)
+        check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraintsFunction(cfun!, cJ!, ch!, bounds)
-        state = Optim.initial_state(method, options, d, constraints, x)
+        state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.slack_c, bstate.slack_c)
         copy!(state.bstate.λc, bstate.λc)
-        setstate!(state, μ, d, constraints, method)
+        setstate!(state, μ, d0, constraints, method)
         hineq = zeros(length(x), length(x))
         λ = zeros(size(J, 1))
         for (i,j) in enumerate(bounds.ineqc)
@@ -273,9 +278,14 @@ ConstraintBounds:
         end
         ch!(x, λ, hineq)
         JI = J[bounds.ineqc,:]
-        hxx = μ*JI'*Diagonal(1./bstate.slack_c.^2)*JI - hineq
+        # # Primal
+        # hxx = μ*JI'*Diagonal(1./bstate.slack_c.^2)*JI - hineq
+        # gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ(bgrad.λc ./ bstate.slack_c.^2))
+        # Primal-dual
+        hxx = JI'*Diagonal(bstate.λc./bstate.slack_c)*JI - hineq
+        gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
         hp = full(cholfact(Positive, hxx))
-        @test state.gf ≈ -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ*(bgrad.λc ./ bstate.slack_c.^2))
+        @test state.gf ≈ gf
         @test state.Hf ≈ hp
     end
 
@@ -364,25 +374,24 @@ ConstraintBounds:
         F = 1000
         d = TwiceDifferentiableFunction(x->F*x[1], (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
         method = Optim.IPNewton()
-        options = OptimizationOptions()
         μ = 1e-20
+        options = OptimizationOptions(μ0=μ)
         x0 = μ/F*10  # minimum is at μ/F
         # Nonnegativity (the case that doesn't require slack variables)
         constraints = TwiceDifferentiableConstraintsFunction([0.0], [])
         state = Optim.initial_state(method, options, d, constraints, [x0])
-        setstate!(state, μ, d, constraints, method)
         Optim.solve_step!(state, constraints)
-        @test state.s[1] ≈ x0 - F*x0^2/μ
+        @test state.s[1] ≈ -(F-μ/x0)/(state.bstate.λx[1]/x0)
         qp = Optim.quadratic_parameters(constraints.bounds, state)
         @test qp[1] ≈ F*x0-μ*log(x0)
         @test qp[2] ≈ -(F-μ/x0)^2*x0^2/μ
         @test qp[3] ≈ μ/x0^2*(x0 - F*x0^2/μ)^2
         bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
-        αmax = Optim.estimate_maxstep(Inf, state.x[bounds.iz].*bounds.σz,
-                                      state.s[bounds.iz].*bounds.σz)
-        ϕ = α->Optim.lagrangian_linefunc(α, d, constraints, state, Float64[])
-        @test ϕ(0) ≈ qp[1]
-        α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, qp)
+        αmax = Optim.estimate_maxstep(Inf, state.x[bounds.ineqx].*bounds.σx,
+                                           state.s[bounds.ineqx].*bounds.σx)
+        ϕ = (α,αI)->Optim.lagrangian_linefunc(α, αI, d, constraints, state)
+        @test ϕ(0,0) ≈ qp[1]
+        α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, Inf, qp)
         @test α > 1e-3
     end
 
@@ -397,15 +406,14 @@ ConstraintBounds:
         # boundary).
         F0 = 1000
         method = Optim.IPNewton()
-        options = OptimizationOptions()
         μ = 1e-20   # smaller than eps(1.0)
+        options = OptimizationOptions(μ0=μ)
         for σ in (1, -1)
             F = σ*F0
             # Nonnegativity/nonpositivity (the case that doesn't require slack variables)
             d = TwiceDifferentiableFunction(x->F*x[1], (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
             constraints = TwiceDifferentiableConstraintsFunction(σswap(σ, [0.0], [])...)
             state = Optim.initial_state(method, options, d, constraints, [μ/F*10])
-            setstate!(state, μ, d, constraints, method)
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method)
                 Optim.update_fg!(d, constraints, state, method)
@@ -416,7 +424,6 @@ ConstraintBounds:
             d = TwiceDifferentiableFunction(x->F*(x[1]-σ), (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
             constraints = TwiceDifferentiableConstraintsFunction(σswap(σ, [Float64(σ)], [])...)
             state = Optim.initial_state(method, options, d, constraints, [(1+eps(1.0))*σ])
-            setstate!(state, μ, d, constraints, method)
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method)
                 Optim.update_fg!(d, constraints, state, method)
@@ -424,7 +431,7 @@ ConstraintBounds:
             end
             @test state.x[1] == σ
             @test state.bstate.slack_x[1] < eps(float(σ))
-            # x >= 1 using the linear/nonlinear constraints
+            # |x| >= 1 using the linear/nonlinear constraints
             d = TwiceDifferentiableFunction(x->F*(x[1]-σ), (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
             constraints = TwiceDifferentiableConstraintsFunction(
                 (x,c)->(c[1] = x[1]),
@@ -432,13 +439,12 @@ ConstraintBounds:
                 (x,λ,h)->nothing,
                 [], [], σswap(σ, [Float64(σ)], [])...)
             state = Optim.initial_state(method, options, d, constraints, [(1+eps(1.0))*σ])
-            setstate!(state, μ, d, constraints, method)
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method)
                 Optim.update_fg!(d, constraints, state, method)
                 Optim.update_h!(d, constraints, state, method)
             end
-            @test state.x[1] == σ
+            @test state.x[1] ≈ σ
             @test state.bstate.slack_c[1] < eps(float(σ))
         end
     end

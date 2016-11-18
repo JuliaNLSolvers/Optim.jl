@@ -291,9 +291,6 @@ immutable ConstraintBounds{T}
     ineqx::Vector{Int}  # index-vector of other inequality-constrained variables
     σx::Vector{Int8}    # ±1, in constraints σ(v-b) ≥ 0 (sign depends on whether v>b or v<b)
     bx::Vector{T}       # bound (upper or lower) on variable
-    iz::Vector{Int}     # index-vector of nonnegative or nonpositive variables
-    σz::Vector{Int8}    # ±1 depending on whether nonnegative or nonpositive
-    bz::Vector{T}       # all-zeros, convenience for evaluation of barrier penalty
     # Linear/nonlinear constraint functions and bounds
     eqc::Vector{Int}    # index-vector equality-constrained entries in c
     valc::Vector{T}     # value of the equality-constraint
@@ -306,7 +303,7 @@ function ConstraintBounds(lx, ux, lc, uc)
 end
 function _cb{Tx,Tc}(lx::AbstractArray{Tx}, ux::AbstractArray{Tx}, lc::AbstractVector{Tc}, uc::AbstractVector{Tc})
     T = promote_type(Tx,Tc)
-    ConstraintBounds{T}(length(lc), parse_constraints(T, lx, ux, true)..., parse_constraints(T, lc, uc)...)
+    ConstraintBounds{T}(length(lc), parse_constraints(T, lx, ux)..., parse_constraints(T, lc, uc)...)
 end
 
 Base.eltype{T}(::Type{ConstraintBounds{T}}) = T
@@ -330,12 +327,10 @@ The number of "meaningful" constraints (not `±Inf`) on the x coordinates.
 See also: nconstraints.
 """
 function nconstraints_x(cb::ConstraintBounds)
-    mz = isempty(cb.iz) ? 0 : maximum(cb.iz)
     mi = isempty(cb.ineqx) ? 0 : maximum(cb.ineqx)
     me = isempty(cb.eqx) ? 0 : maximum(cb.eqx)
-    nmax = max(mz, mi, me)
+    nmax = max(mi, me)
     hasconstraint = falses(nmax)
-    hasconstraint[cb.iz] = true
     hasconstraint[cb.ineqx] = true
     hasconstraint[cb.eqx] = true
     sum(hasconstraint)
@@ -347,7 +342,6 @@ function Base.show(io::IO, cb::ConstraintBounds)
     print(io, "\n  Variables:")
     showeq(io, indent, cb.eqx, cb.valx, 'x', :bracket)
     showineq(io, indent, cb.ineqx, cb.σx, cb.bx, 'x', :bracket)
-    showineq(io, indent, cb.iz, cb.σz, cb.bz, 'x', :bracket)
     print(io, "\n  Linear/nonlinear constraints:")
     showeq(io, indent, cb.eqc, cb.valc, 'c', :subscript)
     showineq(io, indent, cb.ineqc, cb.σc, cb.bc, 'c', :subscript)
@@ -443,7 +437,7 @@ function _symm(l, u)
 end
 
 """
-    parse_constraints(T, l, u, split_signed=false) -> eq, val, ineq, σ, b, [iz, σz, bz]
+    parse_constraints(T, l, u) -> eq, val, ineq, σ, b
 
 From user-supplied constraints of the form
 
@@ -457,13 +451,6 @@ when `l_i == u_i`), convert into the following representation:
     - `ineq`, `σ`, and `b` such that the inequality constraints can be written as
              σ[k]*(v[ineq[k]] - b[k]) ≥ 0
        where `σ[k] = ±1`.
-    - optionally (with `split_signed=true`), return an index-vector
-      `iz` of entries where one of `l`, `u` is zero, along with
-      whether the constraint is `≥ 0` (σz=+1) or `≤ 0` (σz=-1). Such
-      are removed from `ineq`, `σ`, and `b`. For coordinate variables
-      this can be used to reduce the number of slack variables needed,
-      since when one of the bounds is 0, the variable itself *is* a
-      slack variable.
 
 Note that since the same `v_i` might have both lower and upper bounds,
 `ineq` might have the same index twice (once with `σ`=-1 and once with `σ`=1).
@@ -474,11 +461,11 @@ corresponding entry in `ineq`/`σ`/`b`.
 
 T is the element-type of the non-Int outputs
 """
-function parse_constraints{T}(::Type{T}, l, u, split_signed::Bool=false)
+function parse_constraints{T}(::Type{T}, l, u)
     size(l) == size(u) || throw(DimensionMismatch("l and u must be the same size, got $(size(l)) and $(size(u))"))
-    eq, ineq, iz = Int[], Int[], Int[]
+    eq, ineq = Int[], Int[]
     val, b = T[], T[]
-    σ, σz = Array{Int8}(0), Array{Int8}(0)
+    σ = Array{Int8}(0)
     for i = 1:length(l)
         li, ui = l[i], u[i]
         li <= ui || throw(ArgumentError("l must be smaller than u, got $li, $ui"))
@@ -487,30 +474,17 @@ function parse_constraints{T}(::Type{T}, l, u, split_signed::Bool=false)
             push!(val, ui)
         else
             if isfinite(li)
-                if split_signed && li == 0
-                    push!(iz, i)
-                    push!(σz, 1)
-                else
-                    push!(ineq, i)
-                    push!(σ, 1)
-                    push!(b, li)
-                end
+                push!(ineq, i)
+                push!(σ, 1)
+                push!(b, li)
             end
             ui = u[i]
             if isfinite(ui)
-                if split_signed && ui == 0
-                    push!(iz, i)
-                    push!(σz, -1)
-                else
-                    push!(ineq, i)
-                    push!(σ, -1)
-                    push!(b, ui)
-                end
+                push!(ineq, i)
+                push!(σ, -1)
+                push!(b, ui)
             end
         end
-    end
-    if split_signed
-        return eq, val, ineq, σ, b, iz, σz, zeros(T, length(iz))
     end
     eq, val, ineq, σ, b
 end
