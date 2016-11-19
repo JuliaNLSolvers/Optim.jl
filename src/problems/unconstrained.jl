@@ -1,22 +1,13 @@
 module UnconstrainedProblems
 
+using ..OptimizationProblem
+
 ### Sources
 ###
 ### [1] Ali, Khompatraporn, & Zabinsky: A Numerical Evaluation of Several Stochastic Algorithms on Selected Continuous Global Optimization Test
 ### Link: www.researchgate.net/profile/Montaz_Ali/publication/226654862_A_Numerical_Evaluation_of_Several_Stochastic_Algorithms_on_Selected_Continuous_Global_Optimization_Test_Problems/links/00b4952bef133a1a6b000000.pdf
 ###
 ### [2] Fletcher & Powell: A rapidly convergent descent method for minimization,
-
-immutable OptimizationProblem
-    name::AbstractString
-    f::Function
-    g!::Function
-    h!::Function
-    initial_x::Vector{Float64}
-    solutions::Vector
-    isdifferentiable::Bool
-    istwicedifferentiable::Bool
-end
 
 examples = Dict{AbstractString, OptimizationProblem}()
 
