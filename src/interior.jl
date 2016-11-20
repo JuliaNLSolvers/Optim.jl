@@ -167,11 +167,16 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
     iteration, iterationμ = 0, 0
 
     options.show_trace && print_header(method)
-    trace!(tr, state, iteration, method, options)
 
     Δfmax = zero(state.f_x)
 
     while !converged && !stopped && iteration < options.iterations
+        # If tracing, update trace with trace!. If a callback is provided, it
+        # should have boolean return value that controls the variable stopped_by_callback.
+        # This allows for early stopping controlled by the callback.
+        if tracing
+            stopped_by_callback = trace!(tr, state, iteration, method, options)
+        end
         iteration += 1
         iterationμ += 1
 
@@ -189,13 +194,6 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged | g_converged | (counter_f_tol > options.successive_f_tol)
         gnormnew = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
-
-        # If tracing, update trace with trace!. If a callback is provided, it
-        # should have boolean return value that controls the variable stopped_by_callback.
-        # This allows for early stopping controlled by the callback.
-        if tracing
-            stopped_by_callback = trace!(tr, state, iteration, method, options)
-        end
 
         Δf = abs(state.f_x - state.f_x_previous)
         if iterationμ > 1
@@ -227,6 +225,10 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         # and stop the while loop
         stopped = stopped_by_callback || stopped_by_time_limit ? true : false
     end # while
+
+    if tracing
+        trace!(tr, state, iteration, method, options)
+    end
 
     after_while!(d, constraints, state, method, options)
 
@@ -428,9 +430,9 @@ userλ(λcI, constraints) = userλ(λcI, constraints.bounds)
 
 function lagrangian(d, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars, μ)
     f_x = d.f(x)
-    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) +
-            equality_violation(bounds, x, c, bstate)
-    f_x, L_xsλ
+    ev = equality_violation(bounds, x, c, bstate)
+    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) + ev
+    f_x, L_xsλ, ev
 end
 
 function lagrangian_g!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
@@ -444,28 +446,28 @@ end
 function lagrangian_fg!(gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
     fill!(bgrad, 0)
     f_x = d.fg!(x, gx)
-    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) +
-        equality_violation(bounds, x, c, bstate)
+    ev = equality_violation(bounds, x, c, bstate)
+    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) + ev
     barrier_grad!(gx, bgrad, bounds, x, bstate, μ)
     equality_grad!(gx, bgrad, bounds, x, c, J, bstate)
-    f_x, L_xsλ
+    f_x, L_xsλ, ev
 end
 
 ## Computation of Lagrangian and derivatives when passing all parameters as a single vector
 function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::AbstractArray, bstate::BarrierStateVars, μ)
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian(d, bounds, x, c, bstate, μ)
+    f_x, L_xsλ, ev = lagrangian(d, bounds, x, c, bstate, μ)
     L_xsλ
 end
 function lagrangian_vec(p, d, bounds::ConstraintBounds, x, c::Function, bstate::BarrierStateVars, μ)
     # Use this version when using automatic differentiation
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian(d, bounds, x, c(x), bstate, μ)
+    f_x, L_xsλ, ev = lagrangian(d, bounds, x, c(x), bstate, μ)
     L_xsλ
 end
 function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x, c, J, bstate::BarrierStateVars, μ)
     unpack_vec!(x, bstate, p)
-    f_x, L_xsλ = lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
+    f_x, L_xsλ, ev = lagrangian_fg!(gx, bgrad, d, bounds, x, c, J, bstate, μ)
     pack_vec!(storage, gx, bgrad)
     L_xsλ
 end
@@ -486,10 +488,8 @@ end
 function lagrangian_linefunc!(α, αI, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    f_x, L = _lagrangian_linefunc(α, αI, d, constraints, state)
-    state.f_x = f_x
-    state.L = L
-    L
+    state.f_x, state.L, state.ev = _lagrangian_linefunc(α, αI, d, constraints, state)
+    state.L
 end
 lagrangian_linefunc!(α, αI, d, constraints, state, method) = lagrangian_linefunc(α, αI, d, constraints, state)
 
@@ -711,6 +711,7 @@ function isfeasible(constraints, x)
     isfeasible(constraints, x, c)
 end
 isfeasible(constraints::AbstractConstraintsFunction, x, c) = isfeasible(constraints.bounds, x, c)
+isfeasible(constraints::Void, x) = true
 
 """
     isinterior(constraints, state) -> Bool
@@ -744,6 +745,7 @@ function isinterior(constraints, x)
     isinterior(constraints, x, c)
 end
 isinterior(constraints::AbstractConstraintsFunction, x, c) = isinterior(constraints.bounds, x, c)
+isinterior(constraints::Void, x) = true
 
 ## Utilities for representing total state as single vector
 function pack_vec(x, b::BarrierStateVars)

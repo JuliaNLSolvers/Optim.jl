@@ -22,6 +22,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     bstep::BarrierStateVars{T}    # search direction for slack and λ
     constr_c::Vector{T}   # value of the user-supplied constraints at x
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
+    ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
     @add_linesearch_fields()
     b_ls::BarrierLineSearch{T}
     gf::Vector{T}
@@ -82,6 +83,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         bstep,
         constr_c,
         constr_J,
+        T(NaN),
         @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
         gf,
@@ -96,8 +98,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
 end
 
 function update_fg!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
-    f_x, L = lagrangian_fg!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
-    state.f_x, state.L = f_x, L
+    state.f_x, state.L, state.ev = lagrangian_fg!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
     state.f_calls += 1
     state.g_calls += 1
     state

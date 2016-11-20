@@ -119,6 +119,7 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
     dt = Dict()
     dt["Lagrangian"] = state.L
     dt["μ"] = state.μ
+    dt["ev"] = state.ev
     if options.extended_trace
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)
@@ -130,7 +131,7 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
         dt["bgrad"] = copy(state.bgrad)
         dt["c"] = copy(state.constr_c)
     end
-    g_norm = vecnorm(state.gf, Inf)
+    g_norm = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
     update!(tr,
             iteration,
             state.f_x,

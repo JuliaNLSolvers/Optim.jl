@@ -57,7 +57,7 @@ function print_header(method::Optimizer)
 end
 
 function print_header(method::IPOptimizer)
-        @printf "Iter     Lagrangian value Function value   Gradient norm    μ\n"
+        @printf "Iter     Lagrangian value Function value   Gradient norm    |==constr.|      μ\n"
 end
 
 immutable OptimizationState{T <: Optimizer}
@@ -134,10 +134,10 @@ end
 
 function Base.show{M<:IPOptimizer}(io::IO, t::OptimizationState{M})
     md = t.metadata
-    @printf io "%6d   %-14e   %-14e   %-14e   %-6.2e\n" t.iteration md["Lagrangian"] t.value t.g_norm md["μ"]
+    @printf io "%6d   %-14e   %-14e   %-14e   %-14e   %-6.2e\n" t.iteration md["Lagrangian"] t.value t.g_norm md["ev"] md["μ"]
     if !isempty(t.metadata)
         for (key, value) in md
-            key ∈ ("Lagrangian", "μ") && continue
+            key ∈ ("Lagrangian", "μ", "ev") && continue
             @printf io " * %s: %s\n" key value
         end
     end
@@ -154,8 +154,8 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show{M<:IPOptimizer}(io::IO, tr::OptimizationTrace{M})
-    @printf io "Iter     Lagrangian value Function value   Gradient norm    μ\n"
-    @printf io "------   ---------------- --------------   --------------   --------\n"
+    @printf io "Iter     Lagrangian value Function value   Gradient norm    |==constr.|      μ\n"
+    @printf io "------   ---------------- --------------   --------------   --------------   --------\n"
     for state in tr
         show(io, state)
     end
