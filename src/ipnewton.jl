@@ -25,9 +25,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
     @add_linesearch_fields()
     b_ls::BarrierLineSearch{T}
-    gf::Vector{T}
-    Hf::Matrix{T}
-    stepf::Vector{T}
+    gtilde::Vector{T}
 end
 
 function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunction, constraints::TwiceDifferentiableConstraintsFunction, initial_x::Array{T})
@@ -52,9 +50,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
     # More constraints
     constr_J = Array{T}(mc, n)
     constr_gtemp = Array{T}(n)
-    gf = Array{T}(0)    # will be replaced
-    Hf = Array{T}(0,0)  #   "
-    stepf = Array{T}(0)
+    gtilde = similar(g)
     constraints.jacobian!(initial_x, constr_J)
     μ = T(1)
     bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
@@ -86,9 +82,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         T(NaN),
         @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
-        gf,
-        Hf,
-        stepf)
+        gtilde)
 
     d.h!(initial_x, state.H)
     Hinfo = (state.H, hessianI(initial_x, constraints, 1./bstate.slack_c, 1))
@@ -101,27 +95,49 @@ function update_fg!(d, constraints::TwiceDifferentiableConstraintsFunction, stat
     state.f_x, state.L, state.ev = lagrangian_fg!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
     state.f_calls += 1
     state.g_calls += 1
-    state
+    update_gtilde!(d, constraints, state, method)
 end
 
 function update_g!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
     lagrangian_g!(state.g, state.bgrad, d, constraints.bounds, state.x, state.constr_c, state.constr_J, state.bstate, state.μ)
     state.g_calls += 1
+    update_gtilde!(d, constraints, state, method)
+end
+
+function update_gtilde!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
+    # Calculate the modified x-gradient for the block-eliminated problem
+    gtilde, bstate, bgrad = state.gtilde, state.bstate, state.bgrad
+    bounds = constraints.bounds
+    copy!(gtilde, state.g)
+    JIc = view5(state.constr_J, bounds.ineqc, :)
+    if !isempty(JIc)
+        Hssc = Diagonal(bstate.λc./bstate.slack_c)
+        gc = JIc'*(Diagonal(bounds.σc) * (bgrad.slack_c - Hssc*bgrad.λc))
+        for i = 1:length(gtilde)
+            gtilde[i] += gc[i]
+        end
+    end
+    for (i,j) in enumerate(bounds.ineqx)
+        gxi = bounds.σx[i]*(bgrad.slack_x[i] -  bgrad.λx[i]*bstate.λx[i]/bstate.slack_x[i])
+        gtilde[j] += gxi
+    end
     state
 end
 
 function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
-    x = state.x
-    μ, Hxx, J = state.μ, state.H, state.constr_J
-    bstate, bounds = state.bstate, constraints.bounds
+    x, μ, Hxx, J = state.x, state.μ, state.H, state.constr_J
+    bstate, bgrad, bounds = state.bstate, state.bgrad, constraints.bounds
     m, n = size(J, 1), size(J, 2)
 
     d.h!(state.x, Hxx)  # objective's Hessian
-    hessianI!(Hxx, state.x, constraints, bstate.λc, μ)  # accumulate the inequality second derivatives
+    # accumulate the constraint second derivatives
+    λ = userλ(bstate.λc, constraints)
+    λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
+    constraints.h!(x, λ, Hxx)
     # Add the Jacobian terms (J'*Hss*J)
-    JI = view5(J, bounds.ineqc, :)
+    JIc = view5(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc./bstate.slack_c)
-    HJ = JI'*Hssc*JI
+    HJ = JIc'*Hssc*JIc
     for j = 1:n, i = 1:n
         Hxx[i,j] += HJ[i,j]
     end
@@ -129,38 +145,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     for (i,j) in enumerate(bounds.ineqx)
         Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
-    # Perform a positive factorization
-    Hpc, state.Hd = ldltfact(Positive, Hxx)
-    Hp = full(Hpc)
-    # Now add the equality constraint hessian terms
-    eqc, λcE = bounds.eqc, bstate.λcE
-    λ = zeros(eltype(x), nconstraints(bounds))
-    for i = 1:length(eqc)
-        λ[eqc[i]] -= λcE[i]
-    end
-    constraints.h!(state.x, λ, Hp)
-    # Also add these to Hxx so we have the true Hessian (the one
-    # without forcing positive-definiteness)
-    constraints.h!(state.x, λ, Hxx)
-    # Form the total Hessian
-    JEx = zeros(eltype(bounds), length(bounds.eqx), length(state.x))
-    for (i,j) in enumerate(bounds.eqx)
-        JEx[i,j] = 1
-    end
-    JEc = view5(J, eqc, :)
-    Jod = zeros(eltype(JEx), size(JEc, 1), size(JEx, 1))
-    state.Hf = [Hp -JEx' -JEc';
-                -JEx zeros(eltype(JEx), size(JEx,1), size(JEx,1)) Jod';
-                -JEc Jod zeros(eltype(JEc), size(JEc,1), size(JEc,1))]
-    # Also form the total gradient
-    bgrad = state.bgrad
-    gI = state.g + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - Hssc*bgrad.λc)
-    for (i,j) in enumerate(bounds.ineqx)
-        gI[j] += -μ*bounds.σx[i]./bstate.slack_x[i] + bstate.λx[i]*(x[j]-bounds.bx[i])/bstate.slack_x[i]
-    end
-    state.gf = [gI;
-                bgrad.λxE;
-                bgrad.λcE]
+
     state
 end
 
@@ -202,38 +187,42 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     # Evaluate the constraints at the new position
     constraints.c!(state.x, state.constr_c)
     constraints.jacobian!(state.x, state.constr_J)
+    @assert state.ev == equality_violation(constraints, state)
 
     false
 end
 
 function solve_step!(state::IPNewtonState, constraints)
-    # Solve the Newton step
-    local step
-    try
-        step = -(state.Hf\state.gf)  # do *not* force posdef
-    catch
-        step = -(svdfact(state.Hf)\state.gf)
-    end
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
-    k = unpack_vec!(s, step, 0)
-    k = unpack_vec!(bstep.λxE, step, k)
-    k = unpack_vec!(bstep.λcE, step, k)
-    k == length(step) || error("exhausted targets before step")
+    # Solve the Newton step
+    Hxx = state.H
+    JE = jacobianE(state, bounds)
+    # Q, R, p = qr(JE', Val{true})
+    gE = [bgrad.λxE;
+          bgrad.λcE]
+    HxxF = cholfact(Positive, Hxx, Val{true})
+    M = JE*(HxxF \ JE')
+    MF = cholfact(Positive, M, Val{true})
+    ΔλE = MF \ (gE + JE * (HxxF \ state.gtilde))
+    Δx = HxxF \ (JE'*ΔλE - state.gtilde)
+    copy!(s, Δx)
+    k = unpack_vec!(bstep.λxE, ΔλE, 0)
+    k = unpack_vec!(bstep.λcE, ΔλE, k)
+    k == length(ΔλE) || error("exhausted targets before ΔλE")
     # Solve for the slack variable and λI updates
     for (i, j) in enumerate(bounds.ineqx)
         bstep.slack_x[i] = -bgrad.λx[i] + bounds.σx[i]*s[j]
         # bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
         bstep.λx[i] = -bgrad.slack_x[i] - bstate.λx[i]*bstep.slack_x[i]/bstate.slack_x[i]
     end
-    JI = view5(state.constr_J, bounds.ineqc, :)
-    SigmaJIΔx = Diagonal(bounds.σc)*(JI*state.s)
+    JIc = view5(state.constr_J, bounds.ineqc, :)
+    SigmaJIΔx = Diagonal(bounds.σc)*(JIc*state.s)
     for i = 1:length(bstep.λc)
         bstep.slack_c[i] = -bgrad.λc[i] + SigmaJIΔx[i]
         # bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
         bstep.λc[i] = -bgrad.slack_c[i] - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
     end
-    state.stepf = step
     state
 end
 
@@ -246,7 +235,9 @@ function is_smaller_eps(ref, step)
 end
 
 function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
-    slope = dot(state.stepf, state.gf)
+    slope = dot(state.s, state.gtilde) +
+        dot(state.bstep.λxE, state.bgrad.λxE) +
+        dot(state.bstep.λcE, state.bgrad.λcE)
     # For the curvature, use the original hessian (before forcing
     # positive-definiteness)
     q = dot(state.s, state.H*state.s)
@@ -254,3 +245,15 @@ function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
     q -= 2*dot(state.s[bounds.eqx], state.bstep.λxE) + 2*dot(state.s, JE'*state.bstep.λcE)
     state.L, slope, q
 end
+
+# Utility functions that assist in testing: they return the "full
+# Hessian" and "full gradient" for the equation with the slack and λI
+# eliminated.
+function Hf(bounds::ConstraintBounds, state)
+    JE = jacobianE(state, bounds)
+    HxxF = cholfact(Positive, state.H)
+    Hf = [full(HxxF) -JE';
+          -JE zeros(eltype(JE), size(JE, 1), size(JE, 1))]
+end
+Hf(constraints, state) = Hf(constraints.bounds, state)
+gf(state) = [state.gtilde; state.bgrad.λxE; state.bgrad.λcE]

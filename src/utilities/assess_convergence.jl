@@ -86,11 +86,13 @@ function assess_convergence(state::NewtonTrustRegionState, options)
 end
 
 function assess_convergence(state::IPNewtonState, options)
+    # We use the whole bstate-gradient `bgrad`
+    bgrad = state.bgrad
     assess_convergence(state.x,
                        state.x_previous,
                        state.L,
                        state.L_previous,
-                       state.gf,
+                       [state.g; bgrad.slack_x; bgrad.slack_c; bgrad.λx; bgrad.λc; bgrad.λxE; bgrad.λcE],
                        options.x_tol,
                        options.f_tol,
                        options.g_tol)

@@ -119,14 +119,13 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
     dt = Dict()
     dt["Lagrangian"] = state.L
     dt["μ"] = state.μ
-    dt["ev"] = state.ev
+    dt["ev"] = abs(state.ev)
     if options.extended_trace
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(state.g)
-        dt["gf(x)"] = copy(state.gf)
+        dt["gtilde(x)"] = copy(state.gtilde)
         dt["h(x)"] = copy(state.H)
-        dt["hf(x)"] = copy(state.Hf)
         dt["bstate"] = copy(state.bstate)
         dt["bgrad"] = copy(state.bgrad)
         dt["c"] = copy(state.constr_c)

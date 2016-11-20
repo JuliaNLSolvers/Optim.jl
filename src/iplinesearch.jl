@@ -12,5 +12,6 @@ function backtrack_constrained(ϕ, α, αmax, αImax, Lcoefsα,
         α *= ρ
         αI *= ρ
     end
+    ϕ(zero(α), zero(αI))  # to ensure that state gets set appropriately
     return zero(α), zero(αI), f_calls, 0
 end

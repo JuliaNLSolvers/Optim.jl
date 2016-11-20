@@ -113,8 +113,8 @@ ConstraintBounds:
         constraints = TwiceDifferentiableConstraintsFunction(
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
         state = Optim.initial_state(method, options, dg, constraints, x)
-        @test state.gf ≈ gx
-        @test state.Hf ≈ H
+        @test Optim.gf(state) ≈ gx
+        @test Optim.Hf(constraints, state) ≈ H
         ## Pure equality constraints on variables
         xbar = fill(0.2, length(x))
         bounds = Optim.ConstraintBounds(xbar, xbar, [], [])
@@ -132,18 +132,18 @@ ConstraintBounds:
         state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.λxE, bstate.λxE)
         setstate!(state, μ, d0, constraints, method)
-        @test state.gf ≈ [gx; xbar-x]
+        @test Optim.gf(state) ≈ [gx; xbar-x]
         n = length(x)
-        @test state.Hf ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
+        @test Optim.Hf(constraints, state) ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], xbar, xbar)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
         copy!(state.bstate.λcE, bstate.λxE)
         setstate!(state, μ, d0, constraints, method)
-        @test state.gf ≈ [gx; xbar-x]
+        @test Optim.gf(state) ≈ [gx; xbar-x]
         n = length(x)
-        @test state.Hf ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
+        @test Optim.Hf(constraints, state) ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
         ## Nonnegativity constraints
         bounds = Optim.ConstraintBounds(zeros(length(x)), fill(Inf,length(x)), [], [])
         y = rand(length(x))
@@ -160,15 +160,15 @@ ConstraintBounds:
             (x,c)->nothing, (x,J)->nothing, (x,λ,H)->nothing, bounds)
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
-        @test state.gf ≈ -μ./y
-        @test state.Hf ≈ μ*Diagonal(1./y.^2)
+        @test Optim.gf(state) ≈ -μ./y
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], zeros(length(x)), fill(Inf,length(x)))
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
-        @test state.gf ≈ -μ./y
-        @test state.Hf ≈ μ*Diagonal(1./y.^2)
+        @test Optim.gf(state) ≈ -μ./y
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
         ## General inequality constraints on variables
         lb, ub = rand(length(x))-2, rand(length(x))+1
         bounds = Optim.ConstraintBounds(lb, ub, [], [])
@@ -207,8 +207,8 @@ ConstraintBounds:
             hxs[j] += htmp
             gxs[j] += bounds.σx[i]*(gstmp - λ[i]) - bounds.σx[i]*htmp*gλtmp
         end
-        @test state.gf ≈ gxs
-        @test state.Hf ≈ Diagonal(hxs)
+        @test Optim.gf(state) ≈ gxs
+        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], lb, ub)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
@@ -216,8 +216,8 @@ ConstraintBounds:
         copy!(state.bstate.slack_c, bstate.slack_x)
         copy!(state.bstate.λc, bstate.λx)
         setstate!(state, μ, d0, constraints, method)
-        @test state.gf ≈ gxs
-        @test state.Hf ≈ Diagonal(hxs)
+        @test Optim.gf(state) ≈ gxs
+        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
         ## Nonlinear equality constraints
         cfun = x->[x[1]^2+x[2]^2, x[2]*x[3]^2]
         cfun! = (x, c) -> copy!(c, cfun(x))
@@ -248,9 +248,9 @@ ConstraintBounds:
         setstate!(state, μ, d0, constraints, method)
         heq = zeros(length(x), length(x))
         ch!(x, bstate.λcE, heq)
-        @test state.gf ≈ [gx; cbar-c]
-        @test state.Hf ≈ [eye(length(x))-heq -J';
-                          -J zeros(size(J,1), size(J,1))]
+        @test Optim.gf(state) ≈ [gx; cbar-c]
+        @test Optim.Hf(constraints, state) ≈ [heq -J';
+                                              -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
         bounds = Optim.ConstraintBounds([], [], -rand(length(c))-1, rand(length(c))+2)
         bstate = Optim.BarrierStateVars(bounds, x, c)
@@ -285,8 +285,8 @@ ConstraintBounds:
         hxx = JI'*Diagonal(bstate.λc./bstate.slack_c)*JI - hineq
         gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
         hp = full(cholfact(Positive, hxx))
-        @test state.gf ≈ gf
-        @test state.Hf ≈ hp
+        @test Optim.gf(state) ≈ gf
+        @test Optim.Hf(constraints, state) ≈ hp
     end
 
     @testset "IPNewton initialization" begin
