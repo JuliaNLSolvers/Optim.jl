@@ -240,6 +240,13 @@ function solve_step!(state::IPNewtonState, constraints)
     MF = cholfact(Positive, M, Val{true})
     ΔλE = MF \ (gE + JE * (HxxF \ state.gtilde))
     Δx = HxxF \ (JE'*ΔλE - state.gtilde)
+    if norm(gE) < norm(gE - JE*Δx) # ||
+        # norm(state.gtilde) < norm(full(HxxF)*Δx - JE'*ΔλE + state.gtilde)
+        # Precision problems gave us a worse solution than the one we started with, abort
+        fill!(s, 0)
+        fill!(bstep, 0)
+        return state
+    end
     copy!(s, Δx)
     k = unpack_vec!(bstep.λxE, ΔλE, 0)
     k = unpack_vec!(bstep.λcE, ΔλE, k)
