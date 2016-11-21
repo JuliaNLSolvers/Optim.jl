@@ -2,7 +2,7 @@ immutable IPNewton{F} <: IPOptimizer{F}
     linesearch!::F
 end
 
-IPNewton(; linesearch!::Function = backtrack_constrained) =
+IPNewton(; linesearch!::Function = backtrack_constrained_grad) =
   IPNewton(linesearch!)
 
 type IPNewtonState{T,N} <: AbstractBarrierState
@@ -24,7 +24,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
     @add_linesearch_fields()
-    b_ls::BarrierLineSearch{T}
+    b_ls::BarrierLineSearchGrad{T}
     gtilde::Vector{T}
 end
 
@@ -89,7 +89,8 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
     bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
     bgrad = similar(bstate)
     bstep = similar(bstate)
-    b_ls = BarrierLineSearch(similar(constr_c), similar(bstate))
+    # b_ls = BarrierLineSearch(similar(constr_c), similar(bstate))
+    b_ls = BarrierLineSearchGrad(similar(constr_c), similar(constr_J), similar(bstate), similar(bstate))
 
     state = IPNewtonState("Interior-point Newton's Method",
         length(initial_x),
@@ -167,7 +168,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     λ = userλ(bstate.λc, constraints)
     λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
     constraints.h!(x, λ, Hxx)
-    # Add the Jacobian terms (J'*Hss*J)
+    # Add the Jacobian terms (JI'*Hss*JI)
     JIc = view5(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc./bstate.slack_c)
     HJ = JIc'*Hssc*JIc
@@ -205,7 +206,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     αImax = estimate_maxstep(αImax, bstate.λc, bstep.λc)
 
     # Determine the actual distance of movement along the search line
-    ϕ = (α,αI)->lagrangian_linefunc!(α, αI, d, constraints, state, method)
+    ϕ = linesearch_anon(d, constraints, state, method)
     state.alpha, αI, f_update, g_update =
         method.linesearch!(ϕ, T(1), αmax, αImax, qp)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
@@ -215,7 +216,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
 
     # Update current position # x = x + alpha * s
     ls_update!(state.x, state.x, state.s, state.alpha)
-    ls_update!(bstate, bstate, bstep, state.alpha, αI)
+    ls_update!(bstate, bstate, bstep, (state.alpha, αI))
 
     # Evaluate the constraints at the new position
     constraints.c!(state.x, state.constr_c)
@@ -267,16 +268,43 @@ function is_smaller_eps(ref, step)
     ise
 end
 
+"""
+    quadratic_parameters(bounds, state) -> val, slopeα, Hα
+
+Return the parameters for the quadratic fit of the behavior of the
+lagrangian for positions parametrized as a function of the 4-vector
+`α = (αx, αs, αI, αE)`, where the step is
+
+    (αx * Δx, αs * Δs, αI * ΔλI, αE * ΔλE)
+
+and `Δx`, `Δs`, `ΔλI`, and `ΔλE` are the current search directions in
+the parameters. As a function of `α`, the local model is expressed as
+
+    val + dot(α, slopeα) + (α'*Hα*α)/2
+"""
 function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
-    slope = dot(state.s, state.gtilde) +
-        dot(state.bstep.λxE, state.bgrad.λxE) +
-        dot(state.bstep.λcE, state.bgrad.λcE)
-    # For the curvature, use the original hessian (before forcing
-    # positive-definiteness)
-    q = dot(state.s, state.H*state.s)
-    JE = view5(state.constr_J, bounds.eqc, :)
-    q -= 2*dot(state.s[bounds.eqx], state.bstep.λxE) + 2*dot(state.s, JE'*state.bstep.λcE)
-    state.L, slope, q
+    bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
+    slopeα = slopealpha(state.s, state.g, bstep, bgrad)
+    # For the curvature, use the original hessian (before adding the JI'*Hss*JI term)
+    # This undoes the dual correction. However, for linesearch we need
+    # primal, so calculate both.
+    jic = view5(state.constr_J, bounds.ineqc, :)*state.s
+    HsscD = Diagonal(bstate.λc./bstate.slack_c)
+    HsscP = Diagonal(state.μ./bstate.slack_c.^2)
+    jix = view(state.s, bounds.ineqx)
+    HssxD = Diagonal(bstate.λx./bstate.slack_x)
+    HssxP = Diagonal(state.μ./bstate.slack_x.^2)
+    jHj = dot(jic, HsscD*jic) + dot(jix, HssxD*jix)
+    ji = dot(bstep.λc, Diagonal(bounds.σc)*jic) + dot(bstep.λx, Diagonal(bounds.σx)*jix)
+    je = dot(bstep.λcE, view5(state.constr_J, bounds.eqc, :)*state.s) +
+         dot(bstep.λxE, view(state.s, bounds.eqx))
+    hss = dot(bstep.slack_c, HsscP*bstep.slack_c) + dot(bstep.slack_x, HssxP*bstep.slack_x)
+    si = dot(bstep.slack_c, bstep.λc) + dot(bstep.slack_x, bstep.λx)
+    Hα = [state.s'*state.H*state.s - jHj 0    -ji   -je;
+          0                              hss  si    0;
+          -ji                            si   0     0;
+          -je                            0    0     0]
+    state.L, slopeα, Hα
 end
 
 # Utility functions that assist in testing: they return the "full

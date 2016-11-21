@@ -249,7 +249,7 @@ ConstraintBounds:
         heq = zeros(length(x), length(x))
         ch!(x, bstate.λcE, heq)
         @test Optim.gf(state) ≈ [gx; cbar-c]
-        @test Optim.Hf(constraints, state) ≈ [heq -J';
+        @test Optim.Hf(constraints, state) ≈ [full(cholfact(Positive, heq)) -J';
                                               -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
         bounds = Optim.ConstraintBounds([], [], -rand(length(c))-1, rand(length(c))+2)
@@ -396,15 +396,18 @@ ConstraintBounds:
         Optim.solve_step!(state, constraints)
         @test state.s[1] ≈ -(F-μ/x0)/(state.bstate.λx[1]/x0)
         qp = Optim.quadratic_parameters(constraints.bounds, state)
+        g0, H0 = autoqp(d, constraints, state)
         @test qp[1] ≈ F*x0-μ*log(x0)
-        @test qp[2] ≈ -(F-μ/x0)^2*x0^2/μ
-        @test qp[3] ≈ μ/x0^2*(x0 - F*x0^2/μ)^2
+        @test qp[2] ≈ g0 #-(F-μ/x0)^2*x0^2/μ
+        @test qp[3] ≈ H0 # μ/x0^2*(x0 - F*x0^2/μ)^2
         bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
         αmax = Optim.estimate_maxstep(Inf, state.x[bounds.ineqx].*bounds.σx,
                                            state.s[bounds.ineqx].*bounds.σx)
-        ϕ = (α,αI)->Optim.lagrangian_linefunc(α, αI, d, constraints, state)
-        @test ϕ(0,0) ≈ qp[1]
-        α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, Inf, qp)
+        ϕ = Optim.linesearch_anon(d, constraints, state, method)
+        val0 = ϕ((0,0))
+        val0 = isa(val0, Tuple) ? val0[1] : val0
+        @test val0 ≈ qp[1]
+        α, αI, nf, ng = method.linesearch!(ϕ, 1.0, αmax, Inf, qp)
         @test α > 1e-3
     end
 

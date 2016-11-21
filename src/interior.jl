@@ -155,16 +155,21 @@ Base.convert{T}(::Type{BarrierLineSearchGrad{T}}, bsl::BarrierLineSearchGrad) =
                           convert(BarrierStateVars{T}, bsl.bstate),
                           convert(BarrierStateVars{T}, bsl.bgrad))
 
-
-function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α, αI)
-    ls_update!(out.slack_x, base.slack_x, step.slack_x, α)
-    ls_update!(out.slack_c, base.slack_c, step.slack_c, α)
-    ls_update!(out.λxE, base.λxE, step.λxE, α)
-    ls_update!(out.λcE, base.λcE, step.λcE, α)
-    ls_update!(out.λx, base.λx, step.λx, αI)
-    ls_update!(out.λc, base.λc, step.λc, αI)
+function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, αs::NTuple{4,Number})
+    ls_update!(out.slack_x, base.slack_x, step.slack_x, αs[2])
+    ls_update!(out.slack_c, base.slack_c, step.slack_c, αs[2])
+    ls_update!(out.λx, base.λx, step.λx, αs[3])
+    ls_update!(out.λc, base.λc, step.λc, αs[3])
+    ls_update!(out.λxE, base.λxE, step.λxE, αs[4])
+    ls_update!(out.λcE, base.λcE, step.λcE, αs[4])
     out
 end
+ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, αs::Tuple{Number,Number}) =
+    ls_update!(out, base, step, (αs[1],αs[1],αs[2],αs[1]))
+ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α::Number) =
+    ls_update!(out, base, step, (α,α,α,α))
+ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, αs::AbstractVector) =
+    ls_update!(out, base, step, (αs...,))
 
 function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constraints::AbstractConstraintsFunction, initial_x::Array{T}, method::M, options::OptimizationOptions)
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
@@ -488,18 +493,20 @@ function lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds::ConstraintBounds, x
     L_xsλ
 end
 
-# for line searches that don't use the gradient along the line
-function lagrangian_linefunc(α, αI, d, constraints, state)
-    _lagrangian_linefunc(α, αI, d, constraints, state)[2]
+## for line searches that don't use the gradient along the line
+function lagrangian_linefunc(αs, d, constraints, state)
+    _lagrangian_linefunc(αs, d, constraints, state)[2]
 end
 
-function _lagrangian_linefunc(α, αI, d, constraints, state)
+function _lagrangian_linefunc(αs, d, constraints, state)
     b_ls, bounds = state.b_ls, constraints.bounds
-    ls_update!(state.x_ls, state.x, state.s, α)
-    ls_update!(b_ls.bstate, state.bstate, state.bstep, α, αI)
+    ls_update!(state.x_ls, state.x, state.s, alphax(αs))
+    ls_update!(b_ls.bstate, state.bstate, state.bstep, αs)
     constraints.c!(state.x_ls, b_ls.c)
     lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
 end
+alphax(α::Number) = α
+alphax(αs::Union{Tuple,AbstractVector}) = αs[1]
 
 function lagrangian_linefunc!(α, αI, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
     # For backtrack_constrained, the last evaluation is the one we
@@ -508,6 +515,45 @@ function lagrangian_linefunc!(α, αI, d, constraints, state, method::IPOptimize
     state.L
 end
 lagrangian_linefunc!(α, αI, d, constraints, state, method) = lagrangian_linefunc(α, αI, d, constraints, state)
+
+
+## for line searches that do use the gradient along the line
+function lagrangian_lineslope(αs, d, constraints, state)
+    f_x, L, ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
+    L, slope
+end
+
+function _lagrangian_lineslope(αs, d, constraints, state)
+    b_ls, bounds = state.b_ls, constraints.bounds
+    bstep, bgrad = state.bstep, b_ls.bgrad
+    ls_update!(state.x_ls, state.x, state.s, alphax(αs))
+    ls_update!(b_ls.bstate, state.bstate, bstep, αs)
+    constraints.c!(state.x_ls, b_ls.c)
+    constraints.jacobian!(state.x_ls, b_ls.J)
+    f_x, L, ev = lagrangian_fg!(state.g_ls, bgrad, d, bounds, state.x_ls, b_ls.c, b_ls.J, b_ls.bstate, state.μ)
+    slopeα = slopealpha(state.s, state.g_ls, bstep, bgrad)
+    f_x, L, ev, slopeα
+end
+
+function lagrangian_lineslope!(αs, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained_grad)})
+    # For backtrack_constrained, the last evaluation is the one we
+    # keep, so it's safe to store the results in state
+    state.f_x, state.L, state.ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
+     state.L, slope
+end
+lagrangian_lineslope!(αs, d, constraints, state, method) = lagrangian_lineslope(αs, d, constraints, state)
+
+slopealpha(sx, gx, bstep, bgrad) = [dot(sx, gx),
+                                    dot(bstep.slack_x, bgrad.slack_x) + dot(bstep.slack_c, bgrad.slack_c),
+                                    dot(bstep.λx, bgrad.λx) + dot(bstep.λc, bgrad.λc),
+                                    dot(bstep.λxE, bgrad.λxE) + dot(bstep.λcE, bgrad.λcE)]
+
+function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained_grad)})
+    αs->lagrangian_lineslope!(αs, d, constraints, state, method)
+end
+function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
+    αs->lagrangian_linefunc!(αs, d, constraints, state, method)
+end
 
 ## Computation of Lagrangian terms: barrier penalty
 """
