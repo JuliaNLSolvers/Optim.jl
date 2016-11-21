@@ -28,6 +28,39 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     gtilde::Vector{T}
 end
 
+function Base.convert{T,S,N}(::Type{IPNewtonState{T,N}}, state::IPNewtonState{S,N})
+    IPNewtonState(state.method_string,
+                  state.n,
+                  convert(Array{T}, state.x),
+                  T(state.f_x),
+                  state.f_calls,
+                  state.g_calls,
+                  state.h_calls,
+                  convert(Array{T}, state.x_previous),
+                  convert(Array{T}, state.g),
+                  T(state.f_x_previous),
+                  convert(Array{T}, state.H),
+                  state.Hd,
+                  convert(Array{T}, state.s),
+                  T(state.μ),
+                  T(state.L),
+                  T(state.L_previous),
+                  convert(BarrierStateVars{T}, state.bstate),
+                  convert(BarrierStateVars{T}, state.bgrad),
+                  convert(BarrierStateVars{T}, state.bstep),
+                  convert(Array{T}, state.constr_c),
+                  convert(Array{T}, state.constr_J),
+                  T(state.ev),
+                  convert(Array{T}, state.x_ls),
+                  convert(Array{T}, state.g_ls),
+                  T(state.alpha),
+                  state.mayterminate,
+                  state.lsr,
+                  convert(BarrierLineSearchGrad{T}, state.b_ls),
+                  convert(Array{T}, state.gtilde)
+                  )
+end
+
 function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunction, constraints::TwiceDifferentiableConstraintsFunction, initial_x::Array{T})
     # Check feasibility of the initial state
     mc = nconstraints(constraints)

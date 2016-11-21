@@ -371,6 +371,19 @@ ConstraintBounds:
     end
 
     @testset "IPNewton step" begin
+        function autoqp(d, constraints, state)
+            # Note that state must be fully up-to-date, and you must
+            # have also called Optim.solve_step!
+            p = Optim.pack_vec(state.x, state.bstate)
+            chunksize = min(8, max(length(p), 4))  # since αs is of length 4
+            TD = ForwardDiff.Dual{chunksize,eltype(p)}
+            TD2 = ForwardDiff.Dual{chunksize,ForwardDiff.Dual{chunksize,eltype(p)}}
+            stated = convert(Optim.IPNewtonState{TD,1}, state)
+            stated2 = convert(Optim.IPNewtonState{TD2,1}, state)
+            ϕd = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated)
+            ϕd2 = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated2)
+            ForwardDiff.gradient(ϕd, zeros(4)), ForwardDiff.hessian(ϕd2, zeros(4))
+        end
         F = 1000
         d = TwiceDifferentiableFunction(x->F*x[1], (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
         method = Optim.IPNewton()

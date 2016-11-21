@@ -69,7 +69,6 @@ Base.copy(bstate::BarrierStateVars) =
                      copy(bstate.λxE),
                      copy(bstate.λcE))
 
-
 function Base.fill!(b::BarrierStateVars, val)
     fill!(b.slack_x, val)
     fill!(b.slack_c, val)
@@ -79,6 +78,14 @@ function Base.fill!(b::BarrierStateVars, val)
     fill!(b.λcE, val)
     b
 end
+
+Base.convert{T}(::Type{BarrierStateVars{T}}, bstate::BarrierStateVars) =
+    BarrierStateVars(convert(Array{T}, bstate.slack_x),
+                     convert(Array{T}, bstate.slack_c),
+                     convert(Array{T}, bstate.λx),
+                     convert(Array{T}, bstate.λc),
+                     convert(Array{T}, bstate.λxE),
+                     convert(Array{T}, bstate.λcE))
 
 Base.eltype{T}(::Type{BarrierStateVars{T}}) = T
 Base.eltype(sv::BarrierStateVars) = eltype(typeof(sv))
@@ -127,6 +134,9 @@ immutable BarrierLineSearch{T}
     c::Vector{T}                  # value of constraints-functions at trial point
     bstate::BarrierStateVars{T}   # trial point for slack and λ variables
 end
+Base.convert{T}(::Type{BarrierLineSearch{T}}, bsl::BarrierLineSearch) =
+    BarrierLineSearch(convert(Vector{T}, bsl.c),
+                      convert(BarrierStateVars{T}, bsl.bstate))
 
 """
     BarrierLineSearchGrad{T}
@@ -139,6 +149,12 @@ immutable BarrierLineSearchGrad{T}
     bstate::BarrierStateVars{T}   # trial point for slack and λ variables
     bgrad::BarrierStateVars{T}    # trial point's gradient
 end
+Base.convert{T}(::Type{BarrierLineSearchGrad{T}}, bsl::BarrierLineSearchGrad) =
+    BarrierLineSearchGrad(convert(Vector{T}, bsl.c),
+                          convert(Matrix{T}, bsl.J),
+                          convert(BarrierStateVars{T}, bsl.bstate),
+                          convert(BarrierStateVars{T}, bsl.bgrad))
+
 
 function ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α, αI)
     ls_update!(out.slack_x, base.slack_x, step.slack_x, α)
