@@ -23,6 +23,7 @@ function backtrack_constrained_grad(ϕ, α, αmax, αImax, Lcoefsα,
     α, αI = min(α, 0.999*αmax), min(α, 0.999*αImax)
     αmin = αminfrac * α
     L0, L1, L2 = Lcoefsα
+    # @show L2
     f_calls = 0
     while α >= αmin
         f_calls += 1
@@ -30,6 +31,8 @@ function backtrack_constrained_grad(ϕ, α, αmax, αImax, Lcoefsα,
         δval = evalgrad(L1, α, αI) + evalhess(L2, α, αI)/2
         δslope = mulhess(L2, α, αI)
         # r0, r1 = abs(val - (L0 + δval)) / (c1*abs(val-L0)), norm(slopeα - (L1 + δslope))/(c2*norm(slopeα-L1))
+        # @show val L0 L0+δval
+        # @show slopeα L1 L1+δslope
         # @show (α, αI, r0, r1)
         if isfinite(val) && abs(val - (L0 + δval)) <= c1*abs(val-L0) &&
                             norm(slopeα - (L1 + δslope)) <= c2*norm(slopeα-L1)

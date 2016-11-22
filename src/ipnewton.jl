@@ -307,10 +307,11 @@ function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
          dot(bstep.λxE, view(state.s, bounds.eqx))
     hss = dot(bstep.slack_c, HsscP*bstep.slack_c) + dot(bstep.slack_x, HssxP*bstep.slack_x)
     si = dot(bstep.slack_c, bstep.λc) + dot(bstep.slack_x, bstep.λx)
-    Hα = [state.s'*state.H*state.s - jHj 0    -ji   -je;
-          0                              hss  si    0;
-          -ji                            si   0     0;
-          -je                            0    0     0]
+    hxx = dot(state.s, state.H*state.s) - jHj
+    Hα = [hxx    0    -ji   -je;
+          0      hss  si    0;
+          -ji    si   0     0;
+          -je    0    0     0]
     state.L, slopeα, Hα
 end
 
