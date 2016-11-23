@@ -16,6 +16,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     s::Array{T,N}  # step for x
     # Barrier penalty fields
     μ::T                  # coefficient of the barrier penalty
+    μnext::T              # μ for the next iteration
     L::T                  # value of the Lagrangian (objective + barrier + equality)
     L_previous::T
     bstate::BarrierStateVars{T}   # value of slack and λ variables (current "position")
@@ -46,6 +47,7 @@ function Base.convert{T,S,N}(::Type{IPNewtonState{T,N}}, state::IPNewtonState{S,
                   state.Hd,
                   convert(Array{T}, state.s),
                   T(state.μ),
+                  T(state.μnext),
                   T(state.L),
                   T(state.L_previous),
                   convert(BarrierStateVars{T}, state.bstate),
@@ -114,6 +116,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         Hd,
         similar(initial_x), # Maintain current x-search direction in state.s
         μ,
+        μ,
         T(NaN),
         T(NaN),
         bstate,
@@ -149,19 +152,21 @@ end
 
 function update_gtilde!(d, constraints::TwiceDifferentiableConstraintsFunction, state, method::IPNewton)
     # Calculate the modified x-gradient for the block-eliminated problem
+    # gtilde is the gradient for the affine-scaling problem, i.e.,
+    # with μ=0, used in the adaptive setting of μ. Once we calculate μ we'll correct it
     gtilde, bstate, bgrad = state.gtilde, state.bstate, state.bgrad
     bounds = constraints.bounds
     copy!(gtilde, state.g)
     JIc = view5(state.constr_J, bounds.ineqc, :)
     if !isempty(JIc)
         Hssc = Diagonal(bstate.λc./bstate.slack_c)
-        gc = JIc'*(Diagonal(bounds.σc) * (bgrad.slack_c - Hssc*bgrad.λc))
+        gc = JIc'*(Diagonal(bounds.σc) * (bstate.λc - Hssc*bgrad.λc))  # NOT bgrad.slack_c
         for i = 1:length(gtilde)
             gtilde[i] += gc[i]
         end
     end
     for (i,j) in enumerate(bounds.ineqx)
-        gxi = bounds.σx[i]*(bgrad.slack_x[i] -  bgrad.λx[i]*bstate.λx[i]/bstate.slack_x[i])
+        gxi = bounds.σx[i]*(bstate.λx[i] -  bgrad.λx[i]*bstate.λx[i]/bstate.slack_x[i])
         gtilde[j] += gxi
     end
     state
@@ -239,11 +244,12 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
         p = μ/bstate.slack_c[i]
         bstate.λc[i] = max(min(bstate.λc[i], 10^10*p), p/10^10)
     end
+    state.μ = state.μnext
 
     # Evaluate the constraints at the new position
     constraints.c!(state.x, state.constr_c)
     constraints.jacobian!(state.x, state.constr_J)
-    @assert state.ev == equality_violation(constraints, state)
+    state.ev == equality_violation(constraints, state)
 
     false
 end
@@ -251,19 +257,18 @@ end
 function solve_step!(state::IPNewtonState, constraints, options)
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
-    Htilde = state.Htilde
+    J, Htilde = state.constr_J, state.Htilde
     # Solve the Newton step
     JE = jacobianE(state, bounds)
     gE = [bgrad.λxE;
           bgrad.λcE]
     M = JE*(Htilde \ JE')
     MF = cholfact(Positive, M, Val{true})
-    ΔλE = MF \ (gE + JE * (Htilde \ state.gtilde))
-    Δx = Htilde \ (JE'*ΔλE - state.gtilde)
-    # Use the real H in estimating the linesearch quadratic parameters
-    Hstepx, HstepλE = state.H*Δx - JE'*ΔλE, -JE*Δx
-    # Also check that the solution to the linear equations represents an improvement
-    Hpstepx = full(Htilde)*Δx - JE'*ΔλE  # TODO: don't use full here
+    # These are a solution to the affine-scaling problem (with μ=0)
+    ΔλE0 = MF \ (gE + JE * (Htilde \ state.gtilde))
+    Δx0 = Htilde \ (JE'*ΔλE0 - state.gtilde)
+    # Check that the solution to the linear equations represents an improvement
+    Hpstepx, HstepλE = full(Htilde)*Δx0 - JE'*ΔλE0, -JE*Δx0  # TODO: don't use full here
     if options.show_linesearch
         println("|gx| = $(norm(state.gtilde)), |Hstepx + gx| = $(norm(Hpstepx+state.gtilde))")
         println("|gE| = $(norm(gE)), |HstepλE + gE| = $(norm(HstepλE+gE))")
@@ -275,26 +280,54 @@ function solve_step!(state::IPNewtonState, constraints, options)
         fill!(bstep, 0)
         return state
     end
+    # Set μ (see the predictor strategy in Nodecal & Wright, 2nd ed., section 19.3)
+    solve_slack!(bstep, Δx0, bounds, bstate, bgrad, J, zero(state.μ)) # store temporarily in bstep
+    αs = convert(eltype(bstate), 1.0)
+    αs = estimate_maxstep(αs, bstate.slack_x, bstep.slack_x)
+    αs = estimate_maxstep(αs, bstate.slack_c, bstep.slack_c)
+    αλ = convert(eltype(bstate), 1.0)
+    αλ = estimate_maxstep(αλ, bstate.λx, bstep.λx)
+    αλ = estimate_maxstep(αλ, bstate.λc, bstep.λc)
+    m = max(1, length(bstate.slack_x) + length(bstate.slack_c))
+    μaff = (dot(bstate.slack_x + αs*bstep.slack_x, bstate.λx + αλ*bstep.λx) +
+            dot(bstate.slack_c + αs*bstep.slack_c, bstate.λc + αλ*bstep.λc))/m
+    μmean = (dot(bstate.slack_x, bstate.λx) + dot(bstate.slack_c, bstate.λc))/m
+    # When there's only one constraint, μaff can be exactly zero. So limit the decrease.
+    state.μnext = max((μaff/μmean)^3 * μmean, μmean/10)
+    μ = state.μ
+    # Solve for the *real* step (including μ)
+    μsinv = μ * [bounds.σx./bstate.slack_x; bounds.σc./bstate.slack_c]
+    gtildeμ = state.gtilde  - jacobianI(state, bounds)' * μsinv
+    ΔλE = MF \ (gE + JE * (Htilde \ gtildeμ))
+    Δx = Htilde \ (JE'*ΔλE - gtildeμ)
     copy!(s, Δx)
     k = unpack_vec!(bstep.λxE, ΔλE, 0)
     k = unpack_vec!(bstep.λcE, ΔλE, k)
     k == length(ΔλE) || error("exhausted targets before ΔλE")
+    solve_slack!(bstep, Δx, bounds, bstate, bgrad, J, μ)
+    # Solve for the quadratic parameters (use the real H, not the posdef H)
+    Hstepx, HstepλE  = state.H*Δx - JE'*ΔλE, -JE*Δx
+    qp = state.L, slopealpha(state.s, state.g, bstep, bgrad), dot(Δx, Hstepx) + dot(ΔλE, HstepλE)
+    qp
+end
+
+function solve_slack!(bstep, s, bounds, bstate, bgrad, J, μ)
     # Solve for the slack variable and λI updates
     for (i, j) in enumerate(bounds.ineqx)
         bstep.slack_x[i] = -bgrad.λx[i] + bounds.σx[i]*s[j]
         # bstep.λx[i] = -bgrad.slack_x[i] - μ*bstep.slack_x[i]/bstate.slack_x[i]^2
-        bstep.λx[i] = -bgrad.slack_x[i] - bstate.λx[i]*bstep.slack_x[i]/bstate.slack_x[i]
+        # bstep.λx[i] = -bgrad.slack_x[i] - bstate.λx[i]*bstep.slack_x[i]/bstate.slack_x[i]
+        bstep.λx[i] = -(-μ/bstate.slack_x[i] + bstate.λx[i]) - bstate.λx[i]*bstep.slack_x[i]/bstate.slack_x[i]
     end
-    JIc = view5(state.constr_J, bounds.ineqc, :)
-    SigmaJIΔx = Diagonal(bounds.σc)*(JIc*state.s)
+    JIc = view5(J, bounds.ineqc, :)
+    SigmaJIΔx = Diagonal(bounds.σc)*(JIc*s)
     for i = 1:length(bstep.λc)
         bstep.slack_c[i] = -bgrad.λc[i] + SigmaJIΔx[i]
         # bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
-        bstep.λc[i] = -bgrad.slack_c[i] - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
+        # bstep.λc[i] = -bgrad.slack_c[i] - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
+        bstep.λc[i] = -(-μ/bstate.slack_c[i] + bstate.λc[i]) - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
     end
-    # Solve for the quadratic parameters
-    qp = state.L, slopealpha(state.s, state.g, bstep, bgrad), dot(Δx, Hstepx) + dot(ΔλE, HstepλE)
-    qp
+    bstep
 end
 
 function is_smaller_eps(ref, step)

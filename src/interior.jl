@@ -202,9 +202,6 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
 
         update_state!(d, constraints, state, method, options) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
 
-        # Adaptive μ
-        μ, ξ = complementarity_μ(state.bstate)
-        state.μ = μ
         update_fg!(d, constraints, state, method)
 
         x_converged, f_converged,
@@ -847,23 +844,6 @@ end
 function shrink_μ!(d, constraints, state, method, options)
     state.μ *= options.μfactor
     update_fg!(d, constraints, state, method)
-end
-
-function complementarity_μ(bstate)
-    # Adaptively update μ using the complementarity condition and the
-    # coordinate-by-coordinate deviation from the mean. See Nodecal &
-    # Wright, 2nd ed., section 19.3.
-    m = max(length(bstate.λx) + length(bstate.λc), 1)
-    μmean = (dot(bstate.λx, bstate.slack_x) + dot(bstate.λc, bstate.slack_c))/m
-    ξ = oftype(μmean, 1)
-    if !isempty(bstate.slack_x)
-        ξ = min(ξ, Base.minimum(bstate.λx .* bstate.slack_x)/μmean)
-    end
-    if !isempty(bstate.slack_c)
-        ξ = min(ξ, Base.minimum(bstate.λc .* bstate.slack_c)/μmean)
-    end
-    μ = (min((1-ξ)/ξ/20, 2))^3/10 * μmean
-    μ, ξ
 end
 
 function qrregularize!(QRF)
