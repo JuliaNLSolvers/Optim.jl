@@ -11,6 +11,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     g::Array{T,N}
     f_x_previous::T
     H::Matrix{T}
+    HP
     Hd::Vector{Int8}
     s::Array{T,N}  # step for x
     # Barrier penalty fields
@@ -26,6 +27,7 @@ type IPNewtonState{T,N} <: AbstractBarrierState
     @add_linesearch_fields()
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Vector{T}
+    Htilde
 end
 
 function Base.convert{T,S,N}(::Type{IPNewtonState{T,N}}, state::IPNewtonState{S,N})
@@ -40,6 +42,7 @@ function Base.convert{T,S,N}(::Type{IPNewtonState{T,N}}, state::IPNewtonState{S,
                   convert(Array{T}, state.g),
                   T(state.f_x_previous),
                   convert(Array{T}, state.H),
+                  state.HP,
                   state.Hd,
                   convert(Array{T}, state.s),
                   T(state.μ),
@@ -57,7 +60,8 @@ function Base.convert{T,S,N}(::Type{IPNewtonState{T,N}}, state::IPNewtonState{S,
                   state.mayterminate,
                   state.lsr,
                   convert(BarrierLineSearchGrad{T}, state.b_ls),
-                  convert(Array{T}, state.gtilde)
+                  convert(Array{T}, state.gtilde),
+                  state.Htilde,
                   )
 end
 
@@ -103,6 +107,7 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         g, # Store current gradient in state.g
         T(NaN), # Store previous f in state.f_x_previous
         H,
+        0,    # will be replaced
         Hd,
         similar(initial_x), # Maintain current x-search direction in state.s
         μ,
@@ -116,7 +121,8 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
         T(NaN),
         @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
-        gtilde)
+        gtilde,
+        0)
 
     d.h!(initial_x, state.H)
     Hinfo = (state.H, hessianI(initial_x, constraints, 1./bstate.slack_c, 1))
@@ -168,17 +174,20 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     λ = userλ(bstate.λc, constraints)
     λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
     constraints.h!(x, λ, Hxx)
+    state.HP = cholfact(Positive, Hxx, Val{true})
     # Add the Jacobian terms (JI'*Hss*JI)
+    Htilde = full(state.HP)
     JIc = view5(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc./bstate.slack_c)
     HJ = JIc'*Hssc*JIc
     for j = 1:n, i = 1:n
-        Hxx[i,j] += HJ[i,j]
+        Htilde[i,j] += HJ[i,j]
     end
     # Add the variable inequalities portions of J'*Hssx*J
     for (i,j) in enumerate(bounds.ineqx)
-        Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
+        Htilde[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
+    state.Htilde = cholfact(Hermitian(Htilde))
 
     state
 end
@@ -230,18 +239,18 @@ function solve_step!(state::IPNewtonState, constraints)
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
     # Solve the Newton step
-    Hxx = state.H
+    Htilde = state.Htilde
     JE = jacobianE(state, bounds)
     # Q, R, p = qr(JE', Val{true})
     gE = [bgrad.λxE;
           bgrad.λcE]
-    HxxF = cholfact(Positive, Hxx, Val{true})
-    M = JE*(HxxF \ JE')
+    M = JE*(Htilde \ JE')
     MF = cholfact(Positive, M, Val{true})
-    ΔλE = MF \ (gE + JE * (HxxF \ state.gtilde))
-    Δx = HxxF \ (JE'*ΔλE - state.gtilde)
-    if norm(gE) < norm(gE - JE*Δx) # ||
-        # norm(state.gtilde) < norm(full(HxxF)*Δx - JE'*ΔλE + state.gtilde)
+    ΔλE = MF \ (gE + JE * (Htilde \ state.gtilde))
+    Δx = Htilde \ (JE'*ΔλE - state.gtilde)
+    # TODO: don't require full here
+    if norm(gE) + norm(state.gtilde) < max(norm(gE - JE*Δx),
+                                           norm(full(Htilde)*Δx - JE'*ΔλE + state.gtilde))
         # Precision problems gave us a worse solution than the one we started with, abort
         fill!(s, 0)
         fill!(bstep, 0)
@@ -292,22 +301,17 @@ the parameters. As a function of `α`, the local model is expressed as
 function quadratic_parameters(bounds::ConstraintBounds, state::IPNewtonState)
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
     slopeα = slopealpha(state.s, state.g, bstep, bgrad)
-    # For the curvature, use the original hessian (before adding the JI'*Hss*JI term)
-    # This undoes the dual correction. However, for linesearch we need
-    # primal, so calculate both.
+
     jic = view5(state.constr_J, bounds.ineqc, :)*state.s
-    HsscD = Diagonal(bstate.λc./bstate.slack_c)
-    HsscP = Diagonal(state.μ./bstate.slack_c.^2)
+    HsscP = Diagonal(state.μ./bstate.slack_c.^2)  # for linesearch we need primal
     jix = view(state.s, bounds.ineqx)
-    HssxD = Diagonal(bstate.λx./bstate.slack_x)
     HssxP = Diagonal(state.μ./bstate.slack_x.^2)
-    jHj = dot(jic, HsscD*jic) + dot(jix, HssxD*jix)
     ji = dot(bstep.λc, Diagonal(bounds.σc)*jic) + dot(bstep.λx, Diagonal(bounds.σx)*jix)
     je = dot(bstep.λcE, view5(state.constr_J, bounds.eqc, :)*state.s) +
          dot(bstep.λxE, view(state.s, bounds.eqx))
     hss = dot(bstep.slack_c, HsscP*bstep.slack_c) + dot(bstep.slack_x, HssxP*bstep.slack_x)
     si = dot(bstep.slack_c, bstep.λc) + dot(bstep.slack_x, bstep.λx)
-    hxx = dot(state.s, state.H*state.s) - jHj
+    hxx = dot(state.s, full(state.HP)*state.s)  # TODO: don't require full here
     Hα = [hxx    0    -ji   -je;
           0      hss  si    0;
           -ji    si   0     0;
@@ -320,8 +324,7 @@ end
 # eliminated.
 function Hf(bounds::ConstraintBounds, state)
     JE = jacobianE(state, bounds)
-    HxxF = cholfact(Positive, state.H)
-    Hf = [full(HxxF) -JE';
+    Hf = [full(state.Htilde) -JE';
           -JE zeros(eltype(JE), size(JE, 1), size(JE, 1))]
 end
 Hf(constraints, state) = Hf(constraints.bounds, state)

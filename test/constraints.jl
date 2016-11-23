@@ -161,14 +161,14 @@ ConstraintBounds:
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ eye(length(y),length(y)) + μ*Diagonal(1./y.^2)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], zeros(length(x)), fill(Inf,length(x)))
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ eye(length(y),length(y)) + μ*Diagonal(1./y.^2)
         ## General inequality constraints on variables
         lb, ub = rand(length(x))-2, rand(length(x))+1
         bounds = Optim.ConstraintBounds(lb, ub, [], [])
@@ -208,7 +208,7 @@ ConstraintBounds:
             gxs[j] += bounds.σx[i]*(gstmp - λ[i]) - bounds.σx[i]*htmp*gλtmp
         end
         @test Optim.gf(state) ≈ gxs
-        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
+        @test Optim.Hf(constraints, state) ≈ Diagonal(1 + hxs)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], lb, ub)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
@@ -217,7 +217,7 @@ ConstraintBounds:
         copy!(state.bstate.λc, bstate.λx)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ gxs
-        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
+        @test Optim.Hf(constraints, state) ≈ Diagonal(1 + hxs)
         ## Nonlinear equality constraints
         cfun = x->[x[1]^2+x[2]^2, x[2]*x[3]^2]
         cfun! = (x, c) -> copy!(c, cfun(x))
@@ -282,11 +282,10 @@ ConstraintBounds:
         # hxx = μ*JI'*Diagonal(1./bstate.slack_c.^2)*JI - hineq
         # gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ(bgrad.λc ./ bstate.slack_c.^2))
         # Primal-dual
-        hxx = JI'*Diagonal(bstate.λc./bstate.slack_c)*JI - hineq
+        hxx = full(cholfact(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
-        hp = full(cholfact(Positive, hxx))
         @test Optim.gf(state) ≈ gf
-        @test Optim.Hf(constraints, state) ≈ hp
+        @test Optim.Hf(constraints, state) ≈ hxx
     end
 
     @testset "IPNewton initialization" begin

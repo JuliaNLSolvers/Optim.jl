@@ -8,7 +8,7 @@ function backtrack_constrained(ϕ, α, αmax, αImax, Lcoefsα,
         f_calls += 1
         val = ϕ((α, αI))
         δ = evalgrad(L1, α, αI)
-        if isfinite(val) && abs(val - (L0 + δ)) <= c1*abs(val-L0)
+        if isfinite(val) && val - (L0 + δ) <= c1*abs(val-L0)
             return α, αI, f_calls, 0
         end
         α *= ρ
@@ -34,8 +34,8 @@ function backtrack_constrained_grad(ϕ, α, αmax, αImax, Lcoefsα,
         # @show val L0 L0+δval
         # @show slopeα L1 L1+δslope
         # @show (α, αI, r0, r1)
-        if isfinite(val) && abs(val - (L0 + δval)) <= c1*abs(val-L0) &&
-                            norm(slopeα - (L1 + δslope)) <= c2*norm(slopeα-L1)
+        if isfinite(val) && val - (L0 + δval) <= c1*abs(val-L0) &&
+                            all(slopeα - (L1 + δslope) .<= c2*abs.(slopeα-L1))
             return α, αI, f_calls, f_calls
         end
         α *= ρ
