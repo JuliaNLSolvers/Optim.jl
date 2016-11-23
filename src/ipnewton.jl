@@ -228,6 +228,18 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     ls_update!(state.x, state.x, state.s, state.alpha)
     ls_update!(bstate, bstate, bstep, state.alpha)
 
+    # Ensure that the primal-dual approach does not deviate too much from primal
+    # (See Waechter & Biegler 2006, eq. 16)
+    μ = state.μ
+    for i = 1:length(bstate.slack_x)
+        p = μ/bstate.slack_x[i]
+        bstate.λx[i] = max(min(bstate.λx[i], 10^10*p), p/10^10)
+    end
+    for i = 1:length(bstate.slack_c)
+        p = μ/bstate.slack_c[i]
+        bstate.λc[i] = max(min(bstate.λc[i], 10^10*p), p/10^10)
+    end
+
     # Evaluate the constraints at the new position
     constraints.c!(state.x, state.constr_c)
     constraints.jacobian!(state.x, state.constr_J)
