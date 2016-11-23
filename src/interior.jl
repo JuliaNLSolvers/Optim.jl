@@ -285,7 +285,7 @@ You can manually specify `μ` by supplying a numerical value for
 `μ0`. Whether calculated algorithmically or specified manually, the
 values of `λ` are set using the chosen `μ`.
 """
-function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Symbol,Number}, β=1//100)
+function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Symbol,Number}, β::Number=1//100)
     if nconstraints(bounds) == 0 && nconstraints_x(bounds) == 0
         state.μ = 0
         fill!(state.bstate, 0)
@@ -341,7 +341,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
     k == length(λE) || error("something is wrong")
     state
 end
-function initialize_μ_λ!(state, bounds::ConstraintBounds, μ0::Union{Number,Symbol}, β=1//100)
+function initialize_μ_λ!(state, bounds::ConstraintBounds, μ0::Union{Number,Symbol}, β::Number=1//100)
     initialize_μ_λ!(state, bounds, nothing, μ0, β)
 end
 
@@ -490,13 +490,13 @@ end
 alphax(α::Number) = α
 alphax(αs::Union{Tuple,AbstractVector}) = αs[1]
 
-function lagrangian_linefunc!(α, αI, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
+function lagrangian_linefunc!(α, d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    state.f_x, state.L, state.ev = _lagrangian_linefunc(α, αI, d, constraints, state)
+    state.f_x, state.L, state.ev = _lagrangian_linefunc(α, d, constraints, state)
     state.L
 end
-lagrangian_linefunc!(α, αI, d, constraints, state, method) = lagrangian_linefunc(α, αI, d, constraints, state)
+lagrangian_linefunc!(α, d, constraints, state, method) = lagrangian_linefunc(α, d, constraints, state)
 
 
 ## for line searches that do use the gradient along the line
@@ -530,11 +530,22 @@ slopealpha(sx, gx, bstep, bgrad) = dot(sx, gx) +
     dot(bstep.λx, bgrad.λx) + dot(bstep.λc, bgrad.λc) +
     dot(bstep.λxE, bgrad.λxE) + dot(bstep.λcE, bgrad.λcE)
 
-function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained_grad)})
-    αs->lagrangian_lineslope!(αs, d, constraints, state, method)
-end
-function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
-    αs->lagrangian_linefunc!(αs, d, constraints, state, method)
+if VERSION >= v"0.5.0"
+    function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained_grad)})
+        αs->lagrangian_lineslope!(αs, d, constraints, state, method)
+    end
+    function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained)})
+        αs->lagrangian_linefunc!(αs, d, constraints, state, method)
+    end
+else
+    # 0.4 can't dispatch on a particular function
+    function linesearch_anon(d, constraints, state, method::IPOptimizer)
+        ls = method.linesearch!
+        if ls == backtrack_constrained_grad
+            return αs->lagrangian_lineslope!(αs, d, constraints, state, method)
+        end
+        αs->lagrangian_linefunc!(αs, d, constraints, state, method)
+    end
 end
 
 ## Computation of Lagrangian terms: barrier penalty
@@ -755,6 +766,7 @@ function isfeasible(constraints, x)
     isfeasible(constraints, x, c)
 end
 isfeasible(constraints::AbstractConstraintsFunction, x, c) = isfeasible(constraints.bounds, x, c)
+isfeasible(constraints::Void, state::AbstractBarrierState) = true
 isfeasible(constraints::Void, x) = true
 
 """
@@ -789,6 +801,7 @@ function isinterior(constraints, x)
     isinterior(constraints, x, c)
 end
 isinterior(constraints::AbstractConstraintsFunction, x, c) = isinterior(constraints.bounds, x, c)
+isinterior(constraints::Void, state::AbstractBarrierState) = true
 isinterior(constraints::Void, x) = true
 
 ## Utilities for representing total state as single vector

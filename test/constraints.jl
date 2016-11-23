@@ -322,7 +322,7 @@ ConstraintBounds:
         Optim.update_fg!(d, constraints, state, method)
         J = zeros(2,4)
         constraints.jacobian!(x, J)
-        eqnormal = J[1,:]; eqnormal = eqnormal/norm(eqnormal)
+        eqnormal = vec(J[1,:]); eqnormal = eqnormal/norm(eqnormal)
         @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
         Pfg = f_g - dot(f_g, eqnormal)*eqnormal
         Pg = state.g - dot(state.g, eqnormal)*eqnormal
@@ -362,7 +362,7 @@ ConstraintBounds:
         Optim.update_fg!(d, constraints, state, method)
         J = zeros(2,4)
         constraints.jacobian!(x, J)
-        eqnormal = J[1,:]; eqnormal = eqnormal/norm(eqnormal)
+        eqnormal = vec(J[1,:]); eqnormal = eqnormal/norm(eqnormal)
         @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
         Pgx = gx - dot(gx, eqnormal)*eqnormal
         @test abs(dot(Pgx, state.g)/dot(Pgx,Pgx) - 1) <= 0.011
@@ -404,7 +404,7 @@ ConstraintBounds:
         αmax = Optim.estimate_maxstep(Inf, state.x[bounds.ineqx].*bounds.σx,
                                            state.s[bounds.ineqx].*bounds.σx)
         ϕ = Optim.linesearch_anon(d, constraints, state, method)
-        val0 = ϕ((0,0))
+        val0 = ϕ(0.0)
         val0 = isa(val0, Tuple) ? val0[1] : val0
         @test val0 ≈ qp[1]
         α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, qp)
