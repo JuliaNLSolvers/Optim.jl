@@ -184,15 +184,12 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
     x_converged, f_converged, counter_f_tol = false, false, 0
-    gnorm = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
-    g_converged = gnorm < options.g_tol
+    g_converged = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf) < options.g_tol
 
     converged = g_converged
-    iteration, iterationμ = 0, 0
+    iteration = 0
 
     options.show_trace && print_header(method)
-
-    Δfmax = zero(state.f_x)
 
     while !converged && !stopped && iteration < options.iterations
         # If tracing, update trace with trace!. If a callback is provided, it
@@ -202,10 +199,14 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
             stopped_by_callback = trace!(tr, state, iteration, method, options)
         end
         iteration += 1
-        iterationμ += 1
 
         update_state!(d, constraints, state, method, options) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
-        update_asneeded_fg!(d, constraints, state, method)
+
+        # Adaptive μ
+        μ, ξ = complementarity_μ(state.bstate)
+        state.μ = μ
+        update_fg!(d, constraints, state, method)
+
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
         # With equality constraints, optimization is not necessarily
@@ -217,25 +218,6 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         # declaring convergence.
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged | g_converged | (counter_f_tol > options.successive_f_tol)
-        gnormnew = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
-
-        Δf = abs(state.f_x - state.f_x_previous)
-        if iterationμ > 1
-            Δfmax = max(Δfmax, abs(state.f_x - state.f_x_previous))
-        end
-
-        # Test whether we need to decrease the barrier penalty
-        if iterationμ > 1 && (converged || 100*gnormnew < gnorm || 100*Δf < Δfmax)
-            # Since iterationμ > 1 we must have accomplished real
-            # work, so it's worth trying to decrease the barrier
-            # penalty further.
-            shrink_μ!(d, constraints, state, method, options)
-            iterationμ = 0
-            converged = false
-            gnormnew = oftype(gnormnew, NaN)
-            Δfmax = zero(Δfmax)
-        end
-        gnorm = gnormnew
 
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true
@@ -865,6 +847,23 @@ end
 function shrink_μ!(d, constraints, state, method, options)
     state.μ *= options.μfactor
     update_fg!(d, constraints, state, method)
+end
+
+function complementarity_μ(bstate)
+    # Adaptively update μ using the complementarity condition and the
+    # coordinate-by-coordinate deviation from the mean. See Nodecal &
+    # Wright, 2nd ed., section 19.3.
+    m = max(length(bstate.λx) + length(bstate.λc), 1)
+    μmean = (dot(bstate.λx, bstate.slack_x) + dot(bstate.λc, bstate.slack_c))/m
+    ξ = oftype(μmean, 1)
+    if !isempty(bstate.slack_x)
+        ξ = min(ξ, Base.minimum(bstate.λx .* bstate.slack_x)/μmean)
+    end
+    if !isempty(bstate.slack_c)
+        ξ = min(ξ, Base.minimum(bstate.λc .* bstate.slack_c)/μmean)
+    end
+    μ = (min((1-ξ)/ξ/20, 2))^3/10 * μmean
+    μ, ξ
 end
 
 function qrregularize!(QRF)
