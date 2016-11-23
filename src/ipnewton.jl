@@ -382,4 +382,10 @@ function Hf(bounds::ConstraintBounds, state)
           -JE zeros(eltype(JE), size(JE, 1), size(JE, 1))]
 end
 Hf(constraints, state) = Hf(constraints.bounds, state)
-gf(state) = [state.gtilde; state.bgrad.λxE; state.bgrad.λcE]
+function gf(bounds::ConstraintBounds, state)
+    bstate, μ = state.bstate, state.μ
+    μsinv = μ * [bounds.σx./bstate.slack_x; bounds.σc./bstate.slack_c]
+    gtildeμ = state.gtilde  - jacobianI(state, bounds)' * μsinv
+    [gtildeμ; state.bgrad.λxE; state.bgrad.λcE]
+end
+gf(constraints, state) = gf(constraints.bounds, state)
