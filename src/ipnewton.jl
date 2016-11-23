@@ -177,20 +177,18 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     λ = userλ(bstate.λc, constraints)
     λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
     constraints.h!(x, λ, Hxx)
-    state.HP = cholfact(Positive, Hxx, Val{true})
     # Add the Jacobian terms (JI'*Hss*JI)
-    Htilde = full(state.HP)
     JIc = view5(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc./bstate.slack_c)
     HJ = JIc'*Hssc*JIc
     for j = 1:n, i = 1:n
-        Htilde[i,j] += HJ[i,j]
+        Hxx[i,j] += HJ[i,j]
     end
     # Add the variable inequalities portions of J'*Hssx*J
     for (i,j) in enumerate(bounds.ineqx)
-        Htilde[j,j] += bstate.λx[i]/bstate.slack_x[i]
+        Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
-    state.Htilde = cholfact(Hermitian(Htilde))
+    state.Htilde = cholfact(Positive, state.H, Val{true})
 
     state
 end
@@ -198,7 +196,7 @@ end
 function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton, options)
     state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
-    state = solve_step!(state, constraints)
+    qp = solve_step!(state, constraints, options)
     # If a step α=1 will not change any of the parameters, we can quit now.
     # This prevents a futile linesearch.
     if is_smaller_eps(state.x, state.s) &&
@@ -208,19 +206,19 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
         is_smaller_eps(bstate.λc, bstep.λc)
         return false
     end
-    qp = quadratic_parameters(bounds, state)
+    # qp = quadratic_parameters(bounds, state)
 
     # Estimate αmax, the upper bound on distance of movement along the search line
-    αmax = αImax = convert(eltype(bstate), Inf)
+    αmax = convert(eltype(bstate), Inf)
     αmax = estimate_maxstep(αmax, bstate.slack_x, bstep.slack_x)
     αmax = estimate_maxstep(αmax, bstate.slack_c, bstep.slack_c)
-    αImax = estimate_maxstep(αImax, bstate.λx, bstep.λx)
-    αImax = estimate_maxstep(αImax, bstate.λc, bstep.λc)
+    αmax = estimate_maxstep(αmax, bstate.λx, bstep.λx)
+    αmax = estimate_maxstep(αmax, bstate.λc, bstep.λc)
 
     # Determine the actual distance of movement along the search line
     ϕ = linesearch_anon(d, constraints, state, method)
-    state.alpha, αI, f_update, g_update =
-        method.linesearch!(ϕ, T(1), αmax, αImax, qp; show_linesearch=options.show_linesearch)
+    state.alpha, f_update, g_update =
+        method.linesearch!(ϕ, T(1), αmax, qp; show_linesearch=options.show_linesearch)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
     # Maintain a record of previous position
@@ -228,7 +226,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
 
     # Update current position # x = x + alpha * s
     ls_update!(state.x, state.x, state.s, state.alpha)
-    ls_update!(bstate, bstate, bstep, (state.alpha, αI))
+    ls_update!(bstate, bstate, bstep, state.alpha)
 
     # Evaluate the constraints at the new position
     constraints.c!(state.x, state.constr_c)
@@ -238,22 +236,28 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     false
 end
 
-function solve_step!(state::IPNewtonState, constraints)
+function solve_step!(state::IPNewtonState, constraints, options)
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
     bstate, bstep, bgrad = state.bstate, state.bstep, state.bgrad
-    # Solve the Newton step
     Htilde = state.Htilde
+    # Solve the Newton step
     JE = jacobianE(state, bounds)
-    # Q, R, p = qr(JE', Val{true})
     gE = [bgrad.λxE;
           bgrad.λcE]
     M = JE*(Htilde \ JE')
     MF = cholfact(Positive, M, Val{true})
     ΔλE = MF \ (gE + JE * (Htilde \ state.gtilde))
     Δx = Htilde \ (JE'*ΔλE - state.gtilde)
-    # TODO: don't require full here
-    if norm(gE) + norm(state.gtilde) < max(norm(gE - JE*Δx),
-                                           norm(full(Htilde)*Δx - JE'*ΔλE + state.gtilde))
+    # Use the real H in estimating the linesearch quadratic parameters
+    Hstepx, HstepλE = state.H*Δx - JE'*ΔλE, -JE*Δx
+    # Also check that the solution to the linear equations represents an improvement
+    Hpstepx = full(Htilde)*Δx - JE'*ΔλE  # TODO: don't use full here
+    if options.show_linesearch
+        println("|gx| = $(norm(state.gtilde)), |Hstepx + gx| = $(norm(Hpstepx+state.gtilde))")
+        println("|gE| = $(norm(gE)), |HstepλE + gE| = $(norm(HstepλE+gE))")
+    end
+    if norm(gE) + norm(state.gtilde) < max(norm(HstepλE + gE),
+                                           norm(Hpstepx  + state.gtilde))
         # Precision problems gave us a worse solution than the one we started with, abort
         fill!(s, 0)
         fill!(bstep, 0)
@@ -276,7 +280,9 @@ function solve_step!(state::IPNewtonState, constraints)
         # bstep.λc[i] = -bgrad.slack_c[i] - μ*bstep.slack_c[i]/bstate.slack_c[i]^2
         bstep.λc[i] = -bgrad.slack_c[i] - bstate.λc[i]*bstep.slack_c[i]/bstate.slack_c[i]
     end
-    state
+    # Solve for the quadratic parameters
+    qp = state.L, slopealpha(state.s, state.g, bstep, bgrad), dot(Δx, Hstepx) + dot(ΔλE, HstepλE)
+    qp
 end
 
 function is_smaller_eps(ref, step)
@@ -290,7 +296,7 @@ end
 """
     quadratic_parameters(bounds, state) -> val, slopeα, Hα
 
-Return the parameters for the quadratic fit of the behavior of the
+OUTDATED! Return the parameters for the quadratic fit of the behavior of the
 lagrangian for positions parametrized as a function of the 4-vector
 `α = (αx, αs, αI, αE)`, where the step is
 

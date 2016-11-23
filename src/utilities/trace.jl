@@ -124,11 +124,13 @@ function trace!(tr, state, iteration, method::IPOptimizer, options)
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(state.g)
-        dt["gtilde(x)"] = copy(state.gtilde)
         dt["h(x)"] = copy(state.H)
-        dt["bstate"] = copy(state.bstate)
-        dt["bgrad"] = copy(state.bgrad)
-        dt["c"] = copy(state.constr_c)
+        if !isempty(state.bstate)
+            dt["gtilde(x)"] = copy(state.gtilde)
+            dt["bstate"] = copy(state.bstate)
+            dt["bgrad"] = copy(state.bgrad)
+            dt["c"] = copy(state.constr_c)
+        end
     end
     g_norm = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
     update!(tr,

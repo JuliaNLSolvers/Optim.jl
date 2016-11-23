@@ -161,14 +161,14 @@ ConstraintBounds:
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ eye(length(y),length(y)) + μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], zeros(length(x)), fill(Inf,length(x)))
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ eye(length(y),length(y)) + μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
         ## General inequality constraints on variables
         lb, ub = rand(length(x))-2, rand(length(x))+1
         bounds = Optim.ConstraintBounds(lb, ub, [], [])
@@ -208,7 +208,7 @@ ConstraintBounds:
             gxs[j] += bounds.σx[i]*(gstmp - λ[i]) - bounds.σx[i]*htmp*gλtmp
         end
         @test Optim.gf(state) ≈ gxs
-        @test Optim.Hf(constraints, state) ≈ Diagonal(1 + hxs)
+        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], lb, ub)
         constraints = TwiceDifferentiableConstraintsFunction(cvar!, cvarJ!, cvarh!, bounds)
@@ -217,7 +217,7 @@ ConstraintBounds:
         copy!(state.bstate.λc, bstate.λx)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(state) ≈ gxs
-        @test Optim.Hf(constraints, state) ≈ Diagonal(1 + hxs)
+        @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
         ## Nonlinear equality constraints
         cfun = x->[x[1]^2+x[2]^2, x[2]*x[3]^2]
         cfun! = (x, c) -> copy!(c, cfun(x))
@@ -282,10 +282,11 @@ ConstraintBounds:
         # hxx = μ*JI'*Diagonal(1./bstate.slack_c.^2)*JI - hineq
         # gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ(bgrad.λc ./ bstate.slack_c.^2))
         # Primal-dual
-        hxx = full(cholfact(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
+#        hxx = full(cholfact(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
+        hxx = -hineq + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
         @test Optim.gf(state) ≈ gf
-        @test Optim.Hf(constraints, state) ≈ hxx
+        @test Optim.Hf(constraints, state) ≈ full(cholfact(Positive, hxx, Val{true}))
     end
 
     @testset "IPNewton initialization" begin
@@ -374,14 +375,15 @@ ConstraintBounds:
             # Note that state must be fully up-to-date, and you must
             # have also called Optim.solve_step!
             p = Optim.pack_vec(state.x, state.bstate)
-            chunksize = min(8, max(length(p), 4))  # since αs is of length 4
+            chunksize = 1 #min(8, length(p))
             TD = ForwardDiff.Dual{chunksize,eltype(p)}
             TD2 = ForwardDiff.Dual{chunksize,ForwardDiff.Dual{chunksize,eltype(p)}}
             stated = convert(Optim.IPNewtonState{TD,1}, state)
             stated2 = convert(Optim.IPNewtonState{TD2,1}, state)
             ϕd = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated)
             ϕd2 = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated2)
-            ForwardDiff.gradient(ϕd, zeros(4)), ForwardDiff.hessian(ϕd2, zeros(4))
+#            ForwardDiff.gradient(ϕd, zeros(4)), ForwardDiff.hessian(ϕd2, zeros(4))
+            ForwardDiff.gradient(ϕd, [0.0]), ForwardDiff.hessian(ϕd2, [0.0])
         end
         F = 1000
         d = TwiceDifferentiableFunction(x->F*x[1], (x,g) -> (g[1] = F), (x,h) -> (h[1,1] = 0))
@@ -392,13 +394,12 @@ ConstraintBounds:
         # Nonnegativity (the case that doesn't require slack variables)
         constraints = TwiceDifferentiableConstraintsFunction([0.0], [])
         state = Optim.initial_state(method, options, d, constraints, [x0])
-        Optim.solve_step!(state, constraints)
+        qp = Optim.solve_step!(state, constraints)
         @test state.s[1] ≈ -(F-μ/x0)/(state.bstate.λx[1]/x0)
-        qp = Optim.quadratic_parameters(constraints.bounds, state)
         g0, H0 = autoqp(d, constraints, state)
         @test qp[1] ≈ F*x0-μ*log(x0)
-        @test qp[2] ≈ g0 #-(F-μ/x0)^2*x0^2/μ
-        @test qp[3] ≈ H0 # μ/x0^2*(x0 - F*x0^2/μ)^2
+        @test [qp[2]] ≈ g0 #-(F-μ/x0)^2*x0^2/μ
+        @test [qp[3]] ≈ H0 # μ/x0^2*(x0 - F*x0^2/μ)^2
         bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
         αmax = Optim.estimate_maxstep(Inf, state.x[bounds.ineqx].*bounds.σx,
                                            state.s[bounds.ineqx].*bounds.σx)
@@ -406,7 +407,7 @@ ConstraintBounds:
         val0 = ϕ((0,0))
         val0 = isa(val0, Tuple) ? val0[1] : val0
         @test val0 ≈ qp[1]
-        α, αI, nf, ng = method.linesearch!(ϕ, 1.0, αmax, Inf, qp)
+        α, nf, ng = method.linesearch!(ϕ, 1.0, αmax, qp)
         @test α > 1e-3
     end
 

@@ -87,6 +87,9 @@ Base.convert{T}(::Type{BarrierStateVars{T}}, bstate::BarrierStateVars) =
                      convert(Array{T}, bstate.λxE),
                      convert(Array{T}, bstate.λcE))
 
+Base.isempty(bstate::BarrierStateVars) = isempty(bstate.slack_x) &
+    isempty(bstate.slack_c) & isempty(bstate.λxE) & isempty(bstate.λcE)
+
 Base.eltype{T}(::Type{BarrierStateVars{T}}) = T
 Base.eltype(sv::BarrierStateVars) = eltype(typeof(sv))
 
@@ -169,7 +172,7 @@ ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars
 ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, α::Number) =
     ls_update!(out, base, step, (α,α,α,α))
 ls_update!(out::BarrierStateVars, base::BarrierStateVars, step::BarrierStateVars, αs::AbstractVector) =
-    ls_update!(out, base, step, (αs...,))
+    ls_update!(out, base, step, αs[1]) # (αs...,))
 
 function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constraints::AbstractConstraintsFunction, initial_x::Array{T}, method::M, options::OptimizationOptions)
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
@@ -543,10 +546,10 @@ function lagrangian_lineslope!(αs, d, constraints, state, method::IPOptimizer{t
 end
 lagrangian_lineslope!(αs, d, constraints, state, method) = lagrangian_lineslope(αs, d, constraints, state)
 
-slopealpha(sx, gx, bstep, bgrad) = [dot(sx, gx),
-                                    dot(bstep.slack_x, bgrad.slack_x) + dot(bstep.slack_c, bgrad.slack_c),
-                                    dot(bstep.λx, bgrad.λx) + dot(bstep.λc, bgrad.λc),
-                                    dot(bstep.λxE, bgrad.λxE) + dot(bstep.λcE, bgrad.λcE)]
+slopealpha(sx, gx, bstep, bgrad) = dot(sx, gx) +
+    dot(bstep.slack_x, bgrad.slack_x) + dot(bstep.slack_c, bgrad.slack_c) +
+    dot(bstep.λx, bgrad.λx) + dot(bstep.λc, bgrad.λc) +
+    dot(bstep.λxE, bgrad.λxE) + dot(bstep.λcE, bgrad.λcE)
 
 function linesearch_anon(d, constraints, state, method::IPOptimizer{typeof(backtrack_constrained_grad)})
     αs->lagrangian_lineslope!(αs, d, constraints, state, method)
