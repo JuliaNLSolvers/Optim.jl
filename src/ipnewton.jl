@@ -70,8 +70,11 @@ function initial_state{T}(method::IPNewton, options, d::TwiceDifferentiableFunct
     mc = nconstraints(constraints)
     constr_c = Array{T}(mc)
     constraints.c!(initial_x, constr_c)
-    isinterior(constraints, initial_x, constr_c) || (warn("initial guess is not an interior point"); Base.show_backtrace(STDOUT, backtrace()))
-
+    if !isinterior(constraints, initial_x, constr_c)
+        warn("initial guess is not an interior point")
+        Base.show_backtrace(STDERR, backtrace())
+        println(STDERR)
+    end
     # Allocate fields for the objective function
     n = length(initial_x)
     g = Array(T, n)
@@ -192,7 +195,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraintsFunction, state
     state
 end
 
-function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton)
+function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction, state::IPNewtonState{T}, method::IPNewton, options)
     state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
     state = solve_step!(state, constraints)
@@ -217,7 +220,7 @@ function update_state!{T}(d, constraints::TwiceDifferentiableConstraintsFunction
     # Determine the actual distance of movement along the search line
     ϕ = linesearch_anon(d, constraints, state, method)
     state.alpha, αI, f_update, g_update =
-        method.linesearch!(ϕ, T(1), αmax, αImax, qp)
+        method.linesearch!(ϕ, T(1), αmax, αImax, qp; show_linesearch=options.show_linesearch)
     state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
     # Maintain a record of previous position

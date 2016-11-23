@@ -430,7 +430,7 @@ ConstraintBounds:
             constraints = TwiceDifferentiableConstraintsFunction(σswap(σ, [0.0], [])...)
             state = Optim.initial_state(method, options, d, constraints, [μ/F*10])
             for i = 1:10
-                Optim.update_state!(d, constraints, state, method)
+                Optim.update_state!(d, constraints, state, method, options)
                 Optim.update_fg!(d, constraints, state, method)
                 Optim.update_h!(d, constraints, state, method)
             end
@@ -440,7 +440,7 @@ ConstraintBounds:
             constraints = TwiceDifferentiableConstraintsFunction(σswap(σ, [Float64(σ)], [])...)
             state = Optim.initial_state(method, options, d, constraints, [(1+eps(1.0))*σ])
             for i = 1:10
-                Optim.update_state!(d, constraints, state, method)
+                Optim.update_state!(d, constraints, state, method, options)
                 Optim.update_fg!(d, constraints, state, method)
                 Optim.update_h!(d, constraints, state, method)
             end
@@ -455,7 +455,7 @@ ConstraintBounds:
                 [], [], σswap(σ, [Float64(σ)], [])...)
             state = Optim.initial_state(method, options, d, constraints, [(1+eps(1.0))*σ])
             for i = 1:10
-                Optim.update_state!(d, constraints, state, method)
+                Optim.update_state!(d, constraints, state, method, options)
                 Optim.update_fg!(d, constraints, state, method)
                 Optim.update_h!(d, constraints, state, method)
             end

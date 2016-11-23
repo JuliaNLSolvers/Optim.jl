@@ -201,7 +201,7 @@ function optimize{T, M<:ConstrainedOptimizer}(d::AbstractOptimFunction, constrai
         iteration += 1
         iterationμ += 1
 
-        update_state!(d, constraints, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+        update_state!(d, constraints, state, method, options) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
         update_asneeded_fg!(d, constraints, state, method)
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
