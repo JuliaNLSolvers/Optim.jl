@@ -44,8 +44,8 @@ Base.dot(A, ::Void, B) = vecdot(A, B)
 #      unfortunately, Base does not implement
 #      A_ldiv_B!(a, P, b) or A_mul_B! for this type, so we do it by hand
 #      TODO: maybe implement this in Base
-Base.A_ldiv_B!(out::Array, P::Diagonal, A::Array) = copy!(out, A ./ P.diag)
-Base.dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
+Base.A_ldiv_B!{T,N}(out::AbstractArray{T,N}, P::Diagonal{T}, A::AbstractArray{T,N}) = copy!(out, A ./ P.diag)
+Base.dot{T,N}(A::AbstractArray{T,N}, P::Diagonal{T}, B::AbstractArray{T,N}) = vecdot(A, P.diag .* B)
 
 #####################################################
 #  [3] Inverse Diagonal preconditioner
