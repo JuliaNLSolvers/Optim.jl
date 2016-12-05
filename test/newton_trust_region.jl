@@ -181,14 +181,14 @@ let
     # Test Optim.newton for all twice differentiable functions in
     # Optim.UnconstrainedProblems.examples
     for (name, prob) in Optim.UnconstrainedProblems.examples
-    	if prob.istwicedifferentiable
-    		ddf = DifferentiableFunction(prob.f, prob.g!)
-    		res = Optim.optimize(ddf, prob.initial_x, NewtonTrustRegion(), OptimizationOptions(autodiff = true))
-    		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    		res = Optim.optimize(ddf.f, prob.initial_x, NewtonTrustRegion(), OptimizationOptions(autodiff = true))
-    		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        if prob.istwicedifferentiable
+            ddf = DifferentiableFunction(prob.f, prob.g!)
+            res = Optim.optimize(ddf, prob.initial_x, NewtonTrustRegion(), OptimizationOptions(autodiff = true))
+            @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+            res = Optim.optimize(ddf.f, prob.initial_x, NewtonTrustRegion(), OptimizationOptions(autodiff = true))
+            @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
             res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, NewtonTrustRegion(), OptimizationOptions(autodiff = true))
-    		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    	end
+            @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        end
     end
 end

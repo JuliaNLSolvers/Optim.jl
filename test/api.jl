@@ -65,59 +65,59 @@ let
     optimize(f, g!, h!, initial_x, method = SimulatedAnnealing())
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = BFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = BFGS(),
+                   g_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = GradientDescent(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = GradientDescent(),
+                   g_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = LBFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = LBFGS(),
+                   g_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = NelderMead(),
-    	           f_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = NelderMead(),
+                   f_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = Newton(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = Newton(),
+                   g_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = SimulatedAnnealing(),
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = SimulatedAnnealing(),
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = BFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+                   initial_x,
+                   method = BFGS(),
+                   g_tol = 1e-12,
+                   iterations = 10,
+                   store_trace = true,
+                   show_trace = false)
                    
    res_ext = optimize(f, g!, h!,
                       initial_x,
