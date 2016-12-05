@@ -26,7 +26,7 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    g = Array(T, n)
+    g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
     invH = method.initial_invH(initial_x)
     # Maintain a cache for line search results
@@ -42,12 +42,12 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
-              Array{T}(n), # Store changes in position in state.dx
-              Array{T}(n), # Store changes in gradient in state.dg
-              Array{T}(n), # Buffer stored in state.u
+              similar(initial_x), # Store changes in position in state.dx
+              similar(initial_x), # Store changes in gradient in state.dg
+              similar(initial_x), # Buffer stored in state.u
               eye(T, size(invH)...),
               invH, # Store current invH in state.invH
-              Array{T}(n), # Store current search direction in state.s
+              similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

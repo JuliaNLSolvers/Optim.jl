@@ -95,8 +95,9 @@ end
 
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    g = Array(T, n)
+    g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
+    dx_history = Array{T}(size(initial_x)..., method.m)
     # Maintain a cache for line search results
     # Trace the history of states visited
     LBFGSState("L-BFGS",
@@ -110,16 +111,16 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
-              Array{T}(n, method.m), # Store changes in position in state.dx_history
-              Array{T}(n, method.m), # Store changes in gradient in state.dg_history
-              Array{T}(n), # Buffer for new entry in state.dx_history
-              Array{T}(n), # Buffer for new entry in state.dg_history
-              Array{T}(n), # Buffer stored in state.u
+              dx_history, # Store changes in position in state.dx_history
+              similar(dx_history), # Store changes in gradient in state.dg_history
+              similar(initial_x), # Buffer for new entry in state.dx_history
+              similar(initial_x), # Buffer for new entry in state.dg_history
+              similar(initial_x), # Buffer stored in state.u
               T(NaN), # Store previous f in state.f_x_previous
-              Array{T}(n), #Buffer for use by twoloop
+              similar(initial_x), #Buffer for use by twoloop
               Array{T}(method.m), #Buffer for use by twoloop
               0,
-              Array{T}(n), # Store current search direction in state.s
+              similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

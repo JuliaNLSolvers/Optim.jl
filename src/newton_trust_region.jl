@@ -238,10 +238,10 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     reached_subproblem_solution = true
     interior = true
     lambda = NaN
-    g = Array(T, n)
+    g = similar(initial_x)
     f_x_previous, f_x = NaN, d.fg!(initial_x, g)
     f_calls, g_calls = 1, 1
-    H = Array(T, n, n)
+    H = Array{T}(size(initial_x)..., size(initial_x)...)
     d.h!(initial_x, H)
     h_calls = 1
 

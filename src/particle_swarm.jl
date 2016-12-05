@@ -74,14 +74,14 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
     c2 = 2.0
     w = 1.0
 
-    X = Array{T}(n, n_particles)
-    V = Array{T}(n, n_particles)
-    X_best = Array{T}(n, n_particles)
-    dx = zeros(T, n)
+    X = Array{T}(size(initial_x)..., n_particles)
+    V = similar(X)
+    X_best = similar(X)
+    dx = zeros(X)
     score = zeros(T, n_particles)
-    x = zeros(T, n)
+    x = zeros(initial_x)
     best_score = zeros(T, n_particles)
-    x_learn = zeros(T, n)
+    x_learn = zeros(initial_x)
 
     f_calls = 0
     current_state = 0
