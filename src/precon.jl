@@ -51,11 +51,11 @@ Base.dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
 #  [3] Inverse Diagonal preconditioner
 #      here, P is stored by the entries of its inverse
 #      TODO: maybe implement this in Base?
-type InverseDiagonal
-   diag
+immutable InverseDiagonal{T,N}
+   diag::Array{T,N}
 end
-Base.A_ldiv_B!(out::Array, P::InverseDiagonal, A::Array) = copy!(out, A .* P.diag)
-Base.dot(A::Array, P::InverseDiagonal, B::Vector) = vecdot(A, B ./ P.diag)
+Base.A_ldiv_B!{T,N}(out::AbstractArray{T,N}, P::InverseDiagonal{T,N}, A::AbstractArray{T,N}) = copy!(out, A .* P.diag)
+Base.dot{T,N}(A::AbstractArray{T,N}, P::InverseDiagonal{T,N}, B::AbstractArray{T,N}) = vecdot(A, B ./ P.diag)
 
 #####################################################
 #  [4] Matrix Preconditioner
