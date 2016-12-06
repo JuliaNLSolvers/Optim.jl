@@ -145,18 +145,20 @@ function optimize{T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::Functio
             error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
         end
     else
-        g!(x, out) = ForwardDiff.gradient!(out, f, x)
+        gcfg = ForwardDiff.GradientConfig(initial_x)
+        g! = (x, out) -> ForwardDiff.gradient!(out, f, x, gcfg)
 
-        function fg!(x, out)
-            gr_res = ForwardDiff.GradientResult(zero(T),out)
-            ForwardDiff.gradient!(gr_res, f, x)
-            ForwardDiff.value(gr_res)
+        fg! = (x, out) -> begin
+            gr_res = DiffBase.DiffResult(zero(T), out)
+            ForwardDiff.gradient!(gr_res, f, x, gcfg)
+            DiffBase.value(gr_res)
         end
 
         if M <: FirstOrderSolver
             d = DifferentiableFunction(f, g!, fg!)
         else
-            h! = (x, out) -> ForwardDiff.hessian!(out, f, x)
+            hcfg = ForwardDiff.HessianConfig(initial_x)
+            h! = (x, out) -> ForwardDiff.hessian!(out, f, x, hcfg)
             d = TwiceDifferentiableFunction(f, g!, fg!, h!)
         end
     end
@@ -171,7 +173,8 @@ function optimize(d::DifferentiableFunction,
     if !options.autodiff
         error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
     else
-        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x)
+        hcfg = ForwardDiff.HessianConfig(initial_x)
+        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     end
     optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
@@ -183,7 +186,8 @@ function optimize(d::DifferentiableFunction,
     if !options.autodiff
         error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the OptimizationOptions if applicable, or choose a solver that doesn't require a Hessian.")
     else
-        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x)
+        hcfg = ForwardDiff.HessianConfig(initial_x)
+        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     end
     optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
