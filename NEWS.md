@@ -1,4 +1,7 @@
-# Optim (unversioned) release notes
+# Optim v0.7.0 release notes
+* Refactor code internally to clean up code and allow more flexible use Optim
+* Switch to new (v.0.3) ForwardDiff
+* Make minimizer/minimum transition final
 * Fix dispatch bug for univariate optimization.
 * The line search functionality has been separated into a new package
   [LineSearches.jl](https://github.com/anriseth/LineSearches.jl), see
