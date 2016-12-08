@@ -150,9 +150,9 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
         @printf io "   * |g(x)| < %.1e: %s\n" g_tol(r) g_converged(r)
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
-    @printf io " * Objective Function Calls: %d\n" f_calls(r)
+    @printf io " * Objective Function Calls: %d" f_calls(r)
     if !(r.method in ("Nelder-Mead", "Simulated Annealing"))
-        @printf io " * Gradient Calls: %d" g_calls(r)
+        @printf io "\n * Gradient Calls: %d" g_calls(r)
     end
     return
 end
