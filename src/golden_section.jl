@@ -1,5 +1,5 @@
 macro goldensectiontrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -17,7 +17,7 @@ macro goldensectiontrace()
                     show_every,
                     callback)
         end
-    end
+    end)
 end
 
 immutable GoldenSection <: Optimizer end

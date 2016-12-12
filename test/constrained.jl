@@ -33,7 +33,7 @@ let
         g = similar(initial_x)
         @test func(Optim.minimizer(results), g) + dot(b,b)/2 < 1e-8
         @test norm(g) < 1e-4
-        outbox = any(abs(Optim.minimizer(results)) .> boxl)
+        outbox = any(t -> abs(t) .> boxl, Optim.minimizer(results))
     end
 
     # fminbox

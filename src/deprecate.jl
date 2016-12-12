@@ -12,7 +12,7 @@
 
 # LineSearches deprecation
 for name in names(LineSearches)
-    if name == :LineSearches
+    if name in (:LineSearches, :hz_linesearch!, :mt_linesearch!, :interpolating_linesearch!, :backtracking_linesearch!, :interpbacktracking_linesearch!)
         continue
     end
     eval(:(@deprecate $name LineSearches.$name))

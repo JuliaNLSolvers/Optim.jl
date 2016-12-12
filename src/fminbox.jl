@@ -3,9 +3,9 @@
 # gradient of the barrier.
 function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
     if isnan(mu0)
-        gbarriernorm = sum(abs(gbarrier))
+        gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
-            mu = mu0factor*sum(abs(gfunc))/gbarriernorm
+            mu = mu0factor*sum(abs, gfunc)/gbarriernorm
         else
             # Presumably, there is no barrier function
             mu = zero(T)
