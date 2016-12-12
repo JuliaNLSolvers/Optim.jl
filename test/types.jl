@@ -1,3 +1,6 @@
+using Compat
+import Compat.String
+
 let
     solver = NelderMead()
     T = typeof(solver)
