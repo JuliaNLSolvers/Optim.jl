@@ -1,3 +1,5 @@
+using Compat
+
 let
     solver = NelderMead()
     T = typeof(solver)
@@ -14,7 +16,7 @@ let
 
         io = IOBuffer()
         show(io, res)
-        s = takebuf_string(io)
+        s = String(take!(io))
 
         lines = split(s, '\n')
         @test lines[1] == "Results of Optimization Algorithm"
@@ -41,7 +43,7 @@ let
 
     io = IOBuffer()
     show(io, res)
-    s = takebuf_string(io)
+    s = String(take!(io))
 
     lines = split(s, '\n')
     @test lines[1] == "Results of Optimization Algorithm"

@@ -1,5 +1,5 @@
 macro brenttrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -17,7 +17,7 @@ macro brenttrace()
                     show_every,
                     callback)
         end
-    end
+    end)
 end
 
 immutable Brent <: Optimizer end
