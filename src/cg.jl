@@ -93,9 +93,9 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     if !isfinite(f_x)
         error("Must have finite starting value")
     end
-    if !all(isfinite(g))
+    if !all(isfinite, g)
         @show g
-        @show find(!isfinite(g))
+        @show find(!isfinite.(g))
         error("Gradient must have all finite values at starting point")
     end
 

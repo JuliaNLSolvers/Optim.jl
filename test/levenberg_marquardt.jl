@@ -50,12 +50,12 @@ let
     let
         srand(12345)
 
-        model(x, p) = p[1]*exp(-x.*p[2])
+        model(x, p) = p[1]*map(exp,-x.*p[2])
 
         xdata = linspace(0,10,20)
         ydata = model(xdata, [1.0 2.0]) + 0.01*randn(length(xdata))
 
-        f_lsq = p -> p[1]*exp(-xdata.*p[2])-ydata
+        f_lsq = p -> p[1]*map(exp, -xdata.*p[2])-ydata
         g_lsq = Calculus.jacobian(f_lsq)
         results = Optim.levenberg_marquardt(f_lsq, g_lsq, [0.5, 0.5])
 
@@ -65,7 +65,7 @@ let
     let
         srand(12345)
 
-        model(x, p) = p[1]*exp(-x./p[2])+p[3]
+        model(x, p) = p[1]*map(exp, -x./p[2])+p[3]
 
         xdata = 1:100
         ydata = model(xdata, [10.0, 10.0, 10.0]) + 0.1*randn(length(xdata))
