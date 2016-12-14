@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaOpt">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Newton with Trust Region - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Newton with Trust Region";
+    var mkdocs_page_input_path = "algo/newton_trust_region.md";
+    var mkdocs_page_url = "/algo/newton_trust_region/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>General information</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/minimization/">Minimizing a function</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/config/">Configurable Options</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/planned/">Planned Changes</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Algorithms</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Solvers</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Free</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../nelder_mead/">Nelder Mead</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../gradientdescent/">Gradient Descent</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lbfgs/">(L-)BFGS</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Hessian Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../newton/">Newton</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Newton with Trust Region</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#newtons-method-with-a-trust-region">Newton's Method With a Trust Region</a></li>
+                
+                    <li><a class="toctree-l4" href="#constructor">Constructor</a></li>
+                
+                    <li><a class="toctree-l4" href="#description">Description</a></li>
+                
+                    <li><a class="toctree-l4" href="#example">Example</a></li>
+                
+                    <li><a class="toctree-l4" href="#references">References</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../linesearch/">Linesearch</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../precondition/">Preconditioners</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Contributing</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../dev/contributing/">Contributing</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../LICENSE/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Hessian Required &raquo;</li>
+        
+      
+    
+    <li>Newton with Trust Region</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/algo/newton_trust_region.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Newton's-Method-With-a-Trust-Region-1'></a></p>
+<h1 id="newtons-method-with-a-trust-region">Newton's Method With a Trust Region</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">NewtonTrustRegion</span><span class="p">(;</span> <span class="n">initial_delta</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+                    <span class="n">delta_hat</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+                    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                    <span class="n">rho_lower</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+                    <span class="n">rho_upper</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The constructor takes keywords that determine the initial and maximal size of the trust region, when to grow and shrink the region, and how close the function should be to the quadratic approximation.  The notation follows chapter four of Numerical Optimization.  Below, <code>rho</code>$=\rho$ refers to the ratio of the actual function change to the change in the quadratic approximation for a given step.</p>
+<ul>
+<li><code>initial_delta:</code>The starting trust region radius</li>
+<li><code>delta_hat:</code> The largest allowable trust region radius</li>
+<li><code>eta:</code> When <code>rho</code> is at least <code>eta</code>, accept the step.</li>
+<li><code>rho_lower:</code> When <code>rho</code> is less than <code>rho_lower</code>, shrink the trust region.</li>
+<li><code>rho_upper:</code> When <code>rho</code> is greater than <code>rho_upper</code>, grow the trust region (though no greater than <code>delta_hat</code>).</li>
+</ul>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Newton's method with a trust region is designed to take advantage of the second-order information in a function's Hessian, but with more stability that Newton's method when functions are not globally well-approximated by a quadratic.  This is achieved by repeatedly minimizing quadratic approximations within a dynamically-sized "trust region" in which the function is assumed to be locally quadratic [1].</p>
+<p>Newton's method optimizes a quadratic approximation to a function.  When a function is well approximated by a quadratic (for example, near an optimum), Newton's method converges very quickly by exploiting the second-order information in the Hessian matrix.  However, when the function is not well-approximated by a quadratic, either because the starting point is far from the optimum or the function has a more irregular shape, Newton steps can be erratically large, leading to distant, irrelevant areas of the space.</p>
+<p>Trust region methods use second-order information but restrict the steps to be within a "trust region" where the function is believed to be approximately quadratic.  At iteration $k$, a trust region method chooses a step $p$ to minimize a quadratic approximation to the objective such that the step size is no larger than a given trust region size, $\Delta_k$.</p>
+<p>$$
+\underset{p\in\mathbb{R}^n}\min m_k(p) = f_k + g_k^T p + \frac{1}{2}p^T B_k p \quad\textrm{such that } ||p||\le \Delta_k
+$$</p>
+<p>Here, $p$ is the step to take at iteration $k$, so that $x_{k+1} = x_k + p$.   In the definition of $m_k(p)$, $f_k = f(x_k)$ is the value at the previous location, $g_k=\nabla f(x_k)$ is the gradient at the previous location, $B_k = \nabla^2 f(x_k)$ is the Hessian matrix at the previous iterate, and $||\cdot||$ is the Euclidian norm.</p>
+<p>If the trust region size, $\Delta_k$, is large enough that the minimizer of the quadratic approximation $m_k(p)$ has $||p|| \le \Delta_k$, then the step is the same as an ordinary Newton step.  However, if the unconstrained quadratic minimizer lies outside the trust region, then the minimizer to the constrained problem will occur on the boundary, i.e. we will have $||p|| = \Delta_k$.  It turns out that when the Cholesky decomposition of $B_k$ can be computed, the optimal $p$ can be found numerically with relative ease.  ([1], section 4.3)  This is the method currently used in Optim.</p>
+<p>It makes sense to adapt the trust region size, $\Delta_k$, as one moves through the space and assesses the quality of the quadratic fit.  This adaptation is controlled by the parameters $\eta$, $\rho_{lower}$, and $\rho_{upper}$, which are parameters to the <code>NewtonTrustRegion</code> optimization method.  For each step, we calculate</p>
+<p>$$
+\rho_k := \frac{f(x_{k+1}) - f(x_k)}{m_k(p) - m_k(0)}
+$$</p>
+<p>Intuitively, $\rho_k$ measures the quality of the quadratic approximation: if $\rho_k \approx 1$, then our quadratic approximation is reasonable.  If  $p$ was on the boundary and $\rho_k &gt; \rho_{upper}$, then perhaps we can benefit from larger steps.  In this case, for the next iteration we grow the trust region geometrically up to a maximum of $\hat\Delta$:</p>
+<p>$$
+\rho_k &gt; \rho_{upper} \Rightarrow \Delta_{k+1} = \min(2 \Delta_k, \hat\Delta)
+$$</p>
+<p>. Conversely, if $\rho_k &lt; \rho_{lower}$, then we shrink the trust region geometrically:</p>
+<p>$$
+\rho_k &lt; \rho_{lower} \Rightarrow \Delta_{k+1} = 0.25 \Delta_k
+$$</p>
+<p>. Finally, we only accept a point if its decrease is appreciable compared to the quadratic approximation.  Specifically, a step is only accepted $\rho_k &gt; \eta$.  As long as we choose $\eta$ to be less than $\rho_{lower}$, we will shrink the trust region whenever we reject a step.  Eventually, if the objective function is locally quadratic, $\Delta_k$ will become small enough that a quadratic approximation will be accurate enough to make progress again.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">NewtonTrustRegion</span><span class="p">())</span>
+</pre></div>
+
+
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>[1] Nocedal, Jorge, and Stephen Wright. Numerical optimization. Springer Science &amp; Business Media, 2006.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../autodiff/" class="btn btn-neutral float-right" title="Automatic Differentiation">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../newton/" class="btn btn-neutral" title="Newton"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../newton/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../autodiff/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
