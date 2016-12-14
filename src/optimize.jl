@@ -3,7 +3,7 @@ typealias FirstOrderSolver Union{AcceleratedGradientDescent, ConjugateGradient, 
 typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
 
 # Multivariate optimization
-function optimize(f::Function,
+function optimize{F<:Function}(f::F,
                   initial_x::Array;
                   method = NelderMead(),
                   x_tol::Real = 1e-32,
@@ -25,8 +25,8 @@ function optimize(f::Function,
     optimize(f, initial_x, method, options)
 end
 
-function optimize(f::Function,
-                  g!::Function,
+function optimize{F<:Function, G<:Function}(f::F,
+                  g!::G,
                   initial_x::Array;
                   method = LBFGS(),
                   x_tol::Real = 1e-32,
@@ -46,9 +46,9 @@ function optimize(f::Function,
     optimize(f, g!, initial_x, method, options)
 end
 
-function optimize(f::Function,
-                  g!::Function,
-                  h!::Function,
+function optimize{F<:Function, G<:Function, H<:Function}(f::F,
+                  g!::G,
+                  h!::H,
                   initial_x::Array;
                   method = Newton(),
                   x_tol::Real = 1e-32,
@@ -115,8 +115,8 @@ function optimize(d,
     optimize(d, initial_x, method, options)
 end
 
-function optimize(f::Function,
-                  g!::Function,
+function optimize{F<:Function, G<:Function}(f::F,
+                  g!::G,
                   initial_x::Array,
                   method::Optimizer,
                   options::OptimizationOptions = OptimizationOptions())
@@ -124,9 +124,9 @@ function optimize(f::Function,
     optimize(d, initial_x, method, options)
 end
 
-function optimize(f::Function,
-                  g!::Function,
-                  h!::Function,
+function optimize{F<:Function, G<:Function, H<:Function}(f::F,
+                  g!::G,
+                  h!::H,
                   initial_x::Array,
                   method::Optimizer,
                   options::OptimizationOptions = OptimizationOptions())
@@ -134,7 +134,7 @@ function optimize(f::Function,
     optimize(d, initial_x, method, options)
 end
 
-function optimize{T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::Function,
+function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F,
                   initial_x::Array{T},
                   method::M,
                   options::OptimizationOptions)
@@ -287,7 +287,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 end
 
 # Univariate OptimizationOptions
-function optimize{T <: AbstractFloat}(f::Function,
+function optimize{F<:Function, T <: AbstractFloat}(f::F,
                                       lower::T,
                                       upper::T;
                                       method = Brent(),
@@ -317,7 +317,7 @@ function optimize{T <: AbstractFloat}(f::Function,
              extended_trace = extended_trace)
 end
 
-function optimize(f::Function,
+function optimize{F<:Function}(f::F,
                   lower::Real,
                   upper::Real;
                   kwargs...)
@@ -327,7 +327,7 @@ function optimize(f::Function,
              kwargs...)
 end
 
-function optimize(f::Function,
+function optimize{F<:Function}(f::F,
                   lower::Real,
                   upper::Real,
                   mo::Union{Brent, GoldenSection};

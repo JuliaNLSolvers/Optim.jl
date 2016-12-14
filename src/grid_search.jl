@@ -1,6 +1,6 @@
-function grid_search(f::Function, grid::Vector)
-    min_value = Inf
-    arg_min_value = Inf
+function grid_search{F<:Function, T<:Real}(f::F, grid::Vector{T})
+    min_value = f(grid[1])
+    arg_min_value = grid[1]
 
     for el in grid
         if f(el) < min_value
