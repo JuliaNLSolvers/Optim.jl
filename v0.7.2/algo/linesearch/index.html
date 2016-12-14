@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaOpt">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Linesearch - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Linesearch";
+    var mkdocs_page_input_path = "algo/linesearch.md";
+    var mkdocs_page_url = "/algo/linesearch/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>General information</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/minimization/">Minimizing a function</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/config/">Configurable Options</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../user/planned/">Planned Changes</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Algorithms</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Solvers</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Free</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../nelder_mead/">Nelder Mead</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../gradientdescent/">Gradient Descent</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../lbfgs/">(L-)BFGS</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Hessian Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../newton/">Newton</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Linesearch</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#line-search">Line search</a></li>
+                
+                    <li><a class="toctree-l4" href="#description">Description</a></li>
+                
+                    <li><a class="toctree-l4" href="#example">Example</a></li>
+                
+                    <li><a class="toctree-l4" href="#references">References</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../precondition/">Preconditioners</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Contributing</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../dev/contributing/">Contributing</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../LICENSE/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Algorithms &raquo;</li>
+        
+      
+    
+    <li>Linesearch</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/algo/linesearch.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Line-search-1'></a></p>
+<h1 id="line-search">Line search</h1>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The line search functionality has been moved to <a href="https://github.com/anriseth/LineSearches.jl">LineSearches.jl</a>.</p>
+<p>Line search is used to decide the step length along the direction computed by an optimization algorithm.</p>
+<p>The following <code>Optim</code> algorithms use line search:</p>
+<ul>
+<li>Accelerated Gradient Descent</li>
+<li>(L-)BFGS</li>
+<li>Conjugate Gradient</li>
+<li>Gradient Descent</li>
+<li>Momentum Gradient Descent</li>
+<li>Newton</li>
+</ul>
+<p>By default <code>Optim</code> calls the line search algorithm <code>hagerzhang!</code> provided by <code>LineSearches</code>. Different line search algorithms can be assigned with the <code>linesearch!</code> keyword argument to the given algorithm.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>This example compares two different line search algorithms on the Rosenbrock problem.</p>
+<p>First, run <code>Newton</code> with the default line search algorithm:</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">LineSearches</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
+
+<span class="n">algo_hz</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch!</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">hagerzhang!</span><span class="p">)</span>
+<span class="n">res_hz</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_hz</span><span class="p">)</span>
+</pre></div>
+
+
+<p>This gives the result</p>
+<div class="codehilite"><pre><span></span><span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
+ <span class="o">*</span> <span class="n">Algorithm</span><span class="p">:</span> <span class="n">Newton</span><span class="o">&#39;</span><span class="n">s</span> <span class="n">Method</span>
+ <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimizer</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.9999999999979515</span><span class="p">,</span><span class="mf">0.9999999999960232</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimum</span><span class="p">:</span> <span class="mf">5.639268e-24</span>
+ <span class="o">*</span> <span class="n">Iterations</span><span class="p">:</span> <span class="mi">13</span>
+ <span class="o">*</span> <span class="n">Convergence</span><span class="p">:</span> <span class="n">true</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">&lt;</span> <span class="mf">1.0e-32</span><span class="p">:</span> <span class="n">false</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">/</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">&lt;</span> <span class="mf">1.0e-32</span><span class="p">:</span> <span class="n">false</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">&lt;</span> <span class="mf">1.0e-08</span><span class="p">:</span> <span class="n">true</span>
+   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="p">:</span> <span class="n">false</span>
+ <span class="o">*</span> <span class="n">Objective</span> <span class="n">Function</span> <span class="n">Calls</span><span class="p">:</span> <span class="mi">54</span>
+ <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="p">:</span> <span class="mi">54</span>
+</pre></div>
+
+
+<p>Now we can try <code>Newton</code> with the More-Thuente line search:</p>
+<div class="codehilite"><pre><span></span><span class="n">algo_mt</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch!</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">morethuente!</span><span class="p">)</span>
+<span class="n">res_mt</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_mt</span><span class="p">)</span>
+</pre></div>
+
+
+<p>This gives the following result, reducing the number of function and gradient calls:</p>
+<div class="codehilite"><pre><span></span><span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
+ <span class="o">*</span> <span class="n">Algorithm</span><span class="p">:</span> <span class="n">Newton</span><span class="o">&#39;</span><span class="n">s</span> <span class="n">Method</span>
+ <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimizer</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.9999999999999992</span><span class="p">,</span><span class="mf">0.999999999999998</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimum</span><span class="p">:</span> <span class="mf">2.032549e-29</span>
+ <span class="o">*</span> <span class="n">Iterations</span><span class="p">:</span> <span class="mi">14</span>
+ <span class="o">*</span> <span class="n">Convergence</span><span class="p">:</span> <span class="n">true</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">&lt;</span> <span class="mf">1.0e-32</span><span class="p">:</span> <span class="n">false</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">/</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">&lt;</span> <span class="mf">1.0e-32</span><span class="p">:</span> <span class="n">false</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">&lt;</span> <span class="mf">1.0e-08</span><span class="p">:</span> <span class="n">true</span>
+   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="p">:</span> <span class="n">false</span>
+ <span class="o">*</span> <span class="n">Objective</span> <span class="n">Function</span> <span class="n">Calls</span><span class="p">:</span> <span class="mi">31</span>
+ <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="p">:</span> <span class="mi">31</span>
+</pre></div>
+
+
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../precondition/" class="btn btn-neutral float-right" title="Preconditioners">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../autodiff/" class="btn btn-neutral" title="Automatic Differentiation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../autodiff/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../precondition/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
