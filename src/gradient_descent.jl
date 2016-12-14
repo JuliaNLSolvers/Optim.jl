@@ -1,10 +1,10 @@
-immutable GradientDescent{T} <: Optimizer
-    linesearch!::Function
+immutable GradientDescent{L<:Function, T, Tprep<:Union{Function, Void}} <: Optimizer
+    linesearch!::L
     P::T
-    precondprep!::Function
+    precondprep!::Tprep
 end
 
-GradientDescent(; linesearch!::Function = LineSearches.hagerzhang!,
+GradientDescent(; linesearch! = LineSearches.hagerzhang!,
                 P = nothing, precondprep! = (P, x) -> nothing) =
                     GradientDescent(linesearch!, P, precondprep!)
 

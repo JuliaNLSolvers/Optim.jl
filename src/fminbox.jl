@@ -52,7 +52,7 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
     return v
 end
 
-function function_barrier{T}(x::Array{T}, gfunc, gbarrier, f::Function, fbarrier::Function)
+function function_barrier{T, F<:Function, FB<:Function}(x::Array{T}, gfunc, gbarrier, f::F, fbarrier::FB)
     vbarrier = fbarrier(x, gbarrier)
     if isfinite(vbarrier)
         vfunc = f(x, gfunc)
@@ -62,7 +62,7 @@ function function_barrier{T}(x::Array{T}, gfunc, gbarrier, f::Function, fbarrier
     return vfunc, vbarrier
 end
 
-function barrier_combined{T}(x::Array{T}, g, gfunc, gbarrier, fb::Function, mu::T)
+function barrier_combined{T, FB<:Function}(x::Array{T}, g, gfunc, gbarrier, fb::FB, mu::T)
     calc_g = !(g === nothing)
     valfunc, valbarrier = fb(x, gfunc, gbarrier)
     if calc_g
@@ -117,7 +117,7 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        linesearch!::Function = LineSearches.hagerzhang!,
+        linesearch! = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),

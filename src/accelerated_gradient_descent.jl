@@ -7,11 +7,11 @@
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
 
-immutable AcceleratedGradientDescent <: Optimizer
-    linesearch!::Function
+immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
+    linesearch!::L
 end
 
-AcceleratedGradientDescent(; linesearch!::Function = LineSearches.hagerzhang!) =
+AcceleratedGradientDescent(; linesearch! = LineSearches.hagerzhang!) =
   AcceleratedGradientDescent(linesearch!)
 
 type AcceleratedGradientDescentState{T}

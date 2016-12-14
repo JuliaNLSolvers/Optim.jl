@@ -22,8 +22,8 @@ end
 
 immutable Brent <: Optimizer end
 
-function optimize{T <: AbstractFloat}(
-        f::Function, x_lower::T, x_upper::T,
+function optimize{F <: Function, T <: AbstractFloat}(
+        f::F, x_lower::T, x_upper::T,
         mo::Brent;
         rel_tol::T = sqrt(eps(T)),
         abs_tol::T = eps(T),

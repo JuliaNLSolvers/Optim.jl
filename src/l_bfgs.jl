@@ -60,16 +60,16 @@ function twoloop!(s::Vector,
     return
 end
 
-immutable LBFGS{T} <: Optimizer
+immutable LBFGS{T, L<:Function, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
-    linesearch!::Function
+    linesearch!::L
     P::T
-    precondprep!::Function
+    precondprep!::Tprep
     extrapolate::Bool
     snap2one::Tuple
 end
 
-LBFGS(; m::Integer = 10, linesearch!::Function = LineSearches.hagerzhang!,
+LBFGS(; m::Integer = 10, linesearch! = LineSearches.hagerzhang!,
                         P=nothing, precondprep! = (P, x) -> nothing,
                         extrapolate::Bool=false, snap2one = (0.75, Inf)) =
       LBFGS(Int(m), linesearch!, P, precondprep!, extrapolate, snap2one)

@@ -130,7 +130,7 @@ end
 
 initial_state(method::NelderMead, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
 
-function initial_state{T}(method::NelderMead, options, f::Function, initial_x::Array{T})
+function initial_state{F<:Function, T}(method::NelderMead, options, f::F, initial_x::Array{T})
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)
@@ -172,7 +172,7 @@ NelderMeadState("Nelder-Mead",
           "initial")
 end
 update_state!(d, state::NelderMeadState, method::NelderMead) = update_state!(d.f, state, method)
-function update_state!{T}(f::Function, state::NelderMeadState{T}, method::NelderMead)
+function update_state!{F<:Function, T}(f::F, state::NelderMeadState{T}, method::NelderMead)
     # Augment the iteration counter
     shrink = false
     n, m = state.n, state.m
@@ -267,7 +267,7 @@ function update_state!{T}(f::Function, state::NelderMeadState{T}, method::Nelder
 end
 
 after_while!(d, state, method::NelderMead, options) = after_while!(d.f, state, method::NelderMead, options)
-function after_while!(f::Function, state, method::NelderMead, options)
+function after_while!{F<:Function}(f::F, state, method::NelderMead, options)
     sortperm!(state.i_order, state.f_simplex)
     x_centroid_min = centroid(state.simplex,  state.i_order[state.m])
     f_centroid_min = f(state.x_centroid)

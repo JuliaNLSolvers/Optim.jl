@@ -1,12 +1,12 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-immutable MomentumGradientDescent <: Optimizer
+immutable MomentumGradientDescent{L<:Function} <: Optimizer
     mu::Float64
-    linesearch!::Function
+    linesearch!::L
 end
 
-MomentumGradientDescent(; mu::Real = 0.01, linesearch!::Function = LineSearches.hagerzhang!) =
+MomentumGradientDescent(; mu::Real = 0.01, linesearch! = LineSearches.hagerzhang!) =
   MomentumGradientDescent(Float64(mu), linesearch!)
 
 type MomentumGradientDescentState{T}
