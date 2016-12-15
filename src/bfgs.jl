@@ -6,8 +6,8 @@ immutable BFGS{L<:Function, H<:Function} <: Optimizer
     initial_invH::H
 end
 
-BFGS(; linesearch! = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
-  BFGS(linesearch!, initial_invH)
+BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
+  BFGS(linesearch, initial_invH)
 
 type BFGSState{T}
     @add_generic_fields()

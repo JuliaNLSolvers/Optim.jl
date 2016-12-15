@@ -6,8 +6,8 @@ immutable MomentumGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
-MomentumGradientDescent(; mu::Real = 0.01, linesearch! = LineSearches.hagerzhang!) =
-  MomentumGradientDescent(Float64(mu), linesearch!)
+MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!) =
+  MomentumGradientDescent(Float64(mu), linesearch)
 
 type MomentumGradientDescentState{T}
     @add_generic_fields()

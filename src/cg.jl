@@ -61,13 +61,13 @@ immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L<:Function} <: Opt
 end
 
 function ConjugateGradient(;
-                           linesearch! = LineSearches.hagerzhang!,
+                           linesearch = LineSearches.hagerzhang!,
                            eta::Real = 0.4,
                            P::Any = nothing,
-                           precondprep! = (P, x) -> nothing)
+                           precondprep = (P, x) -> nothing)
     ConjugateGradient(Float64(eta),
-                                 P, precondprep!,
-                                 linesearch!)
+                                 P, precondprep,
+                                 linesearch)
 end
 
 type ConjugateGradientState{T}

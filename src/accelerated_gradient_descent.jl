@@ -11,8 +11,8 @@ immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
-AcceleratedGradientDescent(; linesearch! = LineSearches.hagerzhang!) =
-  AcceleratedGradientDescent(linesearch!)
+AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
+  AcceleratedGradientDescent(linesearch)
 
 type AcceleratedGradientDescentState{T}
     @add_generic_fields()

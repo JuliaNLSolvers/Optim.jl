@@ -117,7 +117,7 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        linesearch! = LineSearches.hagerzhang!,
+        linesearch = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
@@ -181,15 +181,15 @@ function optimize{T<:AbstractFloat}(
         end
         pcp = (P, x) -> precondprep!(P, x, l, u, mu)
         if optimizer == ConjugateGradient
-            _optimizer = optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = optimizer(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         elseif optimizer in (LBFGS, GradientDescent)
-            _optimizer = optimizer(linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = optimizer(linesearch = linesearch, P = P, precondprep = pcp)
         elseif optimizer in (NelderMead, SimulatedAnnealing)
             _optimizer = optimizer()
         elseif optimizer == Newton
-            _optimizer = ConjugateGradient(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = ConjugateGradient(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         else
-            _optimizer = optimizer(linesearch! = linesearch!)
+            _optimizer = optimizer(linesearch = linesearch)
         end
         resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first

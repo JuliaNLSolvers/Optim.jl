@@ -2,8 +2,8 @@ immutable Newton <: Optimizer
     linesearch!::Function
 end
 
-Newton(; linesearch!::Function = LineSearches.hagerzhang!) =
-  Newton(linesearch!)
+Newton(; linesearch::Function = LineSearches.hagerzhang!) =
+  Newton(linesearch)
 
 type NewtonState{T}
     @add_generic_fields()

@@ -4,9 +4,9 @@ immutable GradientDescent{L<:Function, T, Tprep<:Union{Function, Void}} <: Optim
     precondprep!::Tprep
 end
 
-GradientDescent(; linesearch! = LineSearches.hagerzhang!,
-                P = nothing, precondprep! = (P, x) -> nothing) =
-                    GradientDescent(linesearch!, P, precondprep!)
+GradientDescent(; linesearch = LineSearches.hagerzhang!,
+                P = nothing, precondprep = (P, x) -> nothing) =
+                    GradientDescent(linesearch, P, precondprep)
 
 type GradientDescentState{T}
     @add_generic_fields()

@@ -1,12 +1,12 @@
 # Newton's Method
 ## Constructor
 ```julia
-Newton(; linesearch! = LineSearches.hagerzhang!)
+Newton(; linesearch = LineSearches.hagerzhang!)
 ```
 
 The constructor takes one keyword
 
-* `linesearch! = a(d, x, p, x_new, g_new, lsr, c, mayterminate)`, a function performing line search, see the line search section.
+* `linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)`, a function performing line search, see the line search section.
 
 ## Description
 Newton's method for optimization has a long history, and is in some sense the

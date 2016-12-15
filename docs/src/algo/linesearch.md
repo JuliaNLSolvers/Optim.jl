@@ -17,7 +17,7 @@ The following `Optim` algorithms use line search:
 
 By default `Optim` calls the line search algorithm `hagerzhang!` provided by `LineSearches`.
 Different line search algorithms can be assigned with
-the `linesearch!` keyword argument to the given algorithm.
+the `linesearch` keyword argument to the given algorithm.
 
 ## Example
 This example compares two different line search algorithms on the Rosenbrock problem.
@@ -27,7 +27,7 @@ First, run `Newton` with the default line search algorithm:
 using Optim, LineSearches
 prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
 
-algo_hz = Newton(;linesearch! = LineSearches.hagerzhang!)
+algo_hz = Newton(;linesearch = LineSearches.hagerzhang!)
 res_hz = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_hz)
 ```
 
@@ -50,7 +50,7 @@ Results of Optimization Algorithm
 
 Now we can try `Newton` with the More-Thuente line search:
 ``` julia
-algo_mt = Newton(;linesearch! = LineSearches.morethuente!)
+algo_mt = Newton(;linesearch = LineSearches.morethuente!)
 res_mt = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_mt)
 ```
 

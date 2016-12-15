@@ -69,10 +69,10 @@ immutable LBFGS{T, L<:Function, Tprep<:Union{Function, Void}} <: Optimizer
     snap2one::Tuple
 end
 
-LBFGS(; m::Integer = 10, linesearch! = LineSearches.hagerzhang!,
-                        P=nothing, precondprep! = (P, x) -> nothing,
+LBFGS(; m::Integer = 10, linesearch = LineSearches.hagerzhang!,
+                        P=nothing, precondprep = (P, x) -> nothing,
                         extrapolate::Bool=false, snap2one = (0.75, Inf)) =
-      LBFGS(Int(m), linesearch!, P, precondprep!, extrapolate, snap2one)
+      LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 
 type LBFGSState{T}
     @add_generic_fields()
