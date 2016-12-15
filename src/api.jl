@@ -6,26 +6,26 @@ iteration_limit_reached(r::OptimizationResults) = r.iteration_converged
 trace(r::OptimizationResults) = length(r.trace) > 0 ? r.trace : error("No trace in optimization results. To get a trace, run optimize() with store_trace = true.")
 
 function x_trace(r::UnivariateOptimizationResults)
-	tr = trace(r)
-	!haskey(tr[1].metadata, "minimizer") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    tr = trace(r)
+    !haskey(tr[1].metadata, "minimizer") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
     [ state.metadata["minimizer"] for state in tr ]
 end
 function x_lower_trace(r::UnivariateOptimizationResults)
-	tr = trace(r)
-	!haskey(tr[1].metadata, "x_lower") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    tr = trace(r)
+    !haskey(tr[1].metadata, "x_lower") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
     [ state.metadata["x_lower"] for state in tr ]
 end
 x_lower_trace(r::MultivariateOptimizationResults) = error("x_lower_trace is not implemented for $(method(r)).")
 function x_upper_trace(r::UnivariateOptimizationResults)
-	tr = trace(r)
-	!haskey(tr[1].metadata, "x_upper") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    tr = trace(r)
+    !haskey(tr[1].metadata, "x_upper") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
     [ state.metadata["x_upper"] for state in tr ]
 end
 x_upper_trace(r::MultivariateOptimizationResults) = error("x_upper_trace is not implemented for $(method(r)).")
 
 function x_trace(r::MultivariateOptimizationResults)
-	tr = trace(r)
-	!haskey(tr[1].metadata, "x") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
+    tr = trace(r)
+    !haskey(tr[1].metadata, "x") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
     [ state.metadata["x"] for state in tr ]
 end
 

@@ -20,12 +20,12 @@ end
 function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
         n = length(initial_x)
       # Maintain current gradient in gr
-      g = Array(T, n)
-      s = Array(T, n)
-      x_ls, g_ls = Array(T, n), Array(T, n)
+      g = similar(initial_x)
+      s = similar(initial_x)
+      x_ls, g_ls = similar(initial_x), similar(initial_x)
       f_x_previous, f_x = NaN, d.fg!(initial_x, g)
       f_calls, g_calls = 1, 1
-      H = Array(T, n, n)
+      H = Array(T, size(g)..., size(g)...)
       d.h!(initial_x, H)
       h_calls = 1
 

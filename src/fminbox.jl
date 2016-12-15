@@ -134,20 +134,18 @@ function optimize{T<:AbstractFloat}(
     fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
-    P = InverseDiagonal(Array(T, length(initial_x)))
+    P = InverseDiagonal(similar(initial_x))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
-    for i = 1:length(gbarrier)
+    @inbounds for i in eachindex(gbarrier)
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
-        if thisx < thisl || thisx > thisu
-            error("Initial position must be inside the box")
-        end
+        @assert thisl <= thisx <= thisu "Initial x[$(ind2sub(i))]=$thisx is outside of [$thisl, $thisu] box"
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
     df.g!(x, gfunc)
@@ -207,7 +205,7 @@ function optimize{T<:AbstractFloat}(
         mu *= mufactor
 
         # Test for convergence
-        @simd for i = 1:length(x)
+        @simd for i in eachindex(x)
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
 

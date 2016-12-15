@@ -61,27 +61,27 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
 
     if method.n_particles > 0
         if method.n_particles < 3
-          warn("Number of particles is set to 3 (minimum required)")
-          n_particles = 3
+            warn("Number of particles is set to 3 (minimum required)")
+            n_particles = 3
         else
-          n_particles = method.n_particles
+            n_particles = method.n_particles
         end
     else
-      # user did not define number of particles
-       n_particles = maximum([3, length(initial_x)])
+        # user did not define number of particles
+        n_particles = maximum([3, length(initial_x)])
     end
     c1 = 2.0
     c2 = 2.0
     w = 1.0
 
-    X = Array{T}(n, n_particles)
-    V = Array{T}(n, n_particles)
-    X_best = Array{T}(n, n_particles)
-    dx = zeros(T, n)
+    X = Array{T}(size(initial_x)..., n_particles)
+    V = similar(X)
+    X_best = similar(X)
+    dx = zeros(X)
     score = zeros(T, n_particles)
-    x = zeros(T, n)
+    x = zeros(initial_x)
     best_score = zeros(T, n_particles)
-    x_learn = zeros(T, n)
+    x_learn = zeros(initial_x)
 
     f_calls = 0
     current_state = 0
@@ -219,16 +219,16 @@ end
 
 function update_swarm!(X, X_best, best_point, n, n_particles, V,
                        w, c1, c2)
-  # compute new positions for the swarm particles
-  for i in 1:n_particles
-      for j in 1:n
-          r1 = rand()
-          r2 = rand()
-          vx = X_best[j, i] - X[j, i]
-          vg = best_point[j] - X[j, i]
-          V[j, i] = V[j, i]*w + c1*r1*vx + c2*r2*vg
-          X[j, i] = X[j, i] + V[j, i]
-      end
+    # compute new positions for the swarm particles
+    for i in 1:n_particles
+        for j in 1:n
+            r1 = rand()
+            r2 = rand()
+            vx = X_best[j, i] - X[j, i]
+            vg = best_point[j] - X[j, i]
+            V[j, i] = V[j, i]*w + c1*r1*vx + c2*r2*vg
+            X[j, i] = X[j, i] + V[j, i]
+        end
     end
 end
 
@@ -317,37 +317,37 @@ function get_swarm_state(X, score, best_point, previous_state)
         if mu[1] > 0
             current_state = 1
         else
-          if mu[2] > 0
-              current_state = 2
-          elseif mu[4] > 0
-              current_state = 4
-          else
-              current_state = 3
-          end
+            if mu[2] > 0
+                current_state = 2
+            elseif mu[4] > 0
+                current_state = 4
+            else
+                current_state = 3
+            end
         end
     elseif previous_state == 2
         if mu[2] > 0
             current_state = 2
         else
-          if mu[3] > 0
-              current_state = 3
-          elseif mu[1] > 0
-              current_state = 1
-          else
-              current_state = 4
-          end
+            if mu[3] > 0
+                current_state = 3
+            elseif mu[1] > 0
+                current_state = 1
+            else
+                current_state = 4
+            end
         end
     elseif previous_state == 3
         if mu[3] > 0
             current_state = 3
         else
-          if mu[4] > 0
-              current_state = 4
-          elseif mu[2] > 0
-              current_state = 2
-          else
-              current_state = 1
-          end
+            if mu[4] > 0
+                current_state = 4
+            elseif mu[2] > 0
+                current_state = 2
+            else
+                current_state = 1
+            end
         end
     elseif previous_state == 4
         if mu[4] > 0
@@ -417,9 +417,9 @@ function housekeeping!(score, best_score, X, X_best, best_point,
             end
             if score[i] <= f_x
                 for k in 1:n
-                  	best_point[k] = X[k, i]
+                    best_point[k] = X[k, i]
                 end
-              	f_x = score[i]
+                f_x = score[i]
             end
         end
     end
@@ -431,9 +431,9 @@ function limit_X!(X, lower, upper, n_particles, n)
     for i in 1:n_particles
         for j in 1:n
             if X[j, i] < lower[j]
-              	X[j, i] = lower[j]
+                X[j, i] = lower[j]
             elseif X[j, i] > upper[j]
-              	X[j, i] = upper[j]
+                X[j, i] = upper[j]
             end
         end
     end
