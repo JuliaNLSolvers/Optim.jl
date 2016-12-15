@@ -22,111 +22,91 @@ let
     Optim.optimize(d2, initial_x, BFGS(), OptimizationOptions())
     Optim.optimize(d3, initial_x, BFGS(), OptimizationOptions())
 
-    Optim.optimize(d1, initial_x, method = BFGS())
-    Optim.optimize(d2, initial_x, method = BFGS())
+    Optim.optimize(d1, initial_x, BFGS())
+    Optim.optimize(d2, initial_x, BFGS())
 
-    Optim.optimize(d1, initial_x, method = GradientDescent())
-    Optim.optimize(d2, initial_x, method = GradientDescent())
+    Optim.optimize(d1, initial_x, GradientDescent())
+    Optim.optimize(d2, initial_x, GradientDescent())
 
-    Optim.optimize(d1, initial_x, method = LBFGS())
-    Optim.optimize(d2, initial_x, method = LBFGS())
+    Optim.optimize(d1, initial_x, LBFGS())
+    Optim.optimize(d2, initial_x, LBFGS())
 
-    Optim.optimize(f, initial_x, method = NelderMead())
+    Optim.optimize(f, initial_x, NelderMead())
 
-    Optim.optimize(d3, initial_x, method = Newton())
+    Optim.optimize(d3, initial_x, Newton())
 
-   Optim.optimize(f, initial_x, method = SimulatedAnnealing())
+    Optim.optimize(f, initial_x, SimulatedAnnealing())
 
-    optimize(f, initial_x, method = BFGS())
     optimize(f, initial_x, BFGS())
-    optimize(f, g!, initial_x, method = BFGS())
-    optimize(f, g!, h!, initial_x, method = BFGS())
+    optimize(f, g!, initial_x, BFGS())
+    optimize(f, g!, h!, initial_x, BFGS())
 
-    optimize(f, initial_x, method = GradientDescent())
     optimize(f, initial_x, GradientDescent())
-    optimize(f, g!, initial_x, method = GradientDescent())
-    optimize(f, g!, h!, initial_x, method = GradientDescent())
+    optimize(f, g!, initial_x, GradientDescent())
+    optimize(f, g!, h!, initial_x, GradientDescent())
 
-    optimize(f, initial_x, method = LBFGS())
     optimize(f, initial_x, LBFGS())
-    optimize(f, g!, initial_x, method = LBFGS())
-    optimize(f, g!, h!, initial_x, method = LBFGS())
+    optimize(f, g!, initial_x, LBFGS())
+    optimize(f, g!, h!, initial_x, LBFGS())
 
-    optimize(f, initial_x, method = NelderMead())
     optimize(f, initial_x, NelderMead())
-    optimize(f, g!, initial_x, method = NelderMead())
-    optimize(f, g!, h!, initial_x, method = NelderMead())
+    optimize(f, g!, initial_x, NelderMead())
+    optimize(f, g!, h!, initial_x, NelderMead())
 
-    optimize(f, g!, h!, initial_x, method = Newton())
+    optimize(f, g!, h!, initial_x, Newton())
 
-    optimize(f, initial_x, method = SimulatedAnnealing())
     optimize(f, initial_x, SimulatedAnnealing())
-    optimize(f, g!, initial_x, method = SimulatedAnnealing())
-    optimize(f, g!, h!, initial_x, method = SimulatedAnnealing())
+    optimize(f, g!, initial_x, SimulatedAnnealing())
+    optimize(f, g!, h!, initial_x, SimulatedAnnealing())
+
+    options = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+                                  store_trace = true, show_trace = false)
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           BFGS(),
+    	           options)
+
+    options_g = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+                                  store_trace = true, show_trace = false)
+    options_f = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+                                  store_trace = true, show_trace = false)
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           GradientDescent(),
+    	           options_g)
 
     res = optimize(f, g!, h!,
     	           initial_x,
-    	           method = BFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+    	           LBFGS(),
+    	           options_g)
 
     res = optimize(f, g!, h!,
     	           initial_x,
-    	           method = GradientDescent(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+    	           NelderMead(),
+                   options_f)
 
     res = optimize(f, g!, h!,
     	           initial_x,
-    	           method = LBFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
+    	           Newton(),
+                   options_g)
+    options_sa = OptimizationOptions(iterations = 10, store_trace = true,
+                                     show_trace = false)
+    res = optimize(f, g!, h!,
+    	           initial_x,
+    	           SimulatedAnnealing(),
+    	           options_sa)
 
     res = optimize(f, g!, h!,
     	           initial_x,
-    	           method = NelderMead(),
-    	           f_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
-
-    res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = Newton(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
-
-    res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = SimulatedAnnealing(),
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
-
-    res = optimize(f, g!, h!,
-    	           initial_x,
-    	           method = BFGS(),
-    	           g_tol = 1e-12,
-    	           iterations = 10,
-    	           store_trace = true,
-    	           show_trace = false)
-                   
-   res_ext = optimize(f, g!, h!,
-                      initial_x,
-                      method = BFGS(),
-                      g_tol = 1e-12,
-                      iterations = 10,
-                      store_trace = true,
-                      show_trace = false,
-                      extended_trace = true)
+    	           BFGS(),
+    	           options_g)
+    options_ext = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+                                      store_trace = true, show_trace = false,
+                                      extended_trace = true)
+    res_ext = optimize(f, g!, h!,
+                       initial_x,
+                       BFGS(),
+                       options_ext)
 
    @test Optim.method(res) == "BFGS"
    @test Optim.minimum(res) ≈ 0.055119582904897345
@@ -156,13 +136,13 @@ let
    @test_throws ErrorException Optim.upper_bound(res)
    @test_throws ErrorException Optim.rel_tol(res)
    @test_throws ErrorException Optim.abs_tol(res)
-
-   res_extended = Optim.optimize(f, g!, initial_x, method=BFGS(), store_trace = true, extended_trace = true)
+   options_extended = OptimizationOptions(store_trace = true, extended_trace = true)
+   res_extended = Optim.optimize(f, g!, initial_x, BFGS(), options_extended)
    @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"x")
-
-   res_extended_nm = Optim.optimize(f, g!, initial_x, method=NelderMead(), store_trace = true, extended_trace = true)
+   options_extended_nm = OptimizationOptions(store_trace = true, extended_trace = true)
+   res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
 end
@@ -170,7 +150,7 @@ end
 # Test univariate API
 let
     f(x) = 2x^2+3x+1
-    res = optimize(f, -2.0, 1.0, method = GoldenSection())
+    res = optimize(f, -2.0, 1.0, GoldenSection())
     @test Optim.method(res) == "Golden Section Search"
     @test Optim.minimum(res) ≈ -0.125
     @test Optim.minimizer(res) ≈ -0.749999994377939
@@ -194,7 +174,8 @@ let
     @test_throws ErrorException Optim.x_tol(res)
     @test_throws ErrorException Optim.f_tol(res)
     @test_throws ErrorException Optim.g_tol(res)
-    res = optimize(f, -2.0, 1.0, method = GoldenSection(), store_trace = true, extended_trace = true)
+    options =
+    res = optimize(f, -2.0, 1.0, GoldenSection(), store_trace = true, extended_trace = true)
 
     # Right now, these just "test" if they run
     Optim.x_trace(res)

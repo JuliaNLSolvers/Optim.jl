@@ -29,7 +29,7 @@ let
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
-    results = optimize(f1, [127.0, 921.0], autodiff = true)
+    results = optimize(f1, [127.0, 921.0], OptimizationOptions(autodiff = true))
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 

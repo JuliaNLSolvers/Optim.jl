@@ -26,15 +26,16 @@ let
         initial_x = zeros(N)
         Plap = precond(initial_x)
         ID = nothing
-        for Optimiser in (GradientDescent, ConjugateGradient, LBFGS)
+        for optimizer in (GradientDescent, ConjugateGradient, LBFGS)
             for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
                 results = Optim.optimize(df, copy(initial_x),
-                                         method=Optimiser(P = P),
-                                         f_tol = 1e-32, g_tol = GRTOL )
-                println(Optimiser, wwo,
+                                         optimizer(P = P),
+                                         OptimizationOptions(f_tol = 1e-32,
+                                                             g_tol = GRTOL))
+                println(optimizer, wwo,
                         " preconditioning : g_calls = ", results.g_calls,
                         ", f_calls = ", results.f_calls)
-                if (Optimiser == GradientDescent) && (N > 15) && (P == ID)
+                if (optimizer == GradientDescent) && (N > 15) && (P == ID)
                     println("    (gradient descent is not expected to converge)")
                 else
                     @assert Optim.converged(results)

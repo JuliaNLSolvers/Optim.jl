@@ -4,7 +4,7 @@ let
 		f_prob = prob.f
 		res = Optim.optimize(f_prob, prob.initial_x, NelderMead(), OptimizationOptions(iterations = 10000))
 		if name == "Powell"
-			res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(), g_tol = 1e-12)
+			res = Optim.optimize(f_prob, prob.initial_x, NelderMead(), OptimizationOptions(g_tol = 1e-12))
 		elseif name == "Large Polynomial"
 			# TODO do this only when a "run all" flag checked
 			# res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(initial_simplex = Optim.AffineSimplexer(1.,1.)), iterations = 450_000)

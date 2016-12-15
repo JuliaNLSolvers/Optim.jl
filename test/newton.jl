@@ -41,7 +41,7 @@ let
     end
 
     d = TwiceDifferentiableFunction(f_2, g!_2, h!_2)
-    results = Optim.optimize(d, [127.0, 921.0], method=Newton())
+    results = Optim.optimize(d, [127.0, 921.0], Newton())
     @test_throws ErrorException Optim.x_trace(results)
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
@@ -50,7 +50,7 @@ let
     for (name, prob) in Optim.UnconstrainedProblems.examples
     	if prob.istwicedifferentiable
     		ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
-    		res = Optim.optimize(ddf, prob.initial_x, method=Newton())
+    		res = Optim.optimize(ddf, prob.initial_x, Newton())
     		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
     	end
     end
