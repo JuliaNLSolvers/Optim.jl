@@ -2,12 +2,14 @@ typealias FirstOrderSolver Union{AcceleratedGradientDescent, ConjugateGradient, 
                                  MomentumGradientDescent, BFGS, LBFGS}
 typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
 
+
 function optimize(d,
                   initial_x::Array,
                   method::Optimizer,
                   options::OptimizationOptions = OptimizationOptions())
     optimize(d, initial_x, method, options)
 end
+optimize(d, initial_x, options::OptimizationOptions) = optimize(d, initial_x, NelderMead(), options)
 
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
@@ -16,6 +18,13 @@ function optimize{F<:Function, G<:Function}(f::F,
                   options::OptimizationOptions = OptimizationOptions())
     d = DifferentiableFunction(f, g!)
     optimize(d, initial_x, method, options)
+end
+function optimize{F<:Function, G<:Function}(f::F,
+                  g!::G,
+                  initial_x::Array,
+                  options::OptimizationOptions)
+    d = DifferentiableFunction(f, g!)
+    optimize(d, initial_x, BFGS(), options)
 end
 
 function optimize{F<:Function, G<:Function, H<:Function}(f::F,
@@ -26,6 +35,14 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   options::OptimizationOptions = OptimizationOptions())
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, method, options)
+end
+function optimize{F<:Function, G<:Function, H<:Function}(f::F,
+                  g!::G,
+                  h!::H,
+                  initial_x::Array,
+                  options::OptimizationOptions = OptimizationOptions())
+    d = TwiceDifferentiableFunction(f, g!, h!)
+    optimize(d, initial_x, Newton(), options)
 end
 
 function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F,
