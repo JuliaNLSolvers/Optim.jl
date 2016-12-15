@@ -124,6 +124,7 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
 end
 
 function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
+    lssuccess = true
     n = state.n
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
@@ -166,10 +167,21 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     end
 
     # Determine the distance of movement along the search line
-    state.alpha, f_update, g_update =
-      method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                     alphaguess, state.mayterminate)
-    state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    try
+        state.alpha, f_update, g_update =
+        method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                           alphaguess, state.mayterminate)
+        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    catch ex
+        if isa(ex, LineSearches.LineSearchException)
+            lssuccess = false
+            state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
+            state.alpha = ex.alpha
+            Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
+        else
+            rethrow(ex)
+        end
+    end
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
@@ -183,7 +195,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Save old f and g values to prepare for update_g! call
     state.f_x_previous = state.f_x
     copy!(state.g_previous, state.g)
-    false
+    (lssuccess == false) # break on linesearch error
 end
 
 

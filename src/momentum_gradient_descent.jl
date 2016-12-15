@@ -37,6 +37,7 @@ function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x
 end
 
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
+    lssuccess = true
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
         @inbounds state.s[i] = -state.g[i]
@@ -48,9 +49,21 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line
-    state.alpha, f_update, g_update =
-      method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr, state.alpha, state.mayterminate)
-    state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    try
+        state.alpha, f_update, g_update =
+        method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                           state.alpha, state.mayterminate)
+        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+    catch ex
+        if isa(ex, LineSearches.LineSearchException)
+            lssuccess = false
+            state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
+            state.alpha = ex.alpha
+            Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
+        else
+            rethrow(ex)
+        end
+    end
 
     # Update current position
     @simd for i in 1:state.n
@@ -59,5 +72,5 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
         @inbounds state.x_previous[i] = state.x[i]
         @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
     end
-    false # don't force break
+    (lssuccess == false) # break on linesearch error
 end
