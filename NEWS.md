@@ -1,4 +1,4 @@
-# Optim v0.7.2 release notes
+# Optim v0.7.3 release notes
 * Failures in a line search now terminates the optimization with a warning and status of non-convergence. The results can still be accessed, but `minimizer(res)` will not represent a local minimum.
   See [275](https://github.com/JuliaOpt/Optim.jl/pull/275).
 
