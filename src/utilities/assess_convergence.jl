@@ -53,7 +53,7 @@ function assess_convergence(state, options)
 end
 
 function assess_convergence(state::NelderMeadState, options)
-    g_converged = state.f_x <= options.g_tol # Hijact g_converged for NM stopping criterior
+    g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged
 end
 

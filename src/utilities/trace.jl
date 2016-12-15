@@ -7,7 +7,7 @@ function trace!(tr, state, iteration, method::NelderMead, options)
     update!(tr,
     iteration,
     state.f_lowest,
-    state.f_x,
+    state.nm_x,
     dt,
     options.store_trace,
     options.show_trace,
