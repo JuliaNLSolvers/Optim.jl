@@ -7,8 +7,11 @@ Newton(; linesearch::Function = LineSearches.hagerzhang!) =
 =#
 function Newton(; linesearch! = nothing, linesearch::Function = LineSearches.hagerzhang!)
     if linesearch! != nothing
-        warn("linesearch! keyword is deprecated, please use linesearch (without !)")
         linesearch = linesearch!
+        if !has_deprecated_linesearch![]
+            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+            has_deprecated_linesearch![] = true
+        end
     end
     Newton(linesearch)
 end
