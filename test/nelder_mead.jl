@@ -17,14 +17,3 @@ let
     res = Optim.optimize(prob.f, prob.initial_x, method = NelderMead(), store_trace = true)
     @assert ( length(unique(Optim.g_norm_trace(res))) != 1 || length(unique(Optim.f_trace(res))) != 1 ) && issorted(Optim.f_trace(res)[end:1])
 end
-
-
-# Test that deprecated syntax runs
-let
-	dep_prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(a = 1.0))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(g = 2.0))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(b = 0.5))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(initial_simplex = Optim.AffineSimplexer()))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(parameters = Optim.AdaptiveParameters()))
-end

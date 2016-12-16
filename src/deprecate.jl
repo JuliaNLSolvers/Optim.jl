@@ -1,5 +1,3 @@
-@deprecate NelderMead(a::Real, g::Real, b::Real) NelderMead(initial_simplex = AffineSimplexer(), parameters = FixedParameters(a, g, b, 0.5))
-
 @deprecate MultivariateOptimizationResults(method,
     initial_x, minimizer, minimum, iterations,
     iteration_converged, x_converged, x_tol,
