@@ -1,10 +1,17 @@
 immutable Newton <: Optimizer
     linesearch!::Function
 end
-
+#= uncomment v0.8.0
 Newton(; linesearch::Function = LineSearches.hagerzhang!) =
   Newton(linesearch)
-
+=#
+function Newton(; linesearch! = nothing, linesearch::Function = LineSearches.hagerzhang!)
+    if linesearch! != nothing
+        warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+        linesearch = linesearch!
+    end
+    Newton(linesearch)
+end
 type NewtonState{T}
     @add_generic_fields()
     x_previous::Array{T}

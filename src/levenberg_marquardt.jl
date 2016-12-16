@@ -24,6 +24,7 @@ function levenberg_marquardt{F<:Function, G<:Function, T}(f::F, g::G, initial_x:
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
     lambda::Real = 10.0, show_trace::Bool = false, lower::Vector{T} = Array(T,0), upper::Vector{T} = Array(T,0))
 
+    warn("levenberg_marquardt has been moved out of Optim.jl and into LsqFit.jl. Please adjust your code, and change your dependency to match this migration.")
     # check parameters
     ((isempty(lower) || length(lower)==length(initial_x)) && (isempty(upper) || length(upper)==length(initial_x))) ||
             throw(ArgumentError("Bounds must either be empty or of the same length as the number of parameters."))

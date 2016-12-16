@@ -68,11 +68,32 @@ immutable LBFGS{T, L<:Function, Tprep<:Union{Function, Void}} <: Optimizer
     extrapolate::Bool
     snap2one::Tuple
 end
-
+#= uncomment for v0.8.0
 LBFGS(; m::Integer = 10, linesearch = LineSearches.hagerzhang!,
                         P=nothing, precondprep = (P, x) -> nothing,
                         extrapolate::Bool=false, snap2one = (0.75, Inf)) =
       LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
+=#
+
+function LBFGS(; linesearch! = nothing,
+                 m::Integer = 10,
+                 linesearch = LineSearches.hagerzhang!,
+                 P=nothing,
+                 precondprep! = nothing,
+                 precondprep = (P, x) -> nothing,
+                 extrapolate::Bool=false,
+                 snap2one = (0.75, Inf))
+    if linesearch! != nothing
+      warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+      linesearch = linesearch!
+    end
+    if precondprep! != nothing
+       warn("precondprep! keyword is deprecated, please use precondprep (without !)")
+       precondprep = precondprep!
+    end
+
+    LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
+end
 
 type LBFGSState{T}
     @add_generic_fields()

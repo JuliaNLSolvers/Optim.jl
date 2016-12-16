@@ -4,9 +4,28 @@ immutable GradientDescent{L<:Function, T, Tprep<:Union{Function, Void}} <: Optim
     precondprep!::Tprep
 end
 
+#= uncomment for v0.8.0
 GradientDescent(; linesearch = LineSearches.hagerzhang!,
                 P = nothing, precondprep = (P, x) -> nothing) =
                     GradientDescent(linesearch, P, precondprep)
+=#
+function GradientDescent(; linesearch! = nothing,
+                           linesearch = LineSearches.hagerzhang!,
+                           P = nothing,
+                           precondprep! = nothing,
+                           precondprep = (P, x) -> nothing)
+
+    if linesearch! != nothing
+       warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+       linesearch = linesearch!
+    end
+    if precondprep! != nothing
+       warn("precondprep! keyword is deprecated, please use precondprep (without !)")
+       precondprep = precondprep!
+    end
+
+    GradientDescent(linesearch, P, precondprep)
+end
 
 type GradientDescentState{T}
     @add_generic_fields()
