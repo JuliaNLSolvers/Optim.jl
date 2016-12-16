@@ -13,7 +13,7 @@ let
     upper = [100.0]
     lower = [-100.0]
     n_particles = 4
-    options = OptimizationOptions(iterations=100)
+    options = Optim.Options(iterations=100)
     res = Optim.optimize(f_s, initial_x, ParticleSwarm(lower, upper, n_particles),
                          options)
     @assert norm(Optim.minimizer(res) - [5.0]) < 0.1
@@ -22,7 +22,7 @@ let
     lower = [-20., -20.]
     upper = [20., 20.]
     n_particles = 5
-    options = OptimizationOptions(iterations=300)
+    options = Optim.Options(iterations=300)
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles),
                              options)
     @assert norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1

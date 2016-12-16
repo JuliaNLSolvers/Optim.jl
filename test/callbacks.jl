@@ -15,7 +15,7 @@ let
             ot_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
         optimize(f, initial_x, method, options)
         @test ot_run == true
 
@@ -25,12 +25,12 @@ let
             os_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every=3)
         optimize(f, initial_x, method, options)
         @test os_run == true
 
         # Test early stopping by callbacks
-        options = OptimizationOptions(callback = x -> x.iteration == 5 ? true : false)
+        options = Optim.Options(callback = x -> x.iteration == 5 ? true : false)
         optimize(f, zeros(2), NelderMead(), options)
     end
 
@@ -44,7 +44,7 @@ let
             ot_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
         optimize(d2, initial_x, method, options)
         @test ot_run == true
 
@@ -54,7 +54,7 @@ let
             os_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every=3)
         optimize(d2, initial_x, method, options)
         @test os_run == true
     end
@@ -66,7 +66,7 @@ let
             ot_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
         optimize(d3, initial_x, method, options)
         @test ot_run == true
 
@@ -76,7 +76,7 @@ let
             os_run = true
             false
         end
-        options = OptimizationOptions(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every=3)
         optimize(d3, initial_x, method, options)
         @test os_run == true
     end

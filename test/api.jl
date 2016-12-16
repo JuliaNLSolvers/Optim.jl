@@ -16,11 +16,11 @@ let
     Optim.optimize(d2, initial_x, BFGS())
     Optim.optimize(d3, initial_x, BFGS())
 
-    Optim.optimize(f, initial_x, BFGS(), OptimizationOptions())
-    Optim.optimize(f, g!, initial_x, BFGS(), OptimizationOptions())
-    Optim.optimize(f, g!, h!, initial_x, BFGS(), OptimizationOptions())
-    Optim.optimize(d2, initial_x, BFGS(), OptimizationOptions())
-    Optim.optimize(d3, initial_x, BFGS(), OptimizationOptions())
+    Optim.optimize(f, initial_x, BFGS(), Optim.Options())
+    Optim.optimize(f, g!, initial_x, BFGS(), Optim.Options())
+    Optim.optimize(f, g!, h!, initial_x, BFGS(), Optim.Options())
+    Optim.optimize(d2, initial_x, BFGS(), Optim.Options())
+    Optim.optimize(d3, initial_x, BFGS(), Optim.Options())
 
     Optim.optimize(d1, initial_x, BFGS())
     Optim.optimize(d2, initial_x, BFGS())
@@ -59,16 +59,16 @@ let
     optimize(f, g!, initial_x, SimulatedAnnealing())
     optimize(f, g!, h!, initial_x, SimulatedAnnealing())
 
-    options = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+    options = Optim.Options(g_tol = 1e-12, iterations = 10,
                                   store_trace = true, show_trace = false)
     res = optimize(f, g!, h!,
     	           initial_x,
     	           BFGS(),
     	           options)
 
-    options_g = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+    options_g = Optim.Options(g_tol = 1e-12, iterations = 10,
                                   store_trace = true, show_trace = false)
-    options_f = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+    options_f = Optim.Options(g_tol = 1e-12, iterations = 10,
                                   store_trace = true, show_trace = false)
     res = optimize(f, g!, h!,
     	           initial_x,
@@ -89,7 +89,7 @@ let
     	           initial_x,
     	           Newton(),
                    options_g)
-    options_sa = OptimizationOptions(iterations = 10, store_trace = true,
+    options_sa = Optim.Options(iterations = 10, store_trace = true,
                                      show_trace = false)
     res = optimize(f, g!, h!,
     	           initial_x,
@@ -100,7 +100,7 @@ let
     	           initial_x,
     	           BFGS(),
     	           options_g)
-    options_ext = OptimizationOptions(g_tol = 1e-12, iterations = 10,
+    options_ext = Optim.Options(g_tol = 1e-12, iterations = 10,
                                       store_trace = true, show_trace = false,
                                       extended_trace = true)
     res_ext = optimize(f, g!, h!,
@@ -136,12 +136,12 @@ let
    @test_throws ErrorException Optim.upper_bound(res)
    @test_throws ErrorException Optim.rel_tol(res)
    @test_throws ErrorException Optim.abs_tol(res)
-   options_extended = OptimizationOptions(store_trace = true, extended_trace = true)
+   options_extended = Optim.Options(store_trace = true, extended_trace = true)
    res_extended = Optim.optimize(f, g!, initial_x, BFGS(), options_extended)
    @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
    @test haskey(Optim.trace(res_extended)[1].metadata,"x")
-   options_extended_nm = OptimizationOptions(store_trace = true, extended_trace = true)
+   options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
    res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")

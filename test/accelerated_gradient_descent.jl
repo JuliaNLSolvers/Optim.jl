@@ -9,6 +9,6 @@ let
     d = DifferentiableFunction(f, g!)
 
     initial_x = [1.0]
-    options = OptimizationOptions(show_trace = true, iterations = 10)
+    options = Optim.Options(show_trace = true, iterations = 10)
     Optim.optimize(d, initial_x, AcceleratedGradientDescent(), options)
 end

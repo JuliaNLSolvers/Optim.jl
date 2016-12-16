@@ -14,9 +14,3 @@ of the Julia ecosystem and write
 g!(stor, x)
 h!(stor, x)
 ```
-
-Ít is also quite possible that the keywords-style tuning of options will be removed.
-Instead of writing `optimize(..., g_tol = 1e-4)` users will have to write `optimize(..., OptimizationOptions(g_tol = 1e-4))`.
-Obviously, it is a bit more verbose, but it will allow the internals to work entirely through
-dispatch, and avoid a lot of keyword handling. Simpler code is easier to maintain,
-and less prone to bugs.

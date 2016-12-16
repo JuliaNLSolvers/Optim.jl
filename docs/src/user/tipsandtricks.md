@@ -95,7 +95,7 @@ We only show the first five iterations of an attempt to minimize the function us
 Gradient Descent.
 ```jlcon
 julia> @time optimize(f, initial_x, GradientDescent(),
-                      OptimizationOptions(show_trace=true, iterations = 5))
+                      Optim.Options(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02
      1     1.018734e+03     2.704951e+01
@@ -119,7 +119,7 @@ Results of Optimization Algorithm
  * Gradient Calls: 23
 
 julia> @time optimize(f, g!, initial_x, GradientDescent(),
-                      OptimizationOptions(show_trace=true, iterations = 5))
+                      Optim.Options(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
      0     4.850000e+04     2.116000e+02
      1     1.018769e+03     2.704998e+01
@@ -149,10 +149,10 @@ by all the function evaluations required to do the central finite differences ca
 
 ## Early stopping
 Sometimes it might be of interest to stop the optimizer early. The simplest way to
-do this is to set the `iterations` keyword in `OptimizationOptions` to some number.
+do this is to set the `iterations` keyword in `Optim.Options` to some number.
 This will prevent the iteration counter exceeding some limit, with the standard value
 being 1000. Alternatively, it is possible to put a soft limit on the run time of
-the optimization procedure by setting the `time_limit` keyword in the `OptimizationOptions`
+the optimization procedure by setting the `time_limit` keyword in the `Optim.Options`
 constructor.
 ```julia
 using Optim
@@ -168,7 +168,7 @@ end
 
 start_time = time()
 
-optimize(slow, zeros(2), NelderMead(), OptimizationOptions(time_limit = 3.0))
+optimize(slow, zeros(2), NelderMead(), Optim.Options(time_limit = 3.0))
 ```
 This will stop after about three seconds. If it is more important that we stop before the limit
 is reached, it is possible to use a callback with a simple model for predicting how much
@@ -202,13 +202,13 @@ function advanced_time_control(x)
     println()
     false
 end
-optimize(very_slow, zeros(2), NelderMead(), OptimizationOptions(callback = advanced_time_control))
+optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_time_control))
 ```
 It will try to predict the elapsed time after the next iteration is over, and stop now
 if it is expected to exceed the limit of 13 seconds. Running it, we get something like
 the following output
 ```jlcon
-julia> optimize(very_slow, zeros(2), NelderMead(), OptimizationOptions(callback = advanced_time_control))
+julia> optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_time_control))
  * Iteration:       0
  * Time so far:     2.219298839569092
 

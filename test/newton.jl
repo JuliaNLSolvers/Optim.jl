@@ -15,7 +15,7 @@ let
 
     # Need to specify autodiff!
     @test_throws ErrorException Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], Newton())
-    Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], Newton(), OptimizationOptions(autodiff = true))
+    Optim.optimize(DifferentiableFunction(f_1, g!_1), [0.0], Newton(), Optim.Options(autodiff = true))
 
     results = Optim.optimize(d, [0.0], Newton())
     @test_throws ErrorException Optim.x_trace(results)
@@ -66,11 +66,11 @@ let
     for (name, prob) in Optim.UnconstrainedProblems.examples
     	if prob.istwicedifferentiable
     		ddf = DifferentiableFunction(prob.f, prob.g!)
-    		res = Optim.optimize(ddf, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+    		res = Optim.optimize(ddf, prob.initial_x, Newton(), Optim.Options(autodiff = true))
     		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    		res = Optim.optimize(ddf.f, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+    		res = Optim.optimize(ddf.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
     		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-            res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, Newton(), OptimizationOptions(autodiff = true))
+            res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))
     		@assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
     	end
     end

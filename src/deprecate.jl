@@ -40,7 +40,7 @@ end
                   extended_trace::Bool = false,
                   show_every::Integer = 1,
                   autodiff::Bool = false,
-                  callback = nothing) optimize(f, initial_x, method, OptimizationOptions(;
+                  callback = nothing) optimize(f, initial_x, method, Options(;
         x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
@@ -59,7 +59,7 @@ end
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   show_every::Integer = 1,
-                  callback = nothing) optimize(f, g!, initial_x, method, OptimizationOptions(;
+                  callback = nothing) optimize(f, g!, initial_x, method, Options(;
                       x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
                       iterations = iterations, store_trace = store_trace,
                       show_trace = show_trace, extended_trace = extended_trace,
@@ -78,7 +78,7 @@ end
                   show_trace::Bool = false,
                   extended_trace::Bool = false,
                   show_every::Integer = 1,
-                  callback = nothing) optimize(f, g!, h!, initial_x, method, OptimizationOptions(;
+                  callback = nothing) optimize(f, g!, h!, initial_x, method, Options(;
         x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
@@ -96,7 +96,7 @@ end
                           show_trace::Bool = false,
                           extended_trace::Bool = false,
                           show_every::Integer = 1,
-                          callback = nothing) optimize(d, initial_x, method, OptimizationOptions(;
+                          callback = nothing) optimize(d, initial_x, method, Options(;
                               x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
                               iterations = iterations, store_trace = store_trace,
                               show_trace = show_trace, extended_trace = extended_trace,
@@ -113,8 +113,10 @@ end
                           show_trace::Bool = false,
                           extended_trace::Bool = false,
                           show_every::Integer = 1,
-                          callback = nothing) optimize(d, initial_x, method, OptimizationOptions(;
+                          callback = nothing) optimize(d, initial_x, method, Options(;
                               x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
                               iterations = iterations, store_trace = store_trace,
                               show_trace = show_trace, extended_trace = extended_trace,
                               callback = callback, show_every = show_every))
+
+@deprecate OptimizationOptions(args...; kwargs...) Optim.Options(args...; kwargs...)

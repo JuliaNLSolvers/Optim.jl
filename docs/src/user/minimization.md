@@ -28,7 +28,7 @@ optimize(f, [0.0, 0.0], LBFGS())
 Alternatively, the `autodiff` keyword will use atomatic differentiation to construct
 the gradient.
 ```jl
-optimize(f, [0.0, 0.0], LBFGS(), OptimizationOptions(autodiff = true))
+optimize(f, [0.0, 0.0], LBFGS(), Optim.Options(autodiff = true))
 ```
 For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
@@ -86,7 +86,7 @@ This performs optimization with a barrier penalty, successively scaling down the
 
 This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` or `LBFGS` with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
 
-There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `OptimizationOptions` type using the keyword `optimizer_o`.
+There are two iterations parameters: an outer iterations parameter used to control `Fminbox` and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an `Optim.Options` type using the keyword `optimizer_o`.
 
 For example, the following restricts the optimization to 2 major iterations
 ```julia
@@ -94,7 +94,7 @@ results = optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimi
 ```
 In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
 ```julia
-results = Optim.optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimizer = GradientDescent, optimizer_o = OptimizationOptions(iterations = 2))
+results = Optim.optimize(DifferentiableFunction(f), initial_x, l, u, Fminbox(); optimizer = GradientDescent, optimizer_o = Optim.Options(iterations = 2))
 ```
 ## Minimizing a univariate function on a bounded interval
 

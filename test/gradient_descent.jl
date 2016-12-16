@@ -11,7 +11,7 @@ let
                         1000
                 end
                 res = Optim.optimize(f_prob, prob.initial_x, GradientDescent(),
-                                     OptimizationOptions(autodiff = use_autodiff,
+                                     Optim.Options(autodiff = use_autodiff,
                                                          iterations = iterations))
                 @assert norm(Optim.minimizer(res) - prob.solutions, Inf) < 1e-2
             end

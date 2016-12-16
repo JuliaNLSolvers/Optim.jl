@@ -123,7 +123,7 @@ function optimize{T<:AbstractFloat}(
         mufactor::T = convert(T, 0.001),
         precondprep! = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
         optimizer = ConjugateGradient,
-        optimizer_o = OptimizationOptions(store_trace = store_trace,
+        optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
         nargs...)

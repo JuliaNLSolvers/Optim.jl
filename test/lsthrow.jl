@@ -9,7 +9,7 @@ let
         println("Testing $(string(optimizer))")
         prob = Optim.UnconstrainedProblems.examples["Exponential"]
         optimize(prob.f, prob.initial_x, optimizer(linesearch = ls),
-                 OptimizationOptions(autodiff = true))
+                 Optim.Options(autodiff = true))
         # TODO: How can I verify that the call to optimize gives a warning?
     end
 end
