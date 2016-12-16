@@ -9,6 +9,7 @@ function optimize{F<:Function}(f::F,
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
                   g_tol::Real = 1e-8,
+                  successive_f_tol::Integer = 2,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -17,7 +18,7 @@ function optimize{F<:Function}(f::F,
                   autodiff::Bool = false,
                   callback = nothing)
     options = OptimizationOptions(;
-        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol, successive_f_tol = successive_f_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every,
@@ -32,6 +33,7 @@ function optimize{F<:Function, G<:Function}(f::F,
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
                   g_tol::Real = 1e-8,
+                  successive_f_tol::Integer = 2,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -39,7 +41,7 @@ function optimize{F<:Function, G<:Function}(f::F,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol, successive_f_tol = successive_f_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -54,6 +56,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
                   g_tol::Real = 1e-8,
+                  successive_f_tol::Integer = 2,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -61,7 +64,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol, successive_f_tol = successive_f_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -74,6 +77,7 @@ function optimize(d::DifferentiableFunction,
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
                   g_tol::Real = 1e-8,
+                  successive_f_tol::Integer = 2,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -81,7 +85,7 @@ function optimize(d::DifferentiableFunction,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol, successive_f_tol = successive_f_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -94,6 +98,7 @@ function optimize(d::TwiceDifferentiableFunction,
                   x_tol::Real = 1e-32,
                   f_tol::Real = 1e-32,
                   g_tol::Real = 1e-8,
+                  successive_f_tol::Integer = 2,
                   iterations::Integer = 1_000,
                   store_trace::Bool = false,
                   show_trace::Bool = false,
@@ -101,7 +106,7 @@ function optimize(d::TwiceDifferentiableFunction,
                   show_every::Integer = 1,
                   callback = nothing)
     options = OptimizationOptions(;
-        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol,
+        x_tol = x_tol, f_tol = f_tol, g_tol = g_tol, successive_f_tol = successive_f_tol,
         iterations = iterations, store_trace = store_trace,
         show_trace = show_trace, extended_trace = extended_trace,
         callback = callback, show_every = show_every)
@@ -224,7 +229,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
-    x_converged, f_converged = false, false
+    x_converged, f_converged, counter_f_tol = false, false, 0
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
@@ -246,6 +251,11 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
         update_g!(d, state, method)
         x_converged, f_converged,
         g_converged, converged = assess_convergence(state, options)
+        # See optimize in interior.jl for an explanation of the next
+        # two lines (given the existence of the option, we'd better
+        # use it here too)
+        counter_f_tol = f_converged ? counter_f_tol+1 : 0
+        converged = x_converged | g_converged | (counter_f_tol > options.successive_f_tol)
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true
         !converged && update_h!(d, state, method)

@@ -25,3 +25,9 @@ end
 @deprecate interpolating_linesearch! LineSearches.strongwolfe!
 @deprecate backtracking_linesearch! LineSearches.backtracking!
 @deprecate interpbacktracking_linesearch! LineSearches.interpbacktracking!
+
+if VERSION >= v"0.5.0"
+    view5(A, i, j) = view(A, i, j)
+else
+    view5(A, i, j) = A[i,j]
+end

@@ -17,8 +17,13 @@ module Optim
            Base.setindex!
 
     export optimize,
+           isfeasible,
+           isinterior,
+           nconstraints,
            DifferentiableFunction,
            TwiceDifferentiableFunction,
+           DifferentiableConstraintsFunction,
+           TwiceDifferentiableConstraintsFunction,
            OptimizationOptions,
            OptimizationState,
            OptimizationTrace,
@@ -30,6 +35,7 @@ module Optim
            Fminbox,
            GoldenSection,
            GradientDescent,
+           IPNewton,
            LBFGS,
            MomentumGradientDescent,
            NelderMead,
@@ -76,6 +82,9 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
+    include("iplinesearch.jl")
+    include("interior.jl")
+    include("ipnewton.jl")
 
     # trust region methods
     include("levenberg_marquardt.jl")
@@ -102,8 +111,9 @@ module Optim
     include("utilities/trace.jl")
 
     # Examples for testing
-    include(joinpath("problems", "unconstrained.jl"))
+    include(joinpath("problems", "multivariate.jl"))
     include(joinpath("problems", "univariate.jl"))
+    using .MultivariateProblems
 
     cgdescent(args...) = error("API has changed. Please use cg.")
 end
