@@ -11,6 +11,11 @@ let
 		end
 		!(name == "Large Polynomial") && @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
 	end
+
+    # Test if the trace is correctly stored.
+    prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+    res = Optim.optimize(prob.f, prob.initial_x, method = NelderMead(), store_trace = true)
+    @assert ( length(unique(Optim.g_norm_trace(res))) != 1 || length(unique(Optim.f_trace(res))) != 1 ) && issorted(Optim.f_trace(res)[end:1])
 end
 
 
