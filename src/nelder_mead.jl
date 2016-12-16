@@ -37,7 +37,6 @@ end
 FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
 parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 
-
 immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     initial_simplex::Ts
     parameters::Tp
@@ -104,9 +103,6 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-# f_x and f_x_previous should be renamed to nm_x, nm_x_previous and f_x should hold
-# f_lowest instead!
-
 type NelderMeadState{T, N}
     @add_generic_fields()
     m::Int64
@@ -118,7 +114,7 @@ type NelderMeadState{T, N}
     x_reflect::Array{T}
     x_cache::Array{T}
     f_simplex::Array{T}
-    f_x_previous::T
+    nm_x::T
     f_lowest::T
     i_order::Vector{Int64}
     α::T
@@ -129,7 +125,6 @@ type NelderMeadState{T, N}
 end
 
 initial_state(method::NelderMead, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
-
 function initial_state{F<:Function, T}(method::NelderMead, options, f::F, initial_x::Array{T})
     n = length(initial_x)
     m = n + 1
@@ -149,7 +144,7 @@ function initial_state{F<:Function, T}(method::NelderMead, options, f::F, initia
 NelderMeadState("Nelder-Mead",
           n, # Dimensionality of the problem
           Array{T}(n), # Variable to hold final minimizer value for MultivariateOptimizationResults
-          T(nmobjective(f_simplex, n, m)), # Store Nelder Mead objective in state.f_x
+          f_simplex[i_order[1]], # Store Nelder Mead objective in state.f_x = state.f_lowest
           m,
           0,
           0,
@@ -162,7 +157,7 @@ NelderMeadState("Nelder-Mead",
           Array{T}(n), # Store cache in state.x_reflect
           Array{T}(n), # Store cache in state.x_cache
           f_simplex, # Store objective values at the vertices in state.f_simplex
-          T(NaN), # Store previous f in state.f_x_previous
+          T(nmobjective(f_simplex, n, m)), # Store nmobjective in state.nm_x
           f_simplex[i_order[1]], # Store lowest f in state.f_lowest
           i_order, # Store a vector of rankings of objective values
           T(α),
@@ -171,19 +166,21 @@ NelderMeadState("Nelder-Mead",
           T(δ),
           "initial")
 end
+
 update_state!(d, state::NelderMeadState, method::NelderMead) = update_state!(d.f, state, method)
 function update_state!{F<:Function, T}(f::F, state::NelderMeadState{T}, method::NelderMead)
     # Augment the iteration counter
     shrink = false
     n, m = state.n, state.m
-    centroid!(state.x_centroid, state.simplex,  state.i_order[m])
+
+    centroid!(state.x_centroid, state.simplex, state.i_order[m])
     copy!(state.x_lowest, state.simplex[state.i_order[1]])
     copy!(state.x_second_highest, state.simplex[state.i_order[n]])
     copy!(state.x_highest, state.simplex[state.i_order[m]])
-
-    f_lowest = state.f_simplex[state.i_order[1]]
+    state.f_lowest = state.f_simplex[state.i_order[1]]
     f_second_highest = state.f_simplex[state.i_order[n]]
     f_highest = state.f_simplex[state.i_order[m]]
+
     # Compute a reflection
     @inbounds for j in 1:n
         state.x_reflect[j] = state.x_centroid[j] + state.α * (state.x_centroid[j]-state.x_highest[j])
@@ -191,7 +188,7 @@ function update_state!{F<:Function, T}(f::F, state::NelderMeadState{T}, method::
 
     f_reflect = f(state.x_reflect)
     state.f_calls += 1
-    if f_reflect < f_lowest
+    if f_reflect < state.f_lowest
         # Compute an expansion
         @inbounds for j in 1:n
             state.x_cache[j] = state.x_centroid[j] + state.β *(state.x_reflect[j] - state.x_centroid[j])
@@ -242,8 +239,8 @@ function update_state!{F<:Function, T}(f::F, state::NelderMeadState{T}, method::
             end
             f_inside_contraction = f(state.x_cache)
             if f_inside_contraction < f_highest
-                copy!(state.simplex[ state.i_order[m]], state.x_cache)
-                @inbounds state.f_simplex[ state.i_order[m]] = f_inside_contraction
+                copy!(state.simplex[state.i_order[m]], state.x_cache)
+                @inbounds state.f_simplex[state.i_order[m]] = f_inside_contraction
                 state.step_type = "inside contraction"
                 sortperm!(state.i_order, state.f_simplex)
             else
@@ -262,15 +259,15 @@ function update_state!{F<:Function, T}(f::F, state::NelderMeadState{T}, method::
         sortperm!(state.i_order, state.f_simplex)
     end
 
-    state.f_x_previous, state.f_x = state.f_x, nmobjective(state.f_simplex, n, m)
+    state.nm_x = nmobjective(state.f_simplex, n, m)
     false
 end
 
 after_while!(d, state, method::NelderMead, options) = after_while!(d.f, state, method::NelderMead, options)
 function after_while!{F<:Function}(f::F, state, method::NelderMead, options)
     sortperm!(state.i_order, state.f_simplex)
-    x_centroid_min = centroid(state.simplex,  state.i_order[state.m])
-    f_centroid_min = f(state.x_centroid)
+    x_centroid_min = centroid(state.simplex, state.i_order[state.m])
+    f_centroid_min = f(x_centroid_min)
     state.f_calls += 1
     f_min, i_f_min = findmin(state.f_simplex)
     x_min = state.simplex[i_f_min]
