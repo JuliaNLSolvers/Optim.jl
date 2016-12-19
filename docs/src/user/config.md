@@ -58,3 +58,16 @@ res = optimize(f, g!,
                              store_trace = true,
                              show_trace = false))
 ```
+Another interface is also available, based directly on keywords:
+```jl
+res = optimize(f, g!,
+               [0.0, 0.0],
+               method = GradientDescent(),
+               g_tol = 1e-12,
+               iterations = 10,
+               store_trace = true,
+               show_trace = false)
+```
+Notice the need to specify the method using a keyword if this syntax is used.
+This approach might be deprecated in the future, and as a result we recommend writing code
+that has to maintained using the `Optim.Options` approach.
