@@ -7,7 +7,7 @@ let
                 f_prob = prob.f
                 iterations = name == "Powell" ? 2000 : 1000
                 res = Optim.optimize(f_prob, prob.initial_x, MomentumGradientDescent(),
-                                     OptimizationOptions(autodiff = use_autodiff,
+                                     Optim.Options(autodiff = use_autodiff,
                                                          iterations = iterations,
                                                          show_trace = debug))
                 debug && @show Optim.minimizer(res)

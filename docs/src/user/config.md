@@ -47,16 +47,16 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `autodiff`: When only an objective function is provided, use automatic differentiation to compute exact numerical gradients. If not, finite differencing will be used. This functionality is experimental. Defaults to `false`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
 
-We currently recommend the statically dispatched interface by using the `OptimizationOptions` 
+We currently recommend the statically dispatched interface by using the `Optim.Options`
 constructor:
 ```jl
 res = optimize(f, g!,
                [0.0, 0.0],
                GradientDescent(),
-               OptimizationOptions(g_tol = 1e-12,
-                                   iterations = 10,
-                                   store_trace = true,
-                                   show_trace = false))
+               Optim.Options(g_tol = 1e-12,
+                             iterations = 10,
+                             store_trace = true,
+                             show_trace = false))
 ```
 Another interface is also available, based directly on keywords:
 ```jl
@@ -68,4 +68,6 @@ res = optimize(f, g!,
                store_trace = true,
                show_trace = false)
 ```
-Notice the need to specify the method using a keyword if this syntax is used. It is likely that this will be deprecated in the future.
+Notice the need to specify the method using a keyword if this syntax is used.
+This approach might be deprecated in the future, and as a result we recommend writing code
+that has to maintained using the `Optim.Options` approach.

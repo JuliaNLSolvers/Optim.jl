@@ -11,7 +11,7 @@ let
                         1000
                 end
                 res = Optim.optimize(f_prob, prob.initial_x, GradientDescent(),
-                                     OptimizationOptions(autodiff = use_autodiff,
+                                     Optim.Options(autodiff = use_autodiff,
                                                          iterations = iterations))
                 @assert norm(Optim.minimizer(res) - prob.solutions, Inf) < 1e-2
             end
@@ -30,7 +30,7 @@ let
 
     d = DifferentiableFunction(f_gd_1, g_gd_1)
 
-    results = Optim.optimize(d, initial_x, method=GradientDescent())
+    results = Optim.optimize(d, initial_x, GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [5.0]) < 0.01
@@ -48,7 +48,7 @@ let
 
     d = DifferentiableFunction(f_gd_2, g_gd_2)
 
-    results = Optim.optimize(d, [1.0, 1.0], method=GradientDescent())
+    results = Optim.optimize(d, [1.0, 1.0], GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
     @assert Optim.g_converged(results)
     @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01

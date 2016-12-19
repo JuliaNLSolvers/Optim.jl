@@ -57,14 +57,14 @@ julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 ```
 Still looks good. Returning to automatic differentiation, let us try both solvers using this
 method. We enable automatic differentiation by adding `autodiff = true` to our
-`OptimizationOptions`.
+`Optim.Options`.
 ```jlcon
-julia> Optim.minimizer(optimize(f, initial_x, BFGS(), OptimizationOptions(autodiff = true)))
+julia> Optim.minimizer(optimize(f, initial_x, BFGS(), Optim.Options(autodiff = true)))
 2-element Array{Float64,1}:
  1.0
  1.0
 
-julia> Optim.minimizer(optimize(f, initial_x, Newton(), OptimizationOptions(autodiff = true)))
+julia> Optim.minimizer(optimize(f, initial_x, Newton(), Optim.Options(autodiff = true)))
 2-element Array{Float64,1}:
  1.0
  1.0

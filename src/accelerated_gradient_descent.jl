@@ -11,8 +11,21 @@ immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
-AcceleratedGradientDescent(; linesearch! = LineSearches.hagerzhang!) =
-  AcceleratedGradientDescent(linesearch!)
+#= uncomment for v0.8.0
+AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
+  AcceleratedGradientDescent(linesearch)
+=#
+function AcceleratedGradientDescent(; linesearch! = nothing,
+                                      linesearch = LineSearches.hagerzhang!)
+    if linesearch! != nothing
+        linesearch = linesearch!
+        if !has_deprecated_linesearch![]
+            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+            has_deprecated_linesearch![] = true
+        end
+    end
+    AcceleratedGradientDescent(linesearch)
+end
 
 type AcceleratedGradientDescentState{T}
     @add_generic_fields()

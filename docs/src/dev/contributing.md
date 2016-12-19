@@ -22,8 +22,8 @@ immutable Minim{F<:Function, T} <: Optimizer
     minim_parameter::T
 end
 
-Minim(; linesearch! = LineSearches.hagerzhang!, minim_parameter = 1.0) =
-  Minim(linesearch!, minim_parameter)
+Minim(; linesearch = LineSearches.hagerzhang!, minim_parameter = 1.0) =
+  Minim(linesearch, minim_parameter)
 
 type MinimState{T}
   @add_generic_fields()

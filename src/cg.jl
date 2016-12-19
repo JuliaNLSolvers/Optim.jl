@@ -59,15 +59,41 @@ immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L<:Function} <: Opt
     precondprep!::Tprep
     linesearch!::L
 end
-
+#= uncomment for v0.8.0
 function ConjugateGradient(;
-                           linesearch! = LineSearches.hagerzhang!,
+                           linesearch = LineSearches.hagerzhang!,
                            eta::Real = 0.4,
                            P::Any = nothing,
-                           precondprep! = (P, x) -> nothing)
+                           precondprep = (P, x) -> nothing)
     ConjugateGradient(Float64(eta),
-                                 P, precondprep!,
-                                 linesearch!)
+                                 P, precondprep,
+                                 linesearch)
+end
+=#
+function ConjugateGradient(; linesearch! = nothing,
+                             linesearch = LineSearches.hagerzhang!,
+                             eta::Real = 0.4,
+                             P::Any = nothing,
+                             precondprep! = nothing,
+                             precondprep = (P, x) -> nothing)
+
+    if linesearch! != nothing
+       linesearch = linesearch!
+       if !has_deprecated_linesearch![]
+           warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+           has_deprecated_linesearch![] = true
+       end
+    end
+    if precondprep! != nothing
+       precondprep = precondprep!
+       if !has_deprecated_precondprep![]
+           warn("precondprep! keyword is deprecated, please use precondprep (without !)")
+           has_deprecated_precondprep![] = true
+       end
+    end
+    ConjugateGradient(Float64(eta),
+                      P, precondprep,
+                      linesearch)
 end
 
 type ConjugateGradientState{T}

@@ -2,9 +2,9 @@ let
 	# Test Optim.nelder_mead for all functions except Large Polynomials in Optim.UnconstrainedProblems.examples
 	for (name, prob) in Optim.UnconstrainedProblems.examples
 		f_prob = prob.f
-		res = Optim.optimize(f_prob, prob.initial_x, NelderMead(), OptimizationOptions(iterations = 10000))
+		res = Optim.optimize(f_prob, prob.initial_x, NelderMead(), Optim.Options(iterations = 10000))
 		if name == "Powell"
-			res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(), g_tol = 1e-12)
+			res = Optim.optimize(f_prob, prob.initial_x, NelderMead(), Optim.Options(g_tol = 1e-12))
 		elseif name == "Large Polynomial"
 			# TODO do this only when a "run all" flag checked
 			# res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(initial_simplex = Optim.AffineSimplexer(1.,1.)), iterations = 450_000)
@@ -16,15 +16,4 @@ let
     prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     res = Optim.optimize(prob.f, prob.initial_x, method = NelderMead(), store_trace = true)
     @assert ( length(unique(Optim.g_norm_trace(res))) != 1 || length(unique(Optim.f_trace(res))) != 1 ) && issorted(Optim.f_trace(res)[end:1])
-end
-
-
-# Test that deprecated syntax runs
-let
-	dep_prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(a = 1.0))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(g = 2.0))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(b = 0.5))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(initial_simplex = Optim.AffineSimplexer()))
-	optimize(dep_prob.f, dep_prob.initial_x, NelderMead(parameters = Optim.AdaptiveParameters()))
 end

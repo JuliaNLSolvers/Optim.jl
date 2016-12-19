@@ -1,4 +1,6 @@
-@deprecate NelderMead(a::Real, g::Real, b::Real) NelderMead(initial_simplex = AffineSimplexer(), parameters = FixedParameters(a, g, b, 0.5))
+const has_deprecated_linesearch! = Ref(false)
+const has_deprecated_precondprep! = Ref(false)
+const has_deprecated_levenberg_marquardt = Ref(false)
 
 @deprecate MultivariateOptimizationResults(method,
     initial_x, minimizer, minimum, iterations,
@@ -25,3 +27,5 @@ end
 @deprecate interpolating_linesearch! LineSearches.strongwolfe!
 @deprecate backtracking_linesearch! LineSearches.backtracking!
 @deprecate interpbacktracking_linesearch! LineSearches.interpbacktracking!
+
+@deprecate OptimizationOptions(args...; kwargs...) Optim.Options(args...; kwargs...)

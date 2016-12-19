@@ -1,9 +1,9 @@
 # Gradient Descent
 ## Constructor
 ```julia
-GradientDescent(; linesearch! = LineSearches.hagerzhang!,
+GradientDescent(; linesearch = LineSearches.hagerzhang!,
                   P = nothing,
-                  precondprep! = (P, x) -> nothing)
+                  precondprep = (P, x) -> nothing)
 ```
 ## Description
 Gradient Descent a common name for a quasi-Newton solver. This means that it takes

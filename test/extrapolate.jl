@@ -3,7 +3,7 @@ import LineSearches
 
 let
    methods = [ LBFGS(), ConjugateGradient(),
-               LBFGS(extrapolate=true, linesearch! = LineSearches.interpbacktrack!) ]
+               LBFGS(extrapolate=true, linesearch = LineSearches.interpbacktrack!) ]
    msgs = ["LBFGS Default Options: ",  "CG Default Options: ",
           "LBFGS + Backtracking + Extrapolation: " ]
 
@@ -12,7 +12,7 @@ let
    println("--------------------")
    rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
    for (method, msg) in zip(methods, msgs)
-      results = Optim.optimize(rosenbrock, zeros(2), method=method)
+      results = Optim.optimize(rosenbrock, zeros(2), method)
       println(msg, "g_calls = ", results.g_calls, ", f_calls = ", results.f_calls)
    end
 
@@ -32,10 +32,10 @@ let
    initial_x = zeros(N)
    P = precond(initial_x)
    methods = [ LBFGS(P=P), ConjugateGradient(P=P),
-         LBFGS(extrapolate=true, linesearch! = LineSearches.interpbacktrack!, P=P) ]
+         LBFGS(extrapolate=true, linesearch = LineSearches.interpbacktrack!, P=P) ]
 
    for (method, msg) in zip(methods, msgs)
-      results = Optim.optimize(df, copy(initial_x), method=method)
+      results = Optim.optimize(df, copy(initial_x), method)
       println(msg, "g_calls = ", results.g_calls, ", f_calls = ", results.f_calls)
    end
 end

@@ -3,7 +3,7 @@ let
         for (name, prob) in Optim.UnconstrainedProblems.examples
             if prob.isdifferentiable
                 f_prob = prob.f
-                res = Optim.optimize(f_prob, prob.initial_x, BFGS(), OptimizationOptions(autodiff = use_autodiff))
+                res = Optim.optimize(f_prob, prob.initial_x, BFGS(), Optim.Options(autodiff = use_autodiff))
                 @assert norm(Optim.minimizer(res) - prob.solutions) < 1e-2
             end
         end

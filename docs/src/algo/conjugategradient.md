@@ -1,10 +1,10 @@
 # Conjugate Gradient Descent
 ## Constructor
 ```julia
-ConjugateGradient(; linesearch! = LineSearches.hagerzhang!,
+ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
                     eta = 0.4,
                     P = nothing,
-                    precondprep! = (P, x) -> nothing)
+                    precondprep = (P, x) -> nothing)
 ```
 
 ## Description

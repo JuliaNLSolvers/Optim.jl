@@ -5,9 +5,22 @@ immutable BFGS{L<:Function, H<:Function} <: Optimizer
     linesearch!::L
     initial_invH::H
 end
-
-BFGS(; linesearch! = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
-  BFGS(linesearch!, initial_invH)
+#= uncomment for v0.8.0
+BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
+  BFGS(linesearch, initial_invH)
+=#
+function BFGS(; linesearch! = nothing,
+                linesearch = LineSearches.hagerzhang!,
+                initial_invH = x -> eye(eltype(x), length(x)))
+    if linesearch! != nothing
+        linesearch = linesearch!
+        if !has_deprecated_linesearch![]
+            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+            has_deprecated_linesearch![] = true
+        end
+    end
+    BFGS(linesearch, initial_invH)
+end
 
 type BFGSState{T}
     @add_generic_fields()

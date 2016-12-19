@@ -6,8 +6,22 @@ immutable MomentumGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
-MomentumGradientDescent(; mu::Real = 0.01, linesearch! = LineSearches.hagerzhang!) =
-  MomentumGradientDescent(Float64(mu), linesearch!)
+#= uncomment for v0.8.0
+MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!) =
+  MomentumGradientDescent(Float64(mu), linesearch)
+=#
+
+function MomentumGradientDescent(; mu::Real = 0.01, linesearch! = nothing,
+                                   linesearch = LineSearches.hagerzhang!)
+    if linesearch! != nothing
+       linesearch = linesearch!
+       if !has_deprecated_linesearch![]
+           warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+           has_deprecated_linesearch![] = true
+       end
+    end
+    MomentumGradientDescent(Float64(mu), linesearch)
+end
 
 type MomentumGradientDescentState{T}
     @add_generic_fields()

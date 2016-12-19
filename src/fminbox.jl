@@ -117,16 +117,34 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        linesearch! = LineSearches.hagerzhang!,
+        linesearch! = nothing,
+        linesearch = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
-        precondprep! = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
+        precondprep! = nothing,
+        precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
         optimizer = ConjugateGradient,
-        optimizer_o = OptimizationOptions(store_trace = store_trace,
+        optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
         nargs...)
+
+    # remove in v0.8.0
+    if linesearch! != nothing
+        linesearch = linesearch!
+        if !has_deprecated_linesearch![]
+            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
+            has_deprecated_linesearch![] = true
+        end
+    end
+    if precondprep! != nothing
+       precondprep = precondprep!
+       if !has_deprecated_precondprep![]
+           warn("precondprep! keyword is deprecated, please use precondprep (without !)")
+           has_deprecated_precondprep![] = true
+       end
+    end
 
     optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
@@ -179,17 +197,17 @@ function optimize{T<:AbstractFloat}(
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
-        pcp = (P, x) -> precondprep!(P, x, l, u, mu)
+        pcp = (P, x) -> precondprep(P, x, l, u, mu)
         if optimizer == ConjugateGradient
-            _optimizer = optimizer(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = optimizer(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         elseif optimizer in (LBFGS, GradientDescent)
-            _optimizer = optimizer(linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = optimizer(linesearch = linesearch, P = P, precondprep = pcp)
         elseif optimizer in (NelderMead, SimulatedAnnealing)
             _optimizer = optimizer()
         elseif optimizer == Newton
-            _optimizer = ConjugateGradient(eta = eta, linesearch! = linesearch!, P = P, precondprep! = pcp)
+            _optimizer = ConjugateGradient(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         else
-            _optimizer = optimizer(linesearch! = linesearch!)
+            _optimizer = optimizer(linesearch = linesearch)
         end
         resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first

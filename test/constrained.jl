@@ -27,8 +27,8 @@ let
         tmp = similar(initial_x)
         func = (x, g) -> quadratic!(x, g, AtA, A'*b, tmp)
         objective = Optim.DifferentiableFunction(x->func(x, nothing), (x,g)->func(x,g), func)
-        results = Optim.optimize(objective, initial_x, method=ConjugateGradient())
-        results = Optim.optimize(objective, Optim.minimizer(results), method=ConjugateGradient())  # restart to ensure high-precision convergence
+        results = Optim.optimize(objective, initial_x, ConjugateGradient())
+        results = Optim.optimize(objective, Optim.minimizer(results), ConjugateGradient())  # restart to ensure high-precision convergence
         @test Optim.converged(results)
         g = similar(initial_x)
         @test func(Optim.minimizer(results), g) + dot(b,b)/2 < 1e-8
@@ -58,6 +58,6 @@ let
 
     # might fail if changes are made to Optim.jl
     # TODO: come up with a better test
-    results = Optim.optimize(objective, initial_x, l, u, Fminbox(); optimizer_o = OptimizationOptions(iterations = 2))
+    results = Optim.optimize(objective, initial_x, l, u, Fminbox(); optimizer_o = Optim.Options(iterations = 2))
     @test Optim.iterations(results) == 470
 end

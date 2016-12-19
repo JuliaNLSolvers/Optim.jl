@@ -1,5 +1,5 @@
 abstract Optimizer
-immutable OptimizationOptions{TCallback <: Union{Void, Function}}
+immutable Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
     g_tol::Float64
@@ -13,7 +13,7 @@ immutable OptimizationOptions{TCallback <: Union{Void, Function}}
     time_limit::Float64
 end
 
-function OptimizationOptions(;
+function Options(;
         x_tol::Real = 1e-32,
         f_tol::Real = 1e-32,
         g_tol::Real = 1e-8,
@@ -29,13 +29,13 @@ function OptimizationOptions(;
     if extended_trace && callback == nothing
         show_trace = true
     end
-    OptimizationOptions{typeof(callback)}(
+    Options{typeof(callback)}(
         Float64(x_tol), Float64(f_tol), Float64(g_tol), Int(iterations),
         store_trace, show_trace, extended_trace, autodiff, Int(show_every),
         callback, time_limit)
 end
 
-function print_header(options::OptimizationOptions)
+function print_header(options::Options)
     if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
