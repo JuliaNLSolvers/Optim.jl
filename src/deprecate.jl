@@ -1,6 +1,5 @@
 const has_deprecated_linesearch! = Ref(false)
 const has_deprecated_precondprep! = Ref(false)
-const has_deprecated_kwargs = Ref(false)
 const has_deprecated_levenberg_marquardt = Ref(false)
 
 @deprecate MultivariateOptimizationResults(method,

@@ -104,6 +104,4 @@ module Optim
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))
     include(joinpath("problems", "univariate.jl"))
-
-    cgdescent(args...) = error("API has changed. Please use cg.")
 end
