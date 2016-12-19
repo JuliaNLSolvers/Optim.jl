@@ -312,14 +312,14 @@
 <li><code>autodiff</code>: When only an objective function is provided, use automatic differentiation to compute exact numerical gradients. If not, finite differencing will be used. This functionality is experimental. Defaults to <code>false</code>.</li>
 <li><code>show_every</code>: Trace output is printed every <code>show_every</code>th iteration.</li>
 </ul>
-<p>We currently recommend the statically dispatched interface by using the <code>OptimizationOptions</code>  constructor:</p>
+<p>We currently recommend the statically dispatched interface by using the <code>Optim.Options</code> constructor:</p>
 <div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span>
                <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
                <span class="n">GradientDescent</span><span class="p">(),</span>
-               <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">g_tol</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
-                                   <span class="n">iterations</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-                                   <span class="n">store_trace</span> <span class="o">=</span> <span class="n">true</span><span class="p">,</span>
-                                   <span class="n">show_trace</span> <span class="o">=</span> <span class="n">false</span><span class="p">))</span>
+               <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">g_tol</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
+                             <span class="n">iterations</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+                             <span class="n">store_trace</span> <span class="o">=</span> <span class="n">true</span><span class="p">,</span>
+                             <span class="n">show_trace</span> <span class="o">=</span> <span class="n">false</span><span class="p">))</span>
 </pre></div>
 
 
@@ -334,7 +334,7 @@
 </pre></div>
 
 
-<p>Notice the need to specify the method using a keyword if this syntax is used. It is likely that this will be deprecated in the future.</p>
+<p>Notice the need to specify the method using a keyword if this syntax is used. This approach might be deprecated in the future, and as a result we recommend writing code that has to maintained using the <code>Optim.Options</code> approach.</p>
               
             </div>
           </div>

@@ -359,7 +359,7 @@
 <p>Below, we use the gradients and objective functions from <a href="http://www.cuter.rl.ac.uk/Problems/mastsif.shtml">mastsif</a> through <a href="https://github.com/JuliaOptimizers/CUTEst.jl">CUTEst.jl</a>. We only show the first five iterations of an attempt to minimize the function using Gradient Descent.</p>
 <div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
 
-<span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
+<span class="gt">                      Optim.Options(show_trace=true, iterations = 5))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
 <span class="go">     0     4.850000e+04     2.116000e+02</span>
 <span class="go">     1     1.018734e+03     2.704951e+01</span>
@@ -384,7 +384,7 @@
 
 <span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
 
-<span class="gt">                      OptimizationOptions(show_trace=true, iterations = 5))</span>
+<span class="gt">                      Optim.Options(show_trace=true, iterations = 5))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
 <span class="go">     0     4.850000e+04     2.116000e+02</span>
 <span class="go">     1     1.018769e+03     2.704998e+01</span>
@@ -412,7 +412,7 @@
 <p>The objective has obtained a value that is very similar between the two runs, but the run with the analytical gradient is way faster.  It is possible that the finite differences code can be improved, but generally the optimization will be slowed down by all the function evaluations required to do the central finite differences calculations.</p>
 <p><a id='Early-stopping-1'></a></p>
 <h2 id="early-stopping">Early stopping</h2>
-<p>Sometimes it might be of interest to stop the optimizer early. The simplest way to do this is to set the <code>iterations</code> keyword in <code>OptimizationOptions</code> to some number. This will prevent the iteration counter exceeding some limit, with the standard value being 1000. Alternatively, it is possible to put a soft limit on the run time of the optimization procedure by setting the <code>time_limit</code> keyword in the <code>OptimizationOptions</code> constructor.</p>
+<p>Sometimes it might be of interest to stop the optimizer early. The simplest way to do this is to set the <code>iterations</code> keyword in <code>Optim.Options</code> to some number. This will prevent the iteration counter exceeding some limit, with the standard value being 1000. Alternatively, it is possible to put a soft limit on the run time of the optimization procedure by setting the <code>time_limit</code> keyword in the <code>Optim.Options</code> constructor.</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
 <span class="n">problem</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
 
@@ -426,7 +426,7 @@
 
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 
-<span class="n">optimize</span><span class="p">(</span><span class="n">slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">time_limit</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">))</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">time_limit</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">))</span>
 </pre></div>
 
 
@@ -459,12 +459,12 @@
     <span class="n">println</span><span class="p">()</span>
     <span class="n">false</span>
 <span class="k">end</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
 </pre></div>
 
 
 <p>It will try to predict the elapsed time after the next iteration is over, and stop now if it is expected to exceed the limit of 13 seconds. Running it, we get something like the following output</p>
-<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">OptimizationOptions</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
 <span class="go"> * Iteration:       0</span>
 <span class="go"> * Time so far:     2.219298839569092</span>
 

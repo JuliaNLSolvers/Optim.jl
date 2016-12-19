@@ -274,9 +274,6 @@
 <div class="codehilite"><pre><span></span><span class="n">g!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">h!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 </pre></div>
-
-
-<p>Ít is also quite possible that the keywords-style tuning of options will be removed. Instead of writing <code>optimize(..., g_tol = 1e-4)</code> users will have to write <code>optimize(..., OptimizationOptions(g_tol = 1e-4))</code>. Obviously, it is a bit more verbose, but it will allow the internals to work entirely through dispatch, and avoid a lot of keyword handling. Simpler code is easier to maintain, and less prone to bugs.</p>
               
             </div>
           </div>
