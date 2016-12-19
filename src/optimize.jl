@@ -1,15 +1,59 @@
 typealias FirstOrderSolver Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
                                  MomentumGradientDescent, BFGS, LBFGS}
 typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
+# Multivariate optimization
+function check_kwargs(kwargs, fallback_method)
+    kws = Dict{Symbol, Any}()
+    method = nothing
+    for kwarg in kwargs
+        if kwarg[1] != :method
+            kws[kwarg[1]] = kwarg[2]
+        else
+            method = kwarg[2]
+        end
+    end
+
+    if method == nothing
+        method = fallback_method
+    end
+    kws, method
+end
+
+function optimize{F<:Function}(f::F, initial_x::Array; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, NelderMead())
+    optimize(f, initial_x, method, Options(; checked_kwargs...))
+end
+
+function optimize{F<:Function, G<:Function}(f::F, g!::G, initial_x::Array; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, BFGS())
+    optimize(f, g!, initial_x, method, Options(;checked_kwargs...))
+end
+function optimize(d::DifferentiableFunction, initial_x::Array; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, BFGS())
+    optimize(d, initial_x, method, Options(checked_kwargs...))
+end
+
+function optimize{F<:Function, G<:Function, H<:Function}(f::F,
+                  g!::G,
+                  h!::H,
+                  initial_x::Array; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, Newton())
+    optimize(f, g!, h!, initial_x, method, Options(checked_kwargs...))
+end
+
+function optimize(d::TwiceDifferentiableFunction, initial_x::Array; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, Newton())
+    optimize(d, initial_x, method, Options(;kwargs...))
+end
 
 
-function optimize(d,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::Options = Options())
+function optimize(d, initial_x::Array,
+                  method::Optimizer, options::Options = Options())
     optimize(d, initial_x, method, options)
 end
-optimize(d, initial_x, options::Options) = optimize(d, initial_x, NelderMead(), options)
+optimize(d::Function, initial_x, options::Options) = optimize(d, initial_x, NelderMead(), options)
+optimize(d::DifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, BFGS(), options)
+optimize(d::TwiceDifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, Newton(), options)
 
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
@@ -40,7 +84,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   g!::G,
                   h!::H,
                   initial_x::Array,
-                  options::Options = Options())
+                  options)
     d = TwiceDifferentiableFunction(f, g!, h!)
     optimize(d, initial_x, Newton(), options)
 end

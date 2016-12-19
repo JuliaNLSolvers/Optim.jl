@@ -1,10 +1,6 @@
 __precompile__(true)
 
 module Optim
-    const has_deprecated_linesearch! = Ref(false)
-    const has_deprecated_precondprep! = Ref(false)
-    const has_deprecated_kwargs = Ref(false)
-    const has_deprecated_levenberg_marquardt = Ref(false)
     using Calculus
     using PositiveFactorizations
     using Compat
