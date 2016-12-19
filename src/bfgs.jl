@@ -12,13 +12,7 @@ BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x),
 function BFGS(; linesearch! = nothing,
                 linesearch = LineSearches.hagerzhang!,
                 initial_invH = x -> eye(eltype(x), length(x)))
-    if linesearch! != nothing
-        linesearch = linesearch!
-        if !has_deprecated_linesearch![]
-            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
-            has_deprecated_linesearch![] = true
-        end
-    end
+    linesearch = get_linesearch(linesearch!, linesearch)
     BFGS(linesearch, initial_invH)
 end
 
