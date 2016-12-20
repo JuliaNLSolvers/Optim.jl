@@ -282,7 +282,7 @@
 <li>Momentum Gradient Descent</li>
 <li>Newton</li>
 </ul>
-<p>By default <code>Optim</code> calls the line search algorithm <code>hagerzhang!</code> provided by <code>LineSearches</code>. Different line search algorithms can be assigned with the <code>linesearch!</code> keyword argument to the given algorithm.</p>
+<p>By default <code>Optim</code> calls the line search algorithm <code>hagerzhang!</code> provided by <code>LineSearches</code>. Different line search algorithms can be assigned with the <code>linesearch</code> keyword argument to the given algorithm.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>This example compares two different line search algorithms on the Rosenbrock problem.</p>
@@ -290,7 +290,7 @@
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">LineSearches</span>
 <span class="n">prob</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
 
-<span class="n">algo_hz</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch!</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">hagerzhang!</span><span class="p">)</span>
+<span class="n">algo_hz</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">hagerzhang!</span><span class="p">)</span>
 <span class="n">res_hz</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_hz</span><span class="p">)</span>
 </pre></div>
 
@@ -313,7 +313,7 @@
 
 
 <p>Now we can try <code>Newton</code> with the More-Thuente line search:</p>
-<div class="codehilite"><pre><span></span><span class="n">algo_mt</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch!</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">morethuente!</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">algo_mt</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">morethuente!</span><span class="p">)</span>
 <span class="n">res_mt</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_mt</span><span class="p">)</span>
 </pre></div>
 

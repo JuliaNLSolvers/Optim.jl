@@ -273,13 +273,13 @@
 <p><a id='Adding-a-solver-1'></a></p>
 <h3 id="adding-a-solver">Adding a solver</h3>
 <p>If you're contributing a new solver, you shouldn't need to touch any of the code in <code>src/optimize.jl</code>. You should rather add a file named (<code>solver</code> is the name of the solver) <code>solver.jl</code> in <code>src</code>, and make sure that you define an <code>Optimizer</code> subtype <code>immutable Solver &lt;: Optimizer end</code> with appropriate fields, a default constructor with a keyword for each field, a state type that holds all variables that are (re)used throughout the iterative procedure, an <code>initial_state</code> that initializes such a state, and  an <code>update!</code> method that does the actual work. Say you want to contribute a solver called <code>Minim</code>, then your <code>src/minim.jl</code> file would look something like</p>
-<div class="codehilite"><pre><span></span>immutable Minim{T} &lt;: Optimizer
-    linesearch!::Function
+<div class="codehilite"><pre><span></span>immutable Minim{F&lt;:Function, T} &lt;: Optimizer
+    linesearch!::F
     minim_parameter::T
 end
 
-Minim(; linesearch!::Function = LineSearches.hagerzhang!, minim_parameter = 1.0) =
-  Minim(linesearch!, minim_parameter)
+Minim(; linesearch = LineSearches.hagerzhang!, minim_parameter = 1.0) =
+  Minim(linesearch, minim_parameter)
 
 type MinimState{T}
   @add_generic_fields()
