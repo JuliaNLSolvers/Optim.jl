@@ -17,13 +17,7 @@ AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
 =#
 function AcceleratedGradientDescent(; linesearch! = nothing,
                                       linesearch = LineSearches.hagerzhang!)
-    if linesearch! != nothing
-        linesearch = linesearch!
-        if !has_deprecated_linesearch![]
-            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
-            has_deprecated_linesearch![] = true
-        end
-    end
+    linesearch = get_linesearch(linesearch!, linesearch)
     AcceleratedGradientDescent(linesearch)
 end
 

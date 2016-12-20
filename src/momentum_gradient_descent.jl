@@ -13,13 +13,7 @@ MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!
 
 function MomentumGradientDescent(; mu::Real = 0.01, linesearch! = nothing,
                                    linesearch = LineSearches.hagerzhang!)
-    if linesearch! != nothing
-       linesearch = linesearch!
-       if !has_deprecated_linesearch![]
-           warn("linesearch! keyword is deprecated, please use linesearch (without !)")
-           has_deprecated_linesearch![] = true
-       end
-    end
+    linesearch = get_linesearch(linesearch!, linesearch)
     MomentumGradientDescent(Float64(mu), linesearch)
 end
 

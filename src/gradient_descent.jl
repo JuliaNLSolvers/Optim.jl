@@ -14,20 +14,8 @@ function GradientDescent(; linesearch! = nothing,
                            P = nothing,
                            precondprep! = nothing,
                            precondprep = (P, x) -> nothing)
-    if linesearch! != nothing
-       linesearch = linesearch!
-       if !has_deprecated_linesearch![]
-           warn("linesearch! keyword is deprecated, please use linesearch (without !)")
-           has_deprecated_linesearch![] = true
-       end
-    end
-    if precondprep! != nothing
-       precondprep = precondprep!
-       if !has_deprecated_precondprep![]
-           warn("precondprep! keyword is deprecated, please use precondprep (without !)")
-           has_deprecated_precondprep![] = true
-       end
-    end
+    linesearch = get_linesearch(linesearch!, linesearch)
+    precondprep = get_precondprep(precondprep!, precondprep)
     GradientDescent(linesearch, P, precondprep)
 end
 

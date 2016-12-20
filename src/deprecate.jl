@@ -29,3 +29,25 @@ end
 @deprecate interpbacktracking_linesearch! LineSearches.interpbacktracking!
 
 @deprecate OptimizationOptions(args...; kwargs...) Optim.Options(args...; kwargs...)
+
+function get_linesearch(linesearch!, linesearch)
+    if linesearch! != nothing
+        if !has_deprecated_linesearch![]
+            warn("linesearch! keyword is deprecated, use linesearch instead (without !)")
+            has_deprecated_linesearch![] = true
+        end
+        return linesearch!
+    end
+    linesearch
+end
+
+function get_precondprep(precondprep!, precondprep)
+    if precondprep! != nothing
+        if !has_deprecated_precondprep![]
+            warn("precondprep! keyword is deprecated, use precondprep instead (without !)")
+            has_deprecated_precondprep![] = true
+        end
+        return precondprep!
+    end
+    precondprep
+end

@@ -131,20 +131,9 @@ function optimize{T<:AbstractFloat}(
         nargs...)
 
     # remove in v0.8.0
-    if linesearch! != nothing
-        linesearch = linesearch!
-        if !has_deprecated_linesearch![]
-            warn("linesearch! keyword is deprecated, please use linesearch (without !)")
-            has_deprecated_linesearch![] = true
-        end
-    end
-    if precondprep! != nothing
-       precondprep = precondprep!
-       if !has_deprecated_precondprep![]
-           warn("precondprep! keyword is deprecated, please use precondprep (without !)")
-           has_deprecated_precondprep![] = true
-       end
-    end
+
+    linesearch = get_linesearch(linesearch!, linesearch)
+    precondprep = get_precondprep(precondprep!, precondprep)
 
     optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
