@@ -109,11 +109,11 @@ let
                        options_ext)
 
    @test Optim.method(res) == "BFGS"
-   @test Optim.minimum(res) ≈ 0.055119582904897345
-   @test Optim.minimizer(res) ≈ [0.7731690866149542; 0.5917345966396391]
+   @test isapprox(Optim.minimum(res), 0.0020622412076141045; rtol=1e-3)
+   @test isapprox(Optim.minimizer(res), [0.9719007353489979,0.9410235857510793]; rtol=1e-3)
    @test Optim.iterations(res) == 10
-   @test Optim.f_calls(res) == 48
-   @test Optim.g_calls(res) == 48
+   @test Optim.f_calls(res) == 47
+   @test Optim.g_calls(res) == 47
    @test Optim.converged(res) == false
    @test Optim.x_converged(res) == false
    @test Optim.f_converged(res) == false
