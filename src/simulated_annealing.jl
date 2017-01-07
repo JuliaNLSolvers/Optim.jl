@@ -23,7 +23,7 @@ SimulatedAnnealing(; neighbor!::Function = default_neighbor!,
 
 type SimulatedAnnealingState{T}
     @add_generic_fields()
-    iteration::Int64
+    iteration::Int
     x_current::Array{T}
     x_proposal
     f_x_current::T

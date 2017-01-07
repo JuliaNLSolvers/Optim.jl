@@ -9,12 +9,12 @@ end
 # TODO decide if this is wanted and/or necessary
 @def add_generic_fields begin
     method_string::String
-    n::Int64
+    n::Int
     x::Array{T}
     f_x::T
-    f_calls::Int64
-    g_calls::Int64
-    h_calls::Int64
+    f_calls::Int
+    g_calls::Int
+    h_calls::Int
 end
 
 @def add_linesearch_fields begin
