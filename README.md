@@ -5,7 +5,7 @@ Univariate and multivariate optimization in Julia.
 
 | **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 |
 |:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]|
+| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] [![Build Status][winbuild-img]][winbuild-url] | [![][gitter-img]][gitter-url]|
 | [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]| [![Codecov branch][cov-img]][cov-url] |  |
 
 # Optimization
@@ -51,6 +51,9 @@ julia> Pkg.add("Optim")
 
 [build-img]: https://travis-ci.org/JuliaOpt/Optim.jl.svg?branch=master
 [build-url]: https://travis-ci.org/JuliaOpt/Optim.jl
+
+[winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true
+[winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl
 
 [pkg-0.4-img]: http://pkg.julialang.org/badges/Optim_0.4.svg
 [pkg-0.4-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.4
