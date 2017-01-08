@@ -8,14 +8,14 @@ ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, 
 
 type ParticleSwarmState{T}
     @add_generic_fields()
-    iteration::Int64
+    iteration::Int
     lower
     upper
     c1::T # Weight variable; currently not exposed to users
     c2::T # Weight variable; currently not exposed to users
     w::T  # Weight variable; currently not exposed to users
     limit_search_space::Bool
-    n_particles::Int64
+    n_particles::Int
     X
     V
     X_best

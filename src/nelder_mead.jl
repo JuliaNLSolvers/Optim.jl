@@ -105,7 +105,7 @@ end
 
 type NelderMeadState{T, N}
     @add_generic_fields()
-    m::Int64
+    m::Int
     simplex::Vector{Array{T,N}}
     x_centroid::Array{T}
     x_lowest::Array{T}
@@ -116,7 +116,7 @@ type NelderMeadState{T, N}
     f_simplex::Array{T}
     nm_x::T
     f_lowest::T
-    i_order::Vector{Int64}
+    i_order::Vector{Int}
     α::T
     β::T
     γ::T

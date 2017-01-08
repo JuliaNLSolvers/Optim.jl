@@ -103,7 +103,7 @@ type LBFGSState{T}
     f_x_previous::T
     twoloop_q
     twoloop_alpha
-    pseudo_iteration::Int64
+    pseudo_iteration::Int
     s::Array{T}
     @add_linesearch_fields()
 end
