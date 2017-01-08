@@ -158,7 +158,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
                                          initial_lower,
                                          initial_upper,
                                          new_minimizer,
-                                         Float64(new_minimum),
+                                         new_minimum,
                                          iteration,
                                          iteration == iterations,
                                          converged,
