@@ -261,7 +261,7 @@ function optimize{F<:Function, T <: AbstractFloat}(f::F,
     if show_trace
         @printf "Iter     Function value   Gradient norm \n"
     end
-    optimize(f, Float64(lower), Float64(upper), method;
+    optimize(f, T(lower), T(upper), method;
              rel_tol = rel_tol,
              abs_tol = abs_tol,
              iterations = iterations,

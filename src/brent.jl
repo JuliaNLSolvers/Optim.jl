@@ -162,8 +162,8 @@ function optimize{F <: Function, T <: AbstractFloat}(
                                          iteration,
                                          iteration == iterations,
                                          converged,
-                                         rel_tol,
-                                         abs_tol,
+                                         Float64(rel_tol),
+                                         Float64(abs_tol),
                                          tr,
                                          f_calls)
 end
