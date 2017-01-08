@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaOpt">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Minimizing a function - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Minimizing a function";
+    var mkdocs_page_input_path = "user/minimization.md";
+    var mkdocs_page_url = "/user/minimization/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>General information</span></li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Minimizing a function</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#minimizing-a-multivariate-function">Minimizing a multivariate function</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#box-minimization">Box minimization</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#obtaining-results">Obtaining results</a></li>
+                
+                    <li><a class="toctree-l4" href="#complete-list-of-functions">Complete list of functions</a></li>
+                
+            
+                <li class="toctree-l3"><a href="#notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</a></li>
+                
+            
+            </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../config/">Configurable Options</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../tipsandtricks/">Tips and tricks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../planned/">Planned Changes</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Algorithms</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Solvers</span></li>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Free</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Gradient Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+            
+    <ul class="subnav">
+    <li><span>Hessian Required</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/newton/">Newton</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
+        
+    </li>
+
+        
+    </ul>
+
+        
+    </ul>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/linesearch/">Linesearch</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../algo/precondition/">Preconditioners</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Contributing</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../dev/contributing/">Contributing</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../../LICENSE/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>General information &raquo;</li>
+        
+      
+    
+    <li>Minimizing a function</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/user/minimization.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Minimizing-a-multivariate-function-1'></a></p>
+<h2 id="minimizing-a-multivariate-function">Minimizing a multivariate function</h2>
+<p>To show how the Optim package can be used, we implement the <a href="http://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a>, a classic problem in numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager. First, we load Optim and define the Rosenbrock function:</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+</pre></div>
+
+
+<p>Once we've defined this function, we can find the minimum of the Rosenbrock function using any of our favorite optimization algorithms. With a function defined, we just specify an initial point <code>x</code> and run:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+
+
+<p>Optim will default to using the Nelder-Mead method in this case, as we did not provide a gradient. This can also be explicitly specified using:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">())</span>
+</pre></div>
+
+
+<p>Other solvers are available. Below, we use L-BFGS, a quasi-Newton method that requires a gradient. If we pass <code>f</code> alone, Optim will construct an approximate gradient for us using central finite differencing:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">LBFGS</span><span class="p">())</span>
+</pre></div>
+
+
+<p>Alternatively, the <code>autodiff</code> keyword will use atomatic differentiation to construct the gradient.</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">LBFGS</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">autodiff</span> <span class="o">=</span> <span class="n">true</span><span class="p">))</span>
+</pre></div>
+
+
+<p>For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> g</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="n">Vector</span><span class="p">,</span> <span class="n">storage</span><span class="p">::</span><span class="n">Vector</span><span class="p">)</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>Note that the functions we're using to calculate the gradient (and later the Hessian <code>h!</code>) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called <code>storage</code>. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the <code>g!</code> or <code>h!</code> functions. You can use <code>Optim</code> without manually defining a gradient or Hessian function, but if you do define these functions, they must take these two arguments in this order. Returning to our optimization, you simply pass <code>g!</code> together with <code>f</code> from before to use the gradient:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">LBFGS</span><span class="p">())</span>
+</pre></div>
+
+
+<p>For some methods, like simulated annealing, the gradient will be ignored:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">SimulatedAnnealing</span><span class="p">())</span>
+</pre></div>
+
+
+<p>In addition to providing gradients, you can provide a Hessian function <code>h!</code> as well. In our current case this is:</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> h</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="n">Vector</span><span class="p">,</span> <span class="n">storage</span><span class="p">::</span><span class="n">Matrix</span><span class="p">)</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1200.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>Now we can use Newton's method for optimization by running:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">h!</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+</pre></div>
+
+
+<p>Which defaults to <code>Newton()</code> since a Hessian was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:</p>
+<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">h!</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">LBFGS</span><span class="p">())</span>
+</pre></div>
+
+
+<p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
+<p><a id='Box-minimization-1'></a></p>
+<h2 id="box-minimization">Box minimization</h2>
+<p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available:</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> f</span><span class="p">(</span><span class="n">x</span><span class="p">::</span><span class="n">Vector</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="k">end</span>
+<span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.25</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.1</span><span class="p">]</span>
+<span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="nb">Inf</span><span class="p">,</span> <span class="nb">Inf</span><span class="p">]</span>
+<span class="n">initial_x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">(),</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">)</span>
+</pre></div>
+
+
+<p>This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen <code>optimizer</code> for convergence at each step. Notice that the <code>Optimizer</code> type, not an instance should be passed. This means that the keyword should be passed as <code>optimizer = GradientDescent</code> not <code>optimizer = GradientDescent()</code>, as you usually would.</p>
+<p>This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use <code>ConjugateGradient</code> or <code>LBFGS</code> with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.</p>
+<p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an <code>Optim.Options</code> type using the keyword <code>optimizer_o</code>.</p>
+<p>For example, the following restricts the optimization to 2 major iterations</p>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+
+
+<p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient</code> optimization to 2</p>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">optimizer_o</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+
+<p><a id='Minimizing-a-univariate-function-on-a-bounded-interval-1'></a></p>
+<h2 id="minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</h2>
+<p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
+<div class="codehilite"><pre><span></span><span class="n">f_univariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">f_univariate</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Two methods are available:</p>
+<ul>
+<li>Brent's method, the default (can be explicitly selected with <code>Brent()</code>).</li>
+<li>Golden section search, available with <code>GoldenSection()</code>.</li>
+</ul>
+<p>In addition to the <code>iterations</code>, <code>store_trace</code>, <code>show_trace</code> and <code>extended_trace</code> options, the following options are also available:</p>
+<ul>
+<li><code>rel_tol</code>: The relative tolerance used for determining convergence. Defaults to <code>sqrt(eps(T))</code>.</li>
+<li><code>abs_tol</code>: The absolute tolerance used for determining convergence. Defaults to <code>eps(T)</code>.</li>
+</ul>
+<p><a id='Obtaining-results-1'></a></p>
+<h2 id="obtaining-results">Obtaining results</h2>
+<p>After we have our results in <code>res</code>, we can use the API for getting optimization results. This consists of a collection of functions. They are not exported, so they have to be prefixed by <code>Optim.</code>. Say we do the following optimization:</p>
+<div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">x</span><span class="o">-&gt;</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,[</span><span class="mi">1</span> <span class="mf">0.</span> <span class="mi">0</span><span class="p">;</span> <span class="mi">0</span> <span class="mi">3</span> <span class="mi">0</span><span class="p">;</span> <span class="mi">0</span> <span class="mi">0</span> <span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+
+
+<p>If we can't remember what method we used, we simply use</p>
+<div class="codehilite"><pre><span></span><span class="n">Optim</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+</pre></div>
+
+
+<p>which will return <code>"Nelder Mead"</code>. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+<span class="go">3-element Array{Float64,1}:</span>
+<span class="go"> -0.499921</span>
+<span class="go"> -0.3333  </span>
+<span class="go"> -1.49994</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+<span class="go"> -2.8333333205768865</span>
+</pre></div>
+
+
+<p><a id='Complete-list-of-functions-1'></a></p>
+<h3 id="complete-list-of-functions">Complete list of functions</h3>
+<p>A complete list of functions can be found below.</p>
+<p>Defined for all methods:</p>
+<ul>
+<li><code>method(res)</code></li>
+<li><code>minimizer(res)</code></li>
+<li><code>minimum(res)</code></li>
+<li><code>iterations(res)</code></li>
+<li><code>iteration_limit_reached(res)</code></li>
+<li><code>trace(res)</code></li>
+<li><code>x_trace(res)</code></li>
+<li><code>f_trace(res)</code></li>
+<li><code>f_calls(res)</code></li>
+<li><code>converged(res)</code></li>
+</ul>
+<p>Defined for univariate optimization:</p>
+<ul>
+<li><code>lower_bound(res)</code></li>
+<li><code>upper_bound(res)</code></li>
+<li><code>x_lower_trace(res)</code></li>
+<li><code>x_upper_trace(res)</code></li>
+<li><code>rel_tol(res)</code></li>
+<li><code>abs_tol(res)</code></li>
+</ul>
+<p>Defined for multivariate optimization:</p>
+<ul>
+<li><code>g_norm_trace(res)</code></li>
+<li><code>g_calls(res)</code></li>
+<li><code>x_converged(res)</code></li>
+<li><code>f_converged(res)</code></li>
+<li><code>g_converged(res)</code></li>
+<li><code>initial_state(res)</code></li>
+</ul>
+<p><a id='Notes-on-convergence-flags-and-checks-1'></a></p>
+<h2 id="notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</h2>
+<p>Currently, it is possible to access a minimizer using <code>Optim.minimizer(result)</code> even if all convergence flags are <code>false</code>. This means that the user has to be a bit careful when using the output from the solvers. It is advised to include checks for convergence if the minimizer or minimum is used to carry out further calculations.</p>
+<p>A related note is that first and second order methods makes a convergence check on the gradient before entering the optimization loop. This is done to prevent line search errors if <code>initial_x</code> is a stationary point. Notice, that this is only a first order check. If <code>initial_x</code> is any type of stationary point, <code>g_converged</code> will be true. This includes local minima, saddle points, and local maxima. If <code>iterations</code> is <code>0</code> and <code>g_converged</code> is <code>true</code>, the user needs to keep this point in mind.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../config/" class="btn btn-neutral float-right" title="Configurable Options">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../.." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../config/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
