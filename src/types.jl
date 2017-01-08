@@ -80,12 +80,12 @@ type UnivariateOptimizationResults{T,M} <: OptimizationResults
     initial_lower::T
     initial_upper::T
     minimizer::T
-    minimum::Float64
+    minimum::T
     iterations::Int
     iteration_converged::Bool
     converged::Bool
-    rel_tol::Float64
-    abs_tol::Float64
+    rel_tol::T
+    abs_tol::T
     trace::OptimizationTrace{M}
     f_calls::Int
 end
