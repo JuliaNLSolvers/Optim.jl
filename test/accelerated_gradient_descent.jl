@@ -1,5 +1,5 @@
 # TODO expand tests here
-let
+@testset "Accelerated Gradient Descent" begin 
     f(x) = x[1]^4
     function g!(x, storage)
         storage[1] = 4 * x[1]^3

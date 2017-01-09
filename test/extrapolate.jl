@@ -1,9 +1,9 @@
 
 import LineSearches
 
-let
+@testset "Extrapolation" begin
    methods = [ LBFGS(), ConjugateGradient(),
-               LBFGS(extrapolate=true, linesearch = LineSearches.interpbacktrack!) ]
+               LBFGS(extrapolate=true, linesearch = LineSearches.bt2!) ]
    msgs = ["LBFGS Default Options: ",  "CG Default Options: ",
           "LBFGS + Backtracking + Extrapolation: " ]
 
@@ -32,10 +32,10 @@ let
    initial_x = zeros(N)
    P = precond(initial_x)
    methods = [ LBFGS(P=P), ConjugateGradient(P=P),
-         LBFGS(extrapolate=true, linesearch = LineSearches.interpbacktrack!, P=P) ]
+         LBFGS(extrapolate=true, linesearch = LineSearches.bt2!, P=P) ]
 
    for (method, msg) in zip(methods, msgs)
       results = Optim.optimize(df, copy(initial_x), method)
-      println(msg, "g_calls = ", results.g_calls, ", f_calls = ", results.f_calls)
+      println(msg, "g_calls = ", Optim.g_calls(results), ", f_calls = ", Optim.f_calls(results))
    end
 end

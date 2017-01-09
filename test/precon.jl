@@ -8,7 +8,7 @@
 #     equivalent (in the limit h → 0) to that induced by the hessian, but
 #     does not approximate the hessian explicitly.
 
-let
+@testset "Preconditioning" begin
     plap(U; n=length(U)) = (n-1) * sum( (0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
     plap1(U; n=length(U), dU = diff(U), dW = 4 * (0.1 + dU.^2) .* dU) =
                             (n-1) * ([0.0; dW] - [dW; 0.0]) - ones(U) / (n-1)
@@ -20,9 +20,9 @@ let
 
     GRTOL = 1e-6
 
-    println("Test a basic preconditioning example")
+    debug_printing && println("Test a basic preconditioning example")
     for N in (10, 50, 250)
-        println("N = ", N)
+        debug_printing && println("N = ", N)
         initial_x = zeros(N)
         Plap = precond(initial_x)
         ID = nothing
@@ -32,13 +32,13 @@ let
                                          optimizer(P = P),
                                          Optim.Options(f_tol = 1e-32,
                                                              g_tol = GRTOL))
-                println(optimizer, wwo,
-                        " preconditioning : g_calls = ", results.g_calls,
-                        ", f_calls = ", results.f_calls)
+                debug_printing && println(optimizer, wwo,
+                                          " preconditioning : g_calls = ", Optim.g_calls(results),
+                                          ", f_calls = ", Optim.f_calls(results))
                 if (optimizer == GradientDescent) && (N > 15) && (P == ID)
-                    println("    (gradient descent is not expected to converge)")
+                    debug_printing && println("    (gradient descent is not expected to converge)")
                 else
-                    @assert Optim.converged(results)
+                    @test Optim.converged(results)
                 end
             end
         end

@@ -1,5 +1,5 @@
 # Test multivariate optimization
-let
+@testset "API" begin
     rosenbrock = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     f = rosenbrock.f
     g! = rosenbrock.g!

@@ -1,4 +1,4 @@
-let
+@testset "Particle Swarm" begin
     srand(100)
 
     function f_s(x::Vector)
@@ -16,7 +16,7 @@ let
     options = Optim.Options(iterations=100)
     res = Optim.optimize(f_s, initial_x, ParticleSwarm(lower, upper, n_particles),
                          options)
-    @assert norm(Optim.minimizer(res) - [5.0]) < 0.1
+    @test norm(Optim.minimizer(res) - [5.0]) < 0.1
 
     initial_x = [0.0, 0.0]
     lower = [-20., -20.]
@@ -25,7 +25,7 @@ let
     options = Optim.Options(iterations=300)
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles),
                              options)
-    @assert norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
+    @test norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
 
     # Add UnconstrainedProblems here; currently they take too many iterations to be
     # feasible

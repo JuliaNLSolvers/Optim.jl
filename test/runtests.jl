@@ -1,21 +1,15 @@
-#
-# Correctness Tests
-#
+using Optim, Base.Test, Compat
 
-using Optim
-using Base.Test
-using Compat
+debug_printing = false
 
 my_tests = [
     "types.jl",
-    "lsthrow.jl",
     "bfgs.jl",
     "gradient_descent.jl",
     "accelerated_gradient_descent.jl",
     "momentum_gradient_descent.jl",
     "grid_search.jl",
     "l_bfgs.jl",
-    "levenberg_marquardt.jl",
     "newton.jl",
     "newton_trust_region.jl",
     "cg.jl",
@@ -23,7 +17,6 @@ my_tests = [
     "optimize.jl",
     "simulated_annealing.jl",
     "particle_swarm.jl",
-    "api.jl",
     "golden_section.jl",
     "brent.jl",
     "type_stability.jl",
@@ -32,12 +25,12 @@ my_tests = [
     "callbacks.jl",
     "precon.jl",
     "initial_convergence.jl",
-    "extrapolate.jl"
+    "extrapolate.jl",
+    "levenberg_marquardt.jl",
+    "lsthrow.jl",
+    "api.jl",
 ]
 
-println("Running tests:")
-
 for my_test in my_tests
-    println(" * $(my_test)")
     include(my_test)
 end

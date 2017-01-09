@@ -1,4 +1,4 @@
-let
+@testset "Type Stability" begin
     function rosenbrock{T}(x::Vector{T})
         o = one(T)
         c = convert(T,100)

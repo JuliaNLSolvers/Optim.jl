@@ -1,4 +1,4 @@
-let
+@testset "Line search errors" begin
     function ls(df,x,s,xtmp,g,lsr,c,mayterminate)
         LineSearches.hagerzhang!(df,x,s,xtmp,g,lsr,c,mayterminate,
                                  0.1,0.9,

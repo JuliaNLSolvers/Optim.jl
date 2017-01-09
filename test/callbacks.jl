@@ -1,4 +1,4 @@
-let
+@testset "Callbacks" begin
     problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
 
     f = problem.f

@@ -1,4 +1,4 @@
-let
+@testset "Levenberg Marquardt" begin
     function f_lm(x)
       [x[1], 2.0 - x[2]]
     end
@@ -9,7 +9,7 @@ let
     initial_x = [100.0, 100.0]
 
     results = Optim.levenberg_marquardt(f_lm, g_lm, initial_x)
-    @assert norm(Optim.minimizer(results) - [0.0, 2.0]) < 0.01
+    @test norm(Optim.minimizer(results) - [0.0, 2.0]) < 0.01
 
 
     function rosenbrock_res(x, r)
@@ -36,7 +36,7 @@ let
 
     results = Optim.levenberg_marquardt(frb, grb, initial_xrb)
 
-    @assert norm(Optim.minimizer(results) - [1.0, 1.0]) < 0.01
+    @test norm(Optim.minimizer(results) - [1.0, 1.0]) < 0.01
 
     # check estimate is within the bound PR #278
      result = Optim.levenberg_marquardt(frb, grb, [150.0, 150.0]; lower = [10.0, 10.0], upper = [200.0, 200.0])
@@ -59,7 +59,7 @@ let
         g_lsq = Calculus.jacobian(f_lsq)
         results = Optim.levenberg_marquardt(f_lsq, g_lsq, [0.5, 0.5])
 
-        @assert norm(Optim.minimizer(results) - [1.0, 2.0]) < 0.05
+        @test norm(Optim.minimizer(results) - [1.0, 2.0]) < 0.05
     end
 
     let
