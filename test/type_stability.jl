@@ -28,23 +28,18 @@
                                      rosenbrock_gradient!,
                                      rosenbrock_hessian!)
 
-    for method in (NelderMead(), SimulatedAnnealing())
-        optimize(rosenbrock, [0.0,0,.0], method)
-        optimize(rosenbrock, Float32[0.0, 0.0], method)
-    end
-
-    for method in (BFGS(),
+    for method in (NelderMead(),
+                   SimulatedAnnealing(),
+                   BFGS(),
                    ConjugateGradient(),
                    GradientDescent(),
                    MomentumGradientDescent(),
                    AcceleratedGradientDescent(),
-                   LBFGS())
-        optimize(d2, [0.0,0,.0], method)
-        optimize(d2, Float32[0.0, 0.0], method)
-    end
-
-    for method in (Newton(),)# NewtonTrustRegion())
-        optimize(d3, [0.0,0.0], method)
-        optimize(d3, Float32[0.0, 0.0], method)
+                   LBFGS(),
+                   Newton())
+        for T in (Float32, Float64)
+            result = optimize(d3, fill(zero(T), 2), method)
+            @test eltype(Optim.minimizer(result)) == T
+        end
     end
 end
