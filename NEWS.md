@@ -1,3 +1,7 @@
+# Optim (unversioned) release notes
+* Newton and BFGS: set initial step length to one.
+See [328](https://github.com/JuliaOpt/Optim.jl/pull/328).
+
 # Optim v0.7.3 release notes
 * OptimizationOptions is now unexported, and has been renamed to Options. Must be accessed as Optim.Options as a result.
 * Bug fixes to Nelder-Mead tracing.

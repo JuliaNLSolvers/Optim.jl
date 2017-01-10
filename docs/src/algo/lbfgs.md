@@ -4,7 +4,8 @@ This page contains information about BFGS and its limited memory version L-BFGS.
 ```julia
 BFGS(; linesearch = LineSearches.hagerzhang!,
        P = nothing,
-       precondprep = (P, x) -> nothing)
+       precondprep = (P, x) -> nothing,
+       resetalpha = true)
 ```
 
 ```julia
@@ -38,6 +39,9 @@ as follows
 $ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)$
 
 and is chosen by a linesearch algorithm such that each step gives sufficient descent.
+
+**For BFGS only**: If `resetalpha = true`, the linesearch algorithm starts with the initial value $ \alpha = 1.0 $ for each new BFGS iteration. Otherwise, it will use the terminating value of $ \alpha $ from the previous BFGS iteration.
+
 ## Example
 ## References
 Wright, Stephen, and Jorge Nocedal (2006) "Numerical optimization." Springer
