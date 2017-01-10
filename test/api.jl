@@ -1,5 +1,5 @@
 # Test multivariate optimization
-@testset "API" begin
+@testset "Multivariate API" begin
     rosenbrock = Optim.UnconstrainedProblems.examples["Rosenbrock"]
     f = rosenbrock.f
     g! = rosenbrock.g!
@@ -148,7 +148,7 @@
 end
 
 # Test univariate API
-let
+@testset "Univariate API" begin
     f(x) = 2x^2+3x+1
     res = optimize(f, -2.0, 1.0, GoldenSection())
     @test Optim.method(res) == "Golden Section Search"

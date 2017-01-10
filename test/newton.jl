@@ -47,12 +47,14 @@
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
     # Test Optim.newton for all twice differentiable functions in Optim.UnconstrainedProblems.examples
-    for (name, prob) in Optim.UnconstrainedProblems.examples
-    	if prob.istwicedifferentiable
-    		ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
-    		res = Optim.optimize(ddf, prob.initial_x, Newton())
-    		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    	end
+    @testset "Optim problems" begin
+        for (name, prob) in Optim.UnconstrainedProblems.examples
+        	if prob.istwicedifferentiable
+        		ddf = TwiceDifferentiableFunction(prob.f, prob.g!,prob.h!)
+        		res = Optim.optimize(ddf, prob.initial_x, Newton())
+        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        	end
+        end
     end
 
     let
@@ -62,16 +64,17 @@
         @test norm(Optim.minimizer(res) - prob.solutions) < 1e-9
     end
 
-
-    for (name, prob) in Optim.UnconstrainedProblems.examples
-    	if prob.istwicedifferentiable
-    		ddf = DifferentiableFunction(prob.f, prob.g!)
-    		res = Optim.optimize(ddf, prob.initial_x, Newton(), Optim.Options(autodiff = true))
-    		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    		res = Optim.optimize(ddf.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
-    		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-            res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))
-    		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-    	end
+    @testset "Optim problems (ForwardDiff)" begin
+        for (name, prob) in Optim.UnconstrainedProblems.examples
+        	if prob.istwicedifferentiable
+        		ddf = DifferentiableFunction(prob.f, prob.g!)
+        		res = Optim.optimize(ddf, prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        		res = Optim.optimize(ddf.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+                res = Optim.optimize(ddf.f, ddf.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        	end
+        end
     end
 end
