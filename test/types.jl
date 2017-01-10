@@ -1,7 +1,7 @@
 using Compat
 import Compat.String
 
-let
+@testset "Types" begin
     solver = NelderMead()
     T = typeof(solver)
     trace = OptimizationTrace{T}()

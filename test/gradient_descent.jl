@@ -1,4 +1,4 @@
-let
+@testset "Gradient Descent" begin
     for use_autodiff in (false, true)
         for (name, prob) in Optim.UnconstrainedProblems.examples
             if prob.isdifferentiable
@@ -13,7 +13,7 @@ let
                 res = Optim.optimize(f_prob, prob.initial_x, GradientDescent(),
                                      Optim.Options(autodiff = use_autodiff,
                                                          iterations = iterations))
-                @assert norm(Optim.minimizer(res) - prob.solutions, Inf) < 1e-2
+                @test norm(Optim.minimizer(res) - prob.solutions, Inf) < 1e-2
             end
         end
     end
@@ -32,8 +32,8 @@ let
 
     results = Optim.optimize(d, initial_x, GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
-    @assert Optim.g_converged(results)
-    @assert norm(Optim.minimizer(results) - [5.0]) < 0.01
+    @test Optim.g_converged(results)
+    @test norm(Optim.minimizer(results) - [5.0]) < 0.01
 
     eta = 0.9
 
@@ -50,6 +50,6 @@ let
 
     results = Optim.optimize(d, [1.0, 1.0], GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
-    @assert Optim.g_converged(results)
-    @assert norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+    @test Optim.g_converged(results)
+    @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 end

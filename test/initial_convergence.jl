@@ -1,4 +1,4 @@
-let
+@testset "Initial Convergence Handling" begin
     f(x) = x[1]^2
     function g!(x, out)
         out[1] = 2.*x[1]
@@ -11,11 +11,11 @@ let
                       MomentumGradientDescent)
 
         res = optimize(f, g!, [0.], Optimizer())
-        @assert isapprox(Optim.minimizer(res)[1], 0.)
+        @test isapprox(Optim.minimizer(res)[1], 0.)
     end
 
     for Optimizer in (Newton, NewtonTrustRegion)
         res = optimize(f, g!, h!, [0.], Optimizer())
-        @assert isapprox(Optim.minimizer(res)[1], 0.)
+        @test isapprox(Optim.minimizer(res)[1], 0.)
     end
 end

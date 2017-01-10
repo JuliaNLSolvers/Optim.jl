@@ -1,4 +1,4 @@
-let
+@testset "Constrained" begin
     # Quadratic objective function
     # For (A*x-b)^2/2
     function quadratic!(x, g, AtA, Atb, tmp)
