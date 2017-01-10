@@ -1,5 +1,10 @@
-using Optim, Base.Test, Compat
-
+using Optim, Compat
+if VERSION >= v"0.5-"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
 debug_printing = false
 
 my_tests = [
