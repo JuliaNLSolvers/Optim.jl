@@ -1,9 +1,9 @@
 module ConstrainedProblems
 
-using Optim
+using Optim, Compat
 
 immutable ConstrainedProblem{C<:Optim.AbstractConstraints}
-    name::ASCIIString
+    name::Compat.ASCIIString
     f::Function
     g!::Function
     h!::Function
@@ -14,7 +14,7 @@ immutable ConstrainedProblem{C<:Optim.AbstractConstraints}
     istwicedifferentiable::Bool
 end
 
-pexamples = Dict{ASCIIString, ConstrainedProblem}()
+pexamples = Dict{Compat.ASCIIString, ConstrainedProblem}()
 
 #####################################
 ###

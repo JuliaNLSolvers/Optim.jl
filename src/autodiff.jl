@@ -10,10 +10,10 @@ function autodiff{T <: Real}(f,
         dualvec[i] = Dual(x[i], zero(T))
     end
     for i in 1:length(x)
-        dualvec[i] = Dual(real(dualvec[i]), one(T))
+        dualvec[i] = Dual(realpart(dualvec[i]), one(T))
         result = f(dualvec)
         gradient_output[i] = epsilon(result)
-        dualvec[i] = Dual(real(dualvec[i]), zero(T))
+        dualvec[i] = Dual(realpart(dualvec[i]), zero(T))
     end
 
 end

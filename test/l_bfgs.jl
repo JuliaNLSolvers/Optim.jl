@@ -1,12 +1,12 @@
-function f(x::Vector)
+function f_lbfgs(x::Vector)
   (309.0 - 5.0 * x[1])^2 + (17.0 - x[2])^2
 end
-function g!(x::Vector, storage::Vector)
+function g_lbfgs!(x::Vector, storage::Vector)
   storage[1] = -10.0 * (309.0 - 5.0 * x[1])
   storage[2] = -2.0 * (17.0 - x[2])
 end
 
-d = DifferentiableFunction(f, g!)
+d = DifferentiableFunction(f_lbfgs, g_lbfgs!)
 
 initial_x = [10.0, 10.0]
 m = 10

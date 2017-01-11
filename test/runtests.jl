@@ -5,7 +5,7 @@
 using Optim
 
 for path in Optim.testpaths
-    require(path)
+    include(path)
 end
 
 my_tests = ["bfgs.jl",
