@@ -179,7 +179,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
 
-    x_converged, f_converged = false, false
+    x_converged, f_converged, f_increased = false, false, false
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
@@ -200,7 +200,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
         update_g!(d, state, method)
         x_converged, f_converged,
-        g_converged, converged = assess_convergence(state, options)
+        g_converged, converged, f_increased = assess_convergence(state, options)
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true
         !converged && update_h!(d, state, method)
@@ -219,6 +219,10 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
         # Combine the two, so see if the stopped flag should be changed to true
         # and stop the while loop
         stopped = stopped_by_callback || stopped_by_time_limit ? true : false
+
+        # Did the iteration provide a non-decreasing step?
+        f_increased && !options.allow_f_increases && break
+
     end # while
 
     after_while!(d, state, method, options)
@@ -233,6 +237,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
                                             options.x_tol,
                                             f_converged,
                                             options.f_tol,
+                                            f_increased,
                                             g_converged,
                                             options.g_tol,
                                             tr,
