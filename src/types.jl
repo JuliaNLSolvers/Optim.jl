@@ -62,7 +62,7 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     method::String
     initial_x::Array{T,N}
     minimizer::Array{T,N}
-    minimum::Float64
+    minimum::T
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool

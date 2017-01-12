@@ -229,8 +229,8 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::O
 
     return MultivariateOptimizationResults(state.method_string,
                                             initial_x,
-                                            state.x,
-                                            Float64(state.f_x),
+                                            f_increased ? state.x_previous : state.x,
+                                            f_increased ? state.f_x_previous : state.f_x,
                                             iteration,
                                             iteration == options.iterations,
                                             x_converged,
