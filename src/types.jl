@@ -71,7 +71,7 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     f_tol::Float64
     g_converged::Bool
     g_tol::Float64
-    f_increased
+    f_increased::Bool
     trace::OptimizationTrace{M}
     f_calls::Int
     g_calls::Int
