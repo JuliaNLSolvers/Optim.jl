@@ -2,8 +2,8 @@ abstract Optimizer
 immutable Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
-    allow_f_increases
     g_tol::Float64
+    allow_f_increases::Bool
     iterations::Int
     store_trace::Bool
     show_trace::Bool
@@ -17,8 +17,8 @@ end
 function Options(;
         x_tol::Real = 1e-32,
         f_tol::Real = 1e-32,
-        allow_f_increases = false,
         g_tol::Real = 1e-8,
+        allow_f_increases::Bool = false,
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,
@@ -32,7 +32,7 @@ function Options(;
         show_trace = true
     end
     Options{typeof(callback)}(
-        Float64(x_tol), Float64(f_tol), allow_f_increases, Float64(g_tol), Int(iterations),
+        Float64(x_tol), Float64(f_tol), Float64(g_tol), allow_f_increases, Int(iterations),
         store_trace, show_trace, extended_trace, autodiff, Int(show_every),
         callback, time_limit)
 end
@@ -69,9 +69,9 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     x_tol::Float64
     f_converged::Bool
     f_tol::Float64
-    f_increased
     g_converged::Bool
     g_tol::Float64
+    f_increased
     trace::OptimizationTrace{M}
     f_calls::Int
     g_calls::Int
@@ -151,7 +151,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
         @printf io "   * |x - x'| < %.1e: %s\n" x_tol(r) x_converged(r)
         @printf io "   * |f(x) - f(x')| / |f(x)| < %.1e: %s\n" f_tol(r) f_converged(r)
         @printf io "   * |g(x)| < %.1e: %s\n" g_tol(r) g_converged(r)
-        @printf io "   * f(x) > f(x'): %s\n" r.f_increased
+        @printf io "   * f(x) > f(x'): %s\n" f_increased(r)
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
     @printf io " * Objective Function Calls: %d" f_calls(r)
