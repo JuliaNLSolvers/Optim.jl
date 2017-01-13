@@ -35,6 +35,7 @@ import Compat.String
             @test startswith(lines[8], "   * |x - x'| < ")
             @test startswith(lines[9], "   * |f(x) - f(x')| / |f(x)| < ")
             @test startswith(lines[10], "   * |g(x)| < ")
+            @test startswith(lines[11], "   * f(x) > f(x')")
             @test startswith(lines[12], "   * Reached Maximum Number of Iterations: ")
             @test startswith(lines[13], " * Objective Function Calls: ")
         end
