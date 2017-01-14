@@ -5,8 +5,9 @@ Univariate and multivariate optimization in Julia.
 
 | **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 |
 |:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] [![Build Status][winbuild-img]][winbuild-url] | [![][gitter-img]][gitter-url]|
-| [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]| [![Codecov branch][cov-img]][cov-url] |  |
+| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]|
+| [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  |
+| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  ||
 
 # Optimization
 
@@ -59,6 +60,8 @@ julia> Pkg.add("Optim")
 [pkg-0.4-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.4
 [pkg-0.5-img]: http://pkg.julialang.org/badges/Optim_0.5.svg
 [pkg-0.5-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.5
+[pkg-0.6-img]: http://pkg.julialang.org/badges/Optim_0.6.svg
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.6
 
 [cov-img]: https://img.shields.io/codecov/c/github/JuliaOpt/Optim.jl/master.svg?maxAge=2592000
 [cov-url]: https://codecov.io/gh/JuliaOpt/Optim.jl
