@@ -9,8 +9,18 @@ const has_deprecated_levenberg_marquardt = Ref(false)
     trace, f_calls, g_calls)  MultivariateOptimizationResults(method,
         initial_x, minimizer, minimum, iterations,
         iteration_converged, x_converged, x_tol,
-        f_converged, f_tol, g_converged, g_tol,
+        f_converged, f_tol, g_converged, g_tol, false,
         trace, f_calls, g_calls, 0)
+
+@deprecate MultivariateOptimizationResults(method,
+    initial_x, minimizer, minimum, iterations,
+    iteration_converged, x_converged, x_tol,
+    f_converged, f_tol, g_converged, g_tol,
+    trace, f_calls, g_calls, h_calls)  MultivariateOptimizationResults(method,
+        initial_x, minimizer, minimum, iterations,
+        iteration_converged, x_converged, x_tol,
+        f_converged, f_tol, g_converged, g_tol, false,
+        trace, f_calls, g_calls, h_calls)
 
 # LineSearches deprecation
 for name in names(LineSearches)

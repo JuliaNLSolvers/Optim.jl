@@ -111,12 +111,13 @@ function optimize{T<:AbstractFloat}(
         x_tol::T = eps(T),
         f_tol::T = sqrt(eps(T)),
         g_tol::T = sqrt(eps(T)),
+        allow_f_increases::Bool = true,
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
         callback = nothing,
-        show_every = 1,
+        show_every::Integer = 1,
         linesearch! = nothing,
         linesearch = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
@@ -218,8 +219,8 @@ function optimize{T<:AbstractFloat}(
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
         end
 
-        results.x_converged, results.f_converged, results.g_converged, converged = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
-
+        results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
+        f_increased && !allow_f_increases && break
     end
     results.method = "Fminbox with $(method(results))"
     results.iterations = iteration

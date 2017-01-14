@@ -7,7 +7,6 @@
 #  preconditioner is a discrete laplacian, which defines a metric
 #     equivalent (in the limit h → 0) to that induced by the hessian, but
 #     does not approximate the hessian explicitly.
-
 @testset "Preconditioning" begin
     plap(U; n=length(U)) = (n-1) * sum( (0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
     plap1(U; n=length(U), dU = diff(U), dW = 4 * (0.1 + dU.^2) .* dU) =
@@ -31,7 +30,7 @@
                 results = Optim.optimize(df, copy(initial_x),
                                          optimizer(P = P),
                                          Optim.Options(f_tol = 1e-32,
-                                                             g_tol = GRTOL))
+                                                             g_tol = GRTOL, allow_f_increases = true))
                 debug_printing && println(optimizer, wwo,
                                           " preconditioning : g_calls = ", Optim.g_calls(results),
                                           ", f_calls = ", Optim.f_calls(results))

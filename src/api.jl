@@ -44,6 +44,8 @@ x_converged(r::OptimizationResults) = error("x_converged is not implemented for 
 x_converged(r::MultivariateOptimizationResults) = r.x_converged
 f_converged(r::OptimizationResults) = error("f_converged is not implemented for $(method(r)).")
 f_converged(r::MultivariateOptimizationResults) = r.f_converged
+f_increased(r::OptimizationResults) = error("f_increased is not implemented for $(method(r)).")
+f_increased(r::MultivariateOptimizationResults) = r.f_increased
 g_converged(r::OptimizationResults) = error("g_converged is not implemented for $(method(r)).")
 g_converged(r::MultivariateOptimizationResults) = r.g_converged
 
