@@ -1,4 +1,5 @@
-# Optim (unversioned) release notes
+# Optim v0.7.5 release notes
+* New option in Optim.Options: allow_f_increases. Defaults to false, but if set to true, the solver will not stop even if a step leads to an increase in the objective.
 * Newton and BFGS: set initial step length to one.
 See [328](https://github.com/JuliaOpt/Optim.jl/pull/328).
 
