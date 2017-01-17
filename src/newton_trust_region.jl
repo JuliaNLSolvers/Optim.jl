@@ -124,8 +124,9 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
             p_lambda2 = p_sq_norm(lambda, min_H_ev_multiplicity + 1)
             if p_lambda2 > delta_sq
                 # Then we can simply solve using root finding.
-                # Set a starting point between the minimum and largest eigenvalues.
-                lambda = lambda_lb + 0.01 * (max_H_ev - lambda_lb)
+                # Set a starting point greater than the minimum based on the
+                # range between the largest and smallest eigenvalues.
+                lambda = lambda_lb + 0.01 * (max_H_ev - min_H_ev)
             else
                 hard_case = true
                 reached_solution = true
