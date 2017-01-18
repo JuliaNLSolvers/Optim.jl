@@ -15,7 +15,7 @@ function assess_convergence(x::Array,
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(f_x - f_x_previous) < min(f_tol * (abs(f_x) + f_tol), eps(abs(f_x)+abs(f_x_previous)))
+    if abs(f_x - f_x_previous) < max(f_tol * (abs(f_x) + f_tol), eps(abs(f_x)+abs(f_x_previous)))
         f_converged = true
     end
 
@@ -43,7 +43,7 @@ function assess_convergence(state, options)
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(state.f_x - state.f_x_previous) < min(options.f_tol * (abs(state.f_x) + options.f_tol), eps(abs(state.f_x)+abs(state.f_x_previous)))
+    if abs(state.f_x - state.f_x_previous) < max(options.f_tol * (abs(state.f_x) + options.f_tol), eps(abs(state.f_x)+abs(state.f_x_previous)))
         f_converged = true
     end
 
