@@ -116,9 +116,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     # Could move this out? as a general check?
     #=
     # Output messages
-    if !isfinite(value(d))
-        error("Must have finite starting value")
-    end
+    isfinite(value(d)) || error("Initial f(x) is not finite ($(value(d)))")
     if !all(isfinite, gradient(d))
         @show gradient(d)
         @show find(.!isfinite.(gradient(d)))
@@ -163,9 +161,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         project_tangent!(method.manifold, gradient(d), state.x)
 
         # Check sanity of function and gradient
-        if !isfinite(value(d))
-            error("Function value must be finite")
-        end
+        isfinite(value(d)) || error("Non-finite f(x) while optimizing ($(value(d)))")
 
         # Determine the next search direction using HZ's CG rule
         #  Calculate the beta factor (HZ2012)
