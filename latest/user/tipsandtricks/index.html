@@ -345,7 +345,7 @@
 <p>and then the following</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
 <span class="n">initial_x</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">buffer</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">Array</span><span class="p">{</span><span class="n">eltype</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)}(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
 <span class="n">last_x</span> <span class="o">=</span> <span class="n">similar</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">TwiceDifferentiableFunction</span><span class="p">(</span><span class="n">x</span> <span class="o">-&gt;</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">),</span>
                                 <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">))</span>
