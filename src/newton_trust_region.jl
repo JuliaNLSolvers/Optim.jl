@@ -75,7 +75,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
     H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.
-    qg = Array(T, n)
+    qg = similar(gr)
     for i=1:n
         qg[i] = vecdot(H_eig[:vectors][:, i], gr)
     end
@@ -238,10 +238,10 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     reached_subproblem_solution = true
     interior = true
     lambda = NaN
-    g = Array(T, n)
+    g = similar(initial_x)
     f_x_previous, f_x = NaN, d.fg!(initial_x, g)
     f_calls, g_calls = 1, 1
-    H = Array(T, n, n)
+    H = Array{T}(n, n)
     d.h!(initial_x, H)
     h_calls = 1
 

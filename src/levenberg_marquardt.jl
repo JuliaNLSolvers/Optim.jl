@@ -22,7 +22,7 @@ Implements box constraints as described in Kanzow, Yamashita, Fukushima (2004; J
 """
 function levenberg_marquardt{F<:Function, G<:Function, T}(f::F, g::G, initial_x::AbstractVector{T};
     tolX::Real = 1e-8, tolG::Real = 1e-12, maxIter::Integer = 100,
-    lambda::Real = 10.0, show_trace::Bool = false, lower::Vector{T} = Array(T,0), upper::Vector{T} = Array(T,0))
+    lambda::Real = 10.0, show_trace::Bool = false, lower::Vector{T} = Array{T}(0), upper::Vector{T} = Array{T}(0))
 
     if !has_deprecated_levenberg_marquardt[]
         warn("levenberg_marquardt has been moved out of Optim.jl and into LsqFit.jl. Please adjust your code, and change your dependency to match this migration.")
