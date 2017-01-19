@@ -35,7 +35,7 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    g = Array(T, n)
+    g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
     invH = method.initial_invH(initial_x)
     # Maintain a cache for line search results

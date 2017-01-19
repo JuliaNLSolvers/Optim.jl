@@ -79,7 +79,7 @@ and then the following
 ```julia
 using Optim
 initial_x = ...
-buffer = Array(...) # Preallocate an appropriate buffer
+buffer = Array{eltype(initial_x)}(...) # Preallocate an appropriate buffer
 last_x = similar(initial_x)
 df = TwiceDifferentiableFunction(x -> f(x, buffer, initial_x),
                                 (x, stor) -> g!(x, stor, buffer, last_x))

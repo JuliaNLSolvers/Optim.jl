@@ -142,7 +142,7 @@ function optimize{T<:AbstractFloat}(
     fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
-    P = InverseDiagonal(Array(T, length(initial_x)))
+    P = InverseDiagonal(similar(initial_x))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
@@ -166,7 +166,7 @@ function optimize{T<:AbstractFloat}(
     end
 
     g = similar(x)
-    fval_all = Array(Vector{T}, 0)
+    fval_all = Array{Vector{T}}(0)
 
     # Count the total number of outer iterations
     iteration = 0
