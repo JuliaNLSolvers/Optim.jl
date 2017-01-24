@@ -233,7 +233,7 @@ function optimize(
         fval0 = funcc(nothing, x)
         dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x, zero(T))
         if show_trace > 0
-            println("#### Calling optimizer with mu = ", mu[], " ####")
+            println("#### Fminbox #$iteration: Calling optimizer with mu = ", mu[], " ####")
         end
         resultsnew = optimize(dfbox, x, _optimizer, options)
         if first
@@ -244,7 +244,7 @@ function optimize(
         end
         copy!(x, minimizer(results))
         if show_trace > 0
-            println("x: ", x)
+            println("#### Fminbox #$iteration: x=", x)
         end
 
         # Decrease mu
@@ -256,7 +256,10 @@ function optimize(
         results.x_converged, results.f_converged,
         results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
-        f_increased && !allow_outer_f_increases && break
+        if f_increased && !allow_outer_f_increases
+            warn("f(x) increased: stopping optimization")
+            break
+        end
     end
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
