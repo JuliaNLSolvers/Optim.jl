@@ -27,7 +27,6 @@ type BFGSState{T}
     dx::Array{T}
     dg::Array{T}
     u::Array{T}
-    I::Array{T}
     invH::Array{T}
     s::Array{T}
     @add_linesearch_fields()
@@ -37,7 +36,6 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     g = similar(initial_x)
     f_x = d.fg!(initial_x, g)
-    invH = method.initial_invH(initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState("BFGS",
@@ -54,8 +52,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
               Array{T}(n), # Store changes in position in state.dx
               Array{T}(n), # Store changes in gradient in state.dg
               Array{T}(n), # Buffer stored in state.u
-              eye(T, size(invH)...),
-              invH, # Store current invH in state.invH
+              method.initial_invH(initial_x), # Store current invH in state.invH
               Array{T}(n), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
@@ -72,7 +69,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     dphi0 = vecdot(state.g, state.s)
     # If invH is not positive definite, reset it to I
     if dphi0 > 0.0
-        copy!(state.invH, state.I)
+        copy!(state.invH, method.initial_invH(state.x))
         @simd for i in 1:state.n
             @inbounds state.s[i] = -state.g[i]
         end
