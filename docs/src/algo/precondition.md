@@ -36,13 +36,14 @@ Below, we see an example where a function is minimized without and with a precon
 applied.
 ```jl
 using ForwardDiff
+initial_x = zeros(100)
 plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
 plap1 = ForwardDiff.gradient(plap)
 precond(n) = spdiagm((-ones(n-1), 2*ones(n), -ones(n-1)), (-1,0,1), n, n)*(n+1)
 df = DifferentiableFunction(x -> plap([0; X; 0]),
                             (x, g) -> copy!(g, (plap1([0; X; 0]))[2:end-1]))
-result = Optim.optimize(df, zeros(100), method = ConjugateGradient(P = nothing))
-result = Optim.optimize(df, zeros(100), method = ConjugateGradient(P = precond(100)))
+result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))
+result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = precond(100)))
 ```
 The former optimize call converges at a slower rate than the latter. Looking at a
  plot of the 2D version of the function shows the problem.
