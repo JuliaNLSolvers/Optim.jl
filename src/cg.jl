@@ -163,21 +163,7 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
 
         # Determine the distance of movement along the search line
-        try
-            state.alpha, f_update, g_update =
-                method.linesearch!(df, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                                   state.alpha, state.mayterminate)
-            state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
-        catch ex
-            if isa(ex, LineSearches.LineSearchException)
-                lssuccess = false
-                state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
-                state.alpha = ex.alpha
-                Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
-            else
-                rethrow(ex)
-            end
-        end
+        lssuccess = perform_linesearch(state, method, df)
 
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
