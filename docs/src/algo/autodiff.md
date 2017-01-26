@@ -15,16 +15,16 @@ to be written using only Julia code, so no calls to BLAS or Fortran functions.
 
 Let us consider the Rosenbrock example again.
 ```julia
-function f(x::Vector)
+function f(x)
     return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 
-function g!(x::Vector, storage::Vector)
+function g!(x, storage)
     storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
     storage[2] = 200.0 * (x[2] - x[1]^2)
 end
 
-function h!(x::Vector, storage::Matrix)
+function h!(x, storage)
     storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
     storage[1, 2] = -400.0 * x[1]
     storage[2, 1] = -400.0 * x[1]
