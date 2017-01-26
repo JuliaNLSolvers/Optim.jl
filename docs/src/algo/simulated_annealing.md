@@ -1,14 +1,14 @@
 # Simulated Annealing
 ## Constructor
 ```julia
-SimulatedAnnealing(; neighbor! = default_neighbor!,
+SimulatedAnnealing(; neighbor = default_neighbor!,
                     T = default_temperature,
                     p = kirkpatrick)
 ```
 
 The constructor takes three keywords:
 
-* `neighbor! = a!(x_proposed, x_current)`, a mutating function of the current x, and the proposed x
+* `neighbor = a!(x_proposed, x_current)`, a mutating function of the current x, and the proposed x
 * `T = b(iteration)`, a function of the current iteration that returns a temperature
 * `p = c(f_proposal, f_current, T)`, a function of the current temperature, current function value and proposed function value that returns an acceptance probability
 
