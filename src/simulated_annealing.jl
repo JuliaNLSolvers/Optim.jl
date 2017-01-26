@@ -10,22 +10,23 @@ function default_neighbor!(x::Array, x_proposal::Array)
     return
 end
 
-immutable SimulatedAnnealing <: Optimizer
-    neighbor!::Function
-    temperature::Function
+immutable SimulatedAnnealing{Tn, Ttemp} <: Optimizer
+    neighbor!::Tn
+    temperature::Ttemp
     keep_best::Bool # not used!?
 end
 
-SimulatedAnnealing(; neighbor!::Function = default_neighbor!,
-                     temperature::Function = log_temperature,
-                     keep_best::Bool = true) =
-  SimulatedAnnealing(neighbor!, temperature, keep_best)
+SimulatedAnnealing(;neighbor! = nothing,
+                    neighbor = default_neighbor!,
+                    temperature = log_temperature,
+                    keep_best::Bool = true) =
+  SimulatedAnnealing(get_neighbor(neighbor!, neighbor), temperature, keep_best)
 
-type SimulatedAnnealingState{T}
+type SimulatedAnnealingState{T, N}
     @add_generic_fields()
     iteration::Int
-    x_current::Array{T}
-    x_proposal
+    x_current::Array{T, N}
+    x_proposal::Array{T, N}
     f_x_current::T
     f_proposal::T
 end
