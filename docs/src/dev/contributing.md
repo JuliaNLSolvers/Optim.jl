@@ -7,7 +7,7 @@ When proposing a change to `Optim.jl`, there are a few things to consider. If yo
 Before submitting a pull request, please consider the following bullets:
 * Did you remember to provide tests for your changes? If not, please do so, or ask for help.
 * Did your change add new functionality? Remember to add a section in the documentation.
-* Did you change existing code in such a way that existing code might break? Then remember to use Julia's deprecation tools to help users migrate to the new syntax.
+* Did you change existing code in a breaking way? Then remember to use Julia's deprecation tools to help users migrate to the new syntax.
 * Add a note in the NEWS.md file, so we can keep track of changes between versions.
 
 ### Adding a solver
