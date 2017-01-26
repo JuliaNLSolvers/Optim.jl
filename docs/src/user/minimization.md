@@ -32,7 +32,7 @@ optimize(f, [0.0, 0.0], LBFGS(), Optim.Options(autodiff = true))
 ```
 For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
-function g!(x::Vector, storage::Vector)
+function g!(x, storage)
 storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
 storage[2] = 200.0 * (x[2] - x[1]^2)
 end
