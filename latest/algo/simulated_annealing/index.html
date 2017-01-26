@@ -277,7 +277,7 @@
 <h1 id="simulated-annealing">Simulated Annealing</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">SimulatedAnnealing</span><span class="p">(;</span> <span class="n">neighbor!</span> <span class="o">=</span> <span class="n">default_neighbor!</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">SimulatedAnnealing</span><span class="p">(;</span> <span class="n">neighbor</span> <span class="o">=</span> <span class="n">default_neighbor!</span><span class="p">,</span>
                     <span class="n">T</span> <span class="o">=</span> <span class="n">default_temperature</span><span class="p">,</span>
                     <span class="n">p</span> <span class="o">=</span> <span class="n">kirkpatrick</span><span class="p">)</span>
 </pre></div>
@@ -285,7 +285,7 @@
 
 <p>The constructor takes three keywords:</p>
 <ul>
-<li><code>neighbor! = a!(x_proposed, x_current)</code>, a mutating function of the current x, and the proposed x</li>
+<li><code>neighbor = a!(x_proposed, x_current)</code>, a mutating function of the current x, and the proposed x</li>
 <li><code>T = b(iteration)</code>, a function of the current iteration that returns a temperature</li>
 <li><code>p = c(f_proposal, f_current, T)</code>, a function of the current temperature, current function value and proposed function value that returns an acceptance probability</li>
 </ul>
