@@ -298,8 +298,8 @@
 
 
 <p>A high temperature makes it more likely that a draw is accepted, by pushing acceptance probability to 1. As in the Metropolis-Hastings algorithm, we always accept a smaller function value, but we also sometimes accept a larger value. As the temperature decreases, we're more and more likely to only accept candidate <code>x</code>'s that lowers the function value. To obtain a new <code>f_proposal</code>, we need a neighbor function. A simple neighbor function adds a standard normal draw to each dimension of <code>x</code></p>
-<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> neighbor</span><span class="o">!</span><span class="p">(</span><span class="n">x_proposal</span><span class="p">::</span><span class="n">Array</span><span class="p">,</span> <span class="n">x</span><span class="p">::</span><span class="n">Array</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="n">eachindex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">neighbor!</span><span class="p">(</span><span class="n">x_proposal</span><span class="o">::</span><span class="kt">Array</span><span class="p">,</span> <span class="n">x</span><span class="o">::</span><span class="kt">Array</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="kp">in</span> <span class="n">eachindex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">x_proposal</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">randn</span><span class="p">()</span>
     <span class="k">end</span>
 <span class="k">end</span>

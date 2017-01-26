@@ -281,9 +281,9 @@
 
 
 <p>We then simply define a function in three variables</p>
-<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
     <span class="n">err</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">length</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="kp">in</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="n">pred_i</span> <span class="o">=</span> <span class="n">betas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">betas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">err</span> <span class="o">+=</span> <span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pred_i</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
     <span class="k">end</span>
@@ -298,9 +298,9 @@
 
 
 <p>Alternatively, we can define a closure <code>sqerror(betas)</code> that is aware of the variables we just defined</p>
-<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">sqerror</span><span class="p">(</span><span class="n">betas</span><span class="p">)</span>
     <span class="n">err</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="k">in</span> <span class="mi">1</span><span class="p">:</span><span class="n">length</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="kp">in</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">pred_i</span> <span class="o">=</span> <span class="n">betas</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">betas</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">err</span> <span class="o">+=</span> <span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">pred_i</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
     <span class="k">end</span>
@@ -323,19 +323,19 @@
 
 
 <p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused. The trick here is essentially the same as above. We use a closure or an anonymous function. Basically, we define</p>
-<div class="codehilite"><pre><span></span><span class="k">function</span><span class="nf"> calculate_common</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">calculate_common!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">last_x</span>
         <span class="n">copy!</span><span class="p">(</span><span class="n">last_x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
         <span class="c">#do whatever common calculations and save to buffer</span>
     <span class="k">end</span>
 <span class="k">end</span>
 
-<span class="k">function</span><span class="nf"> f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
     <span class="n">calculate_common!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
     <span class="n">f_body</span> <span class="c"># depends on buffer</span>
 <span class="k">end</span>
 
-<span class="k">function</span><span class="nf"> g</span><span class="o">!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">)</span>
     <span class="n">calculate_common!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">last_x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">)</span>
     <span class="n">g_body!</span> <span class="c"># depends on buffer</span>
 <span class="k">end</span>
@@ -345,7 +345,7 @@
 <p>and then the following</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
 <span class="n">initial_x</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">buffer</span> <span class="o">=</span> <span class="n">Array</span><span class="p">{</span><span class="n">eltype</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)}(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="kt">Array</span><span class="p">{</span><span class="n">eltype</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)}(</span><span class="o">...</span><span class="p">)</span> <span class="c"># Preallocate an appropriate buffer</span>
 <span class="n">last_x</span> <span class="o">=</span> <span class="n">similar</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">TwiceDifferentiableFunction</span><span class="p">(</span><span class="n">x</span> <span class="o">-&gt;</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">),</span>
                                 <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stor</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">last_x</span><span class="p">))</span>
@@ -357,9 +357,8 @@
 <h2 id="provide-gradients">Provide gradients</h2>
 <p>As mentioned in the general introduction, passing analytical gradients can have an impact on performance. To show an example of this, consider the separable extension of the Rosenbrock function in dimension 5000, see <a href="ftp://ftp.numerical.rl.ac.uk/pub/cutest/sif/SROSENBR.SIF">SROSENBR</a> in CUTEst.</p>
 <p>Below, we use the gradients and objective functions from <a href="http://www.cuter.rl.ac.uk/Problems/mastsif.shtml">mastsif</a> through <a href="https://github.com/JuliaOptimizers/CUTEst.jl">CUTEst.jl</a>. We only show the first five iterations of an attempt to minimize the function using Gradient Descent.</p>
-<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
-
-<span class="gt">                      Optim.Options(show_trace=true, iterations = 5))</span>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="nd">@time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+                      <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">show_trace</span><span class="o">=</span><span class="kc">true</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">5</span><span class="p">))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
 <span class="go">     0     4.850000e+04     2.116000e+02</span>
 <span class="go">     1     1.018734e+03     2.704951e+01</span>
@@ -382,9 +381,8 @@
 <span class="go"> * Objective Function Calls: 23</span>
 <span class="go"> * Gradient Calls: 23</span>
 
-<span class="gp">julia&gt;</span> <span class="p">@</span><span class="n">time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
-
-<span class="gt">                      Optim.Options(show_trace=true, iterations = 5))</span>
+<span class="gp">julia&gt;</span> <span class="nd">@time</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">(),</span>
+                      <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">show_trace</span><span class="o">=</span><span class="kc">true</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">5</span><span class="p">))</span>
 <span class="go">Iter     Function value   Gradient norm</span>
 <span class="go">     0     4.850000e+04     2.116000e+02</span>
 <span class="go">     1     1.018769e+03     2.704998e+01</span>
@@ -419,7 +417,7 @@
 <span class="n">f</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">f</span>
 <span class="n">initial_x</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">initial_x</span>
 
-<span class="k">function</span><span class="nf"> slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
     <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="k">end</span>
@@ -437,27 +435,27 @@
 <span class="n">f</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">f</span>
 <span class="n">initial_x</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">initial_x</span>
 
-<span class="k">function</span><span class="nf"> very_slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">very_slow</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 <span class="k">end</span>
 
 <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
 <span class="n">time_to_setup</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">function</span><span class="nf"> advanced_time_control</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">advanced_time_control</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Iteration:       &quot;</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span>
     <span class="n">so_far</span> <span class="o">=</span>  <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span>
     <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Time so far:     &quot;</span><span class="p">,</span> <span class="n">so_far</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span>
-        <span class="n">time_to_setup</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span>
+        <span class="n">time_to_setup</span><span class="p">[</span><span class="o">:</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span>
     <span class="k">else</span>
         <span class="n">expected_next_time</span> <span class="o">=</span> <span class="n">so_far</span> <span class="o">+</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start_time</span><span class="o">-</span><span class="n">time_to_setup</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span>
         <span class="n">println</span><span class="p">(</span><span class="s">&quot; * Next iteration ≈ &quot;</span><span class="p">,</span> <span class="n">expected_next_time</span><span class="p">)</span>
         <span class="n">println</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">expected_next_time</span> <span class="o">&lt;</span> <span class="mi">13</span> <span class="o">?</span> <span class="n">false</span> <span class="p">:</span> <span class="n">true</span>
+        <span class="k">return</span> <span class="n">expected_next_time</span> <span class="o">&lt;</span> <span class="mi">13</span> <span class="o">?</span> <span class="kc">false</span> <span class="o">:</span> <span class="kc">true</span>
     <span class="k">end</span>
     <span class="n">println</span><span class="p">()</span>
-    <span class="n">false</span>
+    <span class="kc">false</span>
 <span class="k">end</span>
 <span class="n">optimize</span><span class="p">(</span><span class="n">very_slow</span><span class="p">,</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">NelderMead</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">callback</span> <span class="o">=</span> <span class="n">advanced_time_control</span><span class="p">))</span>
 </pre></div>
