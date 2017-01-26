@@ -193,4 +193,11 @@ end
     	end
     end
 end
+
+
+@testset "PR #341" begin
+    # verify that no PosDef exception is thrown
+    Optim.solve_tr_subproblem!([0, 1.], [-1000 0; 0. -999], 1e-2, ones(2))
+end
+
 end
