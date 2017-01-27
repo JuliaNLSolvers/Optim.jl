@@ -53,7 +53,6 @@ module Optim
     # Tracing
     include("utilities/update.jl")
 
-
     # Grid Search
     include("grid_search.jl")
 
@@ -88,6 +87,9 @@ module Optim
     # Univariate methods
     include("golden_section.jl")
     include("brent.jl")
+
+    # Line search generic code
+    include("utilities/perform_linesearch.jl")
 
     # Backward compatibility
     include("deprecate.jl")

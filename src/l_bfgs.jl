@@ -139,7 +139,6 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
 end
 
 function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
-    lssuccess = true
     n = state.n
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
@@ -152,51 +151,9 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.P)
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    if dphi0 > 0.0
-        state.pseudo_iteration = 1
-        @simd for i in 1:n
-            @inbounds state.s[i] = -state.g[i]
-        end
-        dphi0 = vecdot(state.g, state.s)
-    end
-
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
-    # compute an initial guess for the linesearch based on
-    # Nocedal/Wright, 2nd ed, (3.60)
-    # TODO: this is a temporary fix, but should eventually be split off into
-    #       a separate type and possibly live in LineSearches; see #294
-    if method.extrapolate && state.pseudo_iteration > 1
-        alphaguess = 2.0 * (state.f_x - state.f_x_previous) / dphi0
-        alphaguess = max(alphaguess, state.alpha/4.0)  # not too much reduction
-        # if alphaguess ≈ 1, then make it 1 (Newton-type behaviour)
-        if method.snap2one[1] < alphaguess < method.snap2one[2]
-            alphaguess = 1.0
-        end
-    else
-        # without extrapolation use previous alpha (old behaviour)
-        alphaguess = state.alpha
-    end
 
     # Determine the distance of movement along the search line
-    try
-        state.alpha, f_update, g_update =
-        method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                           alphaguess, state.mayterminate)
-        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
-    catch ex
-        if isa(ex, LineSearches.LineSearchException)
-            lssuccess = false
-            state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
-            state.alpha = ex.alpha
-            Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
-        else
-            rethrow(ex)
-        end
-    end
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
@@ -210,7 +167,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Save old f and g values to prepare for update_g! call
     state.f_x_previous = state.f_x
     copy!(state.g_previous, state.g)
-    (lssuccess == false) # break on linesearch error
+    lssuccess == false # break on linesearch error
 end
 
 

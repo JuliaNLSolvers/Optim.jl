@@ -59,44 +59,15 @@ end
 
 
 function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
-    lssuccess = true
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
     A_mul_B!(state.s, state.invH, state.g)
     scale!(state.s, -1)
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    # If invH is not positive definite, reset it to I
-    if dphi0 > 0.0
-        copy!(state.invH, method.initial_invH(state.x))
-        @simd for i in 1:state.n
-            @inbounds state.s[i] = -state.g[i]
-        end
-        dphi0 = vecdot(state.g, state.s)
-    end
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
     # Determine the distance of movement along the search line
-    try
-        if method.resetalpha == true
-            state.alpha = one(T)
-        end
-        state.alpha, f_update, g_update =
-            method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                               state.alpha, state.mayterminate)
-        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
-    catch ex
-        if isa(ex, LineSearches.LineSearchException)
-            lssuccess = false
-            state.f_calls, state.g_calls = state.f_calls + ex.f_update, state.g_calls + ex.g_update
-            state.alpha = ex.alpha
-            Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
-        else
-            rethrow(ex)
-        end
-    end
+    # This call resets invH to initial_invH is the former in not positive
+    # semi-definite
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
