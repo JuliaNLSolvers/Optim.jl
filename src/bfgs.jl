@@ -78,9 +78,6 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line
-    if method.resetalpha == true
-        state.alpha = one(T)
-    end
     lssuccess = perform_linesearch(state, method, d)
 
     # Maintain a record of previous position

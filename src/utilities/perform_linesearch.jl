@@ -2,6 +2,9 @@ perform_linesearch(state, method, d) = perform_linesearch(state, method, d, stat
 function perform_linesearch(state, method, d, alphaguess)
     # Determine the distance of movement along the search line
     try
+        if method.resetalpha == true
+            state.alpha = one(T)
+        end
         state.alpha, f_update, g_update =
         method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
                            alphaguess, state.mayterminate)
