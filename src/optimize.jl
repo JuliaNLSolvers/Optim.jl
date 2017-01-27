@@ -46,11 +46,6 @@ function optimize(d::TwiceDifferentiableFunction, initial_x::Array; kwargs...)
     optimize(d, initial_x, method, Options(;kwargs...))
 end
 
-
-function optimize(d, initial_x::Array,
-                  method::Optimizer, options::Options = Options())
-    optimize(d, initial_x, method, options)
-end
 optimize(d::Function, initial_x, options::Options) = optimize(d, initial_x, NelderMead(), options)
 optimize(d::DifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, BFGS(), options)
 optimize(d::TwiceDifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, Newton(), options)
@@ -165,7 +160,8 @@ end
 
 after_while!(d, state, method, options) = nothing
 
-function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M, options::Options)
+function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
+                                   options::Options = Options())
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
