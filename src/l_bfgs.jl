@@ -173,15 +173,12 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
         alphaguess = max(alphaguess, state.alpha/4.0)  # not too much reduction
         # if alphaguess ≈ 1, then make it 1 (Newton-type behaviour)
         if method.snap2one[1] < alphaguess < method.snap2one[2]
-            alphaguess = 1.0
+            alphaguess = one(T)
         end
-    else
-        # without extrapolation use previous alpha (old behaviour)
-        alphaguess = state.alpha
+        state.alpha = alphaguess
     end
-
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d, alphaguess)
+    lssuccess = perform_linesearch(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

@@ -1,13 +1,12 @@
-perform_linesearch(state, method, d) = perform_linesearch(state, method, d, state.alpha)
-function perform_linesearch(state, method, d, alphaguess)
+function perform_linesearch{M}(state, method::M, d)
     # Determine the distance of movement along the search line
+    if M <: Union{BFGS, Newton} && method.resetalpha == true
+        state.alpha = one(state.alpha)
+    end
     try
-        if method.resetalpha == true
-            state.alpha = one(T)
-        end
         state.alpha, f_update, g_update =
         method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                           alphaguess, state.mayterminate)
+                           state.alpha, state.mayterminate)
         state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
         return true
     catch ex
