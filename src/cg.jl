@@ -138,32 +138,10 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
 end
 
 function update_state!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
-        lssuccess = true
-        # Reset the search direction if it becomes corrupted
-        dphi0 = vecdot(state.g, state.s)
-        if dphi0 >= 0
-            @simd for i in 1:state.n
-                @inbounds state.s[i] = -state.pg[i]
-            end
-            dphi0 = vecdot(state.g, state.s)
-            if dphi0 >= 0
-                return true
-            end
-        end
-
-        # Refresh the line search cache
-        LineSearches.clear!(state.lsr)
-        @assert typeof(state.f_x) == T
-        @assert typeof(dphi0) == T
-        push!(state.lsr, zero(T), state.f_x, dphi0)
-
-        # Pick the initial step size (HZ #I1-I2)
-        state.alpha, state.mayterminate, f_update, g_update =
-          LineSearches.alphatry(state.alpha, df, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
-        state.f_calls, state.g_calls = state.f_calls + f_update, state.g_calls + g_update
+        # Search direction is predetermined
 
         # Determine the distance of movement along the search line
-        lssuccess = perform_linesearch(state, method, df)
+        lssuccess = perform_linesearch!(state, method, df)
 
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
@@ -209,7 +187,7 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         @simd for i in 1:state.n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
-        (lssuccess == false) # break on linesearch error
+        lssuccess == false # break on linesearch error
 end
 
 update_g!(d, state, method::ConjugateGradient) = nothing

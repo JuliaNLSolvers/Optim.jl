@@ -64,21 +64,10 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     A_mul_B!(state.s, state.invH, state.g)
     scale!(state.s, -1)
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    # If invH is not positive definite, reset it to I
-    if dphi0 > 0.0
-        copy!(state.invH, method.initial_invH(state.x))
-        @simd for i in 1:state.n
-            @inbounds state.s[i] = -state.g[i]
-        end
-        dphi0 = vecdot(state.g, state.s)
-    end
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    # This call resets invH to initial_invH is the former in not positive
+    # semi-definite
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

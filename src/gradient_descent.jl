@@ -53,13 +53,9 @@ function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDes
     @simd for i in 1:state.n
         @inbounds state.s[i] = -state.s[i]
     end
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
 
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

@@ -50,13 +50,8 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
         @inbounds state.s[i] = -state.g[i]
     end
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Update current position
     @simd for i in 1:state.n

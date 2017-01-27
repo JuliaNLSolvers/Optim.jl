@@ -151,34 +151,9 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.P)
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    if dphi0 > 0.0
-        state.pseudo_iteration = 1
-        @simd for i in 1:n
-            @inbounds state.s[i] = -state.g[i]
-        end
-        dphi0 = vecdot(state.g, state.s)
-    end
 
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
-    # compute an initial guess for the linesearch based on
-    # Nocedal/Wright, 2nd ed, (3.60)
-    # TODO: this is a temporary fix, but should eventually be split off into
-    #       a separate type and possibly live in LineSearches; see #294
-    if method.extrapolate && state.pseudo_iteration > 1
-        alphaguess = 2.0 * (state.f_x - state.f_x_previous) / dphi0
-        alphaguess = max(alphaguess, state.alpha/4.0)  # not too much reduction
-        # if alphaguess ≈ 1, then make it 1 (Newton-type behaviour)
-        if method.snap2one[1] < alphaguess < method.snap2one[2]
-            alphaguess = one(T)
-        end
-        state.alpha = alphaguess
-    end
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

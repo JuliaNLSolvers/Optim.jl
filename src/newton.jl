@@ -62,13 +62,8 @@ function update_state!{T}(d, state::NewtonState{T}, method::Newton)
     state.F, state.Hd = ldltfact!(Positive, state.H)
     state.s[:] = -(state.F\state.g)
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

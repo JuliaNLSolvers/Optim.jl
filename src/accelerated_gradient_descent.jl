@@ -6,7 +6,6 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-
 immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
@@ -61,13 +60,8 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
         @inbounds state.s[i] = -state.g[i]
     end
 
-    # Refresh the line search cache
-    dphi0 = vecdot(state.g, state.s)
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(T), state.f_x, dphi0)
-
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch(state, method, d)
+    lssuccess = perform_linesearch!(state, method, d)
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
