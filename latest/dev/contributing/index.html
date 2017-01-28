@@ -289,12 +289,12 @@
 <span class="nx">Minim</span><span class="p">(;</span> <span class="nx">linesearch</span> <span class="o">=</span> <span class="nx">LineSearches</span><span class="p">.</span><span class="nx">hagerzhang</span><span class="o">!</span><span class="p">,</span> <span class="nx">minim_parameter</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">=</span>
   <span class="nx">Minim</span><span class="p">(</span><span class="nx">linesearch</span><span class="p">,</span> <span class="nx">minim_parameter</span><span class="p">)</span>
 
-<span class="nx">type</span> <span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">}</span>
+<span class="nx">type</span> <span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">,</span><span class="nx">G</span><span class="p">}</span>
   <span class="kd">@add_generic_fields</span><span class="p">()</span>
-  <span class="nx">x_previous</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">}</span>
-  <span class="nx">g</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">}</span>
+  <span class="nx">x_previous</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
+  <span class="nx">g</span><span class="o">::</span><span class="nx">G</span>
   <span class="nx">f_x_previous</span><span class="o">::</span><span class="nx">T</span>
-  <span class="nx">s</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">}</span>
+  <span class="nx">s</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
   <span class="kd">@add_linesearch_fields</span><span class="p">()</span>
 <span class="nx">end</span>
 
