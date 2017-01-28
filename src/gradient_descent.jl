@@ -19,12 +19,12 @@ function GradientDescent(; linesearch! = nothing,
     GradientDescent(linesearch, P, precondprep)
 end
 
-type GradientDescentState{T}
+type GradientDescentState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T,N}
+    g::G
     f_x_previous::T
-    s::Array{T}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 

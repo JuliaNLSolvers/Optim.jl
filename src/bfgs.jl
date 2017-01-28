@@ -18,17 +18,17 @@ function BFGS(; linesearch! = nothing,
     BFGS(linesearch, initial_invH, resetalpha)
 end
 
-type BFGSState{T}
+type BFGSState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
-    g_previous::Array{T}
+    x_previous::Array{T,N}
+    g::G
+    g_previous::G
     f_x_previous::T
-    dx::Array{T}
-    dg::Array{T}
-    u::Array{T}
-    invH::Array{T}
-    s::Array{T}
+    dx::Array{T,N}
+    dg::Array{T,N}
+    u::Array{T,N}
+    invH::Matrix{T}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 
@@ -49,11 +49,11 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
-              Array{T}(n), # Store changes in position in state.dx
-              Array{T}(n), # Store changes in gradient in state.dg
-              Array{T}(n), # Buffer stored in state.u
+              similar(initial_x), # Store changes in position in state.dx
+              similar(initial_x), # Store changes in gradient in state.dg
+              similar(initial_x), # Buffer stored in state.u
               method.initial_invH(initial_x), # Store current invH in state.invH
-              Array{T}(n), # Store current search direction in state.s
+              similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

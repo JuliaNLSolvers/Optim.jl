@@ -84,16 +84,16 @@ function ConjugateGradient(; linesearch! = nothing,
                       linesearch)
 end
 
-type ConjugateGradientState{T}
+type ConjugateGradientState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
-    g_previous::Array{T}
+    x_previous::Array{T,N}
+    g::G
+    g_previous::G
     f_x_previous::T
-    y::Array{T}
-    py::Array{T}
-    pg::Array{T}
-    s::Array{T}
+    y::Array{T,N}
+    py::Array{T,N}
+    pg::Array{T,N}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 

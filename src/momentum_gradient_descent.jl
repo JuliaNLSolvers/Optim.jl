@@ -17,12 +17,12 @@ function MomentumGradientDescent(; mu::Real = 0.01, linesearch! = nothing,
     MomentumGradientDescent(Float64(mu), linesearch)
 end
 
-type MomentumGradientDescentState{T}
+type MomentumGradientDescentState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T,N}
+    g::G
     f_x_previous::T
-    s::Array{T}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 

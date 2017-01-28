@@ -20,15 +20,15 @@ function AcceleratedGradientDescent(; linesearch! = nothing,
     AcceleratedGradientDescent(linesearch)
 end
 
-type AcceleratedGradientDescentState{T}
+type AcceleratedGradientDescentState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T,N}
+    g::G
     f_x_previous::T
     iteration::Int
-    y::Array{T}
-    y_previous::Array{T}
-    s::Array{T}
+    y::Array{T,N}
+    y_previous::Array{T,N}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 

@@ -12,15 +12,15 @@ function Newton(; linesearch! = nothing, linesearch::Function = LineSearches.hag
     Newton(linesearch,resetalpha)
 end
 
-type NewtonState{T}
+type NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T, N}
+    g::Array{T, N}
     f_x_previous::T
-    H
-    F
-    Hd
-    s::Array{T}
+    H::Matrix{T}
+    F::F
+    Hd::Thd
+    s::Array{T, N}
     @add_linesearch_fields()
 end
 
@@ -47,8 +47,8 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
                 g, # Store current gradient in state.g
                 T(NaN), # Store previous f in state.f_x_previous
                 H,
-                copy(H),
-                copy(H),
+                Base.LinAlg.Cholesky(Matrix{T}(), :U),
+                Vector{Int8}(),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
