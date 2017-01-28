@@ -84,16 +84,16 @@ function ConjugateGradient(; linesearch! = nothing,
                       linesearch)
 end
 
-type ConjugateGradientState{T}
+type ConjugateGradientState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
-    g_previous::Array{T}
+    x_previous::Array{T,N}
+    g::G
+    g_previous::G
     f_x_previous::T
-    y::Array{T}
-    py::Array{T}
-    pg::Array{T}
-    s::Array{T}
+    y::Array{T,N}
+    py::Array{T,N}
+    pg::Array{T,N}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 
@@ -126,14 +126,14 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          1, # Track f calls in state.f_calls
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
-                         copy(initial_x), # Maintain current state in state.x_previous
+                         similar(initial_x), # Maintain previous state in state.x_previous
                          g, # Store current gradient in state.g
-                         copy(g), # Store previous gradient in state.g_previous
+                         similar(g), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Intermediate value in CG calculation
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
-                         -copy(pg), # Maintain current search direction in state.s
+                         -pg, # Maintain current search direction in state.s
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

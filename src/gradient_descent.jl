@@ -19,12 +19,12 @@ function GradientDescent(; linesearch! = nothing,
     GradientDescent(linesearch, P, precondprep)
 end
 
-type GradientDescentState{T}
+type GradientDescentState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T,N}
+    g::G
     f_x_previous::T
-    s::Array{T}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 
@@ -39,7 +39,7 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
                          1, # Track f calls in state.f_calls
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
-                         copy(initial_x), # Maintain current state in state.x_previous
+                         similar(initial_x), # Maintain previous state in state.x_previous
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s

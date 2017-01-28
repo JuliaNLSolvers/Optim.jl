@@ -89,22 +89,22 @@ function LBFGS(; linesearch! = nothing,
     LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 end
 
-type LBFGSState{T}
+type LBFGSState{T,N,M}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
-    g_previous::Array{T}
-    rho::Array{T}
-    dx_history::Array{T}
-    dg_history::Array{T}
-    dx::Array{T}
-    dg::Array{T}
-    u::Array{T}
+    x_previous::Array{T,N}
+    g::Array{T,N}
+    g_previous::Array{T,N}
+    rho::Array{T,N}
+    dx_history::Array{T,M}
+    dg_history::Array{T,M}
+    dx::Array{T,N}
+    dg::Array{T,N}
+    u::Array{T,N}
     f_x_previous::T
     twoloop_q
     twoloop_alpha
     pseudo_iteration::Int
-    s::Array{T}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 
@@ -121,20 +121,20 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               1, # Track f calls in state.f_calls
               1, # Track g calls in state.g_calls
               0, # Track h calls in state.h_calls
-              copy(initial_x), # Maintain current state in state.x_previous
+              similar(initial_x), # Maintain previous state in state.x_previous
               g, # Store current gradient in state.g
-              copy(g), # Store previous gradient in state.g_previous
+              similar(g), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
               Array{T}(n, method.m), # Store changes in position in state.dx_history
               Array{T}(n, method.m), # Store changes in gradient in state.dg_history
-              Array{T}(n), # Buffer for new entry in state.dx_history
-              Array{T}(n), # Buffer for new entry in state.dg_history
-              Array{T}(n), # Buffer stored in state.u
+              similar(initial_x), # Buffer for new entry in state.dx_history
+              similar(initial_x), # Buffer for new entry in state.dg_history
+              similar(initial_x), # Buffer stored in state.u
               T(NaN), # Store previous f in state.f_x_previous
-              Array{T}(n), #Buffer for use by twoloop
+              similar(initial_x), #Buffer for use by twoloop
               Array{T}(method.m), #Buffer for use by twoloop
               0,
-              Array{T}(n), # Store current search direction in state.s
+              similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

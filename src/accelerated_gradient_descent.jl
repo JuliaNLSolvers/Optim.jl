@@ -20,15 +20,15 @@ function AcceleratedGradientDescent(; linesearch! = nothing,
     AcceleratedGradientDescent(linesearch)
 end
 
-type AcceleratedGradientDescentState{T}
+type AcceleratedGradientDescentState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
+    x_previous::Array{T,N}
+    g::G
     f_x_previous::T
     iteration::Int
-    y::Array{T}
-    y_previous::Array{T}
-    s::Array{T}
+    y::Array{T,N}
+    y_previous::Array{T,N}
+    s::Array{T,N}
     @add_linesearch_fields()
 end
 
@@ -43,12 +43,12 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          1, # Track f calls in state.f_calls
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
-                         copy(initial_x), # Maintain current state in state.x_previous
+                         copy(initial_x), # Maintain previous state in state.x_previous
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
-                         copy(initial_x), # Maintain intermediary current state in state.y
-                         copy(initial_x), # Maintain intermediary state in state.y_previous
+                         similar(initial_x), # Maintain intermediary current state in state.y
+                         similar(initial_x), # Maintain intermediary state in state.y_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
@@ -63,14 +63,14 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
 
+    # Record previous state
+    copy!(state.x_previous, state.x)
+
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
     @simd for i in 1:state.n
-        @inbounds state.y[i] = state.x_previous[i] + state.alpha * state.s[i]
+        @inbounds state.y[i] = state.x[i] + state.alpha * state.s[i]
     end
-
-    # Record previous state
-    copy!(state.x_previous, state.x)
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
@@ -82,5 +82,5 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
     state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
 
-    (lssuccess == false) # break on linesearch error
+    lssuccess == false # break on linesearch error
 end

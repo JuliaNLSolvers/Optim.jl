@@ -6,11 +6,11 @@ end
 
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, upper, n_particles)
 
-type ParticleSwarmState{T}
+type ParticleSwarmState{T,N}
     @add_generic_fields()
     iteration::Int
-    lower
-    upper
+    lower::Array{T,N}
+    upper::Array{T,N}
     c1::T # Weight variable; currently not exposed to users
     c2::T # Weight variable; currently not exposed to users
     w::T  # Weight variable; currently not exposed to users
@@ -19,11 +19,11 @@ type ParticleSwarmState{T}
     X
     V
     X_best
-    score
-    best_score
+    score::Array{T,N}
+    best_score::Array{T,N}
     x_learn
     current_state
-    iterations
+    iterations::Int
 end
 
 initial_state(method::ParticleSwarm, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)

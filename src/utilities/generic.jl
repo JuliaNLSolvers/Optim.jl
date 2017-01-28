@@ -10,7 +10,7 @@ end
 @def add_generic_fields begin
     method_string::String
     n::Int
-    x::Array{T}
+    x::Array{T,N}
     f_x::T
     f_calls::Int
     g_calls::Int
@@ -18,8 +18,8 @@ end
 end
 
 @def add_linesearch_fields begin
-    x_ls::Array{T}
-    g_ls::Array{T}
+    x_ls::Array{T,N}
+    g_ls::Array{T,N}
     alpha::T
     mayterminate::Bool
     lsr::LineSearches.LineSearchResults

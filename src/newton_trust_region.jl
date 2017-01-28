@@ -205,13 +205,13 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
 
-type NewtonTrustRegionState{T}
+type NewtonTrustRegionState{T,N,G}
     @add_generic_fields()
-    x_previous::Array{T}
-    g::Array{T}
-    g_previous::Array{T}
+    x_previous::Array{T,N}
+    g::G
+    g_previous::G
     f_x_previous::T
-    s::Array{T}
+    s::Array{T,N}
     H
     hard_case
     reached_subproblem_solution
@@ -253,9 +253,9 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
                          f_calls, # Track f calls in state.f_calls
                          g_calls, # Track g calls in state.g_calls
                          h_calls,
-                         copy(initial_x), # Maintain current state in state.x_previous
+                         similar(initial_x), # Maintain previous state in state.x_previous
                          g, # Store current gradient in state.g
-                         copy(g), # Store previous gradient in state.g_previous
+                         similar(g), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          H,
