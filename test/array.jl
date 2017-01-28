@@ -15,8 +15,6 @@
             @test typeof(Optim.minimizer(res)) <: Vector
             @test vecnorm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
         end
-        # TODO: Get finite differencing to work for generic arrays as well
-        # optimize(f, eye(2), method = :gradient_descent)
     end
 
     @testset "matrix" begin
@@ -26,8 +24,6 @@
             @test typeof(Optim.minimizer(res)) <: Matrix
             @test vecnorm(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0]) < 10e-8
         end
-        # TODO: Get finite differencing to work for generic arrays as well
-        # optimize(f, eye(2), method = :gradient_descent)
     end
 
     @testset "tensor" begin
@@ -36,11 +32,9 @@
         for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing(), ParticleSwarm())
             res = optimize(f, g!, eye3, GradientDescent())
             _minimizer = Optim.minimizer(res)
-            @test typeof(_minimizer) <: Array
+            @test typeof(_minimizer) <: Array{Float64, 3}
             @test size(_minimizer) == (2,2,1)
             @test vecnorm(_minimizer - [10.0 0.0; 0.0 5.0]) < 10e-8
         end
-        # TODO: Get finite differencing to work for generic arrays as well
-        # optimize(f, eye(2), method = :gradient_descent)
     end
 end
