@@ -45,7 +45,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
               1, # Track f calls in state.f_calls
               1, # Track g calls in state.g_calls
               0, # Track h calls in state.h_calls
-              copy(initial_x), # Maintain current state in state.x_previous
+              similar(initial_x), # Maintain previous state in state.x_previous
               g, # Store current gradient in state.g
               copy(g), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
@@ -80,7 +80,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, state.g)
-    (lssuccess == false) # break on linesearch error
+    lssuccess == false # break on linesearch error
 end
 
 function update_h!(d, state, mehtod::BFGS)

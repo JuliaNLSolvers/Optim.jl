@@ -126,14 +126,14 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          1, # Track f calls in state.f_calls
                          1, # Track g calls in state.g_calls
                          0, # Track h calls in state.h_calls
-                         copy(initial_x), # Maintain current state in state.x_previous
+                         similar(initial_x), # Maintain previous state in state.x_previous
                          g, # Store current gradient in state.g
-                         copy(g), # Store previous gradient in state.g_previous
+                         similar(g), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Intermediate value in CG calculation
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
-                         -copy(pg), # Maintain current search direction in state.s
+                         -pg, # Maintain current search direction in state.s
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 

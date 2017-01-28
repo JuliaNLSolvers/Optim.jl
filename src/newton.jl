@@ -43,7 +43,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
                 f_calls, # Track f calls in state.f_calls
                 g_calls, # Track g calls in state.g_calls
                 h_calls,
-                copy(initial_x), # Maintain current state in state.x_previous
+                similar(initial_x), # Maintain previous state in state.x_previous
                 g, # Store current gradient in state.g
                 T(NaN), # Store previous f in state.f_x_previous
                 H,

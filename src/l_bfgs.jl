@@ -121,9 +121,9 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               1, # Track f calls in state.f_calls
               1, # Track g calls in state.g_calls
               0, # Track h calls in state.h_calls
-              copy(initial_x), # Maintain current state in state.x_previous
+              similar(initial_x), # Maintain previous state in state.x_previous
               g, # Store current gradient in state.g
-              copy(g), # Store previous gradient in state.g_previous
+              similar(g), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
               Array{T}(n, method.m), # Store changes in position in state.dx_history
               Array{T}(n, method.m), # Store changes in gradient in state.dg_history
