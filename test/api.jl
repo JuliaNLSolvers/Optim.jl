@@ -6,9 +6,9 @@
     h! = rosenbrock.h!
     initial_x = rosenbrock.initial_x
 
-    d1 = DifferentiableFunction(f)
-    d2 = DifferentiableFunction(f, g!)
-    d3 = TwiceDifferentiableFunction(f, g!, h!)
+    d1 = OnceDifferentiable(f)
+    d2 = OnceDifferentiable(f, g!)
+    d3 = TwiceDifferentiable(f, g!, h!)
 
     Optim.optimize(f, initial_x, BFGS())
     Optim.optimize(f, g!, initial_x, BFGS())

@@ -28,7 +28,7 @@ function optimize{F<:Function, G<:Function}(f::F, g!::G, initial_x::Array; kwarg
     checked_kwargs, method = check_kwargs(kwargs, BFGS())
     optimize(f, g!, initial_x, method, Options(;checked_kwargs...))
 end
-function optimize(d::DifferentiableFunction, initial_x::Array; kwargs...)
+function optimize(d::OnceDifferentiable, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, BFGS())
     optimize(d, initial_x, method, Options(checked_kwargs...))
 end
@@ -41,28 +41,28 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
     optimize(f, g!, h!, initial_x, method, Options(checked_kwargs...))
 end
 
-function optimize(d::TwiceDifferentiableFunction, initial_x::Array; kwargs...)
+function optimize(d::TwiceDifferentiable, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, Newton())
     optimize(d, initial_x, method, Options(;kwargs...))
 end
 
 optimize(d::Function, initial_x, options::Options) = optimize(d, initial_x, NelderMead(), options)
-optimize(d::DifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, BFGS(), options)
-optimize(d::TwiceDifferentiableFunction, initial_x, options::Options) = optimize(d, initial_x, Newton(), options)
+optimize(d::OnceDifferentiable, initial_x, options::Options) = optimize(d, initial_x, BFGS(), options)
+optimize(d::TwiceDifferentiable, initial_x, options::Options) = optimize(d, initial_x, Newton(), options)
 
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
                   initial_x::Array,
                   method::Optimizer,
                   options::Options = Options())
-    d = DifferentiableFunction(f, g!)
+    d = OnceDifferentiable(f, g!)
     optimize(d, initial_x, method, options)
 end
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
                   initial_x::Array,
                   options::Options)
-    d = DifferentiableFunction(f, g!)
+    d = OnceDifferentiable(f, g!)
     optimize(d, initial_x, BFGS(), options)
 end
 
@@ -72,7 +72,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   initial_x::Array,
                   method::Optimizer,
                   options::Options = Options())
-    d = TwiceDifferentiableFunction(f, g!, h!)
+    d = TwiceDifferentiable(f, g!, h!)
     optimize(d, initial_x, method, options)
 end
 function optimize{F<:Function, G<:Function, H<:Function}(f::F,
@@ -80,7 +80,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   h!::H,
                   initial_x::Array,
                   options)
-    d = TwiceDifferentiableFunction(f, g!, h!)
+    d = TwiceDifferentiable(f, g!, h!)
     optimize(d, initial_x, Newton(), options)
 end
 
@@ -90,7 +90,7 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
                   options::Options)
     if !options.autodiff
         if M <: FirstOrderSolver
-            d = DifferentiableFunction(f)
+            d = OnceDifferentiable(f)
         else
             error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
         end
@@ -105,18 +105,18 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
         end
 
         if M <: FirstOrderSolver
-            d = DifferentiableFunction(f, g!, fg!)
+            d = OnceDifferentiable(f, g!, fg!)
         else
             hcfg = ForwardDiff.HessianConfig(initial_x)
             h! = (x, out) -> ForwardDiff.hessian!(out, f, x, hcfg)
-            d = TwiceDifferentiableFunction(f, g!, fg!, h!)
+            d = TwiceDifferentiable(f, g!, fg!, h!)
         end
     end
 
     optimize(d, initial_x, method, options)
 end
 
-function optimize(d::DifferentiableFunction,
+function optimize(d::OnceDifferentiable,
                   initial_x::Array,
                   method::Newton,
                   options::Options)
@@ -126,10 +126,10 @@ function optimize(d::DifferentiableFunction,
         hcfg = ForwardDiff.HessianConfig(initial_x)
         h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     end
-    optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
+    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
 
-function optimize(d::DifferentiableFunction,
+function optimize(d::OnceDifferentiable,
                   initial_x::Array,
                   method::NewtonTrustRegion,
                   options::Options)
@@ -139,7 +139,7 @@ function optimize(d::DifferentiableFunction,
         hcfg = ForwardDiff.HessianConfig(initial_x)
         h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     end
-    optimize(TwiceDifferentiableFunction(d.f, d.g!, d.fg!, h!), initial_x, method, options)
+    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end
 
 update_g!(d, state, method) = nothing

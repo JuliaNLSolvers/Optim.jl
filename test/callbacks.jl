@@ -5,8 +5,8 @@
     g! = problem.g!
     h! = problem.h!
     initial_x = problem.initial_x
-    d2 = DifferentiableFunction(f, g!)
-    d3 = TwiceDifferentiableFunction(f, g!, h!)
+    d2 = OnceDifferentiable(f, g!)
+    d3 = TwiceDifferentiable(f, g!, h!)
 
     for method in (NelderMead(), SimulatedAnnealing())
         ot_run = false

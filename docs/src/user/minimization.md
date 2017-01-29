@@ -75,7 +75,7 @@ A primal interior-point algorithm for simple "box" constraints (lower and upper 
 lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
-results = optimize(DifferentiableFunction(f, g!), initial_x, lower, upper, Fminbox(), optimizer = GradientDescent)
+results = optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(), optimizer = GradientDescent)
 ```
 
 This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed. This means that the keyword should be passed as `optimizer = GradientDescent` not `optimizer = GradientDescent()`, as you usually would.
@@ -86,11 +86,11 @@ There are two iterations parameters: an outer iterations parameter used to contr
 
 For example, the following restricts the optimization to 2 major iterations
 ```julia
-results = optimize(DifferentiableFunction(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, iterations = 2)
+results = optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, iterations = 2)
 ```
 In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
 ```julia
-results = Optim.optimize(DifferentiableFunction(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, optimizer_o = Optim.Options(iterations = 2))
+results = Optim.optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, optimizer_o = Optim.Options(iterations = 2))
 ```
 ## Minimizing a univariate function on a bounded interval
 

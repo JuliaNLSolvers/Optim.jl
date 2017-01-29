@@ -22,9 +22,9 @@
         storage[2, 2] = 2*c
     end
 
-    d2 = DifferentiableFunction(rosenbrock,
+    d2 = OnceDifferentiable(rosenbrock,
                                 rosenbrock_gradient!)
-    d3 = TwiceDifferentiableFunction(rosenbrock,
+    d3 = TwiceDifferentiable(rosenbrock,
                                      rosenbrock_gradient!,
                                      rosenbrock_hessian!)
 
