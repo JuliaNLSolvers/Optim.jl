@@ -20,10 +20,9 @@ function AcceleratedGradientDescent(; linesearch! = nothing,
     AcceleratedGradientDescent(linesearch)
 end
 
-type AcceleratedGradientDescentState{T,N,G}
+type AcceleratedGradientDescentState{T,N}
     @add_generic_fields()
     x_previous::Array{T,N}
-    g::G
     f_x_previous::T
     iteration::Int
     y::Array{T,N}
@@ -33,18 +32,12 @@ type AcceleratedGradientDescentState{T,N,G}
 end
 
 function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
-    g = similar(initial_x)
-    f_x = d.fg!(initial_x, g)
+    value_grad!(d, initial_x)
 
     AcceleratedGradientDescentState("Accelerated Gradient Descent",
                          length(initial_x),
                          copy(initial_x), # Maintain current state in state.x
-                         f_x, # Store current f in state.f_x
-                         1, # Track f calls in state.f_calls
-                         1, # Track g calls in state.g_calls
-                         0, # Track h calls in state.h_calls
                          copy(initial_x), # Maintain previous state in state.x_previous
-                         g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
                          similar(initial_x), # Maintain intermediary current state in state.y
@@ -57,7 +50,7 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     state.iteration += 1
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
-        @inbounds state.s[i] = -state.g[i]
+        @inbounds state.s[i] = -gradient(d, i)
     end
 
     # Determine the distance of movement along the search line
@@ -77,10 +70,6 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     @simd for i in 1:state.n
         @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
     end
-
-    # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
 
     lssuccess == false # break on linesearch error
 end

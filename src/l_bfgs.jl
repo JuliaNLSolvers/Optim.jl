@@ -92,7 +92,6 @@ end
 type LBFGSState{T,N,M}
     @add_generic_fields()
     x_previous::Array{T,N}
-    g::Array{T,N}
     g_previous::Array{T,N}
     rho::Array{T,N}
     dx_history::Array{T,M}
@@ -110,20 +109,12 @@ end
 
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    g = similar(initial_x)
-    f_x = d.fg!(initial_x, g)
-    # Maintain a cache for line search results
-    # Trace the history of states visited
+    value_grad!(d, initial_x)
     LBFGSState("L-BFGS",
               n,
               copy(initial_x), # Maintain current state in state.x
-              f_x, # Store current f in state.f_x
-              1, # Track f calls in state.f_calls
-              1, # Track g calls in state.g_calls
-              0, # Track h calls in state.h_calls
               similar(initial_x), # Maintain previous state in state.x_previous
-              g, # Store current gradient in state.g
-              similar(g), # Store previous gradient in state.g_previous
+              similar(gradient(d)), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
               Array{T}(n, method.m), # Store changes in position in state.dx_history
               Array{T}(n, method.m), # Store changes in gradient in state.dg_history
@@ -147,7 +138,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     method.precondprep!(method.P, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
-    twoloop!(state.s, state.g, state.rho, state.dx_history, state.dg_history,
+    twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.P)
 
@@ -165,8 +156,8 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     end
 
     # Save old f and g values to prepare for update_g! call
-    state.f_x_previous = state.f_x
-    copy!(state.g_previous, state.g)
+    state.f_x_previous = value(d)
+    copy!(state.g_previous, gradient(d))
     lssuccess == false # break on linesearch error
 end
 
@@ -174,7 +165,7 @@ end
 function update_h!(d, state, method::LBFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
-        @inbounds state.dg[i] = state.g[i] - state.g_previous[i]
+        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
     end
 
     # Update the L-BFGS history of positions and gradients

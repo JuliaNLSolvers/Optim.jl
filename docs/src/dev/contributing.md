@@ -32,7 +32,6 @@ Minim(; linesearch = LineSearches.hagerzhang!, minim_parameter = 1.0) =
 type MinimState{T,N,G}
   @add_generic_fields()
   x_previous::Array{T,N}
-  g::G
   f_x_previous::T
   s::Array{T,N}
   @add_linesearch_fields()

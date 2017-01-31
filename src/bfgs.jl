@@ -21,7 +21,6 @@ end
 type BFGSState{T,N,G}
     @add_generic_fields()
     x_previous::Array{T,N}
-    g::G
     g_previous::G
     f_x_previous::T
     dx::Array{T,N}
@@ -34,20 +33,14 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    g = similar(initial_x)
-    f_x = d.fg!(initial_x, g)
+    value_grad!(d, initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState("BFGS",
               n,
               copy(initial_x), # Maintain current state in state.x
-              f_x, # Store current f in state.f_x
-              1, # Track f calls in state.f_calls
-              1, # Track g calls in state.g_calls
-              0, # Track h calls in state.h_calls
               similar(initial_x), # Maintain previous state in state.x_previous
-              g, # Store current gradient in state.g
-              copy(g), # Store previous gradient in state.g_previous
+              copy(gradient(d)), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Store changes in position in state.dx
               similar(initial_x), # Store changes in gradient in state.dg
@@ -61,7 +54,7 @@ end
 function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    A_mul_B!(state.s, state.invH, state.g)
+    A_mul_B!(state.s, state.invH, gradient(d))
     scale!(state.s, -1)
 
     # Determine the distance of movement along the search line
@@ -79,14 +72,14 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     end
 
     # Maintain a record of the previous gradient
-    copy!(state.g_previous, state.g)
+    copy!(state.g_previous, gradient(d))
     lssuccess == false # break on linesearch error
 end
 
-function update_h!(d, state, mehtod::BFGS)
+function update_h!(d, state, method::BFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
-        @inbounds state.dg[i] = state.g[i] - state.g_previous[i]
+        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
     end
 
     # Update the inverse Hessian approximation using Sherman-Morrison

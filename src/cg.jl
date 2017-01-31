@@ -87,7 +87,6 @@ end
 type ConjugateGradientState{T,N,G}
     @add_generic_fields()
     x_previous::Array{T,N}
-    g::G
     g_previous::G
     f_x_previous::T
     y::Array{T,N}
@@ -99,17 +98,16 @@ end
 
 
 function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
-    g = similar(initial_x)
-    f_x = d.fg!(initial_x, g)
-    pg = copy(g)
-    @assert typeof(f_x) == T
+    value_grad!(d, initial_x)
+    pg = copy(gradient(d))
+    @assert typeof(value(d)) == T
     # Output messages
-    if !isfinite(f_x)
+    if !isfinite(value(d))
         error("Must have finite starting value")
     end
-    if !all(isfinite, g)
-        @show g
-        @show find(!isfinite.(g))
+    if !all(isfinite, gradient(d))
+        @show gradient(d)
+        @show find(!isfinite.(gradient(d)))
         error("Gradient must have all finite values at starting point")
     end
 
@@ -117,18 +115,13 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
     method.precondprep!(method.P, initial_x)
-    A_ldiv_B!(pg, method.P, g)
+    A_ldiv_B!(pg, method.P, gradient(d))
 
     ConjugateGradientState("Conjugate Gradient",
                          length(initial_x),
                          copy(initial_x), # Maintain current state in state.x
-                         f_x, # Store current f in state.f_x
-                         1, # Track f calls in state.f_calls
-                         1, # Track g calls in state.g_calls
-                         0, # Track h calls in state.h_calls
                          similar(initial_x), # Maintain previous state in state.x_previous
-                         g, # Store current gradient in state.g
-                         similar(g), # Store previous gradient in state.g_previous
+                         similar(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Intermediate value in CG calculation
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
@@ -137,11 +130,11 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(df, state::ConjugateGradientState{T}, method::ConjugateGradient)
+function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Search direction is predetermined
 
         # Determine the distance of movement along the search line
-        lssuccess = perform_linesearch!(state, method, df)
+        lssuccess = perform_linesearch!(state, method, d)
 
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
@@ -150,15 +143,15 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         LinAlg.axpy!(state.alpha, state.s, state.x)
 
         # Maintain a record of the previous gradient
-        copy!(state.g_previous, state.g)
+        copy!(state.g_previous, gradient(d))
 
         # Update the function value and gradient
-        state.f_x_previous, state.f_x = state.f_x, df.fg!(state.x, state.g)
-        state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+        state.f_x_previous  = value(d)
+        value_grad!(d, state.x)
 
         # Check sanity of function and gradient
-        if !isfinite(state.f_x)
-            error("Function must finite function values")
+        if !isfinite(value(d))
+            error("Function value must be finite")
         end
 
         # Determine the next search direction using HZ's CG rule
@@ -174,15 +167,15 @@ function update_state!{T}(df, state::ConjugateGradientState{T}, method::Conjugat
         dPd = dot(state.s, method.P, state.s)
         etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
         @simd for i in 1:state.n
-            @inbounds state.y[i] = state.g[i] - state.g_previous[i]
+            @inbounds state.y[i] = gradient(d, i) - state.g_previous[i]
         end
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
-        A_ldiv_B!(state.pg, method.P, state.g)
+        A_ldiv_B!(state.pg, method.P, gradient(d))
         @simd for i in 1:state.n     # py = pg - py
            @inbounds state.py[i] = state.pg[i] - state.py[i]
         end
-        betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(state.g, state.s) / ydots) / ydots
+        betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
         beta = max(betak, etak)
         @simd for i in 1:state.n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]

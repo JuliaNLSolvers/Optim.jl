@@ -10,7 +10,7 @@
                     else
                         1000
                 end
-                res = Optim.optimize(f_prob, prob.initial_x, GradientDescent(),
+                res = Optim.optimize(prob.f, prob.g!, prob.initial_x, GradientDescent(),
                                      Optim.Options(autodiff = use_autodiff,
                                                          iterations = iterations))
                 @test norm(Optim.minimizer(res) - prob.solutions, Inf) < 1e-2
@@ -28,7 +28,7 @@
 
     initial_x = [0.0]
 
-    d = OnceDifferentiable(f_gd_1, g_gd_1)
+    d = OnceDifferentiable(f_gd_1, g_gd_1, initial_x)
 
     results = Optim.optimize(d, initial_x, GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
@@ -46,7 +46,7 @@
       storage[2] = eta * x[2]
     end
 
-    d = OnceDifferentiable(f_gd_2, g_gd_2)
+    d = OnceDifferentiable(f_gd_2, g_gd_2, [1.0, 1.0])
 
     results = Optim.optimize(d, [1.0, 1.0], GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)

@@ -22,12 +22,6 @@
         storage[2, 2] = 2*c
     end
 
-    d2 = OnceDifferentiable(rosenbrock,
-                                rosenbrock_gradient!)
-    d3 = TwiceDifferentiable(rosenbrock,
-                                     rosenbrock_gradient!,
-                                     rosenbrock_hessian!)
-
     for method in (NelderMead(),
                    SimulatedAnnealing(),
                    BFGS(),
@@ -38,7 +32,7 @@
                    LBFGS(),
                    Newton())
         for T in (Float32, Float64)
-            result = optimize(d3, fill(zero(T), 2), method)
+            result = optimize(rosenbrock, rosenbrock_gradient!, rosenbrock_hessian!, fill(zero(T), 2), method)
             @test eltype(Optim.minimizer(result)) == T
         end
     end

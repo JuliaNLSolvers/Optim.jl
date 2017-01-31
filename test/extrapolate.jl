@@ -30,8 +30,8 @@ import LineSearches
     precond(x::Vector) = precond(length(x))
     precond(n::Number) = spdiagm(( -ones(n-1), 2*ones(n), -ones(n-1) ),
                          (-1,0,1), n, n) * (n+1)
-    df = OnceDifferentiable( X->plap([0;X;0]),
-                                (X, G)->copy!(G, (plap1([0;X;0]))[2:end-1]) )
+    f = X->plap([0;X;0])
+    g! = (X, G)->copy!(G, (plap1([0;X;0]))[2:end-1])
     GRTOL = 1e-6
     N = 100
     initial_x = zeros(N)
@@ -41,7 +41,7 @@ import LineSearches
                LBFGS(extrapolate=true, linesearch = LineSearches.bt2!, P=P)]
 
     for (method, msg) in zip(methods, msgs)
-        results = Optim.optimize(df, copy(initial_x), method)
+        results = Optim.optimize(f, g!, copy(initial_x), method)
         debug_printing && println(msg, "g_calls = ", Optim.g_calls(results), ", f_calls = ", Optim.f_calls(results))
     end
 end
