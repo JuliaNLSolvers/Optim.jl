@@ -17,6 +17,10 @@ module Optim
            Base.setindex!
 
     export optimize,
+           NonDifferentiableFunction,
+           OnceDifferentiableFunction,
+           TwiceDifferentiableFunction,
+           NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
            OptimizationOptions,
