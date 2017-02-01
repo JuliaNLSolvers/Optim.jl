@@ -155,7 +155,7 @@ end
 
 after_while!(d, state, method, options) = nothing
 
-function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
+function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{T}, method::M,
                                    options::Options = Options())
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
