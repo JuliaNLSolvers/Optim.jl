@@ -73,3 +73,7 @@ function get_neighbor(neighbor!, neighbor)
     end
     neighbor
 end
+
+@deprecate NonDifferentiableFunction(args...) NonDifferentiable(args)
+@deprecate DifferentiableFunction(args...) OnceDifferentiable(args)
+@deprecate TwiceDifferentiableFunction(args...) TwiceDifferentiable(args)

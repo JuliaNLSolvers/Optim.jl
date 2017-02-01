@@ -93,17 +93,17 @@ type UnivariateOptimizationResults{T,M} <: OptimizationResults
     f_calls::Int
 end
 
-immutable NonDifferentiableFunction
+immutable NonDifferentiable
     f::Function
 end
 
-immutable DifferentiableFunction
+immutable OnceDifferentiable
     f::Function
     g!::Function
     fg!::Function
 end
 
-immutable TwiceDifferentiableFunction
+immutable TwiceDifferentiable
     f::Function
     g!::Function
     fg!::Function
@@ -187,7 +187,7 @@ function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimiz
 end
 
 # TODO: Expose ability to do forward and backward differencing
-function DifferentiableFunction(f::Function)
+function OnceDifferentiable(f::Function)
     function g!(x::Array, storage::Array)
         Calculus.finite_difference!(f, x, storage, :central)
         return
@@ -196,18 +196,18 @@ function DifferentiableFunction(f::Function)
         g!(x, storage)
         return f(x)
     end
-    return DifferentiableFunction(f, g!, fg!)
+    return OnceDifferentiable(f, g!, fg!)
 end
 
-function DifferentiableFunction(f::Function, g!::Function)
+function OnceDifferentiable(f::Function, g!::Function)
     function fg!(x::Array, storage::Array)
         g!(x, storage)
         return f(x)
     end
-    return DifferentiableFunction(f, g!, fg!)
+    return OnceDifferentiable(f, g!, fg!)
 end
 
-function TwiceDifferentiableFunction(f::Function)
+function TwiceDifferentiable(f::Function)
     function g!(x::Vector, storage::Vector)
         Calculus.finite_difference!(f, x, storage, :central)
         return
@@ -220,15 +220,15 @@ function TwiceDifferentiableFunction(f::Function)
         Calculus.finite_difference_hessian!(f, x, storage)
         return
     end
-    return TwiceDifferentiableFunction(f, g!, fg!, h!)
+    return TwiceDifferentiable(f, g!, fg!, h!)
 end
 
-function TwiceDifferentiableFunction(f::Function,
+function TwiceDifferentiable(f::Function,
                                      g!::Function,
                                      h!::Function)
     function fg!(x::Vector, storage::Vector)
         g!(x, storage)
         return f(x)
     end
-    return TwiceDifferentiableFunction(f, g!, fg!, h!)
+    return TwiceDifferentiable(f, g!, fg!, h!)
 end

@@ -6,7 +6,7 @@
         return
     end
 
-    d = DifferentiableFunction(f, g!)
+    d = OnceDifferentiable(f, g!)
 
     initial_x = [1.0]
     options = Optim.Options(show_trace = true, iterations = 10)

@@ -28,7 +28,7 @@
 
     initial_x = [0.0]
 
-    d = DifferentiableFunction(f_gd_1, g_gd_1)
+    d = OnceDifferentiable(f_gd_1, g_gd_1)
 
     results = Optim.optimize(d, initial_x, GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)
@@ -46,7 +46,7 @@
       storage[2] = eta * x[2]
     end
 
-    d = DifferentiableFunction(f_gd_2, g_gd_2)
+    d = OnceDifferentiable(f_gd_2, g_gd_2)
 
     results = Optim.optimize(d, [1.0, 1.0], GradientDescent())
     @test_throws ErrorException Optim.x_trace(results)

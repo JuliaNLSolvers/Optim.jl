@@ -81,7 +81,7 @@ using Optim
 initial_x = ...
 buffer = Array{eltype(initial_x)}(...) # Preallocate an appropriate buffer
 last_x = similar(initial_x)
-df = TwiceDifferentiableFunction(x -> f(x, buffer, initial_x),
+df = TwiceDifferentiable(x -> f(x, buffer, initial_x),
                                 (x, stor) -> g!(x, stor, buffer, last_x))
 optimize(df, initial_x)
 ```
