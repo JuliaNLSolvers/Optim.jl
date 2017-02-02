@@ -1,5 +1,5 @@
 @testset "Momentum Gradient Descent" begin
-    for use_autodiff in (false, true)
+    for use_autodiff in (:finite, :forward, :reverse)
         for (name, prob) in Optim.UnconstrainedProblems.examples
             if prob.isdifferentiable && !(name in ("Polynomial", "Large Polynomial", "Himmelblau")) # it goes in a direction of ascent -> f_converged == true
                 f_prob = prob.f

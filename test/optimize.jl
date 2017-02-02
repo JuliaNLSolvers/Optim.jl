@@ -29,7 +29,7 @@
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
-    results = optimize(f1, [127.0, 921.0], Optim.Options(autodiff = true))
+    results = optimize(f1, [127.0, 921.0], Optim.Options(autodiff = :forward))
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
