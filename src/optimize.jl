@@ -134,7 +134,7 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
         error("The autodiff value $(options.autodiff) is not supported. Use :finite, :forward or :reverse.")
     end
 
-    optimize(d, initial_x, method, options).
+    optimize(d, initial_x, method, options)
 end
 
 function optimize{M<:Union{Newton,NewtonTrustRegion}}(d::OnceDifferentiable,
