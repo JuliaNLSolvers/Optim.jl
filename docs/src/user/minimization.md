@@ -26,9 +26,10 @@ using central finite differencing:
 optimize(f, [0.0, 0.0], LBFGS())
 ```
 Alternatively, the `autodiff` keyword will use atomatic differentiation to construct
-the gradient.
+the gradient. Two types of automatic differentiation is supported:
+[forward mode](https://github.com/JuliaDiff/ForwardDiff.jl) (`:forward`), and [reverse mode](https://github.com/JuliaDiff/ReverseDiff.jl) (`:reverse`).
 ```jl
-optimize(f, [0.0, 0.0], LBFGS(), Optim.Options(autodiff = true))
+optimize(f, [0.0, 0.0], LBFGS(), Optim.Options(autodiff = :forward))
 ```
 For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
@@ -129,7 +130,7 @@ which will return `"Nelder Mead"`. A bit more useful information is the minimize
 julia> Optim.minimizer(res)
 3-element Array{Float64,1}:
  -0.499921
- -0.3333  
+ -0.3333
  -1.49994
 
 julia> Optim.minimum(res)
