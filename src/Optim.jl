@@ -5,6 +5,7 @@ module Optim
     using PositiveFactorizations
     using Compat
     using ForwardDiff
+    using ReverseDiff
     using LineSearches
 
     import Compat.String

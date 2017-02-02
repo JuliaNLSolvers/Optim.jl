@@ -88,13 +88,13 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
                   initial_x::Array{T},
                   method::M,
                   options::Options)
-    if !options.autodiff
+    if options.autodiff == :finite
         if M <: FirstOrderSolver
             d = OnceDifferentiable(f)
         else
-            error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
+            error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = :forward in the Options if applicable, or choose a solver that doesn't require a Hessian.")
         end
-    else
+    elseif options.autodiff == :forward
         gcfg = ForwardDiff.GradientConfig(initial_x)
         g! = (x, out) -> ForwardDiff.gradient!(out, f, x, gcfg)
 
@@ -111,33 +111,47 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
             h! = (x, out) -> ForwardDiff.hessian!(out, f, x, hcfg)
             d = TwiceDifferentiable(f, g!, fg!, h!)
         end
+    elseif options.autodiff == :reverse
+        # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
+        const grev! = ReverseDiff.compile_gradient(f, initial_x)
+        g! = (x, out) -> grev!(out, x)
+
+        fg! = (x, out) -> begin
+            gr_res = DiffBase.DiffResult(zero(T), out)
+            grev!(gr_res, x)
+            DiffBase.value(gr_res)
+        end
+
+        if M <: FirstOrderSolver
+            d = OnceDifferentiable(f, g!, fg!)
+        else
+            # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
+            const hrev! = ReverseDiff.compile_hessian(f, initial_x)
+            h! = (x, out) -> hrev!(out, x)
+            d = TwiceDifferentiable(f, g!, fg!, h!)
+        end
+    else
+        error("The autodiff value $(options.autodiff) is not supported. Use :finite, :forward or :reverse.")
     end
 
-    optimize(d, initial_x, method, options)
+    optimize(d, initial_x, method, options).
 end
 
-function optimize(d::OnceDifferentiable,
-                  initial_x::Array,
-                  method::Newton,
-                  options::Options)
-    if !options.autodiff
-        error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
-    else
+function optimize{M<:Union{Newton,NewtonTrustRegion}}(d::OnceDifferentiable,
+                                                      initial_x::Array,
+                                                      method::M,
+                                                      options::Options)
+    if options.autodiff == :finite
+        error("No Hessian was provided. Either provide a Hessian, set autodiff = :forward or :reverse in the Options if applicable, or choose a solver that doesn't require a Hessian.")
+    elseif options.autodiff == :forward
         hcfg = ForwardDiff.HessianConfig(initial_x)
         h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
-    end
-    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
-end
-
-function optimize(d::OnceDifferentiable,
-                  initial_x::Array,
-                  method::NewtonTrustRegion,
-                  options::Options)
-    if !options.autodiff
-        error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
+    elseif options.autodiff == :reverse
+        # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
+        const hrev! = ReverseDiff.compile_hessian(f, initial_x)
+        h! = (x, out) -> hrev!(out, x)
     else
-        hcfg = ForwardDiff.HessianConfig(initial_x)
-        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
+        error("The autodiff value $(options.autodiff) is not supported. Use :forward or :reverse.")
     end
     optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
 end

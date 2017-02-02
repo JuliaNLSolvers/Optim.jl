@@ -8,7 +8,7 @@ immutable Options{TCallback <: Union{Void, Function}}
     store_trace::Bool
     show_trace::Bool
     extended_trace::Bool
-    autodiff::Bool
+    autodiff::Symbol
     show_every::Int
     callback::TCallback
     time_limit::Float64
@@ -23,7 +23,7 @@ function Options(;
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
-        autodiff::Bool = false,
+        autodiff::Symbol = :finite,
         show_every::Integer = 1,
         callback = nothing,
         time_limit = NaN)
