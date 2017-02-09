@@ -112,22 +112,20 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
             d = TwiceDifferentiable(f, g!, fg!, h!)
         end
     elseif options.autodiff == :reverse
-        # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
-        const grev! = ReverseDiff.compile_gradient(f, initial_x)
-        g! = (x, out) -> grev!(out, x)
+        gcfg = ReverseDiff.GradientConfig(initial_x)
+        g! = (x, out) -> ReverseDiff.gradient!(out, f, x, gcfg)
 
         fg! = (x, out) -> begin
             gr_res = DiffBase.DiffResult(zero(T), out)
-            grev!(gr_res, x)
+            ReverseDiff.gradient!(gr_res, f, x, gcfg)
             DiffBase.value(gr_res)
         end
 
         if M <: FirstOrderSolver
             d = OnceDifferentiable(f, g!, fg!)
         else
-            # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
-            const hrev! = ReverseDiff.compile_hessian(f, initial_x)
-            h! = (x, out) -> hrev!(out, x)
+            hcfg = ReverseDiff.HessianConfig(initial_x)
+            h! = (x, out) -> ReverseDiff.hessian!(out, f, x, hcfg)
             d = TwiceDifferentiable(f, g!, fg!, h!)
         end
     else
@@ -147,9 +145,8 @@ function optimize{M<:Union{Newton,NewtonTrustRegion}}(d::OnceDifferentiable,
         hcfg = ForwardDiff.HessianConfig(initial_x)
         h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     elseif options.autodiff == :reverse
-        # TODO: make g! = grev! when we change to the "out-first" style in g! and h!
-        const hrev! = ReverseDiff.compile_hessian(f, initial_x)
-        h! = (x, out) -> hrev!(out, x)
+        hcfg = ReverseDiff.HessianConfig(initial_x)
+        h! = (x, out) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
     else
         error("The autodiff value $(options.autodiff) is not supported. Use :forward or :reverse.")
     end
