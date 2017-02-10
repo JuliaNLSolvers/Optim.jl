@@ -1,4 +1,8 @@
 # Optim v0.7.5 release notes
+* Various bug fixes
+* Deprecate DifferentiableFunction, TwiceDifferentiable in favor of OnceDifferentiable, TwiceDifferentiable
+* widen some type annotations (e.g. allow for multidimensional arrays as inputs again)
+* introduce allow_f_increases keyword in Optim.Options to allow objective to increase between iterations
 * New option in Optim.Options: allow_f_increases. Defaults to false, but if set to true, the solver will not stop even if a step leads to an increase in the objective.
 * Newton and BFGS: set initial step length to one.
 See [328](https://github.com/JuliaOpt/Optim.jl/pull/328).
