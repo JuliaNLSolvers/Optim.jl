@@ -45,10 +45,10 @@ julia> Pkg.add("Optim")
 ```
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://juliaopt.github.io/Optim.jl/latest
+[docs-latest-url]: https://julianlsolvers.github.io/Optim.jl/latest
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://juliaopt.github.io/Optim.jl/stable
+[docs-stable-url]: https://julianlsolvers.github.io/Optim.jl/stable
 
 [build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master
 [build-url]: https://travis-ci.org/JuliaNLSolvers/Optim.jl
