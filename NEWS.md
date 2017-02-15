@@ -1,3 +1,7 @@
+# Optim v0.7.6 release notes
+* Fix depwarns on Julia master (v0.6)
+* Update references to new JuliaNLSolvers home for Optim+family
+
 # Optim v0.7.5 release notes
 * Various bug fixes
 * Deprecate DifferentiableFunction, TwiceDifferentiable in favor of OnceDifferentiable, TwiceDifferentiable
