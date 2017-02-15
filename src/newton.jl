@@ -47,7 +47,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
                 g, # Store current gradient in state.g
                 T(NaN), # Store previous f in state.f_x_previous
                 H,
-                Base.LinAlg.Cholesky(Matrix{T}(), :U),
+                Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U),
                 Vector{Int8}(),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr

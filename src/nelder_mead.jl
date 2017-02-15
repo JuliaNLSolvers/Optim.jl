@@ -1,4 +1,4 @@
-abstract Simplexer
+@compat abstract type Simplexer end
 
 immutable AffineSimplexer <: Simplexer
     a::Float64
@@ -15,7 +15,7 @@ function simplexer{T,N}(S::AffineSimplexer, initial_x::Array{T,N})
     initial_simplex
 end
 
-abstract NMParameters
+@compat abstract type NMParameters end
 
 immutable AdaptiveParameters <: NMParameters
     α::Float64
