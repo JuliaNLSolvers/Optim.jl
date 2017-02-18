@@ -90,7 +90,7 @@ As mentioned in the general introduction, passing analytical gradients can have 
 impact on performance. To show an example of this, consider the separable extension of the
 Rosenbrock function in dimension 5000, see [SROSENBR](ftp://ftp.numerical.rl.ac.uk/pub/cutest/sif/SROSENBR.SIF) in CUTEst.
 
-Below, we use the gradients and objective functions from [mastsif](http://www.cuter.rl.ac.uk/Problems/mastsif.shtml) through [CUTEst.jl](https://github.com/JuliaOptimizers/CUTEst.jl).
+Below, we use the gradients and objective functions from [mastsif](http://www.cuter.rl.ac.uk/Problems/mastsif.shtml) through [CUTEst.jl](https://github.com/JuliaSmoothOptimizers/CUTEst.jl).
 We only show the first five iterations of an attempt to minimize the function using
 Gradient Descent.
 ```jlcon
