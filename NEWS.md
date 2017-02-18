@@ -1,4 +1,5 @@
 # Optim v0.7.6 release notes
+* Fix deprecations for *Function constructors
 * Fix depwarns on Julia master (v0.6)
 * Update references to new JuliaNLSolvers home for Optim+family
 
