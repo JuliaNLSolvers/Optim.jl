@@ -37,5 +37,5 @@ my_tests = [
 ]
 
 for my_test in my_tests
-    include(my_test)
+    @time include(my_test)
 end
