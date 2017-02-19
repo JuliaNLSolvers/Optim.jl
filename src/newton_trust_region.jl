@@ -36,6 +36,15 @@ function check_hard_case_candidate(H_eigv, qg)
     hard_case, lambda_index - 1
 end
 
+# Function 4.39 in N&W
+function p_sq_norm{T}(lambda::T, min_i, n, qg, H_eig)
+    p_sum = zero(T)
+    for i = min_i:n
+        p_sum += qg[i]^2 / (lambda + H_eig[:values][i])^2
+    end
+    p_sum
+end
+
 # Choose a point in the trust region for the next step using
 # the interative (nearly exact) method of section 4.3 of Nocedal and Wright.
 # This is appropriate for Hessians that you factorize quickly.
@@ -59,8 +68,8 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
                                  H::Matrix{T},
                                  delta::T,
                                  s::Vector{T};
-                                 tolerance=1e-10,
-                                 max_iters=5)
+                                 tolerance::T=1e-10,
+                                 max_iters::Int=5)
     n = length(gr)
     delta_sq = delta^2
 
@@ -80,27 +89,18 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
         qg[i] = vecdot(H_eig[:vectors][:, i], gr)
     end
 
-    # Function 4.39 in N&W
-    function p_sq_norm(lambda, min_i)
-        p_sum = 0.
-        for i = min_i:n
-            p_sum += qg[i]^2 / (lambda + H_eig[:values][i])^2
-        end
-        p_sum
-    end
-
     # These values describe the outcome of the subproblem.  They will be
     # set below and returned at the end.
     interior = true
     hard_case = false
     reached_solution = true
 
-    if min_H_ev >= 1e-8 && p_sq_norm(0.0, 1) <= delta_sq
+    if min_H_ev >= 1e-8 && p_sq_norm(zero(T), 1, n, qg, H_eig) <= delta_sq
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
         reached_solution = true
         s[:] = -(H_eig[:vectors] ./ H_eig[:values]') * H_eig[:vectors]' * gr
-        lambda = 0.0
+        lambda = zero(T)
     else
         interior = false
 
@@ -121,7 +121,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
             # iterate on the boundary.
 
             # Formula 4.45 in N&W
-            p_lambda2 = p_sq_norm(lambda, min_H_ev_multiplicity + 1)
+            p_lambda2 = p_sq_norm(lambda, min_H_ev_multiplicity + 1, n, qg, H_eig)
             if p_lambda2 > delta_sq
                 # Then we can simply solve using root finding.
                 # Set a starting point greater than the minimum based on the
