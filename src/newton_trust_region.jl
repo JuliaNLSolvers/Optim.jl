@@ -212,15 +212,14 @@ type NewtonTrustRegionState{T,N,G}
     g_previous::G
     f_x_previous::T
     s::Array{T,N}
-    H
-    hard_case
-    reached_subproblem_solution
-    interior
+    H::Matrix{T}
+    hard_case::Bool
+    reached_subproblem_solution::Bool
+    interior::Bool
     delta::T
-    lambda
-    eta
-    rho
-    d
+    lambda::T
+    eta::T
+    rho::T
 end
 
 function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
@@ -265,8 +264,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
                          T(delta),
                          lambda,
                          method.eta, # eta
-                         0., # state.rho
-                         d) # Maintain a cache for line search results in state.lsr
+                         zero(T)) # Maintain a cache for line search results in state.lsr
 end
 
 
