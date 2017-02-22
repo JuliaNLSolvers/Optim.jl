@@ -78,9 +78,5 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
         @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
     end
 
-    # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
-
     lssuccess == false # break on linesearch error
 end
