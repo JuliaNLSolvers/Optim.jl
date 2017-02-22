@@ -14,8 +14,8 @@
     precond(x::Vector) = precond(length(x))
     precond(n::Number) = spdiagm( ( -ones(n-1), 2*ones(n), -ones(n-1) ),
                                   (-1,0,1), n, n) * (n+1)
-    df = OnceDifferentiable( X->plap([0;X;0]),
-                                 (X, G)->copy!(G, (plap1([0;X;0]))[2:end-1]) )
+    f(X) = plap([0;X;0])
+    g!(X, G) = copy!(G, (plap1([0;X;0]))[2:end-1])
 
     GRTOL = 1e-6
 
@@ -27,7 +27,7 @@
         ID = nothing
         for optimizer in (GradientDescent, ConjugateGradient, LBFGS)
             for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
-                results = Optim.optimize(df, copy(initial_x),
+                results = Optim.optimize(f, g!, copy(initial_x),
                                          optimizer(P = P),
                                          Optim.Options(f_tol = 1e-32,
                                                              g_tol = GRTOL, allow_f_increases = true))
