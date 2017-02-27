@@ -1,5 +1,5 @@
 @testset "BFGS" begin
-    for use_autodiff in (false, true)
+    for use_autodiff in (:finite, :forward, :reverse)
         for (name, prob) in Optim.UnconstrainedProblems.examples
             if prob.isdifferentiable
                 f_prob = prob.f

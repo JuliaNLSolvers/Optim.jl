@@ -13,7 +13,7 @@ immutable OptimizationProblem
     g!::Function
     h!::Function
     initial_x::Vector{Float64}
-    solutions::Vector
+    solutions
     isdifferentiable::Bool
     istwicedifferentiable::Bool
 end
@@ -26,16 +26,16 @@ examples = Dict{AbstractString, OptimizationProblem}()
 ###
 ##########################################################################
 
-function exponential(x::Vector)
+function exponential(x)
     return exp((2.0 - x[1])^2) + exp((3.0 - x[2])^2)
 end
 
-function exponential_gradient!(x::Vector, storage::Vector)
+function exponential_gradient!(x, storage)
     storage[1] = -2.0 * (2.0 - x[1]) * exp((2.0 - x[1])^2)
     storage[2] = -2.0 * (3.0 - x[2]) * exp((3.0 - x[2])^2)
 end
 
-function exponential_hessian!(x::Vector, storage::Matrix)
+function exponential_hessian!(x, storage)
     storage[1, 1] = 2.0 * exp((2.0 - x[1])^2) * (2.0 * x[1]^2 - 8.0 * x[1] + 9)
     storage[1, 2] = 0.0
     storage[2, 1] = 0.0
@@ -60,8 +60,8 @@ examples["Exponential"] = OptimizationProblem("Exponential",
 ###         Fletcher & Powell
 ##########################################################################
 
-function fletcher_powell(x::Vector)
-    function theta(x::Vector)
+function fletcher_powell(x)
+    function theta(x)
         if x[1] > 0
             return atan(x[2] / x[1]) / (2.0 * pi)
         else
@@ -74,12 +74,12 @@ function fletcher_powell(x::Vector)
 end
 
 # TODO: Implement
-function fletcher_powell_gradient!(x::Vector, storage::Vector)
+function fletcher_powell_gradient!(x, storage)
     return
 end
 
 # TODO: Implement
-function fletcher_powell_hessian!(x::Vector, storage::Matrix)
+function fletcher_powell_hessian!(x, storage)
     return
 end
 
@@ -98,18 +98,18 @@ examples["Fletcher-Powell"] = OptimizationProblem("Fletcher-Powell",
 ###
 ##########################################################################
 
-function himmelblau(x::Vector)
+function himmelblau(x)
     return (x[1]^2 + x[2] - 11)^2 + (x[1] + x[2]^2 - 7)^2
 end
 
-function himmelblau_gradient!(x::Vector, storage::Vector)
+function himmelblau_gradient!(x, storage)
     storage[1] = 4.0 * x[1]^3 + 4.0 * x[1] * x[2] -
                   44.0 * x[1] + 2.0 * x[1] + 2.0 * x[2]^2 - 14.0
     storage[2] = 2.0 * x[1]^2 + 2.0 * x[2] - 22.0 +
                   4.0 * x[1] * x[2] + 4.0 * x[2]^3 - 28.0 * x[2]
 end
 
-function himmelblau_hessian!(x::Vector, storage::Matrix)
+function himmelblau_hessian!(x, storage)
     storage[1, 1] = 12.0 * x[1]^2 + 4.0 * x[2] - 42.0
     storage[1, 2] = 4.0 * x[1] + 4.0 * x[2]
     storage[2, 1] = 4.0 * x[1] + 4.0 * x[2]
@@ -131,17 +131,17 @@ examples["Himmelblau"] = OptimizationProblem("Himmelblau",
 ### Problem 20 in [1]
 ##########################################################################
 
-function hosaki(x::Vector)
+function hosaki(x)
     a = (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4)
     return a * x[2]^2 * exp(-x[2])
 end
 
-function hosaki_gradient!(x::Vector, storage::Vector)
+function hosaki_gradient!(x, storage)
     storage[1] = (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8)* x[2]^2 * exp(-x[2])
     storage[2] = 2.0 * (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2] * exp(-x[2]) - (1.0 - 8.0 * x[1] + 7.0 * x[1]^2 - (7.0 / 3.0) * x[1]^3 + (1.0 / 4.0) * x[1]^4) * x[2]^2 * exp(-x[2])
 end
 
-function hosaki_hessian!(x::Vector, storage::Matrix)
+function hosaki_hessian!(x, storage)
     storage[1, 1] = (3.0 * x[1]^2 - 14.0 * x[1] + 14.0) * x[2]^2 * exp(-x[2])
     storage[1, 2] = 2.0 * (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2] * exp(-x[2])  - (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2]^2 * exp(-x[2])
     storage[2, 1] =  2.0 * (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2] * exp(-x[2])  - (x[1]^3 - 7.0 * x[1]^2 + 14.0 * x[1] - 8.0) * x[2]^2 * exp(-x[2])
@@ -163,7 +163,7 @@ examples["Hosaki"] = OptimizationProblem("Hosaki",
 ###
 ##########################################################################
 
-function large_polynomial(x::Vector)
+function large_polynomial(x)
     res = zero(x[1])
     for i in 1:250
         res += (i - x[i])^2
@@ -171,13 +171,13 @@ function large_polynomial(x::Vector)
     return res
 end
 
-function large_polynomial_gradient!(x::Vector, storage::Vector)
+function large_polynomial_gradient!(x, storage)
     for i in 1:250
         storage[i] = -2.0 * (i - x[i])
     end
 end
 
-function large_polynomial_hessian!(x::Vector, storage::Matrix)
+function large_polynomial_hessian!(x, storage)
     for i in 1:250
         for j in i:250
             if i == j
@@ -205,12 +205,12 @@ examples["Large Polynomial"] = OptimizationProblem("Large Polynomial",
 ###
 ##########################################################################
 
-function parabola(x::Vector)
+function parabola(x)
     return (1.0 - x[1])^2 + (2.0 - x[2])^2 + (3.0 - x[3])^2 +
             (5.0 - x[4])^2 + (8.0 - x[5])^2
 end
 
-function parabola_gradient!(x::Vector, storage::Vector)
+function parabola_gradient!(x, storage)
     storage[1] = -2.0 * (1.0 - x[1])
     storage[2] = -2.0 * (2.0 - x[2])
     storage[3] = -2.0 * (3.0 - x[3])
@@ -218,7 +218,7 @@ function parabola_gradient!(x::Vector, storage::Vector)
     storage[5] = -2.0 * (8.0 - x[5])
 end
 
-function parabola_hessian!(x::Vector, storage::Matrix)
+function parabola_hessian!(x, storage)
     for i in 1:5
         for j in 1:5
             if i == j
@@ -245,17 +245,17 @@ examples["Parabola"] = OptimizationProblem("Parabola",
 ###
 ##########################################################################
 
-function polynomial(x::Vector)
+function polynomial(x)
     return (10.0 - x[1])^2 + (7.0 - x[2])^4 + (108.0 - x[3])^4
 end
 
-function polynomial_gradient!(x::Vector, storage::Vector)
+function polynomial_gradient!(x, storage)
     storage[1] = -2.0 * (10.0 - x[1])
     storage[2] = -4.0 * (7.0 - x[2])^3
     storage[3] = -4.0 * (108.0 - x[3])^3
 end
 
-function polynomial_hessian!(x::Vector, storage::Matrix)
+function polynomial_hessian!(x, storage)
     storage[1, 1] = 2.0
     storage[1, 2] = 0.0
     storage[1, 3] = 0.0
@@ -284,19 +284,19 @@ examples["Polynomial"] = OptimizationProblem("Polynomial",
 ### Difficult since the hessian is singular at the optimum
 ##########################################################################
 
-function powell(x::Vector)
+function powell(x)
     return (x[1] + 10.0 * x[2])^2 + 5.0 * (x[3] - x[4])^2 +
             (x[2] - 2.0 * x[3])^4 + 10.0 * (x[1] - x[4])^4
 end
 
-function powell_gradient!(x::Vector, storage::Vector)
+function powell_gradient!(x, storage)
     storage[1] = 2.0 * (x[1] + 10.0 * x[2]) + 40.0 * (x[1] - x[4])^3
     storage[2] = 20.0 * (x[1] + 10.0 * x[2]) + 4.0 * (x[2] - 2.0 * x[3])^3
     storage[3] = 10.0 * (x[3] - x[4]) - 8.0 * (x[2] - 2.0 * x[3])^3
     storage[4] = -10.0 * (x[3] - x[4]) - 40.0 * (x[1] - x[4])^3
 end
 
-function powell_hessian!(x::Vector, storage::Matrix)
+function powell_hessian!(x, storage)
     storage[1, 1] = 2.0 + 120.0 * (x[1] - x[4])^2
     storage[1, 2] = 20.0
     storage[1, 3] = 0.0
@@ -333,16 +333,16 @@ examples["Powell"] = OptimizationProblem("Powell",
 ### Saddle point makes optimization difficult
 ##########################################################################
 
-function rosenbrock(x::Vector)
+function rosenbrock(x)
     return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 
-function rosenbrock_gradient!(x::Vector, storage::Vector)
+function rosenbrock_gradient!(x, storage)
     storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
     storage[2] = 200.0 * (x[2] - x[1]^2)
 end
 
-function rosenbrock_hessian!(x::Vector, storage::Matrix)
+function rosenbrock_hessian!(x, storage)
     storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
     storage[1, 2] = -400.0 * x[1]
     storage[2, 1] = -400.0 * x[1]

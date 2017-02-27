@@ -49,24 +49,27 @@ julia> Optim.minimizer(optimize(f, g!, h!, initial_x, Newton()))
 ```
 This is indeed the case. Now let us use finite differences for BFGS (we cannot
     get finite difference Hessians in Optim).
-```jlcon    
+```jlcon
 julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 2-element Array{Float64,1}:
  1.0
  1.0
 ```
 Still looks good. Returning to automatic differentiation, let us try both solvers using this
-method. We enable automatic differentiation by adding `autodiff = true` to our
+method. We enable [forward mode](https://github.com/JuliaDiff/ForwardDiff.jl) automatic differentiation by adding `autodiff = :forward` to our
 `Optim.Options`.
 ```jlcon
-julia> Optim.minimizer(optimize(f, initial_x, BFGS(), Optim.Options(autodiff = true)))
+julia> Optim.minimizer(optimize(f, initial_x, BFGS(), Optim.Options(autodiff = :forward)))
 2-element Array{Float64,1}:
  1.0
  1.0
 
-julia> Optim.minimizer(optimize(f, initial_x, Newton(), Optim.Options(autodiff = true)))
+julia> Optim.minimizer(optimize(f, initial_x, Newton(), Optim.Options(autodiff = :forward)))
 2-element Array{Float64,1}:
  1.0
  1.0
 ```
 Indeed, the minimizer was found, without providing any gradients or Hessians.
+
+Optim also supports
+[reverse mode](https://github.com/JuliaDiff/ReverseDiff.jl) automatic differentiation, which is enabled by adding `autodiff = :reverse` to `Optim.Options`.
