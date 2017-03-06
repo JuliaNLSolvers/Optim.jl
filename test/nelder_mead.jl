@@ -6,7 +6,7 @@
 			res = Optim.optimize(prob.f, prob.initial_x, NelderMead(), Optim.Options(g_tol = 1e-12))
 		elseif name == "Large Polynomial"
 			# TODO do this only when a "run all" flag checked
-			# res = Optim.optimize(f_prob, prob.initial_x, method=NelderMead(initial_simplex = Optim.AffineSimplexer(1.,1.)), iterations = 450_000)
+			# res = Optim.optimize(prob.f, prob.initial_x, method=NelderMead(initial_simplex = Optim.AffineSimplexer(1.,1.)), iterations = 450_000)
 		end
 		!(name == "Large Polynomial") && @test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
 	end
