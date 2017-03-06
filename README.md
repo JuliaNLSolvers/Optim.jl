@@ -34,7 +34,7 @@ Results of Optimization Algorithm
  * Objective Function Calls: 157
  * Gradient Calls: 157
 ```
-For more details and options, see the documentation ([stable](https://juliaopt.github.io/Optim.jl/stable) | [latest](https://juliaopt.github.io/Optim.jl/latest)).
+For more details and options, see the documentation ([stable](https://julianlsolvers.github.io/Optim.jl/stable) | [latest](https://julianlsolvers.github.io/Optim.jl/latest)).
 
 # Installation
 
@@ -45,13 +45,13 @@ julia> Pkg.add("Optim")
 ```
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://juliaopt.github.io/Optim.jl/latest
+[docs-latest-url]: https://julianlsolvers.github.io/Optim.jl/latest
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://juliaopt.github.io/Optim.jl/stable
+[docs-stable-url]: https://julianlsolvers.github.io/Optim.jl/stable
 
-[build-img]: https://travis-ci.org/JuliaOpt/Optim.jl.svg?branch=master
-[build-url]: https://travis-ci.org/JuliaOpt/Optim.jl
+[build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master
+[build-url]: https://travis-ci.org/JuliaNLSolvers/Optim.jl
 
 [winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true
 [winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl
@@ -63,8 +63,8 @@ julia> Pkg.add("Optim")
 [pkg-0.6-img]: http://pkg.julialang.org/badges/Optim_0.6.svg
 [pkg-0.6-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.6
 
-[cov-img]: https://img.shields.io/codecov/c/github/JuliaOpt/Optim.jl/master.svg?maxAge=2592000
-[cov-url]: https://codecov.io/gh/JuliaOpt/Optim.jl
+[cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000
+[cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl
 
-[gitter-url]: https://gitter.im/JuliaOpt/Optim.jl
-[gitter-img]: https://badges.gitter.im/JuliaOpt/Optim.jl.svg
+[gitter-url]: https://gitter.im/JuliaNLSolvers/Optim.jl
+[gitter-img]: https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg

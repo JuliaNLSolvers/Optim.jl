@@ -34,7 +34,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
         show_every = 1,
         extended_trace::Bool = false)
 
-    if !(x_lower < x_upper)
+    if x_lower > x_upper
         error("x_lower must be less than x_upper")
     end
 

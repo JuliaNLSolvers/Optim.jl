@@ -1,6 +1,6 @@
-typealias FirstOrderSolver Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
-                                 MomentumGradientDescent, BFGS, LBFGS}
-typealias SecondOrderSolver Union{Newton, NewtonTrustRegion}
+const FirstOrderSolver = Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
+                               MomentumGradientDescent, BFGS, LBFGS}
+const SecondOrderSolver = Union{Newton, NewtonTrustRegion}
 # Multivariate optimization
 function check_kwargs(kwargs, fallback_method)
     kws = Dict{Symbol, Any}()

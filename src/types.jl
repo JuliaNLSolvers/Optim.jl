@@ -1,4 +1,4 @@
-abstract Optimizer
+@compat abstract type Optimizer end
 immutable Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
@@ -54,9 +54,9 @@ immutable OptimizationState{T <: Optimizer}
     metadata::Dict
 end
 
-typealias OptimizationTrace{T} Vector{OptimizationState{T}}
+@compat OptimizationTrace{T} = Vector{OptimizationState{T}}
 
-abstract OptimizationResults
+@compat abstract type OptimizationResults end
 
 type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     method::String

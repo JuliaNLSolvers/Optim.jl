@@ -51,7 +51,7 @@ function determine if the next draw of `x` is accepted or not.
 
 The current implementation of Simulated Annealing is very rough.  It lacks quite
 a few features which are normally part of a proper SA implementation.
-A better implementation is under way, see [this issue](https://github.com/JuliaOpt/Optim.jl/issues/200).
+A better implementation is under way, see [this issue](https://github.com/JuliaNLSolvers/Optim.jl/issues/200).
 
 ## Example
 

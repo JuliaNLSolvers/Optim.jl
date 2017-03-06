@@ -21,11 +21,10 @@ function trace!(tr, d, state, iteration, method::Union{ParticleSwarm, SimulatedA
     if options.extended_trace
         dt["x"] = copy(state.x)
     end
-    g_norm = NaN
     update!(tr,
             state.iteration,
             d.f_x,
-            g_norm,
+            NaN,
             dt,
             options.store_trace,
             options.show_trace,
