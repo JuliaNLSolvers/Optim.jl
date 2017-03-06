@@ -47,7 +47,7 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          g, # Store current gradient in state.g
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
-                         similar(initial_x), # Maintain intermediary current state in state.y
+                         copy(initial_x), # Maintain intermediary current state in state.y
                          similar(initial_x), # Maintain intermediary state in state.y_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr

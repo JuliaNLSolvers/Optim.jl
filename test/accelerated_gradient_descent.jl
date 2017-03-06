@@ -7,14 +7,17 @@
 
     initial_x = [1.0]
     options = Optim.Options(show_trace = true, allow_f_increases=true)
-    res = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
-    @test norm(Optim.minimum(res)) < 1e-6
+    results = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
+    @test norm(Optim.minimum(results)) < 1e-6
 
     for (name, prob) in Optim.UnconstrainedProblems.examples
         if prob.isdifferentiable
-            if !(name in ["Large Polynomial", "Parabola"])
-                res = Optim.optimize(prob.f, prob.g!, prob.initial_x, AcceleratedGradientDescent(), Optim.Options(allow_f_increases=true))
-                @test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+            if !(name in ("Large Polynomial", "Parabola"))
+                results = Optim.optimize(prob.f, prob.g!, prob.initial_x, AcceleratedGradientDescent(), Optim.Options(allow_f_increases=true))
+                if !(name in ("Rosenbrock", "Polynomial", "Powell"))
+                    @test Optim.converged(results)
+                end
+                @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
             end
         end
     end
