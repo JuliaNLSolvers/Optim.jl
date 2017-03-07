@@ -12,7 +12,7 @@ function checked_dphi0!{M<:Union{BFGS, LBFGS}}(state, d, method::M)
 
         # Re-calculate direction
         @simd for i in 1:state.n
-            @inbounds state.s[i] = -obj.g[i]
+            @inbounds state.s[i] = -d.g[i]
         end
         dphi0 = vecdot(gradient(d), state.s)
     end

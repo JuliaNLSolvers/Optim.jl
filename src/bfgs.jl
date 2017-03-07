@@ -79,7 +79,7 @@ end
 function update_h!(d, state, method::BFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
-        @inbounds state.dg[i] = obj.g[i] - state.g_previous[i]
+        @inbounds state.dg[i] = d.g[i] - state.g_previous[i]
     end
 
     # Update the inverse Hessian approximation using Sherman-Morrison
