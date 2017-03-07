@@ -165,7 +165,7 @@ end
 function update_h!(d, state, method::LBFGS)
     # Measure the change in the gradient
     @simd for i in 1:state.n
-        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
+        @inbounds state.dg[i] = obj.g[i] - state.g_previous[i]
     end
 
     # Update the L-BFGS history of positions and gradients

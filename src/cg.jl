@@ -167,7 +167,7 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         dPd = dot(state.s, method.P, state.s)
         etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
         @simd for i in 1:state.n
-            @inbounds state.y[i] = gradient(d, i) - state.g_previous[i]
+            @inbounds state.y[i] = obj.g[i] - state.g_previous[i]
         end
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py

@@ -40,7 +40,7 @@ end
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
     # Search direction is always the negative gradient
     @simd for i in 1:state.n
-        @inbounds state.s[i] = -gradient(d, i)
+        @inbounds state.s[i] = -obj.g[i]
     end
 
     # Determine the distance of movement along the search line
