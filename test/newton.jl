@@ -62,8 +62,8 @@
     @testset "Optim problems (ForwardDiff)" begin
         for (name, prob) in Optim.UnconstrainedProblems.examples
         	if prob.istwicedifferentiable
-        		res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton(), Optim.Options(autodiff = true))
-        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
+        	#	res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        	#	@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
         		res = Optim.optimize(prob.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
         		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
                 res = Optim.optimize(prob.f, prob.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))
