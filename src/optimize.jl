@@ -89,69 +89,30 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
                   initial_x::Array{T},
                   method::M,
                   options::Options)
-    if !options.autodiff
-        if M <: FirstOrderSolver
-            d = OnceDifferentiable(f, initial_x)
-        else
-            error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
-        end
+    if M <: FirstOrderSolver
+        d = OnceDifferentiable(f, initial_x)
     else
-        gcfg = ForwardDiff.GradientConfig(initial_x)
-        g! = (x, out) -> ForwardDiff.gradient!(out, f, x, gcfg)
-
-        fg! = (x, out) -> begin
-            gr_res = DiffBase.DiffResult(zero(T), out)
-            ForwardDiff.gradient!(gr_res, f, x, gcfg)
-            DiffBase.value(gr_res)
-        end
-
-        if M <: FirstOrderSolver
-            d = OnceDifferentiable(f, g!, fg!, initial_x)
-        else
-            hcfg = ForwardDiff.HessianConfig(initial_x)
-            h! = (x, out) -> ForwardDiff.hessian!(out, f, x, hcfg)
-            d = TwiceDifferentiable(f, g!, fg!, h!, initial_x)
-        end
+        d = TwiceDifferentiable(f, initial_x)
     end
-
     optimize(d, initial_x, method, options)
 end
 
 function optimize(d::OnceDifferentiable,
                   initial_x::Array,
-                  method::Newton,
+                  method::SecondOrderSolver,
                   options::Options)
     optimize(TwiceDifferentiable(d), initial_x, method, options)
 end
 
-function optimize(d::OnceDifferentiable,
-                  initial_x::Array,
-                  method::NewtonTrustRegion,
-                  options::Options)
-    if !options.autodiff
-        error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
-    else
-        hcfg = ForwardDiff.HessianConfig(initial_x)
-        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
-    end
-    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!, initial_x), initial_x, method, options)
-end
-
 update_g!(d, state, method) = nothing
-
 function update_g!{M<:Union{FirstOrderSolver, Newton}}(d, state, method::M)
     # Update the function value and gradient
     value_grad!(d, state.x)
 end
 
-update_h!(d, state, method) = nothing
-
 # Update the Hessian
-function update_h!(d, state, method::SecondOrderSolver)
-    hessian!(d, state.x)
-    #d.h!(state.x, state.H)
-    #state.h_calls += 1
-end
+update_h!(d, state, method) = nothing
+update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
@@ -168,7 +129,7 @@ function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
-
+    f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased = false, false, false
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
@@ -191,28 +152,23 @@ function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{
         update_g!(d, state, method)
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
-        # We don't use the Hessian for anything if we have declared convergence,
-        # so we might as well not make the (expensive) update if converged == true
-        !converged && update_h!(d, state, method)
 
-        # If tracing, update trace with trace!. If a callback is provided, it
-        # should have boolean return value that controls the variable stopped_by_callback.
-        # This allows for early stopping controlled by the callback.
+        !converged && update_h!(d, state, method) # only relevant if not converged
+
         if tracing
+            # update trace; callbacks can stop routine early by returning true
             stopped_by_callback = trace!(tr, d, state, iteration, method, options)
         end
 
-        # Check time_limit; if none is provided it is NaN and the comparison
-        # will always return false.
         stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
+        f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
+        g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
+        h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
 
-        # Combine the two, so see if the stopped flag should be changed to true
-        # and stop the while loop
-        stopped = stopped_by_callback || stopped_by_time_limit ? true : false
-
-        # Did the iteration provide a non-decreasing step?
-        f_increased && !options.allow_f_increases && break
-
+        if (f_increased && !options.allow_f_increases) || stopped_by_callback ||
+            stopped_by_time_limit || f_limit_reached || g_limit_reached || h_limit_reached
+            stopped = true
+        end
     end # while
 
     after_while!(d, state, method, options)

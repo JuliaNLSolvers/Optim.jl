@@ -30,14 +30,14 @@ import Compat.String
         if res.method == "Nelder-Mead"
             @test startswith(lines[8], "   *  √(Σ(yᵢ-ȳ)²)/n < 1.0e-08: ")
             @test startswith(lines[9], "   * Reached Maximum Number of Iterations: ")
-            @test startswith(lines[10], " * Objective Function Calls: ")
+            @test startswith(lines[10], " * Objective Calls: ")
         elseif res.method == "Simulated Annealing"
             @test startswith(lines[8], "   * |x - x'| < ")
             @test startswith(lines[9], "   * |f(x) - f(x')| / |f(x)| < ")
             @test startswith(lines[10], "   * |g(x)| < ")
             @test startswith(lines[11], "   * f(x) > f(x')")
             @test startswith(lines[12], "   * Reached Maximum Number of Iterations: ")
-            @test startswith(lines[13], " * Objective Function Calls: ")
+            @test startswith(lines[13], " * Objective Calls: ")
         end
     end
 
@@ -60,6 +60,9 @@ import Compat.String
     @test startswith(lines[10], "   * |g(x)| < ")
     @test startswith(lines[11], "   * f(x) > f(x')")
     @test startswith(lines[12], "   * Reached Maximum Number of Iterations: ")
-    @test startswith(lines[13], " * Objective Function Calls: ")
+    @test startswith(lines[13], " * Objective Calls: ")
     @test startswith(lines[14], " * Gradient Calls: ")
+    if res.method in ("Newton's Method", "Newton's Method (Trust Region)")
+        @test startswith(lines[15], " * Hessian Calls: ")
+    end
 end
