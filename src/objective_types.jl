@@ -1,6 +1,6 @@
 abstract AbstractObjective
 type NonDifferentiable{T} <: AbstractObjective
-    f::Function
+    f
     f_x::T
     last_x_f::Array{T}
     f_calls::Vector{Int}
@@ -8,9 +8,9 @@ end
 NonDifferentiable{T}(f, x_seed::Array{T}) = NonDifferentiable(f, f(x_seed), copy(x_seed), [1])
 
 type OnceDifferentiable{T, Tgrad} <: AbstractObjective
-    f::Function
-    g!::Function
-    fg!::Function
+    f
+    g!
+    fg!
     f_x::T
     g::Tgrad
     last_x_f::Array{T}
@@ -59,10 +59,10 @@ function OnceDifferentiable{T}(f, x_seed::Vector{T}; method = :finitediff)
 end
 
 type TwiceDifferentiable{T<:Real} <: AbstractObjective
-    f::Function
-    g!::Function
-    fg!::Function
-    h!::Function
+    f
+    g!
+    fg!
+    h!
     f_x::T
     g::Vector{T}
     H::Matrix{T}
