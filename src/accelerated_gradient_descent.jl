@@ -14,9 +14,7 @@ end
 AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
   AcceleratedGradientDescent(linesearch)
 =#
-function AcceleratedGradientDescent(; linesearch! = nothing,
-                                      linesearch = LineSearches.hagerzhang!)
-    linesearch = get_linesearch(linesearch!, linesearch)
+function AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!)
     AcceleratedGradientDescent(linesearch)
 end
 

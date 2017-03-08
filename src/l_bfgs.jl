@@ -75,17 +75,13 @@ LBFGS(; m::Integer = 10, linesearch = LineSearches.hagerzhang!,
       LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 =#
 
-function LBFGS(; linesearch! = nothing,
-                 m::Integer = 10,
+function LBFGS(; m::Integer = 10,
                  linesearch = LineSearches.hagerzhang!,
                  P=nothing,
-                 precondprep! = nothing,
                  precondprep = (P, x) -> nothing,
                  extrapolate::Bool=false,
                  snap2one = (0.75, Inf))
 
-    linesearch = get_linesearch(linesearch!, linesearch)
-    precondprep = get_precondprep(precondprep!, precondprep)
     LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 end
 

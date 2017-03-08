@@ -10,11 +10,9 @@ end
 BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch, initial_invH)
 =#
-function BFGS(; linesearch! = nothing,
-                linesearch = LineSearches.hagerzhang!,
-              initial_invH = x -> eye(eltype(x), length(x)),
-              resetalpha = true)
-    linesearch = get_linesearch(linesearch!, linesearch)
+function BFGS(; linesearch = LineSearches.hagerzhang!,
+                initial_invH = x -> eye(eltype(x), length(x)),
+                resetalpha = true)
     BFGS(linesearch, initial_invH, resetalpha)
 end
 

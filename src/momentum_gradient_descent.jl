@@ -11,9 +11,7 @@ MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!
   MomentumGradientDescent(Float64(mu), linesearch)
 =#
 
-function MomentumGradientDescent(; mu::Real = 0.01, linesearch! = nothing,
-                                   linesearch = LineSearches.hagerzhang!)
-    linesearch = get_linesearch(linesearch!, linesearch)
+function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!)
     MomentumGradientDescent(Float64(mu), linesearch)
 end
 

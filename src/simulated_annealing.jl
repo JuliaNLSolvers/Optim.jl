@@ -16,11 +16,10 @@ immutable SimulatedAnnealing{Tn, Ttemp} <: Optimizer
     keep_best::Bool # not used!?
 end
 
-SimulatedAnnealing(;neighbor! = nothing,
-                    neighbor = default_neighbor!,
+SimulatedAnnealing(;neighbor = default_neighbor!,
                     temperature = log_temperature,
                     keep_best::Bool = true) =
-  SimulatedAnnealing(get_neighbor(neighbor!, neighbor), temperature, keep_best)
+  SimulatedAnnealing(neighbor, temperature, keep_best)
 
 type SimulatedAnnealingState{T, N}
     @add_generic_fields()

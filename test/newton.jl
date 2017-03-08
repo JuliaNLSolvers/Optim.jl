@@ -12,7 +12,7 @@
     end
     initial_x = [0.0]
 
-    Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton(), Optim.Options(autodiff = true))
+    Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton())
 
     results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton())
 
@@ -62,11 +62,11 @@
     @testset "Optim problems (ForwardDiff)" begin
         for (name, prob) in Optim.UnconstrainedProblems.examples
         	if prob.istwicedifferentiable
-        		res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        		res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton())
         		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-        		res = Optim.optimize(prob.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        		res = Optim.optimize(prob.f, prob.initial_x, Newton())
         		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-                res = Optim.optimize(prob.f, prob.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))
+                res = Optim.optimize(prob.f, prob.g!, prob.initial_x, Newton())
         		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
         	end
         end

@@ -70,15 +70,11 @@ function ConjugateGradient(;
                                  linesearch)
 end
 =#
-function ConjugateGradient(; linesearch! = nothing,
-                             linesearch = LineSearches.hagerzhang!,
+function ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
                              eta::Real = 0.4,
                              P::Any = nothing,
-                             precondprep! = nothing,
                              precondprep = (P, x) -> nothing)
 
-    linesearch = get_linesearch(linesearch!, linesearch)
-    precondprep = get_precondprep(precondprep!, precondprep)
     ConjugateGradient(Float64(eta),
                       P, precondprep,
                       linesearch)

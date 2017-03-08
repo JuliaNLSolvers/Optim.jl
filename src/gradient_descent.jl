@@ -9,13 +9,9 @@ GradientDescent(; linesearch = LineSearches.hagerzhang!,
                 P = nothing, precondprep = (P, x) -> nothing) =
                     GradientDescent(linesearch, P, precondprep)
 =#
-function GradientDescent(; linesearch! = nothing,
-                           linesearch = LineSearches.hagerzhang!,
+function GradientDescent(; linesearch = LineSearches.hagerzhang!,
                            P = nothing,
-                           precondprep! = nothing,
                            precondprep = (P, x) -> nothing)
-    linesearch = get_linesearch(linesearch!, linesearch)
-    precondprep = get_precondprep(precondprep!, precondprep)
     GradientDescent(linesearch, P, precondprep)
 end
 

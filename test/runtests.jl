@@ -31,7 +31,6 @@ my_tests = [
     "precon.jl",
     "initial_convergence.jl",
     "extrapolate.jl",
-    "levenberg_marquardt.jl",
     "lsthrow.jl",
     "api.jl",
 ]

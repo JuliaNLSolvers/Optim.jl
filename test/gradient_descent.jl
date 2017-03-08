@@ -2,18 +2,21 @@
     for use_autodiff in (false, true)
         for (name, prob) in Optim.UnconstrainedProblems.examples
             opt_allow_f_increases = name == "Hosaki" ? true : false
+            iterations = if name == "Rosenbrock"
+                    10000 # Zig-zagging
+                elseif name == "Powell"
+                    80000 # Zig-zagging as the problem is (intentionally) ill-conditioned
+                else
+                    1000
+            end
+            options = Optim.Options(iterations = iterations, allow_f_increases = opt_allow_f_increases)
             if prob.isdifferentiable
-                iterations = if name == "Rosenbrock"
-                        10000 # Zig-zagging
-                    elseif name == "Powell"
-                        80000 # Zig-zagging as the problem is (intentionally) ill-conditioned
-                    else
-                        1000
+                results = Optim.optimize(prob.f, prob.initial_x, GradientDescent(), options)
+                if !(name in ("Rosenbrock", "Polynomial", "Powell"))
+                    @test Optim.converged(results)
                 end
-                results = Optim.optimize(prob.f, prob.initial_x, GradientDescent(),
-                                     Optim.Options(autodiff = use_autodiff,
-                                                   iterations = iterations,
-                                                   allow_f_increases = opt_allow_f_increases))
+                @test norm(Optim.minimizer(results) - prob.solutions, Inf) < 1e-2
+                results = Optim.optimize(prob.f, prob.g!, prob.initial_x, GradientDescent(), options)
                 if !(name in ("Rosenbrock", "Polynomial", "Powell"))
                     @test Optim.converged(results)
                 end

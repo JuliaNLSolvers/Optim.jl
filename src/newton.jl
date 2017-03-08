@@ -6,9 +6,7 @@ end
 Newton(; linesearch::Function = LineSearches.hagerzhang!) =
 Newton(linesearch)
 =#
-function Newton(; linesearch! = nothing, linesearch::Function = LineSearches.hagerzhang!,
-                resetalpha = true)
-    linesearch = get_linesearch(linesearch!, linesearch)
+function Newton(; linesearch::Function = LineSearches.hagerzhang!, resetalpha = true)
     Newton(linesearch,resetalpha)
 end
 
