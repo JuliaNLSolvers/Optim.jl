@@ -1,6 +1,6 @@
 julia 0.4
 Calculus
-ForwardDiff 0.3.0 0.4.0
+ForwardDiff 0.3.0 0.5.0
 PositiveFactorizations
 Compat 0.18.0
 LineSearches 0.1.2
