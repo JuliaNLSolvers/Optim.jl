@@ -31,24 +31,17 @@ type SimulatedAnnealingState{T, N}
     f_proposal::T
 end
 
-initial_state(method::SimulatedAnnealing, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
-
-function initial_state{T}(method::SimulatedAnnealing, options, f::Function, initial_x::Array{T})
+function initial_state{T}(method::SimulatedAnnealing, options, f, initial_x::Array{T})
     # Count number of parameters
     n = length(initial_x)
-
-    # Store f(x) in f_x
-    f_x = f(initial_x)
-    f_calls = 1
+    value!(f, initial_x)
 
     # Store the best state ever visited
     best_x = copy(initial_x)
-    best_f_x = f_x
-    SimulatedAnnealingState("Simulated Annealing", n, copy(best_x), f_x, f_calls, 0, 0, 1, best_x, similar(initial_x), best_f_x, f_x)
+    SimulatedAnnealingState("Simulated Annealing", n, copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
 end
 
-update_state!(d, state::SimulatedAnnealingState, method::SimulatedAnnealing) = update_state!(d.f, state, method)
-function update_state!{T}(f::Function, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
+function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)
@@ -57,8 +50,7 @@ function update_state!{T}(f::Function, state::SimulatedAnnealingState{T}, method
     method.neighbor!(state.x_current, state.x_proposal)
 
     # Evaluate the cost function at the proposed state
-    state.f_proposal = f(state.x_proposal)
-    state.f_calls += 1
+    state.f_proposal = value(nd, state.x_proposal)
 
     if state.f_proposal <= state.f_x_current
         # If proposal is superior, we always move to it
@@ -66,8 +58,8 @@ function update_state!{T}(f::Function, state::SimulatedAnnealingState{T}, method
         state.f_x_current = state.f_proposal
 
         # If the new state is the best state yet, keep a record of it
-        if state.f_proposal < state.f_x
-            state.f_x = state.f_proposal
+        if state.f_proposal < nd.f_x
+            nd.f_x = state.f_proposal
             copy!(state.x, state.x_proposal)
         end
     else

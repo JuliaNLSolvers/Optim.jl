@@ -44,6 +44,7 @@ module Optim
 
     # Types
     include("types.jl")
+    include("objective_types.jl")
 
     # API
     include("api.jl")

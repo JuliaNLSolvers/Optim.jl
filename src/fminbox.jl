@@ -183,7 +183,7 @@ function optimize{T<:AbstractFloat}(
         # Optimize with current setting of mu
         funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, fb, mu)
         fval0 = funcc(x, nothing)
-        dfbox = OnceDifferentiable(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc)
+        dfbox = OnceDifferentiable(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc, initial_x)
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end

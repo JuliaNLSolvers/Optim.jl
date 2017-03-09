@@ -10,12 +10,12 @@
     function h!_1(x::Vector, storage::Matrix)
         storage[1, 1] = 12.0 * (x[1] - 5.0)^2
     end
+    initial_x = [0.0]
 
-    # Need to specify autodiff!
-    @test_throws ErrorException Optim.optimize(OnceDifferentiable(f_1, g!_1), [0.0], Newton())
-    Optim.optimize(OnceDifferentiable(f_1, g!_1), [0.0], Newton(), Optim.Options(autodiff = true))
+    Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton(), Optim.Options(autodiff = true))
 
     results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton())
+
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
@@ -62,6 +62,8 @@
     @testset "Optim problems (ForwardDiff)" begin
         for (name, prob) in Optim.UnconstrainedProblems.examples
         	if prob.istwicedifferentiable
+        	#	res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton(), Optim.Options(autodiff = true))
+        	#	@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
         		res = Optim.optimize(prob.f, prob.initial_x, Newton(), Optim.Options(autodiff = true))
         		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
                 res = Optim.optimize(prob.f, prob.g!, prob.initial_x, Newton(), Optim.Options(autodiff = true))

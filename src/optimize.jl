@@ -46,23 +46,24 @@ function optimize(d::TwiceDifferentiable, initial_x::Array; kwargs...)
     optimize(d, initial_x, method, Options(;kwargs...))
 end
 
-optimize(d::Function, initial_x, options::Options) = optimize(d, initial_x, NelderMead(), options)
-optimize(d::OnceDifferentiable, initial_x, options::Options) = optimize(d, initial_x, BFGS(), options)
-optimize(d::TwiceDifferentiable, initial_x, options::Options) = optimize(d, initial_x, Newton(), options)
+optimize(f::Function, initial_x::Array, options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
+optimize(f::Function, initial_x::Array, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method, options)
+optimize(d::OnceDifferentiable, initial_x::Array, options::Options) = optimize(d, initial_x, BFGS(), options)
+optimize(d::TwiceDifferentiable, initial_x::Array, options::Options) = optimize(d, initial_x, Newton(), options)
 
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
                   initial_x::Array,
                   method::Optimizer,
                   options::Options = Options())
-    d = OnceDifferentiable(f, g!)
+    d = OnceDifferentiable(f, g!, initial_x)
     optimize(d, initial_x, method, options)
 end
 function optimize{F<:Function, G<:Function}(f::F,
                   g!::G,
                   initial_x::Array,
                   options::Options)
-    d = OnceDifferentiable(f, g!)
+    d = OnceDifferentiable(f, g!, initial_x)
     optimize(d, initial_x, BFGS(), options)
 end
 
@@ -72,7 +73,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   initial_x::Array,
                   method::Optimizer,
                   options::Options = Options())
-    d = TwiceDifferentiable(f, g!, h!)
+    d = TwiceDifferentiable(f, g!, h!, initial_x)
     optimize(d, initial_x, method, options)
 end
 function optimize{F<:Function, G<:Function, H<:Function}(f::F,
@@ -80,7 +81,7 @@ function optimize{F<:Function, G<:Function, H<:Function}(f::F,
                   h!::H,
                   initial_x::Array,
                   options)
-    d = TwiceDifferentiable(f, g!, h!)
+    d = TwiceDifferentiable(f, g!, h!, initial_x)
     optimize(d, initial_x, Newton(), options)
 end
 
@@ -90,7 +91,7 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
                   options::Options)
     if !options.autodiff
         if M <: FirstOrderSolver
-            d = OnceDifferentiable(f)
+            d = OnceDifferentiable(f, initial_x)
         else
             error("No gradient or Hessian was provided. Either provide a gradient and Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
         end
@@ -105,11 +106,11 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
         end
 
         if M <: FirstOrderSolver
-            d = OnceDifferentiable(f, g!, fg!)
+            d = OnceDifferentiable(f, g!, fg!, initial_x)
         else
             hcfg = ForwardDiff.HessianConfig(initial_x)
             h! = (x, out) -> ForwardDiff.hessian!(out, f, x, hcfg)
-            d = TwiceDifferentiable(f, g!, fg!, h!)
+            d = TwiceDifferentiable(f, g!, fg!, h!, initial_x)
         end
     end
 
@@ -120,13 +121,7 @@ function optimize(d::OnceDifferentiable,
                   initial_x::Array,
                   method::Newton,
                   options::Options)
-    if !options.autodiff
-        error("No Hessian was provided. Either provide a Hessian, set autodiff = true in the Options if applicable, or choose a solver that doesn't require a Hessian.")
-    else
-        hcfg = ForwardDiff.HessianConfig(initial_x)
-        h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
-    end
-    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
+    optimize(TwiceDifferentiable(d), initial_x, method, options)
 end
 
 function optimize(d::OnceDifferentiable,
@@ -139,35 +134,34 @@ function optimize(d::OnceDifferentiable,
         hcfg = ForwardDiff.HessianConfig(initial_x)
         h! = (x, out) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
     end
-    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!), initial_x, method, options)
+    optimize(TwiceDifferentiable(d.f, d.g!, d.fg!, h!, initial_x), initial_x, method, options)
 end
 
 update_g!(d, state, method) = nothing
 
 function update_g!{M<:Union{FirstOrderSolver, Newton}}(d, state, method::M)
     # Update the function value and gradient
-    state.f_x_previous, state.f_x = state.f_x, d.fg!(state.x, state.g)
-    state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+    value_grad!(d, state.x)
 end
 
 update_h!(d, state, method) = nothing
 
 # Update the Hessian
 function update_h!(d, state, method::SecondOrderSolver)
-    d.h!(state.x, state.H)
-    state.h_calls += 1
+    hessian!(d, state.x)
+    #d.h!(state.x, state.H)
+    #state.h_calls += 1
 end
 
 after_while!(d, state, method, options) = nothing
 
-function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
+function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{T}, method::M,
                                    options::Options = Options())
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("Use optimize(f, scalar, scalar) for 1D problems")
     end
-
 
     state = initial_state(method, options, d, initial_x)
 
@@ -181,14 +175,14 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
         g_converged = false
     else
-        vecnorm(state.g, Inf) < options.g_tol
+        vecnorm(gradient(d), Inf) < options.g_tol
     end
 
     converged = g_converged
     iteration = 0
 
     options.show_trace && print_header(method)
-    trace!(tr, state, iteration, method, options)
+    trace!(tr, d, state, iteration, method, options)
 
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
@@ -196,7 +190,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
         update_g!(d, state, method)
         x_converged, f_converged,
-        g_converged, converged, f_increased = assess_convergence(state, options)
+        g_converged, converged, f_increased = assess_convergence(state, d, options)
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true
         !converged && update_h!(d, state, method)
@@ -205,7 +199,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
         # should have boolean return value that controls the variable stopped_by_callback.
         # This allows for early stopping controlled by the callback.
         if tracing
-            stopped_by_callback = trace!(tr, state, iteration, method, options)
+            stopped_by_callback = trace!(tr, d, state, iteration, method, options)
         end
 
         # Check time_limit; if none is provided it is NaN and the comparison
@@ -226,7 +220,7 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
     return MultivariateOptimizationResults(state.method_string,
                                             initial_x,
                                             f_increased ? state.x_previous : state.x,
-                                            f_increased ? state.f_x_previous : state.f_x,
+                                            f_increased ? state.f_x_previous : value(d),
                                             iteration,
                                             iteration == options.iterations,
                                             x_converged,
@@ -237,9 +231,9 @@ function optimize{T, M<:Optimizer}(d, initial_x::Array{T}, method::M,
                                             options.g_tol,
                                             f_increased,
                                             tr,
-                                            state.f_calls,
-                                            state.g_calls,
-                                            state.h_calls)
+                                            f_calls(d),
+                                            g_calls(d),
+                                            h_calls(d))
 end
 
 # Univariate Options

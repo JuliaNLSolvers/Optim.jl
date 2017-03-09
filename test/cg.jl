@@ -18,8 +18,7 @@
 
 		srand(1)
 		B = rand(2,2)
-		df = Optim.OnceDifferentiable(X -> objective(X, B), (X, G) -> objective_gradient!(X, G, B))
-		results = Optim.optimize(df, rand(2,2), ConjugateGradient())
+		results = Optim.optimize(X -> objective(X, B), (X, G) -> objective_gradient!(X, G, B), rand(2,2), ConjugateGradient())
 		@test Optim.converged(results)
 		@test Optim.minimum(results) < 1e-8
 	end
