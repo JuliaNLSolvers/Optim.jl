@@ -1,3 +1,10 @@
+# Optim v1.0.0
+* Significant changes to the Non-, Once-, and TwiceDifferentiable setup
+* Test refactoring
+* Drop v0.4 support
+* Swap the order of arguments to gradients and Hessians, such that the mutated object comes first
+* Add limits to f-, g-, and h_calls
+
 # Optim v0.7.6 release notes
 * Fix deprecations for *Function constructors
 * Fix depwarns on Julia master (v0.6)
