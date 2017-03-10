@@ -1,4 +1,4 @@
-abstract AbstractObjective
+@compat abstract type AbstractObjective end
 type NonDifferentiable{T} <: AbstractObjective
     f
     f_x::T
