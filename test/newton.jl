@@ -43,32 +43,13 @@
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
-    # Test Optim.newton for all twice differentiable functions in Optim.UnconstrainedProblems.examples
-    @testset "Optim problems" begin
-        for (name, prob) in Optim.UnconstrainedProblems.examples
-        	if prob.istwicedifferentiable
-        		res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, Newton())
-        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-        	end
-        end
-    end
-
     @testset "newton in concave region" begin
         prob=Optim.UnconstrainedProblems.examples["Himmelblau"]
         res = optimize(prob.f, prob.g!, prob.h!, [0., 0.], Newton())
         @test norm(Optim.minimizer(res) - prob.solutions) < 1e-9
     end
 
-    @testset "Optim problems (ForwardDiff)" begin
-        for (name, prob) in Optim.UnconstrainedProblems.examples
-        	if prob.istwicedifferentiable
-        		res = Optim.optimize(OnceDifferentiable(prob.f, prob.g!, prob.initial_x), prob.initial_x, Newton())
-        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-        		res = Optim.optimize(prob.f, prob.initial_x, Newton())
-        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-                res = Optim.optimize(prob.f, prob.g!, prob.initial_x, Newton())
-        		@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-        	end
-        end
+    @testset "Optim problems" begin
+        run_optim_tests(Newton())
     end
 end

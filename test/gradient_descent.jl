@@ -1,29 +1,9 @@
 @testset "Gradient Descent" begin
-    for use_autodiff in (false, true)
-        for (name, prob) in Optim.UnconstrainedProblems.examples
-            opt_allow_f_increases = name == "Hosaki" ? true : false
-            iterations = if name == "Rosenbrock"
-                    10000 # Zig-zagging
-                elseif name == "Powell"
-                    80000 # Zig-zagging as the problem is (intentionally) ill-conditioned
-                else
-                    1000
-            end
-            options = Optim.Options(iterations = iterations, allow_f_increases = opt_allow_f_increases)
-            if prob.isdifferentiable
-                results = Optim.optimize(prob.f, prob.initial_x, GradientDescent(), options)
-                if !(name in ("Rosenbrock", "Polynomial", "Powell"))
-                    @test Optim.converged(results)
-                end
-                @test norm(Optim.minimizer(results) - prob.solutions, Inf) < 1e-2
-                results = Optim.optimize(prob.f, prob.g!, prob.initial_x, GradientDescent(), options)
-                if !(name in ("Rosenbrock", "Polynomial", "Powell"))
-                    @test Optim.converged(results)
-                end
-                @test norm(Optim.minimizer(results) - prob.solutions, Inf) < 1e-2
-            end
-        end
-    end
+    run_optim_tests(GradientDescent(),
+                    f_increase_exceptions = ("Hosaki",),
+                    convergence_exceptions = (("Polynomial", 1), ("Polynomial", 2), ("Rosenbrock", 1), ("Rosenbrock", 2)),
+                    iteration_exceptions = (("Rosenbrock", 10000),),
+                    skip = ("Powell",))
 
     function f_gd_1(x)
       (x[1] - 5.0)^2

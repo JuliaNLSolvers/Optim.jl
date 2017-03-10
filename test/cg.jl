@@ -1,11 +1,7 @@
-@testset "Conjugate Gradient" begin
+ @testset "Conjugate Gradient" begin
 	# Test Optim.cg for all differentiable functions in Optim.UnconstrainedProblems.examples
-	for (name, prob) in Optim.UnconstrainedProblems.examples
-		if prob.isdifferentiable
-			res = Optim.optimize(prob.f, prob.g!, prob.initial_x, ConjugateGradient())
-			@test norm(Optim.minimizer(res) - prob.solutions) < 1e-2
-		end
-	end
+	run_optim_tests(ConjugateGradient(),
+                    convergence_exceptions = (("Powell", 1), ("Powell", 2), ("Polynomial", 1)))
 
 	@testset "matrix input" begin
 		objective(X, B) = sum((X.-B).^2)/2
