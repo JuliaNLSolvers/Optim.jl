@@ -118,23 +118,16 @@ function optimize{T<:AbstractFloat}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every::Integer = 1,
-        linesearch! = nothing,
         linesearch = LineSearches.hagerzhang!,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
-        precondprep! = nothing,
         precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
         optimizer = ConjugateGradient,
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
         nargs...)
-
-    # remove in v0.8.0
-
-    linesearch = get_linesearch(linesearch!, linesearch)
-    precondprep = get_precondprep(precondprep!, precondprep)
 
     optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
@@ -183,7 +176,7 @@ function optimize{T<:AbstractFloat}(
         # Optimize with current setting of mu
         funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, fb, mu)
         fval0 = funcc(x, nothing)
-        dfbox = OnceDifferentiable(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc)
+        dfbox = OnceDifferentiable(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc, initial_x)
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end

@@ -44,6 +44,7 @@ module Optim
 
     # Types
     include("types.jl")
+    include("objective_types.jl")
 
     # API
     include("api.jl")
@@ -79,9 +80,6 @@ module Optim
 
     # Constrained optimization
     include("fminbox.jl")
-
-    # trust region methods
-    include("levenberg_marquardt.jl")
 
     # Heuristic Optimization Methods
     include("nelder_mead.jl")

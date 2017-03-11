@@ -1,23 +1,19 @@
-immutable Newton <: Optimizer
-    linesearch!::Function
+immutable Newton{L} <: Optimizer
+    linesearch!::L
     resetalpha::Bool
 end
 #= uncomment v0.8.0
 Newton(; linesearch::Function = LineSearches.hagerzhang!) =
 Newton(linesearch)
 =#
-function Newton(; linesearch! = nothing, linesearch::Function = LineSearches.hagerzhang!,
-                resetalpha = true)
-    linesearch = get_linesearch(linesearch!, linesearch)
+function Newton(; linesearch::Function = LineSearches.hagerzhang!, resetalpha = true)
     Newton(linesearch,resetalpha)
 end
 
 type NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
     @add_generic_fields()
     x_previous::Array{T, N}
-    g::Array{T, N}
     f_x_previous::T
-    H::Matrix{T}
     F::F
     Hd::Thd
     s::Array{T, N}
@@ -27,26 +23,15 @@ end
 function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
     n = length(initial_x)
     # Maintain current gradient in gr
-    g = similar(initial_x)
-    s = similar(g)
-    x_ls, g_ls = similar(g), similar(g)
-    f_x_previous, f_x = NaN, d.fg!(initial_x, g)
-    f_calls, g_calls = 1, 1
-    H = Array{T}(n, n)
-    d.h!(initial_x, H)
-    h_calls = 1
-
+    s = similar(initial_x)
+    x_ls, g_ls = similar(initial_x), similar(initial_x)
+    value_grad!(d, initial_x)
+    hessian!(d, initial_x)
     NewtonState("Newton's Method",
                 length(initial_x),
                 copy(initial_x), # Maintain current state in state.x
-                f_x, # Store current f in state.f_x
-                f_calls, # Track f calls in state.f_calls
-                g_calls, # Track g calls in state.g_calls
-                h_calls,
                 similar(initial_x), # Maintain previous state in state.x_previous
-                g, # Store current gradient in state.g
                 T(NaN), # Store previous f in state.f_x_previous
-                H,
                 Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U),
                 Vector{Int8}(),
                 similar(initial_x), # Maintain current search direction in state.s
@@ -59,8 +44,8 @@ function update_state!{T}(d, state::NewtonState{T}, method::Newton)
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
-    state.F, state.Hd = ldltfact!(Positive, state.H)
-    state.s[:] = -(state.F\state.g)
+    state.F, state.Hd = ldltfact!(Positive, hessian(d))
+    state.s[:] = -(state.F\gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)

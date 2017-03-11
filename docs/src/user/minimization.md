@@ -25,11 +25,6 @@ using central finite differencing:
 ```jl
 optimize(f, [0.0, 0.0], LBFGS())
 ```
-Alternatively, the `autodiff` keyword will use atomatic differentiation to construct
-the gradient.
-```jl
-optimize(f, [0.0, 0.0], LBFGS(), Optim.Options(autodiff = true))
-```
 For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
 function g!(x, storage)
