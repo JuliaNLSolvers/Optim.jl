@@ -36,7 +36,7 @@ function OnceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finitediff)
     g_calls = [1]
     if autodiff == :finitediff
         function g!(x, storage)
-            Calculus.finite_difference!(x->(f_calls[1]+=1;f(x)), x, storage, :central)
+            Calculus.finite_difference!(f, x, storage, :central)
             return
         end
         function fg!(x, storage)
@@ -101,7 +101,7 @@ function TwiceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finitediff)
     h_calls = [1]
     if autodiff == :finitediff
         function g!(x::Vector, storage::Vector)
-            Calculus.finite_difference!(x->(f_calls[1]+=1;f(x)), x, storage, :central)
+            Calculus.finite_difference!(f, x, storage, :central)
             return
         end
         function fg!(x::Vector, storage::Vector)
@@ -109,7 +109,7 @@ function TwiceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finitediff)
             return f(x)
         end
         function h!(x::Vector, storage::Matrix)
-            Calculus.finite_difference_hessian!(x->(f_calls[1]+=1;f(x)), x, storage)
+            Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
     elseif autodiff == :forwarddiff
@@ -144,7 +144,7 @@ function TwiceDifferentiable{T}(f, g!, x_seed::Array{T}; autodiff = :finitediff)
     end
     if autodiff == :finitediff
         function h!(x, storage)
-            Calculus.finite_difference_hessian!(x->(f_calls[1]+=1;f(x)), x, storage)
+            Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
     elseif autodiff == :forwarddiff
@@ -165,7 +165,7 @@ function TwiceDifferentiable{T}(f, g!, fg!, x_seed::Array{T}; autodiff = :finite
     f_calls = [1]
     if autodiff == :finitediff
         function h!(x::Vector, storage::Matrix)
-            Calculus.finite_difference_hessian!(x->(f_calls[1]+=1;f(x)), x, storage)
+            Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
     elseif autodiff == :forwarddiff
@@ -258,3 +258,18 @@ value(obj) = obj.f_x
 gradient(obj) = obj.g
 gradient(obj, i::Integer) = obj.g[i]
 hessian(obj) = obj.H
+#=
+# This can be used when LineSearches switches to value_grad! and family
+# Remember to change all fg!'s to "nothing" for finite differences
+# and when f and g! are passed but no fg!. Can potentially avoid more calls
+# than current setup.
+function value_grad!(obj::Union{OnceDifferentiable{Void}, TwiceDifferentiable{Void}}, x)
+    if x != obj.last_x_f
+        _unchecked_value!(obj, x)
+    end
+    if x != obj.last_x_g
+        _unchecked_grad!(obj, x)
+    end
+    obj.f_x
+end
+=#
