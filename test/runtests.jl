@@ -33,6 +33,7 @@ my_tests = [
     "extrapolate.jl",
     "lsthrow.jl",
     "api.jl",
+    "objective_types.jl",
 ]
 
 differentiability_condition(method, prob) = true

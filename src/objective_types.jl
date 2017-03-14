@@ -287,18 +287,3 @@ value(obj) = obj.f_x
 gradient(obj) = obj.g
 gradient(obj, i::Integer) = obj.g[i]
 hessian(obj) = obj.H
-#=
-# This can be used when LineSearches switches to value_grad! and family
-# Remember to change all fg!'s to "nothing" for finite differences
-# and when f and g! are passed but no fg!. Can potentially avoid more calls
-# than current setup.
-function value_grad!(obj::Union{OnceDifferentiable{Void}, TwiceDifferentiable{Void}}, x)
-    if x != obj.last_x_f
-        _unchecked_value!(obj, x)
-    end
-    if x != obj.last_x_g
-        _unchecked_grad!(obj, x)
-    end
-    obj.f_x
-end
-=#
