@@ -124,7 +124,7 @@ which will return `"Nelder Mead"`. A bit more useful information is the minimize
 julia> Optim.minimizer(res)
 3-element Array{Float64,1}:
  -0.499921
- -0.3333  
+ -0.3333
  -1.49994
 
 julia> Optim.minimum(res)
