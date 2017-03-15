@@ -74,7 +74,9 @@ function perform_linesearch!{M}(state, method::M, d)
         state.alpha, f_update, g_update =
         method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
                            state.alpha, state.mayterminate)
-        d.f_calls, d.g_calls = d.f_calls + f_update, d.g_calls + g_update
+        # TODO: linesearch now updates d.f_calls through NLSolversBase.value!
+        # Should we create a separate property state.f_calls_ls to track the number of ls calls?
+        #d.f_calls, d.g_calls = d.f_calls + f_update, d.g_calls + g_update
         return true
     catch ex
         if isa(ex, LineSearches.LineSearchException)
