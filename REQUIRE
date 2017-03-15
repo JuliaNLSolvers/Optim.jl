@@ -5,3 +5,4 @@ ReverseDiff 0.0.3
 PositiveFactorizations
 Compat 0.18.0
 LineSearches 0.1.2
+NLSolversBase
