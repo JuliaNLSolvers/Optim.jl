@@ -236,7 +236,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     reached_subproblem_solution = true
     interior = true
     lambda = NaN
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     NLSolversBase.hessian!(d, initial_x)
     NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
                          length(initial_x),
@@ -273,7 +273,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
     # Update the function value and gradient
     copy!(state.g_previous, gradient(d))
     state.f_x_previous = value(d)
-    value_grad!(d, state.x)
+    value_gradient!(d, state.x)
 
 
     # Update the trust region size based on the discrepancy between

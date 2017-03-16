@@ -31,7 +31,7 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState("BFGS",

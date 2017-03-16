@@ -24,7 +24,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
     n = length(initial_x)
     # Maintain current gradient in gr
     s = similar(initial_x)
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     NLSolversBase.hessian!(d, initial_x)
     NewtonState("Newton's Method",
                 length(initial_x),

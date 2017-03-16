@@ -94,7 +94,7 @@ end
 
 
 function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     pg = copy(gradient(d))
     @assert typeof(value(d)) == T
     # Output messages
@@ -142,7 +142,7 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         LinAlg.axpy!(state.alpha, state.s, state.x)
 
         # Update the function value and gradient
-        value_grad!(d, state.x)
+        value_gradient!(d, state.x)
 
         # Check sanity of function and gradient
         if !isfinite(value(d))

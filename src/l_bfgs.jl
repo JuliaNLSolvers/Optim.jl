@@ -105,7 +105,7 @@ end
 
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     LBFGSState("L-BFGS",
               n,
               copy(initial_x), # Maintain current state in state.x
