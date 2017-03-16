@@ -129,20 +129,19 @@ end
 function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Search direction is predetermined
 
-        # Determine the distance of movement along the search line
-        lssuccess = perform_linesearch!(state, method, d)
-
+        # Maintain a record of the previous gradient
+        copy!(state.g_previous, gradient(d))
         # Maintain a record of previous position
         copy!(state.x_previous, state.x)
+        state.f_x_previous  = value(d)
+
+        # Determine the distance of movement along the search line
+        lssuccess = perform_linesearch!(state, method, d)
 
         # Update current position # x = x + alpha * s
         LinAlg.axpy!(state.alpha, state.s, state.x)
 
-        # Maintain a record of the previous gradient
-        copy!(state.g_previous, gradient(d))
-
         # Update the function value and gradient
-        state.f_x_previous  = value(d)
         value_grad!(d, state.x)
 
         # Check sanity of function and gradient

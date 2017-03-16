@@ -138,12 +138,17 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.P)
 
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+    # Save old f and g values to prepare for update_g! call
+    f_x_prev = value(d)
+    copy!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
 
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
+    # This has to come after perform_linesearch since alphaguess! uses state.f_x_previous from the prior iteration
+    state.f_x_previous = f_x_prev
 
     # Update current position
     @simd for i in 1:n
@@ -151,9 +156,6 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
         @inbounds state.x[i] = state.x[i] + state.dx[i]
     end
 
-    # Save old f and g values to prepare for update_g! call
-    state.f_x_previous = value(d)
-    copy!(state.g_previous, gradient(d))
     lssuccess == false # break on linesearch error
 end
 

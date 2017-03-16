@@ -55,6 +55,9 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     A_mul_B!(state.s, state.invH, gradient(d))
     scale!(state.s, -1)
 
+    # Maintain a record of the previous gradient
+    copy!(state.g_previous, gradient(d))
+
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
     # semi-definite
@@ -69,8 +72,6 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
         @inbounds state.x[i] = state.x[i] + state.dx[i]
     end
 
-    # Maintain a record of the previous gradient
-    copy!(state.g_previous, gradient(d))
     lssuccess == false # break on linesearch error
 end
 
