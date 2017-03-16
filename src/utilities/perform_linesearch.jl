@@ -54,9 +54,8 @@ function alphaguess!(state, method::Union{BFGS, Newton}, dphi0, d)
 end
 function alphaguess!(state, method::ConjugateGradient, dphi0, d)
     # Pick the initial step size (HZ #I1-I2)
-    state.alpha, state.mayterminate, f_update, g_update =
+    state.alpha, state.mayterminate =
       LineSearches.alphatry(state.alpha, d, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
-    d.f_calls, d.g_calls = d.f_calls + f_update, d.g_calls + g_update
 end
 function perform_linesearch!{M}(state, method::M, d)
     # Calculate search direction dphi0
@@ -71,16 +70,12 @@ function perform_linesearch!{M}(state, method::M, d)
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try
-        state.alpha, f_update, g_update =
-        method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
-                           state.alpha, state.mayterminate)
-        # TODO: linesearch now updates d.f_calls through NLSolversBase.value!
-        # Should we create a separate property state.f_calls_ls to track the number of ls calls?
-        #d.f_calls, d.g_calls = d.f_calls + f_update, d.g_calls + g_update
+        state.alpha =
+            method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+                               state.alpha, state.mayterminate)
         return true
     catch ex
         if isa(ex, LineSearches.LineSearchException)
-            d.f_calls, d.g_calls = d.f_calls + ex.f_update, d.g_calls + ex.g_update
             state.alpha = ex.alpha
             Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
             return false #lssuccess = false
