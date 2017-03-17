@@ -112,7 +112,7 @@ end
 
 # Update the Hessian
 update_h!(d, state, method) = nothing
-update_h!(d, state, method::SecondOrderSolver) = NLSolversBase.hessian!(d, state.x)
+update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 

@@ -237,7 +237,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     interior = true
     lambda = NaN
     value_gradient!(d, initial_x)
-    NLSolversBase.hessian!(d, initial_x)
+    hessian!(d, initial_x)
     NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
                          length(initial_x),
                          copy(initial_x), # Maintain current state in state.x
@@ -260,7 +260,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
 
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
-        solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
+        solve_tr_subproblem!(gradient(d), hessian(d), state.delta, state.s)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

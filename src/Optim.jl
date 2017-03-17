@@ -1,11 +1,8 @@
 __precompile__(true)
 
 module Optim
-    using Calculus
     using PositiveFactorizations
     using Compat
-    using ForwardDiff
-    using ReverseDiff
     using LineSearches
     using NLSolversBase
 
