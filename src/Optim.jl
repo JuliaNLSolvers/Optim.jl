@@ -5,6 +5,7 @@ module Optim
     using Compat
     using LineSearches
     using NLSolversBase
+    using NLSolversTools
 
     import Compat.String
     import Compat.view
