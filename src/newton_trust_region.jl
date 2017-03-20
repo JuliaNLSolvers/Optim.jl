@@ -260,7 +260,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
 
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
-        solve_tr_subproblem!(gradient(d), hessian(d), state.delta, state.s)
+        solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)

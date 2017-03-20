@@ -5,7 +5,9 @@ module Optim
     using Compat
     using LineSearches
     using NLSolversBase
-    using NLSolversTools
+    using Calculus
+    using ReverseDiff
+    using ForwardDiff
 
     import Compat.String
     import Compat.view
@@ -41,6 +43,7 @@ module Optim
 
     # Types
     include("types.jl")
+    include("objective_types.jl")
 
     # API
     include("api.jl")

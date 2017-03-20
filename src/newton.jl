@@ -43,7 +43,7 @@ function update_state!{T}(d, state::NewtonState{T}, method::Newton)
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
-    state.F, state.Hd = ldltfact!(Positive, hessian(d))
+    state.F, state.Hd = ldltfact!(Positive, NLSolversBase.hessian(d))
     state.s[:] = -(state.F\gradient(d))
 
     # Determine the distance of movement along the search line
