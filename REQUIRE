@@ -4,5 +4,5 @@ Compat 0.18.0
 LineSearches 1.0.0 2.0.0-
 Calculus
 NLSolversBase
-ForwardDiff
-ReverseDiff
+ForwardDiff 0.3.0 0.5.0
+ReverseDiff 0.0.3
