@@ -24,7 +24,7 @@ type MomentumGradientDescentState{T,N}
 end
 
 function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
 
     MomentumGradientDescentState("Momentum Gradient Descent",
                          length(initial_x),

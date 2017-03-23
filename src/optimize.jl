@@ -107,7 +107,7 @@ end
 update_g!(d, state, method) = nothing
 function update_g!{M<:Union{FirstOrderSolver, Newton}}(d, state, method::M)
     # Update the function value and gradient
-    value_grad!(d, state.x)
+    value_gradient!(d, state.x)
 end
 
 # Update the Hessian

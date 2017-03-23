@@ -34,13 +34,13 @@
         x_seed = rand(1)
         odad1 = OnceDifferentiable(x->a*x[1]^2, x_seed)
         tmp_1 = copy(odad1.g)
-        Optim.value_grad!(odad1, x_seed)
+        Optim.value_gradient!(odad1, x_seed)
         @test tmp_1 == odad1.g
         @testset "call counters" begin
             @test Optim.f_calls(odad1) == 1
             @test Optim.g_calls(odad1) == 1
             @test Optim.h_calls(odad1) == 0
-            Optim.value_grad!(odad1, x_seed+1.0)
+            Optim.value_gradient!(odad1, x_seed+1.0)
             @test Optim.f_calls(odad1) == 2
             @test Optim.g_calls(odad1) == 2
             @test Optim.h_calls(odad1) == 0

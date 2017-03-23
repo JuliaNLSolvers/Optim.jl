@@ -31,7 +31,7 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState("BFGS",
@@ -55,6 +55,9 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     A_mul_B!(state.s, state.invH, gradient(d))
     scale!(state.s, -1)
 
+    # Maintain a record of the previous gradient
+    copy!(state.g_previous, gradient(d))
+
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
     # semi-definite
@@ -69,8 +72,6 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
         @inbounds state.x[i] = state.x[i] + state.dx[i]
     end
 
-    # Maintain a record of the previous gradient
-    copy!(state.g_previous, gradient(d))
     lssuccess == false # break on linesearch error
 end
 

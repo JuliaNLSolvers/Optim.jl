@@ -24,7 +24,7 @@ type GradientDescentState{T,N}
 end
 
 function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{T})
-    value_grad!(d, initial_x)
+    value_gradient!(d, initial_x)
 
     GradientDescentState("Gradient Descent",
                          length(initial_x),
