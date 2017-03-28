@@ -95,6 +95,9 @@ module Optim
     # Backward compatibility
     include("deprecate.jl")
 
+    # Linear programming
+    include("linprog.jl")
+
     # End-User Facing Wrapper Functions
     include("optimize.jl")
 
