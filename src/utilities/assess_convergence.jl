@@ -33,7 +33,7 @@ function assess_convergence(x::Array,
 end
 
 
-function assess_convergence(state, options)
+function assess_convergence(state, d, options)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
     if maxdiff(state.x, state.x_previous) < options.x_tol
@@ -43,15 +43,15 @@ function assess_convergence(state, options)
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(state.f_x - state.f_x_previous) < max(options.f_tol * (abs(state.f_x) + options.f_tol), eps(abs(state.f_x)+abs(state.f_x_previous)))
+    if abs(value(d) - state.f_x_previous) < max(options.f_tol * (abs(value(d)) + options.f_tol), eps(abs(value(d))+abs(state.f_x_previous)))
         f_converged = true
     end
 
-    if state.f_x > state.f_x_previous
+    if value(d) > state.f_x_previous
         f_increased = true
     end
 
-    if vecnorm(state.g, Inf) < options.g_tol
+    if vecnorm(gradient(d), Inf) < options.g_tol
         g_converged = true
     end
 
@@ -60,19 +60,19 @@ function assess_convergence(state, options)
     return x_converged, f_converged, g_converged, converged, f_increased
 end
 
-function assess_convergence(state::NelderMeadState, options)
+function assess_convergence(state::NelderMeadState, d, options)
     g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged, false
 end
 
 
-function assess_convergence(state::Union{ParticleSwarmState, SimulatedAnnealingState}, options)
+function assess_convergence(state::Union{ParticleSwarmState, SimulatedAnnealingState}, d, options)
     false, false, false, false, false
 end
 
 
 
-function assess_convergence(state::NewtonTrustRegionState, options)
+function assess_convergence(state::NewtonTrustRegionState, d, options)
     x_converged, f_converged, g_converged, converged, f_increased = false, false, false, false, false
     if state.rho > state.eta
         # Accept the point and check convergence
@@ -82,9 +82,9 @@ function assess_convergence(state::NewtonTrustRegionState, options)
         converged,
         f_increased = assess_convergence(state.x,
                                        state.x_previous,
-                                       state.f_x,
+                                       value(d),
                                        state.f_x_previous,
-                                       state.g,
+                                       gradient(d),
                                        options.x_tol,
                                        options.f_tol,
                                        options.g_tol)

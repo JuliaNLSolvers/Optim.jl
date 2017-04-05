@@ -10,15 +10,8 @@
     results = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
     @test norm(Optim.minimum(results)) < 1e-6
 
-    for (name, prob) in Optim.UnconstrainedProblems.examples
-        if prob.isdifferentiable
-            if !(name in ("Large Polynomial", "Parabola"))
-                results = Optim.optimize(prob.f, prob.g!, prob.initial_x, AcceleratedGradientDescent(), Optim.Options(allow_f_increases=true))
-                if !(name in ("Rosenbrock", "Polynomial", "Powell"))
-                    @test Optim.converged(results)
-                end
-                @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
-            end
-        end
-    end
+    run_optim_tests(AcceleratedGradientDescent(); skip = ("Large Polynomial","Parabola"),
+                                                  convergence_exceptions = (("Rosenbrock", 1),("Rosenbrock", 2)),
+                                                  iteration_exceptions = (("Powell", 1100),
+                                                                          ("Polynomial", 1500)))
 end

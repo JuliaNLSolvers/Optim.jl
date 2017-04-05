@@ -5,6 +5,7 @@ module Optim
     using PositiveFactorizations
     using Compat
     using ForwardDiff
+    using ReverseDiff
     using LineSearches
 
     import Compat.String
@@ -17,9 +18,6 @@ module Optim
            Base.setindex!
 
     export optimize,
-           NonDifferentiableFunction,
-           OnceDifferentiableFunction,
-           TwiceDifferentiableFunction,
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
@@ -44,9 +42,7 @@ module Optim
 
     # Types
     include("types.jl")
-
-    # API
-    include("api.jl")
+    include("objective_types.jl")
 
     # Generic stuff
     include("utilities/generic.jl")
@@ -80,9 +76,6 @@ module Optim
     # Constrained optimization
     include("fminbox.jl")
 
-    # trust region methods
-    include("levenberg_marquardt.jl")
-
     # Heuristic Optimization Methods
     include("nelder_mead.jl")
     include("simulated_annealing.jl")
@@ -108,6 +101,9 @@ module Optim
 
     # Traces
     include("utilities/trace.jl")
+
+    # API
+    include("api.jl")
 
     # Examples for testing
     include(joinpath("problems", "unconstrained.jl"))

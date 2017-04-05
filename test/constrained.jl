@@ -26,7 +26,7 @@
         initial_x = randn(N)
         tmp = similar(initial_x)
         func = (x, g) -> quadratic!(x, g, AtA, A'*b, tmp)
-        objective = Optim.OnceDifferentiable(x->func(x, nothing), (x,g)->func(x,g), func)
+        objective = Optim.OnceDifferentiable(x->func(x, nothing), (x,g)->func(x,g), func, initial_x)
         results = Optim.optimize(objective, initial_x, ConjugateGradient())
         results = Optim.optimize(objective, Optim.minimizer(results), ConjugateGradient())  # restart to ensure high-precision convergence
         @test Optim.converged(results)

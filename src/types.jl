@@ -3,12 +3,14 @@ immutable Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
     g_tol::Float64
+    f_calls_limit::Int
+    g_calls_limit::Int
+    h_calls_limit::Int
     allow_f_increases::Bool
     iterations::Int
     store_trace::Bool
     show_trace::Bool
     extended_trace::Bool
-    autodiff::Bool
     show_every::Int
     callback::TCallback
     time_limit::Float64
@@ -18,12 +20,14 @@ function Options(;
         x_tol::Real = 1e-32,
         f_tol::Real = 1e-32,
         g_tol::Real = 1e-8,
+        f_calls_limit::Int = 0,
+        g_calls_limit::Int = 0,
+        h_calls_limit::Int = 0,
         allow_f_increases::Bool = false,
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
-        autodiff::Bool = false,
         show_every::Integer = 1,
         callback = nothing,
         time_limit = NaN)
@@ -32,9 +36,9 @@ function Options(;
         show_trace = true
     end
     Options{typeof(callback)}(
-        Float64(x_tol), Float64(f_tol), Float64(g_tol), allow_f_increases, Int(iterations),
-        store_trace, show_trace, extended_trace, autodiff, Int(show_every),
-        callback, time_limit)
+        Float64(x_tol), Float64(f_tol), Float64(g_tol), f_calls_limit, g_calls_limit, h_calls_limit,
+        allow_f_increases, Int(iterations), store_trace, show_trace, extended_trace,
+        Int(show_every), callback, time_limit)
 end
 
 function print_header(options::Options)
@@ -76,38 +80,6 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     f_calls::Int
     g_calls::Int
     h_calls::Int
-end
-
-type UnivariateOptimizationResults{T,M} <: OptimizationResults
-    method::String
-    initial_lower::T
-    initial_upper::T
-    minimizer::T
-    minimum::T
-    iterations::Int
-    iteration_converged::Bool
-    converged::Bool
-    rel_tol::T
-    abs_tol::T
-    trace::OptimizationTrace{M}
-    f_calls::Int
-end
-
-immutable NonDifferentiable
-    f::Function
-end
-
-immutable OnceDifferentiable
-    f::Function
-    g!::Function
-    fg!::Function
-end
-
-immutable TwiceDifferentiable
-    f::Function
-    g!::Function
-    fg!::Function
-    h!::Function
 end
 
 function Base.show(io::IO, t::OptimizationState)
@@ -154,9 +126,12 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
         @printf io "   * f(x) > f(x'): %s\n" f_increased(r)
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
-    @printf io " * Objective Function Calls: %d" f_calls(r)
+    @printf io " * Objective Calls: %d" f_calls(r)
     if !(r.method in ("Nelder-Mead", "Simulated Annealing"))
         @printf io "\n * Gradient Calls: %d" g_calls(r)
+    end
+    if r.method in ("Newton's Method", "Newton's Method (Trust Region)")
+        @printf io "\n * Hessian Calls: %d" h_calls(r)
     end
     return
 end
@@ -172,51 +147,4 @@ function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimiz
     append!(a.trace, b.trace)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)
-end
-
-# TODO: Expose ability to do forward and backward differencing
-function OnceDifferentiable(f::Function)
-    function g!(x::Array, storage::Array)
-        Calculus.finite_difference!(f, x, storage, :central)
-        return
-    end
-    function fg!(x::Array, storage::Array)
-        g!(x, storage)
-        return f(x)
-    end
-    return OnceDifferentiable(f, g!, fg!)
-end
-
-function OnceDifferentiable(f::Function, g!::Function)
-    function fg!(x::Array, storage::Array)
-        g!(x, storage)
-        return f(x)
-    end
-    return OnceDifferentiable(f, g!, fg!)
-end
-
-function TwiceDifferentiable(f::Function)
-    function g!(x::Vector, storage::Vector)
-        Calculus.finite_difference!(f, x, storage, :central)
-        return
-    end
-    function fg!(x::Vector, storage::Vector)
-        g!(x, storage)
-        return f(x)
-    end
-    function h!(x::Vector, storage::Matrix)
-        Calculus.finite_difference_hessian!(f, x, storage)
-        return
-    end
-    return TwiceDifferentiable(f, g!, fg!, h!)
-end
-
-function TwiceDifferentiable(f::Function,
-                                     g!::Function,
-                                     h!::Function)
-    function fg!(x::Vector, storage::Vector)
-        g!(x, storage)
-        return f(x)
-    end
-    return TwiceDifferentiable(f, g!, fg!, h!)
 end

@@ -26,9 +26,7 @@ type ParticleSwarmState{T,N}
     iterations::Int
 end
 
-initial_state(method::ParticleSwarm, options, d, initial_x::Array) = initial_state(method, options, d.f, initial_x)
-
-function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x::Array{T})
+function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T})
 
     #=
     Variable X represents the whole swarm of solutions with
@@ -83,10 +81,8 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
     best_score = zeros(T, n_particles)
     x_learn = zeros(T, n)
 
-    f_calls = 0
     current_state = 0
-    f_x = f(initial_x)
-    f_calls += 1
+    value!(f, initial_x)
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
@@ -123,10 +119,6 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
     ParticleSwarmState("Particle Swarm",
         n,
         x,
-        f_x,
-        f_calls, # f call
-        0, # g calls
-        0, # h calls
         0,
         lower,
         upper,
@@ -145,24 +137,22 @@ function initial_state{T}(method::ParticleSwarm, options, f::Function, initial_x
         options.iterations)
 end
 
-update_state!(d, state::ParticleSwarmState, method::ParticleSwarm) = update_state!(d.f, state, method)
-function update_state!{T}(f::Function, state::ParticleSwarmState{T}, method::ParticleSwarm)
+function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm)
     if state.limit_search_space
         limit_X!(state.X, state.lower, state.upper, state.n_particles, state.n)
     end
     compute_cost!(f, state.n_particles, state.X, state.score)
-    state.f_calls += state.n_particles
 
     if state.iteration == 0
         copy!(state.best_score, state.score)
-        state.f_x = Base.minimum(state.score)
+        f.f_x = Base.minimum(state.score)
     end
-    state.f_x = housekeeping!(state.score,
+    f.f_x = housekeeping!(state.score,
                               state.best_score,
                               state.X,
                               state.X_best,
                               state.x,
-                              state.f_x,
+                              value(f),
                               state.n_particles)
     # Elitist Learning:
     # find a new solution named 'x_learn' which is the current best
@@ -195,9 +185,8 @@ function update_state!{T}(f::Function, state::ParticleSwarmState{T}, method::Par
         end
     end
 
-    score_learn = f(state.x_learn)
-    state.f_calls += 1
-    if score_learn < state.f_x
+    score_learn = value(f, state.x_learn)
+    if score_learn < f.f_x
         state.f_x = score_learn * 1.0
         for j in 1:state.n
             state.X_best[j, i_worst] = state.x_learn[j]
@@ -440,13 +429,13 @@ function limit_X!(X, lower, upper, n_particles, n)
     nothing
 end
 
-function compute_cost!(f::Function,
+function compute_cost!(f,
                        n_particles::Int,
                        X::Matrix,
                        score::Vector)
 
     for i in 1:n_particles
-        score[i] = f(X[:, i])
+        score[i] = value(f, X[:, i])
     end
     nothing
 end
