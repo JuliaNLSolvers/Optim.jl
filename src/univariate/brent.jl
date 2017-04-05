@@ -2,10 +2,11 @@ macro brenttrace()
     esc(quote
         if tracing
             dt = Dict()
+            dt["minimizer"] = new_minimizer
+            dt["x_lower"] = x_lower
+            dt["x_upper"] = x_upper
+            dt["best bound"] = best_bound
             if extended_trace
-                dt["minimizer"] = new_minimizer
-                dt["x_lower"] = x_lower
-                dt["x_upper"] = x_upper
             end
             update!(tr,
                     iteration,
@@ -46,8 +47,8 @@ function optimize{F <: Function, T <: AbstractFloat}(
 
     new_minimizer = x_lower + golden_ratio*(x_upper-x_lower)
     new_minimum = f(new_minimizer)
+    best_bound = "initial"
     f_calls = 1 # Number of calls to f
-
     step = zero(T)
     old_step = zero(T)
 
@@ -125,8 +126,10 @@ function optimize{F <: Function, T <: AbstractFloat}(
         if new_f <= new_minimum
             if new_x < new_minimizer
                 x_upper = new_minimizer
+                best_bound = "upper"
             else
                 x_lower = new_minimizer
+                best_bound = "lower"
             end
             old_old_minimizer = old_minimizer
             old_old_minimum = old_minimum
@@ -150,7 +153,6 @@ function optimize{F <: Function, T <: AbstractFloat}(
                 old_old_minimum = new_f
             end
         end
-
         @brenttrace
     end
 

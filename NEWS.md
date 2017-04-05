@@ -1,8 +1,9 @@
 # Optim v1.0.0
-* Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters 
+* Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters
 * Refactor tests
 * Drop v0.4 support
 * Add limits to f-, g-, and h_calls
+* Improve trace for univariate optimization
 
 # Optim v0.7.6 release notes
 * Fix deprecations for *Function constructors

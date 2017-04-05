@@ -82,21 +82,6 @@ type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
     h_calls::Int
 end
 
-type UnivariateOptimizationResults{T,M} <: OptimizationResults
-    method::String
-    initial_lower::T
-    initial_upper::T
-    minimizer::T
-    minimum::T
-    iterations::Int
-    iteration_converged::Bool
-    converged::Bool
-    rel_tol::T
-    abs_tol::T
-    trace::OptimizationTrace{M}
-    f_calls::Int
-end
-
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
@@ -148,18 +133,6 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if r.method in ("Newton's Method", "Newton's Method (Trust Region)")
         @printf io "\n * Hessian Calls: %d" h_calls(r)
     end
-    return
-end
-
-function Base.show(io::IO, r::UnivariateOptimizationResults)
-    @printf io "Results of Optimization Algorithm\n"
-    @printf io " * Algorithm: %s\n" method(r)
-    @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
-    @printf io " * Minimizer: %e\n" minimizer(r)
-    @printf io " * Minimum: %e\n" minimum(r)
-    @printf io " * Iterations: %d\n" iterations(r)
-    @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(r) abs_tol(r) converged(r)
-    @printf io " * Objective Function Calls: %d" f_calls(r)
     return
 end
 
