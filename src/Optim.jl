@@ -89,8 +89,10 @@ module Optim
     include("particle_swarm.jl")
 
     # Univariate methods
-    include("golden_section.jl")
-    include("brent.jl")
+    include("univariate/golden_section.jl")
+    include("univariate/brent.jl")
+    include("univariate/types.jl")
+    include("univariate/printing.jl")
 
     # Line search generic code
     include("utilities/perform_linesearch.jl")
