@@ -140,11 +140,11 @@ end
         (x[1] - 5.0)^4
     end
 
-    function g!(x::Vector, storage::Vector)
+    function g!(storage::Vector, x::Vector)
         storage[1] = 4.0 * (x[1] - 5.0)^3
     end
 
-    function h!(x::Vector, storage::Matrix)
+    function h!(storage::Matrix, x::Vector)
         storage[1, 1] = 12.0 * (x[1] - 5.0)^2
     end
 
@@ -161,12 +161,12 @@ end
         0.5 * (x[1]^2 + eta * x[2]^2)
     end
 
-    function g!_2(x::Vector, storage::Vector)
+    function g!_2(storage::Vector, x::Vector)
         storage[1] = x[1]
         storage[2] = eta * x[2]
     end
 
-    function h!_2(x::Vector, storage::Matrix)
+    function h!_2(storage::Matrix, x::Vector)
         storage[1, 1] = 1.0
         storage[1, 2] = 0.0
         storage[2, 1] = 0.0

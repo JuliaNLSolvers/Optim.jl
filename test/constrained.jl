@@ -1,7 +1,7 @@
 @testset "Constrained" begin
     # Quadratic objective function
     # For (A*x-b)^2/2
-    function quadratic!(x, g, AtA, Atb, tmp)
+    function quadratic!(g, x, AtA, Atb, tmp)
         calc_grad = !(g === nothing)
         A_mul_B!(tmp, AtA, x)
         v = dot(x,tmp)/2 + dot(Atb,x)
@@ -25,13 +25,13 @@
         b = randn(N)
         initial_x = randn(N)
         tmp = similar(initial_x)
-        func = (x, g) -> quadratic!(x, g, AtA, A'*b, tmp)
-        objective = Optim.OnceDifferentiable(x->func(x, nothing), (x,g)->func(x,g), func, initial_x)
+        func = (g, x) -> quadratic!(g, x, AtA, A'*b, tmp)
+        objective = Optim.OnceDifferentiable(x->func(nothing, x), (g, x)->func(g, x), func, initial_x)
         results = Optim.optimize(objective, initial_x, ConjugateGradient())
         results = Optim.optimize(objective, Optim.minimizer(results), ConjugateGradient())  # restart to ensure high-precision convergence
         @test Optim.converged(results)
         g = similar(initial_x)
-        @test func(Optim.minimizer(results), g) + dot(b,b)/2 < 1e-8
+        @test func(g, Optim.minimizer(results)) + dot(b,b)/2 < 1e-8
         @test norm(g) < 1e-4
         outbox = any(t -> abs(t) .> boxl, Optim.minimizer(results))
     end
@@ -45,7 +45,7 @@
         @test Optim.converged(results)
 
         g = similar(initial_x)
-        objective.fg!(Optim.minimizer(results), g)
+        objective.fg!(g, Optim.minimizer(results))
         for i = 1:N
             @test abs(g[i]) < 3e-3 || (Optim.minimizer(results)[i] < -boxl+1e-3 && g[i] > 0) || (Optim.minimizer(results)[i] > boxl-1e-3 && g[i] < 0)
         end

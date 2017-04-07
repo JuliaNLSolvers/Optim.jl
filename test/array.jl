@@ -1,11 +1,11 @@
 @testset "input types" begin
     f(X) = (10 - X[1])^2 + (0 - X[2])^2 + (0 - X[3])^2 + (5 - X[4])^2
 
-    function g!(X, S)
-        S[1] = -20 + 2 * X[1]
-        S[2] = 2 * X[2]
-        S[3] = 2 * X[3]
-        S[4] = -10 + 2 * X[4]
+    function g!(storage, x)
+        storage[1] = -20 + 2 * x[1]
+        storage[2] = 2 * x[2]
+        storage[3] = 2 * x[3]
+        storage[4] = -10 + 2 * x[4]
         return
     end
     @testset "vector" begin

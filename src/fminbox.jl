@@ -16,7 +16,7 @@ function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, 
     return mu
 end
 
-function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
+function barrier_box{T}(g, x::Array{T}, l::Array{T}, u::Array{T})
     n = length(x)
     calc_g = !(g === nothing)
 
@@ -52,19 +52,19 @@ function barrier_box{T}(x::Array{T}, g, l::Array{T}, u::Array{T})
     return v
 end
 
-function function_barrier{T, F<:Function, FB<:Function}(x::Array{T}, gfunc, gbarrier, f::F, fbarrier::FB)
-    vbarrier = fbarrier(x, gbarrier)
+function function_barrier{T, F<:Function, FB<:Function}(gfunc, gbarrier, x::Array{T}, f::F, fbarrier::FB)
+    vbarrier = fbarrier(gbarrier, x)
     if isfinite(vbarrier)
-        vfunc = f(x, gfunc)
+        vfunc = f(gfunc, x)
     else
         vfunc = vbarrier
     end
     return vfunc, vbarrier
 end
 
-function barrier_combined{T, FB<:Function}(x::Array{T}, g, gfunc, gbarrier, fb::FB, mu::T)
+function barrier_combined{T, FB<:Function}(gfunc, gbarrier, g, x::Array{T}, fb::FB, mu::T)
     calc_g = !(g === nothing)
-    valfunc, valbarrier = fb(x, gfunc, gbarrier)
+    valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if calc_g
         @simd for i = 1:length(g)
             @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
@@ -131,8 +131,8 @@ function optimize{T<:AbstractFloat}(
 
     optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
-    fbarrier = (x, gbarrier) -> barrier_box(x, gbarrier, l, u)
-    fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
+    fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
+    fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
     P = InverseDiagonal(similar(initial_x))
@@ -151,7 +151,7 @@ function optimize{T<:AbstractFloat}(
         end
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
-    df.g!(x, gfunc)
+    df.g!(gfunc, x)
     mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
     if show_trace > 0
         println("######## fminbox ########")
@@ -174,9 +174,9 @@ function optimize{T<:AbstractFloat}(
 
         copy!(xold, x)
         # Optimize with current setting of mu
-        funcc = (x, g) -> barrier_combined(x, g, gfunc, gbarrier, fb, mu)
-        fval0 = funcc(x, nothing)
-        dfbox = OnceDifferentiable(x->funcc(x,nothing), (x,g)->(funcc(x,g); g), funcc, initial_x)
+        funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu)
+        fval0 = funcc(nothing, x)
+        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x)
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end

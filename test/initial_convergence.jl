@@ -1,9 +1,9 @@
 @testset "Initial Convergence Handling" begin
     f(x) = x[1]^2
-    function g!(x, out)
+    function g!(out, x)
         out[1] = 2.*x[1]
     end
-    function h!(x, out)
+    function h!(out, x)
         out[1,1] = 2.
     end
     for Optimizer in (AcceleratedGradientDescent,
