@@ -29,7 +29,6 @@ pages:
         - Minimizing a function: 'user/minimization.md'
         - Configurable Options: 'user/config.md'
         - Tips and tricks: 'user/tipsandtricks.md'
-        - Planned Changes: 'user/planned.md'
     - Algorithms:
         - Solvers:
             - Gradient Free:
