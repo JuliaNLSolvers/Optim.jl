@@ -4,6 +4,7 @@
 * Drop v0.4 support
 * Add limits to f-, g-, and h_calls
 * Improve trace for univariate optimization
+* Changed order of storage arrays and evaluation point arrays in gradient and Hessian calls
 
 # Optim v0.7.6 release notes
 * Fix deprecations for *Function constructors
