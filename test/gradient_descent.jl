@@ -9,7 +9,7 @@
       (x[1] - 5.0)^2
     end
 
-    function g_gd_1(x, storage)
+    function g_gd_1(storage, x)
       storage[1] = 2.0 * (x[1] - 5.0)
     end
 
@@ -28,7 +28,7 @@
       (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
     end
 
-    function g_gd_2(x, storage)
+    function g_gd_2(storage, x)
       storage[1] = x[1]
       storage[2] = eta * x[2]
     end

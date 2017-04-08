@@ -50,7 +50,7 @@ res = optimize(sqerror, [0.0, 0.0])
 Say you are optimizing a function
 ```julia
 f(x) = x[1]^2+x[2]^2
-g!(x, stor) = [2x[1], 2x[2]]
+g!(storage, x) = copy!(storage, [2x[1], 2x[2]])
 ```
 In this situation, no calculations from `f` could be reused in `g!`. However, sometimes
 there is a substantial similarity between the objective function, and gradient, and
@@ -82,7 +82,7 @@ initial_x = ...
 buffer = Array{eltype(initial_x)}(...) # Preallocate an appropriate buffer
 last_x = similar(initial_x)
 df = TwiceDifferentiable(x -> f(x, buffer, initial_x),
-                                (x, stor) -> g!(x, stor, buffer, last_x))
+                                (stor, x) -> g!(x, stor, buffer, last_x))
 optimize(df, initial_x)
 ```
 ## Provide gradients

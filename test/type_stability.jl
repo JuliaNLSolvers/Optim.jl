@@ -5,14 +5,14 @@
         return (o - x[1])^2 + c * (x[2] - x[1]^2)^2
     end
 
-    function rosenbrock_gradient!{T}(x::Vector{T}, storage::Vector{T})
+    function rosenbrock_gradient!{T}(storage::Vector{T}, x::Vector{T})
         o = one(T)
         c = convert(T,100)
         storage[1] = (-2*o) * (o - x[1]) - (4*c) * (x[2] - x[1]^2) * x[1]
         storage[2] = (2*c) * (x[2] - x[1]^2)
     end
 
-    function rosenbrock_hessian!{T}(x::Vector{T}, storage::Matrix{T})
+    function rosenbrock_hessian!{T}(storage::Matrix{T}, x::Vector{T})
         o = one(T)
         c = convert(T,100)
         f = 4*c
