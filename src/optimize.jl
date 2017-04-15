@@ -117,14 +117,13 @@ update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 after_while!(d, state, method, options) = nothing
 
 function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{T}, method::M,
-                                   options::Options = Options())
+    options::Options = Options(), state = initial_state(method, options, d, initial_x))
+
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("Use optimize(f, scalar, scalar) for 1D problems")
     end
-
-    state = initial_state(method, options, d, initial_x)
 
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
