@@ -31,12 +31,12 @@ function optimize(objective::AbstractObjective; kwargs...)
     optimize(objective, objective.last_f_x, method, Options(; checked_kwargs...))
 end
 
-function optimize{F<:Function}(f::F, initial_x::Array; kwargs...)
+function optimize(f::Function, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, NelderMead())
     optimize(f, initial_x, method, Options(; checked_kwargs...))
 end
 
-function optimize{F<:Function, G<:Function}(f::F, g!::G, initial_x::Array; kwargs...)
+function optimize(f::Function, g!::Function, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, BFGS())
     optimize(f, g!, initial_x, method, Options(;checked_kwargs...))
 end
@@ -45,10 +45,7 @@ function optimize(d::OnceDifferentiable, initial_x::Array; kwargs...)
     optimize(d, initial_x, method, Options(checked_kwargs...))
 end
 
-function optimize{F<:Function, G<:Function, H<:Function}(f::F,
-                  g!::G,
-                  h!::H,
-                  initial_x::Array; kwargs...)
+function optimize(f::Function, g!::Function, h!::Function, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, Newton())
     optimize(f, g!, h!, initial_x, method, Options(checked_kwargs...))
 end
@@ -83,7 +80,7 @@ function optimize(f, g!, initial_x::AbstractArray, method::Optimizer, options::O
     optimize(d, initial_x, method, options)
 end
 # (abstract) functions
-function optimize(f::Function, g!::Function, initial_x::AbstractArray, options::Options)
+function optimize(f::Function, g!::Function, initial_x::AbstractArray, options::Options = Options())
     d = OnceDifferentiable(f, g!, initial_x)
     optimize(d, initial_x, BFGS(), options)
 end
@@ -115,7 +112,7 @@ end
 
 # autodiff constructors for function and Once- or TwiceDifferentiable input
 # wide
-function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F, initial_x::AbstractArray{T}, method::M, options::Options)
+function optimize{M <: Union{FirstOrderSolver, SecondOrderSolver}}(f, initial_x::AbstractArray, method::M, options::Options)
     if M <: FirstOrderSolver
         d = OnceDifferentiable(f, initial_x)
     else
@@ -124,7 +121,7 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
     optimize(d, initial_x, method, options)
 end
 # (abstract functions)
-function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F, initial_x::AbstractArray{T}, method::M, options::Options)
+function optimize{F<:Function, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F, initial_x::AbstractArray, method::M, options::Options)
     if M <: FirstOrderSolver
         d = OnceDifferentiable(f, initial_x)
     else
@@ -133,14 +130,8 @@ function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver
     optimize(d, initial_x, method, options)
 end
 
-function optimize(d::OnceDifferentiable,
-                  initial_x::Array,
-                  method::SecondOrderSolver,
-                  options::Options)
-    optimize(TwiceDifferentiable(d), initial_x, method, options)
-end
 # OnceDifferentiable -> TwiceDifferentiable using autodiff
-function optimize(d::OnceDifferentiable, initial_x::Array, method::SecondOrderSolver, options::Options = Options())
+function optimize(d::OnceDifferentiable, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options())
     optimize(TwiceDifferentiable(d), initial_x, method, options)
 end
 
@@ -156,8 +147,7 @@ update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
-function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{T}, method::M,
-                                   options::Options = Options())
+function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::AbstractArray{T}, method::M, options::Options)
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
