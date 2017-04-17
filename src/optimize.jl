@@ -19,6 +19,18 @@ function check_kwargs(kwargs, fallback_method)
     kws, method
 end
 
+# kwords
+fallback_method(o::AbstractObjective) = NelderMead()
+fallback_method(o::OnceDifferentiable) = LBFGS()
+fallback_method(o::TwiceDifferentiable) = Newton()
+
+# objective without initial_x
+# use objective.last_f_x, since this is guaranteed to be in Non-, Once-, and TwiceDifferentiable
+function optimize(objective::AbstractObjective; kwargs...)
+    checked_kwargs, method = check_kwargs(kwargs, fallback_method(objective))
+    optimize(objective, objective.last_f_x, method, Options(; checked_kwargs...))
+end
+
 function optimize{F<:Function}(f::F, initial_x::Array; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, NelderMead())
     optimize(f, initial_x, method, Options(; checked_kwargs...))
@@ -46,49 +58,73 @@ function optimize(d::TwiceDifferentiable, initial_x::Array; kwargs...)
     optimize(d, initial_x, method, Options(;kwargs...))
 end
 
-optimize(f::Function, initial_x::Array, options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
-optimize(f::Function, initial_x::Array, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method, options)
-optimize(d::OnceDifferentiable, initial_x::Array, options::Options) = optimize(d, initial_x, BFGS(), options)
+# w/ Options
+# AbstractObjectives
+optimize(f::NonDifferentiable,   initial_x::Array, options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
+optimize(d::OnceDifferentiable,  initial_x::Array, options::Options) = optimize(d, initial_x, BFGS(), options)
 optimize(d::TwiceDifferentiable, initial_x::Array, options::Options) = optimize(d, initial_x, Newton(), options)
 
-function optimize{F<:Function, G<:Function}(f::F,
-                  g!::G,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::Options = Options())
-    d = OnceDifferentiable(f, g!, initial_x)
-    optimize(d, initial_x, method, options)
-end
-function optimize{F<:Function, G<:Function}(f::F,
-                  g!::G,
-                  initial_x::Array,
-                  options::Options)
+# NonDifferentiable
+# wide
+optimize(f, initial_x::AbstractArray, options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
+optimize(f, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method, options)
+# (abstract) functions
+optimize(f::Function, initial_x::AbstractArray, options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
+optimize(f::Function, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method, options)
+
+# OnceDifferentiable
+# wide
+function optimize(f, g!, initial_x::AbstractArray, options::Options = Options())
     d = OnceDifferentiable(f, g!, initial_x)
     optimize(d, initial_x, BFGS(), options)
 end
+function optimize(f, g!, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
+    d = OnceDifferentiable(f, g!, initial_x)
+    optimize(d, initial_x, method, options)
+end
+# (abstract) functions
+function optimize(f::Function, g!::Function, initial_x::AbstractArray, options::Options)
+    d = OnceDifferentiable(f, g!, initial_x)
+    optimize(d, initial_x, BFGS(), options)
+end
+function optimize(f::Function, g!::Function, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
+    d = OnceDifferentiable(f, g!, initial_x)
+    optimize(d, initial_x, method, options)
+end
 
-function optimize{F<:Function, G<:Function, H<:Function}(f::F,
-                  g!::G,
-                  h!::H,
-                  initial_x::Array,
-                  method::Optimizer,
-                  options::Options = Options())
+# TwiceDifferentiable
+# wide
+function optimize(f, g!, h!, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
     d = TwiceDifferentiable(f, g!, h!, initial_x)
     optimize(d, initial_x, method, options)
 end
-function optimize{F<:Function, G<:Function, H<:Function}(f::F,
-                  g!::G,
-                  h!::H,
-                  initial_x::Array,
-                  options)
+function optimize(f, g!, h!, initial_x::AbstractArray, options)
     d = TwiceDifferentiable(f, g!, h!, initial_x)
     optimize(d, initial_x, Newton(), options)
 end
 
-function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F,
-                  initial_x::Array{T},
-                  method::M,
-                  options::Options)
+# (abstract) functions
+function optimize{F<:Function, G<:Function, H<:Function}(f::F, g!::G, h!::H, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
+    d = TwiceDifferentiable(f, g!, h!, initial_x)
+    optimize(d, initial_x, method, options)
+end
+function optimize{F<:Function, G<:Function, H<:Function}(f::F, g!::G, h!::H, initial_x::AbstractArray, options)
+    d = TwiceDifferentiable(f, g!, h!, initial_x)
+    optimize(d, initial_x, Newton(), options)
+end
+
+# autodiff constructors for function and Once- or TwiceDifferentiable input
+# wide
+function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F, initial_x::AbstractArray{T}, method::M, options::Options)
+    if M <: FirstOrderSolver
+        d = OnceDifferentiable(f, initial_x)
+    else
+        d = TwiceDifferentiable(f, initial_x)
+    end
+    optimize(d, initial_x, method, options)
+end
+# (abstract functions)
+function optimize{F<:Function, T, M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::F, initial_x::AbstractArray{T}, method::M, options::Options)
     if M <: FirstOrderSolver
         d = OnceDifferentiable(f, initial_x)
     else
@@ -101,6 +137,10 @@ function optimize(d::OnceDifferentiable,
                   initial_x::Array,
                   method::SecondOrderSolver,
                   options::Options)
+    optimize(TwiceDifferentiable(d), initial_x, method, options)
+end
+# OnceDifferentiable -> TwiceDifferentiable using autodiff
+function optimize(d::OnceDifferentiable, initial_x::Array, method::SecondOrderSolver, options::Options = Options())
     optimize(TwiceDifferentiable(d), initial_x, method, options)
 end
 
