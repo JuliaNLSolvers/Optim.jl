@@ -8,6 +8,7 @@ end
 debug_printing = false
 
 my_tests = [
+    "callables.jl",
     "types.jl",
     "bfgs.jl",
     "gradient_descent.jl",
