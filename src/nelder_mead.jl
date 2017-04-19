@@ -42,6 +42,8 @@ immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     parameters::Tp
 end
 
+Base.summary(::NelderMead) = "Nelder-Mead"
+
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)
     if haskey(KW, :a) || haskey(KW, :g) || haskey(KW, :b)
@@ -104,7 +106,7 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
 end
 
 type NelderMeadState{T, N}
-    @add_generic_fields()
+    x::Array{T,N}
     m::Int
     simplex::Vector{Array{T,N}}
     x_centroid::Array{T,N}
@@ -140,9 +142,7 @@ function initial_state{F, T}(method::NelderMead, options, f::F, initial_x::Array
 
     α, β, γ, δ = parameters(method.parameters, n)
 
-NelderMeadState("Nelder-Mead",
-          n, # Dimensionality of the problem
-          similar(initial_x), # Variable to hold final minimizer value for MultivariateOptimizationResults
+NelderMeadState(similar(initial_x), # Variable to hold final minimizer value for MultivariateOptimizationResults
           m, # Number of vertices in the simplex
           simplex, # Maintain simplex in state.simplex
           centroid(simplex,  i_order[m]), # Maintain centroid in state.centroid
@@ -165,7 +165,7 @@ end
 function update_state!{F, T}(f::F, state::NelderMeadState{T}, method::NelderMead)
     # Augment the iteration counter
     shrink = false
-    n, m = state.n, state.m
+    n, m = length(state.x), state.m
 
     centroid!(state.x_centroid, state.simplex, state.i_order[m])
     copy!(state.x_lowest, state.simplex[state.i_order[1]])

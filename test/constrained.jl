@@ -41,8 +41,9 @@
     u = fill(boxl, N)
     initial_x = (rand(N)-0.5)*boxl
     for _optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS)
-        results = Optim.optimize(objective, initial_x, l, u, Fminbox(), optimizer = _optimizer)
+        results = Optim.optimize(objective, initial_x, l, u, Fminbox{_optimizer}())
         @test Optim.converged(results)
+        @test summary(results) == "Fminbox with $(summary(_optimizer()))"
 
         g = similar(initial_x)
         objective.fg!(g, Optim.minimizer(results))

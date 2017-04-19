@@ -6,8 +6,10 @@ end
 
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, upper, n_particles)
 
+Base.summary(::ParticleSwarm) = "Particle Swarm"
+
 type ParticleSwarmState{T,N}
-    @add_generic_fields()
+    x::Array{T,N}
     iteration::Int
     lower::Array{T,N}
     upper::Array{T,N}
@@ -116,8 +118,7 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
         X[j, 1] = initial_x[j]
         X_best[j, 1] = initial_x[j]
     end
-    ParticleSwarmState("Particle Swarm",
-        n,
+    ParticleSwarmState(
         x,
         0,
         lower,
@@ -138,8 +139,9 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
 end
 
 function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm)
+    n = length(state.x)
     if state.limit_search_space
-        limit_X!(state.X, state.lower, state.upper, state.n_particles, state.n)
+        limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
     end
     compute_cost!(f, state.n_particles, state.X, state.score)
 
@@ -162,10 +164,10 @@ function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm
     # In all other cases discard x_learn.
     # This helps jumping out of local minima.
     worst_score, i_worst = findmax(state.score)
-    for k in 1:state.n
+    for k in 1:n
         state.x_learn[k] = state.x[k]
     end
-    random_index = rand(1:state.n)
+    random_index = rand(1:n)
     random_value = randn()
     sigma_learn = 1 - (1 - 0.1) * state.iteration / state.iterations
 
@@ -188,7 +190,7 @@ function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm
     score_learn = value(f, state.x_learn)
     if score_learn < f.f_x
         state.f_x = score_learn * 1.0
-        for j in 1:state.n
+        for j in 1:n
             state.X_best[j, i_worst] = state.x_learn[j]
             state.X[j, i_worst] = state.x_learn[j]
             state.x[j] = state.x_learn[j]
@@ -200,7 +202,7 @@ function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm
     # TODO find a better name for _f (look inthe paper, it might be called f there)
     state.current_state, _f = get_swarm_state(state.X, state.score, state.x, state.current_state)
     state.w, state.c1, state.c2 = update_swarm_params!(state.c1, state.c2, state.w, state.current_state, _f)
-    update_swarm!(state.X, state.X_best, state.x, state.n, state.n_particles, state.V, state.w, state.c1, state.c2)
+    update_swarm!(state.X, state.X_best, state.x, n, state.n_particles, state.V, state.w, state.c1, state.c2)
     state.iteration += 1
     false
 end

@@ -9,6 +9,9 @@ GradientDescent(; linesearch = LineSearches.hagerzhang!,
                 P = nothing, precondprep = (P, x) -> nothing) =
                     GradientDescent(linesearch, P, precondprep)
 =#
+
+Base.summary(::GradientDescent) = "Gradient Descent"
+
 function GradientDescent(; linesearch = LineSearches.hagerzhang!,
                            P = nothing,
                            precondprep = (P, x) -> nothing)
@@ -16,7 +19,7 @@ function GradientDescent(; linesearch = LineSearches.hagerzhang!,
 end
 
 type GradientDescentState{T,N}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T
     s::Array{T,N}
@@ -26,9 +29,7 @@ end
 function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{T})
     value_gradient!(d, initial_x)
 
-    GradientDescentState("Gradient Descent",
-                         length(initial_x),
-                         copy(initial_x), # Maintain current state in state.x
+    GradientDescentState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
@@ -36,10 +37,11 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
 end
 
 function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
+    n = length(state.x)
     # Search direction is always the negative preconditioned gradient
     method.precondprep!(method.P, state.x)
     A_ldiv_B!(state.s, method.P, gradient(d))
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.s[i] = -state.s[i]
     end
 

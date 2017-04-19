@@ -10,8 +10,10 @@ function Newton(; linesearch::Function = LineSearches.hagerzhang!, resetalpha = 
     Newton(linesearch,resetalpha)
 end
 
+Base.summary(::Newton) = "Newton's Method"
+
 type NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T, N}
     f_x_previous::T
     F::F
@@ -26,9 +28,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
     s = similar(initial_x)
     value_gradient!(d, initial_x)
     hessian!(d, initial_x)
-    NewtonState("Newton's Method",
-                length(initial_x),
-                copy(initial_x), # Maintain current state in state.x
+    NewtonState(copy(initial_x), # Maintain current state in state.x
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
                 Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U),

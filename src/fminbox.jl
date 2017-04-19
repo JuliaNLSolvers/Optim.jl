@@ -100,14 +100,17 @@ function precondprepbox!(P, x, l, u, mu)
     end
 end
 
-immutable Fminbox <: Optimizer end
+immutable Fminbox{T<:Optimizer} <: Optimizer end
+Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
-function optimize{T<:AbstractFloat}(
+Base.summary{O}(::Fminbox{O}) = "Fminbox with $(summary(O()))"
+
+function optimize{T<:AbstractFloat,O<:Optimizer}(
         df::OnceDifferentiable,
         initial_x::Array{T},
         l::Array{T},
         u::Array{T},
-        ::Fminbox;
+        ::Fminbox{O};
         x_tol::T = eps(T),
         f_tol::T = sqrt(eps(T)),
         g_tol::T = sqrt(eps(T)),
@@ -123,13 +126,12 @@ function optimize{T<:AbstractFloat}(
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
         precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
-        optimizer = ConjugateGradient,
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
         nargs...)
 
-    optimizer == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
+    O == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
     fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
@@ -181,16 +183,16 @@ function optimize{T<:AbstractFloat}(
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        if optimizer == ConjugateGradient
-            _optimizer = optimizer(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
-        elseif optimizer in (LBFGS, GradientDescent)
-            _optimizer = optimizer(linesearch = linesearch, P = P, precondprep = pcp)
-        elseif optimizer in (NelderMead, SimulatedAnnealing)
-            _optimizer = optimizer()
-        elseif optimizer == Newton
+        if O == ConjugateGradient
+            _optimizer = O(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
+        elseif O in (LBFGS, GradientDescent)
+            _optimizer = O(linesearch = linesearch, P = P, precondprep = pcp)
+        elseif O in (NelderMead, SimulatedAnnealing)
+            _optimizer = O()
+        elseif O == Newton
             _optimizer = ConjugateGradient(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         else
-            _optimizer = optimizer(linesearch = linesearch)
+            _optimizer = O(linesearch = linesearch)
         end
         resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first
@@ -215,9 +217,8 @@ function optimize{T<:AbstractFloat}(
         results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
         f_increased && !allow_f_increases && break
     end
-    results.method = "Fminbox with $(method(results))"
-    results.iterations = iteration
-    results.initial_x = initial_x
-    results.minimum = df.f(minimizer(results))
-    results
+    return MultivariateOptimizationResults(Fminbox{O}(), initial_x, minimizer(results), df.f(minimizer(results)),
+            iteration, results.iteration_converged, results.x_converged, results.x_tol, results.f_converged,
+            results.f_tol, results.g_converged, results.g_tol, results.f_increased, results.trace, results.f_calls,
+            results.g_calls, results.h_calls)
 end
