@@ -31,58 +31,52 @@ function optimize(objective::AbstractObjective, initial_x::AbstractArray = objec
     checked_kwargs, method = check_kwargs(kwargs, fallback_method(objective))
     optimize(objective, initial_x, method, Options(; checked_kwargs...))
 end
+
 # no method + Options
 optimize(d::AbstractObjective, initial_x::AbstractArray, options::Options) = optimize(d, initial_x,  fallback_method(d), options)
 # no method + no initial_x + Options
 optimize(d::AbstractObjective,                           options::Options) = optimize(d, d.last_x_f, fallback_method(d), options)
 
 # f only - these methods define the behavior when only the objective function is passed
-function optimize(f::Function, initial_x::Array; kwargs...)
+function optimize(f, initial_x::AbstractArray; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, NelderMead())
     optimize(f, initial_x, method, Options(; checked_kwargs...))
 end
 
-function optimize{M <: Union{FirstOrderSolver, SecondOrderSolver}}(f, initial_x::AbstractArray, method::M, options::Options)
-    d = ifelse(M <: FirstOrderSolver, OnceDifferentiable(f, initial_x), TwiceDifferentiable(f, initial_x))
-    optimize(d, initial_x, method, options)
-end
-function optimize{M <: Union{FirstOrderSolver, SecondOrderSolver}}(f::Function, initial_x::AbstractArray, method::M, options::Options)
-    d = ifelse(M <: FirstOrderSolver, OnceDifferentiable(f, initial_x), TwiceDifferentiable(f, initial_x))
-    optimize(d, initial_x, method, options)
+function optimize{M <: Optimizer}(f, initial_x::AbstractArray, method::M, options::Options = Options())
+    if M <: FirstOrderSolver
+        d = OnceDifferentiable(f, initial_x)
+    elseif M <: SecondOrderSolver
+        d = TwiceDifferentiable(f, initial_x)
+    else
+        d = NonDifferentiable(f, initial_x)
+    end
+    optimize(d, initial_x, method, options, initial_state(method, options, d, initial_x))
 end
 
-optimize(f, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method,       options)
 optimize(f, initial_x::AbstractArray,                    options::Options)             = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
 
-optimize(f::Function, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize(NonDifferentiable(f, initial_x), initial_x, method,       options)
-optimize(f::Function, initial_x::AbstractArray,                    options::Options) = optimize(NonDifferentiable(f, initial_x), initial_x, NelderMead(), options)
-
 # f and g! - these methods define the behavior when the objective function and gradient is passed
-function optimize(f::Function, g!::Function, initial_x::Array; kwargs...)
+function optimize(f, g!, initial_x::AbstractArray; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, BFGS())
     optimize(f, g!, initial_x, method, Options(; checked_kwargs...))
 end
-function optimize(f, g!, initial_x::AbstractArray, options::Options = Options())
+function optimize(f, g!, initial_x::AbstractArray, options::Options)
     d = OnceDifferentiable(f, g!, initial_x)
     optimize(d, initial_x, fallback_method(d), options)
 end
-function optimize(f, g!, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
-    d = OnceDifferentiable(f, g!, initial_x)
-    optimize(d, initial_x, method, options)
-end
-# (abstract) functions
-function optimize(f::Function, g!::Function, initial_x::AbstractArray, options::Options = Options())
-    d = OnceDifferentiable(f, g!, initial_x)
-    optimize(d, initial_x, fallback_method(d), options)
-end
-function optimize(f::Function, g!::Function, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
-    d = OnceDifferentiable(f, g!, initial_x)
-    optimize(d, initial_x, method, options)
+function optimize{M<:Optimizer}(f, g!, initial_x::AbstractArray, method::M, options::Options = Options())
+    if M <: FirstOrderSolver
+        d = OnceDifferentiable(f, g!, initial_x)
+    else
+        d = TwiceDifferentiable(f, g!, initial_x)
+    end
+    optimize(d, initial_x, method, options, initial_state(method, options, d, initial_x))
 end
 
 ## f, g!, and h!
 # no method + kwargs
-function optimize(f::Function, g!::Function, h!::Function, initial_x::Array; kwargs...)
+function optimize(f, g!, h!, initial_x::AbstractArray; kwargs...)
     checked_kwargs, method = check_kwargs(kwargs, Newton())
     optimize(f, g!, h!, initial_x, method, Options(; checked_kwargs...))
 end
@@ -94,19 +88,12 @@ end
 # method + Options (or default value if no Options passed)
 function optimize(f, g!, h!, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
     d = TwiceDifferentiable(f, g!, h!, initial_x)
-    optimize(d, initial_x, method, options)
-end
-# no method + Options
-function optimize(f::Function, g!::Function, h!::Function, initial_x::AbstractArray, options::Options)
-    d = TwiceDifferentiable(f, g!, h!, initial_x)
-    optimize(d, initial_x, fallback_method(d), options)
-end
-function optimize(f::Function, g!::Function, h!::Function, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
-    d = TwiceDifferentiable(f, g!, h!, initial_x)
-    optimize(d, initial_x, method, options)
+    optimize(d, initial_x, method, options, initial_state(method, options, d, initial_x))
 end
 
-# OnceDifferentiable -> TwiceDifferentiable using autodiff
-function optimize(d::OnceDifferentiable, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options())
-    optimize(TwiceDifferentiable(d), initial_x, method, options)
+function optimize{M <: Optimizer}(d::OnceDifferentiable, initial_x::AbstractArray, method::M, options::Options = Options())
+    if M <: SecondOrderSolver
+        d = TwiceDifferentiable(d)
+    end
+    optimize(d, initial_x, method, options, initial_state(method, options, d, initial_x))
 end
