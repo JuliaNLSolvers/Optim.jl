@@ -204,9 +204,10 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     rho_upper::Real = 0.75) =
                     NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
+method(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
 type NewtonTrustRegionState{T,N,G}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G
     f_x_previous::T
@@ -238,9 +239,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     lambda = NaN
     value_gradient!(d, initial_x)
     hessian!(d, initial_x)
-    NewtonTrustRegionState("Newton's Method (Trust Region)", # Store string with model name in state.method
-                         length(initial_x),
-                         copy(initial_x), # Maintain current state in state.x
+    NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
@@ -256,7 +255,7 @@ end
 
 
 function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
-
+    n = length(state.x)
 
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
@@ -266,7 +265,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
     copy!(state.x_previous, state.x)
 
     # Update current position
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.x[i] = state.x[i] + state.s[i]
     end
 

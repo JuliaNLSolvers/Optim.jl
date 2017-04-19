@@ -10,6 +10,8 @@ immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
+method(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
+
 #= uncomment for v0.8.0
 AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
   AcceleratedGradientDescent(linesearch)
@@ -19,7 +21,7 @@ function AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!)
 end
 
 type AcceleratedGradientDescentState{T,N}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T
     iteration::Int
@@ -32,9 +34,7 @@ end
 function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
     value_gradient!(d, initial_x)
 
-    AcceleratedGradientDescentState("Accelerated Gradient Descent",
-                         length(initial_x),
-                         copy(initial_x), # Maintain current state in state.x
+    AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
@@ -45,9 +45,10 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
 end
 
 function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
+    n = length(state.x)
     state.iteration += 1
     # Search direction is always the negative gradient
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.s[i] = -gradient(d, i)
     end
 
@@ -59,13 +60,13 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.y[i] = state.x[i] + state.alpha * state.s[i]
     end
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
     end
 

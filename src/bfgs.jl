@@ -6,6 +6,9 @@ immutable BFGS{L<:Function, H<:Function} <: Optimizer
     initial_invH::H
     resetalpha::Bool
 end
+
+method(::BFGS) = "BFGS"
+
 #= uncomment for v0.8.0
 BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =
   BFGS(linesearch, initial_invH)
@@ -17,7 +20,7 @@ function BFGS(; linesearch = LineSearches.hagerzhang!,
 end
 
 type BFGSState{T,N,G}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G
     f_x_previous::T
@@ -34,9 +37,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     value_gradient!(d, initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
-    BFGSState("BFGS",
-              n,
-              copy(initial_x), # Maintain current state in state.x
+    BFGSState(copy(initial_x), # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               copy(gradient(d)), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
@@ -50,6 +51,8 @@ end
 
 
 function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
+    n = length(state.x)
+
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
     A_mul_B!(state.s, state.invH, gradient(d))
@@ -67,7 +70,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     copy!(state.x_previous, state.x)
 
     # Update current position
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.dx[i] = state.alpha * state.s[i]
         @inbounds state.x[i] = state.x[i] + state.dx[i]
     end
@@ -76,8 +79,9 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
 end
 
 function update_h!(d, state, method::BFGS)
+    n = length(state.x)
     # Measure the change in the gradient
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
     end
 
@@ -92,8 +96,8 @@ function update_h!(d, state, method::BFGS)
     c2 = 1 / dx_dg
 
     # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-    for i in 1:state.n
-        @simd for j in 1:state.n
+    for i in 1:n
+        @simd for j in 1:n
             @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
         end
     end

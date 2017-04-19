@@ -6,13 +6,6 @@ macro def(name, definition)
   end)
 end
 
-# TODO decide if this is wanted and/or necessary
-@def add_generic_fields begin
-    method_string::String
-    n::Int
-    x::Array{T,N}
-end
-
 @def add_linesearch_fields begin
     x_ls::Array{T,N}
     g_ls::Array{T,N}

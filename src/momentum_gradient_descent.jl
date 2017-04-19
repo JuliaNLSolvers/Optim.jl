@@ -11,12 +11,14 @@ MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!
   MomentumGradientDescent(Float64(mu), linesearch)
 =#
 
+method(::MomentumGradientDescent) = "Momentum Gradient Descent"
+
 function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!)
     MomentumGradientDescent(Float64(mu), linesearch)
 end
 
 type MomentumGradientDescentState{T,N}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T
     s::Array{T,N}
@@ -26,9 +28,7 @@ end
 function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
     value_gradient!(d, initial_x)
 
-    MomentumGradientDescentState("Momentum Gradient Descent",
-                         length(initial_x),
-                         copy(initial_x), # Maintain current state in state.x
+    MomentumGradientDescentState(copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
@@ -36,8 +36,9 @@ function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x
 end
 
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
+    n = length(state.x)
     # Search direction is always the negative gradient
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.s[i] = -gradient(d, i)
     end
 
@@ -45,7 +46,7 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
     lssuccess = perform_linesearch!(state, method, d)
 
     # Update current position
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         # Need to move x into x_previous while using x_previous and creating "x_new"
         @inbounds tmp = state.x_previous[i]
         @inbounds state.x_previous[i] = state.x[i]

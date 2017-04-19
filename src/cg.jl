@@ -70,6 +70,9 @@ function ConjugateGradient(;
                                  linesearch)
 end
 =#
+
+method(::ConjugateGradient) = "Conjugate Gradient"
+
 function ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
                              eta::Real = 0.4,
                              P::Any = nothing,
@@ -81,7 +84,7 @@ function ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
 end
 
 type ConjugateGradientState{T,N,G}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G
     f_x_previous::T
@@ -113,9 +116,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     method.precondprep!(method.P, initial_x)
     A_ldiv_B!(pg, method.P, gradient(d))
 
-    ConjugateGradientState("Conjugate Gradient",
-                         length(initial_x),
-                         copy(initial_x), # Maintain current state in state.x
+    ConjugateGradientState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
@@ -128,6 +129,8 @@ end
 
 function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Search direction is predetermined
+
+        n = length(state.x)
 
         # Maintain a record of the previous gradient
         copy!(state.g_previous, gradient(d))
@@ -161,18 +164,18 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         method.precondprep!(method.P, state.x)
         dPd = dot(state.s, method.P, state.s)
         etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
-        @simd for i in 1:state.n
+        @simd for i in 1:n
             @inbounds state.y[i] = gradient(d, i) - state.g_previous[i]
         end
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
         A_ldiv_B!(state.pg, method.P, gradient(d))
-        @simd for i in 1:state.n     # py = pg - py
+        @simd for i in 1:n     # py = pg - py
            @inbounds state.py[i] = state.pg[i] - state.py[i]
         end
         betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
         beta = max(betak, etak)
-        @simd for i in 1:state.n
+        @simd for i in 1:n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
         lssuccess == false # break on linesearch error

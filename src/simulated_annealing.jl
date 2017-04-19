@@ -21,8 +21,10 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
                     keep_best::Bool = true) =
   SimulatedAnnealing(neighbor, temperature, keep_best)
 
+method(::SimulatedAnnealing) = "Simulated Annealing"
+
 type SimulatedAnnealingState{T, N}
-    @add_generic_fields()
+    x::Array{T,N}
     iteration::Int
     x_current::Array{T, N}
     x_proposal::Array{T, N}
@@ -37,7 +39,7 @@ function initial_state{T}(method::SimulatedAnnealing, options, f, initial_x::Arr
 
     # Store the best state ever visited
     best_x = copy(initial_x)
-    SimulatedAnnealingState("Simulated Annealing", n, copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
+    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
 end
 
 function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)

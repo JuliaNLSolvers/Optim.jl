@@ -85,8 +85,10 @@ function LBFGS(; m::Integer = 10,
     LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 end
 
+method(::LBFGS) = "L-BFGS"
+
 type LBFGSState{T,N,M}
-    @add_generic_fields()
+    x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::Array{T,N}
     rho::Array{T,N}
@@ -106,9 +108,7 @@ end
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     value_gradient!(d, initial_x)
-    LBFGSState("L-BFGS",
-              n,
-              copy(initial_x), # Maintain current state in state.x
+    LBFGSState(copy(initial_x), # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
@@ -126,7 +126,7 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
 end
 
 function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
-    n = state.n
+    n = length(state.x)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
@@ -161,8 +161,9 @@ end
 
 
 function update_h!(d, state, method::LBFGS)
+    n = length(state.x)
     # Measure the change in the gradient
-    @simd for i in 1:state.n
+    @simd for i in 1:n
         @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
     end
 
