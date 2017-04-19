@@ -22,6 +22,8 @@ end
 
 immutable GoldenSection <: Optimizer end
 
+Base.summary(::GoldenSection) = "Golden Section Search"
+
 function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
                                       mo::GoldenSection;
                                       rel_tol::T = sqrt(eps(T)),
@@ -100,7 +102,7 @@ function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
         @goldensectiontrace
     end
 
-    return UnivariateOptimizationResults("Golden Section Search",
+    return UnivariateOptimizationResults(mo,
                                          initial_lower,
                                          initial_upper,
                                          new_minimizer,

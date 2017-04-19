@@ -21,7 +21,7 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
                     keep_best::Bool = true) =
   SimulatedAnnealing(neighbor, temperature, keep_best)
 
-method(::SimulatedAnnealing) = "Simulated Annealing"
+Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
 type SimulatedAnnealingState{T, N}
     x::Array{T,N}

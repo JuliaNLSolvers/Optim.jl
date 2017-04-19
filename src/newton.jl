@@ -10,7 +10,7 @@ function Newton(; linesearch::Function = LineSearches.hagerzhang!, resetalpha = 
     Newton(linesearch,resetalpha)
 end
 
-method(::Newton) = "Newton's Method"
+Base.summary(::Newton) = "Newton's Method"
 
 type NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
     x::Array{T,N}

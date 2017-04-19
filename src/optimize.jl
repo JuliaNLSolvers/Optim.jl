@@ -173,7 +173,7 @@ function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{
 
     after_while!(d, state, method, options)
 
-    return MultivariateOptimizationResults(Optim.method(method),
+    return MultivariateOptimizationResults(method,
                                             initial_x,
                                             f_increased ? state.x_previous : state.x,
                                             f_increased ? state.f_x_previous : value(d),

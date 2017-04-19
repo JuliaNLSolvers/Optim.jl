@@ -85,7 +85,7 @@ function LBFGS(; m::Integer = 10,
     LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
 end
 
-method(::LBFGS) = "L-BFGS"
+Base.summary(::LBFGS) = "L-BFGS"
 
 type LBFGSState{T,N,M}
     x::Array{T,N}

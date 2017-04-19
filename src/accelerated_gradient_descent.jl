@@ -10,7 +10,7 @@ immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
     linesearch!::L
 end
 
-method(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
+Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
 #= uncomment for v0.8.0
 AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =

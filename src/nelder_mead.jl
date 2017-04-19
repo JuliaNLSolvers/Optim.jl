@@ -42,7 +42,7 @@ immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     parameters::Tp
 end
 
-method(::NelderMead) = "Nelder-Mead"
+Base.summary(::NelderMead) = "Nelder-Mead"
 
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)

@@ -154,6 +154,7 @@ end
     @test length(results.trace) == 0
     @test results.g_converged
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
+    @test summary(results) == "Newton's Method (Trust Region)"
 
     eta = 0.9
 

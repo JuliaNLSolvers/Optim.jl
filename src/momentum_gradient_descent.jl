@@ -11,7 +11,7 @@ MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!
   MomentumGradientDescent(Float64(mu), linesearch)
 =#
 
-method(::MomentumGradientDescent) = "Momentum Gradient Descent"
+Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
 function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.hagerzhang!)
     MomentumGradientDescent(Float64(mu), linesearch)

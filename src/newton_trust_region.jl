@@ -204,7 +204,7 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     rho_upper::Real = 0.75) =
                     NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
-method(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
+Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
 type NewtonTrustRegionState{T,N,G}
     x::Array{T,N}

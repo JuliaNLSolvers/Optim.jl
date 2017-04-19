@@ -71,7 +71,7 @@ function ConjugateGradient(;
 end
 =#
 
-method(::ConjugateGradient) = "Conjugate Gradient"
+Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 
 function ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
                              eta::Real = 0.4,

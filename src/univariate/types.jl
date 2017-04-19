@@ -1,5 +1,5 @@
-type UnivariateOptimizationResults{T,M} <: OptimizationResults
-    method::String
+type UnivariateOptimizationResults{T,M,O<:Optimizer} <: OptimizationResults
+    method::O
     initial_lower::T
     initial_upper::T
     minimizer::T

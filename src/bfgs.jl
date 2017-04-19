@@ -7,7 +7,7 @@ immutable BFGS{L<:Function, H<:Function} <: Optimizer
     resetalpha::Bool
 end
 
-method(::BFGS) = "BFGS"
+Base.summary(::BFGS) = "BFGS"
 
 #= uncomment for v0.8.0
 BFGS(; linesearch = LineSearches.hagerzhang!, initial_invH = x -> eye(eltype(x), length(x))) =

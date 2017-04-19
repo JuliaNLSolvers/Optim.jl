@@ -10,7 +10,7 @@ GradientDescent(; linesearch = LineSearches.hagerzhang!,
                     GradientDescent(linesearch, P, precondprep)
 =#
 
-method(::GradientDescent) = "Gradient Descent"
+Base.summary(::GradientDescent) = "Gradient Descent"
 
 function GradientDescent(; linesearch = LineSearches.hagerzhang!,
                            P = nothing,

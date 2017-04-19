@@ -6,7 +6,7 @@ end
 
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, upper, n_particles)
 
-method(::ParticleSwarm) = "Particle Swarm"
+Base.summary(::ParticleSwarm) = "Particle Swarm"
 
 type ParticleSwarmState{T,N}
     x::Array{T,N}

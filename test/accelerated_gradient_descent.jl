@@ -9,6 +9,7 @@
     options = Optim.Options(show_trace = true, allow_f_increases=true)
     results = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
     @test norm(Optim.minimum(results)) < 1e-6
+    @test summary(results) == "Accelerated Gradient Descent"
 
     run_optim_tests(AcceleratedGradientDescent(); skip = ("Large Polynomial","Parabola"),
                                                   convergence_exceptions = (("Rosenbrock", 1),("Rosenbrock", 2)),
