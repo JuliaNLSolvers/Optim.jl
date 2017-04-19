@@ -125,13 +125,14 @@ function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{
         error("Use optimize(f, scalar, scalar) for 1D problems")
     end
 
+    n = length(initial_x)
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased = false, false, false
     g_converged = if typeof(method) <: NelderMead
-        nmobjective(state.f_simplex, state.m, state.n) < options.g_tol
+        nmobjective(state.f_simplex, state.m, n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
         g_converged = false
     else
@@ -172,7 +173,7 @@ function optimize{D<:AbstractObjective, T, M<:Optimizer}(d::D, initial_x::Array{
 
     after_while!(d, state, method, options)
 
-    return MultivariateOptimizationResults(state.method_string,
+    return MultivariateOptimizationResults(method,
                                             initial_x,
                                             f_increased ? state.x_previous : state.x,
                                             f_increased ? state.f_x_previous : value(d),

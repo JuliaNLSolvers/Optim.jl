@@ -117,7 +117,7 @@ res = optimize(x->dot(x,[1 0. 0; 0 3 0; 0 0 1]*x), zeros(3))
 ```
  If we can't remember what method we used, we simply use
 ```jl
-Optim.method(res)
+Optim.summary(res)
 ```
 which will return `"Nelder Mead"`. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using
 ```jlcon
@@ -136,7 +136,7 @@ A complete list of functions can be found below.
 
 Defined for all methods:
 
-* `method(res)`
+* `summary(res)`
 * `minimizer(res)`
 * `minimum(res)`
 * `iterations(res)`

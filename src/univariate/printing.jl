@@ -21,7 +21,7 @@ end
 
 function Base.show(io::IO, r::UnivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
-    @printf io " * Algorithm: %s\n" method(r)
+    @printf io " * Algorithm: %s\n" summary(r)
     @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
     @printf io " * Minimizer: %e\n" minimizer(r)
     @printf io " * Minimum: %e\n" minimum(r)
