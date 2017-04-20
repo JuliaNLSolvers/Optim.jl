@@ -17,8 +17,9 @@
         end
     end
 
+    # PSO does not accept matrix input
     @testset "matrix" begin
-        for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing(), ParticleSwarm())
+        for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing())
             res = optimize(f, g!, eye(2), m)
 
             @test typeof(Optim.minimizer(res)) <: Matrix
@@ -26,10 +27,11 @@
         end
     end
 
+    # PSO does not accept tensor input
     @testset "tensor" begin
         eye3 = zeros(2,2,1)
         eye3[:,:,1] = eye(2)
-        for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing(), ParticleSwarm())
+        for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing())
             res = optimize(f, g!, eye3, m)
             _minimizer = Optim.minimizer(res)
             @test typeof(_minimizer) <: Array{Float64, 3}
