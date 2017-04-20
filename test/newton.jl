@@ -12,6 +12,7 @@
     end
     initial_x = [0.0]
 
+    Optim.optimize(NonDifferentiable(f_1, initial_x), [0.0], Newton())
     Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton())
 
     results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton())

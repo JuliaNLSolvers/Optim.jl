@@ -1,7 +1,15 @@
+import NLSolversBase.NonDifferentiable
 import NLSolversBase.OnceDifferentiable
 import NLSolversBase.TwiceDifferentiable
 
-function OnceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finite)
+NonDifferentiable{T}(f, g!,     x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
+NonDifferentiable{T}(f, g!, h!, x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
+
+function OnceDifferentiable{T}(d::OnceDifferentiable, x_seed::AbstractVector{T})
+    value_gradient!(d, x_seed)
+    d
+end
+function OnceDifferentiable{T}(f, x_seed::AbstractVector{T}; autodiff = :finite)
     n_x = length(x_seed)
     f_calls = [1]
     g_calls = [1]
@@ -123,34 +131,13 @@ function TwiceDifferentiable{T}(f, g!, x_seed::Array{T}; autodiff = :finite)
                                g, H, copy(x_seed),
                                copy(x_seed), copy(x_seed), f_calls, [1], [1])
 end
-#=
-function TwiceDifferentiable{T}(f, g!, fg!, x_seed::Array{T}; autodiff = :finite)
+
+TwiceDifferentiable{T}(d::NonDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite) =
+TwiceDifferentiable(d.f, x_seed; autodiff = autodiff)
+function TwiceDifferentiable{T}(d::OnceDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite)
     n_x = length(x_seed)
-    f_calls = [1]
     if autodiff == :finite
-        function h!(storage::Matrix, x::Vector)
-            Calculus.finite_difference_hessian!(f, x, storage)
-            return
-        end
-    elseif autodiff == :forward
-        hcfg = ForwardDiff.HessianConfig(similar(gradient(d)))
-        h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
-    elseif autodiff == :reverse
-        hcfg = ReverseDiff.HessianConfig(similar(gradient(d)))
-        h! = (out, x) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
-    else
-        error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
-    g = similar(x_seed)
-    g!(g, x_seed)
-    return TwiceDifferentiable(f, g!, fg!, h!, f(x_seed),
-                                       g, Array{T}(n_x, n_x), copy(x_seed), f_calls, [1], [0])
-end
-=#
-function TwiceDifferentiable(d::OnceDifferentiable; autodiff = :finite)
-    n_x = length(d.last_x_f)
-    T = eltype(d.last_x_f)
-    if autodiff == :finite
-        function h!(storage::Matrix, x::Vector)
+        function h!(storage, x)
             Calculus.finite_difference_hessian!(d.f, x, storage)
             return
         end

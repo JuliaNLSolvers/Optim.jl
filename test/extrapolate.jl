@@ -31,7 +31,7 @@ import LineSearches
     precond(n::Number) = spdiagm(( -ones(n-1), 2*ones(n), -ones(n-1) ),
                          (-1,0,1), n, n) * (n+1)
     f(X) = plap([0;X;0])
-    g!(X, G) = copy!(G, (plap1([0;X;0]))[2:end-1])
+    g!(g, X) = copy!(g, (plap1([0;X;0]))[2:end-1])
     N = 100
     initial_x = zeros(N)
     P = precond(initial_x)

@@ -1,13 +1,10 @@
 using Optim, Compat
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+using Base.Test
+
 debug_printing = false
 
 my_tests = [
+    "callables.jl",
     "types.jl",
     "bfgs.jl",
     "gradient_descent.jl",
@@ -20,6 +17,7 @@ my_tests = [
     "cg.jl",
     "nelder_mead.jl",
     "optimize.jl",
+    "interface.jl",
     "simulated_annealing.jl",
     "particle_swarm.jl",
     "golden_section.jl",
