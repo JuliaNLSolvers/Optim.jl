@@ -70,6 +70,7 @@
                                   store_trace = true, show_trace = false)
     options_f = Optim.Options(g_tol = 1e-12, iterations = 10,
                                   store_trace = true, show_trace = false)
+
     res = optimize(f, g!, h!,
     	           initial_x,
     	           GradientDescent(),
