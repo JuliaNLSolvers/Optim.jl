@@ -1,10 +1,6 @@
 using Optim, Compat
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+using Base.Test
+
 debug_printing = false
 
 my_tests = [
