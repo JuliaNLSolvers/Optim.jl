@@ -108,6 +108,8 @@ In addition to the `iterations`, `store_trace`, `show_trace` and
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
 
+Important notice: the minimization of a univariate function in a bounded interval assumes that your function can be "bracketet" in the given interval. If this is not the case, optimisation of the univariate function may not necessarily yield a global minimum.
+
 ## Obtaining results
 After we have our results in `res`, we can use the API for getting optimization results.
 This consists of a collection of functions. They are not exported, so they have to be prefixed by `Optim.`.
