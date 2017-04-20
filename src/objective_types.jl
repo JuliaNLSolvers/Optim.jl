@@ -2,7 +2,7 @@ import NLSolversBase.NonDifferentiable
 import NLSolversBase.OnceDifferentiable
 import NLSolversBase.TwiceDifferentiable
 
-NonDifferentiable{T}(f, g!, x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
+NonDifferentiable{T}(f, g!,     x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
 NonDifferentiable{T}(f, g!, h!, x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
 
 function OnceDifferentiable{T}(d::OnceDifferentiable, x_seed::AbstractVector{T})
@@ -131,29 +131,7 @@ function TwiceDifferentiable{T}(f, g!, x_seed::Array{T}; autodiff = :finite)
                                g, H, copy(x_seed),
                                copy(x_seed), copy(x_seed), f_calls, [1], [1])
 end
-#=
-function TwiceDifferentiable{T}(f, g!, fg!, x_seed::Array{T}; autodiff = :finite)
-    n_x = length(x_seed)
-    f_calls = [1]
-    if autodiff == :finite
-        function h!(storage::Matrix, x::Vector)
-            Calculus.finite_difference_hessian!(f, x, storage)
-            return
-        end
-    elseif autodiff == :forward
-        hcfg = ForwardDiff.HessianConfig(similar(gradient(d)))
-        h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
-    elseif autodiff == :reverse
-        hcfg = ReverseDiff.HessianConfig(similar(gradient(d)))
-        h! = (out, x) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
-    else
-        error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
-    g = similar(x_seed)
-    g!(g, x_seed)
-    return TwiceDifferentiable(f, g!, fg!, h!, f(x_seed),
-                                       g, Array{T}(n_x, n_x), copy(x_seed), f_calls, [1], [0])
-end
-=#
+
 TwiceDifferentiable{T}(d::NonDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite) =
 TwiceDifferentiable(d.f, x_seed; autodiff = autodiff)
 function TwiceDifferentiable{T}(d::OnceDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite)
