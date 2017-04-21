@@ -1,6 +1,6 @@
 @testset "Accelerated Gradient Descent" begin
     f(x) = x[1]^4
-    function g!(x, storage)
+    function g!(storage, x)
         storage[1] = 4 * x[1]^3
         return
     end
