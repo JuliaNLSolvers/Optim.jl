@@ -2,8 +2,8 @@ import NLSolversBase.NonDifferentiable
 import NLSolversBase.OnceDifferentiable
 import NLSolversBase.TwiceDifferentiable
 
-NonDifferentiable{T}(f, g!,     x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
-NonDifferentiable{T}(f, g!, h!, x_seed::AbstractVector{T}) = NonDifferentiable(f, x_seed)
+NonDifferentiable(f, g!,     x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
+NonDifferentiable(f, g!, h!, x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
 
 function OnceDifferentiable{T}(d::OnceDifferentiable, x_seed::AbstractVector{T})
     value_gradient!(d, x_seed)
