@@ -14,6 +14,6 @@
     @test Optim.minimizer(result) == 4.0
     @test Optim.minimum(result) == 2.0
     @test_throws ErrorException optimize(identity, 2.0, 1.0, Brent())
-    
+    @test summary(result) == "Brent's Method"
 end
 

@@ -1,0 +1,1 @@
+Base.@deprecate method(x) summary(x)

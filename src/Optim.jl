@@ -94,8 +94,13 @@ module Optim
     # Backward compatibility
     include("deprecate.jl")
 
-    # End-User Facing Wrapper Functions
-    include("optimize.jl")
+    # convenient user facing optimize methods
+    include("optimize/univariate/interface.jl")
+    include("optimize/multivariate/interface.jl")
+
+    # actual optimize methods
+    include("optimize/univariate/optimize.jl")
+    include("optimize/multivariate/optimize.jl")
 
     # Convergence
     include("utilities/assess_convergence.jl")

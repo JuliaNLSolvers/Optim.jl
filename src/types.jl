@@ -62,8 +62,8 @@ end
 
 @compat abstract type OptimizationResults end
 
-type MultivariateOptimizationResults{T,N,M} <: OptimizationResults
-    method::String
+type MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
+    method::O
     initial_x::Array{T,N}
     minimizer::Array{T,N}
     minimum::T
@@ -103,7 +103,7 @@ end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io "Results of Optimization Algorithm\n"
-    @printf io " * Algorithm: %s\n" method(r)
+    @printf io " * Algorithm: %s\n" summary(r)
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else
@@ -117,7 +117,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: %s\n" converged(r)
-    if r.method == "Nelder-Mead"
+    if isa(r.method, NelderMead)
         @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_tol(r) g_converged(r)
     else
         @printf io "   * |x - x'| < %.1e: %s\n" x_tol(r) x_converged(r)
@@ -127,10 +127,10 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
     @printf io " * Objective Calls: %d" f_calls(r)
-    if !(r.method in ("Nelder-Mead", "Simulated Annealing"))
+    if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))
         @printf io "\n * Gradient Calls: %d" g_calls(r)
     end
-    if r.method in ("Newton's Method", "Newton's Method (Trust Region)")
+    if isa(r.method, Newton) || isa(r.method, NewtonTrustRegion)
         @printf io "\n * Hessian Calls: %d" h_calls(r)
     end
     return

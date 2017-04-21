@@ -23,6 +23,8 @@ end
 
 immutable Brent <: Optimizer end
 
+Base.summary(::Brent) = "Brent's Method"
+
 function optimize{F <: Function, T <: AbstractFloat}(
         f::F, x_lower::T, x_upper::T,
         mo::Brent;
@@ -156,7 +158,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
         @brenttrace
     end
 
-    return UnivariateOptimizationResults("Brent's Method",
+    return UnivariateOptimizationResults(mo,
                                          initial_lower,
                                          initial_upper,
                                          new_minimizer,

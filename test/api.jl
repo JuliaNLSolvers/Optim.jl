@@ -70,6 +70,7 @@
                                   store_trace = true, show_trace = false)
     options_f = Optim.Options(g_tol = 1e-12, iterations = 10,
                                   store_trace = true, show_trace = false)
+
     res = optimize(f, g!, h!,
     	           initial_x,
     	           GradientDescent(),
@@ -108,7 +109,7 @@
                        BFGS(),
                        options_ext)
 
-   @test Optim.method(res) == "BFGS"
+   @test summary(res) == "BFGS"
    @test isapprox(Optim.minimum(res), 0.0020622412076141045; rtol=1e-3)
    @test isapprox(Optim.minimizer(res), [0.9719007353489979,0.9410235857510793]; rtol=1e-3)
    @test Optim.iterations(res) == 10
@@ -151,7 +152,7 @@ end
 @testset "Univariate API" begin
     f(x) = 2x^2+3x+1
     res = optimize(f, -2.0, 1.0, GoldenSection())
-    @test Optim.method(res) == "Golden Section Search"
+    @test summary(res) == "Golden Section Search"
     @test Optim.minimum(res) ≈ -0.125
     @test Optim.minimizer(res) ≈ -0.749999994377939
     @test Optim.iterations(res) == 38

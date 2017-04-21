@@ -1,13 +1,10 @@
 using Optim, Compat
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+using Base.Test
+
 debug_printing = false
 
 my_tests = [
+    "callables.jl",
     "types.jl",
     "bfgs.jl",
     "gradient_descent.jl",
@@ -20,6 +17,7 @@ my_tests = [
     "cg.jl",
     "nelder_mead.jl",
     "optimize.jl",
+    "interface.jl",
     "simulated_annealing.jl",
     "particle_swarm.jl",
     "golden_section.jl",
@@ -64,6 +62,7 @@ function run_optim_tests(method; convergence_exceptions = (),
             # Loop over appropriate input combinations of f, g!, and h!
             for (i, input) in enumerate(input_tuple(method, prob))
                 results = Optim.optimize(input..., prob.initial_x, method, options)
+                @test isa(summary(results), String)
                 if !((name, i) in convergence_exceptions)
                     @test Optim.converged(results)
                 end
