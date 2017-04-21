@@ -10,7 +10,6 @@
     end
     @testset "vector" begin
         for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), SimulatedAnnealing())
-            println(m)
             res = optimize(f, g!, [1., 0., 1., 0.], m)
             if !(m in (NelderMead(), SimulatedAnnealing()))
                 @test typeof(Optim.minimizer(res)) <: Vector
@@ -22,7 +21,6 @@
     # PSO does not accept matrix input
     @testset "matrix" begin
         for m in (AcceleratedGradientDescent(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(),  SimulatedAnnealing())
-            println(m)
             res = optimize(f, g!, eye(2), m)
             if m != SimulatedAnnealing()
                 @test typeof(Optim.minimizer(res)) <: Matrix
@@ -36,7 +34,6 @@
         eye3 = zeros(2,2,1)
         eye3[:,:,1] = eye(2)
         for m in (AcceleratedGradientDescent(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(),  SimulatedAnnealing())
-            println(m)
             res = optimize(f, g!, eye3, m)
             if m != SimulatedAnnealing()
                 _minimizer = Optim.minimizer(res)
