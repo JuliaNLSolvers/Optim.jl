@@ -23,16 +23,17 @@ Which gives the output
 Results of Optimization Algorithm
  * Algorithm: BFGS
  * Starting Point: [0.0,0.0]
- * Minimizer: [0.9999999929485311,0.9999999859278653]
- * Minimum: 4.981810e-17
- * Iterations: 21
+ * Minimizer: [0.9999999926033423,0.9999999852005353]
+ * Minimum: 5.471433e-17
+ * Iterations: 16
  * Convergence: true
    * |x - x'| < 1.0e-32: false
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: true
-   * |g(x)| < 1.0e-08: false
+   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+   * |g(x)| < 1.0e-08: true
+   * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
- * Objective Function Calls: 157
- * Gradient Calls: 157
+ * Objective Calls: 53
+ * Gradient Calls: 53
 ```
 For more details and options, see the documentation ([stable](https://julianlsolvers.github.io/Optim.jl/stable) | [latest](https://julianlsolvers.github.io/Optim.jl/latest)).
 
