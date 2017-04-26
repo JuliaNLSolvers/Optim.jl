@@ -32,9 +32,9 @@ function Options(;
         callback = nothing,
         time_limit = NaN)
     show_every = show_every > 0 ? show_every: 1
-    if extended_trace && callback == nothing
-        show_trace = true
-    end
+    #if extended_trace && callback == nothing
+    #    show_trace = true
+    #end
     Options{typeof(callback)}(
         Float64(x_tol), Float64(f_tol), Float64(g_tol), f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, Int(iterations), store_trace, show_trace, extended_trace,
