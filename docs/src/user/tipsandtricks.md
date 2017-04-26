@@ -147,6 +147,39 @@ the run with the analytical gradient is way faster.  It is possible that the fin
 differences code can be improved, but generally the optimization will be slowed down
 by all the function evaluations required to do the central finite differences calculations.
 
+## Separating time spent in Optim's code and user provided functions
+Consider the Rosenbrock problem.
+```julia
+using Optim
+prob = Optim.UnconstrainedProblems.examples["Rosenbrock"];
+```
+Say we optimize this function, and look at the total run time of `optimize` using
+the Newton Trust Region method, and we are surprised that it takes a long time to run.
+We then wonder if time is spent in Optim's own code (solving the sub-problem for example)
+or in evaluating the objective, gradient or hessian that we provided. Then it can
+be very useful to use the [TimerOutputs.jl](https://github.com/KristofferC/TimerOutputs.jl) package.
+This package allows us to run an over-all timer for `optimize`, and add individual
+timers for `f`, `g!`, and `h!`. Consider the example below, that is due to the author
+of the package (Kristoffer Carlsson).
+```julia
+using TimerOutputs
+const to = TimerOutput()
+
+f(x    ) =  @timeit to "f"  prob.f(x)
+g!(x, g) =  @timeit to "g!" prob.g!(x, g)
+h!(x, h) =  @timeit to "h!" prob.h!(x, h)
+
+begin
+reset_timer!(to)
+@timeit to "Trust Region" begin
+    res = Optim.optimize(f, g!, h!, prob.initial_x, NewtonTrustRegion())
+end
+show(to; allocations = false)
+end
+```
+We see that the time is actually *not* spent in our provided functions, but most
+of the time is spent in the code for the trust region method.
+
 ## Early stopping
 Sometimes it might be of interest to stop the optimizer early. The simplest way to
 do this is to set the `iterations` keyword in `Optim.Options` to some number.
