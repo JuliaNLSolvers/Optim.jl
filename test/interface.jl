@@ -1,4 +1,5 @@
-@testset "interface" begin
+
+@testset "multivariate interface" begin
     problem = Optim.UnconstrainedProblems.examples["Exponential"]
     f = problem.f
     g! = problem.g!
