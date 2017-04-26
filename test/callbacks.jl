@@ -45,7 +45,6 @@
             false
         end
         options = Optim.Options(callback = cb, show_every=3, store_trace=true)
-
         optimize(d2, initial_x, method, options)
         @test ot_run == true
 

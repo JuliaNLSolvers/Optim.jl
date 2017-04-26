@@ -55,39 +55,36 @@ module Optim
     include("utilities/update.jl")
 
     # Grid Search
-    include("multivariate/solvers/zeroth_order/grid_search.jl")
-
-    # Heuristic Optimization Methods
-    include("multivariate/solvers/zeroth_order/nelder_mead.jl")
-    include("multivariate/solvers/zeroth_order/simulated_annealing.jl")
-    include("multivariate/solvers/zeroth_order/particle_swarm.jl")
+    include("grid_search.jl")
 
     # preconditioning functionality
-    include("multivariate/precon.jl")
+    include("precon.jl")
 
     # Gradient Descent
-    include("multivariate/solvers/first_order/gradient_descent.jl")
-    include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
-    include("multivariate/solvers/first_order/momentum_gradient_descent.jl")
+    include("gradient_descent.jl")
+    include("accelerated_gradient_descent.jl")
+    include("momentum_gradient_descent.jl")
 
     # Conjugate gradient
-    include("multivariate/solvers/first_order/cg.jl")
+    include("cg.jl")
 
-    # (L-)BFGS
-    include("multivariate/solvers/first_order/bfgs.jl")
-    include("multivariate/solvers/first_order/l_bfgs.jl")
-
-    # Newton
-    include("multivariate/solvers/second_order/newton.jl")
-    include("multivariate/solvers/second_order/newton_trust_region.jl")
+    # Newton and Quasi-Newton Methods
+    include("newton.jl")
+    include("newton_trust_region.jl")
+    include("bfgs.jl")
+    include("l_bfgs.jl")
 
     # Constrained optimization
-    include("multivariate/solvers/constrained/fminbox.jl")
+    include("fminbox.jl")
 
+    # Heuristic Optimization Methods
+    include("nelder_mead.jl")
+    include("simulated_annealing.jl")
+    include("particle_swarm.jl")
 
     # Univariate methods
-    include("univariate/solvers/golden_section.jl")
-    include("univariate/solvers/brent.jl")
+    include("univariate/golden_section.jl")
+    include("univariate/brent.jl")
     include("univariate/types.jl")
     include("univariate/printing.jl")
 
@@ -98,12 +95,12 @@ module Optim
     include("deprecate.jl")
 
     # convenient user facing optimize methods
-    include("univariate/optimize/interface.jl")
-    include("multivariate/optimize/interface.jl")
+    include("optimize/univariate/interface.jl")
+    include("optimize/multivariate/interface.jl")
 
     # actual optimize methods
-    include("univariate/optimize/optimize.jl")
-    include("multivariate/optimize/optimize.jl")
+    include("optimize/univariate/optimize.jl")
+    include("optimize/multivariate/optimize.jl")
 
     # Convergence
     include("utilities/assess_convergence.jl")
