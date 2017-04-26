@@ -19,8 +19,10 @@ general_tests = [
 general_tests = map(s->"./general/"*s*".jl", general_tests)
 
 univariate_tests = [
+    # optimize
     "optimize/interface",
     "optimize/optimize",
+    # solvers
     "solvers/golden_section",
     "solvers/brent",
     #"initial_convergence",
@@ -28,22 +30,27 @@ univariate_tests = [
 univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
 
 multivariate_tests = [
+    # optimize
+    "optimize/interface",
+    "optimize/optimize",
+    # solvers
+    ## constrained
+    "solvers/constrained/constrained",
+    ## first order
     "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/bfgs",
     "solvers/first_order/cg",
     "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
     "solvers/first_order/momentum_gradient_descent",
+    ## second order
     "solvers/second_order/newton",
     "solvers/second_order/newton_trust_region",
+    ## zeroth order
     "solvers/zeroth_order/grid_search",
     "solvers/zeroth_order/nelder_mead",
     "solvers/zeroth_order/particle_swarm",
     "solvers/zeroth_order/simulated_annealing",
-    "solvers/constrained/constrained",
-    # optimize
-    "optimize/interface",
-    "optimize/optimize",
     # other
     "array",
     "extrapolate",

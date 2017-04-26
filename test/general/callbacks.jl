@@ -45,11 +45,8 @@
             false
         end
         options = Optim.Options(callback = cb, show_every=3, store_trace=true)
-        bdstdout = STDOUT
-        redirect_stdout()
 
         optimize(d2, initial_x, method, options)
-        redirect_stdout(bdstdout)
         @test ot_run == true
 
         os_run = false
@@ -71,10 +68,7 @@
             false
         end
         options = Optim.Options(callback = cb, show_every=3, store_trace=true)
-        bdstdout = STDOUT
-        redirect_stdout()
         optimize(d3, initial_x, method, options)
-        redirect_stdout(bdstdout)
         @test ot_run == true
 
         os_run = false
@@ -83,10 +77,7 @@
             os_run = true
             false
         end
-        bdstdout = STDOUT
-        redirect_stdout()
         options = Optim.Options(callback = cb, show_every=3)
-        redirect_stdout(bdstdout)
         optimize(d3, initial_x, method, options)
         @test os_run == true
     end
