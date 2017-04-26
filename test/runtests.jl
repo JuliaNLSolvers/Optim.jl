@@ -3,36 +3,54 @@ using Base.Test
 
 debug_printing = false
 
-my_tests = [
-    "callables.jl",
-    "types.jl",
-    "bfgs.jl",
-    "gradient_descent.jl",
-    "accelerated_gradient_descent.jl",
-    "momentum_gradient_descent.jl",
-    "grid_search.jl",
-    "l_bfgs.jl",
-    "newton.jl",
-    "newton_trust_region.jl",
-    "cg.jl",
-    "nelder_mead.jl",
-    "optimize.jl",
-    "interface.jl",
-    "simulated_annealing.jl",
-    "particle_swarm.jl",
-    "golden_section.jl",
-    "brent.jl",
-    "type_stability.jl",
-    "array.jl",
-    "constrained.jl",
-    "callbacks.jl",
-    "precon.jl",
-    "initial_convergence.jl",
-    "extrapolate.jl",
-    "lsthrow.jl",
-    "api.jl",
-    "objective_types.jl",
+general_tests = [
+    "api",
+    "callables",
+    "callbacks",
+    "convergence",
+    "deprecate",
+    "initial_convergence",
+    "objective_types",
+    "Optim",
+    "optimize",
+    "type_stability",
+    "types",
 ]
+general_tests = map(s->"./general/"*s*".jl", general_tests)
+
+univariate_tests = [
+    "optimize/interface",
+    "optimize/optimize",
+    "solvers/golden_section",
+    "solvers/brent",
+    #"initial_convergence",
+]
+univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
+
+multivariate_tests = [
+    "solvers/first order/accelerated_gradient_descent",
+    "solvers/first order/bfgs",
+    "solvers/first order/cg",
+    "solvers/first order/gradient_descent",
+    "solvers/first order/l_bfgs",
+    "solvers/first order/momentum_gradient_descent",
+    "solvers/second order/newton",
+    "solvers/second order/newton_trust_region",
+    "solvers/zeroth order/grid_search",
+    "solvers/zeroth order/nelder_mead",
+    "solvers/zeroth order/particle_swarm",
+    "solvers/zeroth order/simulated_annealing",
+    "solvers/constrained/constrained",
+    # optimize
+    "optimize/interface",
+    "optimize/optimize",
+    # other
+    "array",
+    "extrapolate",
+    "lsthrow",
+    "precon",
+]
+multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
 differentiability_condition(method, prob) = true
 differentiability_condition(method::Optim.FirstOrderSolver, prob) = prob.isdifferentiable
@@ -74,6 +92,21 @@ function run_optim_tests(method; convergence_exceptions = (),
     end
 end
 
-for my_test in my_tests
-    @time include(my_test)
+@testset "general" begin
+    for my_test in general_tests
+        println(my_test)
+        @time include(my_test)
+    end
+end
+@testset "univariate" begin
+    for my_test in univariate_tests
+        println(my_test)
+        @time include(my_test)
+    end
+end
+@testset "multivariate" begin
+    for my_test in multivariate_tests
+        println(my_test)
+        @time include(my_test)
+    end
 end

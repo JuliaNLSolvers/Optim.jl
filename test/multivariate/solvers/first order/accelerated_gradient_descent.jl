@@ -7,7 +7,10 @@
 
     initial_x = [1.0]
     options = Optim.Options(show_trace = true, allow_f_increases=true)
+    bdstdout = STDOUT
+    redirect_stdout()
     results = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
+    redirect_stdout(bdstdout)
     @test norm(Optim.minimum(results)) < 1e-6
     @test summary(results) == "Accelerated Gradient Descent"
 
