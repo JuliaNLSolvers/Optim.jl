@@ -55,31 +55,31 @@ module Optim
     include("utilities/update.jl")
 
     # Grid Search
-    include("multivariate/solvers/zeroth order/grid_search.jl")
+    include("multivariate/solvers/zeroth_order/grid_search.jl")
 
     # Heuristic Optimization Methods
-    include("multivariate/solvers/zeroth order/nelder_mead.jl")
-    include("multivariate/solvers/zeroth order/simulated_annealing.jl")
-    include("multivariate/solvers/zeroth order/particle_swarm.jl")
+    include("multivariate/solvers/zeroth_order/nelder_mead.jl")
+    include("multivariate/solvers/zeroth_order/simulated_annealing.jl")
+    include("multivariate/solvers/zeroth_order/particle_swarm.jl")
 
     # preconditioning functionality
     include("multivariate/precon.jl")
 
     # Gradient Descent
-    include("multivariate/solvers/first order/gradient_descent.jl")
-    include("multivariate/solvers/first order/accelerated_gradient_descent.jl")
-    include("multivariate/solvers/first order/momentum_gradient_descent.jl")
+    include("multivariate/solvers/first_order/gradient_descent.jl")
+    include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
+    include("multivariate/solvers/first_order/momentum_gradient_descent.jl")
 
     # Conjugate gradient
-    include("multivariate/solvers/first order/cg.jl")
+    include("multivariate/solvers/first_order/cg.jl")
 
     # (L-)BFGS
-    include("multivariate/solvers/first order/bfgs.jl")
-    include("multivariate/solvers/first order/l_bfgs.jl")
+    include("multivariate/solvers/first_order/bfgs.jl")
+    include("multivariate/solvers/first_order/l_bfgs.jl")
 
     # Newton
-    include("multivariate/solvers/second order/newton.jl")
-    include("multivariate/solvers/second order/newton_trust_region.jl")
+    include("multivariate/solvers/second_order/newton.jl")
+    include("multivariate/solvers/second_order/newton_trust_region.jl")
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
