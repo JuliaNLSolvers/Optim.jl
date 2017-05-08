@@ -131,7 +131,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
                                           extended_trace = extended_trace),
         nargs...)
 
-    O == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
+    O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
     fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
@@ -150,11 +150,11 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         thisu = u[i]
         if thisx <= thisl
             thisx = 0.99*thisl+0.01*thisu
-            warning("Initial position must be inside the box. Moving $(i)th initial condition")
+            warn("Initial position must be inside the box. Moving $(i)th initial condition")
         end
         if thisx >= thisu
             thisx = 0.01*thisl+0.99*thisu
-            warning("Initial position must be inside the box. Moving $(i)th initial condition")
+            warn("Initial position must be inside the box. Moving $(i)th initial condition")
         end
 
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
