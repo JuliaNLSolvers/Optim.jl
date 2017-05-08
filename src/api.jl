@@ -62,6 +62,7 @@ x_tol(r::MultivariateOptimizationResults) = r.x_tol
 x_residual(r::MultivariateOptimizationResults) = r.x_residual
 f_tol(r::OptimizationResults) = error("f_tol is not implemented for $(summary(r)).")
 f_tol(r::MultivariateOptimizationResults) = r.f_tol
+f_residual(r::MultivariateOptimizationResults) = r.f_residual
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
 g_tol(r::MultivariateOptimizationResults) = r.g_tol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
