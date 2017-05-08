@@ -59,7 +59,7 @@
 
 
     # Warn when initial condition is not in the interior of the box
-    initial_x = 2*rand([-1,1],N)*boxl
+    initial_x = rand([-1,1],N)*boxl
     # TODO: how do I test that a call causes a given warning to be sent?
     Optim.optimize(_objective, initial_x, l, u, Fminbox();
                    iterations = 1, optimizer_o = Optim.Options(iterations = 1))
