@@ -148,9 +148,15 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
-        if thisx < thisl || thisx > thisu
-            error("Initial position must be inside the box")
+        if thisx <= thisl
+            thisx = 0.99*thisl+0.01*thisu
+            warning("Initial position must be inside the box. Moving $(i)th initial condition")
         end
+        if thisx >= thisu
+            thisx = 0.01*thisl+0.99*thisu
+            warning("Initial position must be inside the box. Moving $(i)th initial condition")
+        end
+
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
     df.g!(gfunc, x)
