@@ -71,10 +71,12 @@ type MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
     iteration_converged::Bool
     x_converged::Bool
     x_tol::Float64
+    x_residual::Float64
     f_converged::Bool
     f_tol::Float64
     g_converged::Bool
     g_tol::Float64
+    g_residual::Float64
     f_increased::Bool
     trace::OptimizationTrace{M}
     f_calls::Int
