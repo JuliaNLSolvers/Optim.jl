@@ -59,10 +59,12 @@ g_converged(r::MultivariateOptimizationResults) = r.g_converged
 
 x_tol(r::OptimizationResults) = error("x_tol is not implemented for $(summary(r)).")
 x_tol(r::MultivariateOptimizationResults) = r.x_tol
+x_residual(r::MultivariateOptimizationResults) = r.x_residual
 f_tol(r::OptimizationResults) = error("f_tol is not implemented for $(summary(r)).")
 f_tol(r::MultivariateOptimizationResults) = r.f_tol
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
 g_tol(r::MultivariateOptimizationResults) = r.g_tol
+g_residual(r::MultivariateOptimizationResults) = r.g_residual
 
 
 initial_state(r::OptimizationResults) = error("initial_state is not implemented for $(summary(r)).")
