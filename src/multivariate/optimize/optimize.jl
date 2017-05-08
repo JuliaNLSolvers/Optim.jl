@@ -90,8 +90,6 @@ function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractA
                                             g_calls(d),
                                             h_calls(d))
     catch
-      @show typeof(method)
-      warn("optimisation results threw an exception")
       return MultivariateOptimizationResults(method,
                                               initial_x,
                                               f_increased ? state.x_previous : state.x,
