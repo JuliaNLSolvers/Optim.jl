@@ -6,7 +6,8 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-immutable AcceleratedGradientDescent{L<:Function} <: Optimizer
+# L should be function or any other callable
+immutable AcceleratedGradientDescent{L} <: Optimizer
     linesearch!::L
 end
 

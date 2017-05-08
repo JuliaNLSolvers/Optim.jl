@@ -1,4 +1,5 @@
-immutable GradientDescent{L<:Function, T, Tprep<:Union{Function, Void}} <: Optimizer
+# L should be function or any other callable
+immutable GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
     linesearch!::L
     P::T
     precondprep!::Tprep

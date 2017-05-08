@@ -1,7 +1,8 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-immutable MomentumGradientDescent{L<:Function} <: Optimizer
+# L should be function or any other callable
+immutable MomentumGradientDescent{L} <: Optimizer
     mu::Float64
     linesearch!::L
 end
