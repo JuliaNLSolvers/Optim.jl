@@ -53,7 +53,8 @@
 #   for cgdescent and alphamax for linesearch_hz.
 
 
-immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L<:Function} <: Optimizer
+# L should be function or any other callable 
+immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     eta::Float64
     P::T
     precondprep!::Tprep

@@ -60,7 +60,8 @@ function twoloop!(s::Vector,
     return
 end
 
-immutable LBFGS{T, L<:Function, Tprep<:Union{Function, Void}} <: Optimizer
+# L should be function or any other callable 
+immutable LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
     linesearch!::L
     P::T
