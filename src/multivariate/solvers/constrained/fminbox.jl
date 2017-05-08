@@ -152,9 +152,11 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
 
         if thisx <= thisl
             thisx = 0.99*thisl+0.01*thisu
+            x[i] = thisx
             push!(failidx,i)
         elseif thisx >= thisu
             thisx = 0.01*thisl+0.99*thisu
+            x[i] = thisx
             push!(failidx,i)
         end
 
