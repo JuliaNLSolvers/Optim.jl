@@ -150,11 +150,11 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         thisu = u[i]
         if thisx <= thisl
             thisx = 0.99*thisl+0.01*thisu
-            warn("Initial position must be inside the box. Moving $(i)th initial condition")
+            warn("Initial position must be inside the box. Moving initial condition element $i")
         end
         if thisx >= thisu
             thisx = 0.01*thisl+0.99*thisu
-            warn("Initial position must be inside the box. Moving $(i)th initial condition")
+            warn("Initial position must be inside the box. Moving initial condition element $i")
         end
 
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
