@@ -3,10 +3,10 @@ immutable Newton{L} <: Optimizer
     resetalpha::Bool
 end
 #= uncomment v0.8.0
-Newton(; linesearch::Function = LineSearches.hagerzhang!) =
+Newton(; linesearch::Function = LineSearches.HagerZhang()) =
 Newton(linesearch)
 =#
-function Newton(; linesearch::Function = LineSearches.hagerzhang!, resetalpha = true)
+function Newton(; linesearch = LineSearches.HagerZhang(), resetalpha = true)
     Newton(linesearch,resetalpha)
 end
 

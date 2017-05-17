@@ -1,7 +1,7 @@
 # Newton's Method
 ## Constructor
 ```julia
-Newton(; linesearch = LineSearches.hagerzhang!,
+Newton(; linesearch = LineSearches.HagerZhang(),
          resetalpha = true)
 ```
 

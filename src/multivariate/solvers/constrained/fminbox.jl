@@ -121,7 +121,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every::Integer = 1,
-        linesearch = LineSearches.hagerzhang!,
+        linesearch = LineSearches.HagerZhang(),
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
