@@ -22,6 +22,16 @@
             end
             gcount
         end
+        global hcount = 0
+        global hcounter
+        function hcounter(reset::Bool = false)
+            if reset
+                hcount = 0
+            else
+                hcount += 1
+            end
+            hcount
+        end
     end
 
     f(x) = begin
@@ -31,6 +41,10 @@
     g!(out, x) = begin
         gcounter()
         prob.g!(out, x)
+    end
+    h!(out, x) = begin
+        hcounter()
+        prob.h!(out, x)
     end
 
     ls = LineSearches.Static()
@@ -45,10 +59,12 @@
         @test gcount == Optim.g_calls(res)
     end
 
-    solver = NewtonTrustRegion()
-    fcounter(true); gcounter(true)
-    res = Optim.optimize(f,g!, prob.initial_x,
-                         solver(linesearch = ls))
-    @test fcount == Optim.f_calls(res)
-    @test gcount == Optim.g_calls(res)
+    for solver in (Newton(linesearch = ls), NewtonTrustRegion())
+        fcounter(true); gcounter(true)
+        res = Optim.optimize(f,g!, prob.h!, prob.initial_x,
+                             solver)
+        @test fcount == Optim.f_calls(res)
+        @test gcount == Optim.g_calls(res)
+        @test hcount == Optim.h_calls(res)
+    end
 end
