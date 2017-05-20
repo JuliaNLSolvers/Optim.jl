@@ -3,9 +3,9 @@
 # gradient of the barrier.
 function initialize_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T,NaN), mu0factor::T = 0.001)
     if isnan(mu0)
-        gbarriernorm = sum(abs(gbarrier))
+        gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
-            mu = mu0factor*sum(abs(gfunc))/gbarriernorm
+            mu = mu0factor*sum(abs, gfunc)/gbarriernorm
         else
             # Presumably, there is no barrier function
             mu = zero(T)
@@ -128,7 +128,7 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
     fb = (x, gfunc, gbarrier) -> function_barrier(x, gfunc, gbarrier, df.fg!, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
-    P = Array(T, length(initial_x))
+    P = Vector{T}(length(initial_x))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
@@ -152,8 +152,8 @@ function fminbox{T<:AbstractFloat}(df::DifferentiableFunction,
     end
 
     g = similar(x)
-    valboth = Array(T, 2)
-    fval_all = Array(Vector{T}, 0)
+    valboth = Vector{T}(2)
+    fval_all = Vector{Vector{T}}(0)
     fcount_all = 0
     xold = similar(x)
     converged = false

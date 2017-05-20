@@ -27,7 +27,7 @@ immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     scratch3::Array{T,N}
 
     function ConstraintsL(A, l::Array{T,N}, u::Array{T,N},
-                          scratch1 = similar(l), scratch2 = similar(l), scratch3 = Array(T, ndims(l) == 1 ? size(A, 2) : (size(A,2),size(l,2))))
+                          scratch1 = similar(l), scratch2 = similar(l), scratch3 = Array{T}(ndims(l) == 1 ? size(A, 2) : (size(A,2),size(l,2))))
         size(A, 1) == size(l,1) == size(u,1) || error("The sizes of the bounds must match the size of A")
         for i = 1:length(l)
             l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")

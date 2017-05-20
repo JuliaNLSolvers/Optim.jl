@@ -21,7 +21,7 @@ end
 nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
 
 macro nmtrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -36,7 +36,7 @@ macro nmtrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function nelder_mead{T}(f::Function,
@@ -65,11 +65,11 @@ function nelder_mead{T}(f::Function,
     f_calls = 0
 
     # Maintain a record of the value of f() at n points
-    y = Array(Float64, n)
+    y = Vector{Float64}(n)
     for i in 1:n
         @inbounds y[i] = f(p[:, i])
     end
-    any(isfinite(y)) || error("At least one of the starting points must have finite penalty")
+    any(isfinite.(y)) || error("At least one of the starting points must have finite penalty")
     f_calls += n
 
     f_x_previous, f_x = NaN, nmobjective(y, m, n)
@@ -83,10 +83,10 @@ function nelder_mead{T}(f::Function,
     @nmtrace
 
     # Cache p_bar, y_bar, p_star and p_star_star
-    p_bar = Array(T, m)
-    y_bar = Array(T, m)
-    p_star = Array(T, m)
-    p_star_star = Array(T, m)
+    p_bar = Vector{T}(m)
+    y_bar = Vector{T}(m)
+    p_star = Vector{T}(m)
+    p_star_star = Vector{T}(m)
 
     # Iterate until convergence or exhaustion
     f_converged = false
