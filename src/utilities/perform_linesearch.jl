@@ -55,7 +55,7 @@ end
 function alphaguess!(state, method::ConjugateGradient, dphi0, d)
     # Pick the initial step size (HZ #I1-I2)
     state.alpha, state.mayterminate =
-      LineSearches.alphatry(state.alpha, d, state.x, state.s, state.x_ls, state.g_ls, state.lsr)
+        LineSearches.alphatry(state.alpha, d, state.x, state.s, state.x_ls, state.lsr)
 end
 function perform_linesearch!{M}(state, method::M, d)
     # Calculate search direction dphi0
@@ -71,7 +71,7 @@ function perform_linesearch!{M}(state, method::M, d)
     # Perform line search; catch LineSearchException to allow graceful exit
     try
         state.alpha =
-            method.linesearch!(d, state.x, state.s, state.x_ls, state.g_ls, state.lsr,
+            method.linesearch!(d, state.x, state.s, state.x_ls, state.lsr,
                                state.alpha, state.mayterminate)
         return true
     catch ex
