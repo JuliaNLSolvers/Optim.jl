@@ -50,8 +50,7 @@
     ls = LineSearches.Static()
 
     for solver in (AcceleratedGradientDescent, BFGS, ConjugateGradient,
-                   GradientDescent, LBFGS, MomentumGradientDescent,
-                   Newton)
+                   GradientDescent, LBFGS, MomentumGradientDescent)
         fcounter(true); gcounter(true)
         res = Optim.optimize(f,g!, prob.initial_x,
                              solver(linesearch = ls))
@@ -60,8 +59,8 @@
     end
 
     for solver in (Newton(linesearch = ls), NewtonTrustRegion())
-        fcounter(true); gcounter(true)
-        res = Optim.optimize(f,g!, prob.h!, prob.initial_x,
+        fcounter(true); gcounter(true); hcounter(true)
+        res = Optim.optimize(f,g!, h!, prob.initial_x,
                              solver)
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)
