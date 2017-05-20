@@ -3,7 +3,7 @@
 # JMW's dgr <=> NW' y
 
 macro bfgstrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -20,7 +20,7 @@ macro bfgstrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function bfgs{T}(d::Union{DifferentiableFunction,
@@ -49,19 +49,19 @@ function bfgs{T}(d::Union{DifferentiableFunction,
     n = length(x)
 
     # Maintain current gradient in gr and previous gradient in gr_previous
-    gr, gr_previous = Array(T, n), Array(T, n)
+    gr, gr_previous = Vector{T}(n), Vector{T}(n)
 
     # Store the approximate inverse Hessian in invH
     invH = copy(initial_invH)
 
     # The current search direction
-    s = Array(T, n)
+    s = Vector{T}(n)
 
     # Intermediate storage
-    u = Array(T, n)
+    u = Vector{T}(n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, gr_ls = Vector{T}(n), Vector{T}(n)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)
@@ -78,7 +78,7 @@ function bfgs{T}(d::Union{DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Maintain record of changes in position and gradient
-    dx, dgr = Array(T, n), Array(T, n)
+    dx, dgr = Vector{T}(n), Vector{T}(n)
 
     # Maintain a cached copy of the identity matrix
     I = eye(size(invH)...)

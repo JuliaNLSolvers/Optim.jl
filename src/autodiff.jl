@@ -21,7 +21,7 @@ end
 # generates a function that computes the gradient of f(x)
 # assuming that f takes a Vector{T} of length n
 function autodiff{T <: Real}(f,::Type{T},n)
-    dualvec = Array(Dual{T},n)
+    dualvec = Vector{Dual{T}}(n)
     function g!(x, gradient_output)
         autodiff(f,x, gradient_output, dualvec)
     end

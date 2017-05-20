@@ -1,5 +1,5 @@
 macro newtontrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -16,7 +16,7 @@ macro newtontrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function newton{T}(d::TwiceDifferentiableFunction,
@@ -43,21 +43,21 @@ function newton{T}(d::TwiceDifferentiableFunction,
     n = length(x)
 
     # Maintain current gradient in gr
-    gr = Array(T, n)
+    gr = Vector{T}(n)
 
     # The current search direction
     # TODO: Try to avoid re-allocating s
-    s = Array(T, n)
+    s = Vector{T}(n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, gr_ls = Vector{T}(n), Vector{T}(n)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)
     f_calls, g_calls = f_calls + 1, g_calls + 1
 
     # Store h(x) in H
-    H = Array(T, n, n)
+    H = Matrix{T}(n, n)
     d.h!(x, H)
 
     # Keep track of step-sizes

@@ -7,7 +7,7 @@
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
 macro agdtrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -23,7 +23,7 @@ macro agdtrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function accelerated_gradient_descent{T}(d::DifferentiableFunction,
@@ -52,13 +52,13 @@ function accelerated_gradient_descent{T}(d::DifferentiableFunction,
     n = length(x)
 
     # Maintain current gradient in gr
-    gr = Array(T, n)
+    gr = Vector{T}(n)
 
     # The current search direction
-    s = Array(T, n)
+    s = Vector{T}(n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, gr_ls = Vector{T}(n), Vector{T}(n)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)

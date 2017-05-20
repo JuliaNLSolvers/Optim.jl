@@ -1,5 +1,5 @@
 macro gdtrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -15,7 +15,7 @@ macro gdtrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function gradient_descent{T}(d::Union{DifferentiableFunction,

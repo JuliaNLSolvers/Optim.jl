@@ -81,7 +81,7 @@ end
 #   for cgdescent and alphamax for linesearch_hz.
 
 macro cgtrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -98,7 +98,7 @@ macro cgtrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function cg{T}(df::Union{DifferentiableFunction,
@@ -172,9 +172,9 @@ function cg{T}(df::Union{DifferentiableFunction,
     if !isfinite(f_x)
         error("Must have finite starting value")
     end
-    if !all(isfinite(gr))
+    if !all(isfinite.(gr))
         @show gr
-        @show find(!isfinite(gr))
+        @show find(!isfinite.(gr))
         error("Gradient must have all finite values at starting point")
     end
 

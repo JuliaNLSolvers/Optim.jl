@@ -17,7 +17,7 @@ immutable OptimizationTrace
     states::Vector{OptimizationState}
 end
 
-OptimizationTrace() = OptimizationTrace(Array(OptimizationState, 0))
+OptimizationTrace() = OptimizationTrace(Vector{OptimizationState}(0))
 
 abstract OptimizationResults
 

@@ -1,5 +1,5 @@
 macro goldensectiontrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -15,7 +15,7 @@ macro goldensectiontrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function golden_section{T <: AbstractFloat}(f::Function, x_lower::T, x_upper::T;

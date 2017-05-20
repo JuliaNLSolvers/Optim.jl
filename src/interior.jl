@@ -172,7 +172,7 @@ end
 #########################################
 
 linlsq(A::Matrix, b::Vector) =
-    TwiceDifferentiableFunction( x    -> linlsq_fg!(x, Array(eltype(x),0), A, b, similar(b)),
+    TwiceDifferentiableFunction( x    -> linlsq_fg!(x, Vector{eltype(x)}(0), A, b, similar(b)),
                                 (x,g) -> linlsq_fg!(x, g, A, b, similar(b)),
                                 (x,g) -> linlsq_fg!(x, g, A, b, similar(b)),
                                 (x,H) -> linlsq_h!(x, H, A, b))
@@ -228,7 +228,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
     x_previous = similar(x)
     m = length(x)
     gr = similar(x)
-    H = Array(T, m, m)
+    H = Matrix{T}(m, m)
     lsr = LineSearchResults(T)
 
     tr = OptimizationTrace()

@@ -35,7 +35,7 @@ while !outbox
     g = similar(x0)
     @test func(results.minimum, g) + dot(b,b)/2 < 1e-8
     @test norm(g) < 1e-4
-    outbox = any(abs(results.minimum) .> boxl)
+    outbox = any(abs.(results.minimum) .> boxl)
 end
 
 # fminbox
@@ -66,6 +66,6 @@ let f(x) = (z = x[1]; -2z^2 + z^4),
     for x0 in (0.1,0.2,0.3,0.5,0.7)
         x = [x0]
         soln = interior(objective, x, constr, method=:newton)
-        @test_approx_eq_eps soln.minimum[1] 0.9 1e-6
+        @test ≈(soln.minimum[1], 0.9, atol=1e-6)
     end
 end

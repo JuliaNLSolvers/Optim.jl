@@ -11,7 +11,7 @@ function default_neighbor!(x::Array, x_proposal::Array)
 end
 
 macro satrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -26,7 +26,7 @@ macro satrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function simulated_annealing{T}(cost::Function,

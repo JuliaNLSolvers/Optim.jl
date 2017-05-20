@@ -60,7 +60,7 @@ function twoloop!(s::Vector,
 end
 
 macro lbfgstrace()
-    quote
+    esc(quote
         if tracing
             dt = Dict()
             if extended_trace
@@ -77,7 +77,7 @@ macro lbfgstrace()
                     store_trace,
                     show_trace)
         end
-    end
+    end)
 end
 
 function l_bfgs{T}(d::Union{DifferentiableFunction,
@@ -108,17 +108,17 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
     n = length(x)
 
     # Maintain current gradient in gr and previous gradient in gr_previous
-    gr, gr_previous = Array(T, n), Array(T, n)
+    gr, gr_previous = Vector{T}(n), Vector{T}(n)
 
     # Store a history of changes in position and gradient
-    rho = Array(T, m)
-    dx_history, dgr_history = Array(T, n, m), Array(T, n, m)
+    rho = Vector{T}(m)
+    dx_history, dgr_history = Matrix{T}(n, m), Matrix{T}(n, m)
 
     # The current search direction
-    s = Array(T, n)
+    s = Vector{T}(n)
 
     # Buffers for use in line search
-    x_ls, gr_ls = Array(T, n), Array(T, n)
+    x_ls, gr_ls = Vector{T}(n), Vector{T}(n)
 
     # Store f(x) in f_x
     f_x_previous, f_x = NaN, d.fg!(x, gr)
@@ -135,10 +135,10 @@ function l_bfgs{T}(d::Union{DifferentiableFunction,
     lsr = LineSearchResults(T)
 
     # Buffers for new entries of dx_history and dgr_history
-    dx, dgr = Array(T, n), Array(T, n)
+    dx, dgr = Vector{T}(n), Vector{T}(n)
 
     # Buffers for use by twoloop!
-    twoloop_q, twoloop_alpha = Array(T, n), Array(T, m)
+    twoloop_q, twoloop_alpha = Vector{T}(n), Vector{T}(m)
 
     # Trace the history of states visited
     tr = OptimizationTrace()
