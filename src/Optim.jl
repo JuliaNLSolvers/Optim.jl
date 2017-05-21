@@ -80,6 +80,7 @@ module Optim
     # Newton
     include("multivariate/solvers/second_order/newton.jl")
     include("multivariate/solvers/second_order/newton_trust_region.jl")
+    include("multivariate/solvers/second_order/krylov_trust_region.jl")
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
