@@ -16,6 +16,8 @@
         push!(res, optimize(obj, problem.initial_x, Optim.Options()))
 
         push!(res, optimize(obj, Optim.Options()))
+        # Test passing the objective, method and option, but no inital_x
+        push!(res, optimize(obj, NelderMead(), Optim.Options()))
         for r in res
             @test norm(Optim.minimum(ref)-Optim.minimum(r)) < 1e-6
         end
