@@ -42,6 +42,7 @@ function optimize(objective::AbstractObjective, initial_x::AbstractArray = objec
 end
 
 optimize(d::AbstractObjective,                           options::Options) = optimize(d, d.last_x_f, fallback_method(d), options)
+optimize(d::AbstractObjective, method::Optimizer,        options::Options = Options()) = optimize(d, d.last_x_f, method, options)
 optimize(d::AbstractObjective, initial_x::AbstractArray, options::Options) = optimize(d, initial_x,  fallback_method(d), options)
 
 optimize(f,         initial_x::AbstractArray; kwargs...) = optimize((f,),        initial_x; kwargs...)
