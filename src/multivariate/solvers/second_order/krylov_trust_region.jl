@@ -133,16 +133,16 @@ function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
             tau = (-b_ + sqrt(b_ * b_ - 4 * a_ * c_)) / (2 * a_)
-            z[:] += tau * d
+            z .+= tau .* d
             break
         end
 
-        z[:] += alpha * d
+        z .+= alpha .* d
         rho_prev = dot(r, r)
         if i == 1
             rho0 = rho_prev
         end
-        r[:] += alpha * Hd
+        r .+= alpha * Hd
         rho_next = dot(r, r)
         r_sqnorm_ratio = rho_next / rho_prev
         d[:] = -r + r_sqnorm_ratio * d
@@ -175,7 +175,7 @@ function update_state!{T}(objective::TwiceDifferentiableHV,
 
     state.accept_step = state.rho > method.eta
     if state.accept_step
-        state.x[:] += state.s
+        state.x .+= state.s
     end
 
     return false
