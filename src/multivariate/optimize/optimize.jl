@@ -68,6 +68,7 @@ function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractA
 
     after_while!(d, state, method, options)
 
+    try
     return MultivariateOptimizationResults(method,
                                             initial_x,
                                             f_increased ? state.x_previous : state.x,
@@ -76,13 +77,39 @@ function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractA
                                             iteration == options.iterations,
                                             x_converged,
                                             options.x_tol,
+                                            x_residual(state.x, state.x_previous),
                                             f_converged,
                                             options.f_tol,
+                                            f_residual(value(d), state.f_x_previous, options.f_tol),
                                             g_converged,
                                             options.g_tol,
+                                            g_residual(gradient(d)),
                                             f_increased,
                                             tr,
                                             f_calls(d),
                                             g_calls(d),
                                             h_calls(d))
+    catch
+      return MultivariateOptimizationResults(method,
+                                              initial_x,
+                                              f_increased ? state.x_previous : state.x,
+                                              f_increased ? state.f_x_previous : value(d),
+                                              iteration,
+                                              iteration == options.iterations,
+                                              x_converged,
+                                              options.x_tol,
+                                              NaN,
+                                              f_converged,
+                                              options.f_tol,
+                                              NaN,
+                                              g_converged,
+                                              options.g_tol,
+                                              NaN,
+                                              f_increased,
+                                              tr,
+                                              f_calls(d),
+                                              g_calls(d),
+                                              h_calls(d))
+    end
+
 end

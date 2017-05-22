@@ -184,6 +184,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
     converged = false
     local results
     first = true
+    fval0 = zero(T)
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
@@ -232,7 +233,10 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         f_increased && !allow_f_increases && break
     end
     return MultivariateOptimizationResults(Fminbox{O}(), initial_x, minimizer(results), df.f(minimizer(results)),
-            iteration, results.iteration_converged, results.x_converged, results.x_tol, results.f_converged,
-            results.f_tol, results.g_converged, results.g_tol, results.f_increased, results.trace, results.f_calls,
+            iteration, results.iteration_converged,
+            results.x_converged, results.x_tol, vecnorm(x - xold),
+            results.f_converged, results.f_tol, f_residual(minimum(results), fval0, f_tol),
+            results.g_converged, results.g_tol, vecnorm(g, Inf),
+            results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
 end
