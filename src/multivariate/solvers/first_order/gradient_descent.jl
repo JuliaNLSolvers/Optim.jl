@@ -6,14 +6,14 @@ immutable GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
 end
 
 #= uncomment for v0.8.0
-GradientDescent(; linesearch = LineSearches.hagerzhang!,
+GradientDescent(; linesearch = LineSearches.HagerZhang(),
                 P = nothing, precondprep = (P, x) -> nothing) =
                     GradientDescent(linesearch, P, precondprep)
 =#
 
 Base.summary(::GradientDescent) = "Gradient Descent"
 
-function GradientDescent(; linesearch = LineSearches.hagerzhang!,
+function GradientDescent(; linesearch = LineSearches.HagerZhang(),
                            P = nothing,
                            precondprep = (P, x) -> nothing)
     GradientDescent(linesearch, P, precondprep)

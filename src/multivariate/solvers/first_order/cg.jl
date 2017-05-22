@@ -53,7 +53,7 @@
 #   for cgdescent and alphamax for linesearch_hz.
 
 
-# L should be function or any other callable 
+# L should be function or any other callable
 immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     eta::Float64
     P::T
@@ -62,7 +62,7 @@ immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
 end
 #= uncomment for v0.8.0
 function ConjugateGradient(;
-                           linesearch = LineSearches.hagerzhang!,
+                           linesearch = LineSearches.HagerZhang(),
                            eta::Real = 0.4,
                            P::Any = nothing,
                            precondprep = (P, x) -> nothing)
@@ -74,7 +74,7 @@ end
 
 Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 
-function ConjugateGradient(; linesearch = LineSearches.hagerzhang!,
+function ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
                              eta::Real = 0.4,
                              P::Any = nothing,
                              precondprep = (P, x) -> nothing)
