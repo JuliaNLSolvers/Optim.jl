@@ -57,6 +57,16 @@
     @test Optim.iterations(results) == 2
     @test Optim.minimum(results) == _objective.f(Optim.minimizer(results))
 
+
+    # Warn when initial condition is not in the interior of the box
+    initial_x = rand([-1,1],N)*boxl
+    # TODO: Use test_warn when we stop supporting 0.5
+    # @test_warn("Element indices affected: [1,2,3,4,5,6,7,8]",
+    #           Optim.optimize(_objective, initial_x, l, u, Fminbox();
+    #                          iterations = 1, optimizer_o = Optim.Options(iterations = 1)))
+    Optim.optimize(_objective, initial_x, l, u, Fminbox();
+                   iterations = 1, optimizer_o = Optim.Options(iterations = 1))
+
     # might fail if changes are made to Optim.jl
     # TODO: come up with a better test
     #results = Optim.optimize(_objective, initial_x, l, u, Fminbox(); optimizer_o = Optim.Options(iterations = 2))

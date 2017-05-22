@@ -131,7 +131,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
                                           extended_trace = extended_trace),
         nargs...)
 
-    O == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
+    O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
     fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
@@ -144,14 +144,28 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
+    boundaryidx = Array{Int,1}()
     for i = 1:length(gbarrier)
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
-        if thisx < thisl || thisx > thisu
+
+        if thisx == thisl
+            thisx = 0.99*thisl+0.01*thisu
+            x[i] = thisx
+            push!(boundaryidx,i)
+        elseif thisx == thisu
+            thisx = 0.01*thisl+0.99*thisu
+            x[i] = thisx
+            push!(boundaryidx,i)
+        elseif thisx < thisl || thisx > thisu
             error("Initial position must be inside the box")
         end
+
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
+    end
+    if length(boundaryidx) > 0
+        warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
     df.g!(gfunc, x)
     mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
