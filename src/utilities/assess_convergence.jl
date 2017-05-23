@@ -1,3 +1,7 @@
+f_residual(f_x, f_x_previous, f_tol) = abs(f_x - f_x_previous) / (abs(f_x) + f_tol)
+x_residual(x, x_previous) = maxdiff(x, x_previous)
+g_residual(g) = vecnorm(g, Inf)
+
 function assess_convergence(x::Array,
                             x_previous::Array,
                             f_x::Real,
@@ -8,14 +12,15 @@ function assess_convergence(x::Array,
                             g_tol::Real)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
-    if maxdiff(x, x_previous) < x_tol
+    if x_residual(x, x_previous) < x_tol
         x_converged = true
     end
 
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(f_x - f_x_previous) < max(f_tol * (abs(f_x) + f_tol), eps(abs(f_x)+abs(f_x_previous)))
+    if f_residual(f_x, f_x_previous, f_tol) < f_tol ||
+                   abs(f_x - f_x_previous) < eps(abs(f_x)+abs(f_x_previous))
         f_converged = true
     end
 
@@ -23,7 +28,7 @@ function assess_convergence(x::Array,
         f_increased = true
     end
 
-    if vecnorm(g, Inf) < g_tol
+    if g_residual(g) < g_tol
         g_converged = true
     end
 
@@ -36,22 +41,24 @@ end
 function assess_convergence(state, d, options)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
-    if maxdiff(state.x, state.x_previous) < options.x_tol
+    if x_residual(state.x, state.x_previous) < options.x_tol
         x_converged = true
     end
 
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(value(d) - state.f_x_previous) < max(options.f_tol * (abs(value(d)) + options.f_tol), eps(abs(value(d))+abs(state.f_x_previous)))
+    f_x = value(d)
+    if f_residual(f_x, state.f_x_previous, options.f_tol) < options.f_tol ||
+              abs(f_x - state.f_x_previous) < eps(abs(f_x)+abs(state.f_x_previous))
         f_converged = true
     end
 
-    if value(d) > state.f_x_previous
+    if f_x > state.f_x_previous
         f_increased = true
     end
 
-    if vecnorm(gradient(d), Inf) < options.g_tol
+    if g_residual(gradient(d)) < options.g_tol
         g_converged = true
     end
 

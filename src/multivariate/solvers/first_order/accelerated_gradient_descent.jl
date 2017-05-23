@@ -14,10 +14,10 @@ end
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
 #= uncomment for v0.8.0
-AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!) =
+AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang()) =
   AcceleratedGradientDescent(linesearch)
 =#
-function AcceleratedGradientDescent(; linesearch = LineSearches.hagerzhang!)
+function AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang())
     AcceleratedGradientDescent(linesearch)
 end
 

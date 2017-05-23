@@ -2,7 +2,7 @@
 This page contains information about BFGS and its limited memory version L-BFGS.
 ## Constructors
 ```julia
-BFGS(; linesearch = LineSearches.hagerzhang!,
+BFGS(; linesearch = LineSearches.HagerZhang(),
        P = nothing,
        precondprep = (P, x) -> nothing,
        resetalpha = true)
@@ -10,7 +10,7 @@ BFGS(; linesearch = LineSearches.hagerzhang!,
 
 ```julia
 LBFGS(; m = 10,
-        linesearch = LineSearches.hagerzhang!,
+        linesearch = LineSearches.HagerZhang(),
         P = nothing,
         precondprep = (P, x) -> nothing)
 ```

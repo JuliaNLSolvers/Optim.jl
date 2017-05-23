@@ -121,7 +121,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         extended_trace::Bool = false,
         callback = nothing,
         show_every::Integer = 1,
-        linesearch = LineSearches.hagerzhang!,
+        linesearch = LineSearches.HagerZhang(),
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
@@ -131,7 +131,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
                                           extended_trace = extended_trace),
         nargs...)
 
-    O == Newton && warning("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
+    O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
     fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
@@ -144,14 +144,28 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
+    boundaryidx = Array{Int,1}()
     for i = 1:length(gbarrier)
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
-        if thisx < thisl || thisx > thisu
+
+        if thisx == thisl
+            thisx = 0.99*thisl+0.01*thisu
+            x[i] = thisx
+            push!(boundaryidx,i)
+        elseif thisx == thisu
+            thisx = 0.01*thisl+0.99*thisu
+            x[i] = thisx
+            push!(boundaryidx,i)
+        elseif thisx < thisl || thisx > thisu
             error("Initial position must be inside the box")
         end
+
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
+    end
+    if length(boundaryidx) > 0
+        warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
     df.g!(gfunc, x)
     mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
@@ -170,6 +184,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
     converged = false
     local results
     first = true
+    fval0 = zero(T)
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
@@ -218,7 +233,10 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         f_increased && !allow_f_increases && break
     end
     return MultivariateOptimizationResults(Fminbox{O}(), initial_x, minimizer(results), df.f(minimizer(results)),
-            iteration, results.iteration_converged, results.x_converged, results.x_tol, results.f_converged,
-            results.f_tol, results.g_converged, results.g_tol, results.f_increased, results.trace, results.f_calls,
+            iteration, results.iteration_converged,
+            results.x_converged, results.x_tol, vecnorm(x - xold),
+            results.f_converged, results.f_tol, f_residual(minimum(results), fval0, f_tol),
+            results.g_converged, results.g_tol, vecnorm(g, Inf),
+            results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
 end

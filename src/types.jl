@@ -71,10 +71,13 @@ type MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
     iteration_converged::Bool
     x_converged::Bool
     x_tol::Float64
+    x_residual::Float64
     f_converged::Bool
     f_tol::Float64
+    f_residual::Float64
     g_converged::Bool
     g_tol::Float64
+    g_residual::Float64
     f_increased::Bool
     trace::OptimizationTrace{M}
     f_calls::Int
@@ -120,9 +123,12 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if isa(r.method, NelderMead)
         @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_tol(r) g_converged(r)
     else
-        @printf io "   * |x - x'| < %.1e: %s\n" x_tol(r) x_converged(r)
+        @printf io "   * |x - x'| < %.1e: %s \n" x_tol(r) x_converged(r)
+        @printf io "     |x - x'| = %.2e \n"  x_residual(r)
         @printf io "   * |f(x) - f(x')| / |f(x)| < %.1e: %s\n" f_tol(r) f_converged(r)
-        @printf io "   * |g(x)| < %.1e: %s\n" g_tol(r) g_converged(r)
+        @printf io "     |f(x) - f(x')| / |f(x)| = %.2e \n" f_residual(r)
+        @printf io "   * |g(x)| < %.1e: %s \n" g_tol(r) g_converged(r)
+        @printf io "     |g(x)| = %.2e \n"  g_residual(r)
         @printf io "   * stopped by an increasing objective: %s\n" f_increased(r)
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
