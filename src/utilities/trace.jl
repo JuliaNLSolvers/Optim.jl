@@ -1,8 +1,8 @@
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()
     if options.extended_trace
-        dt["centroid"] = state.x_centroid
-        dt["step_type"] = state.step_type
+        dt["centroid"] = copy(state.x_centroid)
+        dt["step_type"] = copy(state.step_type)
     end
     update!(tr,
     iteration,

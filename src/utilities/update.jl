@@ -9,7 +9,7 @@ function update!{T}(tr::OptimizationTrace{T},
                  callback = nothing)
     os = OptimizationState{T}(iteration, f_x, grnorm, dt)
     if store_trace
-        push!(tr, deepcopy(os))
+        push!(tr, os)
     end
     if show_trace
         if iteration % show_every == 0
