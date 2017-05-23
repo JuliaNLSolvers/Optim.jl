@@ -27,9 +27,12 @@ Results of Optimization Algorithm
  * Minimum: 5.471433e-17
  * Iterations: 16
  * Convergence: true
-   * |x - x'| < 1.0e-32: false
+   * |x - x'| < 1.0e-32: false 
+     |x - x'| = 3.47e-07 
    * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
-   * |g(x)| < 1.0e-08: true
+     |f(x) - f(x')| / |f(x)| = NaN 
+   * |g(x)| < 1.0e-08: true 
+     |g(x)| = 2.33e-09 
    * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 53
