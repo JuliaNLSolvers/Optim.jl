@@ -6,7 +6,7 @@
     end
 
     initial_x = [1.0]
-    options = Optim.Options(show_trace = true, allow_f_increases=true)
+    options = Optim.Options(show_trace = debug_printing, allow_f_increases=true)
     results = Optim.optimize(f, g!, initial_x, AcceleratedGradientDescent(), options)
     @test norm(Optim.minimum(results)) < 1e-6
     @test summary(results) == "Accelerated Gradient Descent"
