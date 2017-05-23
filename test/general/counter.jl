@@ -54,16 +54,23 @@
         fcounter(true); gcounter(true)
         res = Optim.optimize(f,g!, prob.initial_x,
                              solver(linesearch = ls))
-        @test fcount == Optim.f_calls(res)
-        @test gcount == Optim.g_calls(res)
+        # TODO: uncomment when gradient storage test is removed from NLSolversBase
+        # @test fcount == Optim.f_calls(res)
+        # @test gcount == Optim.g_calls(res)
+        @test fcount == Optim.f_calls(res) + 1
+        @test gcount == Optim.g_calls(res) + 3
     end
 
     for solver in (Newton(linesearch = ls), NewtonTrustRegion())
         fcounter(true); gcounter(true); hcounter(true)
         res = Optim.optimize(f,g!, h!, prob.initial_x,
                              solver)
-        @test fcount == Optim.f_calls(res)
-        @test gcount == Optim.g_calls(res)
-        @test hcount == Optim.h_calls(res)
+        # TODO: uncomment when gradient storage test is removed from NLSolversBase
+        # @test fcount == Optim.f_calls(res)
+        # @test gcount == Optim.g_calls(res)
+        # @test hcount == Optim.h_calls(res)
+        @test fcount == Optim.f_calls(res) + 1
+        @test gcount == Optim.g_calls(res) + 3
+        @test hcount == Optim.h_calls(res) + 1
     end
 end
