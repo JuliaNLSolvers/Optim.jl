@@ -7,6 +7,7 @@
 
     # Test if the trace is correctly stored.
     prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
-    res = Optim.optimize(prob.f, prob.initial_x, method = NelderMead(), store_trace = true)
+    res = Optim.optimize(prob.f, prob.initial_x, method = NelderMead(), store_trace = true, extended_trace=true)
     @test ( length(unique(Optim.g_norm_trace(res))) != 1 || length(unique(Optim.f_trace(res))) != 1 ) && issorted(Optim.f_trace(res)[end:1])
+    @test !(res.trace[1].metadata["centroid"] === res.trace[end].metadata["centroid"])
 end
