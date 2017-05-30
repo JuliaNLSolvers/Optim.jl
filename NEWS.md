@@ -1,4 +1,4 @@
-# Optim v0.8.0
+# Optim v0.9.0
 * Drop support for Julia versions less than v0.6.0-pre
 * Fminbox: If an initial guess is on the boundary of the box, the guess is moved inside the box and a warning is produced, as opposed to crashing with an error.
 * Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters
@@ -7,6 +7,7 @@
 * Add limits to f-, g-, and h_calls
 * Improve trace for univariate optimization
 * Changed order of storage arrays and evaluation point arrays in gradient and Hessian calls
+* Skip v0.8.0 to allow fixes on Julia v0.5.0
 
 # Optim v0.7.6 release notes
 * Fix deprecations for *Function constructors
