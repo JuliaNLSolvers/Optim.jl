@@ -1,7 +1,8 @@
  @testset "Conjugate Gradient" begin
 	# Test Optim.cg for all differentiable functions in Optim.UnconstrainedProblems.examples
 	run_optim_tests(ConjugateGradient(),
-                    convergence_exceptions = (("Powell", 1), ("Powell", 2), ("Polynomial", 1)))
+                    convergence_exceptions = (("Powell", 1), ("Powell", 2), ("Polynomial", 1)),
+                    f_increase_exceptions = (("Hosaki"),))
 
 	@testset "matrix input" begin
 		objective(X, B) = sum((X.-B).^2)/2
