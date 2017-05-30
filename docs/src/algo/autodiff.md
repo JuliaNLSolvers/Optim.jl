@@ -74,7 +74,3 @@ julia> Optim.minimizer(optimize(td, initial_x, Newton()))
  1.0
 ```
 Indeed, the minimizer was found, without providing any gradients or Hessians.
-
-
-+Optim also supports
-+[reverse mode](https://github.com/JuliaDiff/ReverseDiff.jl) automatic differentiation, which is enabled by adding `autodiff = :reverse` to the constructor.

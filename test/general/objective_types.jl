@@ -6,28 +6,28 @@
         for T in (OnceDifferentiable, TwiceDifferentiable)
             odad1 = T(x->5., rand(1); autodiff = :finite)
             odad2 = T(x->5., rand(1); autodiff = :forward)
-            odad3 = T(x->5., rand(1); autodiff = :reverse)
+        #    odad3 = T(x->5., rand(1); autodiff = :reverse)
             @test odad1.g == [0.0]
             @test odad2.g == [0.0]
-            @test odad3.g == [0.0]
+        #    @test odad3.g == [0.0]
         end
 
         for a in (1.0, 5.0)
             odad1 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :finite)
             odad2 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :forward)
-            odad3 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :reverse)
+        #    odad3 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :reverse)
             @test odad1.g ≈ [a]
             @test odad2.g == [a]
-            @test odad3.g == [a]
+        #    @test odad3.g == [a]
         end
         for a in (1.0, 5.0)
             x_seed = rand(1)
             odad1 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :finite)
             odad2 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :forward)
-            odad3 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :reverse)
+        #    odad3 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :reverse)
             @test odad1.g ≈ 2.0*a*x_seed
             @test odad2.g == 2.0*a*x_seed
-            @test odad3.g == 2.0*a*x_seed
+        #    @test odad3.g == 2.0*a*x_seed
         end
     end
     @testset "value/grad" begin
