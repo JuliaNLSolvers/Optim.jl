@@ -3,7 +3,7 @@ import LineSearches
 @testset "Extrapolation" begin
     methods = [LBFGS(),
                ConjugateGradient(),
-               LBFGS(extrapolate=true, linesearch = LineSearches.bt2!)]
+               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2))]
     msgs = ["LBFGS Default Options: ",
             "CG Default Options: ",
             "LBFGS + Backtracking + Extrapolation: "]
