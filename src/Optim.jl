@@ -6,7 +6,7 @@ module Optim
     using LineSearches
     using NLSolversBase
     using Calculus
-    using ReverseDiff
+#    using ReverseDiff
     using ForwardDiff
 
     import Compat.String

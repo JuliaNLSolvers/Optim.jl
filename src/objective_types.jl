@@ -23,7 +23,7 @@ function OnceDifferentiable{T}(f, x_seed::AbstractVector{T}; autodiff = :finite)
             return f(x)
         end
     elseif autodiff == :forward
-        gcfg = ForwardDiff.GradientConfig(x_seed)
+        gcfg = ForwardDiff.GradientConfig(f, x_seed)
         g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
 
         fg! = (out, x) -> begin
@@ -31,15 +31,15 @@ function OnceDifferentiable{T}(f, x_seed::AbstractVector{T}; autodiff = :finite)
             ForwardDiff.gradient!(gr_res, f, x, gcfg)
             DiffBase.value(gr_res)
         end
-    elseif autodiff == :reverse
-        gcfg = ReverseDiff.GradientConfig(x_seed)
-        g! = (out, x) -> ReverseDiff.gradient!(out, f, x, gcfg)
-
-        fg! = (out, x) -> begin
-            gr_res = DiffBase.DiffResult(zero(T), out)
-            ReverseDiff.gradient!(gr_res, f, x, gcfg)
-            DiffBase.value(gr_res)
-        end
+    # elseif autodiff == :reverse
+    #     gcfg = ReverseDiff.GradientConfig(x_seed)
+    #     g! = (out, x) -> ReverseDiff.gradient!(out, f, x, gcfg)
+    #
+    #     fg! = (out, x) -> begin
+    #         gr_res = DiffBase.DiffResult(zero(T), out)
+    #         ReverseDiff.gradient!(gr_res, f, x, gcfg)
+    #         DiffBase.value(gr_res)
+    #     end
     else
         error("The autodiff value $autodiff is not supported. Use :finite, :forward or :reverse.")
     end
@@ -68,7 +68,7 @@ function TwiceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finite)
         end
     elseif autodiff == :forward
         # TODO: basically same code in :forward and :reverse
-        gcfg = ForwardDiff.GradientConfig(x_seed)
+        gcfg = ForwardDiff.GradientConfig(f, x_seed)
         g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
 
         fg! = (out, x) -> begin
@@ -77,19 +77,19 @@ function TwiceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finite)
             DiffBase.value(gr_res)
         end
 
-        hcfg = ForwardDiff.HessianConfig(x_seed)
+        hcfg = ForwardDiff.HessianConfig(f, x_seed)
         h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
-    elseif autodiff == :reverse
-        gcfg = ReverseDiff.GradientConfig(x_seed)
-        g! = (out, x) -> ReverseDiff.gradient!(out, f, x, gcfg)
-
-        fg! = (out, x) -> begin
-            gr_res = DiffBase.DiffResult(zero(T), out)
-            ReverseDiff.gradient!(gr_res, f, x, gcfg)
-            DiffBase.value(gr_res)
-        end
-        hcfg = ReverseDiff.HessianConfig(x_seed)
-        h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
+    # elseif autodiff == :reverse
+    #     gcfg = ReverseDiff.GradientConfig(x_seed)
+    #     g! = (out, x) -> ReverseDiff.gradient!(out, f, x, gcfg)
+    #
+    #     fg! = (out, x) -> begin
+    #         gr_res = DiffBase.DiffResult(zero(T), out)
+    #         ReverseDiff.gradient!(gr_res, f, x, gcfg)
+    #         DiffBase.value(gr_res)
+    #     end
+    #     hcfg = ReverseDiff.HessianConfig(x_seed)
+    #     h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
     end
@@ -117,9 +117,9 @@ function TwiceDifferentiable{T}(f, g!, x_seed::Array{T}; autodiff = :finite)
     elseif autodiff == :forward
         hcfg = ForwardDiff.HessianConfig(similar(x_seed))
         h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
-    elseif autodiff == :reverse
-        hcfg = ReverseDiff.HessianConfig(x_seed)
-        h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
+    # elseif autodiff == :reverse
+    #     hcfg = ReverseDiff.HessianConfig(x_seed)
+    #     h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
     end
@@ -144,9 +144,9 @@ function TwiceDifferentiable{T}(d::OnceDifferentiable, x_seed::Vector{T} = d.las
     elseif autodiff == :forward
         hcfg = ForwardDiff.HessianConfig(similar(gradient(d)))
         h! = (out, x) -> ForwardDiff.hessian!(out, d.f, x, hcfg)
-    elseif autodiff == :reverse
-        hcfg = ReverseDiff.HessianConfig(similar(gradient(d)))
-        h! = (out, x) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
+    # elseif autodiff == :reverse
+    #     hcfg = ReverseDiff.HessianConfig(similar(gradient(d)))
+    #     h! = (out, x) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
     end
