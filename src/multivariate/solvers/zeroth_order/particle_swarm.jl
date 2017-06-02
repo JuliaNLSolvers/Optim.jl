@@ -46,8 +46,8 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
     the swarm jumping out of local minima.
     =#
     n = length(initial_x)
-    lower = copy(method.lower)
-    upper = copy(method.upper)
+    lower = convert(typeof(initial_x), copy(method.lower))
+    upper = convert(typeof(initial_x), copy(method.upper))
 
     # do some checks on input parameters
     @assert length(lower) == length(upper) "lower and upper must be of same length."
