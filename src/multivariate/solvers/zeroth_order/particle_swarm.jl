@@ -46,8 +46,8 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
     the swarm jumping out of local minima.
     =#
     n = length(initial_x)
-    lower = copy(method.lower)
-    upper = copy(method.upper)
+    lower = convert(typeof(initial_x), copy(method.lower))
+    upper = convert(typeof(initial_x), copy(method.upper))
 
     # do some checks on input parameters
     @assert length(lower) == length(upper) "lower and upper must be of same length."
@@ -189,7 +189,7 @@ function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm
 
     score_learn = value(f, state.x_learn)
     if score_learn < f.f_x
-        state.f_x = score_learn * 1.0
+        f.f_x = score_learn * 1.0
         for j in 1:n
             state.X_best[j, i_worst] = state.x_learn[j]
             state.X[j, i_worst] = state.x_learn[j]
