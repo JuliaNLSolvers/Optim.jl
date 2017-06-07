@@ -189,7 +189,7 @@ function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm
 
     score_learn = value(f, state.x_learn)
     if score_learn < f.f_x
-        state.f_x = score_learn * 1.0
+        f.f_x = score_learn * 1.0
         for j in 1:n
             state.X_best[j, i_worst] = state.x_learn[j]
             state.X[j, i_worst] = state.x_learn[j]
