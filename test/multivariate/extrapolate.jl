@@ -37,7 +37,7 @@ import LineSearches
     P = precond(initial_x)
     methods = [LBFGS(P=P),
                ConjugateGradient(P=P),
-               LBFGS(extrapolate=true, linesearch = LineSearches.bt2!, P=P)]
+               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2), P=P)]
 
     for (method, msg) in zip(methods, msgs)
         results = Optim.optimize(f, g!, copy(initial_x), method)
