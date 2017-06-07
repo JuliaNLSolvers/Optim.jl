@@ -2,14 +2,50 @@ import NLSolversBase.NonDifferentiable
 import NLSolversBase.OnceDifferentiable
 import NLSolversBase.TwiceDifferentiable
 
+
+@compat abstract type UninitializedObjective <: AbstractObjective end
+type UninitializedNonDifferentiable <: UninitializedObjective
+    f
+end
+# The user friendly/short form NonDifferentiable constructor
+NonDifferentiable(f) = UninitializedNonDifferentiable(f)
+NonDifferentiable(u::UninitializedNonDifferentiable, x::AbstractArray) = NonDifferentiable(u.f, x)
+
+type UninitializedOnceDifferentiable{T} <: UninitializedObjective
+    f
+    g!
+    fg!::T
+end
+# The user friendly/short form OnceDifferentiable constructor
+OnceDifferentiable(f, g!, fg!) = UninitializedOnceDifferentiable(f, g!,      fg!)
+OnceDifferentiable(f, g!)      = UninitializedOnceDifferentiable(f, g!,      nothing)
+OnceDifferentiable(f)          = UninitializedOnceDifferentiable(f, nothing, nothing)
+OnceDifferentiable(u::UninitializedOnceDifferentiable, x::AbstractArray) = OnceDifferentiable(u.f, u.g!, u.fg!, x)
+OnceDifferentiable(u::UninitializedOnceDifferentiable{Void}, x::AbstractArray) = OnceDifferentiable(u.f, u.g!, x)
+
+type UninitializedTwiceDifferentiable{Tf, Tfg, Th} <: UninitializedObjective
+    f
+    g!::Tf
+    fg!::Tfg
+    h!::Th
+end
+TwiceDifferentiable(f, g!, fg!, h!) = UninitializedTwiceDifferentiable(f, g!, fg!, h!)
+TwiceDifferentiable(f, g!, h!) = UninitializedTwiceDifferentiable(f, g!,      nothing, h!)
+TwiceDifferentiable(f, g!)     = UninitializedTwiceDifferentiable(f, g!,      nothing, nothing)
+TwiceDifferentiable(f)         = UninitializedTwiceDifferentiable(f, nothing, nothing, nothing)
+TwiceDifferentiable{T<:UninitializedObjective}(u::T, x::AbstractArray) = error("Cannot construct a TwiceDifferentiable from UninitializedTwiceDifferentiable unless the gradient and Hessian is provided.")
+TwiceDifferentiable(u::UninitializedTwiceDifferentiable, x::AbstractArray) = TwiceDifferentiable(u.f, u.g!, u.fg!, u.h!, x)
+TwiceDifferentiable{S, T}(u::UninitializedTwiceDifferentiable{S, Void, T}, x::AbstractArray) = TwiceDifferentiable(u.f, u.g!, u.h!, x)
+
+
 NonDifferentiable(f, g!,     x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
 NonDifferentiable(f, g!, h!, x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
 
-function OnceDifferentiable{T}(d::OnceDifferentiable, x_seed::AbstractVector{T})
+function OnceDifferentiable(d::OnceDifferentiable, x_seed::AbstractArray)
     value_gradient!(d, x_seed)
     d
 end
-function OnceDifferentiable{T}(f, x_seed::AbstractVector{T}; autodiff = :finite)
+function OnceDifferentiable(f, x_seed::AbstractArray; autodiff = :finite)
     n_x = length(x_seed)
     f_calls = [1]
     g_calls = [1]
@@ -48,7 +84,7 @@ function OnceDifferentiable{T}(f, x_seed::AbstractVector{T}; autodiff = :finite)
     return OnceDifferentiable(f, g!, fg!, f(x_seed), g, copy(x_seed), copy(x_seed), f_calls, g_calls)
 end
 
-function TwiceDifferentiable{T}(f, x_seed::Vector{T}; autodiff = :finite)
+function TwiceDifferentiable{T}(f, x_seed::AbstractArray{T}; autodiff = :finite)
     n_x = length(x_seed)
     f_calls = [1]
     g_calls = [1]
@@ -131,7 +167,8 @@ function TwiceDifferentiable{T}(f, g!, x_seed::Array{T}; autodiff = :finite)
                                g, H, copy(x_seed),
                                copy(x_seed), copy(x_seed), f_calls, [1], [1])
 end
-
+TwiceDifferentiable(u::UninitializedTwiceDifferentiable{Void, Void, Void}, x::AbstractArray) = TwiceDifferentiable(u.f, x)
+TwiceDifferentiable{T}(u::UninitializedTwiceDifferentiable{T, Void, Void}, x::AbstractArray) = TwiceDifferentiable(u.f, u.g!, x)
 TwiceDifferentiable{T}(d::NonDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite) =
 TwiceDifferentiable(d.f, x_seed; autodiff = autodiff)
 function TwiceDifferentiable{T}(d::OnceDifferentiable, x_seed::Vector{T} = d.last_x_f; autodiff = :finite)

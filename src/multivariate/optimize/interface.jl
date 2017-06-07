@@ -29,9 +29,15 @@ fallback_method(f, g!, h!) = Newton()
 
 promote_objtype(method, initial_x, obj_args...) = error("No default objective type for $method and $obj_args.")
 promote_objtype(method::ZerothOrderSolver, initial_x, obj_args...) = NonDifferentiable(obj_args..., initial_x)
+promote_objtype(method::ZerothOrderSolver, initial_x, od::OnceDifferentiable) = od
+promote_objtype(method::ZerothOrderSolver, initial_x, td::TwiceDifferentiable) = td
+promote_objtype(method::ZerothOrderSolver, initial_x, nd::NonDifferentiable) = nd
 promote_objtype(method::FirstOrderSolver,  initial_x, obj_args...) = OnceDifferentiable(obj_args..., initial_x)
+promote_objtype(method::FirstOrderSolver,  initial_x, od::OnceDifferentiable) = od
+promote_objtype(method::FirstOrderSolver,  initial_x, td::TwiceDifferentiable) = td
 promote_objtype(method::FirstOrderSolver,  initial_x, f, g!, h!)   = OnceDifferentiable(f, g!, initial_x)
 promote_objtype(method::SecondOrderSolver, initial_x, obj_args...) = TwiceDifferentiable(obj_args..., initial_x)
+promote_objtype(method::SecondOrderSolver, initial_x, td::TwiceDifferentiable) = td
 
 # use objective.last_f_x, since this is guaranteed to be in Non-, Once-, and TwiceDifferentiable
 function optimize(objective::AbstractObjective, initial_x::AbstractArray = objective.last_x_f; kwargs...)
@@ -76,4 +82,17 @@ end
 function optimize{D <: Union{NonDifferentiable, OnceDifferentiable}}(d::D, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options())
     d = promote_objtype(method, initial_x, d)
     optimize(d, initial_x, method, options)
+end
+
+initialize_objective(d::UninitializedNonDifferentiable, x) = NonDifferentiable(d, x)
+initialize_objective(d::UninitializedOnceDifferentiable, x) = OnceDifferentiable(d, x)
+initialize_objective(d::UninitializedTwiceDifferentiable, x) = TwiceDifferentiable(d, x)
+function optimize(d::UninitializedObjective, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
+    id = initialize_objective(d, initial_x)
+    id = promote_objtype(method, initial_x, id)
+    optimize(id, initial_x, method, options, initial_state(method, options, id, initial_x))
+end
+function optimize(d::UninitializedObjective, initial_x::AbstractArray)
+    id = initialize_objective(d, initial_x)
+    optimize(id)
 end
