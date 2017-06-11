@@ -29,18 +29,16 @@
             @test odad2.g == 2.0*a*x_seed
         #    @test odad3.g == 2.0*a*x_seed
         end
-        od = OnceDifferentiable(x->sum(x), rand(2); autodiff = :finite)
-        NLSolversBase.value(od)
-        NLSolversBase.value!(od, rand(2))
-        NLSolversBase.value_gradient!(od, rand(2))
-        NLSolversBase.gradient!(od, rand(2))
-
-        od = OnceDifferentiable(x->sum(x), rand(2); autodiff = :forward)
-        NLSolversBase.value(od)
-        NLSolversBase.value!(od, rand(2))
-        NLSolversBase.value_gradient!(od, rand(2))
-        NLSolversBase.gradient!(od, rand(2))
-
+        for dtype in (OnceDifferentiable, TwiceDifferentiable)
+            for autodiff in (:finite, :forward)
+                differentiable = OnceDifferentiable(x->sum(x), rand(2); autodiff = autodiff)
+                NLSolversBase.value(differentiable)
+                NLSolversBase.value!(differentiable, rand(2))
+                NLSolversBase.value_gradient!(differentiable, rand(2))
+                NLSolversBase.gradient!(differentiable, rand(2))
+                dtype == TwiceDifferentiable && NLSolversBase.hessian!(differentiable, rand(2))
+            end
+        end
     end
     @testset "value/grad" begin
         a = 3.0
