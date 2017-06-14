@@ -27,6 +27,7 @@ univariate_tests = [
     "solvers/golden_section",
     "solvers/brent",
     #"initial_convergence",
+    "dual.jl",
 ]
 univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
 

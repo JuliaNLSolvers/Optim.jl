@@ -1,14 +1,14 @@
-type UnivariateOptimizationResults{T,M,O<:Optimizer} <: OptimizationResults
+type UnivariateOptimizationResults{Tb,Tt,Tf, Tx,M,O<:Optimizer} <: OptimizationResults
     method::O
-    initial_lower::T
-    initial_upper::T
-    minimizer::T
-    minimum::T
+    initial_lower::Tb
+    initial_upper::Tb
+    minimizer::Tx
+    minimum::Tf
     iterations::Int
     iteration_converged::Bool
     converged::Bool
-    rel_tol::T
-    abs_tol::T
+    rel_tol::Tt
+    abs_tol::Tt
     trace::OptimizationTrace{M}
     f_calls::Int
 end
