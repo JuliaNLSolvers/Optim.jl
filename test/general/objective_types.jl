@@ -31,7 +31,7 @@
         end
         for dtype in (OnceDifferentiable, TwiceDifferentiable)
             for autodiff in (:finite, :forward)
-                differentiable = OnceDifferentiable(x->sum(x), rand(2); autodiff = autodiff)
+                differentiable = dtype(x->sum(x), rand(2); autodiff = autodiff)
                 NLSolversBase.value(differentiable)
                 NLSolversBase.value!(differentiable, rand(2))
                 NLSolversBase.value_gradient!(differentiable, rand(2))
