@@ -20,7 +20,7 @@
 
     # PSO does not accept matrix input
     @testset "matrix" begin
-        for m in (AcceleratedGradientDescent(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(),  SimulatedAnnealing())
+        for m in (AcceleratedGradientDescent(), BFGS(), LBFGS(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(), SimulatedAnnealing())
             res = optimize(f, g!, eye(2), m)
             if m != SimulatedAnnealing()
                 @test typeof(Optim.minimizer(res)) <: Matrix
@@ -33,7 +33,7 @@
     @testset "tensor" begin
         eye3 = zeros(2,2,1)
         eye3[:,:,1] = eye(2)
-        for m in (AcceleratedGradientDescent(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(),  SimulatedAnnealing())
+        for m in (AcceleratedGradientDescent(), BFGS(), LBFGS(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(), SimulatedAnnealing())
             res = optimize(f, g!, eye3, m)
             if m != SimulatedAnnealing()
                 _minimizer = Optim.minimizer(res)

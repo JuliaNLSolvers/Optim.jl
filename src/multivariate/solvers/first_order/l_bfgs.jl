@@ -88,21 +88,21 @@ end
 
 Base.summary(::LBFGS) = "L-BFGS"
 
-type LBFGSState{T,N,M}
+type LBFGSState{T,N,M,G}
     x::Array{T,N}
     x_previous::Array{T,N}
-    g_previous::Array{T,N}
-    rho::Array{T,N}
+    g_previous::G
+    rho::Vector{T}
     dx_history::Array{T,M}
     dg_history::Array{T,M}
-    dx::Array{T,N}
-    dg::Array{T,N}
+    dx::Vector{T}
+    dg::Vector{T}
     u::Array{T,N}
     f_x_previous::T
     twoloop_q
     twoloop_alpha
     pseudo_iteration::Int
-    s::Array{T,N}
+    s::Vector{T}
     @add_linesearch_fields()
 end
 
@@ -111,18 +111,18 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     value_gradient!(d, initial_x)
     LBFGSState(copy(initial_x), # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
-              similar(gradient(d)), # Store previous gradient in state.g_previous
+              vec(similar(gradient(d))), # Store previous gradient in state.g_previous
               Array{T}(method.m), # state.rho
               Array{T}(n, method.m), # Store changes in position in state.dx_history
               Array{T}(n, method.m), # Store changes in gradient in state.dg_history
-              similar(initial_x), # Buffer for new entry in state.dx_history
-              similar(initial_x), # Buffer for new entry in state.dg_history
+              vec(similar(initial_x)), # Buffer for new entry in state.dx_history
+              vec(similar(initial_x)), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
               T(NaN), # Store previous f in state.f_x_previous
-              similar(initial_x), #Buffer for use by twoloop
-              Array{T}(method.m), #Buffer for use by twoloop
+              vec(similar(initial_x)), #Buffer for use by twoloop
+              Vector{T}(method.m), #Buffer for use by twoloop
               0,
-              similar(initial_x), # Store current search direction in state.s
+              vec(similar(initial_x)), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
@@ -135,7 +135,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     method.precondprep!(method.P, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
-    twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
+    twoloop!(state.s, vec(gradient(d)), state.rho, state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.P)
 
