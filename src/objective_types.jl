@@ -45,7 +45,7 @@ function OnceDifferentiable(d::OnceDifferentiable, x_seed::AbstractArray)
     value_gradient!(d, x_seed)
     d
 end
-function OnceDifferentiable(f, x_seed::AbstractArray; autodiff = :finite)
+function OnceDifferentiable{T}(f, x_seed::AbstractArray{T}; autodiff = :finite)
     n_x = length(x_seed)
     f_calls = [1]
     g_calls = [1]
