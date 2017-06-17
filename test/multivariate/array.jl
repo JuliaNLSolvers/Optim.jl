@@ -11,34 +11,35 @@
     @testset "vector" begin
         for m in (AcceleratedGradientDescent(), ConjugateGradient(), BFGS(), LBFGS(), NelderMead(), GradientDescent(), MomentumGradientDescent(), NelderMead(), ParticleSwarm(), SimulatedAnnealing())
             res = optimize(f, g!, [1., 0., 1., 0.], m)
+            @test typeof(Optim.minimizer(res)) <: Vector
             if !(m in (NelderMead(), SimulatedAnnealing()))
-                @test typeof(Optim.minimizer(res)) <: Vector
                 @test vecnorm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
             end
         end
     end
 
-    # PSO does not accept matrix input
     @testset "matrix" begin
         for m in (AcceleratedGradientDescent(), BFGS(), LBFGS(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(), ParticleSwarm(), SimulatedAnnealing())
             res = optimize(f, g!, eye(2), m)
+            @test typeof(Optim.minimizer(res)) <: Matrix
             if m != SimulatedAnnealing()
-                @test typeof(Optim.minimizer(res)) <: Matrix
                 @test vecnorm(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0]) < 10e-8
             end
         end
     end
 
-    # PSO does not accept tensor input
     @testset "tensor" begin
         eye3 = zeros(2,2,1)
         eye3[:,:,1] = eye(2)
-        for m in (AcceleratedGradientDescent(), BFGS(), LBFGS(), ConjugateGradient(),  GradientDescent(), MomentumGradientDescent(), SimulatedAnnealing())
-            res = optimize(f, g!, eye3, m)
-            if m != SimulatedAnnealing()
-                _minimizer = Optim.minimizer(res)
-                @test typeof(_minimizer) <: Array{Float64, 3}
-                @test size(_minimizer) == (2,2,1)
+        for m in (AcceleratedGradientDescent, BFGS, LBFGS, ConjugateGradient,  GradientDescent, MomentumGradientDescent, ParticleSwarm, SimulatedAnnealing)
+            res = optimize(f, g!, eye3, m())
+            _minimizer = Optim.minimizer(res)
+            @test typeof(_minimizer) <: Array{Float64, 3}
+            @test size(_minimizer) == (2,2,1)
+            if !(m in (SimulatedAnnealing, ParticleSwarm))
+                println(typeof(m))
+                println(typeof(m) in (SimulatedAnnealing, ParticleSwarm))
+                println(m)
                 @test vecnorm(_minimizer - [10.0 0.0; 0.0 5.0]) < 10e-8
             end
         end
