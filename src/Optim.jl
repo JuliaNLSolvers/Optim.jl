@@ -22,7 +22,6 @@ module Optim
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
-           OptimizationOptions,
            OptimizationState,
            OptimizationTrace,
 
