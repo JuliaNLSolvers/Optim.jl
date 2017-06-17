@@ -57,7 +57,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
 
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    A_mul_B!(state.s, state.invH, gradient(d))
+    A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
     scale!(state.s, -1)
 
     # Maintain a record of the previous gradient
@@ -72,11 +72,9 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     copy!(state.x_previous, state.x)
 
     # Update current position
-    @simd for i in 1:n
-        @inbounds state.dx[i] = state.alpha * state.s[i]
-        @inbounds state.x[i] = state.x[i] + state.dx[i]
-    end
-
+    state.dx .= state.alpha.*state.s
+    state.x .= state.x .+ state.dx
+#  
     lssuccess == false # break on linesearch error
 end
 

@@ -88,11 +88,11 @@ end
 
 Base.summary(::LBFGS) = "L-BFGS"
 
-type LBFGSState{T,N,M}
+type LBFGSState{T,N,M,G}
     x::Array{T,N}
     x_previous::Array{T,N}
-    g_previous::Array{T,N}
-    rho::Array{T,N}
+    g_previous::G
+    rho::Vector{T}
     dx_history::Array{T,M}
     dg_history::Array{T,M}
     dx::Array{T,N}
@@ -112,15 +112,15 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     LBFGSState(copy(initial_x), # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
-              Array{T}(method.m), # state.rho
-              Array{T}(n, method.m), # Store changes in position in state.dx_history
-              Array{T}(n, method.m), # Store changes in gradient in state.dg_history
+              Vector{T}(method.m), # state.rho
+              Matrix{T}(n, method.m), # Store changes in position in state.dx_history
+              Matrix{T}(n, method.m), # Store changes in gradient in state.dg_history
               similar(initial_x), # Buffer for new entry in state.dx_history
               similar(initial_x), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
               T(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
-              Array{T}(method.m), #Buffer for use by twoloop
+              Vector{T}(method.m), #Buffer for use by twoloop
               0,
               similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
@@ -135,9 +135,9 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     method.precondprep!(method.P, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
-    twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
+    twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, state.twoloop_q, method.P)
+             state.twoloop_alpha, vec(state.twoloop_q), method.P)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
@@ -152,10 +152,8 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     state.f_x_previous = f_x_prev
 
     # Update current position
-    @simd for i in 1:n
-        @inbounds state.dx[i] = state.alpha * state.s[i]
-        @inbounds state.x[i] = state.x[i] + state.dx[i]
-    end
+    state.dx .= state.alpha .* state.s
+    state.x .= state.x .+ state.dx
 
     lssuccess == false # break on linesearch error
 end

@@ -21,8 +21,8 @@ type ParticleSwarmState{T,N}
     X
     V
     X_best
-    score::Array{T,N}
-    best_score::Array{T,N}
+    score::Vector{T}
+    best_score::Vector{T}
     x_learn
     current_state
     iterations::Int
@@ -46,16 +46,18 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
     the swarm jumping out of local minima.
     =#
     n = length(initial_x)
-    lower = convert(typeof(initial_x), copy(method.lower))
-    upper = convert(typeof(initial_x), copy(method.upper))
-
+    # TODO do we even need a lower((n) upper    ) that is different from method.lower(upper)
     # do some checks on input parameters
-    @assert length(lower) == length(upper) "lower and upper must be of same length."
-    if length(lower) > 0
+    @assert length(method.lower) == length(method.upper) "lower and upper must be of same length."
+    if length(method.lower) > 0
+        lower = copy!(similar(initial_x), copy(method.lower))
+        upper = copy!(similar(initial_x), copy(method.upper))
         limit_search_space = true
         @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
         @assert all(upper .> lower) "upper must be greater than lower"
     else
+        lower = similar(initial_x)
+        upper = similar(initial_x)
         limit_search_space = false
     end
 
@@ -79,9 +81,9 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
     X_best = Array{T}(n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
-    x = zeros(T, n)
+    x = similar(initial_x)
     best_score = zeros(T, n_particles)
-    x_learn = zeros(T, n)
+    x_learn = similar(initial_x)
 
     current_state = 0
     value!(f, initial_x)
