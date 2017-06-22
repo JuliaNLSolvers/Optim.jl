@@ -4,7 +4,7 @@ module UnivariateProblems
     ###
     ### [1]  http://infinity77.net/global_optimization/test_functions_1d.html
 
-    immutable UnivariateProblem
+    struct UnivariateProblem
         name::AbstractString
         f::Function
         bounds::Vector{Float64}

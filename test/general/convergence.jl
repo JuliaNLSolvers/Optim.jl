@@ -1,4 +1,4 @@
-type DummyState
+mutable struct DummyState
     x
     x_previous
     f_x
@@ -6,7 +6,7 @@ type DummyState
     g
 end
 
-type DummyOptions
+mutable struct DummyOptions
     x_tol
     f_tol
     g_tol

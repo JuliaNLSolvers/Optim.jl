@@ -20,7 +20,7 @@ macro goldensectiontrace()
     end)
 end
 
-immutable GoldenSection <: Optimizer end
+struct GoldenSection <: Optimizer end
 
 Base.summary(::GoldenSection) = "Golden Section Search"
 
