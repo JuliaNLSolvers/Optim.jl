@@ -177,3 +177,12 @@ function update_h!(d, state, method::LBFGS)
     state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
 
 end
+
+function assess_convergence(state::LBFGSState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+
+function trace!(tr, d, state, iteration, method::LBFGS, options)
+  common_1order_trace!(tr, d, state, iteration, method, options)
+end

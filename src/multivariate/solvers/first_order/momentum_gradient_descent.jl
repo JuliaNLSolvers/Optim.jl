@@ -55,3 +55,11 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
     end
     lssuccess == false # break on linesearch error
 end
+
+function assess_convergence(state::MomentumGradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options)
+  common_1order_trace!(tr, d, state, iteration, method, options)
+end

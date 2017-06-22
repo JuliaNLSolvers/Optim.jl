@@ -183,3 +183,11 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
 end
 
 update_g!(d, state, method::ConjugateGradient) = nothing
+
+function assess_convergence(state::ConjugateGradientState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::ConjugateGradient, options)
+  common_1order_trace!(tr, d, state, iteration, method, options)
+end

@@ -56,3 +56,11 @@ function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDes
     LinAlg.axpy!(state.alpha, state.s, state.x)
     lssuccess == false # break on linesearch error
 end
+
+function assess_convergence(state::GradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::GradientDescent, options)
+  common_1order_trace!(tr, d, state, iteration, method, options)
+end

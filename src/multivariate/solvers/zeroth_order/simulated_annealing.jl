@@ -75,3 +75,23 @@ function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::Simulat
     state.iteration += 1
     false
 end
+
+function assess_convergence(state::SimulatedAnnealingState, d, options)
+    false, false, false, false, false
+end
+
+function trace!(tr, d, state, iteration, method::SimulatedAnnealing, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+    end
+    update!(tr,
+            state.iteration,
+            d.f_x,
+            NaN,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end
