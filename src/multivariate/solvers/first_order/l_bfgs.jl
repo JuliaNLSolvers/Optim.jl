@@ -61,7 +61,7 @@ function twoloop!(s::Vector,
 end
 
 # L should be function or any other callable
-immutable LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
+struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
     linesearch!::L
     P::T
@@ -88,7 +88,7 @@ end
 
 Base.summary(::LBFGS) = "L-BFGS"
 
-type LBFGSState{T,N,M,G}
+mutable struct LBFGSState{T,N,M,G}
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

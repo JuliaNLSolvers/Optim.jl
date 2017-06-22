@@ -2,7 +2,7 @@
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
 # L should be function or any other callable
-immutable MomentumGradientDescent{L} <: Optimizer
+struct MomentumGradientDescent{L} <: Optimizer
     mu::Float64
     linesearch!::L
 end
@@ -18,7 +18,7 @@ function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.Ha
     MomentumGradientDescent(Float64(mu), linesearch)
 end
 
-type MomentumGradientDescentState{T,N}
+mutable struct MomentumGradientDescentState{T,N}
     x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T

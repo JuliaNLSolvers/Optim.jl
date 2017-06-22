@@ -189,7 +189,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
     return m, interior, lambda, hard_case, reached_solution
 end
 
-immutable NewtonTrustRegion{T <: Real} <: Optimizer
+struct NewtonTrustRegion{T <: Real} <: Optimizer
     initial_delta::T
     delta_hat::T
     eta::T
@@ -206,7 +206,7 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
-type NewtonTrustRegionState{T,N,G}
+mutable struct NewtonTrustRegionState{T,N,G}
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

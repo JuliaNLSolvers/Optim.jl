@@ -60,7 +60,7 @@ For example, let us minimize the two-dimensional Rosenbrock function, and choose
 that are simply standard uniform draws.
 ```julia
 using Optim
-immutable MySimplexer <: Optim.Simplexer end
+struct MySimplexer <: Optim.Simplexer end
 Optim.simplexer(S::MySimplexer, initial_x) = [rand(length(initial_x)) for i = 1:length(initial_x)+1]
 f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 optimize(f, [.0, .0], NelderMead(initial_simplex = MySimplexer()))
@@ -71,7 +71,7 @@ to the `AffineSimplexer` above, but with a small twist. Instead of always adding
 a constant is only added to entries that are zero. If the entry is non-zero, five
 percent of the level is added. This might be implemented (by the user) as
 ```julia
-immutable MatlabSimplexer <: Optim.Simplexer
+struct MatlabSimplexer <: Optim.Simplexer
     a::Float64
     b::Float64
 end

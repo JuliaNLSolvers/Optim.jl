@@ -3,7 +3,7 @@
 # JMW's dg <=> NW' y
 
 # L should be function or any other callable
-immutable BFGS{L, H<:Function} <: Optimizer
+struct BFGS{L, H<:Function} <: Optimizer
     linesearch!::L
     initial_invH::H
     resetalpha::Bool
@@ -21,7 +21,7 @@ function BFGS(; linesearch = LineSearches.HagerZhang(),
     BFGS(linesearch, initial_invH, resetalpha)
 end
 
-type BFGSState{T,N,G}
+mutable struct BFGSState{T,N,G}
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

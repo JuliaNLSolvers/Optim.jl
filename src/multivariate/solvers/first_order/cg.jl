@@ -54,7 +54,7 @@
 
 
 # L should be function or any other callable
-immutable ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
+struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     eta::Float64
     P::T
     precondprep!::Tprep
@@ -84,7 +84,7 @@ function ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
                       linesearch)
 end
 
-type ConjugateGradientState{T,N,G}
+mutable struct ConjugateGradientState{T,N,G}
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

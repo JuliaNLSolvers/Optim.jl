@@ -1,5 +1,5 @@
 @compat abstract type Optimizer end
-immutable Options{TCallback <: Union{Void, Function}}
+struct Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64
     g_tol::Float64
@@ -51,18 +51,18 @@ function print_header(method::Optimizer)
         @printf "Iter     Function value   Gradient norm \n"
 end
 
-immutable OptimizationState{T <: Optimizer}
+struct OptimizationState{T <: Optimizer}
     iteration::Int
     value::Float64
     g_norm::Float64
     metadata::Dict
 end
 
-@compat OptimizationTrace{T} = Vector{OptimizationState{T}}
+OptimizationTrace{T} = Vector{OptimizationState{T}}
 
-@compat abstract type OptimizationResults end
+abstract type OptimizationResults end
 
-type MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
     method::O
     initial_x::Array{T,N}
     minimizer::Array{T,N}

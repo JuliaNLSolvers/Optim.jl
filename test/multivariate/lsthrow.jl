@@ -8,8 +8,6 @@
     for optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS, Newton, AcceleratedGradientDescent, MomentumGradientDescent)
         println("Testing $(string(optimizer))")
         prob = Optim.UnconstrainedProblems.examples["Exponential"]
-        optimize(prob.f, prob.initial_x, optimizer(linesearch = ls))
-        # TODO: How can I verify that the call to optimize gives a warning?
-        # TODO: Use @throw_warn in 0.6
+        @test_warn "Linesearch failed" optimize(prob.f, prob.initial_x, optimizer(linesearch = ls))
     end
 end

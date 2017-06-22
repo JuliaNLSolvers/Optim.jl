@@ -7,7 +7,7 @@ module UnconstrainedProblems
 ###
 ### [2] Fletcher & Powell: A rapidly convergent descent method for minimization,
 
-immutable OptimizationProblem
+struct OptimizationProblem
     name::AbstractString
     f::Function
     g!::Function

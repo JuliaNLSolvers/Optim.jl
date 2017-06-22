@@ -1,4 +1,4 @@
-immutable Newton{L} <: Optimizer
+struct Newton{L} <: Optimizer
     linesearch!::L
     resetalpha::Bool
 end
@@ -12,7 +12,7 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-type NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
+mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
     x::Array{T,N}
     x_previous::Array{T, N}
     f_x_previous::T

@@ -1,5 +1,5 @@
 # L should be function or any other callable
-immutable GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
+struct GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
     linesearch!::L
     P::T
     precondprep!::Tprep
@@ -19,7 +19,7 @@ function GradientDescent(; linesearch = LineSearches.HagerZhang(),
     GradientDescent(linesearch, P, precondprep)
 end
 
-type GradientDescentState{T,N}
+mutable struct GradientDescentState{T,N}
     x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T
