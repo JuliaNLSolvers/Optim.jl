@@ -1,6 +1,6 @@
-@compat abstract type Simplexer end
+abstract type Simplexer end
 
-immutable AffineSimplexer <: Simplexer
+struct AffineSimplexer <: Simplexer
     a::Float64
     b::Float64
 end
@@ -15,9 +15,9 @@ function simplexer{T,N}(S::AffineSimplexer, initial_x::Array{T,N})
     initial_simplex
 end
 
-@compat abstract type NMParameters end
+abstract type NMParameters end
 
-immutable AdaptiveParameters <: NMParameters
+struct AdaptiveParameters <: NMParameters
     α::Float64
     β::Float64
     γ::Float64
@@ -27,7 +27,7 @@ end
 AdaptiveParameters(;  α = 1.0, β = 1.0, γ = 0.75 , δ = 1.0) = AdaptiveParameters(α, β, γ, δ)
 parameters(P::AdaptiveParameters, n::Integer) = (P.α, P.β + 2/n, P.γ - 1/2n, P.δ - 1/n)
 
-immutable FixedParameters <: NMParameters
+struct FixedParameters <: NMParameters
     α::Float64
     β::Float64
     γ::Float64
@@ -37,7 +37,7 @@ end
 FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
 parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 
-immutable NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
+struct NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
     initial_simplex::Ts
     parameters::Tp
 end
@@ -105,7 +105,7 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-type NelderMeadState{T, N}
+mutable struct NelderMeadState{T, N}
     x::Array{T,N}
     m::Int
     simplex::Vector{Array{T,N}}

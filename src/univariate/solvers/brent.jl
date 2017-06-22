@@ -21,7 +21,7 @@ macro brenttrace()
     end)
 end
 
-immutable Brent <: Optimizer end
+struct Brent <: Optimizer end
 
 Base.summary(::Brent) = "Brent's Method"
 

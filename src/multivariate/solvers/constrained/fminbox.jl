@@ -100,7 +100,7 @@ function precondprepbox!(P, x, l, u, mu)
     end
 end
 
-immutable Fminbox{T<:Optimizer} <: Optimizer end
+struct Fminbox{T<:Optimizer} <: Optimizer end
 Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
 Base.summary{O}(::Fminbox{O}) = "Fminbox with $(summary(O()))"

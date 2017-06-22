@@ -1,4 +1,4 @@
-type MyCallable
+mutable struct MyCallable
     f
 end
 (a::MyCallable)(x) = a.f(x)
