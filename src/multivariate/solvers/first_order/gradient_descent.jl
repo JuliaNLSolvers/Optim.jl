@@ -30,11 +30,12 @@ mutable struct GradientDescentState{T,N}
 end
 
 function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{T})
+    initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
     project_tangent!(method.manifold, gradient(d), initial_x)
 
-    GradientDescentState(copy(initial_x), # Maintain current state in state.x
+    GradientDescentState(initial_x, # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s

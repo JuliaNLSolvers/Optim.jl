@@ -110,9 +110,11 @@ end
 
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
+    initial_x = copy(initial_x)
+    retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
     project_tangent!(method.manifold, gradient(d), initial_x)
-    LBFGSState(copy(initial_x), # Maintain current state in state.x
+    LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
               Vector{T}(method.m), # state.rho

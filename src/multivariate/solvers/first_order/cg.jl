@@ -100,6 +100,7 @@ end
 
 
 function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+    initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
     project_tangent!(method.manifold, gradient(d), initial_x)
@@ -124,7 +125,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
         project_tangent!(method.manifold, pg, initial_x)
     end
 
-    ConjugateGradientState(copy(initial_x), # Maintain current state in state.x
+    ConjugateGradientState(initial_x, # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous

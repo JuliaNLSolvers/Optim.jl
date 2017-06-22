@@ -37,12 +37,13 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
+    initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
     project_tangent!(method.manifold, gradient(d), initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
-    BFGSState(copy(initial_x), # Maintain current state in state.x
+    BFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               copy(gradient(d)), # Store previous gradient in state.g_previous
               T(NaN), # Store previous f in state.f_x_previous
