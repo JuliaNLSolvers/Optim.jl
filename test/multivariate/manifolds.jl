@@ -14,9 +14,20 @@ manif = Optim.Stiefel()
 
 # AcceleratedGradientDescent should be compatible also, but I haven't been able to make it converge
 for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS)
-    println(method)
     res = Optim.optimize(f, g!, x0, method(manifold=manif))
     @test Optim.converged(res)
 end
 res = Optim.optimize(f, g!, x0, Optim.MomentumGradientDescent(mu=0.0, manifold=manif))
 @test Optim.converged(res)
+
+# test product and power manifold
+@views fprod(x) = f(x[1:n]) + f(x[n+1:2n])
+@views gprod!(stor,x) = (g!(stor[1:n],x[1:n]);g!(stor[n+1:2n],x[n+1:2n]);stor)
+m1 = Optim.PowerManifold(Optim.Sphere(), (n,), 2)
+m2 = Optim.ProductManifold(Optim.Sphere(), Optim.Sphere(), (n,), (n,))
+
+x0 = randn(2n)
+for m in (m1,m2)
+    res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m))
+    @test Optim.converged(res)
+end
