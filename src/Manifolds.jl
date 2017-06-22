@@ -19,6 +19,9 @@ end
 function NLSolversBase.gradient(obj::ManifoldObjective)
     gradient(obj.inner_obj)
 end
+function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
+    gradient(obj.inner_obj,i)
+end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     xin = retract(obj.manifold, x)
     value_gradient!(obj.inner_obj,xin)
