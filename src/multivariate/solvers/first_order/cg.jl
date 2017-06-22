@@ -131,8 +131,6 @@ end
 function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
         # Search direction is predetermined
 
-        n = length(state.x)
-
         # Maintain a record of the previous gradient
         copy!(state.g_previous, gradient(d))
         # Maintain a record of previous position
@@ -165,20 +163,14 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         method.precondprep!(method.P, state.x)
         dPd = dot(state.s, method.P, state.s)
         etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
-        @simd for i in 1:n
-            @inbounds state.y[i] = gradient(d, i) - state.g_previous[i]
-        end
+        state.y .= gradient(d) .- state.g_previous
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
         A_ldiv_B!(state.pg, method.P, gradient(d))
-        @simd for i in 1:n     # py = pg - py
-           @inbounds state.py[i] = state.pg[i] - state.py[i]
-        end
+        state.py .= state.pg .- state.py
         betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
         beta = max(betak, etak)
-        @simd for i in 1:n
-            @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
-        end
+        state.s .= beta.*state.s .- state.pg
         lssuccess == false # break on linesearch error
 end
 
