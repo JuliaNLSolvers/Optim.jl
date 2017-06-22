@@ -68,6 +68,7 @@ struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     precondprep!::Tprep
     extrapolate::Bool
     snap2one::Tuple
+    manifold::Manifold
 end
 #= uncomment for v0.8.0
 LBFGS(; m::Integer = 10, linesearch = LineSearches.HagerZhang(),
@@ -81,9 +82,10 @@ function LBFGS(; m::Integer = 10,
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  extrapolate::Bool=false,
-                 snap2one = (0.75, Inf))
+                 snap2one = (0.75, Inf),
+                 manifold::Manifold=Flat())
 
-    LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
+    LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one, manifold)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"
@@ -109,6 +111,7 @@ end
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, gradient(d), initial_x)
     LBFGSState(copy(initial_x), # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -131,6 +134,8 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
+    project_tangent!(method.manifold, gradient(d), state.x)
+
     # update the preconditioner
     method.precondprep!(method.P, state.x)
 
@@ -138,6 +143,8 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, vec(state.twoloop_q), method.P)
+    project_tangent!(method.manifold, state.s, state.x)
+
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
@@ -146,7 +153,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     copy!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # This has to come after perform_linesearch since alphaguess! uses state.f_x_previous from the prior iteration
     state.f_x_previous = f_x_prev
@@ -154,6 +161,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Update current position
     state.dx .= state.alpha .* state.s
     state.x .= state.x .+ state.dx
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end
@@ -172,8 +180,8 @@ function update_h!(d, state, method::LBFGS)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
     end
-    state.dx_history[:, mod1(state.pseudo_iteration, method.m)] = state.dx
-    state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = state.dg
+    state.dx_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dx)
+    state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dg)
     state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
 
 end

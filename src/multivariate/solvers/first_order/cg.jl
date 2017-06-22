@@ -59,6 +59,7 @@ struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     P::T
     precondprep!::Tprep
     linesearch!::L
+    manifold::Manifold
 end
 #= uncomment for v0.8.0
 function ConjugateGradient(;
@@ -77,11 +78,12 @@ Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 function ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
                              eta::Real = 0.4,
                              P::Any = nothing,
-                             precondprep = (P, x) -> nothing)
+                             precondprep = (P, x) -> nothing,
+                             manifold::Manifold=Flat())
 
     ConjugateGradient(Float64(eta),
                       P, precondprep,
-                      linesearch)
+                      linesearch,manifold)
 end
 
 mutable struct ConjugateGradientState{T,N,G}
@@ -98,7 +100,9 @@ end
 
 
 function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+    retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, gradient(d), initial_x)
     pg = copy(gradient(d))
     @assert typeof(value(d)) == T
     # Output messages
@@ -116,6 +120,9 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     #    TODO: consider allowing a reference for pg instead of a copy
     method.precondprep!(method.P, initial_x)
     A_ldiv_B!(pg, method.P, gradient(d))
+    if method.P != nothing
+        project_tangent!(method.manifold, pg, initial_x)
+    end
 
     ConjugateGradientState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
@@ -140,13 +147,16 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         state.f_x_previous  = value(d)
 
         # Determine the distance of movement along the search line
-        lssuccess = perform_linesearch!(state, method, d)
+        lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
+        # lssuccess = perform_linesearch!(state, method, d)
 
         # Update current position # x = x + alpha * s
         LinAlg.axpy!(state.alpha, state.s, state.x)
+        retract!(method.manifold, state.x)
 
         # Update the function value and gradient
         value_gradient!(d, state.x)
+        project_tangent!(method.manifold, gradient(d), state.x)
 
         # Check sanity of function and gradient
         if !isfinite(value(d))
@@ -179,6 +189,7 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         @simd for i in 1:n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
+        project_tangent!(method.manifold, state.s, state.x)
         lssuccess == false # break on linesearch error
 end
 

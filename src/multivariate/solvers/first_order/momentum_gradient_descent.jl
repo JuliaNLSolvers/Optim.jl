@@ -5,6 +5,7 @@
 struct MomentumGradientDescent{L} <: Optimizer
     mu::Float64
     linesearch!::L
+    manifold::Manifold
 end
 
 #= uncomment for v0.8.0
@@ -14,8 +15,8 @@ MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang(
 
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
-function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang())
-    MomentumGradientDescent(Float64(mu), linesearch)
+function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
+    MomentumGradientDescent(Float64(mu), linesearch, manifold)
 end
 
 mutable struct MomentumGradientDescentState{T,N}
@@ -27,7 +28,9 @@ mutable struct MomentumGradientDescentState{T,N}
 end
 
 function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
+    retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, gradient(d), initial_x)
 
     MomentumGradientDescentState(copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
@@ -38,13 +41,15 @@ end
 
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
     n = length(state.x)
+    project_tangent!(method.manifold, gradient(d), state.x)
     # Search direction is always the negative gradient
     @simd for i in 1:n
         @inbounds state.s[i] = -gradient(d, i)
     end
 
+
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Update current position
     @simd for i in 1:n
@@ -53,5 +58,6 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
         @inbounds state.x_previous[i] = state.x[i]
         @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
     end
+    retract!(method.manifold, state.x)
     lssuccess == false # break on linesearch error
 end

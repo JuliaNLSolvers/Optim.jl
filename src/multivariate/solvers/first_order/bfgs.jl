@@ -7,6 +7,7 @@ struct BFGS{L, H<:Function} <: Optimizer
     linesearch!::L
     initial_invH::H
     resetalpha::Bool
+    manifold::Manifold
 end
 
 Base.summary(::BFGS) = "BFGS"
@@ -17,8 +18,8 @@ BFGS(; linesearch = LineSearches.HagerZhang(), initial_invH = x -> eye(eltype(x)
 =#
 function BFGS(; linesearch = LineSearches.HagerZhang(),
                 initial_invH = x -> eye(eltype(x), length(x)),
-                resetalpha = true)
-    BFGS(linesearch, initial_invH, resetalpha)
+                resetalpha = true, manifold::Manifold=Flat())
+    BFGS(linesearch, initial_invH, resetalpha, manifold)
 end
 
 mutable struct BFGSState{T,N,G}
@@ -36,7 +37,9 @@ end
 
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
+    retract!(method.manifold, initial_x)
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, gradient(d), initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(copy(initial_x), # Maintain current state in state.x
@@ -59,6 +62,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Search direction is the negative gradient divided by the approximate Hessian
     A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
     scale!(state.s, -1)
+    project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, gradient(d))
@@ -66,7 +70,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
     # semi-definite
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
@@ -74,6 +78,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Update current position
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
+    retract!(method.manifold, state.x)
 #
     lssuccess == false # break on linesearch error
 end
@@ -90,7 +95,7 @@ function update_h!(d, state, method::BFGS)
     if dx_dg == 0.0
         return true # force stop
     end
-    A_mul_B!(state.u, state.invH, state.dg)
+    A_mul_B!(vec(state.u), state.invH, vec(state.dg))
 
     c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
     c2 = 1 / dx_dg
