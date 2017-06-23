@@ -342,7 +342,7 @@ function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options)
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
-        dt["h(x)"] = copy(NLSolversBase.hessian(H))
+        dt["h(x)"] = copy(NLSolversBase.hessian(d))
         dt["delta"] = copy(state.delta)
         dt["interior"] = state.interior
         dt["hard case"] = state.hard_case
