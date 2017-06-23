@@ -150,7 +150,9 @@ end
 
     d = TwiceDifferentiable(f, g!, h!, [0.0])
 
-    results = Optim.optimize(d, [0.0], NewtonTrustRegion())
+    options = Optim.Options(store_trace = true, show_trace = false,
+                            extended_trace = true)
+    results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
     @test length(results.trace) == 0
     @test results.g_converged
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01

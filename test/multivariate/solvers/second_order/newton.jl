@@ -15,7 +15,9 @@
     Optim.optimize(NonDifferentiable(f_1, initial_x), [0.0], Newton())
     Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton())
 
-    results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton())
+    options = Optim.Options(store_trace = true, show_trace = false,
+                            extended_trace = true)
+    results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton(), options)
 
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
