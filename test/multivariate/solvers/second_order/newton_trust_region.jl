@@ -153,6 +153,7 @@ end
     options = Optim.Options(store_trace = false, show_trace = false,
                             extended_trace = true)
     results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
+    @test_throws ErrorException Optim.x_trace(results)
     @test length(results.trace) == 0
     @test results.g_converged
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
