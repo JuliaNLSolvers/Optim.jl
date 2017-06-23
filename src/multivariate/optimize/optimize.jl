@@ -12,9 +12,13 @@ update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 after_while!(d, state, method, options) = nothing
 
 function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractArray, method::M,
-    options::Options = Options(), state = initial_state(method, options, d, initial_x))
+    options::Options = Options(), state = initial_state(method, options, d, NLSolversBase.iscomplex(d) ? NLSolversBase.complex_to_real(initial_x) : initial_x))
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+
+    if NLSolversBase.iscomplex(d)
+        initial_x = NLSolversBase.complex_to_real(initial_x)
+    end
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("Use optimize(f, scalar, scalar) for 1D problems")
@@ -70,6 +74,7 @@ function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractA
 
     try
     return MultivariateOptimizationResults(method,
+                                            NLSolversBase.iscomplex(d),
                                             initial_x,
                                             f_increased ? state.x_previous : state.x,
                                             f_increased ? state.f_x_previous : value(d),
@@ -91,6 +96,7 @@ function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractA
                                             h_calls(d))
     catch
       return MultivariateOptimizationResults(method,
+                                              NLSolversBase.iscomplex(d),
                                               initial_x,
                                               f_increased ? state.x_previous : state.x,
                                               f_increased ? state.f_x_previous : value(d),
