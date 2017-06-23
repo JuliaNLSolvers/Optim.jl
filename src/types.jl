@@ -64,6 +64,7 @@ abstract type OptimizationResults end
 
 mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
     method::O
+    iscomplex::Bool
     initial_x::Array{T,N}
     minimizer::Array{T,N}
     minimum::T
@@ -84,6 +85,7 @@ mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: Optimizati
     g_calls::Int
     h_calls::Int
 end
+iscomplex(r::MultivariateOptimizationResults) = r.iscomplex
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm

@@ -1,5 +1,5 @@
 Base.summary(r::OptimizationResults) = summary(r.method) # might want to do more here than just return summary of the method used
-minimizer(r::OptimizationResults) = r.minimizer
+minimizer(r::OptimizationResults) = iscomplex(r) ? real_to_complex(r.minimizer) : r.minimizer
 minimum(r::OptimizationResults) = r.minimum
 iterations(r::OptimizationResults) = r.iterations
 iteration_limit_reached(r::OptimizationResults) = r.iteration_converged
