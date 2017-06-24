@@ -18,6 +18,8 @@ module Optim
            Base.getindex,
            Base.setindex!
 
+    import NLSolversBase.iscomplex
+
     export optimize,
            NonDifferentiable,
            OnceDifferentiable,
