@@ -232,7 +232,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
         f_increased && !allow_f_increases && break
     end
-    return MultivariateOptimizationResults(Fminbox{O}(), initial_x, minimizer(results), df.f(minimizer(results)),
+    return MultivariateOptimizationResults(Fminbox{O}(), false, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_tol, vecnorm(x - xold),
             results.f_converged, results.f_tol, f_residual(minimum(results), fval0, f_tol),
