@@ -332,7 +332,7 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
             return MultivariateOptimizationResults("Interior",
                                     initial_x,
                                     initial_x,
-                                    @compat(Float64(vo)),
+                                    Float64(vo),
                                     0,
                                     false,
                                     false,
