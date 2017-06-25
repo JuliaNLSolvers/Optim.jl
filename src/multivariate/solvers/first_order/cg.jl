@@ -101,9 +101,9 @@ end
 
 function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
     initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     pg = copy(gradient(d))
     @assert typeof(value(d)) == T
     # Output messages
@@ -122,7 +122,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     method.precondprep!(method.P, initial_x)
     A_ldiv_B!(pg, method.P, gradient(d))
     if method.P != nothing
-        project_tangent!(method.manifold, pg, initial_x)
+        project_tangent!(method.manifold, real_to_complex(d,pg), real_to_complex(d,initial_x))
     end
 
     ConjugateGradientState(initial_x, # Maintain current state in state.x
@@ -149,15 +149,14 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
 
         # Determine the distance of movement along the search line
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-        # lssuccess = perform_linesearch!(state, method, d)
 
         # Update current position # x = x + alpha * s
         LinAlg.axpy!(state.alpha, state.s, state.x)
-        retract!(method.manifold, state.x)
+        retract!(method.manifold, real_to_complex(d,state.x))
 
         # Update the function value and gradient
         value_gradient!(d, state.x)
-        project_tangent!(method.manifold, gradient(d), state.x)
+        project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
 
         # Check sanity of function and gradient
         if !isfinite(value(d))
@@ -190,7 +189,7 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         @simd for i in 1:n
             @inbounds state.s[i] = beta * state.s[i] - state.pg[i]
         end
-        project_tangent!(method.manifold, state.s, state.x)
+        project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
         lssuccess == false # break on linesearch error
 end
 

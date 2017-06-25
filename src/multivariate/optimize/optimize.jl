@@ -12,13 +12,11 @@ update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 after_while!(d, state, method, options) = nothing
 
 function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractArray, method::M,
-    options::Options = Options(), state = initial_state(method, options, d, iscomplex(d) ? complex_to_real(initial_x) : initial_x))
+    options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x)))
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
-    if iscomplex(d)
-        initial_x = complex_to_real(initial_x)
-    end
+    initial_x = complex_to_real(d, initial_x)
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("Use optimize(f, scalar, scalar) for 1D problems")

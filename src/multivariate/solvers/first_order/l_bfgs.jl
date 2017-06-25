@@ -111,9 +111,9 @@ end
 function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -136,7 +136,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
-    project_tangent!(method.manifold, gradient(d), state.x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
 
     # update the preconditioner
     method.precondprep!(method.P, state.x)
@@ -145,7 +145,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, vec(state.twoloop_q), method.P)
-    project_tangent!(method.manifold, state.s, state.x)
+    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
 
     # Maintain a record of previous position
@@ -163,7 +163,7 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     # Update current position
     state.dx .= state.alpha .* state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, state.x)
+    retract!(method.manifold, real_to_complex(d,state.x))
 
     lssuccess == false # break on linesearch error
 end

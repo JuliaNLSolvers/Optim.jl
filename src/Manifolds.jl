@@ -5,6 +5,7 @@
 ## To add:
 ## * Second order algorithms
 ## * Vector transport
+## * Arbitrary inner product
 ## * More retractions
 ## * More manifolds from ROPTLIB
 ## * {x, Ax = b}
@@ -14,12 +15,15 @@ abstract type Manifold
 end
 
 
-type ManifoldObjective{T<:AbstractObjective}
+type ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
     manifold :: Manifold
     inner_obj :: T
 end
+iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
+# TODO is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
-    value!(obj.inner_obj, retract(obj.manifold, x))
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    value!(obj.inner_obj, xin)
 end
 function NLSolversBase.value(obj::ManifoldObjective)
     value(obj.inner_obj)
@@ -31,9 +35,9 @@ function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
     gradient(obj.inner_obj,i)
 end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
-    xin = retract(obj.manifold, x)
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value_gradient!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
+    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
     return value(obj.inner_obj)
 end
 

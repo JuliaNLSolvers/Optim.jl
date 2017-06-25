@@ -4,11 +4,11 @@ srand(0)
 n = 4
 m = 2
 A = Diagonal(linspace(1,2,n))
-fmanif(x) = vecdot(x,A*x)/2
+fmanif(x) = real(vecdot(x,A*x)/2)
 gmanif(x) = A*x
 gmanif!(stor,x) = copy!(stor,gmanif(x))
 # A[2,2] /= 10 #optional: reduce the gap to make the problem artificially harder
-x0 = randn(n,m)
+x0 = randn(n,m)+im*randn(n,m)
 
 manif = Optim.Stiefel()
 
@@ -26,7 +26,7 @@ res = Optim.optimize(fmanif, gmanif!, x0, Optim.MomentumGradientDescent(mu=0.0, 
 m1 = Optim.PowerManifold(Optim.Sphere(), (n,), 2)
 m2 = Optim.ProductManifold(Optim.Sphere(), Optim.Sphere(), (n,), (n,))
 
-x0 = randn(2n)
+x0 = randn(2n) + im*randn(2n)
 for m in (m1,m2)
     res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m))
     @test Optim.converged(res)

@@ -29,9 +29,9 @@ end
 
 function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
     initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
     MomentumGradientDescentState(initial_x, # Maintain current state in state.x
                                  copy(initial_x), # Maintain previous state in state.x_previous
@@ -42,7 +42,7 @@ end
 
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
     n = length(state.x)
-    project_tangent!(method.manifold, gradient(d), state.x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     @simd for i in 1:n
         @inbounds state.s[i] = -gradient(d, i)
@@ -59,6 +59,6 @@ function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::Mom
         @inbounds state.x_previous[i] = state.x[i]
         @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
     end
-    retract!(method.manifold, state.x)
+    retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
 end

@@ -35,9 +35,9 @@ end
 
 function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
     initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
     AcceleratedGradientDescentState(initial_x, # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
@@ -52,7 +52,7 @@ end
 function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
     n = length(state.x)
     state.iteration += 1
-    project_tangent!(method.manifold, gradient(d), state.x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     @simd for i in 1:n
         @inbounds state.s[i] = -gradient(d, i)
@@ -69,14 +69,14 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
     @simd for i in 1:n
         @inbounds state.y[i] = state.x[i] + state.alpha * state.s[i]
     end
-    retract!(method.manifold, state.y)
+    retract!(method.manifold, real_to_complex(d,state.y))
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
     @simd for i in 1:n
         @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
     end
-    retract!(method.manifold, state.x)
+    retract!(method.manifold, real_to_complex(d,state.x))
 
     lssuccess == false # break on linesearch error
 end

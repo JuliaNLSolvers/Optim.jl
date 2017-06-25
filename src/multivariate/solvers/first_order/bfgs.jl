@@ -38,9 +38,9 @@ end
 function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(initial_x, # Maintain current state in state.x
@@ -63,7 +63,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Search direction is the negative gradient divided by the approximate Hessian
     A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
     scale!(state.s, -1)
-    project_tangent!(method.manifold, state.s, state.x)
+    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, gradient(d))
@@ -79,7 +79,7 @@ function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
     # Update current position
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, state.x)
+    retract!(method.manifold, real_to_complex(d,state.x))
 #
     lssuccess == false # break on linesearch error
 end
