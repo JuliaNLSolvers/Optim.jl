@@ -34,6 +34,12 @@ end
 function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
     gradient(obj.inner_obj,i)
 end
+function NLSolversBase.gradient!(obj::ManifoldObjective,x)
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    gradient!(obj.inner_obj,xin)
+    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    return gradient(obj.inner_obj)
+end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value_gradient!(obj.inner_obj,xin)
@@ -55,7 +61,6 @@ retract(M::Flat, x) = x
 retract!(M::Flat,x) = x
 project_tangent(M::Flat, g, x) = g
 project_tangent!(M::Flat, g, x) = g
-ManifoldObjective(m::Flat, obj) = obj #not strictly necessary
 
 # {||x|| = 1}
 struct Sphere <: Manifold
