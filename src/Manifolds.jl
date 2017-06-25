@@ -92,31 +92,33 @@ project_tangent!(S::Stiefel, G, X) = (G .= X*(X'G .- G'X)./2 .+ G .- X*(X'G))
 
 # multiple copies of the same manifold. Points are arrays of arbitrary
 # dimensions, and the first (given by inner_dims) are points of the
-# inner manifold. E.g. the product of two N x n Stiefel manifolds
-# would be a N x n x 2 matrix
+# inner manifold. E.g. the product of 2x2 Stiefel manifolds of dimension N x n
+# would be a N x n x 2 x 2 matrix
 struct PowerManifold<:Manifold
-    inner_manifold::Manifold #type of manifold
+    inner_manifold::Manifold #type of embedded manifold
     inner_dims::Tuple #dimension of the embedded manifolds
-    ninner::Int #number of manifolds
+    outer_dims::Tuple #number of embedded manifolds
 end
 function retract!(m::PowerManifold, x)
-    size_inner = prod(m.inner_dims)
-    @assert length(x) == size_inner*m.ninner
-    for i=1:m.ninner
-        @views retract!(m.inner_manifold, reshape(x[(i-1)*size_inner+1:i*size_inner], m.inner_dims))
+    for i=1:prod(m.outer_dims)
+        retract!(m.inner_manifold,get_inner(m, x, i))
     end
     x
 end
 function project_tangent!(m::PowerManifold, g, x)
-    size_inner = prod(m.inner_dims)
-    @assert length(g) == length(x) == size_inner*m.ninner
-    for i=1:m.ninner
-        @views project_tangent!(m.inner_manifold,
-                                reshape(g[(i-1)*size_inner+1:i*size_inner], m.inner_dims),
-                                reshape(x[(i-1)*size_inner+1:i*size_inner], m.inner_dims))
+    for i=1:prod(m.outer_dims)
+        project_tangent!(m.inner_manifold,get_inner(m, g, i),get_inner(m, x, i))
     end
     g
 end
+# linear indexing
+@inline function get_inner(m::PowerManifold, x, i::Int)
+    size_inner = prod(m.inner_dims)
+    size_outer = prod(m.outer_dims)
+    @assert 1 <= i <= size_outer
+    return reshape(view(x, (i-1)*size_inner+1:i*size_inner), m.inner_dims)
+end
+@inline get_inner(m::PowerManifold, x, i::Tuple) = get_inner(m, x, ind2sub(m.outer_dims, i...))
 
 #Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
 #P is assumed to be a flat array, and x1 is before x2 in memory
@@ -126,19 +128,25 @@ struct ProductManifold<:Manifold
     dims1::Tuple
     dims2::Tuple
 end
-@views function retract!(m::ProductManifold, x)
-    N1 = prod(m.dims1)
-    N2 = prod(m.dims2)
-    @assert N1+N2 == length(x)
-    retract!(m.m1, x[1:N1])
-    retract!(m.m2, x[N1+1:N1+N2])
+function retract!(m::ProductManifold, x)
+    retract!(m.m1, get_inner(m,x,1))
+    retract!(m.m2, get_inner(m,x,2))
     x
 end
-@views function project_tangent!(m::ProductManifold, g, x)
+function project_tangent!(m::ProductManifold, g, x)
+    project_tangent!(m.m1, get_inner(m, g, 1), get_inner(m, x, 1))
+    project_tangent!(m.m2, get_inner(m, g, 2), get_inner(m, x, 2))
+    g
+end
+function get_inner(m::ProductManifold, x, i)
     N1 = prod(m.dims1)
     N2 = prod(m.dims2)
-    @assert N1+N2 == length(x) == length(g)
-    project_tangent!(m.m1, g[1:N1], x[1:N1])
-    project_tangent!(m.m2, g[N1+1:N1+N2], x[N1+1:N1+N2])
-    g
+    @assert length(x) == N1+N2
+    if i == 1
+        return reshape(view(x, 1:N1),m.dims1)
+    elseif i == 2
+        return reshape(view(x, N1+1:N1+N2), m.dims2)
+    else
+        error("Only two components in a product manifold")
+    end
 end

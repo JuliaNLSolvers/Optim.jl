@@ -20,14 +20,26 @@ end
 res = Optim.optimize(fmanif, gmanif!, x0, Optim.MomentumGradientDescent(mu=0.0, manifold=manif))
 @test Optim.converged(res)
 
-# test product and power manifold
+# Power
+@views fprod(x) = fmanif(x[:,1]) + fmanif(x[:,2])
+@views gprod!(stor,x) = (gmanif!(stor[:, 1],x[:, 1]);gmanif!(stor[:, 2],x[:, 2]);stor)
+m1 = Optim.PowerManifold(Optim.Sphere(), (n,), (2,))
+srand(0)
+x0 = randn(n,2) + im*randn(n,2)
+res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m1))
+@test Optim.converged(res)
+minpow = Optim.minimizer(res)
+
+# Product
 @views fprod(x) = fmanif(x[1:n]) + fmanif(x[n+1:2n])
 @views gprod!(stor,x) = (gmanif!(stor[1:n],x[1:n]);gmanif!(stor[n+1:2n],x[n+1:2n]);stor)
-m1 = Optim.PowerManifold(Optim.Sphere(), (n,), 2)
 m2 = Optim.ProductManifold(Optim.Sphere(), Optim.Sphere(), (n,), (n,))
-
+srand(0)
 x0 = randn(2n) + im*randn(2n)
-for m in (m1,m2)
-    res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m))
-    @test Optim.converged(res)
-end
+res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m2))
+@test Optim.converged(res)
+minprod = Optim.minimizer(res)
+
+# results should be exactly equal: same initial guess, same sequence of operations
+@test minpow[:,1] == minprod[1:n]
+@test minpow[:,2] == minprod[n+1:2n]
