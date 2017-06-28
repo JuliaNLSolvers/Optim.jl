@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="JuliaOpt">
+  <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
   <title>Automatic Differentiation - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -46,181 +46,120 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../..">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
     <ul class="subnav">
-    <li><span>General information</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/minimization/">Minimizing a function</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/config/">Configurable Options</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/planned/">Planned Changes</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
     <ul class="subnav">
-    <li><span>Algorithms</span></li>
-
-        
-            
+                <li class="">
+                    
+    <span class="caption-text">Solvers</span>
     <ul class="subnav">
-    <li><span>Solvers</span></li>
-
-        
-            
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
     <ul class="subnav">
-    <li><span>Gradient Free</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../nelder_mead/">Nelder Mead</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
     <ul class="subnav">
-    <li><span>Gradient Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../gradientdescent/">Gradient Descent</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../lbfgs/">(L-)BFGS</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
     <ul class="subnav">
-    <li><span>Hessian Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../newton/">Newton</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
     </ul>
-
-        
+                </li>
     </ul>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Automatic Differentiation</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#automatic-differentiation">Automatic Differentiation</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Automatic Differentiation</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#automatic-differentiation">Automatic Differentiation</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../linesearch/">Linesearch</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../precondition/">Preconditioners</a>
-        
-    </li>
-
-        
     </ul>
-<li>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
     <ul class="subnav">
-    <li><span>Contributing</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../dev/contributing/">Contributing</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../LICENSE/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -251,7 +190,7 @@
     <li>Automatic Differentiation</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/algo/autodiff.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/autodiff.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -269,12 +208,12 @@
     <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
 <span class="k">end</span>
 
-<span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">end</span>
 
-<span class="k">function</span> <span class="n">h!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+<span class="k">function</span> <span class="n">h!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1200.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -299,7 +238,7 @@
 </pre></div>
 
 
-<p>This is indeed the case. Now let us use finite differences for BFGS (we cannot     get finite difference Hessians in Optim).</p>
+<p>This is indeed the case. Now let us use finite differences for BFGS.</p>
 <div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">()))</span>
 <span class="go">2-element Array{Float64,1}:</span>
 <span class="go"> 1.0</span>
@@ -307,13 +246,17 @@
 </pre></div>
 
 
-<p>Still looks good. Returning to automatic differentiation, let us try both solvers using this method. We enable automatic differentiation by adding <code>autodiff = true</code> to our <code>Optim.Options</code>.</p>
-<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">autodiff</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)))</span>
+<p>Still looks good. Returning to automatic differentiation, let us try both solvers using this method.  We enable <a href="https://github.com/JuliaDiff/ForwardDiff.jl">forward mode</a> automatic differentiation by adding <code>autodiff = :forward</code> when we construct a <code>OnceDifferentiable</code> instance.</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">od</span> <span class="o">=</span> <span class="n">OnceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">;</span> <span class="n">autodiff</span> <span class="o">=</span> <span class="o">:</span><span class="n">forward</span><span class="p">);</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">od</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">()))</span>
 <span class="go">2-element Array{Float64,1}:</span>
 <span class="go"> 1.0</span>
 <span class="go"> 1.0</span>
 
-<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">Newton</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">autodiff</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)))</span>
+<span class="gp">julia&gt;</span> <span class="n">td</span> <span class="o">=</span> <span class="n">TwiceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">;</span> <span class="n">autodiff</span> <span class="o">=</span> <span class="o">:</span><span class="n">forward</span><span class="p">)</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">Newton</span><span class="p">()))</span>
 <span class="go">2-element Array{Float64,1}:</span>
 <span class="go"> 1.0</span>
 <span class="go"> 1.0</span>
@@ -356,7 +299,7 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../newton_trust_region/" style="color: #fcfcfc;">&laquo; Previous</a></span>

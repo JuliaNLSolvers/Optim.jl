@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="JuliaOpt">
+  <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
   <title>Minimizing a function - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -46,198 +46,141 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../..">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
     <ul class="subnav">
-    <li><span>General information</span></li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Minimizing a function</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#minimizing-a-multivariate-function">Minimizing a multivariate function</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Minimizing a function</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#minimizing-a-multivariate-function">Minimizing a multivariate function</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#box-minimization">Box minimization</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#obtaining-results">Obtaining results</a></li>
-                
-                    <li><a class="toctree-l4" href="#complete-list-of-functions">Complete list of functions</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#input-types">Input types</a></li>
-                
-            
-                <li class="toctree-l3"><a href="#notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</a></li>
-                
-            
-            </ul>
-        
-    </li>
+    <li class="toctree-l3"><a href="#box-minimization">Box minimization</a></li>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../config/">Configurable Options</a>
-        
-    </li>
+    <li class="toctree-l3"><a href="#minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</a></li>
+    
 
+    <li class="toctree-l3"><a href="#obtaining-results">Obtaining results</a></li>
+    
+        <ul>
         
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../tipsandtricks/">Tips and tricks</a>
+            <li><a class="toctree-l4" href="#complete-list-of-functions">Complete list of functions</a></li>
         
-    </li>
+        </ul>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../planned/">Planned Changes</a>
-        
-    </li>
+    <li class="toctree-l3"><a href="#input-types">Input types</a></li>
+    
 
-        
+    <li class="toctree-l3"><a href="#notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</a></li>
+    
+
     </ul>
-<li>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
     <ul class="subnav">
-    <li><span>Algorithms</span></li>
-
-        
-            
+                <li class="">
+                    
+    <span class="caption-text">Solvers</span>
     <ul class="subnav">
-    <li><span>Solvers</span></li>
-
-        
-            
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
     <ul class="subnav">
-    <li><span>Gradient Free</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
+                </li>
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
     <ul class="subnav">
-    <li><span>Gradient Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
+                </li>
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
     <ul class="subnav">
-    <li><span>Hessian Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/newton/">Newton</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
+                </li>
     </ul>
-
-        
+                </li>
     </ul>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/linesearch/">Linesearch</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../algo/precondition/">Preconditioners</a>
-        
-    </li>
-
-        
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/precondition/">Preconditioners</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
     <ul class="subnav">
-    <li><span>Contributing</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../dev/contributing/">Contributing</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../LICENSE/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -268,7 +211,7 @@
     <li>Minimizing a function</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/user/minimization.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/user/minimization.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -301,13 +244,8 @@
 </pre></div>
 
 
-<p>Alternatively, the <code>autodiff</code> keyword will use atomatic differentiation to construct the gradient.</p>
-<div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">LBFGS</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">autodiff</span> <span class="o">=</span> <span class="kc">true</span><span class="p">))</span>
-</pre></div>
-
-
 <p>For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:</p>
-<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
 <span class="k">end</span>
@@ -325,7 +263,7 @@
 
 
 <p>In addition to providing gradients, you can provide a Hessian function <code>h!</code> as well. In our current case this is:</p>
-<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">h!</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">storage</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">h!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1200.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -351,7 +289,7 @@
 <div class="codehilite"><pre><span></span><span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.25</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.1</span><span class="p">]</span>
 <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="nb">Inf</span><span class="p">,</span> <span class="nb">Inf</span><span class="p">]</span>
 <span class="n">initial_x</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">(),</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">OnceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">(),</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">)</span>
 </pre></div>
 
 
@@ -359,12 +297,12 @@
 <p>This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use <code>ConjugateGradient</code> or <code>LBFGS</code> with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.</p>
 <p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an <code>Optim.Options</code> type using the keyword <code>optimizer_o</code>.</p>
 <p>For example, the following restricts the optimization to 2 major iterations</p>
-<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">OnceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 
 
 <p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient</code> optimization to 2</p>
-<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">DifferentiableFunction</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">optimizer_o</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">))</span>
+<div class="codehilite"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">OnceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">),</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Fminbox</span><span class="p">();</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">,</span> <span class="n">optimizer_o</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">2</span><span class="p">))</span>
 </pre></div>
 
 
@@ -394,7 +332,7 @@
 
 
 <p>If we can't remember what method we used, we simply use</p>
-<div class="codehilite"><pre><span></span><span class="n">Optim</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">Optim</span><span class="o">.</span><span class="n">summary</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 </pre></div>
 
 
@@ -402,7 +340,7 @@
 <div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
 <span class="go">3-element Array{Float64,1}:</span>
 <span class="go"> -0.499921</span>
-<span class="go"> -0.3333  </span>
+<span class="go"> -0.3333</span>
 <span class="go"> -1.49994</span>
 
 <span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
@@ -415,7 +353,7 @@
 <p>A complete list of functions can be found below.</p>
 <p>Defined for all methods:</p>
 <ul>
-<li><code>method(res)</code></li>
+<li><code>summary(res)</code></li>
 <li><code>minimizer(res)</code></li>
 <li><code>minimum(res)</code></li>
 <li><code>iterations(res)</code></li>
@@ -486,7 +424,7 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>

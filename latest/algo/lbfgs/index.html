@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="JuliaOpt">
+  <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
   <title>(L-)BFGS - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -46,189 +46,132 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../..">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
     <ul class="subnav">
-    <li><span>General information</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/minimization/">Minimizing a function</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/config/">Configurable Options</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/planned/">Planned Changes</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
     <ul class="subnav">
-    <li><span>Algorithms</span></li>
-
-        
-            
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
     <ul class="subnav">
-    <li><span>Solvers</span></li>
-
-        
-            
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
     <ul class="subnav">
-    <li><span>Gradient Free</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../nelder_mead/">Nelder Mead</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Required</span>
     <ul class="subnav">
-    <li><span>Gradient Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../gradientdescent/">Gradient Descent</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">(L-)BFGS</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#l-bfgs">(L-)BFGS</a></li>
-                
-                    <li><a class="toctree-l4" href="#constructors">Constructors</a></li>
-                
-                    <li><a class="toctree-l4" href="#description">Description</a></li>
-                
-                    <li><a class="toctree-l4" href="#example">Example</a></li>
-                
-                    <li><a class="toctree-l4" href="#references">References</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">(L-)BFGS</a>
     <ul class="subnav">
-    <li><span>Hessian Required</span></li>
-
-        
             
-    <li class="toctree-l1 ">
-        <a class="" href="../newton/">Newton</a>
+    <li class="toctree-l5"><a href="#l-bfgs">(L-)BFGS</a></li>
+    
+        <ul>
         
-    </li>
+            <li><a class="toctree-l6" href="#constructors">Constructors</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#example">Example</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
-        
-    </li>
-
-        
     </ul>
-
-        
+                </li>
     </ul>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../autodiff/">Automatic Differentiation</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../linesearch/">Linesearch</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../precondition/">Preconditioners</a>
-        
-    </li>
-
-        
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
     </ul>
-<li>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
     <ul class="subnav">
-    <li><span>Contributing</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../dev/contributing/">Contributing</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../LICENSE/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -263,7 +206,7 @@
     <li>(L-)BFGS</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/algo/lbfgs.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/lbfgs.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -278,7 +221,7 @@
 <p>This page contains information about BFGS and its limited memory version L-BFGS.</p>
 <p><a id='Constructors-1'></a></p>
 <h2 id="constructors">Constructors</h2>
-<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">hagerzhang!</span><span class="p">,</span>
+<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
        <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
        <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">,</span>
        <span class="n">resetalpha</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)</span>
@@ -286,7 +229,7 @@
 
 
 <div class="codehilite"><pre><span></span><span class="n">LBFGS</span><span class="p">(;</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">hagerzhang!</span><span class="p">,</span>
+        <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
         <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
         <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
 </pre></div>
@@ -342,7 +285,7 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
         <span><a href="../gradientdescent/" style="color: #fcfcfc;">&laquo; Previous</a></span>

@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <meta name="author" content="JuliaOpt">
+  <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
   <title>Nelder Mead - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
@@ -46,187 +46,130 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
 	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../..">Home</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
     <ul class="subnav">
-    <li><span>General information</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/minimization/">Minimizing a function</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/config/">Configurable Options</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../user/planned/">Planned Changes</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
     <ul class="subnav">
-    <li><span>Algorithms</span></li>
-
-        
-            
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
     <ul class="subnav">
-    <li><span>Solvers</span></li>
-
-        
-            
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Free</span>
     <ul class="subnav">
-    <li><span>Gradient Free</span></li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Nelder Mead</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#nelder-mead">Nelder-Mead</a></li>
-                
-                    <li><a class="toctree-l4" href="#constructor">Constructor</a></li>
-                
-                    <li><a class="toctree-l4" href="#description">Description</a></li>
-                
-                    <li><a class="toctree-l4" href="#references">References</a></li>
-                
-            
-            </ul>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../simulated_annealing/">Simulated Annealing</a>
-        
-    </li>
-
-        
-    </ul>
-
-        
-            
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">Nelder Mead</a>
     <ul class="subnav">
-    <li><span>Gradient Required</span></li>
-
-        
             
-    <li class="toctree-l1 ">
-        <a class="" href="../gradientdescent/">Gradient Descent</a>
+    <li class="toctree-l5"><a href="#nelder-mead">Nelder-Mead</a></li>
+    
+        <ul>
         
-    </li>
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
 
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../lbfgs/">(L-)BFGS</a>
-        
-    </li>
-
-        
     </ul>
-
-        
-            
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
     <ul class="subnav">
-    <li><span>Hessian Required</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../newton/">Newton</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
-        
-    </li>
-
-        
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
     </ul>
-
-        
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
     </ul>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../autodiff/">Automatic Differentiation</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../linesearch/">Linesearch</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../precondition/">Preconditioners</a>
-        
-    </li>
-
-        
+                </li>
     </ul>
-<li>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+    </ul>
+	    </li>
           
-            <li>
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
     <ul class="subnav">
-    <li><span>Contributing</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../dev/contributing/">Contributing</a>
-        
-    </li>
-
-        
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
     </ul>
-<li>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../../LICENSE/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -261,7 +204,7 @@
     <li>Nelder Mead</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaOpt/Optim.jl/edit/master/docs/algo/nelder_mead.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/nelder_mead.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -303,7 +246,7 @@
 <p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
 <p>If a specific simplex is wanted, it is possible to construct the $n+1$ vector of $n$ dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
-<span class="k">immutable</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
+<span class="n">struct</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
 <span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">S</span><span class="o">::</span><span class="n">MySimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
 <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">(</span><span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">MySimplexer</span><span class="p">()))</span>
@@ -311,7 +254,7 @@
 
 
 <p>Say we want to implement the initial simplex as in Matlab's <code>fminsearch</code>. This is very close to the <code>AffineSimplexer</code> above, but with a small twist. Instead of always adding the <code>a</code>, a constant is only added to entries that are zero. If the entry is non-zero, five percent of the level is added. This might be implemented (by the user) as</p>
-<div class="codehilite"><pre><span></span><span class="k">immutable</span> <span class="n">MatlabSimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span>
+<div class="codehilite"><pre><span></span><span class="n">struct</span> <span class="n">MatlabSimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span>
     <span class="n">a</span><span class="o">::</span><span class="kt">Float64</span>
     <span class="n">b</span><span class="o">::</span><span class="kt">Float64</span>
 <span class="k">end</span>
@@ -350,7 +293,7 @@
         <a href="../simulated_annealing/" class="btn btn-neutral float-right" title="Simulated Annealing">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../user/planned/" class="btn btn-neutral" title="Planned Changes"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../user/tipsandtricks/" class="btn btn-neutral" title="Tips and tricks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -375,10 +318,10 @@
   <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
-          <a href="https://github.com/JuliaOpt/Optim.jl/" class="icon icon-github" style="float: left; color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../../user/planned/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../../user/tipsandtricks/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../simulated_annealing/" style="color: #fcfcfc">Next &raquo;</a></span>
