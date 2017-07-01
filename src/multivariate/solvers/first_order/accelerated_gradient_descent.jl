@@ -46,12 +46,9 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
 end
 
 function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
-    n = length(state.x)
     state.iteration += 1
     # Search direction is always the negative gradient
-    @simd for i in 1:n
-        @inbounds state.s[i] = -gradient(d, i)
-    end
+    state.s .= .-gradient(d)
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
@@ -61,15 +58,11 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
-    @simd for i in 1:n
-        @inbounds state.y[i] = state.x[i] + state.alpha * state.s[i]
-    end
+    state.y .= state.x .+ state.alpha.*state.s
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
-    @simd for i in 1:n
-        @inbounds state.x[i] = state.y[i] + scaling * (state.y[i] - state.y_previous[i])
-    end
+    state.x .= state.y .+ scaling.*(state.y .- state.y_previous)
 
     lssuccess == false # break on linesearch error
 end

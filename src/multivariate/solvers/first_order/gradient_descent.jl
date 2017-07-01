@@ -38,13 +38,10 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
 end
 
 function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
-    n = length(state.x)
     # Search direction is always the negative preconditioned gradient
     method.precondprep!(method.P, state.x)
     A_ldiv_B!(state.s, method.P, gradient(d))
-    @simd for i in 1:n
-        @inbounds state.s[i] = -state.s[i]
-    end
+    scale!(state.s,-1)
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)

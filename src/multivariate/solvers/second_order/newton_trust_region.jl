@@ -255,8 +255,6 @@ end
 
 
 function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
-    n = length(state.x)
-
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
@@ -265,9 +263,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
     copy!(state.x_previous, state.x)
 
     # Update current position
-    @simd for i in 1:n
-        @inbounds state.x[i] = state.x[i] + state.s[i]
-    end
+    state.x .+= state.s
 
     # Update the function value and gradient
     copy!(state.g_previous, gradient(d))
