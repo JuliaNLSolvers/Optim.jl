@@ -101,3 +101,27 @@ function update_h!(d, state, method::BFGS)
         end
     end
 end
+
+function assess_convergence(state::BFGSState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::BFGS, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["~inv(H)"] = copy(state.invH)
+        dt["Current step size"] = state.alpha
+    end
+    g_norm = vecnorm(gradient(d), Inf)
+    update!(tr,
+    iteration,
+    value(d),
+    g_norm,
+    dt,
+    options.store_trace,
+    options.show_trace,
+    options.show_every,
+    options.callback)
+end

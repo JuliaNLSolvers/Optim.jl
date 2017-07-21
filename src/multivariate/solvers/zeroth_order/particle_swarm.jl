@@ -443,3 +443,23 @@ function compute_cost!(f,
     end
     nothing
 end
+
+function assess_convergence(state::ParticleSwarmState, d, options)
+  false, false, false, false, false
+end
+
+function trace!(tr, d, state, iteration, method::ParticleSwarm, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+    end
+    update!(tr,
+            state.iteration,
+            d.f_x,
+            NaN,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end

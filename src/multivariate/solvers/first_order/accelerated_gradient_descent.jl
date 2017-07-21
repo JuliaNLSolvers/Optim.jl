@@ -66,3 +66,12 @@ function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::
 
     lssuccess == false # break on linesearch error
 end
+
+function assess_convergence(state::AcceleratedGradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+
+function trace!(tr, d, state, iteration, method::AcceleratedGradientDescent, options)
+  common_1order_trace!(tr, d, state, iteration, method, options)
+end
