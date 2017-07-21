@@ -55,5 +55,5 @@ function assess_convergence(state::MomentumGradientDescentState, d, options)
 end
 
 function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options)
-  common_1order_trace!(tr, d, state, iteration, method, options)
+  common_trace!(tr, d, state, iteration, method, options)
 end

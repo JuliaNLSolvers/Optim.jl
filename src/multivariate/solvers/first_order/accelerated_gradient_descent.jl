@@ -73,5 +73,5 @@ end
 
 
 function trace!(tr, d, state, iteration, method::AcceleratedGradientDescent, options)
-  common_1order_trace!(tr, d, state, iteration, method, options)
+  common_trace!(tr, d, state, iteration, method, options)
 end
