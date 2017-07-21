@@ -4,7 +4,7 @@
     
     <url>
      <loc>/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,19 +13,19 @@
         
     <url>
      <loc>/user/minimization/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/user/config/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/user/tipsandtricks/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -41,19 +41,19 @@
         
     <url>
      <loc>/algo/autodiff/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/algo/linesearch/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>/algo/precondition/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -63,7 +63,7 @@
         
     <url>
      <loc>/dev/contributing/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -72,7 +72,7 @@
     
     <url>
      <loc>/LICENSE/</loc>
-     <lastmod>2017-07-01</lastmod>
+     <lastmod>2017-07-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
