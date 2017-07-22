@@ -255,8 +255,6 @@ end
 
 
 function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
-    n = length(state.x)
-
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
@@ -265,9 +263,7 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
     copy!(state.x_previous, state.x)
 
     # Update current position
-    @simd for i in 1:n
-        @inbounds state.x[i] = state.x[i] + state.s[i]
-    end
+    state.x .+= state.s
 
     # Update the function value and gradient
     copy!(state.g_previous, gradient(d))
@@ -315,4 +311,48 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
     end
 
     false
+end
+
+function assess_convergence(state::NewtonTrustRegionState, d, options)
+    x_converged, f_converged, g_converged, converged, f_increased = false, false, false, false, false
+    if state.rho > state.eta
+        # Accept the point and check convergence
+        x_converged,
+        f_converged,
+        g_converged,
+        converged,
+        f_increased = assess_convergence(state.x,
+                                       state.x_previous,
+                                       value(d),
+                                       state.f_x_previous,
+                                       gradient(d),
+                                       options.x_tol,
+                                       options.f_tol,
+                                       options.g_tol)
+    end
+    x_converged, f_converged, g_converged, converged, f_increased
+end
+
+function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["delta"] = copy(state.delta)
+        dt["interior"] = state.interior
+        dt["hard case"] = state.hard_case
+        dt["reached_subproblem_solution"] = state.reached_subproblem_solution
+        dt["lambda"] = state.lambda
+    end
+    g_norm = norm(gradient(d), Inf)
+    update!(tr,
+            iteration,
+            value(d),
+            g_norm,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
 end

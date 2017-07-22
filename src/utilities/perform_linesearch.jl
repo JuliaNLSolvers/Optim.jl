@@ -11,9 +11,7 @@ function checked_dphi0!{M<:Union{BFGS, LBFGS}}(state, d, method::M)
         end
 
         # Re-calculate direction
-        @simd for i in 1:length(state.x)
-            @inbounds state.s[i] = -gradient(d, i)
-        end
+        state.s .= .-gradient(d)
         dphi0 = vecdot(gradient(d), state.s)
     end
     return dphi0
@@ -22,9 +20,7 @@ function checked_dphi0!(state, d, method::ConjugateGradient)
     # Reset the search direction if it becomes corrupted
     dphi0 = vecdot(gradient(d), state.s)
     if dphi0 >= 0
-        @simd for i in 1:length(state.x)
-            @inbounds state.s[i] = -state.pg[i]
-        end
+        state.s .= .-state.pg
         dphi0 = vecdot(gradient(d), state.s)
     end
     dphi0

@@ -87,9 +87,7 @@ end
 function update_h!(d, state, method::BFGS)
     n = length(state.x)
     # Measure the change in the gradient
-    @simd for i in 1:n
-        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
-    end
+    state.dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = vecdot(state.dx, state.dg)
@@ -101,10 +99,35 @@ function update_h!(d, state, method::BFGS)
     c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
     c2 = 1 / dx_dg
 
+    # TODO BLASify this
     # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
     for i in 1:n
         @simd for j in 1:n
             @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
         end
     end
+end
+
+function assess_convergence(state::BFGSState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::BFGS, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["~inv(H)"] = copy(state.invH)
+        dt["Current step size"] = state.alpha
+    end
+    g_norm = vecnorm(gradient(d), Inf)
+    update!(tr,
+    iteration,
+    value(d),
+    g_norm,
+    dt,
+    options.store_trace,
+    options.show_trace,
+    options.show_every,
+    options.callback)
 end

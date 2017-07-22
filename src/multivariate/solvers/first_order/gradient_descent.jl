@@ -43,14 +43,11 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
 end
 
 function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
-    n = length(state.x)
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     method.precondprep!(method.P, state.x)
     A_ldiv_B!(state.s, method.P, gradient(d))
-    @simd for i in 1:n
-        @inbounds state.s[i] = -state.s[i]
-    end
+    scale!(state.s,-1)
     if method.P != nothing
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
     end
@@ -66,4 +63,12 @@ function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDes
     LinAlg.axpy!(state.alpha, state.s, state.x)
     retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
+end
+
+function assess_convergence(state::GradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::GradientDescent, options)
+  common_trace!(tr, d, state, iteration, method, options)
 end

@@ -66,9 +66,7 @@ function barrier_combined{T, FB<:Function}(gfunc, gbarrier, g, x::Array{T}, fb::
     calc_g = !(g === nothing)
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if calc_g
-        @simd for i = 1:length(g)
-            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
-        end
+        g .= gfunc .+ mu.*gbarrier
     end
     return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
 end
@@ -92,12 +90,7 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, mu)
-    @inbounds @simd for i = 1:length(x)
-        xi = x[i]
-        li = l[i]
-        ui = u[i]
-        P.diag[i] = 1/(mu*(1/(xi-li)^2 + 1/(ui-xi)^2) + 1) # +1 like identity far from edges
-    end
+    @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
 end
 
 struct Fminbox{T<:Optimizer} <: Optimizer end
@@ -225,9 +218,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         mu *= mufactor
 
         # Test for convergence
-        @simd for i = 1:length(x)
-            @inbounds g[i] = gfunc[i] + mu*gbarrier[i]
-        end
+        g .= gfunc .+ mu.*gbarrier
 
         results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
         f_increased && !allow_f_increases && break

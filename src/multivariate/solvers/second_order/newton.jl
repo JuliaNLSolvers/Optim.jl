@@ -56,3 +56,26 @@ function update_state!{T}(d, state::NewtonState{T}, method::Newton)
     LinAlg.axpy!(state.alpha, state.s, state.x)
     lssuccess == false # break on linesearch error
 end
+
+function assess_convergence(state::NewtonState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::Newton, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+    end
+    g_norm = vecnorm(gradient(d), Inf)
+    update!(tr,
+            iteration,
+            value(d),
+            g_norm,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end

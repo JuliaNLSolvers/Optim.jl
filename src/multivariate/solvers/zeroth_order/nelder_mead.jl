@@ -268,3 +268,25 @@ function after_while!{F}(f::F, state, method::NelderMead, options)
     f.f_x = f_min
     state.x[:] = x_min
 end
+
+function assess_convergence(state::NelderMeadState, d, options)
+    g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
+    return false, false, g_converged, g_converged, false
+end
+
+function trace!(tr, d, state, iteration, method::NelderMead, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["centroid"] = copy(state.x_centroid)
+        dt["step_type"] = state.step_type
+    end
+    update!(tr,
+    iteration,
+    state.f_lowest,
+    state.nm_x,
+    dt,
+    options.store_trace,
+    options.show_trace,
+    options.show_every,
+    options.callback)
+end

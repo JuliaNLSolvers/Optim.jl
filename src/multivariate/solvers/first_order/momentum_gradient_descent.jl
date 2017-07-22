@@ -41,24 +41,26 @@ function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x
 end
 
 function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
-    n = length(state.x)
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
-    @simd for i in 1:n
-        @inbounds state.s[i] = -gradient(d, i)
-    end
+    state.s .= .-gradient(d)
 
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Update current position
-    @simd for i in 1:n
-        # Need to move x into x_previous while using x_previous and creating "x_new"
-        @inbounds tmp = state.x_previous[i]
-        @inbounds state.x_previous[i] = state.x[i]
-        @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
-    end
+    # Update position, and backup current one
+    x_current = copy(state.x)
+    state.x .+= state.alpha.*state.s .+ method.mu.*(state.x .- state.x_previous)
+    state.x_previous .= x_current
     retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
+end
+
+function assess_convergence(state::MomentumGradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options)
+  common_trace!(tr, d, state, iteration, method, options)
 end
