@@ -22,6 +22,7 @@ The following manifolds are currently supported:
 * Flat: Euclidean space, does nothing
 * Sphere: spherical constraint `||x|| = 1`
 * Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. `X'*X = I`
+
 The following meta-manifolds construct manifolds out of pre-existing ones:
 * PowerManifold: identical copies of a specified manifold
 * ProductManifold: product of two (potentially different) manifolds
@@ -31,10 +32,6 @@ See `test/multivariate/manifolds.jl` for usage examples.
 Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,x)` and `retract!(M::YourManifold,g,x)`. If you implement another manifold or optimization method, please contribute a PR!
 
 ## References
-The Geometry of Algorithms with Orthogonality Constraints
-Alan Edelman, Tomás A. Arias, Steven T. Smith
-SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
+The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
 
-Optimization Algorithms on Matrix Manifolds 
-P.-A. Absil, R. Mahony, R. Sepulchre
-Princeton University Press, 2008
+Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008
