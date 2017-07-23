@@ -14,7 +14,8 @@ function twoloop!(s::Vector,
                   pseudo_iteration::Integer,
                   alpha::Vector,
                   q::Vector,
-                  precon)
+                  precon,
+                  d)
     # Count number of parameters
     n = length(s)
 
@@ -40,7 +41,7 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    A_ldiv_B!(s, precon, q)
+    A_ldiv_B!(real_to_complex(d,s), precon, real_to_complex(d,q))
 
     # Forward pass
     for index in lower:1:upper
@@ -139,12 +140,12 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
 
     # update the preconditioner
-    method.precondprep!(method.P, state.x)
+    method.precondprep!(method.P, real_to_complex(d,state.x))
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, vec(state.twoloop_q), method.P)
+             state.twoloop_alpha, vec(state.twoloop_q), method.P, d)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
 

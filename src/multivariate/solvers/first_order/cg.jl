@@ -119,8 +119,8 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
-    method.precondprep!(method.P, initial_x)
-    A_ldiv_B!(pg, method.P, gradient(d))
+    method.precondprep!(method.P, real_to_complex(d,initial_x))
+    A_ldiv_B!(real_to_complex(d,pg), method.P, real_to_complex(d,gradient(d)))
     if method.P != nothing
         project_tangent!(method.manifold, real_to_complex(d,pg), real_to_complex(d,initial_x))
     end
@@ -170,13 +170,13 @@ function update_state!{T}(d, state::ConjugateGradientState{T}, method::Conjugate
         # but I am worried about round-off here, so instead we make an
         # extra copy, which is probably minimal overhead.
         # -----------------
-        method.precondprep!(method.P, state.x)
-        dPd = dot(state.s, method.P, state.s)
+        method.precondprep!(method.P, real_to_complex(d,state.x))
+        dPd = dot(real_to_complex(d,state.s), method.P, real_to_complex(d,state.s))
         etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
         state.y .= gradient(d) .- state.g_previous
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
-        A_ldiv_B!(state.pg, method.P, gradient(d))
+        A_ldiv_B!(real_to_complex(d,state.pg), method.P, real_to_complex(d,gradient(d)))
         state.py .= state.pg .- state.py
         betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
         beta = max(betak, etak)

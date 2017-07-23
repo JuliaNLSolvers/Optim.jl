@@ -45,8 +45,8 @@ end
 function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
-    method.precondprep!(method.P, state.x)
-    A_ldiv_B!(state.s, method.P, gradient(d))
+    method.precondprep!(method.P, real_to_complex(d,state.x))
+    A_ldiv_B!(real_to_complex(d,state.s), method.P, real_to_complex(d,gradient(d)))
     scale!(state.s,-1)
     if method.P != nothing
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
