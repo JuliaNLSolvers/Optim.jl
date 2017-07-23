@@ -19,8 +19,8 @@ end
 
 # Fake objective function implementing a retraction
 type ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
-    manifold :: Manifold
-    inner_obj :: T
+    manifold::Manifold
+    inner_obj::T
 end
 iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
 # TODO is it safe here to call retract! and change x?
