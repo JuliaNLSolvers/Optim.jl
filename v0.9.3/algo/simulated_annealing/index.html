@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Simulated Annealing - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Simulated Annealing";
+    var mkdocs_page_input_path = "algo/simulated_annealing.md";
+    var mkdocs_page_url = "/algo/simulated_annealing/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">Simulated Annealing</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#simulated-annealing">Simulated Annealing</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#example">Example</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Gradient Free &raquo;</li>
+        
+      
+    
+    <li>Simulated Annealing</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/simulated_annealing.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Simulated-Annealing-1'></a></p>
+<h1 id="simulated-annealing">Simulated Annealing</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">SimulatedAnnealing</span><span class="p">(;</span> <span class="n">neighbor</span> <span class="o">=</span> <span class="n">default_neighbor!</span><span class="p">,</span>
+                    <span class="n">T</span> <span class="o">=</span> <span class="n">default_temperature</span><span class="p">,</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="n">kirkpatrick</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The constructor takes three keywords:</p>
+<ul>
+<li><code>neighbor = a!(x_proposed, x_current)</code>, a mutating function of the current x, and the proposed x</li>
+<li><code>T = b(iteration)</code>, a function of the current iteration that returns a temperature</li>
+<li><code>p = c(f_proposal, f_current, T)</code>, a function of the current temperature, current function value and proposed function value that returns an acceptance probability</li>
+</ul>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Simulated Annealing is a derivative free method for optimization. It is based on the Metropolis-Hastings algorithm that was originally used to generate samples from a thermodynamics system, and is often used to generate draws from a posterior when doing Bayesian inference. As such, it is a probabilistic method for finding the minimum of a function, often over a quite large domains. For the historical reasons given above, the algorithm uses terms such as cooling, temperature, and acceptance probabilities.</p>
+<p>As the constructor shows, a simulated annealing implementation is characterized by a temperature, a neighbor function, and an acceptance probability. The temperature controls how volatile the changes in minimizer candidates are allowed to be, as it enters the acceptance probability. For example, the original Kirkpatrick et al. acceptance probability function can be written as follows</p>
+<div class="codehilite"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">f_proposal</span><span class="p">,</span> <span class="n">f_current</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">f_proposal</span> <span class="o">-</span> <span class="n">f_current</span><span class="p">)</span><span class="o">/</span><span class="n">T</span><span class="p">)</span>
+</pre></div>
+
+
+<p>A high temperature makes it more likely that a draw is accepted, by pushing acceptance probability to 1. As in the Metropolis-Hastings algorithm, we always accept a smaller function value, but we also sometimes accept a larger value. As the temperature decreases, we're more and more likely to only accept candidate <code>x</code>'s that lowers the function value. To obtain a new <code>f_proposal</code>, we need a neighbor function. A simple neighbor function adds a standard normal draw to each dimension of <code>x</code></p>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">neighbor!</span><span class="p">(</span><span class="n">x_proposal</span><span class="o">::</span><span class="kt">Array</span><span class="p">,</span> <span class="n">x</span><span class="o">::</span><span class="kt">Array</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="kp">in</span> <span class="n">eachindex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x_proposal</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">randn</span><span class="p">()</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p>As we see, it is not really possible to disentangle the role of the different components of the algorithm. For example, both the functional form of the acceptance function, the temperature and (indirectly) the neighbor function determine if the next draw of <code>x</code> is accepted or not.</p>
+<p>The current implementation of Simulated Annealing is very rough.  It lacks quite a few features which are normally part of a proper SA implementation. A better implementation is under way, see <a href="https://github.com/JuliaNLSolvers/Optim.jl/issues/200">this issue</a>.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../gradientdescent/" class="btn btn-neutral float-right" title="Gradient Descent">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../nelder_mead/" class="btn btn-neutral" title="Nelder Mead"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../nelder_mead/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../gradientdescent/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>

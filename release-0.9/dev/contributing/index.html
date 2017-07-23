@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Contributing - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Contributing";
+    var mkdocs_page_input_path = "dev/contributing.md";
+    var mkdocs_page_url = "/dev/contributing/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../algo/precondition/">Preconditioners</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <a class="current" href="./">Contributing</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#notes-for-contributing">Notes for contributing</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#things-to-consider">Things to consider</a></li>
+        
+            <li><a class="toctree-l4" href="#adding-a-solver">Adding a solver</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Contributing &raquo;</li>
+        
+      
+    
+    <li>Contributing</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/dev/contributing.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Notes-for-contributing-1'></a></p>
+<h2 id="notes-for-contributing">Notes for contributing</h2>
+<p>We are always happy to get help from people who normally do not contribute to the package. However, to make the process run smoothly, we ask you to read this page before creating your pull request. That way it is more probable that your changes will be incorporated, and in the end it will mean less work for everyone.</p>
+<p><a id='Things-to-consider-1'></a></p>
+<h3 id="things-to-consider">Things to consider</h3>
+<p>When proposing a change to <code>Optim.jl</code>, there are a few things to consider. If you're in doubt feel free to reach out. A simple way to get in touch, is to join our <a href="https://gitter.im/JuliaOpt/Optim.jl">gitter channel</a>.</p>
+<p>Before submitting a pull request, please consider the following bullets:</p>
+<ul>
+<li>Did you remember to provide tests for your changes? If not, please do so, or ask for help.</li>
+<li>Did your change add new functionality? Remember to add a section in the documentation.</li>
+<li>Did you change existing code in a breaking way? Then remember to use Julia's deprecation tools to help users migrate to the new syntax.</li>
+<li>Add a note in the NEWS.md file, so we can keep track of changes between versions.</li>
+</ul>
+<p><a id='Adding-a-solver-1'></a></p>
+<h3 id="adding-a-solver">Adding a solver</h3>
+<p>If you're contributing a new solver, you shouldn't need to touch any of the code in <code>src/optimize.jl</code>. You should rather add a file named (<code>solver</code> is the name of the solver) <code>solver.jl</code> in <code>src</code>, and make sure that you define an <code>Optimizer</code> subtype <code>struct Solver &lt;: Optimizer end</code> with appropriate fields, a default constructor with a keyword for each field, a state type that holds all variables that are (re)used throughout the iterative procedure, an <code>initial_state</code> that initializes such a state, and  an <code>update!</code> method that does the actual work. Say you want to contribute a solver called <code>Minim</code>, then your <code>src/minim.jl</code> file would look something like</p>
+<div class="codehilite"><pre><span></span><span class="nx">struct</span> <span class="nx">Minim</span><span class="p">{</span><span class="nx">F</span><span class="o">&lt;:</span><span class="nb">Function</span><span class="p">,</span> <span class="nx">T</span><span class="p">}</span> <span class="o">&lt;:</span> <span class="nx">Optimizer</span>
+    <span class="nx">linesearch</span><span class="o">!::</span><span class="nx">F</span>
+    <span class="nx">minim_parameter</span><span class="o">::</span><span class="nx">T</span>
+<span class="nx">end</span>
+
+<span class="nx">Minim</span><span class="p">(;</span> <span class="nx">linesearch</span> <span class="o">=</span> <span class="nx">LineSearches</span><span class="p">.</span><span class="nx">HagerZhang</span><span class="p">(),</span> <span class="nx">minim_parameter</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">=</span>
+  <span class="nx">Minim</span><span class="p">(</span><span class="nx">linesearch</span><span class="p">,</span> <span class="nx">minim_parameter</span><span class="p">)</span>
+
+<span class="nx">type</span> <span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">,</span><span class="nx">G</span><span class="p">}</span>
+  <span class="nx">x</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
+  <span class="nx">x_previous</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
+  <span class="nx">f_x_previous</span><span class="o">::</span><span class="nx">T</span>
+  <span class="nx">s</span><span class="o">::</span><span class="nb">Array</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
+  <span class="kd">@add_linesearch_fields</span><span class="p">()</span>
+<span class="nx">end</span>
+
+<span class="kd">function</span> <span class="nx">initial_state</span><span class="p">(</span><span class="nx">method</span><span class="o">::</span><span class="nx">Minim</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">d</span><span class="p">,</span> <span class="nx">initial_x</span><span class="p">)</span>
+<span class="err">#</span> <span class="nx">prepare</span> <span class="nx">cache</span> <span class="nx">variables</span> <span class="nx">etc</span> <span class="nx">here</span>
+
+<span class="nx">end</span>
+
+<span class="kd">function</span> <span class="nx">update</span><span class="o">!</span><span class="p">{</span><span class="nx">T</span><span class="p">}(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">state</span><span class="o">::</span><span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">},</span> <span class="nx">method</span><span class="o">::</span><span class="nx">Minim</span><span class="p">)</span>
+    <span class="err">#</span> <span class="nx">code</span> <span class="k">for</span> <span class="nx">Minim</span> <span class="nx">here</span>
+    <span class="kc">false</span> <span class="err">#</span> <span class="nx">should</span> <span class="nx">the</span> <span class="nx">procedure</span> <span class="nx">force</span> <span class="nx">quit</span><span class="o">?</span>
+<span class="nx">end</span>
+</pre></div>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../LICENSE/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../../algo/precondition/" class="btn btn-neutral" title="Preconditioners"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../../algo/precondition/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../../LICENSE/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
