@@ -98,6 +98,31 @@ Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
 Base.summary{O}(::Fminbox{O}) = "Fminbox with $(summary(O()))"
 
+function optimize{T<:AbstractFloat,O<:Optimizer}(obj,
+                                                 initial_x::Array{T},
+                                                 l::Array{T},
+                                                 u::Array{T},
+                                                 F::Fminbox{O}; kwargs...)
+     optimize(OnceDifferentiable(obj, initial_x), l, u, F; kwargs...)
+end
+
+function optimize{T<:AbstractFloat,O<:Optimizer}(f,
+                                                 g!,
+                                                 initial_x::Array{T},
+                                                 l::Array{T},
+                                                 u::Array{T},
+                                                 F::Fminbox{O}; kwargs...)
+     optimize(OnceDifferentiable(f, g!, initial_x), l, u, F; kwargs...)
+end
+
+
+function optimize{T<:AbstractFloat,O<:Optimizer}(df::OnceDifferentiable,
+                                                 l::Array{T},
+                                                 u::Array{T},
+                                                 F::Fminbox{O}; kwargs...)
+    optimize(df, df.last_x_f, l, u, F; kwargs...)
+end
+
 function optimize{T<:AbstractFloat,O<:Optimizer}(
         df::OnceDifferentiable,
         initial_x::Array{T},
