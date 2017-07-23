@@ -2,19 +2,22 @@
 # project_tangent!(m, g, x): project g on the tangent space to m at x
 # retract!(m, x): map x back to a point on the manifold m
 
-## To add:
-## * Second order algorithms
-## * Vector transport
-## * Arbitrary inner product
-## * More retractions
-## * More manifolds from ROPTLIB
-## * {x, Ax = b}
-## * Intersection manifold (just do the projection on both manifolds iteratively and hope it converges)
+# For mathematical references, see e.g.
+
+# The Geometry of Algorithms with Orthogonality Constraints
+# Alan Edelman, Tomás A. Arias, and Steven T. Smith
+# SIAM. J. Matrix Anal. & Appl., 20(2), 303–353. (51 pages)
+
+# Optimization Algorithms on Matrix Manifolds 
+# P.-A. Absil, R. Mahony, R. Sepulchre 
+# Princeton University Press, 2008
+
 
 abstract type Manifold
 end
 
 
+# Fake objective function implementing a retraction
 type ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
     manifold :: Manifold
     inner_obj :: T
@@ -68,9 +71,10 @@ end
 retract!(S::Sphere, x) = normalize!(x)
 project_tangent!(S::Sphere,g,x) = (g .= g .- real(vecdot(x,g)).*x)
 
-# N x n matrices such that X'X = I
-# TODO: add more retractions, and support arbitrary inner product
+# N x n matrices with orthonormal columns, i.e. such that X'X = I
+# Special cases: N x 1 = sphere, N x N = O(N) / U(N)
 abstract type Stiefel <: Manifold end
+# Two types of retraction: SVD is the most stable, CholQR the fastest
 struct Stiefel_CholQR <: Stiefel end
 struct Stiefel_SVD <: Stiefel end
 function Stiefel(retraction=:SVD)
@@ -82,23 +86,20 @@ function Stiefel(retraction=:SVD)
 end
 
 function retract!(S::Stiefel_SVD, X)
-    U,S,V = svd(X)
+    U,S,V = svd(copy(X))
     X .= U*V'
 end
 function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
     X .= X/chol(overlap)
 end
-project_tangent!(S::Stiefel, G, X) = (G .= X*(X'G .- G'X)./2 .+ G .- X*(X'G))
+project_tangent!(S::Stiefel, G, X) = (G .-= X*((X'G .+ G'X)./2))
 
-
-
-# TODO is there a better way of doing power and product manifolds?
 
 # multiple copies of the same manifold. Points are arrays of arbitrary
 # dimensions, and the first (given by inner_dims) are points of the
-# inner manifold. E.g. the product of 2x2 Stiefel manifolds of dimension N x n
-# would be a N x n x 2 x 2 matrix
+# inner manifold. E.g. the product of 2x2 Stiefel manifolds of
+# dimension N x n would be a N x n x 2 x 2 matrix
 struct PowerManifold<:Manifold
     inner_manifold::Manifold #type of embedded manifold
     inner_dims::Tuple #dimension of the embedded manifolds
@@ -116,7 +117,6 @@ function project_tangent!(m::PowerManifold, g, x)
     end
     g
 end
-# linear indexing
 @inline function get_inner(m::PowerManifold, x, i::Int)
     size_inner = prod(m.inner_dims)
     size_outer = prod(m.outer_dims)
@@ -126,7 +126,7 @@ end
 @inline get_inner(m::PowerManifold, x, i::Tuple) = get_inner(m, x, ind2sub(m.outer_dims, i...))
 
 #Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
-#P is assumed to be a flat array, and x1 is before x2 in memory
+#P is stored as a flat 1D array, and x1 is before x2 in memory
 struct ProductManifold<:Manifold
     m1::Manifold
     m2::Manifold
