@@ -15,7 +15,8 @@ function twoloop!(s::Vector,
                   alpha::Vector,
                   q::Vector,
                   precon,
-                  d)
+                  devec_fun #all data is passed to this function is flat vectors, but precon might expect something different. this function undoes the flattening
+                  )
     # Count number of parameters
     n = length(s)
 
@@ -41,7 +42,7 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    A_ldiv_B!(real_to_complex(d,s), precon, real_to_complex(d,q))
+    A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
 
     # Forward pass
     for index in lower:1:upper
@@ -143,9 +144,10 @@ function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
     method.precondprep!(method.P, real_to_complex(d,state.x))
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
+    devec_fun(x) = real_to_complex(d,reshape(x, size(state.s)))
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, vec(state.twoloop_q), method.P, d)
+             state.twoloop_alpha, vec(state.twoloop_q), method.P, devec_fun)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
 
