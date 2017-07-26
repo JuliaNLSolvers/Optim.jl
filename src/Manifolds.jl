@@ -54,27 +54,29 @@ end
 project_tangent(M::Manifold,x) = project_tangent!(M, similar(x), x)
 retract(M::Manifold,x) = retract!(M, copy(x))
 
-# Flat manifold = {R,C}^n
+"""Flat Euclidean space {R,C}^N, with projections equal to the identity."""
+struct Flat <: Manifold
+end
 # all the functions below are no-ops, and therefore the generated code
 # for the flat manifold should be exactly the same as the one with all
 # the manifold stuff removed
-struct Flat <: Manifold
-end
 retract(M::Flat, x) = x
 retract!(M::Flat,x) = x
 project_tangent(M::Flat, g, x) = g
 project_tangent!(M::Flat, g, x) = g
 
-# {||x|| = 1}
+"""Spherical manifold {|x| = 1}."""
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
 project_tangent!(S::Sphere,g,x) = (g .= g .- real(vecdot(x,g)).*x)
 
-# N x n matrices with orthonormal columns, i.e. such that X'X = I
-# Special cases: N x 1 = sphere, N x N = O(N) / U(N)
+"""
+N x n matrices with orthonormal columns, i.e. such that X'X = I.
+Special cases: N x 1 = sphere, N x N = orthogonal/unitary group.
+Stiefel() uses a SVD algorithm to compute the retraction. To use a Cholesky-based orthogonalization, use Stiefel_CholQR()
+"""
 abstract type Stiefel <: Manifold end
-# Two types of retraction: SVD is the most stable, CholQR the fastest
 struct Stiefel_CholQR <: Stiefel end
 struct Stiefel_SVD <: Stiefel end
 function Stiefel(retraction=:SVD)
@@ -84,7 +86,6 @@ function Stiefel(retraction=:SVD)
         Stiefel_SVD()
     end
 end
-
 function retract!(S::Stiefel_SVD, X)
     U,S,V = svd(copy(X))
     X .= U*V'
@@ -96,14 +97,18 @@ end
 project_tangent!(S::Stiefel, G, X) = (G .-= X*((X'G .+ G'X)./2))
 
 
-# multiple copies of the same manifold. Points are arrays of arbitrary
-# dimensions, and the first (given by inner_dims) are points of the
-# inner manifold. E.g. the product of 2x2 Stiefel manifolds of
-# dimension N x n would be a N x n x 2 x 2 matrix
+
+"""
+Multiple copies of the same manifold. Points are stored as inner_dims x outer_dims,
+e.g. the product of 2x2 Stiefel manifolds of dimension N x n would be a N x n x 2 x 2 matrix.
+"""
 struct PowerManifold<:Manifold
-    inner_manifold::Manifold #type of embedded manifold
-    inner_dims::Tuple #dimension of the embedded manifolds
-    outer_dims::Tuple #number of embedded manifolds
+    "Type of embedded manifold"
+    inner_manifold::Manifold 
+    "Dimension of the embedded manifolds"
+    inner_dims::Tuple
+    "Number of embedded manifolds"
+    outer_dims::Tuple
 end
 function retract!(m::PowerManifold, x)
     for i=1:prod(m.outer_dims)
@@ -125,8 +130,12 @@ end
 end
 @inline get_inner(m::PowerManifold, x, i::Tuple) = get_inner(m, x, ind2sub(m.outer_dims, i...))
 
-#Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
-#P is stored as a flat 1D array, and x1 is before x2 in memory
+
+"""
+Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
+P is stored as a flat 1D array, and x1 is before x2 in memory.
+Use get_inner(m, x, {1,2}) to access x1 and x2 in their original format.
+"""
 struct ProductManifold<:Manifold
     m1::Manifold
     m2::Manifold
