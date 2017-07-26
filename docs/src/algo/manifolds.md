@@ -19,7 +19,7 @@ Optim.optimize(f, g!, x0, Optim.ConjugateGradient(manifold=manif))
 All first-order optimization methods are supported.
 
 The following manifolds are currently supported:
-* Flat: Euclidean space, does nothing
+* Flat: Euclidean space, default. Standard unconstrained optimization.
 * Sphere: spherical constraint `||x|| = 1`
 * Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. `X'*X = I`
 
