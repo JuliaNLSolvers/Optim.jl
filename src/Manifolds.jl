@@ -87,7 +87,7 @@ function Stiefel(retraction=:SVD)
     end
 end
 function retract!(S::Stiefel_SVD, X)
-    U,S,V = svd(copy(X))
+    U,S,V = svd(X)
     X .= U*V'
 end
 function retract!(S::Stiefel_CholQR, X)
