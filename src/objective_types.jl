@@ -3,7 +3,7 @@ import NLSolversBase.OnceDifferentiable
 import NLSolversBase.TwiceDifferentiable
 
 
-@compat abstract type UninitializedObjective <: AbstractObjective end
+abstract type UninitializedObjective <: AbstractObjective end
 type UninitializedNonDifferentiable <: UninitializedObjective
     f
 end
