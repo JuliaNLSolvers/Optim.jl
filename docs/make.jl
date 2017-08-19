@@ -10,6 +10,7 @@ makedocs(
 )
 
 deploydocs(
+    deps = Deps.pip("pygments", "mkdocs", "python-markdown-math"),
     repo = "github.com/JuliaNLSolvers/Optim.jl.git",
     julia = "0.6"
 )
