@@ -241,10 +241,14 @@
 <p>When the solver finishes, we return a minimizer which is either the centroid or one of the vertices. The function value at the centroid adds a function evaluation, as we need to evaluate the objection at the centroid to choose the smallest function value. However, even if the function value at the centroid can be returned as the minimum, we do not trace it during the optimization iterations. This is to avoid too many evaluations of the objective function which can be computationally expensive. Typically, there should be no more than twice as many <code>f_calls</code> than <code>iterations</code>.  Adding an evaluation at the centroid when tracing could considerably increase the total run-time of the algorithm.</p>
 <p><a id='Specifying-the-initial-simplex-1'></a></p>
 <h3 id="specifying-the-initial-simplex">Specifying the initial simplex</h3>
-<p>The default choice of <code>initial_simplex</code> is <code>AffineSimplexer()</code>. A simplex is represented by an $n+1$ dimensional vector of $n$ dimensional vectors. It is used together  with the initial <code>x</code> to create the initial simplex. To construct the $i$th vertex, it simply multiplies entry $i$ in the initial vector with a constant <code>b</code>, and adds a constant <code>a</code>. This means that the $i$th of the $n$ additional vertices is of the form</p>
-<p>$ (x_0^1, x_0^2, \ldots, x_0^i, \ldots, 0,0) + (0, 0, \ldots, x_0^i\cdot b+a,\ldots, 0,0) $</p>
+<p>The default choice of <code>initial_simplex</code> is <code>AffineSimplexer()</code>. A simplex is represented by an $(n+1)$-dimensional vector of $n$-dimensional vectors. It is used together  with the initial <code>x</code> to create the initial simplex. To construct the $i$th vertex, it simply multiplies entry $i$ in the initial vector with a constant <code>b</code>, and adds a constant <code>a</code>. This means that the $i$th of the $n$ additional vertices is of the form</p>
+<p>
+<script type="math/tex; mode=display">
+(x_0^1, x_0^2, \ldots, x_0^i, \ldots, 0,0) + (0, 0, \ldots, x_0^i\cdot b+a,\ldots, 0,0)
+</script>
+</p>
 <p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
-<p>If a specific simplex is wanted, it is possible to construct the $n+1$ vector of $n$ dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
+<p>If a specific simplex is wanted, it is possible to construct the $(n+1)$-vector of $n$-dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
 <span class="n">struct</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
 <span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">S</span><span class="o">::</span><span class="n">MySimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
@@ -274,9 +278,17 @@
 <p><a id='The-parameters-of-Nelder-Mead-1'></a></p>
 <h3 id="the-parameters-of-nelder-mead">The parameters of Nelder-Mead</h3>
 <p>The different types of steps in the algorithm are governed by four parameters: $\alpha$ for the reflection, $\beta$ for the expansion, $\gamma$ for the contraction, and $\delta$ for the shrink step. We default to the adaptive parameters scheme in Gao and Han (2010). These are based on the dimensionality of the problem, and are given by</p>
-<p>$ \alpha = 1, \quad \beta = 1+2/n,\quad \gamma =0.75 + 1/2n,\quad \delta = 1-1/n $</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1, \quad \beta = 1+2/n,\quad \gamma =0.75 + 1/2n,\quad \delta = 1-1/n
+</script>
+</p>
 <p>It is also possible to specify the original parameters from Nelder and Mead (1965)</p>
-<p>$ \alpha = 1,\quad \beta = 2, \quad\gamma = 1/2, \quad\delta = 1/2 $</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1,\quad \beta = 2, \quad\gamma = 1/2, \quad\delta = 1/2
+</script>
+</p>
 <p>by specifying <code>parameters  = Optim.FixedParameters()</code>. For specifying custom values, <code>parameters  = Optim.FixedParameters(α = a, β = b, γ = g, δ = d)</code> is used, where a, b, g, d are the chosen values. If another parameter specification is wanted, it is possible to create a custom sub-type of<code>Optim.NMParameters</code>, and add a method to the <code>parameters</code> function. It should take the new type as the first positional argument, and the dimensionality of <code>x</code> as the second positional argument, and return a 4-tuple of parameters. However, it will often be easier to simply supply the wanted parameters to <code>FixedParameters</code>.</p>
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
@@ -329,7 +341,7 @@
     </span>
 </div>
     <script src="../../js/theme.js"></script>
-      <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
       <script src="../../assets/mathjaxhelper.js"></script>
 
 </body>
