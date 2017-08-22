@@ -1,7 +1,7 @@
 Base.@deprecate method(x) summary(x)
 
 const has_deprecated_fminbox = Ref(false)
-function optimize{T<:AbstractFloat}(
+function optimize(
         df::OnceDifferentiable,
         initial_x::Array{T},
         l::Array{T},
@@ -26,7 +26,7 @@ function optimize{T<:AbstractFloat}(
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
-        nargs...)
+        nargs...) where T<:AbstractFloat
         if !has_deprecated_fminbox[]
             warn("Fminbox with the optimizer keyword is deprecated, construct Fminbox{optimizer}() and pass it to optimize(...) instead.")
             has_deprecated_fminbox[] = true

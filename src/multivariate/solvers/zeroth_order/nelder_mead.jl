@@ -6,7 +6,7 @@ struct AffineSimplexer <: Simplexer
 end
 AffineSimplexer(;a = 0.025, b = 0.5) = AffineSimplexer(a, b)
 
-function simplexer{T,N}(S::AffineSimplexer, initial_x::Array{T,N})
+function simplexer(S::AffineSimplexer, initial_x::Array{T,N}) where {T,N}
     n = length(initial_x)
     initial_simplex = Array{T, N}[copy(initial_x) for i = 1:n+1]
     for j = 1:n
@@ -63,7 +63,7 @@ function NelderMead(; kwargs...)
 end
 
 # centroid except h-th vertex
-function centroid!{T}(c::Array{T}, simplex, h=0)
+function centroid!(c::Array{T}, simplex, h=0) where T
     n = length(c)
     fill!(c, zero(T))
     @inbounds for i in 1:n+1
@@ -126,7 +126,7 @@ mutable struct NelderMeadState{T, N}
     step_type::String
 end
 
-function initial_state{F, T}(method::NelderMead, options, f::F, initial_x::Array{T})
+function initial_state(method::NelderMead, options, f::F, initial_x::Array{T}) where {F, T}
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)
@@ -162,7 +162,7 @@ NelderMeadState(similar(initial_x), # Variable to hold final minimizer value for
           "initial")
 end
 
-function update_state!{F, T}(f::F, state::NelderMeadState{T}, method::NelderMead)
+function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) where {F, T}
     # Augment the iteration counter
     shrink = false
     n, m = length(state.x), state.m
@@ -255,7 +255,7 @@ function update_state!{F, T}(f::F, state::NelderMeadState{T}, method::NelderMead
     false
 end
 
-function after_while!{F}(f::F, state, method::NelderMead, options)
+function after_while!(f::F, state, method::NelderMead, options) where F
     sortperm!(state.i_order, state.f_simplex)
     x_centroid_min = centroid(state.simplex, state.i_order[state.m])
     f_centroid_min = value(f, x_centroid_min)

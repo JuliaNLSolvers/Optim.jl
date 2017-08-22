@@ -1,18 +1,18 @@
 @testset "Type Stability" begin
-    function rosenbrock{T}(x::Vector{T})
+    function rosenbrock(x::Vector{T}) where T
         o = one(T)
         c = convert(T,100)
         return (o - x[1])^2 + c * (x[2] - x[1]^2)^2
     end
 
-    function rosenbrock_gradient!{T}(storage::Vector{T}, x::Vector{T})
+    function rosenbrock_gradient!(storage::Vector{T}, x::Vector{T}) where T
         o = one(T)
         c = convert(T,100)
         storage[1] = (-2*o) * (o - x[1]) - (4*c) * (x[2] - x[1]^2) * x[1]
         storage[2] = (2*c) * (x[2] - x[1]^2)
     end
 
-    function rosenbrock_hessian!{T}(storage::Matrix{T}, x::Vector{T})
+    function rosenbrock_hessian!(storage::Matrix{T}, x::Vector{T}) where T
         o = one(T)
         c = convert(T,100)
         f = 4*c

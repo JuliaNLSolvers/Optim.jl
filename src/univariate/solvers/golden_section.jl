@@ -24,17 +24,17 @@ struct GoldenSection <: Optimizer end
 
 Base.summary(::GoldenSection) = "Golden Section Search"
 
-function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
-                                      mo::GoldenSection;
-                                      rel_tol::T = sqrt(eps(T)),
-                                      abs_tol::T = eps(T),
-                                      iterations::Integer = 1_000,
-                                      store_trace::Bool = false,
-                                      show_trace::Bool = false,
-                                      callback = nothing,
-                                      show_every = 1,
-                                      extended_trace::Bool = false,
-                                      nargs...)
+function optimize(f::F, x_lower::T, x_upper::T,
+     mo::GoldenSection;
+     rel_tol::T = sqrt(eps(T)),
+     abs_tol::T = eps(T),
+     iterations::Integer = 1_000,
+     store_trace::Bool = false,
+     show_trace::Bool = false,
+     callback = nothing,
+     show_every = 1,
+     extended_trace::Bool = false,
+     nargs...) where {F<:Function, T <: AbstractFloat}
     if x_lower > x_upper
         error("x_lower must be less than x_upper")
     end

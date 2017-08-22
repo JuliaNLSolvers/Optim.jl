@@ -86,7 +86,7 @@ mutable struct ConjugateGradientState{T,N,G}
 end
 
 
-function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+function initial_state(method::ConjugateGradient, options, d, initial_x::Array{T}) where T
     value_gradient!(d, initial_x)
     pg = copy(gradient(d))
     @assert typeof(value(d)) == T
@@ -117,7 +117,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
+function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGradient) where T
         # Search direction is predetermined
 
         # Maintain a record of the previous gradient
