@@ -60,17 +60,6 @@ struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     precondprep!::Tprep
     linesearch!::L
 end
-#= uncomment for v0.8.0
-function ConjugateGradient(;
-                           linesearch = LineSearches.HagerZhang(),
-                           eta::Real = 0.4,
-                           P::Any = nothing,
-                           precondprep = (P, x) -> nothing)
-    ConjugateGradient(Float64(eta),
-                                 P, precondprep,
-                                 linesearch)
-end
-=#
 
 Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 

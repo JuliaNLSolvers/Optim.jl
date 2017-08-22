@@ -7,11 +7,6 @@ struct MomentumGradientDescent{L} <: Optimizer
     linesearch!::L
 end
 
-#= uncomment for v0.8.0
-MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang()) =
-  MomentumGradientDescent(Float64(mu), linesearch)
-=#
-
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
 function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang())

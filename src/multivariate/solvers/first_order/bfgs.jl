@@ -11,10 +11,6 @@ end
 
 Base.summary(::BFGS) = "BFGS"
 
-#= uncomment for v0.8.0
-BFGS(; linesearch = LineSearches.HagerZhang(), initial_invH = x -> eye(eltype(x), length(x))) =
-  BFGS(linesearch, initial_invH)
-=#
 function BFGS(; linesearch = LineSearches.HagerZhang(),
                 initial_invH = x -> eye(eltype(x), length(x)),
                 resetalpha = true)
