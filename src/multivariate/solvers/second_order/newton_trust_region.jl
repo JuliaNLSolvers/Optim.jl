@@ -37,7 +37,7 @@ function check_hard_case_candidate(H_eigv, qg)
 end
 
 # Function 4.39 in N&W
-function p_sq_norm{T}(lambda::T, min_i, n, qg, H_eig)
+function p_sq_norm(lambda::T, min_i, n, qg, H_eig) where T
     p_sum = zero(T)
     for i = min_i:n
         p_sum += qg[i]^2 / (lambda + H_eig[:values][i])^2
@@ -64,12 +64,12 @@ end
 #  hard_case - Whether or not it was a "hard case" as described by N&W
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
-function solve_tr_subproblem!{T}(gr::Vector{T},
-                                 H::Matrix{T},
-                                 delta::T,
-                                 s::Vector{T};
-                                 tolerance::T=1e-10,
-                                 max_iters::Int=5)
+function solve_tr_subproblem!(gr::Vector{T},
+                              H::Matrix{T},
+                              delta::T,
+                              s::Vector{T};
+                              tolerance::T=1e-10,
+                              max_iters::Int=5) where T
     n = length(gr)
     delta_sq = delta^2
 
@@ -221,7 +221,7 @@ mutable struct NewtonTrustRegionState{T,N,G}
     rho::T
 end
 
-function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
+function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
@@ -254,7 +254,7 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
 end
 
 
-function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
+function update_state!(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion) where T
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)

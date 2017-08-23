@@ -28,7 +28,7 @@ mutable struct ParticleSwarmState{T,N}
     iterations::Int
 end
 
-function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T})
+function initial_state(method::ParticleSwarm, options, f, initial_x::Array{T}) where T
 
     #=
     Variable X represents the whole swarm of solutions with
@@ -140,7 +140,7 @@ function initial_state{T}(method::ParticleSwarm, options, f, initial_x::Array{T}
         options.iterations)
 end
 
-function update_state!{T}(f, state::ParticleSwarmState{T}, method::ParticleSwarm)
+function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) where T
     n = length(state.x)
     if state.limit_search_space
         limit_X!(state.X, state.lower, state.upper, state.n_particles, n)

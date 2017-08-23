@@ -28,7 +28,7 @@ mutable struct AcceleratedGradientDescentState{T,N}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
+function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::Array{T}) where T
     value_gradient!(d, initial_x)
 
     AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
@@ -41,7 +41,7 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
+function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
     state.iteration += 1
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)

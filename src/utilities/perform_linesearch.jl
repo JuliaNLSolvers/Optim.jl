@@ -1,5 +1,5 @@
 checked_dphi0!(state, d, method) = vecdot(gradient(d), state.s)
-function checked_dphi0!{M<:Union{BFGS, LBFGS}}(state, d, method::M)
+function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
     # If invH is not positive definite, reset it
     dphi0 = vecdot(gradient(d), state.s)
     if dphi0 > 0.0
@@ -53,7 +53,7 @@ function alphaguess!(state, method::ConjugateGradient, dphi0, d)
     state.alpha, state.mayterminate =
         LineSearches.alphatry(state.alpha, d, state.x, state.s, state.x_ls, state.lsr)
 end
-function perform_linesearch!{M}(state, method::M, d)
+function perform_linesearch!(state, method::M, d) where M
     # Calculate search direction dphi0
     dphi0 = checked_dphi0!(state, d, method)
 

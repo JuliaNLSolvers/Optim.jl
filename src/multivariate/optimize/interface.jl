@@ -79,7 +79,7 @@ function optimize(f::Tuple, initial_x::AbstractArray, method::Optimizer, options
     optimize(d, initial_x, method, options)
 end
 
-function optimize{D <: Union{NonDifferentiable, OnceDifferentiable}}(d::D, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options())
+function optimize(d::D, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options()) where D <: Union{NonDifferentiable, OnceDifferentiable}
     d = promote_objtype(method, initial_x, d)
     optimize(d, initial_x, method, options)
 end

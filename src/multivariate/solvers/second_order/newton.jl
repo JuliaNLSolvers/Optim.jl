@@ -19,7 +19,7 @@ mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
+function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     # Maintain current gradient in gr
     s = similar(initial_x)
@@ -34,7 +34,7 @@ function initial_state{T}(method::Newton, options, d, initial_x::Array{T})
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::NewtonState{T}, method::Newton)
+function update_state!(d, state::NewtonState{T}, method::Newton) where T
     # Search direction is always the negative gradient divided by
     # a matrix encoding the absolute values of the curvatures
     # represented by H. It deviates from the usual "add a scaled

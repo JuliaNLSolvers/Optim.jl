@@ -30,7 +30,7 @@ mutable struct BFGSState{T,N,G}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
+function initial_state(method::BFGS, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     value_gradient!(d, initial_x)
     # Maintain a cache for line search results
@@ -48,7 +48,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
 end
 
 
-function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
+function update_state!(d, state::BFGSState{T}, method::BFGS) where T
     n = length(state.x)
 
     # Set the search direction

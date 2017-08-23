@@ -1,6 +1,6 @@
 
 update_g!(d, state, method) = nothing
-function update_g!{M<:Union{FirstOrderSolver, Newton}}(d, state, method::M)
+function update_g!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton}
     # Update the function value and gradient
     value_gradient!(d, state.x)
 end
@@ -11,8 +11,8 @@ update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
-function optimize{D<:AbstractObjective, M<:Optimizer}(d::D, initial_x::AbstractArray, method::M,
-    options::Options = Options(), state = initial_state(method, options, d, initial_x))
+function optimize(d::D, initial_x::AbstractArray, method::M,
+    options::Options = Options(), state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:Optimizer}
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
