@@ -1,4 +1,4 @@
-julia 0.6.0-pre
+julia 0.6.0
 PositiveFactorizations
 Compat 0.18.0
 LineSearches 2.1.0
