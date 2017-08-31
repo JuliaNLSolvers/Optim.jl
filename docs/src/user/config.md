@@ -24,12 +24,13 @@ Requires a function and gradient (will be approximated if omitted):
 Requires a function, a gradient, and a Hessian (cannot be omitted):
 
 * `Newton()`
+* `NewtonTrustRegion()`
 
 Box constrained minimization:
 
 * `Fminbox()`
 
-Special methods for univariate optimization:
+Special methods for bounded univariate optimization:
 
 * `Brent()`
 * `GoldenSection()`
