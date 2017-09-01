@@ -38,7 +38,7 @@ pages:
 #                    - Brent's Method: 'algo/brent.md'
 #                    - Golden Section: 'algo/goldensection.md'
             - Gradient Required:
-#                - 'Conjugate Gradient': 'algo/conjugategradient.md'
+                - 'Conjugate Gradient': 'algo/cg.md'
                 - 'Gradient Descent': 'algo/gradientdescent.md'
                 - '(L-)BFGS': 'algo/lbfgs.md'
             - Hessian Required:
