@@ -233,7 +233,7 @@
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
-<p>The <code>ConjugateGradient</code> method implements Hager and Zhang (2006) and elements from Hager and Zhang (2013). Notice, that the default <code>linesearch</code> is <code>HagerZhang</code> from LineSearch.jl. This line search is exactly the one proposed in Hager and Zhang (2006). The constant $eta$ is used in determining the next step direction, and the default here deviates from the one used in the original paper ($0.01$). It needs to be a strictly positive number.</p>
+<p>The <code>ConjugateGradient</code> method implements Hager and Zhang (2006) and elements from Hager and Zhang (2013). Notice, that the default <code>linesearch</code> is <code>HagerZhang</code> from LineSearches.jl. This line search is exactly the one proposed in Hager and Zhang (2006). The constant $eta$ is used in determining the next step direction, and the default here deviates from the one used in the original paper ($0.01$). It needs to be a strictly positive number.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>Let's optimize the 2D Rosenbrock function. The function and gradient are given by</p>
@@ -292,7 +292,10 @@ Results of Optimization Algorithm
 <p>We see that for this objective and starting point, <code>ConjugateGradient()</code> requires fewer objective and gradient evaluations to reach convergence.</p>
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
-<p>W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137. W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.</p>
+<ul>
+<li>W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.</li>
+<li>W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.</li>
+</ul>
               
             </div>
           </div>
