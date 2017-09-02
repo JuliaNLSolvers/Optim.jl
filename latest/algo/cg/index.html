@@ -8,7 +8,7 @@
   
   <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Gradient Descent - Optim.jl</title>
+  <title>Conjugate Gradient - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -18,9 +18,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Gradient Descent";
-    var mkdocs_page_input_path = "algo/gradientdescent.md";
-    var mkdocs_page_url = "/algo/gradientdescent/";
+    var mkdocs_page_name = "Conjugate Gradient";
+    var mkdocs_page_input_path = "algo/cg.md";
+    var mkdocs_page_url = "/algo/cg/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -98,16 +98,12 @@
                     
     <span class="caption-text">Gradient Required</span>
     <ul class="subnav">
-                <li class="toctree-l4">
-                    
-    <a class="" href="../cg/">Conjugate Gradient</a>
-                </li>
                 <li class="toctree-l4 current">
                     
-    <a class="current" href="./">Gradient Descent</a>
+    <a class="current" href="./">Conjugate Gradient</a>
     <ul class="subnav">
             
-    <li class="toctree-l5"><a href="#gradient-descent">Gradient Descent</a></li>
+    <li class="toctree-l5"><a href="#conjugate-gradient-descent">Conjugate Gradient Descent</a></li>
     
         <ul>
         
@@ -123,6 +119,10 @@
     
 
     </ul>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
                 </li>
                 <li class="toctree-l4">
                     
@@ -207,10 +207,10 @@
         
       
     
-    <li>Gradient Descent</li>
+    <li>Conjugate Gradient</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/gradientdescent.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/cg.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -220,36 +220,79 @@
           <div role="main">
             <div class="section">
               
-                <p><a id='Gradient-Descent-1'></a></p>
-<h1 id="gradient-descent">Gradient Descent</h1>
+                <p><a id='Conjugate-Gradient-Descent-1'></a></p>
+<h1 id="conjugate-gradient-descent">Conjugate Gradient Descent</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">GradientDescent</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-                  <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-                  <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">ConjugateGradient</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
+                    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span>
+                    <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
+                    <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
 </pre></div>
 
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
-<p>Gradient Descent a common name for a quasi-Newton solver. This means that it takes steps according to</p>
-<p>
-<script type="math/tex; mode=display">
-x_{n+1} = x_n - P^{-1}\nabla f(x_n)
-</script>
-</p>
-<p>where $P$ is a positive definite matrix. If $P$ is the Hessian, we get Newton's method. In Gradient Descent, $P$ is simply an appropriately dimensioned identity matrix, such that we go in the exact opposite direction of the gradient. This means that we do not use the curvature information from the Hessian, or an approximation of it. While it does seem quite logical to go in the opposite direction of the fastest increase in objective value, the procedure can be very slow if the problem is ill-conditioned. See the section on preconditioners for ways to remedy this when using Gradient Descent.</p>
-<p>As with the other quasi-Newton solvers in this package, a scalar $\alpha$ is introduced as follows</p>
-<p>
-<script type="math/tex; mode=display">
-x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
-</script>
-</p>
-<p>and is chosen by a linesearch algorithm such that each step gives sufficient descent.</p>
+<p>The <code>ConjugateGradient</code> method implements Hager and Zhang (2006) and elements from Hager and Zhang (2013). Notice, that the default <code>linesearch</code> is <code>HagerZhang</code> from LineSearch.jl. This line search is exactly the one proposed in Hager and Zhang (2006). The constant $eta$ is used in determining the next step direction, and the default here deviates from the one used in the original paper ($0.01$). It needs to be a strictly positive number.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
+<p>Let's optimize the 2D Rosenbrock function. The function and gradient are given by</p>
+<div class="codehilite"><pre><span></span><span class="nx">f</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="kd">function</span> <span class="nx">g</span><span class="o">!</span><span class="p">(</span><span class="nx">storage</span><span class="p">,</span> <span class="nx">x</span><span class="p">)</span>
+    <span class="nx">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nx">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<span class="nx">end</span>
+</pre></div>
+
+
+<p>we can then try to optimize this function from <code>x=[0.0, 0.0]</code></p>
+<div class="codehilite"><pre><span></span>julia&gt; optimize(f, g!, zeros(2), ConjugateGradient())
+Results of Optimization Algorithm
+ * Algorithm: Conjugate Gradient
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [1.000000002262018,1.0000000045408348]
+ * Minimum: 5.144946e-18
+ * Iterations: 21
+ * Convergence: true
+   * |x - x&#39;| &lt; 1.0e-32: false
+     |x - x&#39;| = 2.09e-10
+   * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false
+     |f(x) - f(x&#39;)| / |f(x)| = 1.55e+00
+   * |g(x)| &lt; 1.0e-08: true
+     |g(x)| = 3.36e-09
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 54
+ * Gradient Calls: 39
+</pre></div>
+
+
+<p>We can compare this to the default first order solver in Optim.jl</p>
+<div class="codehilite"><pre><span></span> julia&gt; optimize(f, g!, zeros(2))
+ Results of Optimization Algorithm
+  * Algorithm: L-BFGS
+  * Starting Point: [0.0,0.0]
+  * Minimizer: [1.0000000000000007,1.000000000000001]
+  * Minimum: 5.374115e-30
+  * Iterations: 21
+  * Convergence: true
+    * |x - x&#39;| &lt; 1.0e-32: false
+      |x - x&#39;| = 5.95e-10
+    * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false
+      |f(x) - f(x&#39;)| / |f(x)| = 3.24e+10
+    * |g(x)| &lt; 1.0e-08: true
+      |g(x)| = 9.02e-14
+    * stopped by an increasing objective: false
+    * Reached Maximum Number of Iterations: false
+  * Objective Calls: 69
+  * Gradient Calls: 69
+</pre></div>
+
+
+<p>We see that for this objective and starting point, <code>ConjugateGradient()</code> requires fewer objective and gradient evaluations to reach convergence.</p>
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
+<p>W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137. W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.</p>
               
             </div>
           </div>
@@ -257,10 +300,10 @@ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../lbfgs/" class="btn btn-neutral float-right" title="(L-)BFGS">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../gradientdescent/" class="btn btn-neutral float-right" title="Gradient Descent">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../cg/" class="btn btn-neutral" title="Conjugate Gradient"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../simulated_annealing/" class="btn btn-neutral" title="Simulated Annealing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -288,10 +331,10 @@ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
           <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../cg/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../simulated_annealing/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../lbfgs/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../gradientdescent/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
