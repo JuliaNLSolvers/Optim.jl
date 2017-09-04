@@ -3,6 +3,25 @@ struct Newton{L} <: Optimizer
     resetalpha::Bool
 end
 
+"""
+# Newton
+## Constructor
+```julia
+Newton(; linesearch = LineSearches.HagerZhang(),
+resetalpha = true)
+```
+The `resetalpha` flag specifies if the initial guess for the step-size should be
+reset to one at each iteration.
+
+## Description
+The `Newton` method implements Newton's method for optimizing a function. We use
+a special factorization from the package `PositiveFactorizations.jl` to ensure
+that each search direction is a direction of descent. See Wright and Nocedal and
+Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
+
+## References
+ - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
+"""
 function Newton(; linesearch = LineSearches.HagerZhang(), resetalpha = true)
     Newton(linesearch,resetalpha)
 end
