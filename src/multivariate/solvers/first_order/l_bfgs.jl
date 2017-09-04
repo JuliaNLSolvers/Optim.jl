@@ -60,7 +60,6 @@ function twoloop!(s::Vector,
     return
 end
 
-# L should be function or any other callable
 struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
     linesearch!::L

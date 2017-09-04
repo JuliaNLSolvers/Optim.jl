@@ -1,4 +1,3 @@
-# L should be function or any other callable
 struct GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
     linesearch!::L
     P::T

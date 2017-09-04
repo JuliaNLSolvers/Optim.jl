@@ -52,9 +52,6 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-
-# L should be function or any other callable
-
 struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     eta::Float64
     P::T

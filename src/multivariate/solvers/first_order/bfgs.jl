@@ -2,7 +2,6 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-# L should be function or any other callable
 struct BFGS{L, H<:Function} <: Optimizer
     linesearch!::L
     initial_invH::H
