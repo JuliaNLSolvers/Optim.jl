@@ -37,8 +37,8 @@ module UnivariateProblems
     examples["Problem13"] = UnivariateProblem("Problem13",
                                                 p13,
                                                 [0.001, 0.99],
-                                                [1./sqrt(2.0),],
-                                                [p13(1./sqrt(2.0)),])
+                                                [1.0 / sqrt(2.0),],
+                                                [p13(1.0 / sqrt(2.0)),])
 
     # Problem 18 from [1]
     p18(x) = x <= 3.0 ? (x-2.0)^2 : 2.0*log(x-2.0)+1.0

@@ -5,7 +5,7 @@
                                method = GoldenSection())
 
             @test Optim.converged(results)
-            @test norm(Optim.minimizer(results) - prob.minimizers) < 1e-7
+            @test norm(Optim.minimizer(results) .- prob.minimizers) < 1e-7
         end
     end
 

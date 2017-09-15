@@ -12,7 +12,7 @@ function optimize(f::F,
      callback = nothing,
      show_every = 1,
      extended_trace::Bool = false) where {F<:Function, T <: AbstractFloat}
-    show_every = show_every > 0 ? show_every: 1
+    show_every = show_every > 0 ? show_every : 1
     if extended_trace && callback == nothing
         show_trace = true
     end
