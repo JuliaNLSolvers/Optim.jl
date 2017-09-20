@@ -18,7 +18,7 @@ end
 
 
 # Fake objective function implementing a retraction
-type ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
+mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
     manifold::Manifold
     inner_obj::T
 end
