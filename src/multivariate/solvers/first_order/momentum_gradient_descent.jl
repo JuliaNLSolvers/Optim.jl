@@ -8,11 +8,6 @@ struct MomentumGradientDescent{L} <: Optimizer
     manifold::Manifold
 end
 
-#= uncomment for v0.8.0
-MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang()) =
-  MomentumGradientDescent(Float64(mu), linesearch)
-=#
-
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
 function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
@@ -27,7 +22,7 @@ mutable struct MomentumGradientDescentState{T,N}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
+function initial_state(method::MomentumGradientDescent, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
@@ -40,7 +35,7 @@ function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x
                                  @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
+function update_state!(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent) where T
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)

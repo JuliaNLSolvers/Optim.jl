@@ -32,7 +32,7 @@ mutable struct SimulatedAnnealingState{T, N}
     f_proposal::T
 end
 
-function initial_state{T}(method::SimulatedAnnealing, options, f, initial_x::Array{T})
+function initial_state(method::SimulatedAnnealing, options, f, initial_x::Array{T}) where T
     # Count number of parameters
     n = length(initial_x)
     value!(f, initial_x)
@@ -42,7 +42,7 @@ function initial_state{T}(method::SimulatedAnnealing, options, f, initial_x::Arr
     SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
 end
 
-function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
+function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing) where T
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)

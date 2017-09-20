@@ -16,9 +16,10 @@ markdown_extensions:
   - extra
   - tables
   - fenced_code
+  - mdx_math
 
 extra_javascript:
-  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML
   - assets/mathjaxhelper.js
 
 docs_dir: 'build'
@@ -38,7 +39,7 @@ pages:
 #                    - Brent's Method: 'algo/brent.md'
 #                    - Golden Section: 'algo/goldensection.md'
             - Gradient Required:
-#                - 'Conjugate Gradient': 'algo/conjugategradient.md'
+                - 'Conjugate Gradient': 'algo/cg.md'
                 - 'Gradient Descent': 'algo/gradientdescent.md'
                 - '(L-)BFGS': 'algo/lbfgs.md'
             - Hessian Required:

@@ -72,12 +72,6 @@ struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     snap2one::Tuple
     manifold::Manifold
 end
-#= uncomment for v0.8.0
-LBFGS(; m::Integer = 10, linesearch = LineSearches.HagerZhang(),
-                        P=nothing, precondprep = (P, x) -> nothing,
-                        extrapolate::Bool=false, snap2one = (0.75, Inf)) =
-      LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one)
-=#
 
 function LBFGS(; m::Integer = 10,
                  linesearch = LineSearches.HagerZhang(),
@@ -110,7 +104,7 @@ mutable struct LBFGSState{T,N,M,G}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
+function initial_state(method::LBFGS, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
@@ -133,7 +127,7 @@ function initial_state{T}(method::LBFGS, options, d, initial_x::Array{T})
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::LBFGSState{T}, method::LBFGS)
+function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
     n = length(state.x)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1

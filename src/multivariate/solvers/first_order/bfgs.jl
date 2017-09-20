@@ -12,10 +12,6 @@ end
 
 Base.summary(::BFGS) = "BFGS"
 
-#= uncomment for v0.8.0
-BFGS(; linesearch = LineSearches.HagerZhang(), initial_invH = x -> eye(eltype(x), length(x))) =
-  BFGS(linesearch, initial_invH)
-=#
 function BFGS(; linesearch = LineSearches.HagerZhang(),
                 initial_invH = x -> eye(eltype(x), length(x)),
                 resetalpha = true, manifold::Manifold=Flat())
@@ -35,7 +31,7 @@ mutable struct BFGSState{T,N,G}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
+function initial_state(method::BFGS, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
@@ -56,7 +52,7 @@ function initial_state{T}(method::BFGS, options, d, initial_x::Array{T})
 end
 
 
-function update_state!{T}(d, state::BFGSState{T}, method::BFGS)
+function update_state!(d, state::BFGSState{T}, method::BFGS) where T
     n = length(state.x)
 
     # Set the search direction

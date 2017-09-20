@@ -3,7 +3,7 @@
 ## What
 Optim is a Julia package for optimizing functions of
 various kinds. While there is some support for box constrained and Riemannian optimization, most
-of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints.
+of the solvers try to find an ``x`` that minimizes a function ``f(x)`` without any constraints.
 Thus, the main focus is on unconstrained optimization.
 The provided solvers, under certain conditions, will converge to a local minimum.
 In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. [BlackBoxOptim](https://github.com/robertfeldt/BlackBoxOptim.jl)).

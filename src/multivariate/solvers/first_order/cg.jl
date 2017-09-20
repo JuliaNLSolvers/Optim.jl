@@ -61,17 +61,6 @@ struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
     linesearch!::L
     manifold::Manifold
 end
-#= uncomment for v0.8.0
-function ConjugateGradient(;
-                           linesearch = LineSearches.HagerZhang(),
-                           eta::Real = 0.4,
-                           P::Any = nothing,
-                           precondprep = (P, x) -> nothing)
-    ConjugateGradient(Float64(eta),
-                                 P, precondprep,
-                                 linesearch)
-end
-=#
 
 Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 
@@ -99,7 +88,7 @@ mutable struct ConjugateGradientState{T,N,G}
 end
 
 
-function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Array{T})
+function initial_state(method::ConjugateGradient, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
@@ -136,7 +125,7 @@ function initial_state{T}(method::ConjugateGradient, options, d, initial_x::Arra
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::ConjugateGradientState{T}, method::ConjugateGradient)
+function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGradient) where T
         # Search direction is predetermined
 
         # Maintain a record of the previous gradient

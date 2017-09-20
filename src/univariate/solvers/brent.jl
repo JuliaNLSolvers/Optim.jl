@@ -25,7 +25,7 @@ struct Brent <: Optimizer end
 
 Base.summary(::Brent) = "Brent's Method"
 
-function optimize{F <: Function, T <: AbstractFloat}(
+function optimize(
         f::F, x_lower::T, x_upper::T,
         mo::Brent;
         rel_tol::T = sqrt(eps(T)),
@@ -35,7 +35,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
         show_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        extended_trace::Bool = false)
+        extended_trace::Bool = false) where {F <: Function, T <: AbstractFloat}
 
     if x_lower > x_upper
         error("x_lower must be less than x_upper")

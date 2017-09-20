@@ -14,10 +14,6 @@ end
 
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
-#= uncomment for v0.8.0
-AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang()) =
-  AcceleratedGradientDescent(linesearch)
-=#
 function AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
     AcceleratedGradientDescent(linesearch, manifold)
 end
@@ -33,7 +29,7 @@ mutable struct AcceleratedGradientDescentState{T,N}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::AcceleratedGradientDescent, options, d, initial_x::Array{T})
+function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
@@ -49,7 +45,7 @@ function initial_state{T}(method::AcceleratedGradientDescent, options, d, initia
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent)
+function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
     state.iteration += 1
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient

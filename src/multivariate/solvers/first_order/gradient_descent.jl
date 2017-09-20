@@ -6,12 +6,6 @@ struct GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
     manifold::Manifold
 end
 
-#= uncomment for v0.8.0
-GradientDescent(; linesearch = LineSearches.HagerZhang(),
-                P = nothing, precondprep = (P, x) -> nothing) =
-                    GradientDescent(linesearch, P, precondprep)
-=#
-
 Base.summary(::GradientDescent) = "Gradient Descent"
 
 function GradientDescent(; linesearch = LineSearches.HagerZhang(),
@@ -29,7 +23,7 @@ mutable struct GradientDescentState{T,N}
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{T})
+function initial_state(method::GradientDescent, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
@@ -42,7 +36,7 @@ function initial_state{T}(method::GradientDescent, options, d, initial_x::Array{
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!{T}(d, state::GradientDescentState{T}, method::GradientDescent)
+function update_state!(d, state::GradientDescentState{T}, method::GradientDescent) where T
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     method.precondprep!(method.P, real_to_complex(d,state.x))

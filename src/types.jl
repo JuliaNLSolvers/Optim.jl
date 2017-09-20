@@ -1,4 +1,4 @@
-@compat abstract type Optimizer end
+abstract type Optimizer end
 struct Options{TCallback <: Union{Void, Function}}
     x_tol::Float64
     f_tol::Float64

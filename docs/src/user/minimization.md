@@ -70,10 +70,11 @@ A primal interior-point algorithm for simple "box" constraints (lower and upper 
 lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
-results = optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(), optimizer = GradientDescent)
+od = OnceDifferentiable(f, g!, initial_x)
+results = optimize(od, initial_x, lower, upper, Fminbox{GradientDescent}())
 ```
 
-This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed. This means that the keyword should be passed as `optimizer = GradientDescent` not `optimizer = GradientDescent()`, as you usually would.
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `optimizer` (`GradientDescent` above) for convergence at each step. Notice that the `Optimizer` type, not an instance should be passed (`GradientDescent`, not `GradientDescent()`).
 
 This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` or `LBFGS` with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
 
@@ -81,11 +82,13 @@ There are two iterations parameters: an outer iterations parameter used to contr
 
 For example, the following restricts the optimization to 2 major iterations
 ```julia
-results = optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, iterations = 2)
+od = OnceDifferentiable(f, g!, initial_x)
+results = optimize(od, initial_x, lower, upper, Fminbox{GradientDescent}(); iterations = 2)
 ```
 In contrast, the following sets the maximum number of iterations for each `ConjugateGradient` optimization to 2
 ```julia
-results = Optim.optimize(OnceDifferentiable(f, g!), initial_x, lower, upper, Fminbox(); optimizer = GradientDescent, optimizer_o = Optim.Options(iterations = 2))
+od = OnceDifferentiable(f, g!, initial_x)
+results = Optim.optimize(od, initial_x, lower, upper, Fminbox{GradientDescent}(); optimizer_o = Optim.Options(iterations = 2))
 ```
 ## Minimizing a univariate function on a bounded interval
 

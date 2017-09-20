@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001)
+function initial_mu(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001) where T
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -16,7 +16,7 @@ function initial_mu{T}(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, 
     return mu
 end
 
-function barrier_box{T}(g, x::Array{T}, l::Array{T}, u::Array{T})
+function barrier_box(g, x::Array{T}, l::Array{T}, u::Array{T}) where T
     n = length(x)
     calc_g = !(g === nothing)
 
@@ -52,7 +52,7 @@ function barrier_box{T}(g, x::Array{T}, l::Array{T}, u::Array{T})
     return v
 end
 
-function function_barrier{T, F<:Function, FB<:Function}(gfunc, gbarrier, x::Array{T}, f::F, fbarrier::FB)
+function function_barrier(gfunc, gbarrier, x::Array{T}, f::F, fbarrier::FB) where {T, F<:Function, FB<:Function}
     vbarrier = fbarrier(gbarrier, x)
     if isfinite(vbarrier)
         vfunc = f(gfunc, x)
@@ -62,7 +62,7 @@ function function_barrier{T, F<:Function, FB<:Function}(gfunc, gbarrier, x::Arra
     return vfunc, vbarrier
 end
 
-function barrier_combined{T, FB<:Function}(gfunc, gbarrier, g, x::Array{T}, fb::FB, mu::T)
+function barrier_combined(gfunc, gbarrier, g, x::Array{T}, fb::FB, mu::T) where {T, FB<:Function}
     calc_g = !(g === nothing)
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if calc_g
@@ -71,7 +71,7 @@ function barrier_combined{T, FB<:Function}(gfunc, gbarrier, g, x::Array{T}, fb::
     return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
 end
 
-function limits_box{T}(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T})
+function limits_box(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T}) where T
     alphamax = convert(T, Inf)
     for i = 1:length(x)
         if d[i] < 0
@@ -96,9 +96,34 @@ end
 struct Fminbox{T<:Optimizer} <: Optimizer end
 Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
-Base.summary{O}(::Fminbox{O}) = "Fminbox with $(summary(O()))"
+Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
 
-function optimize{T<:AbstractFloat,O<:Optimizer}(
+function optimize(obj,
+                  initial_x::Array{T},
+                  l::Array{T},
+                  u::Array{T},
+                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+     optimize(OnceDifferentiable(obj, initial_x), l, u, F; kwargs...)
+end
+
+function optimize(f,
+                  g!,
+                  initial_x::Array{T},
+                  l::Array{T},
+                  u::Array{T},
+                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+     optimize(OnceDifferentiable(f, g!, initial_x), l, u, F; kwargs...)
+end
+
+
+function optimize(df::OnceDifferentiable,
+                  l::Array{T},
+                  u::Array{T},
+                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+    optimize(df, df.last_x_f, l, u, F; kwargs...)
+end
+
+function optimize(
         df::OnceDifferentiable,
         initial_x::Array{T},
         l::Array{T},
@@ -122,7 +147,7 @@ function optimize{T<:AbstractFloat,O<:Optimizer}(
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
-        nargs...)
+        nargs...) where {T<:AbstractFloat,O<:Optimizer}
 
     O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
