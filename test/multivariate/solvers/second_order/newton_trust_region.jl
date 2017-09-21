@@ -112,7 +112,7 @@ end
 
 
     # Now check an actual had case problem
-    L = zeros(Float64, n) + 0.1
+    L = fill(0.1, n)
     L[1] = -1.
     H = U * diagm(L) * U'
     H = 0.5 * (H' + H)

@@ -3,5 +3,5 @@ PositiveFactorizations
 Compat 0.18.0
 LineSearches 2.1.0
 Calculus
-NLSolversBase 2.1.0
+NLSolversBase 3.0.0
 ForwardDiff 0.5.0

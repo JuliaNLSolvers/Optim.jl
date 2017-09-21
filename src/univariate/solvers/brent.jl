@@ -45,7 +45,7 @@ function optimize(
     initial_lower = x_lower
     initial_upper = x_upper
 
-    const golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
+    golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
 
     new_minimizer = x_lower + golden_ratio*(x_upper-x_lower)
     new_minimum = f(new_minimizer)

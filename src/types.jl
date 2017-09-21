@@ -31,7 +31,7 @@ function Options(;
         show_every::Integer = 1,
         callback = nothing,
         time_limit = NaN)
-    show_every = show_every > 0 ? show_every: 1
+    show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end

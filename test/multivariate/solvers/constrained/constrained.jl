@@ -39,7 +39,7 @@
     # fminbox
     l = fill(-boxl, N)
     u = fill(boxl, N)
-    initial_x = (rand(N)-0.5)*boxl
+    initial_x = (rand(N) .- 0.5) .* boxl
     for _optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS)
         results = Optim.optimize(_objective, initial_x, l, u, Fminbox{_optimizer}())
         @test Optim.converged(results)

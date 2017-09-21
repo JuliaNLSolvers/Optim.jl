@@ -51,12 +51,12 @@
             @test Optim.f_calls(odad1) == 1
             @test Optim.g_calls(odad1) == 1
             @test Optim.h_calls(odad1) == 0
-            Optim.value_gradient!(odad1, x_seed+1.0)
+            Optim.value_gradient!(odad1, x_seed .+ 1.0)
             @test Optim.f_calls(odad1) == 2
             @test Optim.g_calls(odad1) == 2
             @test Optim.h_calls(odad1) == 0
         end
-        @test Optim.gradient(odad1) ≈ 2*a*(x_seed+1.0)
+        @test Optim.gradient(odad1) ≈ 2 .* a .* (x_seed .+ 1.0)
     end
 
 end

@@ -28,7 +28,9 @@ function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
     NewtonState(copy(initial_x), # Maintain current state in state.x
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
-                Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U),
+                @static(VERSION >= v"0.7.0-DEV.393" ?
+                        Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U, BLAS.BlasInt(0)) :
+                        Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U)),
                 Vector{Int8}(),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr

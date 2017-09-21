@@ -227,7 +227,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         else # f_reflect > f_highest
             # Inside constraction
             @simd for j in 1:n
-                @inbounds state.x_cache[j] = state.x_centroid[j] - γ *(state.x_reflect[j] - state.x_centroid[j])
+                @inbounds state.x_cache[j] = state.x_centroid[j] - state.γ *(state.x_reflect[j] - state.x_centroid[j])
             end
             f_inside_contraction = value(f, state.x_cache)
             if f_inside_contraction < f_highest
