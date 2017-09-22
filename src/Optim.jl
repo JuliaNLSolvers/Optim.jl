@@ -18,6 +18,8 @@ module Optim
            Base.getindex,
            Base.setindex!
 
+    import NLSolversBase.iscomplex
+
     export optimize,
            NonDifferentiable,
            OnceDifferentiable,
@@ -39,11 +41,19 @@ module Optim
            Newton,
            NewtonTrustRegion,
            SimulatedAnnealing,
-           ParticleSwarm
+           ParticleSwarm,
+
+           Manifold,
+           Flat,
+           Sphere,
+           Stiefel
 
     # Types
     include("types.jl")
     include("objective_types.jl")
+
+    # Manifolds
+    include("Manifolds.jl")
 
     # Generic stuff
     include("utilities/generic.jl")

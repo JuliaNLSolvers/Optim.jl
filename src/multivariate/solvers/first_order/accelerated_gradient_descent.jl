@@ -9,12 +9,13 @@
 # L should be function or any other callable
 struct AcceleratedGradientDescent{L} <: Optimizer
     linesearch!::L
+    manifold::Manifold
 end
 
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
-function AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang())
-    AcceleratedGradientDescent(linesearch)
+function AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
+    AcceleratedGradientDescent(linesearch, manifold)
 end
 
 mutable struct AcceleratedGradientDescentState{T,N}
@@ -29,9 +30,12 @@ mutable struct AcceleratedGradientDescentState{T,N}
 end
 
 function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::Array{T}) where T
+    initial_x = copy(initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
-    AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
+    AcceleratedGradientDescentState(initial_x, # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
@@ -43,11 +47,12 @@ end
 
 function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
     state.iteration += 1
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
 
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Record previous state
     copy!(state.x_previous, state.x)
@@ -55,10 +60,12 @@ function update_state!(d, state::AcceleratedGradientDescentState{T}, method::Acc
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)
     state.y .= state.x .+ state.alpha.*state.s
+    retract!(method.manifold, real_to_complex(d,state.y))
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
     state.x .= state.y .+ scaling.*(state.y .- state.y_previous)
+    retract!(method.manifold, real_to_complex(d,state.x))
 
     lssuccess == false # break on linesearch error
 end

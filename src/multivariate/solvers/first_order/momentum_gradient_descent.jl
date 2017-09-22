@@ -5,12 +5,13 @@
 struct MomentumGradientDescent{L} <: Optimizer
     mu::Float64
     linesearch!::L
+    manifold::Manifold
 end
 
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
-function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang())
-    MomentumGradientDescent(Float64(mu), linesearch)
+function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
+    MomentumGradientDescent(Float64(mu), linesearch, manifold)
 end
 
 mutable struct MomentumGradientDescentState{T,N}
@@ -22,26 +23,32 @@ mutable struct MomentumGradientDescentState{T,N}
 end
 
 function initial_state(method::MomentumGradientDescent, options, d, initial_x::Array{T}) where T
+    initial_x = copy(initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
-    MomentumGradientDescentState(copy(initial_x), # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
-                         T(NaN), # Store previous f in state.f_x_previous
-                         similar(initial_x), # Maintain current search direction in state.s
-                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+    MomentumGradientDescentState(initial_x, # Maintain current state in state.x
+                                 copy(initial_x), # Maintain previous state in state.x_previous
+                                 T(NaN), # Store previous f in state.f_x_previous
+                                 similar(initial_x), # Maintain current search direction in state.s
+                                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
 function update_state!(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent) where T
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
 
+
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Update position, and backup current one
     x_current = copy(state.x)
     state.x .+= state.alpha.*state.s .+ method.mu.*(state.x .- state.x_previous)
     state.x_previous .= x_current
+    retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
 end
 

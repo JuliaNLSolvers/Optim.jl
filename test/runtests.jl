@@ -58,6 +58,8 @@ multivariate_tests = [
     "extrapolate",
     "lsthrow",
     "precon",
+    "manifolds",
+    "complex",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 

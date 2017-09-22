@@ -48,6 +48,8 @@ pages:
         - Automatic Differentiation: 'algo/autodiff.md'
         - Linesearch: 'algo/linesearch.md'
         - Preconditioners: 'algo/precondition.md'
+        - Complex optimization: 'algo/complex.md'
+        - Manifolds: 'algo/manifolds.md'
     - 'Contributing':
         - 'Contributing': 'dev/contributing.md'
     - License: 'LICENSE.md'

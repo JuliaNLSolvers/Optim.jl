@@ -1,4 +1,6 @@
 # Optim v0.9.0
+* Support for optimization on Riemannian manifolds
+* Support for optimization of functions of complex variables
 * Drop support for Julia versions less than v0.6.0-pre
 * Fminbox: If an initial guess is on the boundary of the box, the guess is moved inside the box and a warning is produced, as opposed to crashing with an error.
 * Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters

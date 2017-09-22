@@ -3,14 +3,16 @@ struct GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
     linesearch!::L
     P::T
     precondprep!::Tprep
+    manifold::Manifold
 end
 
 Base.summary(::GradientDescent) = "Gradient Descent"
 
 function GradientDescent(; linesearch = LineSearches.HagerZhang(),
                            P = nothing,
-                           precondprep = (P, x) -> nothing)
-    GradientDescent(linesearch, P, precondprep)
+                           precondprep = (P, x) -> nothing,
+                           manifold::Manifold=Flat())
+    GradientDescent(linesearch, P, precondprep, manifold)
 end
 
 mutable struct GradientDescentState{T,N}
@@ -22,9 +24,12 @@ mutable struct GradientDescentState{T,N}
 end
 
 function initial_state(method::GradientDescent, options, d, initial_x::Array{T}) where T
+    initial_x = copy(initial_x)
+    retract!(method.manifold, real_to_complex(d,initial_x))
     value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
-    GradientDescentState(copy(initial_x), # Maintain current state in state.x
+    GradientDescentState(initial_x, # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
@@ -33,18 +38,24 @@ end
 
 function update_state!(d, state::GradientDescentState{T}, method::GradientDescent) where T
     # Search direction is always the negative preconditioned gradient
-    method.precondprep!(method.P, state.x)
-    A_ldiv_B!(state.s, method.P, gradient(d))
+    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    method.precondprep!(method.P, real_to_complex(d,state.x))
+    A_ldiv_B!(real_to_complex(d,state.s), method.P, real_to_complex(d,gradient(d)))
     scale!(state.s,-1)
+    if method.P != nothing
+        project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+    end
 
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
+    # lssuccess = perform_linesearch!(state, method, d)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
 
     # Update current position # x = x + alpha * s
     LinAlg.axpy!(state.alpha, state.s, state.x)
+    retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
 end
 
