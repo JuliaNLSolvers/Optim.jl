@@ -62,7 +62,6 @@ function twoloop!(s::Vector,
     return
 end
 
-# L should be function or any other callable
 struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
     linesearch!::L
@@ -72,7 +71,34 @@ struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
     snap2one::Tuple
     manifold::Manifold
 end
+"""
+# LBFGS
+## Constructor
+```julia
+LBFGS(; m::Integer = 10,
+linesearch = LineSearches.HagerZhang(),
+P=nothing,
+precondprep = (P, x) -> nothing,
+extrapolate::Bool=false,
+snap2one = (0.75, Inf))
+```
+`LBFGS` has three special keywords: memory length `m`, `extrapolate` flag,
+and `snap2one` tuple. The memory length determines how many previous Hessian
+approximations to store. The `extrapolate` can be set to `true` to enable an
+extrapolation step used to determine the initial step-size for the line search
+step. The `snap2one` tuple provides boundaries to an interval in which the
+initial step-size should be mapped to the unit step-size.
 
+## Description
+The `LBFGS` method implements the limited-memory BFGS algorithm as described in
+Nocedal and Wright (sec. 9.1, 1999) and original paper by Liu & Nocedal (1989).
+It is a quasi-Newton method that updates an approximation to the Hessian using
+past approximations as well as the gradient.
+
+## References
+ - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
+ - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
+"""
 function LBFGS(; m::Integer = 10,
                  linesearch = LineSearches.HagerZhang(),
                  P=nothing,

@@ -1,7 +1,6 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-# L should be function or any other callable
 struct MomentumGradientDescent{L} <: Optimizer
     mu::Float64
     linesearch!::L
