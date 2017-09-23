@@ -3,7 +3,7 @@ module UnconstrainedProblems
 using Compat
 
 immutable OptimizationProblem
-    name::Compat.ASCIIString
+    name::String
     f::Function
     g!::Function
     h!::Function
@@ -13,7 +13,7 @@ immutable OptimizationProblem
     istwicedifferentiable::Bool
 end
 
-examples = Dict{Compat.ASCIIString, OptimizationProblem}()
+examples = Dict{String, OptimizationProblem}()
 
 ##########################################################################
 ###

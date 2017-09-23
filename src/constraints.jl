@@ -1,4 +1,4 @@
-abstract AbstractConstraints
+abstract type AbstractConstraints end
 
 immutable ConstraintsNone <: AbstractConstraints end
 
@@ -6,7 +6,7 @@ immutable ConstraintsBox{T,N} <: AbstractConstraints
     lower::Array{T,N}
     upper::Array{T,N}
 
-    function ConstraintsBox(l::AbstractArray{T}, u::AbstractArray{T})
+    function ConstraintsBox{T,N}(l::AbstractArray{T,N}, u::AbstractArray{T,N}) where {T,N}
         size(l) == size(u) || error("The sizes of the bounds must match")
         for i = 1:length(l)
             l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")
@@ -26,8 +26,8 @@ immutable ConstraintsL{T,M<:AbstractMatrix,N} <: AbstractConstraints
     scratch2::Array{T,N}
     scratch3::Array{T,N}
 
-    function ConstraintsL(A, l::Array{T,N}, u::Array{T,N},
-                          scratch1 = similar(l), scratch2 = similar(l), scratch3 = Array{T}(ndims(l) == 1 ? size(A, 2) : (size(A,2),size(l,2))))
+    function ConstraintsL{T,M,N}(A, l::Array{T,N}, u::Array{T,N},
+                          scratch1 = similar(l), scratch2 = similar(l), scratch3 = Array{T}(ndims(l) == 1 ? size(A, 2) : (size(A,2),size(l,2)))) where {T,M,N}
         size(A, 1) == size(l,1) == size(u,1) || error("The sizes of the bounds must match the size of A")
         for i = 1:length(l)
             l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")
@@ -45,7 +45,7 @@ immutable ConstraintsNL{T,F<:Union{Function,DifferentiableFunction,TwiceDifferen
     lower::Vector{T}
     upper::Vector{T}
 
-    function ConstraintsNL(funcs::Vector, l::AbstractVector{T}, u::AbstractVector{T})
+    function ConstraintsNL{T,F}(funcs::Vector, l::AbstractVector{T}, u::AbstractVector{T}) where {T,F}
         size(A, 1) == length(l) == length(u) || error("The sizes of the bounds must match the ")
         for i = 1:length(l)
             l[i] <= u[i] || error("The lower bound must be smaller than the upper bound")
