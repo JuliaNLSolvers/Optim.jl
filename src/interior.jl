@@ -258,7 +258,7 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
         f_x /= t
         @newtontrace
         alphamax = toedge(x, s, constraints)
-        alpha = alphamax < 1 ? 0.9*alphamax : 1.0
+        alpha = alphamax < 1 ? T(0.9*alphamax) : T(1.0)
         alpha, _f_calls, _g_calls =
             hz_linesearch!(df, x, s, xtmp, gr, lsr, alpha, true, constraints, alphamax)
         copy!(x_previous, x)
@@ -297,10 +297,10 @@ function interior_newton{T}(objective::TwiceDifferentiableFunction,
                                         (x,gr) -> combined_fg!(x, gr, objective.fg!, constraints, t))
         end
     end
-    MultivariateOptimizationResults("Interior/Newton",
+    MultivariateOptimizationResults{T,1}("Interior/Newton",
                                     initial_x,
                                     x,
-                                    @compat(Float64(f_x)),
+                                    f_x,
                                     iteration,
                                     iteration == iterations,
                                     x_converged,
@@ -329,10 +329,10 @@ function interior{T}(objective::Union{DifferentiableFunction, TwiceDifferentiabl
     if isnan(t)
         vo, vc, gogo, gogc = gnorm(objective, constraints, initial_x)
         if isfinite(vo) && isfinite(vc) && sqrt(gogo) < grtol
-            return MultivariateOptimizationResults("Interior",
+            return MultivariateOptimizationResults{T,ndims(initial_x)}("Interior",
                                     initial_x,
                                     initial_x,
-                                    @compat(Float64(vo)),
+                                    vo,
                                     0,
                                     false,
                                     false,

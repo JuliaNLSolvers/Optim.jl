@@ -6,11 +6,11 @@ immutable OptimizationState
 end
 
 function OptimizationState(i::Integer, f::Real)
-    OptimizationState(int(i), @compat(Float64(f)), NaN, Dict())
+    OptimizationState(int(i), Float64(f), NaN, Dict())
 end
 
 function OptimizationState(i::Integer, f::Real, g::Real)
-    OptimizationState(int(i), @compat(Float64(f)), @compat(Float64(g)), Dict())
+    OptimizationState(int(i), Float64(f), Float64(g), Dict())
 end
 
 immutable OptimizationTrace
@@ -19,10 +19,10 @@ end
 
 OptimizationTrace() = OptimizationTrace(Vector{OptimizationState}(0))
 
-abstract OptimizationResults
+abstract type OptimizationResults end
 
 type MultivariateOptimizationResults{T,N} <: OptimizationResults
-    method::Compat.ASCIIString
+    method::String
     initial_x::Array{T,N}
     minimum::Array{T,N}
     f_minimum::Float64
@@ -40,7 +40,7 @@ type MultivariateOptimizationResults{T,N} <: OptimizationResults
 end
 
 type UnivariateOptimizationResults{T} <: OptimizationResults
-    method::Compat.ASCIIString
+    method::String
     initial_lower::T
     initial_upper::T
     minimum::T
@@ -204,7 +204,7 @@ LineSearchResults{T}(::Type{T}) = LineSearchResults(T[], T[], T[], 0)
 
 Base.length(lsr::LineSearchResults) = length(lsr.alpha)
 
-function Base.push!{T}(lsr::LineSearchResults{T}, a::T, v::T, d::T)
+function Base.push!(lsr::LineSearchResults, a, v, d)
     push!(lsr.alpha, a)
     push!(lsr.value, v)
     push!(lsr.slope, d)
