@@ -1,6 +1,7 @@
 # Optim release notes for next tag
 * Support for optimization on Riemannian manifolds
 * Support for optimization of functions of complex variables
+* Add doc strings to methods
 * Drop support for Julia versions less than v0.6.0-pre
 
 # Optim v0.9.0 release notes
