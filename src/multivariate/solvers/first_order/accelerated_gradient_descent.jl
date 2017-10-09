@@ -50,11 +50,12 @@ function update_state!(d, state::AcceleratedGradientDescentState{T}, method::Acc
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
 
-    # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-
     # Record previous state
     copy!(state.x_previous, state.x)
+    state.f_x_previous = value(d)
+
+    # Determine the distance of movement along the search line
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)

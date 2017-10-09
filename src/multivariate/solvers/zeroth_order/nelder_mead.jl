@@ -268,11 +268,16 @@ function after_while!(f::F, state, method::NelderMead, options) where F
     f.f_x = f_min
     state.x[:] = x_min
 end
+# We don't have an f_x_previous in NelderMeadState, so we need to special case these
+pick_best_x(f_increased, state::NelderMeadState) = state.x
+pick_best_f(f_increased, state::NelderMeadState, d) = value(d)
 
 function assess_convergence(state::NelderMeadState, d, options)
     g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged, false
 end
+f_residual(d::AbstractObjective, state::NelderMeadState, options::Options) = convert(typeof(value(d)), NaN)
+x_residual(state::NelderMeadState) = convert(eltype(state.x), NaN)
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()

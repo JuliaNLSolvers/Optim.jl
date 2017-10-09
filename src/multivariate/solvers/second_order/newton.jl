@@ -61,14 +61,16 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
+
     state.F, state.Hd = ldltfact!(Positive, NLSolversBase.hessian(d))
     state.s[:] = -(state.F\gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
 
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
 
     # Update current position # x = x + alpha * s
     LinAlg.axpy!(state.alpha, state.s, state.x)

@@ -70,50 +70,30 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
 
     after_while!(d, state, method, options)
 
-    try
+    # we can just check minimum, as we've earlier enforced same types/eltypes
+    # in variables besides the option settings
+    elty = typeof(value(d))
     return MultivariateOptimizationResults(method,
                                             NLSolversBase.iscomplex(d),
                                             initial_x,
-                                            f_increased ? state.x_previous : state.x,
-                                            f_increased ? state.f_x_previous : value(d),
+                                            pick_best_x(f_increased, state),
+                                            pick_best_f(f_increased, state, d),
                                             iteration,
                                             iteration == options.iterations,
                                             x_converged,
-                                            options.x_tol,
-                                            x_residual(state.x, state.x_previous),
+                                            convert(elty, options.x_tol),
+                                            x_residual(state),
                                             f_converged,
-                                            options.f_tol,
-                                            f_residual(value(d), state.f_x_previous, options.f_tol),
+                                            convert(elty, options.f_tol),
+                                            f_residual(d, state, options),
                                             g_converged,
-                                            options.g_tol,
-                                            g_residual(gradient(d)),
+                                            convert(elty, options.g_tol),
+                                            g_residual(d),
                                             f_increased,
                                             tr,
                                             f_calls(d),
                                             g_calls(d),
                                             h_calls(d))
-    catch
-      return MultivariateOptimizationResults(method,
-                                              NLSolversBase.iscomplex(d),
-                                              initial_x,
-                                              f_increased ? state.x_previous : state.x,
-                                              f_increased ? state.f_x_previous : value(d),
-                                              iteration,
-                                              iteration == options.iterations,
-                                              x_converged,
-                                              options.x_tol,
-                                              NaN,
-                                              f_converged,
-                                              options.f_tol,
-                                              NaN,
-                                              g_converged,
-                                              options.g_tol,
-                                              NaN,
-                                              f_increased,
-                                              tr,
-                                              f_calls(d),
-                                              g_calls(d),
-                                              h_calls(d))
-    end
+
 
 end

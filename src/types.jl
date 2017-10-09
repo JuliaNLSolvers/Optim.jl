@@ -1,8 +1,8 @@
 abstract type Optimizer end
-struct Options{TCallback <: Union{Void, Function}}
-    x_tol::Float64
-    f_tol::Float64
-    g_tol::Float64
+struct Options{T, TCallback <: Union{Void, Function}}
+    x_tol::T
+    f_tol::T
+    g_tol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
@@ -13,7 +13,7 @@ struct Options{TCallback <: Union{Void, Function}}
     extended_trace::Bool
     show_every::Int
     callback::TCallback
-    time_limit::Float64
+    time_limit::T
 end
 
 function Options(;
@@ -35,8 +35,7 @@ function Options(;
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options{typeof(callback)}(
-        Float64(x_tol), Float64(f_tol), Float64(g_tol), f_calls_limit, g_calls_limit, h_calls_limit,
+    Options(x_tol, f_tol, g_tol, f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, Int(iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, time_limit)
 end
@@ -71,14 +70,14 @@ mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: Optimizati
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool
-    x_tol::Float64
-    x_residual::Float64
+    x_tol::T
+    x_residual::T
     f_converged::Bool
-    f_tol::Float64
-    f_residual::Float64
+    f_tol::T
+    f_residual::T
     g_converged::Bool
-    g_tol::Float64
-    g_residual::Float64
+    g_tol::T
+    g_residual::T
     f_increased::Bool
     trace::OptimizationTrace{M}
     f_calls::Int
@@ -86,6 +85,10 @@ mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: Optimizati
     h_calls::Int
 end
 iscomplex(r::MultivariateOptimizationResults) = r.iscomplex
+# pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
+# f increased and we didn't allow it
+pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
+pick_best_f(f_increased, state, d) = f_increased ? state.f_x_previous : value(d)
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm

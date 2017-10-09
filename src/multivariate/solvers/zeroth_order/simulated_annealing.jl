@@ -31,6 +31,9 @@ mutable struct SimulatedAnnealingState{T, N}
     f_x_current::T
     f_proposal::T
 end
+# We don't have an f_x_previous in SimulatedAnnealing, so we need to special case these
+pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
+pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
 function initial_state(method::SimulatedAnnealing, options, f, initial_x::Array{T}) where T
     # Count number of parameters
@@ -79,6 +82,8 @@ end
 function assess_convergence(state::SimulatedAnnealingState, d, options)
     false, false, false, false, false
 end
+f_residual(d::AbstractObjective, state::SimulatedAnnealingState, options::Options) = convert(typeof(value(d)), NaN)
+x_residual(state::SimulatedAnnealingState) = convert(eltype(state.x), NaN)
 
 function trace!(tr, d, state, iteration, method::SimulatedAnnealing, options)
     dt = Dict()

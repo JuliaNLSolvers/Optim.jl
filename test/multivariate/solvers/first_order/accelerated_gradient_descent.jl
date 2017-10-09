@@ -14,5 +14,6 @@
     run_optim_tests(AcceleratedGradientDescent(); skip = ("Large Polynomial","Parabola"),
                                                   convergence_exceptions = (("Rosenbrock", 1),("Rosenbrock", 2)),
                                                   iteration_exceptions = (("Powell", 1100),
-                                                                          ("Polynomial", 1500)))
+                                                                          ("Polynomial", 1500)),
+                                                  f_increase_exceptions = ("Hosaki", "Polynomial", "Powell", "Himmelblau"))
 end

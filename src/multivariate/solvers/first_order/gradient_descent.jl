@@ -64,12 +64,13 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
     end
 
+    # Maintain a record of previous position
+    copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
+
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
     # lssuccess = perform_linesearch!(state, method, d)
-
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
 
     # Update current position # x = x + alpha * s
     LinAlg.axpy!(state.alpha, state.s, state.x)
