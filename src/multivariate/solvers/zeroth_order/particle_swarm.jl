@@ -447,6 +447,8 @@ end
 function assess_convergence(state::ParticleSwarmState, d, options)
   false, false, false, false, false
 end
+f_residual(d::AbstractObjective, state::ParticleSwarmState, options::Options) = convert(typeof(value(d)), NaN)
+x_residual(state::ParticleSwarmState) = convert(eltype(state.x), NaN)
 
 function trace!(tr, d, state, iteration, method::ParticleSwarm, options)
     dt = Dict()

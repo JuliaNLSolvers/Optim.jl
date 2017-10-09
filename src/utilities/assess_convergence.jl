@@ -1,5 +1,9 @@
-f_residual(f_x, f_x_previous, f_tol) = abs(f_x - f_x_previous) / (abs(f_x) + f_tol)
+f_residual(d::AbstractObjective, state, options::Options) = f_residual(value(d), state.f_x_previous, options.f_tol)
+f_residual(f_x::T, f_x_previous, f_tol) where T = abs(f_x - f_x_previous) / (abs(f_x) + T(f_tol))
+x_residual(state) = x_residual(state.x, state.x_previous)
 x_residual(x, x_previous) = maxdiff(x, x_previous)
+g_residual(d::AbstractObjective) = g_residual(gradient(d))
+g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
 g_residual(g) = vecnorm(g, Inf)
 
 # Used by fminbox
