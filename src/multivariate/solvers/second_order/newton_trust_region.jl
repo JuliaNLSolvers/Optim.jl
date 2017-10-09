@@ -261,6 +261,7 @@ function update_state!(d, state::NewtonTrustRegionState{T}, method::NewtonTrustR
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
 
     # Update current position
     state.x .+= state.s

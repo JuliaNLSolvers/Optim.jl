@@ -86,6 +86,7 @@ function update_state!(d, state::BFGSState{T}, method::BFGS) where T
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, gradient(d))
+    state.f_x_previous  = value(d)
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive

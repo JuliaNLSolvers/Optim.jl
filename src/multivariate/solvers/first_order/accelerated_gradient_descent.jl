@@ -55,6 +55,7 @@ function update_state!(d, state::AcceleratedGradientDescentState{T}, method::Acc
 
     # Record previous state
     copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
 
     # Make one move in the direction of the gradient
     copy!(state.y_previous, state.y)

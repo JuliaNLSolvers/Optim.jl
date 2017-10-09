@@ -70,6 +70,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
 
     # Update current position # x = x + alpha * s
     LinAlg.axpy!(state.alpha, state.s, state.x)
