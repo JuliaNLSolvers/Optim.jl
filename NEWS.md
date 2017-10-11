@@ -1,6 +1,8 @@
-# Optim release notes for next tag
+# Optim v1.0.0 release notes
 * Support for optimization on Riemannian manifolds
 * Support for optimization of functions of complex variables
+* New experimental KrylovTrustRegion method useful when cheap Hessian-vector products are available
+* Improved support for BigFloats
 * Add doc strings to methods
 * Drop support for Julia versions less than v0.6.0-pre
 
