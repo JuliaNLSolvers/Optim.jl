@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Conjugate Gradient - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  <link href="../../assets/Documenter.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Conjugate Gradient";
+    var mkdocs_page_input_path = "algo/cg.md";
+    var mkdocs_page_url = "/algo/cg/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">Conjugate Gradient</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#conjugate-gradient-descent">Conjugate Gradient Descent</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#example">Example</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../manifolds/">Manifolds</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Gradient Required &raquo;</li>
+        
+      
+    
+    <li>Conjugate Gradient</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/cg.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Conjugate-Gradient-Descent-1'></a></p>
+<h1 id="conjugate-gradient-descent">Conjugate Gradient Descent</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">ConjugateGradient</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
+                    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span>
+                    <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
+                    <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
+</pre></div>
+
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The <code>ConjugateGradient</code> method implements Hager and Zhang (2006) and elements from Hager and Zhang (2013). Notice, that the default <code>linesearch</code> is <code>HagerZhang</code> from LineSearches.jl. This line search is exactly the one proposed in Hager and Zhang (2006). The constant $eta$ is used in determining the next step direction, and the default here deviates from the one used in the original paper ($0.01$). It needs to be a strictly positive number.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>Let's optimize the 2D Rosenbrock function. The function and gradient are given by</p>
+<div class="codehilite"><pre><span></span><span class="nx">f</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="kd">function</span> <span class="nx">g</span><span class="o">!</span><span class="p">(</span><span class="nx">storage</span><span class="p">,</span> <span class="nx">x</span><span class="p">)</span>
+    <span class="nx">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nx">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<span class="nx">end</span>
+</pre></div>
+
+
+<p>we can then try to optimize this function from <code>x=[0.0, 0.0]</code></p>
+<div class="codehilite"><pre><span></span>julia&gt; optimize(f, g!, zeros(2), ConjugateGradient())
+Results of Optimization Algorithm
+ * Algorithm: Conjugate Gradient
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [1.000000002262018,1.0000000045408348]
+ * Minimum: 5.144946e-18
+ * Iterations: 21
+ * Convergence: true
+   * |x - x&#39;| &lt; 1.0e-32: false
+     |x - x&#39;| = 2.09e-10
+   * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false
+     |f(x) - f(x&#39;)| / |f(x)| = 1.55e+00
+   * |g(x)| &lt; 1.0e-08: true
+     |g(x)| = 3.36e-09
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 54
+ * Gradient Calls: 39
+</pre></div>
+
+
+<p>We can compare this to the default first order solver in Optim.jl</p>
+<div class="codehilite"><pre><span></span> julia&gt; optimize(f, g!, zeros(2))
+ Results of Optimization Algorithm
+  * Algorithm: L-BFGS
+  * Starting Point: [0.0,0.0]
+  * Minimizer: [1.0000000000000007,1.000000000000001]
+  * Minimum: 5.374115e-30
+  * Iterations: 21
+  * Convergence: true
+    * |x - x&#39;| &lt; 1.0e-32: false
+      |x - x&#39;| = 5.95e-10
+    * |f(x) - f(x&#39;)| / |f(x)| &lt; 1.0e-32: false
+      |f(x) - f(x&#39;)| / |f(x)| = 3.24e+10
+    * |g(x)| &lt; 1.0e-08: true
+      |g(x)| = 9.02e-14
+    * stopped by an increasing objective: false
+    * Reached Maximum Number of Iterations: false
+  * Objective Calls: 69
+  * Gradient Calls: 69
+</pre></div>
+
+
+<p>We see that for this objective and starting point, <code>ConjugateGradient()</code> requires fewer objective and gradient evaluations to reach convergence.</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<ul>
+<li>W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.</li>
+<li>W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../gradientdescent/" class="btn btn-neutral float-right" title="Gradient Descent">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../simulated_annealing/" class="btn btn-neutral" title="Simulated Annealing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../simulated_annealing/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../gradientdescent/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+
+</body>
+</html>
