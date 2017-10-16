@@ -21,7 +21,7 @@ result = optimize(rosenbrock, zeros(2), BFGS())
 
 This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function) 
 
-<img src="https://latex.codecogs.com/gif.latex?f(x,y)&space;=&space;(a-x)^2&plus;b(y-x^2)^2" title="f(x,y) = (a-x)^2+b(y-x^2)^2" />
+<img src="https://user-images.githubusercontent.com/8431156/31627324-2bbc9ebc-b2ad-11e7-916f-857ad8dcb714.gif" title="f(x,y) = (a-x)^2+b(y-x^2)^2" />
 
 with a = 1, b = 100 and the initial values x=0, y=0.
 The minimum is at (a,a^2).
