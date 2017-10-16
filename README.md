@@ -18,6 +18,14 @@ using Optim
 rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 result = optimize(rosenbrock, zeros(2), BFGS())
 ```
+
+This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function) 
+
+<img src="https://latex.codecogs.com/gif.latex?f(x,y)&space;=&space;(a-x)^2&plus;b(y-x^2)^2" title="f(x,y) = (a-x)^2+b(y-x^2)^2" />
+
+with a = 1, b = 100 and the initial values x=0, y=0.
+The minimum is at (a,a^2).
+
 Which gives the output
 ```jlcon
 Results of Optimization Algorithm
