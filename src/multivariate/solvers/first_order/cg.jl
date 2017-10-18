@@ -160,7 +160,7 @@ function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGra
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
         # Update current position # x = x + alpha * s
-        LinAlg.axpy!(state.alpha, state.s, state.x)
+        state.x .= state.x .+ state.alpha * state.s
         retract!(method.manifold, real_to_complex(d,state.x))
 
         # Update the function value and gradient
