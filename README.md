@@ -3,11 +3,11 @@ Optim.jl
 
 Univariate and multivariate optimization in Julia.
 
-| **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 |
-|:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]|
+| **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 | **References to cite** |
+|:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|:-:|
+| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![DOI](https://zenodo.org/badge/3933868.svg)](https://zenodo.org/badge/latestdoi/3933868)|
 | [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  |
-| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  ||
+| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  || |
 
 # Optimization
 
