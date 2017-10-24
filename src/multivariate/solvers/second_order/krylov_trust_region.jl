@@ -128,7 +128,7 @@ function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
 
         alpha = dot(r, r) / dHd
 
-        if dHd < 0. || norm(z + alpha * d) >= state.radius
+        if dHd < 0. || norm(z .+ alpha .* d) >= state.radius
             a_ = dot(d, d)
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
