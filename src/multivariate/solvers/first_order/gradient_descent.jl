@@ -73,7 +73,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # lssuccess = perform_linesearch!(state, method, d)
 
     # Update current position # x = x + alpha * s
-    state.x .= state.x .+ state.alpha .* state.s
+    @. state.x = state.x + state.alpha * state.s
     retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
 end
