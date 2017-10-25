@@ -49,7 +49,7 @@ mutable struct KrylovTrustRegionState{T,G}
     rho::T
     r::Vector{T}  # residual vector
     d::Vector{T}  # direction to consider
-    cg_iters::Int64
+    cg_iters::Int
 end
 
 pick_best_f(f_increased, state::KrylovTrustRegionState, d) = f_increased ? state.f_x_previous : state.f_x # TODO: remove when NLSolversBase.TwiceDifferentiableHV exists
