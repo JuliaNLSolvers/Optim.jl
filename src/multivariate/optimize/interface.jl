@@ -1,7 +1,7 @@
 const ZerothOrderSolver = Union{NelderMead, SimulatedAnnealing, ParticleSwarm}
 const FirstOrderSolver = Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
                                MomentumGradientDescent, BFGS, LBFGS}
-const SecondOrderSolver = Union{Newton, NewtonTrustRegion}
+const SecondOrderSolver = Union{Newton, NewtonTrustRegion, KrylovTrustRegion}
 # Multivariate optimization
 function check_kwargs(kwargs, fallback_method)
     kws = Dict{Symbol, Any}()
