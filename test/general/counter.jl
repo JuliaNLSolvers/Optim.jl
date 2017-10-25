@@ -58,7 +58,7 @@
         @test gcount == Optim.g_calls(res)
     end
 
-    for solver in (Newton(linesearch = ls), NewtonTrustRegion())
+    for solver in (Newton(linesearch = ls), NewtonTrustRegion(), KrylovTrustRegion())
         fcounter(true); gcounter(true); hcounter(true)
         res = Optim.optimize(f,g!, h!, prob.initial_x,
                              solver)

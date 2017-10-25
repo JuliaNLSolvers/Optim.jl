@@ -48,6 +48,7 @@ multivariate_tests = [
     ## second order
     "solvers/second_order/newton",
     "solvers/second_order/newton_trust_region",
+    "solvers/second_order/krylov_trust_region",
     ## zeroth order
     "solvers/zeroth_order/grid_search",
     "solvers/zeroth_order/nelder_mead",
