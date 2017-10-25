@@ -58,10 +58,31 @@
         @test gcount == Optim.g_calls(res)
     end
 
-    for solver in (Newton(linesearch = ls), NewtonTrustRegion(), KrylovTrustRegion())
+    for solver in (Newton(linesearch = ls), NewtonTrustRegion())
         fcounter(true); gcounter(true); hcounter(true)
         res = Optim.optimize(f,g!, h!, prob.initial_x,
                              solver)
+        @test fcount == Optim.f_calls(res)
+        @test gcount == Optim.g_calls(res)
+        @test hcount == Optim.h_calls(res)
+    end
+
+    # Need to define fg! and hv! for KrylovTrustRegion
+    fg!(out,x) = begin
+        g!(out,x)
+        f(x)
+    end
+    hv!(out, x, v) = begin
+        n = length(x)
+        H = Matrix{Float64}(n, n)
+        h!(H, x)
+        out .= H * v
+    end
+    begin
+        solver = Optim.KrylovTrustRegion()
+        fcounter(true); gcounter(true); hcounter(true)
+        df = Optim.TwiceDifferentiableHV(f,fg!,hv!)
+        res = Optim.optimize(df, prob.initial_x, solver)
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)
         @test hcount == Optim.h_calls(res)

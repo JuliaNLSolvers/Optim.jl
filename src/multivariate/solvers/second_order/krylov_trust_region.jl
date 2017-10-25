@@ -173,6 +173,7 @@ function update_state!{T}(objective::TwiceDifferentiableHV,
     @assert state.m_diff <= 0
 
     state.f_diff = objective.f(state.x .+ state.s) - state.f_x
+    state.f_calls += 1
     state.rho = state.f_diff / state.m_diff
     state.interior = norm(state.s) < 0.9 * state.radius
 

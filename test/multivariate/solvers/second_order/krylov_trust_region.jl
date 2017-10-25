@@ -54,7 +54,7 @@ end
                 n = length(x)
                 H = Matrix{Float64}(n, n)
                 prob.h!(H, x)
-                storage[:] = H * v
+                storage .= H * v
             end
             fg!(g::Vector, x::Vector) = begin
                 prob.g!(g, x)
