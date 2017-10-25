@@ -28,12 +28,11 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky, Thd}
+mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky}
     x::Array{T,N}
     x_previous::Array{T, N}
     f_x_previous::T
     F::F
-    Hd::Thd
     s::Array{T, N}
     @add_linesearch_fields()
 end
@@ -48,9 +47,8 @@ function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
                 @static(VERSION >= v"0.7.0-DEV.393" ?
-                        Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U, BLAS.BlasInt(0)) :
-                        Base.LinAlg.Cholesky(Matrix{T}(0, 0), :U)),
-                Vector{Int8}(),
+                        Base.LinAlg.Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)) :
+                        Base.LinAlg.Cholesky(similar(d.H, T, 0, 0), :U)),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
@@ -65,12 +63,15 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     copy!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
 
-    state.F, state.Hd = ldltfact!(Positive, NLSolversBase.hessian(d))
-    state.s[:] = -(state.F\gradient(d))
+    if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
+        state.s .= -NLSolversBase.hessian(d)\gradient(d)
+    else
+        state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+        state.s .= -(state.F\gradient(d))
+    end
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
-
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
