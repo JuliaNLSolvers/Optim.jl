@@ -27,9 +27,9 @@ Application of the algorithm to optimization is covered, for example, in~\cite{s
 }
 """
 
-immutable NGMRES{Tc,Tp,L} <: Optimizer
+immutable NGMRES{Tp,TPrec <: Optimizer,L} <: Optimizer
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
-    precon::Optimizer # Nonlinear preconditioner
+    precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
     #γA::Tc # Heuristic condition (Washio and Oosterlee)
     #γB::Tc # Heuristic condition (Washio and Oosterlee)
@@ -42,7 +42,7 @@ end
 
 Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.precon))"
 
-function NGMRES(; linesearch = LineSearches.Static()
+function NGMRES(; linesearch = LineSearches.Static(),
                 precon = GradientDescent(linesearch = LineSearches.Static()),
                 preconopts = Options(iterations = 1),
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
@@ -56,14 +56,14 @@ end
 
 mutable struct NGMRESState{P,TA,T,N}
     # TODO: maybe we can just use preconstate for x, x_previous and f_x_previous?
-    x::TA # TODO: is this the best type?
-    x_previous::TA
+    x::Vector{T} # TODO: How to handle non-vector types?
+    x_previous::Vector{T}
     f_x_previous::T
     s::TA # Search direction for linesearch between xP and xA
     # TODO: Specify preconstate::P where P <: AbstractOptimizerState
     preconstate::P  # Preconditioner state
-    X::Array{TA,2}  # Solution vectors in the window (TODO: is this the best type?)
-    R::Array{TA,2}  # Gradient vectors in the window (TODO: is this the best type?)
+    X::Array{T,2}  # Solution vectors in the window (TODO: is this the best type?)
+    R::Array{T,2}  # Gradient vectors in the window (TODO: is this the best type?)
     Q::Array{T,2}   # Storage to create linear system (TODO: make Symmetric?)
     ξ::Array{T,1}   # Storage to create linear system
     curw::Int       # Counter for current window size
@@ -71,6 +71,7 @@ mutable struct NGMRESState{P,TA,T,N}
     b::Array{T,1}   # Container for Aα = b
     xA::Array{T,1}  # Container for accelerated step
     iteration::Int  # Iteration counter
+    restart::Bool   # Restart flag
     @add_linesearch_fields()
 end
 
@@ -78,12 +79,12 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
     wmax = method.wmax
 
-    X = Array(typeof(initial_x), wmax)
-    R = Array(typeof(initial_x), wmax)
-    Q = Array(T, wmax, wmax)
+    X = Array{T}(length(initial_x), wmax)
+    R = Array{T}(length(initial_x), wmax)
+    Q = Array{T}(wmax, wmax)
 
-    copy!(X[1], initial_x)
-    copy!(R[1], gradient(d))
+    copy!(X[:,1], initial_x)
+    copy!(R[:,1], gradient(d))
     Q[1,1] =  dot(gradient(d), gradient(d))
 
     NGMRESState(initial_x,                      # Maintain current state in state.x
@@ -94,12 +95,13 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
                 X,
                 R,
                 Q,
-                Array(T, wmax),                 # ξ
+                Array{T}(wmax),                 # ξ
                 1,                              # curw
-                Array(T, wmax, wmax),           # A
-                Array(T, wmax),                 # b
+                Array{T}(wmax, wmax),           # A
+                Array{T}(wmax),                 # b
                 similar(initial_x),             # xA
                 0,                              # iteration counter
+                false,
                 @initial_linesearch()...)       # Maintain a cache for line search results in state.lsr
 end
 
@@ -109,6 +111,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     state.f_x_previous  = value(d)
 
     state.iteration += 1
+    curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
     res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
@@ -125,19 +128,19 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     gP = gradient(d)
     η = dot(gP, gP)
 
-    for i = 1:state.curw
-        state.ξ[i] = dot(gP, R[i])
-        state.b[i] = eta-state.ξ[i]
+    for i = 1:curw
+        state.ξ[i] = dot(gP, state.R[:,i])
+        state.b[i] = η-state.ξ[i]
     end
 
-    for i = 1:state.curw
-        for j = 1:state.curw
+    for i = 1:curw
+        for j = 1:curw
             state.A[i,j] = state.Q[i,j]-state.ξ[i]-state.ξ[j]+η;
         end
     end
 
     # The outer max is to avoid δ=0, which may occur if A=0, e.g. at numerical convergence
-    δ = method.ϵ0*max(maximum(diag(state.A)[1:state.curw]), method.ϵ0)
+    δ = method.ϵ0*max(maximum(diag(state.A)[1:curw]), method.ϵ0)
 
     # TODO: preallocate α in state?
     #state.α[1:curw] .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
@@ -149,7 +152,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     end
 
     # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
-    state.xA .= (1.0-sum(α)).*state.x .+ sum(state.X .* α) # TODO: better way?
+    state.xA .= (1.0-sum(α)).*state.x .+ (state.X[:,1:curw] * α) # TODO: better way?
 
     # 3: Perform condition checks
     @. state.s = state.xA - state.x
@@ -157,9 +160,9 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     if dot(state.s, gP) ≥ 0
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
-        restart = true # TODO: expand restart heuristics
+        state.restart = true # TODO: expand restart heuristics
     else
-        restart = false
+        state.restart = false
         perform_linesearch!(state, method, d)
     end
 
@@ -178,15 +181,20 @@ function update_g!(d, state, method::NGMRES)
         j = 1
     end
 
-    copy!(state.X[j], state.x)
-    copy!(state.R[j], gradient(d))
+    copy!(state.X[:,j], state.x)
+    copy!(state.R[:,j], gradient(d))
     for i=1:state.curw
-        state.Q[j,i] = dot(gradient(d), R[i])
+        state.Q[j,i] = dot(gradient(d), state.R[:,i])
         state.Q[i,j] = state.Q[j,i] # Use Symmetric?
     end
 end
 
 function trace!(tr, d, state, iteration, method::NGMRES, options)
     # TODO: create NGMRES-specific trace
-    common_trace!(tr, d, state, iteration, method, options)
+    #common_trace!(tr, d, state, iteration, method, options)
+    Base.warn_once("We need to implement tracing for N-GMRES")
+end
+
+function assess_convergence(state::NGMRESState, d, options)
+  default_convergence_assessment(state, d, options)
 end
