@@ -191,8 +191,8 @@ end
 
 function trace!(tr, d, state, iteration, method::NGMRES, options)
     # TODO: create NGMRES-specific trace
-    #common_trace!(tr, d, state, iteration, method, options)
-    Base.warn_once("We need to implement tracing for N-GMRES")
+    Base.warn_once("We need to implement proper tracing for N-GMRES")
+    common_trace!(tr, d, state, iteration, method, options)
 end
 
 function assess_convergence(state::NGMRESState, d, options)

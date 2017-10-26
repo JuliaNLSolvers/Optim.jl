@@ -37,6 +37,7 @@ module Optim
            Fminbox,
            GoldenSection,
            GradientDescent,
+           NGMRES,
            LBFGS,
            MomentumGradientDescent,
            NelderMead,
@@ -76,6 +77,9 @@ module Optim
 
     # preconditioning functionality
     include("multivariate/precon.jl")
+
+    # Nonlinear GMRES
+    include("multivariate/solvers/first_order/ngmres.jl")
 
     # Gradient Descent
     include("multivariate/solvers/first_order/gradient_descent.jl")
