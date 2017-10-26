@@ -47,8 +47,10 @@ function NGMRES(; linesearch = LineSearches.Static()
                 preconopts = Options(iterations = 1),
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
                 # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
-                ϵ0 = 1e-12) # ϵ0 = 1e-12 number was an arbitrary choice
-    NGMRES(precon, preconopts, γA, γB, γC, ϵB, l2reg, ϵ0)
+                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
+                10) # wmax = 10  -- number was an arbitrary choice
+    NGMRES(linesearch, precon, preconopts, #γA, γB, γC, ϵB,
+           ϵ0)
 end
 
 mutable struct NGMRESState{P,TA,T,N}
@@ -61,41 +63,51 @@ mutable struct NGMRESState{P,TA,T,N}
     preconstate::P  # Preconditioner state
     X::Array{TA,2}  # Solution vectors in the window (TODO: is this the best type?)
     R::Array{TA,2}  # Gradient vectors in the window (TODO: is this the best type?)
-    Q::Array{T,2}   # Storage to create linear system
-    ξ::Array{T,1}  # Storage to create linear system
+    Q::Array{T,2}   # Storage to create linear system (TODO: make Symmetric?)
+    ξ::Array{T,1}   # Storage to create linear system
     curw::Int       # Counter for current window size
     A::Array{T,2}   # Container for Aα = b  (TODO: correct type?)
     b::Array{T,1}   # Container for Aα = b
-    #xP::Array{T,1}  # Container for preconditioned step (TODO: can just use preconstate.x here)?
     xA::Array{T,1}  # Container for accelerated step
+    iteration::Int  # Iteration counter
     @add_linesearch_fields()
 end
 
 function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) where T
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
-    # TODO: set R[1], X[1] ?
-    NGMRESState(initial_x,                             # Maintain current state in state.x
-                similar(initial_x),                    # Maintain previous state in state.x_previous
-                T(NaN),                                # Store previous f in state.f_x_previous
-                similar(initial_x),                    # Maintain current search direction in state.s
-                preconstate,                           # State storage for preconditioner
-                Array(typeof(initial_x), method.wmax), # X
-                Array(typeof(initial_x), method.wmax), # R
-                Array(T, method.wmax, method.wmax),    # Q
-                Array(T, method.wmax),                 # ξ
-                1,                                     # curw
-                Array(T, method.wmax, method.wmax),    # A
-                Array(T, method.wmax),                 # b
-                similar(initial_x),                    # xA
-                @initial_linesearch()...)              # Maintain a cache for line search results in state.lsr
+    wmax = method.wmax
+
+    X = Array(typeof(initial_x), wmax)
+    R = Array(typeof(initial_x), wmax)
+    Q = Array(T, wmax, wmax)
+
+    copy!(X[1], initial_x)
+    copy!(R[1], gradient(d))
+    Q[1,1] =  dot(gradient(d), gradient(d))
+
+    NGMRESState(initial_x,                      # Maintain current state in state.x
+                similar(initial_x),             # Maintain previous state in state.x_previous
+                T(NaN),                         # Store previous f in state.f_x_previous
+                similar(initial_x),             # Maintain current search direction in state.s
+                preconstate,                    # State storage for preconditioner
+                X,
+                R,
+                Q,
+                Array(T, wmax),                 # ξ
+                1,                              # curw
+                Array(T, wmax, wmax),           # A
+                Array(T, wmax),                 # b
+                similar(initial_x),             # xA
+                0,                              # iteration counter
+                @initial_linesearch()...)       # Maintain a cache for line search results in state.lsr
 end
 
 function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where T # Do I need to specify X, T here?
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
-    state.X[state.curw] .= state.x
-    state.R[state.curw] .= gradient(d)
+
+    state.iteration += 1
 
     # Step 1: Call preconditioner to get x^P
     res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
@@ -142,26 +154,38 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     @. state.s = state.xA - state.x
 
     if dot(state.s, gP) ≥ 0
-        # Then moving from xP to xA is *not* a descent direction
+        # Moving from xP to xA is *not* a descent direction
+        # Discard xA
         restart = true # TODO: expand restart heuristics
     else
+        restart = false
         perform_linesearch!(state, method, d)
     end
-
-    # 4: Choose which x to move on with
-
-    # 5: If we use x_P, update d.last_x for f-eval?
-
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
 
     false
 end
 
-function assess_convergence(state::NGMRESState, d, options)
-    default_convergence_assessment(state.preconstate, d, options)
+function update_g!(d, state, method::NGMRES)
+    # Update the function value and gradient
+    value_gradient!(d, state.x)
+    if state.restart == false
+        state.curw = max(state.curw + 1, method.wmax)
+        j = mod(state.iteration,method.wmax) + 1
+    else
+        state.restart = true
+        state.curw = 1
+        j = 1
+    end
+
+    copy!(state.X[j], state.x)
+    copy!(state.R[j], gradient(d))
+    for i=1:state.curw
+        state.Q[j,i] = dot(gradient(d), R[i])
+        state.Q[i,j] = state.Q[j,i] # Use Symmetric?
+    end
 end
 
 function trace!(tr, d, state, iteration, method::NGMRES, options)
+    # TODO: create NGMRES-specific trace
     common_trace!(tr, d, state, iteration, method, options)
 end
