@@ -48,9 +48,10 @@ function NGMRES(; linesearch = LineSearches.Static()
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
                 # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                10) # wmax = 10  -- number was an arbitrary choice
+                wmax = 10) # wmax = 10  -- number was an arbitrary choice
+    # TODO: make wmax mandatory?
     NGMRES(linesearch, precon, preconopts, #γA, γB, γC, ϵB,
-           ϵ0)
+           ϵ0, wmax)
 end
 
 mutable struct NGMRESState{P,TA,T,N}
@@ -170,7 +171,7 @@ function update_g!(d, state, method::NGMRES)
     value_gradient!(d, state.x)
     if state.restart == false
         state.curw = max(state.curw + 1, method.wmax)
-        j = mod(state.iteration,method.wmax) + 1
+        j = mod(state.iteration, method.wmax) + 1
     else
         state.restart = true
         state.curw = 1
