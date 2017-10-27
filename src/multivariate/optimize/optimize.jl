@@ -30,7 +30,8 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
     x_converged, f_converged, f_increased = false, false, false
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, n) < options.g_tol
-    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
+    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing || typeof(method) <: KrylovTrustRegion
+        # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
         g_converged = false
     else
         vecnorm(gradient(d), Inf) < options.g_tol
@@ -72,8 +73,33 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    elty = typeof(value(d))
-    return MultivariateOptimizationResults(method,
+    if typeof(method) <: KrylovTrustRegion
+        # TODO: remove when NLSolversBase.TwiceDifferentiableHV exists
+        elty = typeof(state.f_x)
+        return MultivariateOptimizationResults(method,
+                                            NLSolversBase.iscomplex(d),
+                                            initial_x,
+                                            pick_best_x(f_increased, state),
+                                            pick_best_f(f_increased, state, d),
+                                            iteration,
+                                            iteration == options.iterations,
+                                            x_converged,
+                                            convert(elty, options.x_tol),
+                                            x_residual(state),
+                                            f_converged,
+                                            convert(elty, options.f_tol),
+                                            f_residual(state.f_x, state.f_x_previous, options.f_tol),
+                                            g_converged,
+                                            convert(elty, options.g_tol),
+                                            vecnorm(state.g, Inf),
+                                            f_increased,
+                                            tr,
+                                            state.f_calls,
+                                            state.g_calls,
+                                            state.hv_calls)
+    else
+        elty = typeof(value(d))
+        return MultivariateOptimizationResults(method,
                                             NLSolversBase.iscomplex(d),
                                             initial_x,
                                             pick_best_x(f_increased, state),
@@ -94,6 +120,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
                                             f_calls(d),
                                             g_calls(d),
                                             h_calls(d))
+    end
 
 
 end
