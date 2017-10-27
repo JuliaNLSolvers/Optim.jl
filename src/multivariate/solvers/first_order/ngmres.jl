@@ -83,11 +83,11 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
     R = Array{T}(length(initial_x), wmax)
     Q = Array{T}(wmax, wmax)
 
-    copy!(X[:,1], initial_x)
-    copy!(R[:,1], gradient(d))
+    copy!(view(X,:,1), initial_x)
+    copy!(view(R,:,1), gradient(d))
     Q[1,1] =  dot(gradient(d), gradient(d))
 
-    NGMRESState(initial_x,                      # Maintain current state in state.x
+    NGMRESState(copy(initial_x),                      # Maintain current state in state.x
                 similar(initial_x),             # Maintain previous state in state.x_previous
                 T(NaN),                         # Store previous f in state.f_x_previous
                 similar(initial_x),             # Maintain current search direction in state.s
@@ -164,6 +164,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     else
         state.restart = false
         perform_linesearch!(state, method, d)
+        @. state.x = state.x + state.alpha * state.s
     end
 
     false
@@ -173,7 +174,7 @@ function update_g!(d, state, method::NGMRES)
     # Update the function value and gradient
     value_gradient!(d, state.x)
     if state.restart == false
-        state.curw = max(state.curw + 1, method.wmax)
+        state.curw = min(state.curw + 1, method.wmax)
         j = mod(state.iteration, method.wmax) + 1
     else
         state.restart = true
@@ -181,9 +182,10 @@ function update_g!(d, state, method::NGMRES)
         j = 1
     end
 
-    copy!(state.X[:,j], state.x)
-    copy!(state.R[:,j], gradient(d))
-    for i=1:state.curw
+    copy!(view(state.X,:,j), state.x)
+    copy!(view(state.R,:,j), gradient(d))
+
+    for i = 1:state.curw
         state.Q[j,i] = dot(gradient(d), state.R[:,i])
         state.Q[i,j] = state.Q[j,i] # Use Symmetric?
     end
