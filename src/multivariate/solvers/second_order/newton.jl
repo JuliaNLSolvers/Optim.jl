@@ -74,7 +74,7 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     lssuccess = perform_linesearch!(state, method, d)
 
     # Update current position # x = x + alpha * s
-    state.x .= state.x .+ state.alpha * state.s
+    @. state.x = state.x + state.alpha * state.s
     lssuccess == false # break on linesearch error
 end
 
