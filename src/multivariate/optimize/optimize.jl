@@ -76,11 +76,12 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
     if typeof(method) <: KrylovTrustRegion
         # TODO: remove when NLSolversBase.TwiceDifferentiableHV exists
         elty = typeof(state.f_x)
+        f_incr_pick = f_increased && !options.allow_f_increases
         return MultivariateOptimizationResults(method,
                                             NLSolversBase.iscomplex(d),
                                             initial_x,
-                                            pick_best_x(f_increased, state),
-                                            pick_best_f(f_increased, state, d),
+                                            pick_best_x(f_incr_pick, state),
+                                            pick_best_f(f_incr_pick, state, d),
                                             iteration,
                                             iteration == options.iterations,
                                             x_converged,
@@ -99,11 +100,12 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
                                             state.hv_calls)
     else
         elty = typeof(value(d))
+        f_incr_pick = f_increased && !options.allow_f_increases
         return MultivariateOptimizationResults(method,
                                             NLSolversBase.iscomplex(d),
                                             initial_x,
-                                            pick_best_x(f_increased, state),
-                                            pick_best_f(f_increased, state, d),
+                                            pick_best_x(f_incr_pick, state),
+                                            pick_best_f(f_incr_pick, state, d),
                                             iteration,
                                             iteration == options.iterations,
                                             x_converged,
