@@ -163,6 +163,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
+        Base.warn("Restart")
     else
         state.restart = false
         perform_linesearch!(state, method, d)
