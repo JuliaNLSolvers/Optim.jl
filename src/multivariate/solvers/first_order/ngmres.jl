@@ -70,7 +70,7 @@ mutable struct NGMRESState{P,TA,T,N}
     A::Array{T,2}   # Container for Aα = b  (TODO: correct type?)
     b::Array{T,1}   # Container for Aα = b
     xA::Array{T,1}  # Container for accelerated step
-    iteration::Int  # Iteration counter
+    k::Int          # Used for indexing where to put values in the Storage containers
     restart::Bool   # Restart flag
     @add_linesearch_fields()
 end
@@ -110,7 +110,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     copy!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
 
-    state.iteration += 1
+    state.k += 1
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
@@ -150,13 +150,14 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     if any(isnan, α)
         # TODO: set the restart flag
         Base.warn("Calculated α is NaN in N-GMRES.")
+        state.s .= zero(eltype(state.s))
+    else
+        # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
+        state.xA .= (1.0-sum(α)).*state.x .+ (state.X[:,1:curw] * α) # TODO: less alloc with sum?
+        @. state.s = state.xA - state.x
     end
 
-    # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
-    state.xA .= (1.0-sum(α)).*state.x .+ (state.X[:,1:curw] * α) # TODO: less alloc with sum?
-
     # 3: Perform condition checks
-    @. state.s = state.xA - state.x
 
     if dot(state.s, gP) ≥ 0
         # Moving from xP to xA is *not* a descent direction
@@ -176,12 +177,12 @@ function update_g!(d, state, method::NGMRES)
     value_gradient!(d, state.x)
     if state.restart == false
         state.curw = min(state.curw + 1, method.wmax)
-        j = mod(state.iteration, method.wmax) + 1
     else
+        state.k = 0
         state.restart = true
         state.curw = 1
-        j = 1
     end
+    j = mod(state.k, method.wmax) + 1
 
     copy!(view(state.X,:,j), state.x)
     copy!(view(state.R,:,j), gradient(d))
