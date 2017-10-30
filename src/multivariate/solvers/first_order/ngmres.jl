@@ -114,7 +114,9 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
-    res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
+    # TODO: pass method.preconstate to optimize (needed for L-BFGS etc.)
+    # TODO: currently, passing on preconstate messes things up?
+    res = optimize(d, state.x, method.precon, method.preconopts)
 
     # state.x = xP
     state.x .= Optim.minimizer(res)
@@ -145,14 +147,13 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     # TODO: preallocate α in state?
     #state.α[1:curw] .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     α = (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
-
     if any(isnan, α)
         # TODO: set the restart flag
         Base.warn("Calculated α is NaN in N-GMRES.")
     end
 
     # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
-    state.xA .= (1.0-sum(α)).*state.x .+ (state.X[:,1:curw] * α) # TODO: better way?
+    state.xA .= (1.0-sum(α)).*state.x .+ (state.X[:,1:curw] * α) # TODO: less alloc with sum?
 
     # 3: Perform condition checks
     @. state.s = state.xA - state.x
