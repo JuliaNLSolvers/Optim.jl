@@ -42,9 +42,9 @@ end
 
 Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.precon))"
 
-function NGMRES(; linesearch = LineSearches.Static(),
-                precon = GradientDescent(linesearch = LineSearches.Static()),
-                preconopts = Options(iterations = 1),
+function NGMRES(; linesearch = LineSearches.BackTracking(),
+                precon = GradientDescent(linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+                preconopts = Options(iterations = 1, allow_f_increases = true),
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
                 # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
