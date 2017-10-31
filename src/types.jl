@@ -134,7 +134,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
         @printf io "     |f(x) - f(x')| / |f(x)| = %.2e \n" f_residual(r)
         @printf io "   * |g(x)| < %.1e: %s \n" g_tol(r) g_converged(r)
         @printf io "     |g(x)| = %.2e \n"  g_residual(r)
-        @printf io "   * stopped by an increasing objective: %s\n" f_increased(r)
+        @printf io "   * Stopped by an increasing objective: %s\n" (f_increased(r) && !iteration_limit_reached(r))
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
     @printf io " * Objective Calls: %d" f_calls(r)
