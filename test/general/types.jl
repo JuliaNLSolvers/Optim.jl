@@ -35,7 +35,7 @@ import Compat.String
             @test startswith(lines[8], "   * |x - x'| < ")
             @test startswith(lines[9], "   * |f(x) - f(x')| / |f(x)| < ")
             @test startswith(lines[10], "   * |g(x)| < ")
-            @test startswith(lines[11], "   * stopped by an increasing objective:")
+            @test startswith(lines[11], "   * Stopped by an increasing objective:")
             @test startswith(lines[12], "   * Reached Maximum Number of Iterations: ")
             @test startswith(lines[13], " * Objective Calls: ")
         end
@@ -61,7 +61,7 @@ import Compat.String
     @test startswith(lines[11], "     |f(x) - f(x')| / |f(x)| = ")
     @test startswith(lines[12], "   * |g(x)| < ")
     @test startswith(lines[13],  "     |g(x)| = ")
-    @test startswith(lines[14], "   * stopped by an increasing objective:")
+    @test startswith(lines[14], "   * Stopped by an increasing objective:")
     @test startswith(lines[15], "   * Reached Maximum Number of Iterations: ")
     @test startswith(lines[16], " * Objective Calls: ")
     @test startswith(lines[17], " * Gradient Calls: ")
