@@ -34,9 +34,8 @@ function twoloop!(s::Vector,
         end
         i = mod1(index, m)
         @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
-        @simd for j in 1:n
-            @inbounds q[j] -= alpha[i] * dg_history[j, i]
-        end
+        dgi = view(dg_history, :, i)
+        q .-= alpha[i] .* dgi
     end
 
     # Copy q into s for forward pass
@@ -51,9 +50,8 @@ function twoloop!(s::Vector,
         end
         i = mod1(index, m)
         @inbounds beta = rho[i] * vecdot(view(dg_history, :, i), s)
-        @simd for j in 1:n
-            @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
-        end
+        dxi = view(dx_history, :, i)
+        @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
     # Negate search direction
@@ -184,9 +182,7 @@ end
 function update_h!(d, state, method::LBFGS)
     n = length(state.x)
     # Measure the change in the gradient
-    @simd for i in 1:n
-        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
-    end
+    state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
     rho_iteration = 1 / vecdot(state.dx, state.dg)
@@ -194,9 +190,10 @@ function update_h!(d, state, method::LBFGS)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
     end
-    state.dx_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dx)
-    state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dg)
-    state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
+    idx = mod1(state.pseudo_iteration, method.m)
+    state.dx_history[:, idx] .= vec(state.dx)
+    state.dg_history[:, idx] .= vec(state.dg)
+    state.rho[idx] = rho_iteration
 
 end
 
