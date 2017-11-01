@@ -41,8 +41,17 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
-
+    if typeof(precon) <: Void && upper > 0
+        # Use the initial scaling guess if no preconditioner is used
+        # See Nocedal & Wright (2nd ed), Equation (7.20)
+        idx = mod1(upper, m)
+        sidx = view(dx_history, :, idx) # TODO: should these use devec_fun?
+        yidx = view(dg_history, :, idx) # TODO: should these use devec_fun?
+        scaling = dot(sidx, yidx) / sum(abs2, yidx) # TODO: Should this be vecdot?
+        s .= scaling*q
+    else
+        A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
+    end
     # Forward pass
     for index in lower:1:upper
         if index < 1
