@@ -41,7 +41,7 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    if typeof(precon) <: Void && upper > 0
+    if method.scaleinvH == true && typeof(precon) <: Void && upper > 0
         # Use the initial scaling guess if no preconditioner is used
         # See Nocedal & Wright (2nd ed), Equation (7.20)
         idx = mod1(upper, m)
@@ -76,6 +76,7 @@ struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
     P::T
     precondprep!::Tprep
     manifold::Manifold
+    scaleinvH::Bool
 end
 """
 # LBFGS
@@ -109,8 +110,9 @@ function LBFGS(; m::Integer = 10,
                  linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
                  P=nothing,
                  precondprep = (P, x) -> nothing,
-                 manifold::Manifold=Flat())
-    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold)
+                 manifold::Manifold=Flat(),
+                 scaleinvH::Bool = true)
+    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"
