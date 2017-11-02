@@ -18,8 +18,11 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
 
     initial_x = complex_to_real(d, initial_x)
 
-    if length(initial_x) == 1 && typeof(method) <: NelderMead
-        error("Use optimize(f, scalar, scalar) for 1D problems")
+    if length(initial_x) == 1
+        if typeof(method) <: NelderMead
+            error("You cannot use Nelder-Mead for univariate problems.")
+        end
+        error("Use optimize(x->f(first(x)), [initial_x], ..) for 1D problems.")
     end
 
     n = length(initial_x)
