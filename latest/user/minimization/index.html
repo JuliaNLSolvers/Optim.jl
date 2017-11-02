@@ -245,6 +245,8 @@
 </pre></div>
 
 
+<p>!!! note
+    It is important to pass <code>initial_x</code> as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write <code>optimize(x-&gt;f(first(x)), [initial_x], ...)</code></p>
 <p>Optim will default to using the Nelder-Mead method in this case, as we did not provide a gradient. This can also be explicitly specified using:</p>
 <div class="codehilite"><pre><span></span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">())</span>
 </pre></div>
@@ -323,17 +325,38 @@
 <p><a id='Minimizing-a-univariate-function-on-a-bounded-interval-1'></a></p>
 <h2 id="minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</h2>
 <p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
-<div class="codehilite"><pre><span></span><span class="n">f_univariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">f_univariate</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span>    <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">method</span><span class="p">;</span> <span class="n">kwargs</span><span class="o">...</span><span class="p">)</span>
 </pre></div>
 
 
-<p>Two methods are available:</p>
+<p>Notice the lack of initial <code>x</code>. A specific example is the following quadratic function.</p>
+<div class="codehilite"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="n">f_univariate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="n">x</span><span class="o">^</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="n">x</span><span class="o">+</span><span class="mi">1</span>
+<span class="n">f_univariate</span> <span class="p">(</span><span class="n">generic</span> <span class="k">function</span> <span class="n">with</span> <span class="mi">1</span> <span class="n">method</span><span class="p">)</span>
+
+<span class="n">julia</span><span class="o">&gt;</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f_univariate</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
+ <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">Brent</span><span class="o">&#39;</span><span class="n">s</span> <span class="kt">Method</span>
+ <span class="o">*</span> <span class="n">Search</span> <span class="n">Interval</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">2.000000</span><span class="p">,</span> <span class="mf">1.000000</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="o">-</span><span class="mf">7.500000e-01</span>
+ <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="o">-</span><span class="mf">1.250000e-01</span>
+ <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">7</span>
+ <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="n">max</span><span class="p">(</span><span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_upper</span><span class="o">|</span><span class="p">,</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_lower</span><span class="o">|</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mf">1.5e-08</span><span class="o">*|</span><span class="n">x</span><span class="o">|+</span><span class="mf">2.2e-16</span><span class="p">)</span><span class="o">:</span> <span class="kc">true</span>
+ <span class="o">*</span> <span class="n">Objective</span> <span class="kt">Function</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">8</span>
+</pre></div>
+
+
+<p>The output shows that we provided an initial lower and upper bound, that there is a final minimizer and minimum, and that it used seven major iterations. Importantly, we also see that convergence was declared. The default method is Brent's method, which is one out of two available methods:</p>
 <ul>
 <li>Brent's method, the default (can be explicitly selected with <code>Brent()</code>).</li>
 <li>Golden section search, available with <code>GoldenSection()</code>.</li>
 </ul>
-<p>In addition to the <code>iterations</code>, <code>store_trace</code>, <code>show_trace</code> and <code>extended_trace</code> options, the following options are also available:</p>
+<p>If we want to manually specify this method, we use the usual syntax as for multivariate optimization.</p>
+<div class="codehilite"><pre><span></span>    <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">Brent</span><span class="p">();</span> <span class="n">kwargs</span><span class="o">...</span><span class="p">)</span>
+    <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">GoldenSection</span><span class="p">();</span> <span class="n">kwargs</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Keywords are used to set options for this special type of optimization. In addition to the <code>iterations</code>, <code>store_trace</code>, <code>show_trace</code> and <code>extended_trace</code> options, the following options are also available:</p>
 <ul>
 <li><code>rel_tol</code>: The relative tolerance used for determining convergence. Defaults to <code>sqrt(eps(T))</code>.</li>
 <li><code>abs_tol</code>: The absolute tolerance used for determining convergence. Defaults to <code>eps(T)</code>.</li>

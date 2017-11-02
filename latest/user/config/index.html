@@ -263,7 +263,7 @@
 <li><code>f_calls_limit</code>: A soft upper limit on the number of objective calls. Defaults to <code>0</code> (unlimited).</li>
 <li><code>g_calls_limit</code>: A soft upper limit on the number of gradient calls. Defaults to <code>0</code> (unlimited).</li>
 <li><code>h_calls_limit</code>: A soft upper limit on the number of Hessian calls. Defaults to <code>0</code> (unlimited).</li>
-<li><code>allow_f_increases</code>: Allow steps that increase the objective value. Defaults to <code>false</code>.</li>
+<li><code>allow_f_increases</code>: Allow steps that increase the objective value. Defaults to <code>false</code>. Note that, when setting this to <code>true</code>, the last iterate will be returned as the minimizer even if the objective increased.</li>
 <li><code>iterations</code>: How many iterations will run before the algorithm gives up? Defaults to <code>1_000</code>.</li>
 <li><code>store_trace</code>: Should a trace of the optimization algorithm's state be stored? Defaults to <code>false</code>.</li>
 <li><code>show_trace</code>: Should a trace of the optimization algorithm's state be shown on <code>STDOUT</code>? Defaults to <code>false</code>.</li>
