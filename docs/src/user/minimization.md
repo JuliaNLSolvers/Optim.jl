@@ -16,7 +16,7 @@ optimize(f, [0.0, 0.0])
 ```
 !!! note
 
-    It is important to pass `initial_x` as a vector. If your problem is one-dimensional, you have to wrap it in a vector. An easy way to do so is to write `optimize(f(first(x)), [initial_x], ...)`
+    It is important to pass `initial_x` as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write `optimize(x->f(first(x)), [initial_x], ...)`
 
 Optim will default to using the Nelder-Mead method in this case, as we did not provide a gradient. This can also
 be explicitly specified using:
