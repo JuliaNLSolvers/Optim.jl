@@ -24,6 +24,8 @@ function assess_convergence(x::Array,
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
+    # TODO: we should check this without dividing by f_x:
+    # abs(f_x - f_x_previous) < f_tol*abs(f_x)
     if f_residual(f_x, f_x_previous, f_tol) < f_tol ||
                    abs(f_x - f_x_previous) < eps(abs(f_x)+abs(f_x_previous))
         f_converged = true
