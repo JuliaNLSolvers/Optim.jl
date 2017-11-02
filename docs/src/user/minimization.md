@@ -14,6 +14,10 @@ we just specify an initial point `x` and run:
 ```jl
 optimize(f, [0.0, 0.0])
 ```
+!!! note
+
+    It is important to pass `initial_x` as a vector. If your problem is one-dimensional, you have to wrap it in a vector. An easy way to do so is to write `optimize(f(first(x)), [initial_x], ...)`
+
 Optim will default to using the Nelder-Mead method in this case, as we did not provide a gradient. This can also
 be explicitly specified using:
 ```jl
@@ -94,19 +98,40 @@ results = Optim.optimize(od, initial_x, lower, upper, Fminbox{GradientDescent}()
 
 Minimization of univariate functions without derivatives is available through
 the `optimize` interface:
-
 ```jl
-f_univariate(x) = 2x^2+3x+1
-optimize(f_univariate, -2.0, 1.0)
+    optimize(f, lower, upper, method; kwargs...)
 ```
+Notice the lack of initial `x`. A specific example is the following quadratic
+function.
+```jl
+julia> f_univariate(x) = 2x^2+3x+1
+f_univariate (generic function with 1 method)
 
-Two methods are available:
+julia> optimize(f_univariate, -2.0, 1.0)
+Results of Optimization Algorithm
+ * Algorithm: Brent's Method
+ * Search Interval: [-2.000000, 1.000000]
+ * Minimizer: -7.500000e-01
+ * Minimum: -1.250000e-01
+ * Iterations: 7
+ * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(1.5e-08*|x|+2.2e-16): true
+ * Objective Function Calls: 8
+```
+The output shows that we provided an initial lower and upper bound, that there is
+a final minimizer and minimum, and that it used seven major iterations. Importantly,
+we also see that convergence was declared. The default method is Brent's method,
+which is one out of two available methods:
 
 * Brent's method, the default (can be explicitly selected with `Brent()`).
 * Golden section search, available with `GoldenSection()`.
 
-In addition to the `iterations`, `store_trace`, `show_trace` and
-`extended_trace` options, the following options are also available:
+If we want to manually specify this method, we use the usual syntax as for multivariate optimization.
+```jl
+    optimize(f, lower, upper, Brent(); kwargs...)
+    optimize(f, lower, upper, GoldenSection(); kwargs...)
+```
+
+Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace` and `extended_trace` options, the following options are also available:
 
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
