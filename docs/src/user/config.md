@@ -44,7 +44,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
-* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `false`. Take care when `allow_f_increases = true`. When the optimization stops a previous iterate may provide a lower objective value than the reported minimizer.
+* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `false`. Note that, when setting this to `true`, the last iterate will be returned as the minimizer even if the objective increased.
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `STDOUT`? Defaults to `false`.

@@ -2,8 +2,11 @@
     f(x) = 2*x[1]^2
     g!(G, x) = copy!(G, 4*x[1])
 
-
-    minimizers = [0.3, -1.5, 0.3, 0.5]
+    # Returned "minimizers" from one iteration of Gradient Descent
+    minimizers = [0.3,  # allow_f_increases = true, alpha = 0.1
+                  -1.5, # allow_f_increases = true, alpha = 1.0
+                  0.3,  # allow_f_increases = false, alpha = 0.1
+                  0.5]  # allow_f_increases = false, alpha = 1.0
     k = 0
     for allow in [true, false]
         for alpha in [0.1, 1.0]
