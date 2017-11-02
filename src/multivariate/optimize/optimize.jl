@@ -19,7 +19,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
     initial_x = complex_to_real(d, initial_x)
 
     if length(initial_x) == 1 && typeof(method) <: NelderMead
-        error("You cannot use Nelder-Mead for univariate problems.")
+        error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
 
     n = length(initial_x)
