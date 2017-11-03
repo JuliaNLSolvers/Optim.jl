@@ -3,7 +3,8 @@ import LineSearches
 @testset "Extrapolation" begin
     methods = [LBFGS(),
                ConjugateGradient(),
-               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2))]
+               LBFGS(alphaguess = LineSearches.InitialQuadratic(),
+                     linesearch = LineSearches.BackTracking(order=2))]
     msgs = ["LBFGS Default Options: ",
             "CG Default Options: ",
             "LBFGS + Backtracking + Extrapolation: "]
@@ -37,7 +38,8 @@ import LineSearches
     P = precond(initial_x)
     methods = [LBFGS(P=P),
                ConjugateGradient(P=P),
-               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2), P=P)]
+               LBFGS(alphaguess = LineSearches.InitialQuadratic(),
+                     linesearch = LineSearches.BackTracking(order=2), P=P)]
 
     for (method, msg) in zip(methods, msgs)
         results = Optim.optimize(f, g!, copy(initial_x), method)
