@@ -61,7 +61,7 @@
     # Warn when initial condition is not in the interior of the box
     initial_x = rand([-1,1],N)*boxl
     @test_warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.
-    Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
+Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
                Optim.optimize(_objective, initial_x, l, u, Fminbox();
                               iterations = 1, optimizer_o = Optim.Options(iterations = 1)))
 
