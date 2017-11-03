@@ -139,7 +139,8 @@ function optimize(
         extended_trace::Bool = false,
         callback = nothing,
         show_every::Integer = 1,
-        linesearch = LineSearches.HagerZhang(),
+        alphaguess = nothing,
+        linesearch = nothing,
         eta::Real = convert(T,0.4),
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
@@ -216,16 +217,51 @@ function optimize(
             println("#### Calling optimizer with mu = ", mu, " ####")
         end
         pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        if O == ConjugateGradient
-            _optimizer = O(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
-        elseif O in (LBFGS, GradientDescent)
-            _optimizer = O(linesearch = linesearch, P = P, precondprep = pcp)
+        # TODO: Changing the default linesearch and alphaguesses
+        #       in the optimization algorithms will imply a lot of extra work here
+        if O == ConjugateGradient || O == Newton
+            if linesearch == nothing
+                linesearch = LineSearches.HagerZhang()
+            end
+            if alphaguess == nothing
+                alphaguess = LineSearches.InitialHagerZhang()
+            end
+            _optimizer = ConjugateGradient(eta = eta, alphaguess = alphaguess,
+                                           linesearch = linesearch, P = P, precondprep = pcp)
+        elseif O == LBFGS
+            if linesearch == nothing
+                linesearch = LineSearches.BackTracking()
+            end
+            if alphaguess == nothing
+                alphaguess = LineSearches.InitialStatic()
+            end
+            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
+        elseif O == BFGS
+            if linesearch == nothing
+                linesearch = LineSearches.BackTracking()
+            end
+            if alphaguess == nothing
+                alphaguess = LineSearches.InitialStatic()
+            end
+            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
+        elseif O == GradientDescent
+            if linesearch == nothing
+                linesearch = LineSearches.HagerZhang()
+            end
+            if alphaguess == nothing
+                alphaguess = LineSearches.InitialPrevious()
+            end
+            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
         elseif O in (NelderMead, SimulatedAnnealing)
             _optimizer = O()
-        elseif O == Newton
-            _optimizer = ConjugateGradient(eta = eta, linesearch = linesearch, P = P, precondprep = pcp)
         else
-            _optimizer = O(linesearch = linesearch)
+            if linesearch == nothing
+                linesearch = LineSearches.HagerZhang()
+            end
+            if alphaguess == nothing
+                alphaguess = LineSearches.InitialPrevious()
+            end
+            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
         end
         resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first
