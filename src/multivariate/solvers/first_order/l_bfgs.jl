@@ -68,8 +68,6 @@ struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
     linesearch!::L
     P::T
     precondprep!::Tprep
-    extrapolate::Bool
-    snap2one::Tuple
     manifold::Manifold
 end
 """
@@ -103,6 +101,7 @@ function LBFGS(; m::Integer = 10,
                  alphaguess = LineSearches.InitialStatic(), # Good default for quasi-Newton
                  linesearch = LineSearches.BackTracking(),  # Good default for quasi-Newton
                  P=nothing,
+                 precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat())
     LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold)
 end

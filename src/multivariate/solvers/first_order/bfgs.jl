@@ -6,7 +6,6 @@ struct BFGS{IL, L, H<:Function} <: Optimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
-    resetalpha::Bool
     manifold::Manifold
 end
 

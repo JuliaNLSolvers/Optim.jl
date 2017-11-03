@@ -28,8 +28,8 @@ Wright (ch. 2.2, 1999) for an explanation of the approach.
 ## References
  - Nocedal, J. and Wright, S. J. (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function GradientDescent(; alphaguess = LineSearches.InitialHagerZhang(), # TODO: Investigate good defaults.
-                           linesearch = LineSearches.HagerZhang(),        # TODO: Investigate good defaults
+function GradientDescent(; alphaguess = LineSearches.InitialPrevious(), # TODO: Investigate good defaults.
+                           linesearch = LineSearches.HagerZhang(),      # TODO: Investigate good defaults
                            P = nothing,
                            precondprep = (P, x) -> nothing,
                            manifold::Manifold=Flat())

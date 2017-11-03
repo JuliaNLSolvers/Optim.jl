@@ -15,7 +15,7 @@ end
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
 function AcceleratedGradientDescent(;
-                                    alphaguess = LineSearches.InitialHagerZhang(), # TODO: investigate good defaults
+                                    alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
                                     linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
                                     manifold::Manifold=Flat())
     AcceleratedGradientDescent(alphaguess, linesearch, manifold)
