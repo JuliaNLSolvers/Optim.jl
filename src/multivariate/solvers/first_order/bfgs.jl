@@ -2,7 +2,8 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{L, H<:Function} <: Optimizer
+struct BFGS{IL, L, H<:Function} <: Optimizer
+    alphaguess!::IL
     linesearch!::L
     initial_invH::H
     resetalpha::Bool
@@ -15,9 +16,9 @@ Base.summary(::BFGS) = "BFGS"
 # BFGS
 ## Constructor
 ```julia
-BFGS(; linesearch = LineSearches.HagerZhang(),
-initial_invH = x -> eye(eltype(x), length(x)),
-resetalpha = true)
+BFGS(; alphaguess = LineSearches.InitialStatic(),
+linesearch = LineSearches.BackTracking(),
+initial_invH = x -> eye(eltype(x), length(x)), # TODO: scale this as in L-BFGS
 ```
 
 ## Description
@@ -35,10 +36,11 @@ approximations as well as the gradient. See also the limited memory variant
  - Goldfarb, D. (1970), A Family of Variable Metric Updates Derived by Variational Means, Mathematics of Computation, 24 (109): 23–26,
  - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
 """
-function BFGS(; linesearch = LineSearches.HagerZhang(),
+function BFGS(; alphaguess = LineSearches.InitialStatic(), # Good default for quasi-Newton
+                linesearch = LineSearches.BackTracking(),  # Good default for quasi-Newton
                 initial_invH = x -> eye(eltype(x), length(x)),
-                resetalpha = true, manifold::Manifold=Flat())
-    BFGS(linesearch, initial_invH, resetalpha, manifold)
+                manifold::Manifold=Flat())
+    BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
 
 mutable struct BFGSState{T,N,G}
@@ -86,15 +88,11 @@ function update_state!(d, state::BFGSState{T}, method::BFGS) where T
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, gradient(d))
-    state.f_x_previous  = value(d)
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
     # semi-definite
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
 
     # Update current position
     state.dx .= state.alpha.*state.s

@@ -15,9 +15,9 @@ end
 end
 
 @def initial_linesearch begin
-    (T(NaN),   # Keep track of previous descent value ⟨∇f(x_{k-1}), s_{k-1}⟩
+    (T(NaN),            # Keep track of previous descent value ⟨∇f(x_{k-1}), s_{k-1}⟩
     similar(initial_x), # Buffer of x for line search in state.x_ls
-    one(T), # Keep track of step size in state.alpha
-    false, # state.mayterminate
+    one(T),             # Keep track of step size in state.alpha
+    false,              # state.mayterminate
     LineSearches.LineSearchResults(T))
 end

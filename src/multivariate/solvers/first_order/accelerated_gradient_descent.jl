@@ -6,15 +6,19 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-struct AcceleratedGradientDescent{L} <: Optimizer
+struct AcceleratedGradientDescent{IL, L} <: Optimizer
+    alphaguess!::IL
     linesearch!::L
     manifold::Manifold
 end
 
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
-function AcceleratedGradientDescent(; linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
-    AcceleratedGradientDescent(linesearch, manifold)
+function AcceleratedGradientDescent(;
+                                    alphaguess = LineSearches.InitialHagerZhang(), # TODO: investigate good defaults
+                                    linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
+                                    manifold::Manifold=Flat())
+    AcceleratedGradientDescent(alphaguess, linesearch, manifold)
 end
 
 mutable struct AcceleratedGradientDescentState{T,N}
@@ -49,10 +53,6 @@ function update_state!(d, state::AcceleratedGradientDescentState{T}, method::Acc
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
-
-    # Record previous state
-    copy!(state.x_previous, state.x)
-    state.f_x_previous = value(d)
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))

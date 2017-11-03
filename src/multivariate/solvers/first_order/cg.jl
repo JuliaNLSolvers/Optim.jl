@@ -41,10 +41,11 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-struct ConjugateGradient{T, Tprep<:Union{Function, Void}, L} <: Optimizer
+struct ConjugateGradient{T, Tprep<:Union{Function, Void}, IL, L} <: Optimizer
     eta::Float64
     P::T
     precondprep!::Tprep
+    alphaguess!::IL
     linesearch!::L
     manifold::Manifold
 end
@@ -55,7 +56,8 @@ Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 # Conjugate Gradient Descent
 ## Constructor
 ```julia
-ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
+ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
+linesearch = LineSearches.HagerZhang(),
 eta = 0.4,
 P = nothing,
 precondprep = (P, x) -> nothing)
@@ -75,7 +77,8 @@ Zhang (2006).
  - W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
  - W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
 """
-function ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
+function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
+                             linesearch = LineSearches.HagerZhang(),
                              eta::Real = 0.4,
                              P::Any = nothing,
                              precondprep = (P, x) -> nothing,
@@ -83,7 +86,8 @@ function ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
 
     ConjugateGradient(Float64(eta),
                       P, precondprep,
-                      linesearch,manifold)
+                      alphaguess, linesearch,
+                      manifold)
 end
 
 mutable struct ConjugateGradientState{T,N,G}
@@ -141,9 +145,6 @@ function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGra
 
         # Maintain a record of the previous gradient
         copy!(state.g_previous, gradient(d))
-        # Maintain a record of previous position
-        copy!(state.x_previous, state.x)
-        state.f_x_previous  = value(d)
 
         # Determine the distance of movement along the search line
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))

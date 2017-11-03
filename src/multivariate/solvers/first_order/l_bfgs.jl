@@ -62,8 +62,9 @@ function twoloop!(s::Vector,
     return
 end
 
-struct LBFGS{T, L, Tprep<:Union{Function, Void}} <: Optimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
     m::Int
+    alphaguess!::IL
     linesearch!::L
     P::T
     precondprep!::Tprep
@@ -76,18 +77,17 @@ end
 ## Constructor
 ```julia
 LBFGS(; m::Integer = 10,
-linesearch = LineSearches.HagerZhang(),
+alphaguess = LineSearches.InitialStatic(),
+linesearch = LineSearches.BackTracking(),
 P=nothing,
 precondprep = (P, x) -> nothing,
-extrapolate::Bool=false,
-snap2one = (0.75, Inf))
+manifold = Flat())
 ```
-`LBFGS` has three special keywords: memory length `m`, `extrapolate` flag,
-and `snap2one` tuple. The memory length determines how many previous Hessian
-approximations to store. The `extrapolate` can be set to `true` to enable an
-extrapolation step used to determine the initial step-size for the line search
-step. The `snap2one` tuple provides boundaries to an interval in which the
-initial step-size should be mapped to the unit step-size.
+`LBFGS` has a special keyword; the memory length `m`.
+The memory length determines how many previous Hessian
+approximations to store.
+In addition, it supports preconditioning via the `P` and `precondprep`
+keywords.
 
 ## Description
 The `LBFGS` method implements the limited-memory BFGS algorithm as described in
@@ -100,14 +100,11 @@ past approximations as well as the gradient.
  - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
 """
 function LBFGS(; m::Integer = 10,
-                 linesearch = LineSearches.HagerZhang(),
+                 alphaguess = LineSearches.InitialStatic(), # Good default for quasi-Newton
+                 linesearch = LineSearches.BackTracking(),  # Good default for quasi-Newton
                  P=nothing,
-                 precondprep = (P, x) -> nothing,
-                 extrapolate::Bool=false,
-                 snap2one = (0.75, Inf),
                  manifold::Manifold=Flat())
-
-    LBFGS(Int(m), linesearch, P, precondprep, extrapolate, snap2one, manifold)
+    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"
@@ -170,18 +167,11 @@ function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
              state.twoloop_alpha, vec(state.twoloop_q), method.P, devec_fun)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
-
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
-    # Save old f and g values to prepare for update_g! call
-    f_x_prev = value(d)
+    # Save g value to prepare for update_g! call
     copy!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-
-    # This has to come after perform_linesearch since alphaguess! uses state.f_x_previous from the prior iteration
-    state.f_x_previous = f_x_prev
 
     # Update current position
     state.dx .= state.alpha .* state.s

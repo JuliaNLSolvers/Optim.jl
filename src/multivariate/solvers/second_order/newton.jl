@@ -1,17 +1,15 @@
-struct Newton{L} <: Optimizer
+struct Newton{IL, L} <: Optimizer
+    alphaguess!::IL
     linesearch!::L
-    resetalpha::Bool
 end
 
 """
 # Newton
 ## Constructor
 ```julia
-Newton(; linesearch = LineSearches.HagerZhang(),
-resetalpha = true)
+Newton(; alphaguess = LineSearches.InitialStatic(),
+linesearch = LineSearches.BackTracking())
 ```
-The `resetalpha` flag specifies if the initial guess for the step-size should be
-reset to one at each iteration.
 
 ## Description
 The `Newton` method implements Newton's method for optimizing a function. We use
@@ -22,8 +20,9 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 ## References
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function Newton(; linesearch = LineSearches.HagerZhang(), resetalpha = true)
-    Newton(linesearch,resetalpha)
+function Newton(; alphaguess = LineSearches.InitialStatic(), # Good default for Newton
+                linesearch = LineSearches.BackTracking())    # Good default for Newton
+    Newton(alphaguess, linesearch)
 end
 
 Base.summary(::Newton) = "Newton's Method"
@@ -59,9 +58,6 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
-    state.f_x_previous  = value(d)
 
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\gradient(d)

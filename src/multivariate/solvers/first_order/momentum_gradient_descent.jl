@@ -1,21 +1,26 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-struct MomentumGradientDescent{L} <: Optimizer
+struct MomentumGradientDescent{IL,L} <: Optimizer
     mu::Float64
+    alphaguess!::IL
     linesearch!::L
     manifold::Manifold
 end
 
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
-function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang(), manifold::Manifold=Flat())
+function MomentumGradientDescent(; mu::Real = 0.01,
+                                 alphaguess = LineSearches.InitialHagerZhang(), # TODO: investigate good defaults
+                                 linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
+                                 manifold::Manifold=Flat())
     MomentumGradientDescent(Float64(mu), linesearch, manifold)
 end
 
 mutable struct MomentumGradientDescentState{T,N}
     x::Array{T,N}
     x_previous::Array{T,N}
+    x_momentum::Array{T,N}
     f_x_previous::T
     s::Array{T,N}
     @add_linesearch_fields()
@@ -29,6 +34,7 @@ function initial_state(method::MomentumGradientDescent, options, d, initial_x::A
 
     MomentumGradientDescentState(initial_x, # Maintain current state in state.x
                                  copy(initial_x), # Maintain previous state in state.x_previous
+                                 similar(initial_x), # Record momentum correction direction in state.x_momentum
                                  T(NaN), # Store previous f in state.f_x_previous
                                  similar(initial_x), # Maintain current search direction in state.s
                                  @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
@@ -40,14 +46,12 @@ function update_state!(d, state::MomentumGradientDescentState{T}, method::Moment
     state.s .= .-gradient(d)
 
     # Update position, and backup current one
-    x_current = copy(state.x)
-    state.f_x_previous  = value(d)
+    state.x_momentum .= state.x .- state.x_previous
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    state.x .+= state.alpha.*state.s .+ method.mu.*(state.x .- state.x_previous)
-    state.x_previous .= x_current
+    state.x .+= state.alpha.*state.s .+ method.mu.*state.x_momentum
     retract!(method.manifold, real_to_complex(d,state.x))
     lssuccess == false # break on linesearch error
 end
