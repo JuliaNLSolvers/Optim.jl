@@ -7,6 +7,7 @@ macro def(name, definition)
 end
 
 @def add_linesearch_fields begin
+    dphi0_previous::T
     x_ls::Array{T,N}
     alpha::T
     mayterminate::Bool
@@ -14,7 +15,8 @@ end
 end
 
 @def initial_linesearch begin
-    (similar(initial_x), # Buffer of x for line search in state.x_ls
+    (T(NaN),   # Keep track of previous descent value ⟨∇f(x_{k-1}), s_{k-1}⟩
+    similar(initial_x), # Buffer of x for line search in state.x_ls
     one(T), # Keep track of step size in state.alpha
     false, # state.mayterminate
     LineSearches.LineSearchResults(T))

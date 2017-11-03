@@ -69,8 +69,10 @@ function perform_linesearch!(state, method::M, d) where M
         state.alpha =
             method.linesearch!(d, state.x, state.s, state.x_ls, state.lsr,
                                state.alpha, state.mayterminate)
+        state.dphi0_previous = dphi0
         return true
     catch ex
+        state.dphi0_previous = dphi0
         if isa(ex, LineSearches.LineSearchException)
             state.alpha = ex.alpha
             Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
