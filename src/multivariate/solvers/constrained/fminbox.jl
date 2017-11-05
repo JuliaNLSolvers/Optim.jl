@@ -230,7 +230,7 @@ function optimize(
                                            linesearch = linesearch, P = P, precondprep = pcp)
         elseif O == LBFGS
             if linesearch == nothing
-                linesearch = LineSearches.BackTracking()
+                linesearch = LineSearches.HagerZhang()
             end
             if alphaguess == nothing
                 alphaguess = LineSearches.InitialStatic()
@@ -238,7 +238,7 @@ function optimize(
             _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
         elseif O == BFGS
             if linesearch == nothing
-                linesearch = LineSearches.BackTracking()
+                linesearch = LineSearches.HagerZhang()
             end
             if alphaguess == nothing
                 alphaguess = LineSearches.InitialStatic()
