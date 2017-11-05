@@ -88,6 +88,7 @@ function trace!(tr, d, state, iteration, method::Newton, options)
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
         dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["Current step size"] = state.alpha
     end
     g_norm = vecnorm(gradient(d), Inf)
     update!(tr,
