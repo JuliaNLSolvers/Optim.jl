@@ -110,11 +110,15 @@
                        options_ext)
 
    @test summary(res) == "BFGS"
-   @test isapprox(Optim.minimum(res), 6.556300e-02; rtol=1e-3)
-   @test isapprox(Optim.minimizer(res), [0.7458993932627154,0.553210145233104]; rtol=1e-3)
+   @test isapprox(Optim.minimum(res), 0.0020622412076141045; rtol=1e-3)
+   @test isapprox(Optim.minimizer(res), [0.9719007353489979,0.9410235857510793]; rtol=1e-3)
+   #@test isapprox(Optim.minimum(res), 6.556300e-02; rtol=1e-3) # BackTracking
+   #@test isapprox(Optim.minimizer(res), [0.7458993932627154,0.553210145233104]; rtol=1e-3) # BackTracking
    @test Optim.iterations(res) == 10
-   @test Optim.f_calls(res) == 17
-   @test Optim.g_calls(res) == 11
+   @test Optim.f_calls(res) == 37
+   @test Optim.g_calls(res) == 37
+   #@test Optim.f_calls(res) == 17 # BackTracking
+   #@test Optim.g_calls(res) == 11 # BackTracking
    @test Optim.converged(res) == false
    @test Optim.x_converged(res) == false
    @test Optim.f_converged(res) == false
