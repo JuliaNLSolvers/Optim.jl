@@ -8,7 +8,7 @@ end
 ## Constructor
 ```julia
 Newton(; alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.BackTracking())
+linesearch = LineSearches.HagerZhang())
 ```
 
 ## Description
@@ -21,7 +21,7 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
 function Newton(; alphaguess = LineSearches.InitialStatic(), # Good default for Newton
-                linesearch = LineSearches.BackTracking())    # Good default for Newton
+                linesearch = LineSearches.HagerZhang())    # Good default for Newton
     Newton(alphaguess, linesearch)
 end
 

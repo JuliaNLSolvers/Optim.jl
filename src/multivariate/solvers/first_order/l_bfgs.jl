@@ -76,7 +76,7 @@ end
 ```julia
 LBFGS(; m::Integer = 10,
 alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.BackTracking(),
+linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat())
@@ -98,8 +98,8 @@ past approximations as well as the gradient.
  - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
 """
 function LBFGS(; m::Integer = 10,
-                 alphaguess = LineSearches.InitialStatic(), # Good default for quasi-Newton
-                 linesearch = LineSearches.BackTracking(),  # Good default for quasi-Newton
+                 alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
+                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat())
