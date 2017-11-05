@@ -2,7 +2,7 @@ checked_dphi0!(state, d, method) = vecdot(gradient(d), state.s)
 function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
     # If invH is not positive definite, reset it
     dphi0 = vecdot(gradient(d), state.s)
-    if dphi0 > 0.0
+    if dphi0 >= 0.0
         # "reset" Hessian approximation
         if M <: BFGS
             copy!(state.invH, method.initial_invH(state.x))
