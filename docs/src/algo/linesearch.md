@@ -2,7 +2,7 @@
 ## Description
 
 The line search functionality has been moved to
-[LineSearches.jl](https://github.com/anriseth/LineSearches.jl).
+[LineSearches.jl](https://github.com/JuliaNLSolvers/LineSearches.jl).
 
 Line search is used to decide the step length along the direction computed by
 an optimization algorithm.
@@ -19,6 +19,12 @@ By default `Optim` calls the line search algorithm `HagerZhang()` provided by `L
 Different line search algorithms can be assigned with
 the `linesearch` keyword argument to the given algorithm.
 
+`LineSearches` also allows the user to decide how the
+initial step length for the line search algorithm is chosen.
+This is set with the `alphaguess` keyword argument for the `Optim` algorithm.
+The default procedure varies.
+
+
 ## Example
 This example compares two different line search algorithms on the Rosenbrock problem.
 
@@ -27,30 +33,34 @@ First, run `Newton` with the default line search algorithm:
 using Optim, LineSearches
 prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
 
-algo_hz = Newton(;linesearch = LineSearches.HagerZhang())
+algo_hz = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang())
 res_hz = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_hz)
 ```
 
 This gives the result
 ``` julia
-Results of Optimization Algorithm
  * Algorithm: Newton's Method
  * Starting Point: [0.0,0.0]
- * Minimizer: [0.9999999999979515,0.9999999999960232]
- * Minimum: 5.639268e-24
- * Iterations: 13
+ * Minimizer: [0.9999999999999994,0.9999999999999989]
+ * Minimum: 3.081488e-31
+ * Iterations: 14
  * Convergence: true
    * |x - x'| < 1.0e-32: false
+     |x - x'| = 3.06e-09
    * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+     |f(x) - f(x')| / |f(x)| = 2.94e+13
    * |g(x)| < 1.0e-08: true
+     |g(x)| = 1.11e-15
+   * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
- * Objective Function Calls: 54
- * Gradient Calls: 54
+ * Objective Calls: 44
+ * Gradient Calls: 44
+ * Hessian Calls: 14
 ```
 
 Now we can try `Newton` with the More-Thuente line search:
 ``` julia
-algo_mt = Newton(;linesearch = LineSearches.MoreThuente())
+algo_mt = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.MoreThuente())
 res_mt = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_mt)
 ```
 
@@ -64,11 +74,16 @@ Results of Optimization Algorithm
  * Iterations: 14
  * Convergence: true
    * |x - x'| < 1.0e-32: false
+     |x - x'| = 3.67e-08
    * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+     |f(x) - f(x')| / |f(x)| = 1.66e+13
    * |g(x)| < 1.0e-08: true
+     |g(x)| = 1.76e-13
+   * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
- * Objective Function Calls: 31
- * Gradient Calls: 31
+ * Objective Calls: 17
+ * Gradient Calls: 17
+ * Hessian Calls: 14
 ```
 
 ## References

@@ -21,12 +21,13 @@ that does the actual work. Say you want to contribute a solver called
 `Minim`, then your `src/minim.jl` file would look something like
 
 ```
-struct Minim{F<:Function, T} <: Optimizer
+struct Minim{IF, F<:Function, T} <: Optimizer
+    alphaguess!::IF
     linesearch!::F
     minim_parameter::T
 end
 
-Minim(; linesearch = LineSearches.HagerZhang(), minim_parameter = 1.0) =
+Minim(; alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang(), minim_parameter = 1.0) =
   Minim(linesearch, minim_parameter)
 
 type MinimState{T,N,G}

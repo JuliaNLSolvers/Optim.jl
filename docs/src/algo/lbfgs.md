@@ -2,14 +2,15 @@
 This page contains information about BFGS and its limited memory version L-BFGS.
 ## Constructors
 ```julia
-BFGS(; linesearch = LineSearches.HagerZhang(),
+BFGS(; alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
        P = nothing,
-       precondprep = (P, x) -> nothing,
-       resetalpha = true)
+       precondprep = (P, x) -> nothing)
 ```
 
 ```julia
 LBFGS(; m = 10,
+        alphaguess = LineSearches.InitialStatic(),
         linesearch = LineSearches.HagerZhang(),
         P = nothing,
         precondprep = (P, x) -> nothing)
@@ -43,8 +44,6 @@ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
 ```
 
 and is chosen by a linesearch algorithm such that each step gives sufficient descent.
-
-**For BFGS only**: If `resetalpha = true`, the linesearch algorithm starts with the initial value ``alpha = 1.0`` for each new BFGS iteration. Otherwise, it will use the terminating value of ``\alpha`` from the previous BFGS iteration.
 
 ## Example
 ## References

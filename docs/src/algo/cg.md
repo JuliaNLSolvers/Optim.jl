@@ -1,7 +1,8 @@
 # Conjugate Gradient Descent
 ## Constructor
 ```julia
-ConjugateGradient(; linesearch = LineSearches.HagerZhang(),
+ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
+                    linesearch = LineSearches.HagerZhang(),
                     eta = 0.4,
                     P = nothing,
                     precondprep = (P, x) -> nothing)
@@ -48,28 +49,28 @@ Results of Optimization Algorithm
 We can compare this to the default first order solver in Optim.jl
 ```
  julia> optimize(f, g!, zeros(2))
+
  Results of Optimization Algorithm
   * Algorithm: L-BFGS
   * Starting Point: [0.0,0.0]
-  * Minimizer: [1.0000000000000007,1.000000000000001]
-  * Minimum: 5.374115e-30
-  * Iterations: 21
+  * Minimizer: [0.9999999999373614,0.999999999868622]
+  * Minimum: 7.645684e-21
+  * Iterations: 16
   * Convergence: true
     * |x - x'| < 1.0e-32: false
-      |x - x'| = 5.95e-10
+      |x - x'| = 3.48e-07
     * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
-      |f(x) - f(x')| / |f(x)| = 3.24e+10
+      |f(x) - f(x')| / |f(x)| = 9.03e+06
     * |g(x)| < 1.0e-08: true
-      |g(x)| = 9.02e-14
+      |g(x)| = 2.32e-09
     * stopped by an increasing objective: false
     * Reached Maximum Number of Iterations: false
-  * Objective Calls: 69
-  * Gradient Calls: 69
-
+  * Objective Calls: 53
+  * Gradient Calls: 53
 ```
 We see that for this objective and starting point, `ConjugateGradient()` requires
-fewer objective and gradient evaluations to reach convergence.
- 
+fewer gradient evaluations to reach convergence.
+
 ## References
 - W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
 - W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
