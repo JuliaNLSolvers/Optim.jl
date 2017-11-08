@@ -14,7 +14,7 @@ function twoloop!(s::Vector,
                   pseudo_iteration::Integer,
                   alpha::Vector,
                   q::Vector,
-                  scaleinvH::Bool,
+                  scaleinvH0::Bool,
                   precon,
                   devec_fun #all data is passed to this function is flat vectors, but precon might expect something different. this function undoes the flattening
                   )
@@ -42,7 +42,7 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    if scaleinvH == true && typeof(precon) <: Void && upper > 0
+    if scaleinvH0 == true && upper > 0
         # Use the initial scaling guess if no preconditioner is used
         # See Nocedal & Wright (2nd ed), Equation (7.20)
         idx = mod1(upper, m)
@@ -77,7 +77,7 @@ struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
     P::T
     precondprep!::Tprep
     manifold::Manifold
-    scaleinvH::Bool
+    scaleinvH0::Bool
 end
 """
 # LBFGS
@@ -89,7 +89,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat(),
-scaleinvH::Bool = true)
+scaleinvH0::Bool = true && (T <: Void)
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -118,8 +118,8 @@ function LBFGS(; m::Integer = 10,
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
-                 scaleinvH::Bool = true)
-    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH)
+                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"
@@ -179,7 +179,7 @@ function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
     devec_fun(x) = real_to_complex(d,reshape(x, size(state.s)))
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, vec(state.twoloop_q), method.scaleinvH, method.P, devec_fun)
+             state.twoloop_alpha, vec(state.twoloop_q), method.scaleinvH0, method.P, devec_fun)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Save g value to prepare for update_g! call
