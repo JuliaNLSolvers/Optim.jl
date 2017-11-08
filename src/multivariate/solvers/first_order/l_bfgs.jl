@@ -42,9 +42,16 @@ function twoloop!(s::Vector,
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    if scaleinvH0 == true && upper > 0
+    if scaleinvH0 == true && pseudo_iteration > 1
         # Use the initial scaling guess if no preconditioner is used
         # See Nocedal & Wright (2nd ed), Equation (7.20)
+
+        #=
+        pseudo_iteration > 1 prevents this scaling from happening
+        at the first iteration, but also at the first step after
+        a reset due to invH being non-positive definite (pseudo_iteration = 1).
+        TODO: Maybe we can still use the scaling as long as iteration > 1?
+        =#
         idx = mod1(upper, m)
         sidx = view(dx_history, :, idx) # TODO: should these use devec_fun?
         yidx = view(dg_history, :, idx) # TODO: should these use devec_fun?
