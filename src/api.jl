@@ -65,10 +65,11 @@ f_tol(r::OptimizationResults) = error("f_tol is not implemented for $(summary(r)
 f_tol(r::MultivariateOptimizationResults) = r.f_tol
 f_abschange(r::MultivariateOptimizationResults) = r.f_abschange
 @inline function f_relchange(r::MultivariateOptimizationResults)
-    if r.f_abschange == zero(r.f_abschange)
-        return zero(r.f_abschange)
+    fabs = f_abschange(r)
+    if fabs == zero(fabs)
+        return zero(fabs)
     else
-        return r.f_abschange / r.minimum # TODO: wrong value if f_increased is true
+        return fabs / r.minimum # TODO: wrong value if f_increased is true
     end
 end
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
