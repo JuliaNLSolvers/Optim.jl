@@ -279,8 +279,6 @@ function assess_convergence(state::NelderMeadState, d, options)
     g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged, false
 end
-f_residual(d::AbstractObjective, state::NelderMeadState, options::Options) = convert(typeof(value(d)), NaN)
-x_residual(state::NelderMeadState) = convert(eltype(state.x), NaN)
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()
