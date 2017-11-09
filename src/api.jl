@@ -68,7 +68,7 @@ f_abschange(r::MultivariateOptimizationResults) = r.f_abschange
     if r.f_abschange == zero(r.f_abschange)
         return zero(r.f_abschange)
     else
-        return r.f_abschange / r.f_minimum # TODO: wrong value if f_increased is true
+        return r.f_abschange / r.minimum # TODO: wrong value if f_increased is true
     end
 end
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
