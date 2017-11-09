@@ -1,5 +1,13 @@
 f_abschange(d::AbstractObjective, state) = f_abschange(value(d), state.f_x_previous)
 f_abschange(f_x::T, f_x_previous) where T = abs(f_x - f_x_previous)
+@inline function f_relchange(f_x::T, f_x_previous) where T
+    fabs = f_abschange(f_x, f_x_previous)
+    if fabs == zero(T)
+        return fabs
+    else
+        return fabs / abs(f_x)
+    end
+end
 x_abschange(state) = x_abschange(state.x, state.x_previous)
 x_abschange(x, x_previous) = maxdiff(x, x_previous)
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
