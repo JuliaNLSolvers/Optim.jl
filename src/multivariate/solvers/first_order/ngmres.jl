@@ -1,3 +1,13 @@
+#= TODO:
+- Support complex numbers
+- Support manifolds
+- How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
+- Check whether this makes sense for other preconditioners than GradientDescent
+  * Update g_previous for L-BFGS after the accelerated step is taken
+  * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
+  * Trust region based methods won't work because we assume the preconditioner calls perform_linesearch!
+=#
+
 """
 Krylov subspace-type acceleration for optimization.
 Originally developed for solving nonlinear systems~\cite{washio1997krylov}, and reduces to
@@ -54,11 +64,15 @@ function NGMRES(; linesearch = LineSearches.BackTracking(),
            ϵ0, wmax)
 end
 
-mutable struct NGMRESState{P,TA,T,N}
+mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
     # TODO: maybe we can just use preconstate for x, x_previous and f_x_previous?
-    x::Vector{T} # TODO: How to handle non-vector types?
-    x_previous::Vector{T}
+    x::Vector{T} # Reference to preconstate.x
+    x_previous::Vector{T}   # Reference to preconstate.x_previous
+    x_previous_0::Vector{T} # Used to deal with assess_convergence of NGMRES
     f_x_previous::T
+    f_x_previous_0::T # Used to deal with assess_convergence of NGMRES
+    f_xP::T         # For tracing purposes
+    grnorm_xP::T     # For tracing purposes
     s::TA # Search direction for linesearch between xP and xA
     # TODO: Specify preconstate::P where P <: AbstractOptimizerState
     preconstate::P  # Preconditioner state
@@ -72,10 +86,15 @@ mutable struct NGMRESState{P,TA,T,N}
     xA::Array{T,1}  # Container for accelerated step
     k::Int          # Used for indexing where to put values in the Storage containers
     restart::Bool   # Restart flag
+    g_tol::T        # Exit tolerance to be checked after preconditioner apply
+    subspacealpha::Array{T,1}  # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
 
 function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) where T
+    if !(typeof(method.precon) <: GradientDescent)
+        warn_once("Use caution. NGMRES has only been tested with Gradient Descent preconditioning")
+    end
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
     wmax = method.wmax
 
@@ -87,47 +106,55 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
     copy!(view(R,:,1), gradient(d))
     Q[1,1] =  dot(gradient(d), gradient(d))
 
-    NGMRESState(copy(initial_x),                      # Maintain current state in state.x
-                similar(initial_x),             # Maintain previous state in state.x_previous
-                T(NaN),                         # Store previous f in state.f_x_previous
-                similar(initial_x),             # Maintain current search direction in state.s
-                preconstate,                    # State storage for preconditioner
+    NGMRESState(preconstate.x,            # Maintain current state in state.x. Use same vector as preconditioner.
+                preconstate.x_previous,   # Maintain  in state.x_previous. Use same vector as preconditioner.
+                similar(preconstate.x),   # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+                T(NaN),                   # Store previous f in state.f_x_previous
+                T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
+                T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
+                T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
+                similar(initial_x),       # Maintain current search direction in state.s
+                preconstate,              # State storage for preconditioner
                 X,
                 R,
                 Q,
-                Array{T}(wmax),                 # ξ
-                1,                              # curw
-                Array{T}(wmax, wmax),           # A
-                Array{T}(wmax),                 # b
-                similar(initial_x),             # xA
-                0,                              # iteration counter
-                false,
-                @initial_linesearch()...)       # Maintain a cache for line search results in state.lsr
+                Array{T}(wmax),           # ξ
+                1,                        # curw
+                Array{T}(wmax, wmax),     # A
+                Array{T}(wmax),           # b
+                similar(initial_x),       # xA
+                0,                        # iteration counter
+                false,                    # Restart flag
+                options.g_tol,            # Exit tolerance check after preconditioner apply
+                Array{T}(wmax),           # subspacealpha
+                @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where T # Do I need to specify X, T here?
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
-    state.f_x_previous  = value(d)
+
+function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where T
+
+    # Reset step length for preconditioner, in case the previous value is detrimental
+    state.preconstate.alpha = one(state.preconstate.alpha)
+
+    # Maintain a record of previous position, for convergence assessment
+    copy!(state.x_previous_0, state.x)
+    state.f_x_previous_0 = value(d)
 
     state.k += 1
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
-    # TODO: pass method.preconstate to optimize (needed for L-BFGS etc.)
-    # TODO: currently, passing on preconstate messes things up?
-    res = optimize(d, state.x, method.precon, method.preconopts)
+    res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
 
-    # state.x = xP
-    state.x .= Optim.minimizer(res)
-
-    # TODO: check for convergence
-    # assess_convergence(with xP and team (so using preconstate?)
-
+    if g_residual(gradient(d)) ≤ state.g_tol
+        return false # Exit on gradient norm convergence
+    end
 
     # Step 2: do NGMRES minimization
-    gradient!(d, state.x)
+    state.f_xP = value_gradient!(d, state.x) # TODO: calling value_gradient! should be superflous, as the last evaluation of d should be at state.x
     gP = gradient(d)
+    state.grnorm_xP = norm(gP, Inf)
+
     η = dot(gP, gP)
 
     for i = 1:curw
@@ -146,7 +173,8 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
 
     # TODO: preallocate α in state?
     #state.α[1:curw] .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
-    α = (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
+    α = view(state.subspacealpha,1:curw)
+    α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     if any(isnan, α)
         # TODO: set the restart flag
         Base.warn("Calculated α is NaN in N-GMRES.")
@@ -158,19 +186,38 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     end
 
     # 3: Perform condition checks
-
     if dot(state.s, gP) ≥ 0
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
-        Base.warn("Restart")
+        lssuccess = true
     else
         state.restart = false
-        perform_linesearch!(state, method, d)
-        @. state.x = state.x + state.alpha * state.s
-    end
 
-    false
+        # Update f_x_previous and dphi0_previous according to preconditioner step
+        # This may be used in perform_linesearch!/alphaguess! when moving from x^P to x^A
+        # TODO: make this a function?
+        state.f_x_previous = state.preconstate.f_x_previous
+        # TODO: Use dphi0_previous when alphaguess branch is merged
+        #state.dphi0_previous = state.preconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
+        # state.x_previous and state.x are dealt with by reference
+
+        lssuccess = perform_linesearch!(state, method, d)
+        @. state.x = state.x + state.alpha * state.s
+
+        # TODO: Make this into a function
+        state.preconstate.f_x_previous = state.f_x_previous
+        # TODO: Use dphi0_previous when alphaguess branch is merged
+        #state.preconstate.dphi0_previous = state.dphi0_previous
+    end
+    #=
+    Update x_previous and f_x_previous to be the values at the beginning
+    of the N-GMRES iteration. For convergence assessment purposes.
+    =#
+    copy!(state.x_previous, state.x_previous_0)
+    state.f_x_previous = state.f_x_previous_0
+
+    lssuccess == false # Break on linesearch error
 end
 
 function update_g!(d, state, method::NGMRES)
@@ -180,7 +227,6 @@ function update_g!(d, state, method::NGMRES)
         state.curw = min(state.curw + 1, method.wmax)
     else
         state.k = 0
-        state.restart = true
         state.curw = 1
     end
     j = mod(state.k, method.wmax) + 1
@@ -195,11 +241,41 @@ function update_g!(d, state, method::NGMRES)
 end
 
 function trace!(tr, d, state, iteration, method::NGMRES, options)
-    # TODO: create NGMRES-specific trace
-    Base.warn_once("We need to implement proper tracing for N-GMRES")
-    common_trace!(tr, d, state, iteration, method, options)
+    dt = Dict()
+    if state.restart == false
+
+    end
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        if state.restart == true
+            dt["Current step size"] = NaN
+        else
+            dt["Current step size"] = state.alpha
+            # This is a wasteful hack to get the previous values for debugging purposes only.
+            xP = state.x .- state.alpha .* state.s
+            dt["x^P"] = copy(xP)
+            # TODO: What's a good way to include g(x^P) here without messing up gradient counts?
+        end
+    end
+    dt["Restart"] = state.restart
+    if state.restart == false
+        dt["f(x^P)"] = state.f_xP
+        dt["|g(x^P)|"] = state.grnorm_xP
+    end
+
+    g_norm = vecnorm(gradient(d), Inf)
+    update!(tr,
+            iteration,
+            value(d),
+            g_norm,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
 end
 
 function assess_convergence(state::NGMRESState, d, options)
-  default_convergence_assessment(state, d, options)
+    default_convergence_assessment(state, d, options)
 end
