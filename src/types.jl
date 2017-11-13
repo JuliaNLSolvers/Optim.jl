@@ -1,5 +1,5 @@
 abstract type Optimizer end
-struct Options{T, TCallback <: Union{Void, Function}}
+struct Options{T, TCallback}
     x_tol::T
     f_tol::T
     g_tol::T
