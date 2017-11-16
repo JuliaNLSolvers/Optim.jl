@@ -1,4 +1,5 @@
 # Optim v1.0.0 release notes
+* Support for initial step length guesses via LineSearches
 * Support for optimization on Riemannian manifolds
 * Support for optimization of functions of complex variables
 * New experimental KrylovTrustRegion method useful when cheap Hessian-vector products are available

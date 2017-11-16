@@ -1,14 +1,14 @@
 # Newton's Method
 ## Constructor
 ```julia
-Newton(; linesearch = LineSearches.HagerZhang(),
-         resetalpha = true)
+Newton(; alphaguess = LineSearches.InitialStatic(),
+         linesearch = LineSearches.HagerZhang())
 ```
 
 The constructor takes two keywords:
 
 * `linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)`, a function performing line search, see the line search section.
-* `resetalpha`, a boolean flag that determines, for each new search direction, whether the initial line search step length should be reset to 1.0, or kept as in the previous Newton iteration.
+* `alphaguess = a(state, dphi0, d)`, a function for setting the initial guess for the line search algorithm, see the line search section.
 
 ## Description
 Newton's method for optimization has a long history, and is in some sense the

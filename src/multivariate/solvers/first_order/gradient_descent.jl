@@ -1,4 +1,5 @@
-struct GradientDescent{L, T, Tprep<:Union{Function, Void}} <: Optimizer
+struct GradientDescent{IL, L, T, Tprep<:Union{Function, Void}} <: Optimizer
+    alphaguess!::IL
     linesearch!::L
     P::T
     precondprep!::Tprep
@@ -11,7 +12,8 @@ Base.summary(::GradientDescent) = "Gradient Descent"
 # Gradient Descent
 ## Constructor
 ```julia
-GradientDescent(; linesearch = LineSearches.HagerZhang(),
+GradientDescent(; alphaguess = LineSearches.InitialHagerZhang(),
+linesearch = LineSearches.HagerZhang(),
 P = nothing,
 precondprep = (P, x) -> nothing)
 ```
@@ -26,11 +28,12 @@ Wright (ch. 2.2, 1999) for an explanation of the approach.
 ## References
  - Nocedal, J. and Wright, S. J. (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function GradientDescent(; linesearch = LineSearches.HagerZhang(),
+function GradientDescent(; alphaguess = LineSearches.InitialPrevious(), # TODO: Investigate good defaults.
+                           linesearch = LineSearches.HagerZhang(),      # TODO: Investigate good defaults
                            P = nothing,
                            precondprep = (P, x) -> nothing,
                            manifold::Manifold=Flat())
-    GradientDescent(linesearch, P, precondprep, manifold)
+    GradientDescent(alphaguess, linesearch, P, precondprep, manifold)
 end
 
 mutable struct GradientDescentState{T,N}
@@ -64,13 +67,8 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
     end
 
-    # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
-    state.f_x_previous  = value(d)
-
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-    # lssuccess = perform_linesearch!(state, method, d)
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s

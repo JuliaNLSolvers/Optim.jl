@@ -1,7 +1,8 @@
 # Gradient Descent
 ## Constructor
 ```julia
-GradientDescent(; linesearch = LineSearches.HagerZhang(),
+GradientDescent(; alphaguess = LineSearches.InitialPrevious(),
+                  linesearch = LineSearches.HagerZhang(),
                   P = nothing,
                   precondprep = (P, x) -> nothing)
 ```
