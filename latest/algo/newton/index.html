@@ -231,15 +231,15 @@
 <h1 id="newtons-method">Newton's Method</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">Newton</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-         <span class="n">resetalpha</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">Newton</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
+         <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">())</span>
 </pre></div>
 
 
 <p>The constructor takes two keywords:</p>
 <ul>
 <li><code>linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)</code>, a function performing line search, see the line search section.</li>
-<li><code>resetalpha</code>, a boolean flag that determines, for each new search direction, whether the initial line search step length should be reset to 1.0, or kept as in the previous Newton iteration.</li>
+<li><code>alphaguess = a(state, dphi0, d)</code>, a function for setting the initial guess for the line search algorithm, see the line search section.</li>
 </ul>
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>

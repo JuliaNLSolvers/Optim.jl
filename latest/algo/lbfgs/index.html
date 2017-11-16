@@ -232,14 +232,15 @@
 <p>This page contains information about BFGS and its limited memory version L-BFGS.</p>
 <p><a id='Constructors-1'></a></p>
 <h2 id="constructors">Constructors</h2>
-<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
+<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
+       <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
        <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-       <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">,</span>
-       <span class="n">resetalpha</span> <span class="o">=</span> <span class="kc">true</span><span class="p">)</span>
+       <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
 </pre></div>
 
 
 <div class="codehilite"><pre><span></span><span class="n">LBFGS</span><span class="p">(;</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
         <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
         <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
         <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
@@ -263,7 +264,6 @@ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
 </script>
 </p>
 <p>and is chosen by a linesearch algorithm such that each step gives sufficient descent.</p>
-<p><strong>For BFGS only</strong>: If <code>resetalpha = true</code>, the linesearch algorithm starts with the initial value $alpha = 1.0$ for each new BFGS iteration. Otherwise, it will use the terminating value of $\alpha$ from the previous BFGS iteration.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p><a id='References-1'></a></p>
