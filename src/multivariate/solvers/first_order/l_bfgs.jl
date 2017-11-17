@@ -34,6 +34,7 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
+        # TODO: Will this vecdot be correct if x and q are complex?
         @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
         dgi = view(dg_history, :, i)
         q .-= alpha[i] .* dgi
@@ -53,9 +54,9 @@ function twoloop!(s::Vector,
         TODO: Maybe we can still use the scaling as long as iteration > 1?
         =#
         idx = mod1(upper, m)
-        sidx = view(dx_history, :, idx) # TODO: should these use devec_fun?
-        yidx = view(dg_history, :, idx) # TODO: should these use devec_fun?
-        scaling = dot(sidx, yidx) / sum(abs2, yidx) # TODO: Should this be vecdot?
+        sidx = view(dx_history, :, idx)
+        yidx = view(dg_history, :, idx)
+        scaling = dot(sidx, yidx) / sum(abs2, yidx)
         @. s = scaling*q
     else
         A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
@@ -210,7 +211,7 @@ function update_h!(d, state, method::LBFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = 1 / vecdot(state.dx, state.dg)
+    rho_iteration = one(eltype(state.dx)) / vecdot(state.dx, state.dg)
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
@@ -219,7 +220,6 @@ function update_h!(d, state, method::LBFGS)
     state.dx_history[:, idx] .= vec(state.dx)
     state.dg_history[:, idx] .= vec(state.dg)
     state.rho[idx] = rho_iteration
-
 end
 
 function assess_convergence(state::LBFGSState, d, options)
