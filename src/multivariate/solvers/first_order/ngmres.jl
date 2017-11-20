@@ -13,7 +13,7 @@ Krylov subspace-type acceleration for optimization.
 Originally developed for solving nonlinear systems~\cite{washio1997krylov}, and reduces to
 GMRES for linear problems.
 
-Application of the algorithm to optimization is covered, for example, in~\cite{sterck2013steepest}
+Application of the algorithm to optimization is covered, for example, in~\cite{sterck2013steepest}.
 
 @article{washio1997krylov,
   title={Krylov subspace acceleration for nonlinear multigrid schemes},
@@ -50,7 +50,18 @@ immutable NGMRES{Tp,TPrec <: Optimizer,L} <: Optimizer
     # TODO: Add manifold support?
 end
 
+immutable OACCEL{Tp,TPrec <: Optimizer,L} <: NGMRES
+    linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
+    precon::TPrec # Nonlinear preconditioner
+    preconopts::Options # Preconditioner options
+    ϵ0::Tp # Ensure A-matrix is positive definite
+    wmax::Int # Maximum window size
+    # TODO: Add manifold support?
+end
+
+
 Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.precon))"
+Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.precon))"
 
 function NGMRES(; linesearch = LineSearches.BackTracking(),
                 precon = GradientDescent(linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
@@ -58,11 +69,21 @@ function NGMRES(; linesearch = LineSearches.BackTracking(),
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
                 # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                wmax = 10) # wmax = 10  -- number was an arbitrary choice
+                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
     # TODO: make wmax mandatory?
     NGMRES(linesearch, precon, preconopts, #γA, γB, γC, ϵB,
            ϵ0, wmax)
 end
+
+function OACCEL(; linesearch = LineSearches.BackTracking(),
+                precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
+                                         linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+                preconopts = Options(iterations = 1, allow_f_increases = true),
+                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
+                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
+    OACCEL(linesearch, precon, preconopts, ϵ0, wmax)
+end
+
 
 mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
     # TODO: maybe we can just use preconstate for x, x_previous and f_x_previous?
@@ -79,7 +100,7 @@ mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
     X::Array{T,2}  # Solution vectors in the window (TODO: is this the best type?)
     R::Array{T,2}  # Gradient vectors in the window (TODO: is this the best type?)
     Q::Array{T,2}   # Storage to create linear system (TODO: make Symmetric?)
-    ξ::Array{T,1}   # Storage to create linear system
+    ξ::Array{T}     # Storage to create linear system
     curw::Int       # Counter for current window size
     A::Array{T,2}   # Container for Aα = b  (TODO: correct type?)
     b::Array{T,1}   # Container for Aα = b
@@ -90,6 +111,54 @@ mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
     subspacealpha::Array{T,1}  # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
+
+"Update storage Q[i,j] and Q[j,i] for `NGMRES`"
+@inline function _updateQ!(Q, i::Int, j::Int, X, R, ::NGMRES)
+    Q[j,i] = dot(R[:, j], R[:,i]) #TODO: vecdot?
+    if i != j
+        Q[i,j] = Q[j, i] # Use Symmetric?
+    end
+end
+
+"Update storage A[i,j] for `NGMRES`"
+@inline function _updateA!(A, i::Int, j::Int, Q, ξ, η, ::NGMRES)
+    A[i,j] = Q[i,j]-ξ[i]-ξ[j]+η
+end
+
+"Update storage ξ[i,:] for `NGMRES`"
+@inline function _updateξ!(ξ, i::Int, X, x, R, r, ::NGMRES)
+    ξ[i] = dot(r, R[:,i])
+end
+
+"Update storage b[i] for `NGMRES`"
+@inline function _updateb!(b, i::Int, ξ, η, ::NGMRES)
+    b[i] = η - ξ[i]
+end
+
+"Update storage Q[i,j] and Q[j,i] for `OACCEL`"
+@inline function _updateQ!(Q, i::Int, j::Int, X, R, ::OACCEL)
+    Q[i,j] = dot(X[:,i], R[:,j]) #TODO: vecdot?
+    if i != j
+        Q[j,i] = dot(X[:,j], R[:,i]) #TODO: vecdot?
+    end
+end
+
+"Update storage A[i,j] for `OACCEL`"
+@inline function _updateA!(A, i::Int, j::Int, Q, ξ, η, ::OACCEL)
+    A[i,j] = Q[i,j]-ξ[i,1]-ξ[j,2]+η
+end
+
+"Update storage ξ[i,:] for `OACCEL`"
+@inline function _updateξ!(ξ, i::Int, X, x, R, r, ::OACCEL)
+    ξ[i,1] = dot(X[:,i], r)
+    ξ[i,2] = dot(x, R[:,i])
+end
+
+"Update storage b[i] for `OACCEL`"
+@inline function _updateb!(b, i::Int, ξ, η, ::OACCEL)
+    b[i] = η - ξ[i,1]
+end
+
 
 function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) where T
     if !(typeof(method.precon) <: GradientDescent)
@@ -102,9 +171,16 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
     R = Array{T}(length(initial_x), wmax)
     Q = Array{T}(wmax, wmax)
 
+    ξ = if typeof(method) == OACCEL
+        Array{T}(wmax, 2)
+    else
+        Array{T}(wmax)
+    end
+
     copy!(view(X,:,1), initial_x)
     copy!(view(R,:,1), gradient(d))
-    Q[1,1] =  dot(gradient(d), gradient(d))
+
+    _updateQ!(Q, 1, 1, X, R, method)
 
     NGMRESState(preconstate.x,            # Maintain current state in state.x. Use same vector as preconditioner.
                 preconstate.x_previous,   # Maintain  in state.x_previous. Use same vector as preconditioner.
@@ -118,7 +194,7 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
                 X,
                 R,
                 Q,
-                Array{T}(wmax),           # ξ
+                ξ,
                 1,                        # curw
                 Array{T}(wmax, wmax),     # A
                 Array{T}(wmax),           # b
@@ -158,22 +234,23 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     η = dot(gP, gP)
 
     for i = 1:curw
-        state.ξ[i] = dot(gP, state.R[:,i])
-        state.b[i] = η-state.ξ[i]
+        # Update storage vectors according to method {NGMRES, OACCEL}
+        _updateξ!(state.ξ, state.X, state.x, state.R, gP, method)
+        _updateb!(state.b, ξ, η, method)
     end
 
     for i = 1:curw
         for j = 1:curw
-            state.A[i,j] = state.Q[i,j]-state.ξ[i]-state.ξ[j]+η;
+            # Update system matrix according to method {NGMRES, OACCEL}
+            _updateA!(state.A, i, j, state.Q, state.ξ, η, method)
         end
     end
 
     # The outer max is to avoid δ=0, which may occur if A=0, e.g. at numerical convergence
     δ = method.ϵ0*max(maximum(diag(state.A)[1:curw]), method.ϵ0)
 
-    # TODO: preallocate α in state?
     #state.α[1:curw] .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
-    α = view(state.subspacealpha,1:curw)
+    α = view(state.subspacealpha, 1:curw)
     α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     if any(isnan, α)
         # TODO: set the restart flag
@@ -235,8 +312,7 @@ function update_g!(d, state, method::NGMRES)
     copy!(view(state.R,:,j), gradient(d))
 
     for i = 1:state.curw
-        state.Q[j,i] = dot(gradient(d), state.R[:,i])
-        state.Q[i,j] = state.Q[j,i] # Use Symmetric?
+        _updateQ!(state.Q, i, j, state.X, state.R, method)
     end
 end
 
