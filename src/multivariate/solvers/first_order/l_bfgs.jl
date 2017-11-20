@@ -33,11 +33,11 @@ function twoloop!(s::Vector,
         if index < 1
             continue
         end
-        i = mod1(index, m)
-        # TODO: Will this vecdot be correct if x and q are complex?
-        @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
+        i   = mod1(index, m)
         dgi = view(dg_history, :, i)
-        q .-= alpha[i] .* dgi
+        dxi = view(dx_history, :, i)
+        @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
+        @inbounds q .-= alpha[i] .* dgi
     end
 
     # Copy q into s for forward pass
@@ -53,10 +53,10 @@ function twoloop!(s::Vector,
         a reset due to invH being non-positive definite (pseudo_iteration = 1).
         TODO: Maybe we can still use the scaling as long as iteration > 1?
         =#
-        idx = mod1(upper, m)
-        sidx = view(dx_history, :, idx)
-        yidx = view(dg_history, :, idx)
-        scaling = dot(sidx, yidx) / sum(abs2, yidx)
+        i = mod1(upper, m)
+        dxi = view(dx_history, :, i)
+        dgi = view(dg_history, :, i)
+        scaling = dot(dxi, dgi) / sum(abs2, dgi)
         @. s = scaling*q
     else
         A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
@@ -67,8 +67,9 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * vecdot(view(dg_history, :, i), s)
+        dgi = view(dg_history, :, i)
         dxi = view(dx_history, :, i)
+        @inbounds beta = rho[i] * vecdot(dgi, s)
         @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
@@ -217,9 +218,9 @@ function update_h!(d, state, method::LBFGS)
         return true
     end
     idx = mod1(state.pseudo_iteration, method.m)
-    state.dx_history[:, idx] .= vec(state.dx)
-    state.dg_history[:, idx] .= vec(state.dg)
-    state.rho[idx] = rho_iteration
+    @inbounds state.dx_history[:, idx] .= vec(state.dx)
+    @inbounds state.dg_history[:, idx] .= vec(state.dg)
+    @inbounds state.rho[idx] = rho_iteration
 end
 
 function assess_convergence(state::LBFGSState, d, options)
