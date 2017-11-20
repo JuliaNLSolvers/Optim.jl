@@ -37,9 +37,10 @@ Application of the algorithm to optimization is covered, for example, in~\cite{s
 }
 """
 
-abstract type AbstractNGMRES <: Optimizer end
+abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
-immutable NGMRES{Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
+immutable NGMRES{IL, Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
+    alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
@@ -52,8 +53,9 @@ immutable NGMRES{Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
     # TODO: Add manifold support?
 end
 
-immutable OACCEL{Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
-    linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
+immutable OACCEL{IL, Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
+    alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
+    linesearch!::L    # Linesearch between xP and xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
     ϵ0::Tp # Ensure A-matrix is positive definite
@@ -65,25 +67,30 @@ end
 Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.precon))"
 Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.precon))"
 
-function NGMRES(; linesearch = LineSearches.BackTracking(),
-                precon = GradientDescent(linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+function NGMRES(;
+                alphaguess = LineSearches.InitialStatic(),
+                linesearch = LineSearches.MoreThuente(),
+                precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
+                                         linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
                 preconopts = Options(iterations = 1, allow_f_increases = true),
                 # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
                 # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
     # TODO: make wmax mandatory?
-    NGMRES(linesearch, precon, preconopts, #γA, γB, γC, ϵB,
+    NGMRES(alphaguess, linesearch, precon, preconopts, #γA, γB, γC, ϵB,
            ϵ0, wmax)
 end
 
-function OACCEL(; linesearch = LineSearches.BackTracking(),
+function OACCEL(;
+                alphaguess = LineSearches.InitialStatic(),
+                linesearch = LineSearches.MoreThuente(),
                 precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
                                          linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
                 preconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
-    OACCEL(linesearch, precon, preconopts, ϵ0, wmax)
+    OACCEL(alphaguess, linesearch, precon, preconopts, ϵ0, wmax)
 end
 
 
@@ -220,7 +227,6 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
 
     state.k += 1
     curw = state.curw
-
     # Step 1: Call preconditioner to get x^P
     res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
 
