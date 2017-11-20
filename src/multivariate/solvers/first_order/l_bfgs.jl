@@ -97,7 +97,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat(),
-scaleinvH0::Bool = true && (T <: Void)
+scaleinvH0::Bool = true && (typeof(P) <: Void))
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
