@@ -237,8 +237,8 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
 
     for i = 1:curw
         # Update storage vectors according to method {NGMRES, OACCEL}
-        _updateξ!(state.ξ, state.X, state.x, state.R, gP, method)
-        _updateb!(state.b, ξ, η, method)
+        _updateξ!(state.ξ, i, state.X, state.x, state.R, gP, method)
+        _updateb!(state.b, i, state.ξ, η, method)
     end
 
     for i = 1:curw
