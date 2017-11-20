@@ -37,7 +37,9 @@ Application of the algorithm to optimization is covered, for example, in~\cite{s
 }
 """
 
-immutable NGMRES{Tp,TPrec <: Optimizer,L} <: Optimizer
+abstract type AbstractNGMRES <: Optimizer end
+
+immutable NGMRES{Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
@@ -50,7 +52,7 @@ immutable NGMRES{Tp,TPrec <: Optimizer,L} <: Optimizer
     # TODO: Add manifold support?
 end
 
-immutable OACCEL{Tp,TPrec <: Optimizer,L} <: NGMRES
+immutable OACCEL{Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
@@ -160,7 +162,7 @@ end
 end
 
 
-function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) where T
+function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
     if !(typeof(method.precon) <: GradientDescent)
         warn_once("Use caution. NGMRES has only been tested with Gradient Descent preconditioning")
     end
@@ -207,7 +209,7 @@ function initial_state(method::NGMRES, options, d, initial_x::AbstractArray{T}) 
 end
 
 
-function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where T
+function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
 
     # Reset step length for preconditioner, in case the previous value is detrimental
     state.preconstate.alpha = one(state.preconstate.alpha)
@@ -297,7 +299,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::NGMRES) where X where
     lssuccess == false # Break on linesearch error
 end
 
-function update_g!(d, state, method::NGMRES)
+function update_g!(d, state, method::AbstractNGMRES)
     # Update the function value and gradient
     value_gradient!(d, state.x)
     if state.restart == false
@@ -316,7 +318,7 @@ function update_g!(d, state, method::NGMRES)
     end
 end
 
-function trace!(tr, d, state, iteration, method::NGMRES, options)
+function trace!(tr, d, state, iteration, method::AbstractNGMRES, options)
     dt = Dict()
     if state.restart == false
 
