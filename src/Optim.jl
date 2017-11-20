@@ -38,6 +38,7 @@ module Optim
            GoldenSection,
            GradientDescent,
            NGMRES,
+           OACCEL,
            LBFGS,
            MomentumGradientDescent,
            NelderMead,
