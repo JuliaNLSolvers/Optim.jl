@@ -144,6 +144,12 @@ end
     b[i] = η - ξ[i]
 end
 
+"Update value η for `NGMRES`"
+@inline function _updateη(x, r, ::NGMRES)
+    dot(r, r) # TODO: vecdot?
+end
+
+
 "Update storage Q[i,j] and Q[j,i] for `OACCEL`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::OACCEL)
     Q[i,j] = dot(X[:,i], R[:,j]) #TODO: vecdot?
@@ -168,6 +174,12 @@ end
     b[i] = η - ξ[i,1]
 end
 
+"Update value η for `OACCEL`"
+@inline function _updateη(x, r, ::OACCEL)
+    dot(x, r) # TODO: vecdot?
+end
+
+
 
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
     if !(typeof(method.precon) <: GradientDescent)
@@ -180,7 +192,7 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
     R = Array{T}(length(initial_x), wmax)
     Q = Array{T}(wmax, wmax)
 
-    ξ = if typeof(method) == OACCEL
+    ξ = if typeof(method) <: OACCEL
         Array{T}(wmax, 2)
     else
         Array{T}(wmax)
@@ -239,7 +251,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     gP = gradient(d)
     state.grnorm_xP = norm(gP, Inf)
 
-    η = dot(gP, gP)
+    η = _updateη(state.x, gP, method)
 
     for i = 1:curw
         # Update storage vectors according to method {NGMRES, OACCEL}
