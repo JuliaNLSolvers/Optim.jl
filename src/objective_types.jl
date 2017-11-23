@@ -77,7 +77,7 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}; autodiff = :finite) whe
     #         DiffBase.value(gr_res)
     #     end
     else
-        error("The autodiff value $autodiff is not supported. Use :finite, :forward or :reverse.")
+        error("The autodiff value $autodiff is not supported. Use :finite or :forward.")
     end
     g = similar(x_seed)
     g!(g, x_seed)
@@ -127,7 +127,7 @@ function TwiceDifferentiable(f, x_seed::AbstractArray{T}; autodiff = :finite) wh
     #     hcfg = ReverseDiff.HessianConfig(x_seed)
     #     h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
     else
-        error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
+        error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
     g = similar(x_seed)
     H = Array{T}(n_x, n_x)
@@ -157,7 +157,7 @@ function TwiceDifferentiable(f, g!, x_seed::Array{T}; autodiff = :finite) where 
     #     hcfg = ReverseDiff.HessianConfig(x_seed)
     #     h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
     else
-        error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
+        error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
     g = similar(x_seed)
     H = Array{T}(n_x, n_x)
@@ -185,7 +185,7 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::Vector{T} = d.last_x
     #     hcfg = ReverseDiff.HessianConfig(similar(gradient(d)))
     #     h! = (out, x) -> ReverseDiff.hessian!(out, d.f, x, hcfg)
     else
-        error("The autodiff value $(autodiff) is not supported. Use :finite, :forward or :reverse.")
+        error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
     H = Array{T}(n_x, n_x)
     h!(H, d.last_x_g)
