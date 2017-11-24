@@ -288,6 +288,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
         lssuccess = true
+        state.alpha = 0.0
     else
         state.restart = false
 
