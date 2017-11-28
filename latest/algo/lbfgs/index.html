@@ -243,7 +243,9 @@
         <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
         <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
         <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-        <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
+        <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">,</span>
+        <span class="n">manifold</span> <span class="o">=</span> <span class="n">Flat</span><span class="p">(),</span>
+        <span class="n">scaleinvH0</span><span class="o">::</span><span class="kt">Bool</span> <span class="o">=</span> <span class="kc">true</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">typeof</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;:</span> <span class="kt">Void</span><span class="p">))</span>
 </pre></div>
 
 
