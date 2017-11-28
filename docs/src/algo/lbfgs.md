@@ -13,7 +13,9 @@ LBFGS(; m = 10,
         alphaguess = LineSearches.InitialStatic(),
         linesearch = LineSearches.HagerZhang(),
         P = nothing,
-        precondprep = (P, x) -> nothing)
+        precondprep = (P, x) -> nothing,
+        manifold = Flat(),
+        scaleinvH0::Bool = true && (typeof(P) <: Void))
 ```
 ## Description
 This means that it takes steps according to

@@ -14,6 +14,7 @@ function twoloop!(s::Vector,
                   pseudo_iteration::Integer,
                   alpha::Vector,
                   q::Vector,
+                  scaleinvH0::Bool,
                   precon,
                   devec_fun #all data is passed to this function is flat vectors, but precon might expect something different. this function undoes the flattening
                   )
@@ -32,28 +33,44 @@ function twoloop!(s::Vector,
         if index < 1
             continue
         end
-        i = mod1(index, m)
-        @inbounds alpha[i] = rho[i] * vecdot(view(dx_history, :, i), q)
-        @simd for j in 1:n
-            @inbounds q[j] -= alpha[i] * dg_history[j, i]
-        end
+        i   = mod1(index, m)
+        dgi = view(dg_history, :, i)
+        dxi = view(dx_history, :, i)
+        @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
+        @inbounds q .-= alpha[i] .* dgi
     end
 
     # Copy q into s for forward pass
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
-    A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
+    if scaleinvH0 == true && pseudo_iteration > 1
+        # Use the initial scaling guess if no preconditioner is used
+        # See Nocedal & Wright (2nd ed), Equation (7.20)
 
+        #=
+        pseudo_iteration > 1 prevents this scaling from happening
+        at the first iteration, but also at the first step after
+        a reset due to invH being non-positive definite (pseudo_iteration = 1).
+        TODO: Maybe we can still use the scaling as long as iteration > 1?
+        =#
+        i = mod1(upper, m)
+        dxi = view(dx_history, :, i)
+        dgi = view(dg_history, :, i)
+        scaling = dot(dxi, dgi) / sum(abs2, dgi)
+        @. s = scaling*q
+    else
+        A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
+    end
     # Forward pass
     for index in lower:1:upper
         if index < 1
             continue
         end
         i = mod1(index, m)
-        @inbounds beta = rho[i] * vecdot(view(dg_history, :, i), s)
-        @simd for j in 1:n
-            @inbounds s[j] += dx_history[j, i] * (alpha[i] - beta)
-        end
+        dgi = view(dg_history, :, i)
+        dxi = view(dx_history, :, i)
+        @inbounds beta = rho[i] * vecdot(dgi, s)
+        @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
     # Negate search direction
@@ -69,6 +86,7 @@ struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
     P::T
     precondprep!::Tprep
     manifold::Manifold
+    scaleinvH0::Bool
 end
 """
 # LBFGS
@@ -79,22 +97,28 @@ alphaguess = LineSearches.InitialStatic(),
 linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
-manifold = Flat())
+manifold = Flat(),
+scaleinvH0::Bool = true && (typeof(P) <: Void))
 ```
-`LBFGS` has a special keyword; the memory length `m`.
+`LBFGS` has two special keywords; the memory length `m`,
+and the `scaleinvH0` flag.
 The memory length determines how many previous Hessian
 approximations to store.
-In addition, it supports preconditioning via the `P` and `precondprep`
+When `scaleinvH0 == true`,
+then the initial guess in the two-loop recursion to approximate the
+inverse Hessian is the scaled identity, as can be found in Nocedal and Wright (2nd edition) (sec. 7.2).
+
+In addition, LBFGS supports preconditioning via the `P` and `precondprep`
 keywords.
 
 ## Description
 The `LBFGS` method implements the limited-memory BFGS algorithm as described in
-Nocedal and Wright (sec. 9.1, 1999) and original paper by Liu & Nocedal (1989).
+Nocedal and Wright (sec. 7.2, 2006) and original paper by Liu & Nocedal (1989).
 It is a quasi-Newton method that updates an approximation to the Hessian using
 past approximations as well as the gradient.
 
 ## References
- - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
+ - Wright, S. J. and J. Nocedal (2006), Numerical optimization, 2nd edition. Springer
  - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
 """
 function LBFGS(; m::Integer = 10,
@@ -102,8 +126,9 @@ function LBFGS(; m::Integer = 10,
                  linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
                  P=nothing,
                  precondprep = (P, x) -> nothing,
-                 manifold::Manifold=Flat())
-    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold)
+                 manifold::Manifold=Flat(),
+                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"
@@ -163,7 +188,7 @@ function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
     devec_fun(x) = real_to_complex(d,reshape(x, size(state.s)))
     twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, vec(state.twoloop_q), method.P, devec_fun)
+             state.twoloop_alpha, vec(state.twoloop_q), method.scaleinvH0, method.P, devec_fun)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Save g value to prepare for update_g! call
@@ -184,20 +209,18 @@ end
 function update_h!(d, state, method::LBFGS)
     n = length(state.x)
     # Measure the change in the gradient
-    @simd for i in 1:n
-        @inbounds state.dg[i] = gradient(d, i) - state.g_previous[i]
-    end
+    state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = 1 / vecdot(state.dx, state.dg)
+    rho_iteration = one(eltype(state.dx)) / vecdot(state.dx, state.dg)
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
     end
-    state.dx_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dx)
-    state.dg_history[:, mod1(state.pseudo_iteration, method.m)] = vec(state.dg)
-    state.rho[mod1(state.pseudo_iteration, method.m)] = rho_iteration
-
+    idx = mod1(state.pseudo_iteration, method.m)
+    @inbounds state.dx_history[:, idx] .= vec(state.dx)
+    @inbounds state.dg_history[:, idx] .= vec(state.dg)
+    @inbounds state.rho[idx] = rho_iteration
 end
 
 function assess_convergence(state::LBFGSState, d, options)
