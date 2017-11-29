@@ -3,14 +3,17 @@
     f = problem.f
     g! = problem.g!
     h! = problem.h!
-    nd = NonDifferentiable(f, problem.initial_x)
-    od = OnceDifferentiable(f, g!, problem.initial_x)
-    td = TwiceDifferentiable(f, g!, h!, problem.initial_x)
-    ref = optimize(td, problem.initial_x, Newton(), Optim.Options())
+    nd = NonDifferentiable(f, zeros(problem.initial_x))
+    od = OnceDifferentiable(f, g!, zeros(problem.initial_x))
+    td = TwiceDifferentiable(f, g!, h!, zeros(problem.initial_x))
+    tdref = TwiceDifferentiable(f, g!, h!, zeros(problem.initial_x))
+    ref = optimize(tdref, problem.initial_x, Newton(), Optim.Options())
     # test AbstractObjective interface
     for obj in (nd, od, td)
         res = []
         push!(res, optimize(obj))
+        # test that initial x isn't overwritten ref #491
+        @test !(Optim.initial_state(res[end]) == Optim.minimizer(res[end]))
         push!(res, optimize(obj, problem.initial_x))
 
         push!(res, optimize(obj, problem.initial_x, Optim.Options()))
