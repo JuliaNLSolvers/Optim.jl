@@ -229,21 +229,23 @@ end
 
 
 function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
-
-    # Reset step length for preconditioner, in case the previous value is detrimental
-    state.preconstate.alpha = one(state.preconstate.alpha)
-
     # Maintain a record of previous position, for convergence assessment
     copy!(state.x_previous_0, state.x)
     state.f_x_previous_0 = value(d)
 
     state.k += 1
     curw = state.curw
+
     # Step 1: Call preconditioner to get x^P
     res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
 
+    if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
+        warn("Non-finite values attained from preconditioner $(summary(method.precon)).")
+        return true
+    end
+
     if g_residual(gradient(d)) ≤ state.g_tol
-        return false # Exit on gradient norm convergence
+        return true # Exit on gradient norm convergence
     end
 
     # Step 2: do NGMRES minimization
@@ -274,7 +276,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     if any(isnan, α)
         # TODO: set the restart flag
-        Base.warn("Calculated α is NaN in N-GMRES.")
+        Base.warn("Calculated α is NaN in $(summary(method))")
         state.s .= zero(eltype(state.s))
     else
         # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
@@ -283,7 +285,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     end
 
     # 3: Perform condition checks
-    if dot(state.s, gP) ≥ 0
+    if dot(state.s, gP) ≥ 0 || !isfinite(dot(state.s, gP))
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
