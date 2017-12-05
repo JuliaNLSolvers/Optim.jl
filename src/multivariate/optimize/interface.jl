@@ -40,15 +40,15 @@ promote_objtype(method::SecondOrderSolver, initial_x, obj_args...) = TwiceDiffer
 promote_objtype(method::SecondOrderSolver, initial_x, td::TwiceDifferentiable) = td
 
 # use objective.last_f_x, since this is guaranteed to be in Non-, Once-, and TwiceDifferentiable
-function optimize(objective::AbstractObjective, initial_x::AbstractArray = objective.last_x_f; kwargs...)
+function optimize(objective::AbstractObjective, initial_x::AbstractArray = copy(objective.last_x_f); kwargs...)
     method = fallback_method(objective)
     checked_kwargs, method = check_kwargs(kwargs, method)
     options = Options(; checked_kwargs...)
     optimize(objective, initial_x, method, options)
 end
 
-optimize(d::AbstractObjective,                           options::Options) = optimize(d, d.last_x_f, fallback_method(d), options)
-optimize(d::AbstractObjective, method::Optimizer,        options::Options = Options()) = optimize(d, d.last_x_f, method, options)
+optimize(d::AbstractObjective,                           options::Options) = optimize(d, copy(d.last_x_f), fallback_method(d), options)
+optimize(d::AbstractObjective, method::Optimizer,        options::Options = Options()) = optimize(d, copy(d.last_x_f), method, options)
 optimize(d::AbstractObjective, initial_x::AbstractArray, options::Options) = optimize(d, initial_x,  fallback_method(d), options)
 
 optimize(f,         initial_x::AbstractArray; kwargs...) = optimize((f,),        initial_x; kwargs...)
