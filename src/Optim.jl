@@ -79,9 +79,6 @@ module Optim
     # preconditioning functionality
     include("multivariate/precon.jl")
 
-    # Nonlinear GMRES
-    include("multivariate/solvers/first_order/ngmres.jl")
-
     # Gradient Descent
     include("multivariate/solvers/first_order/gradient_descent.jl")
     include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
@@ -99,9 +96,11 @@ module Optim
     include("multivariate/solvers/second_order/newton_trust_region.jl")
     include("multivariate/solvers/second_order/krylov_trust_region.jl")
 
+    # Nonlinear GMRES
+    include("multivariate/solvers/first_order/ngmres.jl")
+
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
-
 
     # Univariate methods
     include("univariate/solvers/golden_section.jl")

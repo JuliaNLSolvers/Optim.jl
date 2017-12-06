@@ -4,7 +4,7 @@
 - How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
 - Check whether this makes sense for other preconditioners than GradientDescent
 * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
-  * Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
+* Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
 =#
 
 """
@@ -182,7 +182,7 @@ end
 
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
     if !(typeof(method.precon) <: GradientDescent)
-        warn_once("Use caution. NGMRES has only been tested with Gradient Descent preconditioning")
+        Base.warn_once("Use caution. NGMRES has only been tested with Gradient Descent preconditioning")
     end
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
     wmax = method.wmax
@@ -228,12 +228,15 @@ end
 
 precon_post_optimize!(d, state, method) = update_h!(d, state.preconstate, method)
 
-function precon_post_optimize!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
+function precon_post_optimize!(d, state::NGMRESState{X,T},
+                               method::Union{LBFGS,BFGS}) where X where T
     update_h!(d, state.preconstate, method)
 end
 
 precon_post_accelerate!(d, state, method) = update_h!(d, state.preconstate, method)
-function precon_post_accelerate!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
+
+function precon_post_accelerate!(d, state::NGMRESState{X,T},
+                                 method::Union{LBFGS,BFGS})  where X where T
     state.preconstate.pseudo_iteration += 1
     update_h!(d, state.preconstate, method)
 end
