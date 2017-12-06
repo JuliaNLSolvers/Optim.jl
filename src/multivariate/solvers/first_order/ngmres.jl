@@ -3,9 +3,8 @@
 - Support manifolds
 - How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
 - Check whether this makes sense for other preconditioners than GradientDescent
-  * Update g_previous for L-BFGS after the accelerated step is taken
-  * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
-  * Trust region based methods won't work because we assume the preconditioner calls perform_linesearch!
+* There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
+  * Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
 =#
 
 """
@@ -227,10 +226,18 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-precon_updates!(d, state, method) = nothing
-function precon_updates!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
-    update_h!()
+precon_post_optimize!(d, state, method) = update_h!(d, state.preconstate, method)
+
+function precon_post_optimize!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
+    update_h!(d, state.preconstate, method)
 end
+
+precon_post_accelerate!(d, state, method) = update_h!(d, state.preconstate, method)
+function precon_post_accelerate!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
+    state.preconstate.pseudo_iteration += 1
+    update_h!(d, state.preconstate, method)
+end
+
 
 function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
     # Maintain a record of previous position, for convergence assessment
@@ -248,7 +255,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         return true
     end
 
-    # Step 2: Do acceleration calculation
+
     # Calling value_gradient! in normally done on state.x in optimize or update_g! above,
     # but there are corner cases where we need this.
     state.f_xP = value_gradient!(d, state.x)
@@ -259,6 +266,10 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         return true # Exit on gradient norm convergence
     end
 
+    # Deals with update_h! etc for preconditioner, if needed
+    precon_post_optimize!(d, state, method.precon)
+
+    # Step 2: Do acceleration calculation
     η = _updateη(state.x, gP, method)
 
     for i = 1:curw
@@ -311,10 +322,11 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         lssuccess = perform_linesearch!(state, method, d)
         @. state.x = state.x + state.alpha * state.s
 
-        # TODO: Make this into a function
+        # TODO: Move these into `precon_post_accelerate!` ?
         state.preconstate.f_x_previous = state.f_x_previous
-        # TODO: Use dphi0_previous when alphaguess branch is merged
-        #state.preconstate.dphi0_previous = state.dphi0_previous
+        state.preconstate.dphi0_previous = state.dphi0_previous
+        # Deals with update_h! etc. for preconditioner, if needed
+        precon_post_accelerate!(d, state, method.precon)
     end
     #=
     Update x_previous and f_x_previous to be the values at the beginning
@@ -347,9 +359,6 @@ end
 
 function trace!(tr, d, state, iteration, method::AbstractNGMRES, options)
     dt = Dict()
-    if state.restart == false
-
-    end
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
