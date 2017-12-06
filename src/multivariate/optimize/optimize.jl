@@ -51,7 +51,7 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         update_g!(d, state, method)
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)

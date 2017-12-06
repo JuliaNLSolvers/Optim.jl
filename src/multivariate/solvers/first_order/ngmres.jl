@@ -69,7 +69,7 @@ Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.precon))"
 
 function NGMRES(;
                 alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.MoreThuente(),
+                linesearch = LineSearches.MoreThuente(gtol = 0.5), # gtol in the middle of CG/GD(0.1) and (quasi-)Newton(0.9)
                 precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
                                          linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
                 preconopts = Options(iterations = 1, allow_f_increases = true),
@@ -227,6 +227,10 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
+precon_updates!(d, state, method) = nothing
+function precon_updates!(d, state::NGMRESState{X,T}), method::Union{LBFGS,BFGS})
+    update_h!()
+end
 
 function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
     # Maintain a record of previous position, for convergence assessment
@@ -244,14 +248,16 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         return true
     end
 
-    if g_residual(gradient(d)) ≤ state.g_tol
-        return true # Exit on gradient norm convergence
-    end
-
-    # Step 2: do NGMRES minimization
-    state.f_xP = value_gradient!(d, state.x) # TODO: calling value_gradient! should be superflous, as the last evaluation of d should be at state.x
+    # Step 2: Do acceleration calculation
+    # Calling value_gradient! in normally done on state.x in optimize or update_g! above,
+    # but there are corner cases where we need this.
+    state.f_xP = value_gradient!(d, state.x)
     gP = gradient(d)
     state.grnorm_xP = norm(gP, Inf)
+
+    if g_residual(gP) ≤ state.g_tol
+        return true # Exit on gradient norm convergence
+    end
 
     η = _updateη(state.x, gP, method)
 
