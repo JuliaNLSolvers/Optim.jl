@@ -126,13 +126,17 @@ mutable struct NelderMeadState{T, N}
     step_type::String
 end
 
-function initial_state(method::NelderMead, options, f::F, initial_x::Array{T}) where {F, T}
+function initial_state(method::NelderMead, options, d::F, initial_x::Array{T}) where {F, T}
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)
     f_simplex = zeros(T, m)
+
+    # Force evaluation of the objective, gradient
+    _unchecked_value!(d, first(simplex))
+
     @inbounds for i in 1:length(simplex)
-        f_simplex[i] = value(f, simplex[i])
+        f_simplex[i] = value(d, simplex[i])
     end
     # Get the indeces that correspond to the ordering of the f values
     # at the vertices. i_order[1] is the index in the simplex of the vertex
@@ -265,7 +269,7 @@ function after_while!(f::F, state, method::NelderMead, options) where F
         x_min = x_centroid_min
         f_min = f_centroid_min
     end
-    f.f_x = f_min
+    f.F = f_min
     state.x[:] = x_min
 end
 # We don't have an f_x_previous in NelderMeadState, so we need to special case these

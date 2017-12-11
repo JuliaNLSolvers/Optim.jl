@@ -59,7 +59,10 @@ function initial_state(method::BFGS, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
-    value_gradient!(d, initial_x)
+
+    # Force evaluation of the objective, gradient
+    _unchecked_value_gradient!(d, initial_x)
+
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     # Maintain a cache for line search results
     # Trace the history of states visited
@@ -97,7 +100,7 @@ function update_state!(d, state::BFGSState{T}, method::BFGS) where T
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
     retract!(method.manifold, real_to_complex(d,state.x))
-#
+
     lssuccess == false # break on linesearch error
 end
 

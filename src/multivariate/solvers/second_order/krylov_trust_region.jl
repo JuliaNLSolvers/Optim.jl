@@ -1,9 +1,8 @@
 immutable TwiceDifferentiableHV <: AbstractObjective # TODO: move to NLSolversBase
-    f::Function
-    fg!::Function
-    hv!::Function
+    f
+    fg!
+    hv!
 end
-
 iscomplex(obj::TwiceDifferentiableHV) = false # TODO: move to NLSolversBase
 
 immutable KrylovTrustRegion{T <: Real} <: Optimizer
@@ -64,6 +63,7 @@ function initial_state{T}(method::KrylovTrustRegion, options, d, initial_x::Arra
     @assert(method.rho_lower >= 0)
 
     g = similar(initial_x)
+
     f_x = d.fg!(g, initial_x)
 
     KrylovTrustRegionState(copy(initial_x),    # Maintain current state in state.x

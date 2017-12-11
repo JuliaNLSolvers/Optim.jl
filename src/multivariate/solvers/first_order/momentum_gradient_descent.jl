@@ -29,7 +29,11 @@ end
 function initial_state(method::MomentumGradientDescent, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
+
+    # Force evaluation of the objective, gradient
+    _unchecked_value_gradient!(d, initial_x)
     value_gradient!(d, initial_x)
+
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
     MomentumGradientDescentState(initial_x, # Maintain current state in state.x

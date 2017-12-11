@@ -34,17 +34,17 @@ g_norm_trace(r::OptimizationResults) = error("g_norm_trace is not implemented fo
 g_norm_trace(r::MultivariateOptimizationResults) = [ state.g_norm for state in trace(r) ]
 
 f_calls(r::OptimizationResults) = r.f_calls
-f_calls(d) = d.f_calls[1]
+f_calls(d) = first(d.f_calls)
 
 g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(summary(r)).")
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
 g_calls(d::NonDifferentiable) = 0
-g_calls(d) = d.g_calls[1]
+g_calls(d) = first(d.df_calls)
 
 h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summary(r)).")
 h_calls(r::MultivariateOptimizationResults) = r.h_calls
 h_calls(d::Union{NonDifferentiable, OnceDifferentiable}) = 0
-h_calls(d) = d.h_calls[1]
+h_calls(d) = first(d.h_calls)
 
 converged(r::UnivariateOptimizationResults) = r.converged
 converged(r::MultivariateOptimizationResults) = r.x_converged || r.f_converged || r.g_converged

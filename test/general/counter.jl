@@ -52,7 +52,7 @@
     for solver in (AcceleratedGradientDescent, BFGS, ConjugateGradient,
                    GradientDescent, LBFGS, MomentumGradientDescent)
         fcounter(true); gcounter(true)
-        res = Optim.optimize(f,g!, prob.initial_x,
+        res = Optim.optimize(f, g!, prob.initial_x,
                              solver(linesearch = ls))
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)
@@ -81,7 +81,7 @@
     begin
         solver = Optim.KrylovTrustRegion()
         fcounter(true); gcounter(true); hcounter(true)
-        df = Optim.TwiceDifferentiableHV(f,fg!,hv!)
+        df = Optim.TwiceDifferentiableHV(f, fg!, hv!)
         res = Optim.optimize(df, prob.initial_x, solver)
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)

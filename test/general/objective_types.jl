@@ -1,52 +1,58 @@
 @testset "objective types" begin
     @testset "autodiff" begin
         # Should throw, as :wah is not a proper autodiff choice
-        @test_throws ErrorException OnceDifferentiable(x->x, rand(10); autodiff=:wah)
+        @test_throws ErrorException OnceDifferentiable(x->x, 0.0, rand(10); autodiff=:wah)
 
         for T in (OnceDifferentiable, TwiceDifferentiable)
-            odad1 = T(x->5., rand(1); autodiff = :finite)
-            odad2 = T(x->5., rand(1); autodiff = :forward)
-        #    odad3 = T(x->5., rand(1); autodiff = :reverse)
-            @test odad1.g == [0.0]
-            @test odad2.g == [0.0]
-        #    @test odad3.g == [0.0]
+            odad1 = T(x->5.0, 0.0, rand(1); autodiff = :finite)
+            odad2 = T(x->5.0, 0.0, rand(1); autodiff = :forward)
+            Optim.gradient!(odad1, rand(1))
+            Optim.gradient!(odad2, rand(1))
+            #    odad3 = T(x->5., rand(1); autodiff = :reverse)
+            @test Optim.gradient(odad1) == [0.0]
+            @test Optim.gradient(odad2) == [0.0]
+            #    @test odad3.g == [0.0]
         end
-
+        
         for a in (1.0, 5.0)
-            odad1 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :finite)
-            odad2 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :forward)
-        #    odad3 = OnceDifferentiable(x->a*x[1], rand(1); autodiff = :reverse)
-            @test odad1.g ≈ [a]
-            @test odad2.g == [a]
+            xa = rand(1)
+            odad1 = OnceDifferentiable(x->a*x[1], 0.0, xa; autodiff = :finite)
+            odad2 = OnceDifferentiable(x->a*x[1], 0.0, xa; autodiff = :forward)
+        #    odad3 = OnceDifferentiable(x->a*x[1], xa; autodiff = :reverse)        
+            Optim.gradient!(odad1, xa)
+            Optim.gradient!(odad2, xa)
+            @test Optim.gradient(odad1) ≈ [a]
+            @test Optim.gradient(odad2) == [a]
         #    @test odad3.g == [a]
         end
         for a in (1.0, 5.0)
-            x_seed = rand(1)
-            odad1 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :finite)
-            odad2 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :forward)
-        #    odad3 = OnceDifferentiable(x->a*x[1]^2, x_seed; autodiff = :reverse)
-            @test odad1.g ≈ 2.0*a*x_seed
-            @test odad2.g == 2.0*a*x_seed
-        #    @test odad3.g == 2.0*a*x_seed
+            xa = rand(1)
+            odad1 = OnceDifferentiable(x->a*x[1]^2, 0.0, xa; autodiff = :finite)
+            odad2 = OnceDifferentiable(x->a*x[1]^2, 0.0,xa; autodiff = :forward)
+        #    odad3 = OnceDifferentiable(x->a*x[1]^2, xa; autodiff = :reverse)
+            Optim.gradient!(odad1, xa)
+            Optim.gradient!(odad2, xa)
+         @test Optim.gradient(odad1) ≈ 2.0*a*xa
+            @test Optim.gradient(odad2) == 2.0*a*xa
+        #    @test odad3.g == 2.0*a*xa
         end
         for dtype in (OnceDifferentiable, TwiceDifferentiable)
             for autodiff in (:finite, :forward)
-                differentiable = dtype(x->sum(x), rand(2); autodiff = autodiff)
-                NLSolversBase.value(differentiable)
-                NLSolversBase.value!(differentiable, rand(2))
-                NLSolversBase.value_gradient!(differentiable, rand(2))
-                NLSolversBase.gradient!(differentiable, rand(2))
-                dtype == TwiceDifferentiable && NLSolversBase.hessian!(differentiable, rand(2))
+                differentiable = dtype(x->sum(x), 0.0, rand(2); autodiff = autodiff)
+                Optim.value(differentiable)
+                Optim.value!(differentiable, rand(2))
+                Optim.value_gradient!(differentiable, rand(2))
+                Optim.gradient!(differentiable, rand(2))
+                dtype == TwiceDifferentiable && Optim.hessian!(differentiable, rand(2))
             end
         end
     end
     @testset "value/grad" begin
         a = 3.0
         x_seed = rand(1)
-        odad1 = OnceDifferentiable(x->a*x[1]^2, x_seed)
-        tmp_1 = copy(odad1.g)
+        odad1 = OnceDifferentiable(x->a*x[1]^2, 0.0, x_seed)
         Optim.value_gradient!(odad1, x_seed)
-        @test tmp_1 == odad1.g
+        @test Optim.gradient(odad1) ≈ 2 .* a .* (x_seed)
         @testset "call counters" begin
             @test Optim.f_calls(odad1) == 1
             @test Optim.g_calls(odad1) == 1

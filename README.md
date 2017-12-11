@@ -3,6 +3,8 @@ Optim.jl
 
 Univariate and multivariate optimization in Julia.
 
+Optim.jl is part of the [JuliaNLSolvers](https://julianlsolvers.github.io) family.
+
 | **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 | **References to cite** |
 |:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|:-:|
 | [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![DOI](https://zenodo.org/badge/3933868.svg)](https://zenodo.org/badge/latestdoi/3933868)|

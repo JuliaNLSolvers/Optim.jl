@@ -18,13 +18,15 @@ module Optim
            Base.getindex,
            Base.setindex!
 
-    import NLSolversBase.iscomplex
+    import NLSolversBase: iscomplex,
+                          NonDifferentiable,
+                          OnceDifferentiable,
+                          TwiceDifferentiable
 
     export optimize,
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
-           OptimizationOptions,
            OptimizationState,
            OptimizationTrace,
 

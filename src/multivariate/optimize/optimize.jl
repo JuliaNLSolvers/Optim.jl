@@ -4,6 +4,9 @@ function update_g!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton}
     # Update the function value and gradient
     value_gradient!(d, state.x)
 end
+update_fg!(d, state, method) = nothing
+update_fg!(d, state, method::ZerothOrderSolver) = value!(d, state.x)
+update_fg!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton} = value_gradient!(d, state.x)
 
 # Update the Hessian
 update_h!(d, state, method) = nothing
@@ -13,31 +16,35 @@ after_while!(d, state, method, options) = nothing
 
 function optimize(d::D, initial_x::AbstractArray, method::M,
     options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:Optimizer}
-
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-
-    initial_x = complex_to_real(d, initial_x)
-
+    
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
 
+    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+
+    initial_x = complex_to_real(d, initial_x)
+ 
     n = length(initial_x)
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased = false, false, false
+
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing || typeof(method) <: KrylovTrustRegion
         # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
         g_converged = false
     else
+        gradient!(d, initial_x)
         vecnorm(gradient(d), Inf) < options.g_tol
     end
 
     converged = g_converged
+
+    # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
     options.show_trace && print_header(method)

@@ -237,8 +237,12 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T
     reached_subproblem_solution = true
     interior = true
     lambda = NaN
-    value_gradient!(d, initial_x)
-    hessian!(d, initial_x)
+
+    # Force evaluation of the objective, gradient
+    _unchecked_value_gradient!(d, initial_x)
+    _unchecked_hessian!(d, initial_x)
+
+
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -306,7 +310,7 @@ function update_state!(d, state::NewtonTrustRegionState{T}, method::NewtonTrustR
         x_diff = state.x - state.x_previous
         delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
 
-        d.f_x = state.f_x_previous
+        d.F = state.f_x_previous
         copy!(state.x, state.x_previous)
         copy!(gradient(d), state.g_previous)
     end
