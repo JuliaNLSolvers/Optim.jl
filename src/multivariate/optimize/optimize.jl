@@ -16,7 +16,6 @@ after_while!(d, state, method, options) = nothing
 
 function optimize(d::D, initial_x::AbstractArray, method::M,
     options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:Optimizer}
-    
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
@@ -36,7 +35,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
         nmobjective(state.f_simplex, state.m, n) < options.g_tol
     elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing || typeof(method) <: KrylovTrustRegion
         # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
-        g_converged = false
+        false
     else
         gradient!(d, initial_x)
         vecnorm(gradient(d), Inf) < options.g_tol

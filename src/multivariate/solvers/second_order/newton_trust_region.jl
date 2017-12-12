@@ -239,7 +239,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T
     lambda = NaN
 
     # Force evaluation of the objective, gradient
-    _unchecked_value_gradient!(d, initial_x)
+    value_gradient!(d, initial_x)
     _unchecked_hessian!(d, initial_x)
 
 

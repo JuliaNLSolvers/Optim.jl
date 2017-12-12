@@ -40,7 +40,6 @@ end
 
 function TwiceDifferentiable(f, g!, F::Real, x_seed::AbstractVector{T}; autodiff = :finite) where T
     n_x = length(x_seed)
-    f_calls = [1]
     function fg!(storage, x)
         g!(storage, x)
         return f(x)
@@ -60,12 +59,14 @@ function TwiceDifferentiable(f, g!, F::Real, x_seed::AbstractVector{T}; autodiff
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
     g = similar(x_seed)
-    H = Array{T}(n_x, n_x)
-    g!(g, x_seed)
-    h!(H, x_seed)
+    H = Matrix{T}(n_x, n_x)
+    x_f = convert(typeof(x_seed), fill(eltype(x_seed)(NaN), size(x_seed)...))
+    x_df = copy(x_f)
+    x_h = copy(x_f)
     return TwiceDifferentiable(f, g!, fg!, h!, f(x_seed),
-                               g, H, copy(x_seed),
-                               copy(x_seed), copy(x_seed), f_calls, [1], [1])
+                               g, H,
+                               x_f, x_df, x_h,
+                               [0,], [0,], [0,])
 end
 
 TwiceDifferentiable(d::NonDifferentiable, F::T, x_seed::AbstractVector{T} = d.x_f; autodiff = :finite) where {T<:Real} =
@@ -120,7 +121,11 @@ function TwiceDifferentiable(f, F::T, x::AbstractVector{T}; autodiff = :finite) 
     TwiceDifferentiable(f, g!, fg!, h!, F, x)
     n = length(x)
     H = similar(x, n, n)
+    x_f = convert(typeof(x), fill(eltype(x)(NaN), size(x)...))
+    x_df = copy(x_f)
+    x_h = copy(x_f)
     return TwiceDifferentiable(f, g!, fg!, h!, zero(T),
-                               similar(x), H, similar(x),
-                               similar(x), similar(x), [0,], [0,], [0,])
+                               similar(x), H, 
+                               x_f, x_df, x_h,
+                               [0,], [0,], [0,])
 end

@@ -77,7 +77,8 @@ function run_optim_tests(method; convergence_exceptions = (),
                                  f_increase_exceptions = (),
                                  iteration_exceptions = (),
                                  skip = (),
-                                 show_name = false)
+                                 show_name = false,
+                                 show_trace = false)
     # Loop over unconstrained problems
     for (name, prob) in Optim.UnconstrainedProblems.examples
         show_name && print_with_color(:green, "Problem: ", name, "\n")
@@ -86,7 +87,7 @@ function run_optim_tests(method; convergence_exceptions = (),
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        options = Optim.Options(allow_f_increases = name in f_increase_exceptions, iterations = iters)
+        options = Optim.Options(allow_f_increases = name in f_increase_exceptions, iterations = iters, show_trace = show_trace)
         # Check if once or twice differentiable
         if differentiability_condition(method, prob) && !(name in skip)
             # Loop over appropriate input combinations of f, g!, and h!
