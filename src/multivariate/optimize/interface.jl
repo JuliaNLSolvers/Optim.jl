@@ -30,10 +30,10 @@ fallback_method(d::TwiceDifferentiable) = Newton()
 # promote the objective (tuple of callables or an AbstractObjective) according to method requirement
 promote_objtype(method, initial_x, obj_args...) = error("No default objective type for $method and $obj_args.")
 # actual promotions, notice that (args...) captures FirstOrderSolver and NonDifferentiable, etc
-promote_objtype(method::ZerothOrderSolver, x, args...) = NonDifferentiable(args..., real(zero(eltype(x))), x)
-promote_objtype(method::FirstOrderSolver,  x, args...) = OnceDifferentiable(args..., real(zero(eltype(x))), x)
-promote_objtype(method::FirstOrderSolver,  x, f, g!, h!) = OnceDifferentiable(f, g!, real(zero(eltype(x))), x)
-promote_objtype(method::SecondOrderSolver, x, args...) = TwiceDifferentiable(args..., real(zero(eltype(x))), x)
+promote_objtype(method::ZerothOrderSolver, x, args...) = NonDifferentiable(args..., x, real(zero(eltype(x))))
+promote_objtype(method::FirstOrderSolver,  x, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))))
+promote_objtype(method::FirstOrderSolver,  x, f, g!, h!) = OnceDifferentiable(f, g!, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderSolver, x, args...) = TwiceDifferentiable(args..., x, real(zero(eltype(x))))
 # no-op
 promote_objtype(method::ZerothOrderSolver, x, nd::NonDifferentiable)  = nd
 promote_objtype(method::ZerothOrderSolver, x, od::OnceDifferentiable) = od
@@ -55,7 +55,7 @@ function optimize(f::Tuple, initial_x::AbstractArray{T}; kwargs...) where T
 end
 
 # no method supplied
-optimize(d::T,     initial_x::AbstractArray, options::Options) where T<:AbstractObjective = optimize((d,), initial_x, fallback_method(T), options)
+optimize(d::T,      initial_x::AbstractArray, options::Options) where T<:AbstractObjective = optimize((d,), initial_x, fallback_method(T), options)
 optimize(f,         initial_x::AbstractArray, options::Options) = optimize((f,),        initial_x, fallback_method(f), options)
 optimize(f, g!,     initial_x::AbstractArray, options::Options) = optimize((f, g!),     initial_x, fallback_method(f), options)
 optimize(f, g!, h!, initial_x::AbstractArray, options::Options) = optimize((f, g!, h!), initial_x, fallback_method(f), options)

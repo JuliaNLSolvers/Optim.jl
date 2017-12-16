@@ -48,8 +48,7 @@ function initial_state(method::GradientDescent, options, d, initial_x::Array{T})
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
 
-    # Force evaluation of the objective, gradient
-    value_gradient!(d, initial_x)
+    value_gradient!!(d, initial_x)
 
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 

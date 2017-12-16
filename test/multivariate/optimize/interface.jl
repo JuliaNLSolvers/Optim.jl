@@ -3,10 +3,10 @@
     f = problem.f
     g! = problem.g!
     h! = problem.h!
-    nd = NonDifferentiable(f, 0.0, zeros(problem.initial_x))
-    od = OnceDifferentiable(f, g!, 0.0, zeros(problem.initial_x))
-    td = TwiceDifferentiable(f, g!, h!, 0.0, zeros(problem.initial_x))
-    tdref = TwiceDifferentiable(f, g!, h!, 0.0, zeros(problem.initial_x))
+    nd = NonDifferentiable(f, zeros(problem.initial_x))
+    od = OnceDifferentiable(f, g!, zeros(problem.initial_x))
+    td = TwiceDifferentiable(f, g!, h!, zeros(problem.initial_x))
+    tdref = TwiceDifferentiable(f, g!, h!, zeros(problem.initial_x))
     ref = optimize(tdref, problem.initial_x, Newton(), Optim.Options())
     # test AbstractObjective interface
     for obj in (nd, od, td)

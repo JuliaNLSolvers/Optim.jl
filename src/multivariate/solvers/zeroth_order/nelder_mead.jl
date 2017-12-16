@@ -132,8 +132,7 @@ function initial_state(method::NelderMead, options, d::F, initial_x::Array{T}) w
     simplex = simplexer(method.initial_simplex, initial_x)
     f_simplex = zeros(T, m)
 
-    # Force evaluation of the objective, gradient
-    _unchecked_value!(d, first(simplex))
+    value!!(d, first(simplex))
 
     @inbounds for i in 1:length(simplex)
         f_simplex[i] = value(d, simplex[i])

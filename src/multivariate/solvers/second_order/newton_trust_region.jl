@@ -238,9 +238,8 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T
     interior = true
     lambda = NaN
 
-    # Force evaluation of the objective, gradient
-    value_gradient!(d, initial_x)
-    _unchecked_hessian!(d, initial_x)
+    value_gradient!!(d, initial_x)
+    hessian!!(d, initial_x)
 
 
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x

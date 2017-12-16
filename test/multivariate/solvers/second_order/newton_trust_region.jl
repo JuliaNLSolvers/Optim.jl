@@ -110,7 +110,6 @@ end
         Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
     @test !hard_case
 
-
     # Now check an actual had case problem
     L = fill(0.1, n)
     L[1] = -1.
@@ -148,7 +147,7 @@ end
         storage[1, 1] = 12.0 * (x[1] - 5.0)^2
     end
 
-    d = TwiceDifferentiable(f, g!, h!, 0.0, [0.0])
+    d = TwiceDifferentiable(f, g!, h!, [0.0,])
 
     options = Optim.Options(store_trace = false, show_trace = false,
                             extended_trace = true)
@@ -177,7 +176,7 @@ end
         storage[2, 2] = eta
     end
 
-    d = TwiceDifferentiable(f_2, g!_2, h!_2, 0.0, Float64[127, 921])
+    d = TwiceDifferentiable(f_2, g!_2, h!_2, Float64[127, 921])
 
     results = Optim.optimize(d, Float64[127, 921], NewtonTrustRegion())
     @test results.g_converged

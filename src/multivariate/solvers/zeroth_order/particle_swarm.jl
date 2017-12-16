@@ -87,8 +87,8 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) w
 
     current_state = 0
 
-    # Force evaluation of the objective, gradient
-    _unchecked_value!(d, initial_x)
+    
+    value!!(d, initial_x)
     
     # if search space is limited, spread the initial population
     # uniformly over the whole search space

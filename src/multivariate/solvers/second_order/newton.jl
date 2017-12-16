@@ -41,9 +41,8 @@ function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
     # Maintain current gradient in gr
     s = similar(initial_x)
 
-    # Force evaluation of the objective, gradient
-    value_gradient!(d, initial_x)
-    hessian!(d, initial_x)
+    value_gradient!!(d, initial_x)
+    hessian!!(d, initial_x)
     
     NewtonState(copy(initial_x), # Maintain current state in state.x
                 similar(initial_x), # Maintain previous state in state.x_previous

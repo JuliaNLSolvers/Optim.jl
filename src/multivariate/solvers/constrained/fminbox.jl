@@ -103,7 +103,7 @@ function optimize(obj,
                   l::Array{T},
                   u::Array{T},
                   F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-     optimize(OnceDifferentiable(obj, zero(T), initial_x), l, u, F; kwargs...)
+     optimize(OnceDifferentiable(obj, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
 function optimize(f,
@@ -112,7 +112,7 @@ function optimize(f,
                   l::Array{T},
                   u::Array{T},
                   F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-     optimize(OnceDifferentiable(f, g!, zero(T), initial_x), l, u, F; kwargs...)
+     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
 
@@ -212,7 +212,7 @@ function optimize(
         # Optimize with current setting of mu
         funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu)
         fval0 = funcc(nothing, x)
-        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, zero(T),   initial_x)
+        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x, zero(T))
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end

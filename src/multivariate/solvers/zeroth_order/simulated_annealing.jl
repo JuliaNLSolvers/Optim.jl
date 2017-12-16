@@ -36,8 +36,8 @@ pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
 pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
 function initial_state(method::SimulatedAnnealing, options, d, initial_x::Array{T}) where T
-    # Force evaluation of the objective, gradient
-    _unchecked_value!(d, initial_x)
+    
+    value!!(d, initial_x)
     
     # Store the best state ever visited
     best_x = copy(initial_x)

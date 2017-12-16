@@ -6,9 +6,9 @@
     h! = rosenbrock.h!
     initial_x = rosenbrock.initial_x
     T = eltype(initial_x)
-    d1 = OnceDifferentiable(f, zero(T), initial_x)
-    d2 = OnceDifferentiable(f, g!, zero(T), initial_x)
-    d3 = TwiceDifferentiable(f, g!, h!, zero(T), initial_x)
+    d1 = OnceDifferentiable(f, initial_x)
+    d2 = OnceDifferentiable(f, g!, initial_x)
+    d3 = TwiceDifferentiable(f, g!, h!, initial_x)
 
     Optim.optimize(f, initial_x, BFGS())
     Optim.optimize(f, g!, initial_x, BFGS())

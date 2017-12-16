@@ -1,9 +1,4 @@
-NonDifferentiable(f, g!,     x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
-NonDifferentiable(f, g!, h!, x_seed::AbstractArray) = NonDifferentiable(f, x_seed)
-
-function OnceDifferentiable(f, F::T, x_seed::AbstractArray{T}; autodiff = :finite) where T <: Real
-
-    n_x = length(x_seed)
+function OnceDifferentiable(f, x_seed::AbstractArray{T}, F = zero(T); autodiff = :finite) where T
     if autodiff == :finite
         function g!(storage, x)
             Calculus.finite_difference!(f, x, storage, :central)
@@ -22,23 +17,13 @@ function OnceDifferentiable(f, F::T, x_seed::AbstractArray{T}; autodiff = :finit
             ForwardDiff.gradient!(gr_res, f, x, gcfg)
             DiffBase.value(gr_res)
         end
-    # elseif autodiff == :reverse
-    #     gcfg = ReverseDiff.GradientConfig(x_seed)
-    #     g! = (out, x) -> ReverseDiff.gradient!(out, f, x, gcfg)
-    #
-    #     fg! = (out, x) -> begin
-    #         gr_res = DiffBase.DiffResult(zero(T), out)
-    #         ReverseDiff.gradient!(gr_res, f, x, gcfg)
-    #         DiffBase.value(gr_res)
-    #     end
     else
         error("The autodiff value $autodiff is not support. Use :finite or :forward.")
     end
-    g = similar(x_seed)
-    return OnceDifferentiable(f, g!, fg!, zero(T), g, copy(x_seed))
+    OnceDifferentiable(f, g!, fg!, x_seed)
 end
 
-function TwiceDifferentiable(f, g!, F::Real, x_seed::AbstractVector{T}; autodiff = :finite) where T
+function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
     n_x = length(x_seed)
     function fg!(storage, x)
         g!(storage, x)
@@ -52,27 +37,16 @@ function TwiceDifferentiable(f, g!, F::Real, x_seed::AbstractVector{T}; autodiff
     elseif autodiff == :forward
         hcfg = ForwardDiff.HessianConfig(similar(x_seed))
         h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
-    # elseif autodiff == :reverse
-    #     hcfg = ReverseDiff.HessianConfig(x_seed)
-    #     h! = (out, x) -> ReverseDiff.hessian!(out, f, x, hcfg)
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
-    g = similar(x_seed)
-    H = Matrix{T}(n_x, n_x)
-    x_f = convert(typeof(x_seed), fill(eltype(x_seed)(NaN), size(x_seed)...))
-    x_df = copy(x_f)
-    x_h = copy(x_f)
-    return TwiceDifferentiable(f, g!, fg!, h!, f(x_seed),
-                               g, H,
-                               x_f, x_df, x_h,
-                               [0,], [0,], [0,])
+    TwiceDifferentiable(f, g!, fg!, h!, x_seed, F)
 end
 
-TwiceDifferentiable(d::NonDifferentiable, F::T, x_seed::AbstractVector{T} = d.x_f; autodiff = :finite) where {T<:Real} =
-TwiceDifferentiable(d.f, F, x_seed; autodiff = autodiff)
-function TwiceDifferentiable(d::OnceDifferentiable, F::T, x_seed::AbstractVector{T} = d.x_f; autodiff = :finite) where T<:Real
-    n_x = length(x_seed)
+TwiceDifferentiable(d::NonDifferentiable, x_seed::AbstractVector{T} = d.x_f, F = zero(T); autodiff = :finite) where {T<:Real} =
+    TwiceDifferentiable(d.f, x_seed, F; autodiff = autodiff)
+
+function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = d.x_f, F = zero(T); autodiff = :finite) where T<:Real
     if autodiff == :finite
         function h!(storage, x)
             Calculus.finite_difference_hessian!(d.f, x, storage)
@@ -84,12 +58,10 @@ function TwiceDifferentiable(d::OnceDifferentiable, F::T, x_seed::AbstractVector
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
-    H = Array{T}(n_x, n_x)
-    return TwiceDifferentiable(d.f, d.df, d.fdf, h!, F, copy(gradient(d)), H, similar(x_seed))
+    return TwiceDifferentiable(d.f, d.df, d.fdf, h!, x_seed, F, gradient(d))
 end
     
-# Automatically create the fg! helper function if only f, g! and h! is provided
-function TwiceDifferentiable(f, F::T, x::AbstractVector{T}; autodiff = :finite) where T<:Real
+function TwiceDifferentiable(f, x::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
     if autodiff == :finite
         function g!(storage::Vector, x::Vector)
             Calculus.finite_difference!(f, x, storage, :central)
@@ -118,14 +90,5 @@ function TwiceDifferentiable(f, F::T, x::AbstractVector{T}; autodiff = :finite) 
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
-    TwiceDifferentiable(f, g!, fg!, h!, F, x)
-    n = length(x)
-    H = similar(x, n, n)
-    x_f = convert(typeof(x), fill(eltype(x)(NaN), size(x)...))
-    x_df = copy(x_f)
-    x_h = copy(x_f)
-    return TwiceDifferentiable(f, g!, fg!, h!, zero(T),
-                               similar(x), H, 
-                               x_f, x_df, x_h,
-                               [0,], [0,], [0,])
+    TwiceDifferentiable(f, g!, fg!, h!, x, F)
 end
