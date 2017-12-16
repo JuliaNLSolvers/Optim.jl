@@ -87,7 +87,6 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) w
 
     current_state = 0
 
-    
     value!!(d, initial_x)
     
     # if search space is limited, spread the initial population
