@@ -81,7 +81,7 @@
     begin
         solver = Optim.KrylovTrustRegion()
         fcounter(true); gcounter(true); hcounter(true)
-        df = Optim.TwiceDifferentiableHV(f, fg!, hv!)
+        df = Optim.TwiceDifferentiableHV(f, fg!, hv!, prob.initial_x)
         res = Optim.optimize(df, prob.initial_x, solver)
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)

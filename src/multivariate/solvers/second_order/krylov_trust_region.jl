@@ -1,10 +1,3 @@
-immutable TwiceDifferentiableHV <: AbstractObjective # TODO: move to NLSolversBase
-    f
-    fg!
-    hv!
-end
-iscomplex(obj::TwiceDifferentiableHV) = false # TODO: move to NLSolversBase
-
 immutable KrylovTrustRegion{T <: Real} <: Optimizer
     initial_radius::T
     max_radius::T
@@ -27,18 +20,11 @@ KrylovTrustRegion(; initial_radius::Real = 1.0,
 update_h!(d, state, method::KrylovTrustRegion) = nothing
 
 
-# TODO: move *_calls to NLSolversBase.TwiceDifferentiableHV
 # TODO: support x::Array{T,N} et al.?
-mutable struct KrylovTrustRegionState{T,G}
+mutable struct KrylovTrustRegionState{T}
     x::Vector{T}
     x_previous::Vector{T}
-    f_x::T
     f_x_previous::T
-    f_calls::Int
-    g::G
-    g_calls::Int
-    Hd::Vector{T} # hessian-vector product
-    hv_calls::Int
     s::Vector{T}
     interior::Bool
     accept_step::Bool
@@ -51,9 +37,7 @@ mutable struct KrylovTrustRegionState{T,G}
     cg_iters::Int
 end
 
-pick_best_f(f_increased, state::KrylovTrustRegionState, d) = f_increased ? state.f_x_previous : state.f_x # TODO: remove when NLSolversBase.TwiceDifferentiableHV exists
-
-function initial_state{T}(method::KrylovTrustRegion, options, d, initial_x::Array{T})
+function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.max_radius > 0)
@@ -62,19 +46,11 @@ function initial_state{T}(method::KrylovTrustRegion, options, d, initial_x::Arra
     @assert(method.rho_lower < method.rho_upper)
     @assert(method.rho_lower >= 0)
 
-    g = similar(initial_x)
-
-    f_x = d.fg!(g, initial_x)
+    value_gradient!!(d, initial_x)
 
     KrylovTrustRegionState(copy(initial_x),    # Maintain current state in state.x
                            similar(initial_x), # x_previous
-                           f_x,                # Store current f in state.f_x
                            zero(T),            # f_x_previous
-                           1,                  # track f calls in state.f_calls
-                           g,                  # Store current gradient in state.g
-                           1,                  # track g calls in state.g_calls
-                           Vector{T}(n),       # hessian-vector product
-                           0,                  # track hessian-vector products
                            similar(initial_x), # Maintain current search direction in state.s
                            true,               # interior
                            true,               # accept step
@@ -100,10 +76,10 @@ function trace!(tr, d, state, iteration, method::KrylovTrustRegion, options)
         dt["f_diff"] = state.f_diff
         dt["cg_iters"] = state.cg_iters
     end
-    g_norm = norm(state.g, Inf)
+    g_norm = norm(gradient(d), Inf)
     update!(tr,
             iteration,
-            state.f_x,
+            value(d),
             g_norm,
             dt,
             options.store_trace,
@@ -113,11 +89,11 @@ function trace!(tr, d, state, iteration, method::KrylovTrustRegion, options)
 end
 
 
-function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
-                         state::KrylovTrustRegionState{T},
-                         method::KrylovTrustRegion)
+function cg_steihaug!(objective::TwiceDifferentiableHV,
+                      state::KrylovTrustRegionState{T},
+                      method::KrylovTrustRegion) where T
     n = length(state.x)
-    x, g, d, r, z, Hd = state.x, state.g, state.d, state.r, state.s, state.Hd
+    x, g, d, r, z, Hv = state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
 
     fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
     r .= g  # so at first the whole gradient is the residual.
@@ -127,16 +103,15 @@ function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
     state.cg_iters = 0
     for i in 1:n
         state.cg_iters += 1
-        objective.hv!(Hd, x, d)
-        state.hv_calls += 1
-        dHd = dot(d, Hd)
-        if -1e-15 < dHd < 1e-15
+        hv_product!(objective, x, d)
+        dHv = dot(d, Hv)
+        if -1e-15 < dHv < 1e-15
             break
         end
 
-        alpha = dot(r, r) / dHd
+        alpha = dot(r, r) / dHv
 
-        if dHd < 0. || norm(z .+ alpha .* d) >= state.radius
+        if dHv < 0. || norm(z .+ alpha .* d) >= state.radius
             a_ = dot(d, d)
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
@@ -150,7 +125,7 @@ function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
         if i == 1
             rho0 = rho_prev
         end
-        r .+= alpha * Hd
+        r .+= alpha * Hv
         rho_next = dot(r, r)
         r_sqnorm_ratio = rho_next / rho_prev
         d[:] = -r + r_sqnorm_ratio * d
@@ -160,20 +135,18 @@ function cg_steihaug!{T}(objective::TwiceDifferentiableHV,
         end
     end
 
-    objective.hv!(Hd, x, z)
-    state.hv_calls += 1
-    return dot(g, z) + 0.5 * dot(z, Hd)
+    hv_product!(objective, x, z)
+    return dot(g, z) + 0.5 * dot(z, Hv)
 end
 
 
-function update_state!{T}(objective::TwiceDifferentiableHV,
-                          state::KrylovTrustRegionState{T},
+function update_state!(objective::TwiceDifferentiableHV,
+                          state::KrylovTrustRegionState,
                           method::KrylovTrustRegion)
     state.m_diff = cg_steihaug!(objective, state, method)
     @assert state.m_diff <= 0
 
-    state.f_diff = objective.f(state.x .+ state.s) - state.f_x
-    state.f_calls += 1
+    state.f_diff = value(objective, state.x .+ state.s) - value(objective)
     state.rho = state.f_diff / state.m_diff
     state.interior = norm(state.s) < 0.9 * state.radius
 
@@ -195,8 +168,8 @@ end
 function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrustRegion)
     if state.accept_step
         # Update the function value and gradient
-        state.f_x_previous, state.f_x = state.f_x, objective.fg!(state.g,state.x)
-        state.f_calls, state.g_calls = state.f_calls + 1, state.g_calls + 1
+        state.f_x_previous = value(objective)
+        value_gradient!(objective, state.x)
     end
 end
 
@@ -215,11 +188,11 @@ function assess_convergence(state::KrylovTrustRegionState, d, options)
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(state.f_diff) < max(options.f_tol * (abs(state.f_x) + options.f_tol), eps(abs(state.f_x)+abs(state.f_x_previous)))
+    if abs(state.f_diff) < max(options.f_tol * (abs(value(d)) + options.f_tol), eps(abs(value(d))+abs(state.f_x_previous)))
         f_converged = true
     end
 
-    if vecnorm(state.g, Inf) < options.g_tol
+    if vecnorm(gradient(d), Inf) < options.g_tol
         g_converged = true
     end
 

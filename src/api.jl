@@ -45,6 +45,7 @@ h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summar
 h_calls(r::MultivariateOptimizationResults) = r.h_calls
 h_calls(d::Union{NonDifferentiable, OnceDifferentiable}) = 0
 h_calls(d) = first(d.h_calls)
+h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
 converged(r::UnivariateOptimizationResults) = r.converged
 converged(r::MultivariateOptimizationResults) = r.x_converged || r.f_converged || r.g_converged

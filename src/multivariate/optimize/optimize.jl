@@ -79,33 +79,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    if typeof(method) <: KrylovTrustRegion
-        # TODO: remove when NLSolversBase.TwiceDifferentiableHV exists
-        elty = typeof(state.f_x)
-        f_incr_pick = f_increased && !options.allow_f_increases
-        return MultivariateOptimizationResults(method,
-                                            NLSolversBase.iscomplex(d),
-                                            initial_x,
-                                            pick_best_x(f_incr_pick, state),
-                                            pick_best_f(f_incr_pick, state, d),
-                                            iteration,
-                                            iteration == options.iterations,
-                                            x_converged,
-                                            convert(elty, options.x_tol),
-                                            x_residual(state),
-                                            f_converged,
-                                            convert(elty, options.f_tol),
-                                            f_residual(state.f_x, state.f_x_previous, options.f_tol),
-                                            g_converged,
-                                            convert(elty, options.g_tol),
-                                            vecnorm(state.g, Inf),
-                                            f_increased,
-                                            tr,
-                                            state.f_calls,
-                                            state.g_calls,
-                                            state.hv_calls)
-    else
-        elty = typeof(value(d))
+    elty = typeof(value(d))
         f_incr_pick = f_increased && !options.allow_f_increases
         return MultivariateOptimizationResults(method,
                                             NLSolversBase.iscomplex(d),
@@ -128,7 +102,4 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
                                             f_calls(d),
                                             g_calls(d),
                                             h_calls(d))
-    end
-
-
 end
