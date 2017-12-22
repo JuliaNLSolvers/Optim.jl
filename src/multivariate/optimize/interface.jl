@@ -46,7 +46,7 @@ promote_objtype(method::SecondOrderSolver, x, td::TwiceDifferentiable) = td
 optimize(f,         initial_x::AbstractArray; kwargs...) = optimize((f,),        initial_x; kwargs...)
 optimize(f, g!,     initial_x::AbstractArray; kwargs...) = optimize((f, g!),     initial_x; kwargs...)
 optimize(f, g!, h!, initial_x::AbstractArray; kwargs...) = optimize((f, g!, h!), initial_x; kwargs...)
-function optimize(f::Tuple, initial_x::AbstractArray{T}; kwargs...) where T
+function optimize(f::Tuple, initial_x::AbstractArray; kwargs...)
     method = fallback_method(f...)
     d = promote_objtype(method, initial_x, f...)
     checked_kwargs, method = check_kwargs(kwargs, method)
@@ -64,13 +64,13 @@ optimize(f, g!, h!, initial_x::AbstractArray, options::Options) = optimize((f, g
 optimize(f,         initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f,),        initial_x, method, options)
 optimize(f, g!,     initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f, g!),     initial_x, method, options)
 optimize(f, g!, h!, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f, g!, h!), initial_x, method, options)
-function optimize(f::Tuple, initial_x::AbstractArray{T}, method::Optimizer, options::Options = Options()) where T
+function optimize(f::Tuple, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
     d = promote_objtype(method, initial_x, f...)
 
     optimize(d, initial_x, method, options)
 end
 
-function optimize(d::D, initial_x::AbstractArray{T}, method::SecondOrderSolver, options::Options = Options()) where {T, D <: Union{NonDifferentiable, OnceDifferentiable}}
+function optimize(d::D, initial_x::AbstractArray, method::SecondOrderSolver, options::Options = Options()) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
     d = promote_objtype(method, initial_x, d)
     optimize(d, initial_x, method, options)
 end
