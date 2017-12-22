@@ -58,7 +58,7 @@ import Compat.String
     @test startswith(lines[8], "   * |x - x'| ≤ ")
     @test startswith(lines[9],  "     |x - x'| = ")
     @test startswith(lines[10], "   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|:") # TODO: regexp
-    @test startswith(lines[11], "     |f(x) - f(x')| = 3.25e+10 |f(x)|") # TODO: regexp
+    @test startswith(lines[11], "     |f(x) - f(x')| = 8.50e+07 |f(x)|") # TODO: regexp
     @test startswith(lines[12], "   * |g(x)| ≤ ")
     @test startswith(lines[13], "     |g(x)| = ")
     @test startswith(lines[14], "   * Stopped by an increasing objective:")
