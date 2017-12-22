@@ -1,5 +1,11 @@
-# Optim v1.0.0 release notes
+# Optim master release notes
+* The convergence tolerance computations have changed slightly
+
+# Optim v0.11.0 release notes
+* Optional scaling for inverse Hessian in L-BFGS
 * Support for initial step length guesses via LineSearches
+
+# Optim v0.10.0 release notes
 * Support for optimization on Riemannian manifolds
 * Support for optimization of functions of complex variables
 * New experimental KrylovTrustRegion method useful when cheap Hessian-vector products are available
