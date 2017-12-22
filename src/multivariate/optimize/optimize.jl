@@ -33,7 +33,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
 
     g_converged = if typeof(method) <: NelderMead
         nmobjective(state.f_simplex, state.m, n) < options.g_tol
-    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing || typeof(method) <: KrylovTrustRegion
+    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
         # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
         false
     else
