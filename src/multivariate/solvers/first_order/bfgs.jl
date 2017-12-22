@@ -16,8 +16,9 @@ Base.summary(::BFGS) = "BFGS"
 ## Constructor
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.HagerZhang(),
-initial_invH = x -> eye(eltype(x), length(x)), # TODO: scale this as in L-BFGS
+       linesearch = LineSearches.HagerZhang(),
+       initial_invH = x -> eye(eltype(x), length(x)),
+       manifold = Flat())
 ```
 
 ## Description
