@@ -120,6 +120,7 @@ module Optim
 
     # Convergence
     include("utilities/assess_convergence.jl")
+    include("multivariate/solvers/zeroth_order/zeroth_utils.jl")
 
     # Traces
     include("utilities/trace.jl")

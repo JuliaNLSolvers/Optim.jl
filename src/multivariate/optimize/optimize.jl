@@ -1,4 +1,3 @@
-
 update_g!(d, state, method) = nothing
 function update_g!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton}
     # Update the function value and gradient
@@ -23,7 +22,7 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     initial_x = complex_to_real(d, initial_x)
- 
+
     n = length(initial_x)
     tr = OptimizationTrace{typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
@@ -90,10 +89,10 @@ function optimize(d::D, initial_x::AbstractArray, method::M,
                                         iteration == options.iterations,
                                         x_converged,
                                         convert(elty, options.x_tol),
-                                        x_residual(state),
+                                        x_abschange(state),
                                         f_converged,
                                         convert(elty, options.f_tol),
-                                        f_residual(d, state, options),
+                                        f_abschange(d, state),
                                         g_converged,
                                         convert(elty, options.g_tol),
                                         g_residual(d),

@@ -6,7 +6,7 @@
                                  2)
     end
     for optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS, Newton, AcceleratedGradientDescent, MomentumGradientDescent)
-        println("Testing $(string(optimizer))")
+        debug_printing && println("Testing $(string(optimizer))")
         prob = Optim.UnconstrainedProblems.examples["Exponential"]
         @test_warn "Linesearch failed" optimize(prob.f, prob.initial_x,
                                                 optimizer(alphaguess = LineSearches.InitialPrevious(),

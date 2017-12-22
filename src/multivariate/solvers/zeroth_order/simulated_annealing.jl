@@ -36,9 +36,9 @@ pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
 pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
 function initial_state(method::SimulatedAnnealing, options, d, initial_x::Array{T}) where T
-    
+
     value!!(d, initial_x)
-    
+
     # Store the best state ever visited
     best_x = copy(initial_x)
     SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), value(d), value(d))
@@ -76,26 +76,4 @@ function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedA
 
     state.iteration += 1
     false
-end
-
-function assess_convergence(state::SimulatedAnnealingState, d, options)
-    false, false, false, false, false
-end
-f_residual(d::AbstractObjective, state::SimulatedAnnealingState, options::Options) = convert(typeof(value(d)), NaN)
-x_residual(state::SimulatedAnnealingState) = convert(eltype(state.x), NaN)
-
-function trace!(tr, d, state, iteration, method::SimulatedAnnealing, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["x"] = copy(state.x)
-    end
-    update!(tr,
-            state.iteration,
-            value(d),
-            NaN,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
 end

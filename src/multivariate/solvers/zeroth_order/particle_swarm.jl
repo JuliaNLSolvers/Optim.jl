@@ -88,7 +88,7 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) w
     current_state = 0
 
     value!!(d, initial_x)
-    
+
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
     if limit_search_space
@@ -443,26 +443,4 @@ function compute_cost!(f,
         score[i] = value(f, X[:, i])
     end
     nothing
-end
-
-function assess_convergence(state::ParticleSwarmState, d, options)
-  false, false, false, false, false
-end
-f_residual(d::AbstractObjective, state::ParticleSwarmState, options::Options) = convert(typeof(value(d)), NaN)
-x_residual(state::ParticleSwarmState) = convert(eltype(state.x), NaN)
-
-function trace!(tr, d, state, iteration, method::ParticleSwarm, options)
-    dt = Dict()
-    if options.extended_trace
-        dt["x"] = copy(state.x)
-    end
-    update!(tr,
-            state.iteration,
-            d.F,
-            NaN,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
 end
