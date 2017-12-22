@@ -35,14 +35,13 @@ end
 pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
 pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
-function initial_state(method::SimulatedAnnealing, options, f, initial_x::Array{T}) where T
-    # Count number of parameters
-    n = length(initial_x)
-    value!(f, initial_x)
-
+function initial_state(method::SimulatedAnnealing, options, d, initial_x::Array{T}) where T
+    
+    value!!(d, initial_x)
+    
     # Store the best state ever visited
     best_x = copy(initial_x)
-    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
+    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), value(d), value(d))
 end
 
 function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing) where T
@@ -62,8 +61,8 @@ function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedA
         state.f_x_current = state.f_proposal
 
         # If the new state is the best state yet, keep a record of it
-        if state.f_proposal < nd.f_x
-            nd.f_x = state.f_proposal
+        if state.f_proposal < value(nd)
+            nd.F = state.f_proposal
             copy!(state.x, state.x_proposal)
         end
     else
@@ -92,7 +91,7 @@ function trace!(tr, d, state, iteration, method::SimulatedAnnealing, options)
     end
     update!(tr,
             state.iteration,
-            d.f_x,
+            value(d),
             NaN,
             dt,
             options.store_trace,

@@ -103,7 +103,7 @@ function optimize(obj,
                   l::Array{T},
                   u::Array{T},
                   F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-     optimize(OnceDifferentiable(obj, initial_x), l, u, F; kwargs...)
+     optimize(OnceDifferentiable(obj, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
 function optimize(f,
@@ -112,15 +112,7 @@ function optimize(f,
                   l::Array{T},
                   u::Array{T},
                   F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-     optimize(OnceDifferentiable(f, g!, initial_x), l, u, F; kwargs...)
-end
-
-
-function optimize(df::OnceDifferentiable,
-                  l::Array{T},
-                  u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-    optimize(df, df.last_x_f, l, u, F; kwargs...)
+     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
 function optimize(
@@ -153,7 +145,7 @@ function optimize(
     O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
-    fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fg!, fbarrier)
+    fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fdf, fbarrier)
     gfunc = similar(x)
     gbarrier = similar(x)
     P = InverseDiagonal(similar(initial_x))
@@ -186,7 +178,7 @@ function optimize(
     if length(boundaryidx) > 0
         warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
-    df.g!(gfunc, x)
+    df.df(gfunc, x)
     mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
     if show_trace > 0
         println("######## fminbox ########")
@@ -212,7 +204,7 @@ function optimize(
         # Optimize with current setting of mu
         funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu)
         fval0 = funcc(nothing, x)
-        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x)
+        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x, zero(T))
         if show_trace > 0
             println("#### Calling optimizer with mu = ", mu, " ####")
         end

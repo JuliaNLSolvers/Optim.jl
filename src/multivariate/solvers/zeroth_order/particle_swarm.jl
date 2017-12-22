@@ -28,7 +28,7 @@ mutable struct ParticleSwarmState{T,N}
     iterations::Int
 end
 
-function initial_state(method::ParticleSwarm, options, f, initial_x::Array{T}) where T
+function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) where T
 
     #=
     Variable X represents the whole swarm of solutions with
@@ -86,8 +86,9 @@ function initial_state(method::ParticleSwarm, options, f, initial_x::Array{T}) w
     x_learn = similar(initial_x)
 
     current_state = 0
-    value!(f, initial_x)
 
+    value!!(d, initial_x)
+    
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
     if limit_search_space
@@ -149,9 +150,9 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     if state.iteration == 0
         copy!(state.best_score, state.score)
-        f.f_x = Base.minimum(state.score)
+        f.F = Base.minimum(state.score)
     end
-    f.f_x = housekeeping!(state.score,
+    f.F = housekeeping!(state.score,
                               state.best_score,
                               state.X,
                               state.X_best,
@@ -190,8 +191,8 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     end
 
     score_learn = value(f, state.x_learn)
-    if score_learn < f.f_x
-        f.f_x = score_learn * 1.0
+    if score_learn < f.F
+        f.F = score_learn * 1.0
         for j in 1:n
             state.X_best[j, i_worst] = state.x_learn[j]
             state.X[j, i_worst] = state.x_learn[j]
@@ -400,7 +401,7 @@ function update_swarm_params!(c1, c2, w, current_state, f)
 end
 
 function housekeeping!(score, best_score, X, X_best, best_point,
-                       f_x, n_particles)
+                       F, n_particles)
     n = size(X, 1)
     for i in 1:n_particles
         if score[i] <= best_score[i]
@@ -408,15 +409,15 @@ function housekeeping!(score, best_score, X, X_best, best_point,
             for k in 1:n
                 X_best[k, i] = X[k, i]
             end
-            if score[i] <= f_x
+            if score[i] <= F
                 for k in 1:n
                   	best_point[k] = X[k, i]
                 end
-              	f_x = score[i]
+              	F = score[i]
             end
         end
     end
-    return f_x
+    return F
 end
 
 function limit_X!(X, lower, upper, n_particles, n)
@@ -457,7 +458,7 @@ function trace!(tr, d, state, iteration, method::ParticleSwarm, options)
     end
     update!(tr,
             state.iteration,
-            d.f_x,
+            d.F,
             NaN,
             dt,
             options.store_trace,

@@ -35,7 +35,9 @@ end
 function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
-    value_gradient!(d, initial_x)
+
+    value_gradient!!(d, initial_x)
+
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
     AcceleratedGradientDescentState(initial_x, # Maintain current state in state.x
@@ -49,6 +51,7 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
 end
 
 function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
+    value_gradient!(d, state.x)
     state.iteration += 1
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient

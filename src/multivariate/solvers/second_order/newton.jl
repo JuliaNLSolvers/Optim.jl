@@ -40,8 +40,10 @@ function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
     n = length(initial_x)
     # Maintain current gradient in gr
     s = similar(initial_x)
-    value_gradient!(d, initial_x)
-    hessian!(d, initial_x)
+
+    value_gradient!!(d, initial_x)
+    hessian!!(d, initial_x)
+    
     NewtonState(copy(initial_x), # Maintain current state in state.x
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
@@ -58,14 +60,13 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
-
+    update_h!(d, state, method)
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\gradient(d)
     else
         state.F = cholfact!(Positive, NLSolversBase.hessian(d))
         state.s .= -(state.F\gradient(d))
     end
-
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
 

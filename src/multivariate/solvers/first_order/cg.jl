@@ -106,20 +106,25 @@ end
 function initial_state(method::ConjugateGradient, options, d, initial_x::Array{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
-    value_gradient!(d, initial_x)
+
+    value_gradient!!(d, initial_x)
+
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     pg = copy(gradient(d))
     @assert typeof(value(d)) == T
+
+    # Could move this out? as a general check?
+    #=
     # Output messages
     if !isfinite(value(d))
         error("Must have finite starting value")
     end
     if !all(isfinite, gradient(d))
         @show gradient(d)
-        @show find(!isfinite.(gradient(d)))
+        @show find(.!isfinite.(gradient(d)))
         error("Gradient must have all finite values at starting point")
     end
-
+    =#
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy

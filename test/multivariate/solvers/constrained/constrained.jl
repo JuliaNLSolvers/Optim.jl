@@ -46,7 +46,7 @@
         @test summary(results) == "Fminbox with $(summary(_optimizer()))"
 
         g = similar(initial_x)
-        _objective.fg!(g, Optim.minimizer(results))
+        _objective.fdf(g, Optim.minimizer(results))
         for i = 1:N
             @test abs(g[i]) < 3e-3 || (Optim.minimizer(results)[i] < -boxl+1e-3 && g[i] > 0) || (Optim.minimizer(results)[i] > boxl-1e-3 && g[i] < 0)
         end
