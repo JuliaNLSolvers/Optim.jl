@@ -17,7 +17,7 @@ function assess_convergence(x::Array,
                             g_tol::Real)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
-    if x_abschange(x, x_previous) < x_tol
+    if x_abschange(x, x_previous) ≤ x_tol
         x_converged = true
     end
 
