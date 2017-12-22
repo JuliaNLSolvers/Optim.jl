@@ -59,3 +59,10 @@ end
 function optimize(::AbstractObjective, ::Options)
     throw(ErrorException("Optimizing an objective `obj` without providing an initial `x` has been deprecated without backwards compatability. Please explicitly provide an `x`: `optimize(obj, x, options)``"))
 end
+
+function optimize(df::OnceDifferentiable,
+    l::Array{T},
+    u::Array{T},
+    F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+    throw(ErrorException("Optimizing an objective `obj` without providing an initial `x` has been deprecated without backwards compatability. Please explicitly provide an `x`: `optimize(obj, x, l, u, method, options)``"))
+end

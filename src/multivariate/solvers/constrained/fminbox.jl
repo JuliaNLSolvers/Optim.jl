@@ -115,14 +115,6 @@ function optimize(f,
      optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
-
-function optimize(df::OnceDifferentiable,
-                  l::Array{T},
-                  u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
-    optimize(df, copy(df.last_x_f), l, u, F; kwargs...)
-end
-
 function optimize(
         df::OnceDifferentiable,
         initial_x::Array{T},
