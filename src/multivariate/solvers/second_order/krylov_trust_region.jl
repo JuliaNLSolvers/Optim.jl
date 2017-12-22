@@ -93,7 +93,7 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
                       state::KrylovTrustRegionState{T},
                       method::KrylovTrustRegion) where T
     n = length(state.x)
-    x, g, d, r, z, Hv = state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
+    x, g, d, r, z, Hd = state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
 
     fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
     r .= g  # so at first the whole gradient is the residual.
@@ -104,14 +104,14 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
     for i in 1:n
         state.cg_iters += 1
         hv_product!(objective, x, d)
-        dHv = dot(d, Hv)
-        if -1e-15 < dHv < 1e-15
+        dHd = dot(d, Hd)
+        if -1e-15 < dHd < 1e-15
             break
         end
 
-        alpha = dot(r, r) / dHv
+        alpha = dot(r, r) / dHd
 
-        if dHv < 0. || norm(z .+ alpha .* d) >= state.radius
+        if dHd < 0. || norm(z .+ alpha .* d) >= state.radius
             a_ = dot(d, d)
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
@@ -125,7 +125,7 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
         if i == 1
             rho0 = rho_prev
         end
-        r .+= alpha * Hv
+        r .+= alpha * Hd
         rho_next = dot(r, r)
         r_sqnorm_ratio = rho_next / rho_prev
         d[:] = -r + r_sqnorm_ratio * d
@@ -136,7 +136,7 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
     end
 
     hv_product!(objective, x, z)
-    return dot(g, z) + 0.5 * dot(z, Hv)
+    return dot(g, z) + 0.5 * dot(z, Hd)
 end
 
 
