@@ -1,4 +1,4 @@
-struct ParticleSwarm{T} <: ZerothOrderSolver
+struct ParticleSwarm{T} <: ZerothOrderOptimizer
     lower::Vector{T}
     upper::Vector{T}
     n_particles::Int

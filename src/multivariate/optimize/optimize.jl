@@ -1,15 +1,15 @@
 update_g!(d, state, method) = nothing
-function update_g!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton}
+function update_g!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton}
     # Update the function value and gradient
     value_gradient!(d, state.x)
 end
 update_fg!(d, state, method) = nothing
-update_fg!(d, state, method::ZerothOrderSolver) = value!(d, state.x)
-update_fg!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton} = value_gradient!(d, state.x)
+update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
+update_fg!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton} = value_gradient!(d, state.x)
 
 # Update the Hessian
 update_h!(d, state, method) = nothing
-update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
+update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 

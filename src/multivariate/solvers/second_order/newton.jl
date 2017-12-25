@@ -1,4 +1,4 @@
-struct Newton{IL, L} <: SecondOrderSolver
+struct Newton{IL, L} <: SecondOrderOptimizer
     alphaguess!::IL
     linesearch!::L
 end

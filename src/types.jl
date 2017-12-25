@@ -1,7 +1,8 @@
 abstract type AbstractOptimizer end
-abstract type ZerothOrderSolver <: AbstractOptimizer end
-abstract type FirstOrderSolver  <: AbstractOptimizer end
-abstract type SecondOrderSolver <: AbstractOptimizer end
+abstract type ZerothOrderOptimizer <: AbstractOptimizer end
+abstract type FirstOrderOptimizer  <: AbstractOptimizer end
+abstract type SecondOrderOptimizer <: AbstractOptimizer end
+abstract type UnivariateOptimizer  <: AbstractOptimizer end
 struct Options{T, TCallback}
     x_tol::T
     f_tol::T

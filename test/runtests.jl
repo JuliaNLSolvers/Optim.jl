@@ -65,12 +65,12 @@ multivariate_tests = [
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
 differentiability_condition(method, prob) = true
-differentiability_condition(method::Optim.FirstOrderSolver, prob) = prob.isdifferentiable
-differentiability_condition(method::Optim.SecondOrderSolver, prob) = prob.istwicedifferentiable
+differentiability_condition(method::Optim.FirstOrderOptimizer, prob) = prob.isdifferentiable
+differentiability_condition(method::Optim.SecondOrderOptimizer, prob) = prob.istwicedifferentiable
 
 input_tuple(method, prob) = ((prob.f,),)
-input_tuple(method::Optim.FirstOrderSolver, prob) = ((prob.f,), (prob.f, prob.g!))
-input_tuple(method::Optim.SecondOrderSolver, prob) = ((prob.f,), (prob.f, prob.g!), (prob.f, prob.g!, prob.h!))
+input_tuple(method::Optim.FirstOrderOptimizer, prob) = ((prob.f,), (prob.f, prob.g!))
+input_tuple(method::Optim.SecondOrderOptimizer, prob) = ((prob.f,), (prob.f, prob.g!), (prob.f, prob.g!, prob.h!))
 
 function run_optim_tests(method; convergence_exceptions = (),
                                  minimizer_exceptions = (),

@@ -1,4 +1,4 @@
-struct GradientDescent{IL, L, T, Tprep<:Union{Function, Void}} <: FirstOrderSolver
+struct GradientDescent{IL, L, T, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     P::T

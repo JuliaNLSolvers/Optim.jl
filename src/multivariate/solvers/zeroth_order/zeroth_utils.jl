@@ -1,6 +1,6 @@
 const ZerothOrderStates = Union{NelderMeadState,ParticleSwarmState,SimulatedAnnealingState}
 
-function trace!(tr, d, state, iteration, method::ZerothOrderSolver, options)
+function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
     dt = Dict()
     if options.extended_trace
         dt["x"] = copy(state.x)
