@@ -21,7 +21,7 @@ function AcceleratedGradientDescent(;
     AcceleratedGradientDescent(alphaguess, linesearch, manifold)
 end
 
-mutable struct AcceleratedGradientDescentState{T,N}
+mutable struct AcceleratedGradientDescentState{T,N} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     f_x_previous::T

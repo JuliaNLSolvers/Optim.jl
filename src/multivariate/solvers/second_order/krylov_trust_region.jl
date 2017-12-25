@@ -21,7 +21,7 @@ update_h!(d, state, method::KrylovTrustRegion) = nothing
 
 
 # TODO: support x::Array{T,N} et al.?
-mutable struct KrylovTrustRegionState{T}
+mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     x::Vector{T}
     x_previous::Vector{T}
     f_x_previous::T

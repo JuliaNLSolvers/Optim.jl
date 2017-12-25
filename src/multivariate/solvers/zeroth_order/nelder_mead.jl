@@ -105,7 +105,7 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-mutable struct NelderMeadState{T, N}
+mutable struct NelderMeadState{T, N} <: ZerothOrderState
     x::Array{T,N}
     m::Int
     simplex::Vector{Array{T,N}}

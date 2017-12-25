@@ -206,7 +206,7 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
-mutable struct NewtonTrustRegionState{T,N,G}
+mutable struct NewtonTrustRegionState{T,N,G} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

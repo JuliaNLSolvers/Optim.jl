@@ -44,7 +44,7 @@ end
 # Default function for convergence assessment used by
 # AcceleratedGradientDescentState, BFGSState, ConjugateGradientState,
 # GradientDescentState, LBFGSState, MomentumGradientDescentState and NewtonState
-function default_convergence_assessment(state::Union{AcceleratedGradientDescentState, BFGSState, ConjugateGradientState, GradientDescentState, LBFGSState, MomentumGradientDescentState, NewtonState}, d, options)
+function default_convergence_assessment(state::AbstractOptimizerState, d, options)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
     if x_abschange(state.x, state.x_previous) < options.x_tol

@@ -1,5 +1,3 @@
-const ZerothOrderStates = Union{NelderMeadState,ParticleSwarmState,SimulatedAnnealingState}
-
 function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
     dt = Dict()
     if options.extended_trace
@@ -16,9 +14,9 @@ function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
             options.callback)
 end
 
-function assess_convergence(state::ZerothOrderStates, d, options)
+function assess_convergence(state::ZerothOrderState, d, options)
     false, false, false, false, false
 end
 
-f_abschange(d::AbstractObjective, state::ZerothOrderStates) = convert(typeof(value(d)), NaN)
-x_abschange(state::ZerothOrderStates) = convert(eltype(state.x), NaN)
+f_abschange(d::AbstractObjective, state::ZerothOrderState) = convert(typeof(value(d)), NaN)
+x_abschange(state::ZerothOrderState) = convert(eltype(state.x), NaN)

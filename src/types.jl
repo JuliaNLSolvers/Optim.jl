@@ -3,6 +3,10 @@ abstract type ZerothOrderOptimizer <: AbstractOptimizer end
 abstract type FirstOrderOptimizer  <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
 abstract type UnivariateOptimizer  <: AbstractOptimizer end
+
+abstract type AbstractOptimizerState end
+abstract type ZerothOrderState <: AbstractOptimizerState end
+
 struct Options{T, TCallback}
     x_tol::T
     f_tol::T

@@ -17,7 +17,7 @@ function MomentumGradientDescent(; mu::Real = 0.01,
     MomentumGradientDescent(Float64(mu), alphaguess, linesearch, manifold)
 end
 
-mutable struct MomentumGradientDescentState{T,N}
+mutable struct MomentumGradientDescentState{T,N} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     x_momentum::Array{T,N}

@@ -90,7 +90,7 @@ function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
                       manifold)
 end
 
-mutable struct ConjugateGradientState{T,N,G}
+mutable struct ConjugateGradientState{T,N,G} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

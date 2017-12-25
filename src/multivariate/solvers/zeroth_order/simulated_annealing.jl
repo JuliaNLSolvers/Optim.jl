@@ -23,7 +23,7 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
 
 Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
-mutable struct SimulatedAnnealingState{T, N}
+mutable struct SimulatedAnnealingState{T, N} <: ZerothOrderState
     x::Array{T,N}
     iteration::Int
     x_current::Array{T, N}
