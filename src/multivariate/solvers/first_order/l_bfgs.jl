@@ -79,7 +79,7 @@ function twoloop!(s::Vector,
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: FirstOrderSolver
     m::Int
     alphaguess!::IL
     linesearch!::L

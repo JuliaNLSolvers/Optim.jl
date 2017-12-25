@@ -1,7 +1,3 @@
-const ZerothOrderSolver = Union{NelderMead, SimulatedAnnealing, ParticleSwarm}
-const FirstOrderSolver = Union{AcceleratedGradientDescent, ConjugateGradient, GradientDescent,
-                               MomentumGradientDescent, BFGS, LBFGS}
-const SecondOrderSolver = Union{Newton, NewtonTrustRegion, KrylovTrustRegion}
 # Multivariate optimization
 function check_kwargs(kwargs, fallback_method)
     kws = Dict{Symbol, Any}()
@@ -61,10 +57,10 @@ optimize(f, g!,     initial_x::AbstractArray, options::Options) = optimize((f, g
 optimize(f, g!, h!, initial_x::AbstractArray, options::Options) = optimize((f, g!, h!), initial_x, fallback_method(f), options)
 
 # potentially everything is supplied (besides caches)
-optimize(f,         initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f,),        initial_x, method, options)
-optimize(f, g!,     initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f, g!),     initial_x, method, options)
-optimize(f, g!, h!, initial_x::AbstractArray, method::Optimizer, options::Options = Options()) = optimize((f, g!, h!), initial_x, method, options)
-function optimize(f::Tuple, initial_x::AbstractArray, method::Optimizer, options::Options = Options())
+optimize(f,         initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f,),        initial_x, method, options)
+optimize(f, g!,     initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f, g!),     initial_x, method, options)
+optimize(f, g!, h!, initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f, g!, h!), initial_x, method, options)
+function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options())
     d = promote_objtype(method, initial_x, f...)
 
     optimize(d, initial_x, method, options)

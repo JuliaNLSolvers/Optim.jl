@@ -2,7 +2,7 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H<:Function} <: Optimizer
+struct BFGS{IL, L, H<:Function} <: FirstOrderSolver
     alphaguess!::IL
     linesearch!::L
     initial_invH::H

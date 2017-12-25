@@ -1,4 +1,7 @@
-abstract type Optimizer end
+abstract type AbstractOptimizer end
+abstract type ZerothOrderSolver <: AbstractOptimizer end
+abstract type FirstOrderSolver  <: AbstractOptimizer end
+abstract type SecondOrderSolver <: AbstractOptimizer end
 struct Options{T, TCallback}
     x_tol::T
     f_tol::T
@@ -46,11 +49,11 @@ function print_header(options::Options)
     end
 end
 
-function print_header(method::Optimizer)
+function print_header(method::AbstractOptimizer)
         @printf "Iter     Function value   Gradient norm \n"
 end
 
-struct OptimizationState{T <: Optimizer}
+struct OptimizationState{T <: AbstractOptimizer}
     iteration::Int
     value::Float64
     g_norm::Float64
@@ -61,7 +64,7 @@ OptimizationTrace{T} = Vector{OptimizationState{T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O<:Optimizer,T,N,M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer,T,N,M} <: OptimizationResults
     method::O
     iscomplex::Bool
     initial_x::Array{T,N}

@@ -10,7 +10,7 @@ function default_neighbor!(x::Array, x_proposal::Array)
     return
 end
 
-struct SimulatedAnnealing{Tn, Ttemp} <: Optimizer
+struct SimulatedAnnealing{Tn, Ttemp} <: ZerothOrderSolver
     neighbor!::Tn
     temperature::Ttemp
     keep_best::Bool # not used!?

@@ -36,7 +36,7 @@ is the Golden Ratio.
 ## References
 https://en.wikipedia.org/wiki/Golden-section_search
 """
-struct GoldenSection <: Optimizer end
+struct GoldenSection <: AbstractOptimizer end
 
 Base.summary(::GoldenSection) = "Golden Section Search"
 

@@ -6,7 +6,7 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
-struct AcceleratedGradientDescent{IL, L} <: Optimizer
+struct AcceleratedGradientDescent{IL, L} <: FirstOrderSolver
     alphaguess!::IL
     linesearch!::L
     manifold::Manifold

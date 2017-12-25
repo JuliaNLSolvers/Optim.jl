@@ -39,7 +39,7 @@ accelerate convergence.
 ## References
 R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover edition.
 """
-struct Brent <: Optimizer end
+struct Brent <: AbstractOptimizer end
 
 Base.summary(::Brent) = "Brent's Method"
 

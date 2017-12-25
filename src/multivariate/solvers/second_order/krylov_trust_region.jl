@@ -1,4 +1,4 @@
-immutable KrylovTrustRegion{T <: Real} <: Optimizer
+immutable KrylovTrustRegion{T <: Real} <: SecondOrderSolver
     initial_radius::T
     max_radius::T
     eta::T
