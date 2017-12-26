@@ -38,7 +38,8 @@ Application of the algorithm to optimization is covered, for example, in~\cite{s
 
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
-immutable NGMRES{IL, Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
+# TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
+immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
@@ -52,7 +53,7 @@ immutable NGMRES{IL, Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
     # TODO: Add manifold support?
 end
 
-immutable OACCEL{IL, Tp,TPrec <: Optimizer,L} <: AbstractNGMRES
+immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L    # Linesearch between xP and xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
@@ -93,7 +94,7 @@ function OACCEL(;
 end
 
 
-mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
+mutable struct NGMRESState{P,TA,T,N} <: AbstractOptimizerState where P <: AbstractOptimizerState
     # TODO: maybe we can just use preconstate for x, x_previous and f_x_previous?
     x::Vector{T} # Reference to preconstate.x
     x_previous::Vector{T}   # Reference to preconstate.x_previous
@@ -103,7 +104,6 @@ mutable struct NGMRESState{P,TA,T,N} #where P <: AbstractOptimizerState
     f_xP::T         # For tracing purposes
     grnorm_xP::T     # For tracing purposes
     s::TA # Search direction for linesearch between xP and xA
-    # TODO: Specify preconstate::P where P <: AbstractOptimizerState
     preconstate::P  # Preconditioner state
     X::Array{T,2}  # Solution vectors in the window (TODO: is this the best type?)
     R::Array{T,2}  # Gradient vectors in the window (TODO: is this the best type?)
@@ -181,8 +181,8 @@ end
 
 
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
-    if !(typeof(method.precon) <: GradientDescent)
-        Base.warn_once("Use caution. NGMRES has only been tested with Gradient Descent preconditioning")
+    if !(typeof(method.precon) <: Union{GradientDescent,LBFGS})
+        Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent preconditioning and L-BFGS.")
     end
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
     wmax = method.wmax
