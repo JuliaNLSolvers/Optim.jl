@@ -79,7 +79,7 @@ function twoloop!(s::Vector,
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: Optimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
     linesearch!::L
@@ -133,7 +133,7 @@ end
 
 Base.summary(::LBFGS) = "L-BFGS"
 
-mutable struct LBFGSState{T,N,M,G}
+mutable struct LBFGSState{T,N,M,G} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

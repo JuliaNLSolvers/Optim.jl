@@ -1,20 +1,20 @@
 update_g!(d, state, method) = nothing
-function update_g!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton}
+function update_g!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton}
     # Update the function value and gradient
     value_gradient!(d, state.x)
 end
 update_fg!(d, state, method) = nothing
-update_fg!(d, state, method::ZerothOrderSolver) = value!(d, state.x)
-update_fg!(d, state, method::M) where M<:Union{FirstOrderSolver, Newton} = value_gradient!(d, state.x)
+update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
+update_fg!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton} = value_gradient!(d, state.x)
 
 # Update the Hessian
 update_h!(d, state, method) = nothing
-update_h!(d, state, method::SecondOrderSolver) = hessian!(d, state.x)
+update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
 function optimize(d::D, initial_x::AbstractArray, method::M,
-    options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:Optimizer}
+    options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end

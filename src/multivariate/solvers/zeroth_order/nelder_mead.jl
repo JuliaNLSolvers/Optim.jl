@@ -37,7 +37,7 @@ end
 FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
 parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 
-struct NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: Optimizer
+struct NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: ZerothOrderOptimizer
     initial_simplex::Ts
     parameters::Tp
 end
@@ -105,7 +105,7 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-mutable struct NelderMeadState{T, N}
+mutable struct NelderMeadState{T, N} <: ZerothOrderState
     x::Array{T,N}
     m::Int
     simplex::Vector{Array{T,N}}

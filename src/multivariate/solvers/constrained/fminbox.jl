@@ -93,7 +93,7 @@ function precondprepbox!(P, x, l, u, mu)
     @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
 end
 
-struct Fminbox{T<:Optimizer} <: Optimizer end
+struct Fminbox{T<:AbstractOptimizer} <: AbstractOptimizer end
 Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
 Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
@@ -102,7 +102,7 @@ function optimize(obj,
                   initial_x::Array{T},
                   l::Array{T},
                   u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
      optimize(OnceDifferentiable(obj, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
@@ -111,7 +111,7 @@ function optimize(f,
                   initial_x::Array{T},
                   l::Array{T},
                   u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:Optimizer}
+                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
      optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), l, u, F; kwargs...)
 end
 
@@ -140,7 +140,7 @@ function optimize(
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
                                           extended_trace = extended_trace),
-        nargs...) where {T<:AbstractFloat,O<:Optimizer}
+        nargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
 
     O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)

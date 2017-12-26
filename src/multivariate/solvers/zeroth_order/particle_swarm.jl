@@ -1,4 +1,4 @@
-struct ParticleSwarm{T} <: Optimizer
+struct ParticleSwarm{T} <: ZerothOrderOptimizer
     lower::Vector{T}
     upper::Vector{T}
     n_particles::Int
@@ -8,7 +8,7 @@ ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, 
 
 Base.summary(::ParticleSwarm) = "Particle Swarm"
 
-mutable struct ParticleSwarmState{T,N}
+mutable struct ParticleSwarmState{T,N} <: ZerothOrderState
     x::Array{T,N}
     iteration::Int
     lower::Array{T,N}

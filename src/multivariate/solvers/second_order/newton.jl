@@ -1,4 +1,4 @@
-struct Newton{IL, L} <: Optimizer
+struct Newton{IL, L} <: SecondOrderOptimizer
     alphaguess!::IL
     linesearch!::L
 end
@@ -27,7 +27,7 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky}
+mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T, N}
     f_x_previous::T

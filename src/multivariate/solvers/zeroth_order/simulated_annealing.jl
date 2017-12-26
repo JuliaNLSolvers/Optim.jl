@@ -10,7 +10,7 @@ function default_neighbor!(x::Array, x_proposal::Array)
     return
 end
 
-struct SimulatedAnnealing{Tn, Ttemp} <: Optimizer
+struct SimulatedAnnealing{Tn, Ttemp} <: ZerothOrderOptimizer
     neighbor!::Tn
     temperature::Ttemp
     keep_best::Bool # not used!?
@@ -23,7 +23,7 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
 
 Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
-mutable struct SimulatedAnnealingState{T, N}
+mutable struct SimulatedAnnealingState{T, N} <: ZerothOrderState
     x::Array{T,N}
     iteration::Int
     x_current::Array{T, N}

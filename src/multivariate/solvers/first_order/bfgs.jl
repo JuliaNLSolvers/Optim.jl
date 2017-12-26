@@ -2,7 +2,7 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H<:Function} <: Optimizer
+struct BFGS{IL, L, H<:Function} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
@@ -43,7 +43,7 @@ function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark def
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
 
-mutable struct BFGSState{T,N,G}
+mutable struct BFGSState{T,N,G} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G

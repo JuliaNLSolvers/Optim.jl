@@ -41,7 +41,7 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-struct ConjugateGradient{T, Tprep<:Union{Function, Void}, IL, L} <: Optimizer
+struct ConjugateGradient{T, Tprep<:Union{Function, Void}, IL, L} <: FirstOrderOptimizer
     eta::Float64
     P::T
     precondprep!::Tprep
@@ -90,7 +90,7 @@ function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
                       manifold)
 end
 
-mutable struct ConjugateGradientState{T,N,G}
+mutable struct ConjugateGradientState{T,N,G} <: AbstractOptimizerState
     x::Array{T,N}
     x_previous::Array{T,N}
     g_previous::G
