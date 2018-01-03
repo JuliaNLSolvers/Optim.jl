@@ -47,7 +47,7 @@ end
 function default_convergence_assessment(state::AbstractOptimizerState, d, options)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
-    if x_abschange(state.x, state.x_previous) < options.x_tol
+    if x_abschange(state.x, state.x_previous) ≤ options.x_tol
         x_converged = true
     end
 
