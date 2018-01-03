@@ -2,7 +2,7 @@ checked_dphi0!(state, d, method) = vecdot(gradient(d), state.s)
 function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
     # If invH is not positive definite, reset it
     dphi0 = vecdot(gradient(d), state.s)
-    if dphi0 >= 0.0
+    if dphi0 >= zero(dphi0)
         # "reset" Hessian approximation
         if M <: BFGS
             copy!(state.invH, method.initial_invH(state.x))
@@ -19,7 +19,7 @@ end
 function checked_dphi0!(state, d, method::ConjugateGradient)
     # Reset the search direction if it becomes corrupted
     dphi0 = vecdot(gradient(d), state.s)
-    if dphi0 >= 0
+    if dphi0 >= zero(dphi0)
         state.s .= .-state.pg
         dphi0 = vecdot(gradient(d), state.s)
     end
