@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Nelder Mead - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Nelder Mead";
+    var mkdocs_page_input_path = "algo/nelder_mead.md";
+    var mkdocs_page_url = "/algo/nelder_mead/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">Nelder Mead</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#nelder-mead">Nelder-Mead</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../cg/">Conjugate Gradient</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../manifolds/">Manifolds</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Gradient Free &raquo;</li>
+        
+      
+    
+    <li>Nelder Mead</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/nelder_mead.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Nelder-Mead-1'></a></p>
+<h1 id="nelder-mead">Nelder-Mead</h1>
+<p>Nelder-Mead is currently the standard algorithm when no derivatives are provided.</p>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">NelderMead</span><span class="p">(;</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">AdaptiveParameters</span><span class="p">(),</span>
+             <span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">AffineSimplexer</span><span class="p">())</span>
+</pre></div>
+
+
+<p>The keywords in the constructor are used to control the following parts of the solver:</p>
+<ul>
+<li><code>parameters</code> is a an instance of either <code>AdaptiveParameters</code> or <code>FixedParameters</code>, and is</li>
+</ul>
+<p>used to generate parameters for the Nelder-Mead Algorithm.</p>
+<ul>
+<li><code>initial_simplex</code> is an instance of <code>AffineSimplexer</code>. See more</li>
+</ul>
+<p>details below.</p>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Our current implementation of the Nelder-Mead algorithm is based on Nelder and Mead (1965) and Gao and Han (2010). Gradient free methods can be a bit sensitive to starting values and tuning parameters, so it is a good idea to be careful with the defaults provided in Optim.</p>
+<p>Instead of using gradient information, Nelder-Mead is a direct search method. It keeps track of the function value at a number of points in the search space. Together, the points form a simplex. Given a simplex, we can perform one of four actions: reflect, expand, contract, or shrink. Basically, the goal is to iteratively replace the worst point with a better point. More information can be found in Nelder and Mead (1965), Lagarias, et al (1998) or Gao and Han (2010).</p>
+<p>The stopping rule is the same as in the original paper, and is the standard error of the function values at the vertices. To set the tolerance level for this convergence criterion, set the <code>g_tol</code> level as described in the Configurable Options section.</p>
+<p>When the solver finishes, we return a minimizer which is either the centroid or one of the vertices. The function value at the centroid adds a function evaluation, as we need to evaluate the objection at the centroid to choose the smallest function value. However, even if the function value at the centroid can be returned as the minimum, we do not trace it during the optimization iterations. This is to avoid too many evaluations of the objective function which can be computationally expensive. Typically, there should be no more than twice as many <code>f_calls</code> than <code>iterations</code>.  Adding an evaluation at the centroid when tracing could considerably increase the total run-time of the algorithm.</p>
+<p><a id='Specifying-the-initial-simplex-1'></a></p>
+<h3 id="specifying-the-initial-simplex">Specifying the initial simplex</h3>
+<p>The default choice of <code>initial_simplex</code> is <code>AffineSimplexer()</code>. A simplex is represented by an $(n+1)$-dimensional vector of $n$-dimensional vectors. It is used together  with the initial <code>x</code> to create the initial simplex. To construct the $i$th vertex, it simply multiplies entry $i$ in the initial vector with a constant <code>b</code>, and adds a constant <code>a</code>. This means that the $i$th of the $n$ additional vertices is of the form</p>
+<p>
+<script type="math/tex; mode=display">
+(x_0^1, x_0^2, \ldots, x_0^i, \ldots, 0,0) + (0, 0, \ldots, x_0^i\cdot b+a,\ldots, 0,0)
+</script>
+</p>
+<p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
+<p>If a specific simplex is wanted, it is possible to construct the $(n+1)$-vector of $n$-dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
+<span class="n">struct</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
+<span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">S</span><span class="o">::</span><span class="n">MySimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">(</span><span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">MySimplexer</span><span class="p">()))</span>
+</pre></div>
+
+
+<p>Say we want to implement the initial simplex as in Matlab's <code>fminsearch</code>. This is very close to the <code>AffineSimplexer</code> above, but with a small twist. Instead of always adding the <code>a</code>, a constant is only added to entries that are zero. If the entry is non-zero, five percent of the level is added. This might be implemented (by the user) as</p>
+<div class="codehilite"><pre><span></span><span class="n">struct</span> <span class="n">MatlabSimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span>
+    <span class="n">a</span><span class="o">::</span><span class="kt">Float64</span>
+    <span class="n">b</span><span class="o">::</span><span class="kt">Float64</span>
+<span class="k">end</span>
+<span class="n">MatlabSimplexer</span><span class="p">(;</span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.00025</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">=</span> <span class="n">MatlabSimplexer</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+<span class="k">function</span> <span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">A</span><span class="o">::</span><span class="n">MatlabSimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="o">::</span><span class="kt">Array</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">})</span> <span class="n">where</span> <span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
+    <span class="n">initial_simplex</span> <span class="o">=</span> <span class="kt">Array</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}[</span><span class="n">initial_x</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">n</span>
+        <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">zero</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">?</span> <span class="n">S</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">:</span> <span class="n">S</span><span class="o">.</span><span class="n">a</span>
+    <span class="k">end</span>
+    <span class="n">initial_simplex</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<p><a id='The-parameters-of-Nelder-Mead-1'></a></p>
+<h3 id="the-parameters-of-nelder-mead">The parameters of Nelder-Mead</h3>
+<p>The different types of steps in the algorithm are governed by four parameters: $\alpha$ for the reflection, $\beta$ for the expansion, $\gamma$ for the contraction, and $\delta$ for the shrink step. We default to the adaptive parameters scheme in Gao and Han (2010). These are based on the dimensionality of the problem, and are given by</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1, \quad \beta = 1+2/n,\quad \gamma =0.75 + 1/2n,\quad \delta = 1-1/n
+</script>
+</p>
+<p>It is also possible to specify the original parameters from Nelder and Mead (1965)</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1,\quad \beta = 2, \quad\gamma = 1/2, \quad\delta = 1/2
+</script>
+</p>
+<p>by specifying <code>parameters  = Optim.FixedParameters()</code>. For specifying custom values, <code>parameters  = Optim.FixedParameters(α = a, β = b, γ = g, δ = d)</code> is used, where a, b, g, d are the chosen values. If another parameter specification is wanted, it is possible to create a custom sub-type of<code>Optim.NMParameters</code>, and add a method to the <code>parameters</code> function. It should take the new type as the first positional argument, and the dimensionality of <code>x</code> as the second positional argument, and return a 4-tuple of parameters. However, it will often be easier to simply supply the wanted parameters to <code>FixedParameters</code>.</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.</p>
+<p>Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on optimization 9.1 (1998): 112-147.</p>
+<p>Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../simulated_annealing/" class="btn btn-neutral float-right" title="Simulated Annealing">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../../user/tipsandtricks/" class="btn btn-neutral" title="Tips and tricks"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../../user/tipsandtricks/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../simulated_annealing/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>
