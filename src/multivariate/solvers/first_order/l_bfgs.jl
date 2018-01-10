@@ -44,8 +44,8 @@ function twoloop!(s::Vector,
     # apply preconditioner if precon != nothing
     # (Note: preconditioner update was done outside of this function)
     if scaleinvH0 == true && pseudo_iteration > 1
-        # Use the initial scaling guess if no preconditioner is used
-        # See Nocedal & Wright (2nd ed), Equation (7.20)
+        # Use the initial scaling guess from
+        # Nocedal & Wright (2nd ed), Equation (7.20)
 
         #=
         pseudo_iteration > 1 prevents this scaling from happening
