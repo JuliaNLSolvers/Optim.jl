@@ -2,15 +2,17 @@
 - Support complex numbers
 - Support manifolds
 - How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
-- Check whether this makes sense for other preconditioners than GradientDescent
+- Check whether this makes sense for other preconditioners than GradientDescent and L-BFGS
 * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
 * Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
 =#
 
 """
-Krylov subspace-type acceleration for optimization.
+Krylov subspace-type acceleration for optimization, N-GMRES.
 Originally developed for solving nonlinear systems~\cite{washio1997krylov}, and reduces to
 GMRES for linear problems.
+
+A slight tweak that accelerates against the objective, instead of the norm of the gradient, is also implemented as O-ACCEL~\cite{riseth2017objective}.
 
 Application of the algorithm to optimization is covered, for example, in~\cite{sterck2013steepest}.
 
@@ -34,6 +36,20 @@ Application of the algorithm to optimization is covered, for example, in~\cite{s
   year={2013},
   publisher={Wiley Online Library}
 }
+
+@article{riseth2017objective,
+   author = {Riseth, Asbj{\o}rn N.},
+    title = "{Objective acceleration for unconstrained optimization}",
+  journal = {ArXiv e-prints},
+archivePrefix = "arXiv",
+   eprint = {1710.05200},
+ primaryClass = "math.OC",
+ keywords = {Mathematics - Optimization and Control, Mathematics - Numerical Analysis, 49M05, 65B99, 65K10},
+     year = 2017,
+    month = oct,
+   adsurl = {http://adsabs.harvard.edu/abs/2017arXiv171005200N},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
 """
 
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
@@ -44,10 +60,6 @@ immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
     precon::TPrec # Nonlinear preconditioner
     preconopts::Options # Preconditioner options
-    #γA::Tc # Heuristic condition (Washio and Oosterlee)
-    #γB::Tc # Heuristic condition (Washio and Oosterlee)
-    #ϵB::Tc # Heuristic condition (Washio and Oosterlee)
-    #γC::Tc # Heuristic condition (Washio and Oosterlee)
     ϵ0::Tp # Ensure A-matrix is positive definite
     wmax::Int # Maximum window size
     # TODO: Add manifold support?
@@ -69,14 +81,12 @@ Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.precon))"
 
 function NGMRES(;
                 alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.MoreThuente(gtol = 0.5), # gtol in the middle of CG/GD(0.1) and (quasi-)Newton(0.9)
+                linesearch = LineSearches.HagerZhang(),
                 precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
                                          linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
                 preconopts = Options(iterations = 1, allow_f_increases = true),
-                # γA = 2.0, γB = 0.9, # (defaults in Washio and Oosterlee)
-                # γC = 2.0, ϵB = 0.1, # (defaults in Washio and Oosterlee)
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
+                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     # TODO: make wmax mandatory?
     NGMRES(alphaguess, linesearch, precon, preconopts, #γA, γB, γC, ϵB,
            ϵ0, wmax)
@@ -89,7 +99,7 @@ function OACCEL(;
                                          linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
                 preconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice
+                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     OACCEL(alphaguess, linesearch, precon, preconopts, ϵ0, wmax)
 end
 
@@ -182,7 +192,7 @@ end
 
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
     if !(typeof(method.precon) <: Union{GradientDescent,LBFGS})
-        Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent preconditioning and L-BFGS.")
+        Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning.")
     end
     preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
     wmax = method.wmax
@@ -295,7 +305,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     α = view(state.subspacealpha, 1:curw)
     α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     if any(isnan, α)
-        # TODO: set the restart flag
+        # TODO: set the restart flag?
         Base.warn("Calculated α is NaN in $(summary(method))")
         state.s .= zero(eltype(state.s))
     else
