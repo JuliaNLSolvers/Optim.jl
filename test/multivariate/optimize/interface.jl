@@ -1,8 +1,8 @@
 @testset "interface" begin
-    problem = Optim.UnconstrainedProblems.examples["Exponential"]
-    f = problem.f
-    g! = problem.g!
-    h! = problem.h!
+    problem = OptimTestProblems.UnconstrainedProblems.examples["Exponential"]
+    f = UP.objective(problem)
+    g! = UP.gradient(problem)
+    h! = UP.hessian(problem)
     nd = NonDifferentiable(f, zeros(problem.initial_x))
     od = OnceDifferentiable(f, g!, zeros(problem.initial_x))
     td = TwiceDifferentiable(f, g!, h!, zeros(problem.initial_x))

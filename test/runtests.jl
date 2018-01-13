@@ -1,4 +1,6 @@
 using Optim, Compat
+using OptimTestProblems
+UP = OptimTestProblems.UnconstrainedProblems
 using Base.Test
 
 debug_printing = false
@@ -80,7 +82,7 @@ function run_optim_tests(method; convergence_exceptions = (),
                                  show_name = false,
                                  show_trace = false)
     # Loop over unconstrained problems
-    for (name, prob) in Optim.UnconstrainedProblems.examples
+    for (name, prob) in OptimTestProblems.UnconstrainedProblems.examples
         show_name && print_with_color(:green, "Problem: ", name, "\n")
         # Look for name in the first elements of the iteration_exceptions tuples
         iter_id = find(n[1] == name for n in iteration_exceptions)

@@ -10,8 +10,8 @@ import Compat.String
     @test length(trace) == 2
     @test trace[end].iteration == 2
 
-    prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
-    f_prob = prob.f
+    prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
+    f_prob = UP.objective(prob)
     for g_free in (NelderMead(), SimulatedAnnealing())
         res = Optim.optimize(f_prob, prob.initial_x, g_free)
 
@@ -41,7 +41,7 @@ import Compat.String
         end
     end
 
-    res = Optim.optimize(prob.f, prob.g!, prob.initial_x, LBFGS())
+    res = Optim.optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, LBFGS())
 
     io = IOBuffer()
     show(io, res)
