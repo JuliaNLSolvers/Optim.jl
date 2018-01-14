@@ -1,6 +1,6 @@
 # First order methods trace, used by AcceleratedGradientDescent,
 # ConjugateGradient, GradientDescent, LBFGS and MomentumGradientDescent
-function common_trace!(tr, d, state, iteration, method::Union{LBFGS, AcceleratedGradientDescent, GradientDescent, MomentumGradientDescent, ConjugateGradient}, options)
+function common_trace!(tr, d, state, iteration, method::FirstOrderOptimizer, options)
     dt = Dict()
     if options.extended_trace
         dt["x"] = copy(state.x)
