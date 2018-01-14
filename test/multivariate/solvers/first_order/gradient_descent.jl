@@ -7,7 +7,7 @@
                                               ("Penalty Function I", 1),
                                               ("Penalty Function I", 2)),
                     iteration_exceptions = (("Rosenbrock", 10000),
-                                            ("Extended Rosenbrock", 8500),
+                                            ("Extended Rosenbrock", 10000),
                                             ("Fletcher-Powell", 10000),
                                             ("Paraboloid Diagonal", 10000),
                                             ("Paraboloid Random Matrix", 10000),
