@@ -1,9 +1,12 @@
 @testset "Nelder Mead" begin
-	# Test Optim.nelder_mead for all functions except Large Polynomials in Optim.UnconstrainedProblems.examples
-
-	run_optim_tests(NelderMead(),
-					convergence_exceptions = (("Powell", 1),),
-					skip =  (("Large Polynomial"),))
+    # Test Optim.nelder_mead for all functions except Large Polynomials in OptimTestProblems.UnconstrainedProblems.examples
+    skip = ("Large Polynomial", "Extended Powell", "Quadratic Diagonal",
+            "Extended Rosenbrock", "Paraboloid Diagonal", "Paraboloid Random Matrix",
+            "Trigonometric", "Penalty Function I",)
+    run_optim_tests(NelderMead(),
+                    convergence_exceptions = (("Powell", 1)),
+                    minimum_exceptions = (("Exponential", 1), ("Exponential", 2)),
+                    skip = skip, show_name = debug_printing)
 
     # Test if the trace is correctly stored.
     prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]

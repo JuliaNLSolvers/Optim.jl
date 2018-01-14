@@ -1,9 +1,18 @@
 @testset "Gradient Descent" begin
     run_optim_tests(GradientDescent(),
+                    skip = ("Trigonometric", "Powell", "Extended Powell"),
                     f_increase_exceptions = ("Hosaki",),
-                    convergence_exceptions = (("Polynomial", 1), ("Polynomial", 2), ("Rosenbrock", 1), ("Rosenbrock", 2)),
-                    iteration_exceptions = (("Rosenbrock", 10000),),
-                    skip = ("Powell",))
+                    convergence_exceptions = (("Polynomial", 1), ("Polynomial", 2), ("Rosenbrock", 1), ("Rosenbrock", 2),
+                                              ("Extended Rosenbrock", 1), ("Extended Rosenbrock", 2),
+                                              ("Penalty Function I", 1),
+                                              ("Penalty Function I", 2)),
+                    iteration_exceptions = (("Rosenbrock", 10000),
+                                            ("Extended Rosenbrock", 8500),
+                                            ("Fletcher-Powell", 10000),
+                                            ("Paraboloid Diagonal", 10000),
+                                            ("Paraboloid Random Matrix", 10000),
+                                            ("Penalty Function I", 10000),),
+                    show_name = debug_printing)
 
     function f_gd_1(x)
       (x[1] - 5.0)^2

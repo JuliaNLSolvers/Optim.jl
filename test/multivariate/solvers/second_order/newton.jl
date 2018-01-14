@@ -53,6 +53,6 @@
     end
 
     @testset "Optim problems" begin
-        run_optim_tests(Newton())
+        run_optim_tests(Newton(); skip = ("Trigonometric",), show_name = debug_printing)
     end
 end

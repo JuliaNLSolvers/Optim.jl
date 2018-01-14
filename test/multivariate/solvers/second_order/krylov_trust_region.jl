@@ -2,9 +2,6 @@
 
 @testset "Toy test problem 1" begin
     # Test on actual optimization problems.
-    # TODO: why is srand called here?
-    srand(42)
-
     function f(x::Vector)
         (x[1] - 5.0)^4
     end
