@@ -128,7 +128,4 @@ module Optim
     # API
     include("api.jl")
 
-    # Examples for testing
-    #include(joinpath("problems", "unconstrained.jl"))
-    #include(joinpath("problems", "univariate.jl"))
 end
