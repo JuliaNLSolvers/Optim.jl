@@ -1,5 +1,5 @@
 @testset "function counter" begin
-    prob = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+    prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
 
     let
         global fcount = 0
@@ -36,15 +36,15 @@
 
     f(x) = begin
         fcounter()
-        prob.f(x)
+        UP.objective(prob)(x)
     end
     g!(out, x) = begin
         gcounter()
-        prob.g!(out, x)
+        UP.gradient(prob)(out, x)
     end
     h!(out, x) = begin
         hcounter()
-        prob.h!(out, x)
+        UP.hessian(prob)(out, x)
     end
 
     ls = LineSearches.Static()

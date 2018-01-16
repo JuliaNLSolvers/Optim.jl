@@ -1,5 +1,5 @@
 @testset "Golden Section" begin
-    for (name, prob) in Optim.UnivariateProblems.examples
+    for (name, prob) in OptimTestProblems.UnivariateProblems.examples
         for T in (Float64, BigFloat)
             results = optimize(prob.f, convert(Array{T}, prob.bounds)...,
                                method = GoldenSection())

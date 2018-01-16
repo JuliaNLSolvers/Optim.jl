@@ -1,4 +1,5 @@
 @testset "Particle Swarm" begin
+    # TODO: Run on OptimTestProblems.UnconstrainedProblems?
     srand(100)
 
     function f_s(x::Vector)

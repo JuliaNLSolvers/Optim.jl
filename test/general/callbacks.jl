@@ -1,9 +1,9 @@
 @testset "Callbacks" begin
-    problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+    problem = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
 
-    f = problem.f
-    g! = problem.g!
-    h! = problem.h!
+    f = UP.objective(problem)
+    g! = UP.gradient(problem)
+    h! = UP.hessian(problem)
     initial_x = problem.initial_x
     d2 = OnceDifferentiable(f, g!, initial_x)
     d3 = TwiceDifferentiable(f, g!, h!, initial_x)

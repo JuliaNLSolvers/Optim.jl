@@ -183,9 +183,10 @@ end
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
     # Test Optim.newton for all twice differentiable functions in
-    # Optim.UnconstrainedProblems.examples
+    # OptimTestProblems.UnconstrainedProblems.examples
     @testset "Optim problems" begin
-        run_optim_tests(NewtonTrustRegion())
+        run_optim_tests(NewtonTrustRegion(); skip = ("Trigonometric", ),
+                        show_name = debug_printing)
     end
 end
 

@@ -1,9 +1,9 @@
 # Test multivariate optimization
 @testset "Multivariate API" begin
-    rosenbrock = Optim.UnconstrainedProblems.examples["Rosenbrock"]
-    f = rosenbrock.f
-    g! = rosenbrock.g!
-    h! = rosenbrock.h!
+    rosenbrock = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
+    f = UP.objective(rosenbrock)
+    g! = UP.gradient(rosenbrock)
+    h! = UP.hessian(rosenbrock)
     initial_x = rosenbrock.initial_x
     T = eltype(initial_x)
     d1 = OnceDifferentiable(f, initial_x)
@@ -60,96 +60,92 @@
     optimize(f, g!, h!, initial_x, SimulatedAnnealing())
 
     options = Optim.Options(g_tol = 1e-12, iterations = 10,
-                                  store_trace = true, show_trace = false)
+                            store_trace = true, show_trace = false)
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           BFGS(),
-    	           options)
+                   initial_x,
+                   BFGS(),
+                   options)
 
     options_g = Optim.Options(g_tol = 1e-12, iterations = 10,
-                                  store_trace = true, show_trace = false)
+                              store_trace = true, show_trace = false)
     options_f = Optim.Options(g_tol = 1e-12, iterations = 10,
-                                  store_trace = true, show_trace = false)
+                              store_trace = true, show_trace = false)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           GradientDescent(),
-    	           options_g)
+                   initial_x,
+                   GradientDescent(),
+                   options_g)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           LBFGS(),
-    	           options_g)
+                   initial_x,
+                   LBFGS(),
+                   options_g)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           NelderMead(),
+                   initial_x,
+                   NelderMead(),
                    options_f)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           Newton(),
+                   initial_x,
+                   Newton(),
                    options_g)
     options_sa = Optim.Options(iterations = 10, store_trace = true,
-                                     show_trace = false)
+                               show_trace = false)
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           SimulatedAnnealing(),
-    	           options_sa)
+                   initial_x,
+                   SimulatedAnnealing(),
+                   options_sa)
 
     res = optimize(f, g!, h!,
-    	           initial_x,
-    	           BFGS(),
-    	           options_g)
+                   initial_x,
+                   BFGS(),
+                   options_g)
     options_ext = Optim.Options(g_tol = 1e-12, iterations = 10,
-                                      store_trace = true, show_trace = false,
-                                      extended_trace = true)
+                                store_trace = true, show_trace = false,
+                                extended_trace = true)
     res_ext = optimize(f, g!, h!,
                        initial_x,
                        BFGS(),
                        options_ext)
 
-   @test summary(res) == "BFGS"
-   @test isapprox(Optim.minimum(res), 0.0020622412076141045; rtol=1e-3)
-   @test isapprox(Optim.minimizer(res), [0.9719007353489979,0.9410235857510793]; rtol=1e-3)
-   #@test isapprox(Optim.minimum(res), 6.556300e-02; rtol=1e-3) # BackTracking
-   #@test isapprox(Optim.minimizer(res), [0.7458993932627154,0.553210145233104]; rtol=1e-3) # BackTracking
-   @test Optim.iterations(res) == 10
-   @test Optim.f_calls(res) == 37
-   @test Optim.g_calls(res) == 37
-   #@test Optim.f_calls(res) == 17 # BackTracking
-   #@test Optim.g_calls(res) == 11 # BackTracking
-   @test Optim.converged(res) == false
-   @test Optim.x_converged(res) == false
-   @test Optim.f_converged(res) == false
-   @test Optim.g_converged(res) == false
-   @test Optim.x_tol(res) == 1e-32
-   @test Optim.f_tol(res) == 1e-32
-   @test Optim.g_tol(res) == 1e-12
-   @test Optim.iteration_limit_reached(res) == true
-   @test Optim.initial_state(res) == [0.0; 0.0]
-   @test haskey(Optim.trace(res_ext)[1].metadata,"x")
+    @test summary(res) == "BFGS"
+    @test isapprox(Optim.minimum(res), 1.2580194638225255)
+    @test isapprox(Optim.minimizer(res), [-0.116688, 0.0031153]; rtol=0.001)
+    @test Optim.iterations(res) == 10
+    @test Optim.f_calls(res) == 38
+    @test Optim.g_calls(res) == 38
+    @test Optim.converged(res) == false
+    @test Optim.x_converged(res) == false
+    @test Optim.f_converged(res) == false
+    @test Optim.g_converged(res) == false
+    @test Optim.x_tol(res) == 1e-32
+    @test Optim.f_tol(res) == 1e-32
+    @test Optim.g_tol(res) == 1e-12
+    @test Optim.iteration_limit_reached(res) == true
+    @test Optim.initial_state(res) == [-1.2, 1.0]
+    @test haskey(Optim.trace(res_ext)[1].metadata,"x")
 
-   # just testing if it runs
-   Optim.trace(res)
-   Optim.f_trace(res)
-   Optim.g_norm_trace(res)
-   @test_throws ErrorException Optim.x_trace(res)
-   @test_throws ErrorException Optim.x_lower_trace(res)
-   @test_throws ErrorException Optim.x_upper_trace(res)
-   @test_throws ErrorException Optim.lower_bound(res)
-   @test_throws ErrorException Optim.upper_bound(res)
-   @test_throws ErrorException Optim.rel_tol(res)
-   @test_throws ErrorException Optim.abs_tol(res)
-   options_extended = Optim.Options(store_trace = true, extended_trace = true)
-   res_extended = Optim.optimize(f, g!, initial_x, BFGS(), options_extended)
-   @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
-   @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
-   @test haskey(Optim.trace(res_extended)[1].metadata,"x")
-   options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
-   res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
-   @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
-   @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
+    # just testing if it runs
+    Optim.trace(res)
+    Optim.f_trace(res)
+    Optim.g_norm_trace(res)
+    @test_throws ErrorException Optim.x_trace(res)
+    @test_throws ErrorException Optim.x_lower_trace(res)
+    @test_throws ErrorException Optim.x_upper_trace(res)
+    @test_throws ErrorException Optim.lower_bound(res)
+    @test_throws ErrorException Optim.upper_bound(res)
+    @test_throws ErrorException Optim.rel_tol(res)
+    @test_throws ErrorException Optim.abs_tol(res)
+    options_extended = Optim.Options(store_trace = true, extended_trace = true)
+    res_extended = Optim.optimize(f, g!, initial_x, BFGS(), options_extended)
+    @test haskey(Optim.trace(res_extended)[1].metadata,"~inv(H)")
+    @test haskey(Optim.trace(res_extended)[1].metadata,"g(x)")
+    @test haskey(Optim.trace(res_extended)[1].metadata,"x")
+    options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
+    res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
+    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
+    @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
 end
 
 # Test univariate API
@@ -179,7 +175,6 @@ end
     @test_throws ErrorException Optim.x_tol(res)
     @test_throws ErrorException Optim.f_tol(res)
     @test_throws ErrorException Optim.g_tol(res)
-    options =
     res = optimize(f, -2.0, 1.0, GoldenSection(), store_trace = true, extended_trace = true)
 
     # Right now, these just "test" if they run

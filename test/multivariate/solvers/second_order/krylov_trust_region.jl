@@ -2,9 +2,6 @@
 
 @testset "Toy test problem 1" begin
     # Test on actual optimization problems.
-    # TODO: why is srand called here?
-    srand(42)
-
     function f(x::Vector)
         (x[1] - 5.0)^4
     end
@@ -48,19 +45,19 @@ end
 end
 
 @testset "Stock test problems" begin
-    for (name, prob) in Optim.UnconstrainedProblems.examples
+    for (name, prob) in OptimTestProblems.UnconstrainedProblems.examples
       if prob.istwicedifferentiable
             hv!(storage::Vector, x::Vector, v::Vector) = begin
                 n = length(x)
                 H = Matrix{Float64}(n, n)
-                prob.h!(H, x)
+                UP.hessian(prob)(H, x)
                 storage .= H * v
             end
             fg!(g::Vector, x::Vector) = begin
-                prob.g!(g, x)
-                prob.f(x)
+                UP.gradient(prob)(g,x)
+                UP.objective(prob)(x)
             end
-        ddf = Optim.TwiceDifferentiableHV(prob.f, fg!, hv!, prob.initial_x)
+        ddf = Optim.TwiceDifferentiableHV(UP.objective(prob), fg!, hv!, prob.initial_x)
         result = Optim.optimize(ddf, prob.initial_x, Optim.KrylovTrustRegion())
         @test norm(Optim.minimizer(result) - prob.solutions) < 1e-2
       end
