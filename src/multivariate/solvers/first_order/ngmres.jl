@@ -56,85 +56,84 @@ abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
 immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
-    alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
-    linesearch!::L    # Preconditioner moving from xP to xA (precondition x to accelerated x)
-    precon::TPrec # Nonlinear preconditioner
-    preconopts::Options # Preconditioner options
-    ϵ0::Tp # Ensure A-matrix is positive definite
-    wmax::Int # Maximum window size
+    alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
+    linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
+    nlprecon::TPrec       # Nonlinear preconditioner
+    nlpreconopts::Options # Preconditioner options
+    ϵ0::Tp                # Ensure A-matrix is positive definite
+    wmax::Int             # Maximum window size
     # TODO: Add manifold support?
 end
 
 immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
-    alphaguess!::IL   # Initial step length guess for linesearch along direction xP->xA
-    linesearch!::L    # Linesearch between xP and xA (precondition x to accelerated x)
-    precon::TPrec # Nonlinear preconditioner
-    preconopts::Options # Preconditioner options
-    ϵ0::Tp # Ensure A-matrix is positive definite
-    wmax::Int # Maximum window size
+    alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
+    linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
+    nlprecon::TPrec       # Nonlinear preconditioner
+    nlpreconopts::Options # Preconditioner options
+    ϵ0::Tp                # Ensure A-matrix is positive definite
+    wmax::Int             # Maximum window size
     # TODO: Add manifold support?
 end
 
 
-Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.precon))"
-Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.precon))"
+Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.nlprecon))"
+Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.nlprecon))"
 
 function NGMRES(;
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
-                precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
-                                         linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
-                preconopts = Options(iterations = 1, allow_f_increases = true),
+                nlprecon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
+                                           linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+                nlpreconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     # TODO: make wmax mandatory?
-    NGMRES(alphaguess, linesearch, precon, preconopts, #γA, γB, γC, ϵB,
-           ϵ0, wmax)
+    NGMRES(alphaguess, linesearch, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
 function OACCEL(;
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.MoreThuente(),
-                precon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
-                                         linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
-                preconopts = Options(iterations = 1, allow_f_increases = true),
+                nlprecon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
+                                           linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+                nlpreconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
-    OACCEL(alphaguess, linesearch, precon, preconopts, ϵ0, wmax)
+    OACCEL(alphaguess, linesearch, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
 
 mutable struct NGMRESState{P,TA,T,N} <: AbstractOptimizerState where P <: AbstractOptimizerState
-    # TODO: maybe we can just use preconstate for x, x_previous and f_x_previous?
-    x::Vector{T} # Reference to preconstate.x
-    x_previous::Vector{T}   # Reference to preconstate.x_previous
-    x_previous_0::Vector{T} # Used to deal with assess_convergence of NGMRES
+    # TODO: maybe we can just use nlpreconstate for x, x_previous and f_x_previous?
+    x::Vector{T}              # Reference to nlpreconstate.x
+    x_previous::Vector{T}     # Reference to nlpreconstate.x_previous
+    x_previous_0::Vector{T}   # Used to deal with assess_convergence of NGMRES
     f_x_previous::T
-    f_x_previous_0::T # Used to deal with assess_convergence of NGMRES
-    f_xP::T         # For tracing purposes
-    grnorm_xP::T     # For tracing purposes
-    s::TA # Search direction for linesearch between xP and xA
-    preconstate::P  # Preconditioner state
-    X::Array{T,2}  # Solution vectors in the window (TODO: is this the best type?)
-    R::Array{T,2}  # Gradient vectors in the window (TODO: is this the best type?)
-    Q::Array{T,2}   # Storage to create linear system (TODO: make Symmetric?)
-    ξ::Array{T}     # Storage to create linear system
-    curw::Int       # Counter for current window size
-    A::Array{T,2}   # Container for Aα = b  (TODO: correct type?)
-    b::Array{T,1}   # Container for Aα = b
-    xA::Array{T,1}  # Container for accelerated step
-    k::Int          # Used for indexing where to put values in the Storage containers
-    restart::Bool   # Restart flag
-    g_tol::T        # Exit tolerance to be checked after preconditioner apply
-    subspacealpha::Array{T,1}  # Storage for coefficients in the subspace for the acceleration step
+    f_x_previous_0::T         # Used to deal with assess_convergence of NGMRES
+    f_xP::T                   # For tracing purposes
+    grnorm_xP::T              # For tracing purposes
+    s::TA                     # Search direction for linesearch between xP and xA
+    nlpreconstate::P          # Nonlinear preconditioner state
+    X::Array{T,2}             # Solution vectors in the window (TODO: is this the best type?)
+    R::Array{T,2}             # Gradient vectors in the window (TODO: is this the best type?)
+    Q::Array{T,2}             # Storage to create linear system (TODO: make Symmetric?)
+    ξ::Array{T}               # Storage to create linear system
+    curw::Int                 # Counter for current window size
+    A::Array{T,2}             # Container for Aα = b  (TODO: correct type?)
+    b::Array{T,1}             # Container for Aα = b
+    xA::Array{T,1}            # Container for accelerated step
+    k::Int                    # Used for indexing where to put values in the Storage containers
+    restart::Bool             # Restart flag
+    g_tol::T                  # Exit tolerance to be checked after nonlinear preconditioner apply
+    subspacealpha::Array{T,1} # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
 
 "Update storage Q[i,j] and Q[j,i] for `NGMRES`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::NGMRES)
-    Q[j,i] = dot(R[:, j], R[:,i]) #TODO: vecdot?
+    Q[j,i] = dot(R[:, j], R[:,i]) # TODO: vecdot?
     if i != j
-        Q[i,j] = Q[j, i] # Use Symmetric?
+        Q[i,j] = Q[j, i]          # TODO: Use Symmetric?
     end
 end
 
@@ -158,10 +157,9 @@ end
     dot(r, r) # TODO: vecdot?
 end
 
-
 "Update storage Q[i,j] and Q[j,i] for `OACCEL`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::OACCEL)
-    Q[i,j] = dot(X[:,i], R[:,j]) #TODO: vecdot?
+    Q[i,j] = dot(X[:,i], R[:,j])     #TODO: vecdot?
     if i != j
         Q[j,i] = dot(X[:,j], R[:,i]) #TODO: vecdot?
     end
@@ -189,12 +187,11 @@ end
 end
 
 
-
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{T}) where T
-    if !(typeof(method.precon) <: Union{GradientDescent,LBFGS})
+    if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
         Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning.")
     end
-    preconstate = initial_state(method.precon, method.preconopts, d, initial_x)
+    nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, initial_x)
     wmax = method.wmax
 
     X = Array{T}(length(initial_x), wmax)
@@ -212,15 +209,15 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
 
     _updateQ!(Q, 1, 1, X, R, method)
 
-    NGMRESState(preconstate.x,            # Maintain current state in state.x. Use same vector as preconditioner.
-                preconstate.x_previous,   # Maintain  in state.x_previous. Use same vector as preconditioner.
-                similar(preconstate.x),   # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+    NGMRESState(nlpreconstate.x,          # Maintain current state in state.x. Use same vector as preconditioner.
+                nlpreconstate.x_previous, # Maintain  in state.x_previous. Use same vector as preconditioner.
+                similar(nlpreconstate.x), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
                 T(NaN),                   # Store previous f in state.f_x_previous
                 T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
                 T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
                 T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
                 similar(initial_x),       # Maintain current search direction in state.s
-                preconstate,              # State storage for preconditioner
+                nlpreconstate,            # State storage for preconditioner
                 X,
                 R,
                 Q,
@@ -231,24 +228,24 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 similar(initial_x),       # xA
                 0,                        # iteration counter
                 false,                    # Restart flag
-                options.g_tol,            # Exit tolerance check after preconditioner apply
+                options.g_tol,            # Exit tolerance check after nonlinear preconditioner apply
                 Array{T}(wmax),           # subspacealpha
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-precon_post_optimize!(d, state, method) = update_h!(d, state.preconstate, method)
+nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
-function precon_post_optimize!(d, state::NGMRESState{X,T},
-                               method::Union{LBFGS,BFGS}) where X where T
-    update_h!(d, state.preconstate, method)
+function nlprecon_post_optimize!(d, state::NGMRESState{X,T},
+                                 method::Union{LBFGS,BFGS}) where X where T
+    update_h!(d, state.nlpreconstate, method)
 end
 
-precon_post_accelerate!(d, state, method) = update_h!(d, state.preconstate, method)
+nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
-function precon_post_accelerate!(d, state::NGMRESState{X,T},
-                                 method::Union{LBFGS,BFGS})  where X where T
-    state.preconstate.pseudo_iteration += 1
-    update_h!(d, state.preconstate, method)
+function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
+                                   method::Union{LBFGS,BFGS})  where X where T
+    state.nlpreconstate.pseudo_iteration += 1
+    update_h!(d, state.nlpreconstate, method)
 end
 
 
@@ -261,10 +258,10 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
-    res = optimize(d, state.x, method.precon, method.preconopts, state.preconstate)
+    res = optimize(d, state.x, method.nlprecon, method.nlpreconopts, state.nlpreconstate)
 
     if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
-        warn("Non-finite values attained from preconditioner $(summary(method.precon)).")
+        warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
         return true
     end
 
@@ -280,7 +277,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     end
 
     # Deals with update_h! etc for preconditioner, if needed
-    precon_post_optimize!(d, state, method.precon)
+    nlprecon_post_optimize!(d, state, method.nlprecon)
 
     # Step 2: Do acceleration calculation
     η = _updateη(state.x, gP, method)
@@ -327,19 +324,19 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # Update f_x_previous and dphi0_previous according to preconditioner step
         # This may be used in perform_linesearch!/alphaguess! when moving from x^P to x^A
         # TODO: make this a function?
-        state.f_x_previous = state.preconstate.f_x_previous
+        state.f_x_previous = state.nlpreconstate.f_x_previous
         # TODO: Use dphi0_previous when alphaguess branch is merged
-        #state.dphi0_previous = state.preconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
+        #state.dphi0_previous = state.nlpreconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
         # state.x_previous and state.x are dealt with by reference
 
         lssuccess = perform_linesearch!(state, method, d)
         @. state.x = state.x + state.alpha * state.s
 
-        # TODO: Move these into `precon_post_accelerate!` ?
-        state.preconstate.f_x_previous = state.f_x_previous
-        state.preconstate.dphi0_previous = state.dphi0_previous
+        # TODO: Move these into `nlprecon_post_accelerate!` ?
+        state.nlpreconstate.f_x_previous = state.f_x_previous
+        state.nlpreconstate.dphi0_previous = state.dphi0_previous
         # Deals with update_h! etc. for preconditioner, if needed
-        precon_post_accelerate!(d, state, method.precon)
+        nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
     #=
     Update x_previous and f_x_previous to be the values at the beginning
