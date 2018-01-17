@@ -8,8 +8,8 @@
 # Alan Edelman, Tomás A. Arias, and Steven T. Smith
 # SIAM. J. Matrix Anal. & Appl., 20(2), 303–353. (51 pages)
 
-# Optimization Algorithms on Matrix Manifolds 
-# P.-A. Absil, R. Mahony, R. Sepulchre 
+# Optimization Algorithms on Matrix Manifolds
+# P.-A. Absil, R. Mahony, R. Sepulchre
 # Princeton University Press, 2008
 
 
@@ -23,13 +23,17 @@ mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolver
     inner_obj::T
 end
 iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
-# TODO is it safe here to call retract! and change x?
+# TODO: is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value!(obj.inner_obj, xin)
 end
 function NLSolversBase.value(obj::ManifoldObjective)
     value(obj.inner_obj)
+end
+function NLSolversBase.value!!(obj::ManifoldObjective, x)
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    value!!(obj.inner_obj, xin)
 end
 function NLSolversBase.gradient(obj::ManifoldObjective)
     gradient(obj.inner_obj)
@@ -43,12 +47,26 @@ function NLSolversBase.gradient!(obj::ManifoldObjective,x)
     project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
     return gradient(obj.inner_obj)
 end
+function NLSolversBase.gradient!!(obj::ManifoldObjective,x)
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    gradient!!(obj.inner_obj,xin)
+    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    return gradient(obj.inner_obj)
+end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value_gradient!(obj.inner_obj,xin)
     project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
     return value(obj.inner_obj)
 end
+
+function NLSolversBase.value_gradient!!(obj::ManifoldObjective,x)
+    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    value_gradient!!(obj.inner_obj,xin)
+    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    return value(obj.inner_obj)
+end
+
 
 # fallback for out-of-place ops
 project_tangent(M::Manifold,x) = project_tangent!(M, similar(x), x)
@@ -104,7 +122,7 @@ e.g. the product of 2x2 Stiefel manifolds of dimension N x n would be a N x n x 
 """
 struct PowerManifold<:Manifold
     "Type of embedded manifold"
-    inner_manifold::Manifold 
+    inner_manifold::Manifold
     "Dimension of the embedded manifolds"
     inner_dims::Tuple
     "Number of embedded manifolds"
