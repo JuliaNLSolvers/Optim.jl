@@ -1,5 +1,4 @@
 #= TODO:
-- Check that Manifold optimization is done correctly??
 - How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
 - Check whether this makes sense for other preconditioners than GradientDescent and L-BFGS
 * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
@@ -27,7 +26,6 @@ immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     nlpreconopts::Options # Preconditioner options
     ϵ0::Tp                # Ensure A-matrix is positive definite
     wmax::Int             # Maximum window size
-    # TODO: Add manifold support?
 end
 
 
@@ -123,7 +121,6 @@ end
 
 
 mutable struct NGMRESState{P,T,N} <: AbstractOptimizerState where P <: AbstractOptimizerState
-    # TODO: maybe we can just use nlpreconstate for x, x_previous and f_x_previous?
     x::Array{T,N}             # Reference to nlpreconstate.x
     x_previous::Array{T,N}    # Reference to nlpreconstate.x_previous
     x_previous_0::Array{T,N}  # Used to deal with assess_convergence of NGMRES
@@ -133,12 +130,12 @@ mutable struct NGMRESState{P,T,N} <: AbstractOptimizerState where P <: AbstractO
     grnorm_xP::T              # For tracing purposes
     s::Array{T,N}             # Search direction for linesearch between xP and xA
     nlpreconstate::P          # Nonlinear preconditioner state
-    X::Array{T,2}             # Solution vectors in the window (TODO: is this the best type?)
-    R::Array{T,2}             # Gradient vectors in the window (TODO: is this the best type?)
+    X::Array{T,2}             # Solution vectors in the window
+    R::Array{T,2}             # Gradient vectors in the window
     Q::Array{T,2}             # Storage to create linear system (TODO: make Symmetric?)
     ξ::Array{T}               # Storage to create linear system
     curw::Int                 # Counter for current window size
-    A::Array{T,2}             # Container for Aα = b  (TODO: correct type?)
+    A::Array{T,2}             # Container for Aα = b
     b::Array{T,1}             # Container for Aα = b
     xA::Vector{T}             # Container for accelerated step
     k::Int                    # Used for indexing where to put values in the Storage containers
@@ -277,7 +274,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
 
     # Step 1: Call preconditioner to get x^P
     res = optimize(d, real_to_complex(d,state.x), method.nlprecon, method.nlpreconopts, state.nlpreconstate)
-    # TODO: Are these necessary, or is it called by nlprecon before exit?
+    # TODO: Is project_tangent! necessary, or is it called by nlprecon before exit?
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
 
     if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
@@ -325,15 +322,14 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     α = view(state.subspacealpha, 1:curw)
     α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     if any(isnan, α)
-        # TODO: set the restart flag?
-        Base.warn("Calculated α is NaN in $(summary(method))")
+        Base.warn("Calculated α is NaN in $(summary(method)). Restarting ...")
         state.s .= zero(eltype(state.s))
+        state.restart = true
     else
         # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
         state.xA .= (1.0-sum(α)).*vec(state.x) .+
             sum(state.X[:,k]*α[k] for k = 1:curw)
 
-        # TODO: Manifolds, should I do some retract operations here?
         devec_fun(x) = real_to_complex(d, reshape(x, size(state.x)))
         state.s .=  reshape(state.xA, size(state.x)) .- state.x
     end
@@ -352,8 +348,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # This may be used in perform_linesearch!/alphaguess! when moving from x^P to x^A
         # TODO: make this a function?
         state.f_x_previous = state.nlpreconstate.f_x_previous
-        # TODO: Use dphi0_previous when alphaguess branch is merged
-        #state.dphi0_previous = state.nlpreconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
+        state.dphi0_previous = state.nlpreconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
         # state.x_previous and state.x are dealt with by reference
 
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
