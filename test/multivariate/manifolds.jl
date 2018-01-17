@@ -14,7 +14,9 @@
     manif = Optim.Stiefel()
 
     # AcceleratedGradientDescent should be compatible also, but I haven't been able to make it converge
-    for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS)
+    for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
+                   Optim.NGMRES, Optim.OACCEL)
+        debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
         res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif))
         @test Optim.converged(res)
     end

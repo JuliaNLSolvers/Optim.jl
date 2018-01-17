@@ -1,3 +1,5 @@
+# TODO: add specialized tests
+
 @testset "N-GMRES" begin
     run_optim_tests(NGMRES();
                     f_increase_exceptions = ("Rosenbrock", "Powell", "Himmelblau"))

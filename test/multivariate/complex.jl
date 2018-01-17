@@ -11,7 +11,18 @@
     gcomplex(x) = A*x-b
     gcomplex!(stor,x) = copy!(stor,gcomplex(x))
     x0 = randn(n)+im*randn(n)
-    res = Optim.optimize(fcomplex, gcomplex!, x0, Optim.ConjugateGradient())
+
+    # TODO: AcceleratedGradientDescent fail to converge?
+    for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
+                   Optim.NGMRES, Optim.OACCEL)
+        debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
+
+        res = Optim.optimize(fcomplex, gcomplex!, x0, method())
+        @test Optim.converged(res)
+        @test Optim.minimizer(res) ≈ A\b rtol=1e-2
+    end
+
+    debug_printing && print_with_color(:green, "Solver: $(summary(MomentumGradientDescent(mu=0.0)))\n")
+    res = Optim.optimize(fcomplex, gcomplex!, x0, Optim.MomentumGradientDescent(mu=0.0))
     @test Optim.converged(res)
-    @test Optim.minimizer(res) ≈ A\b rtol=1e-2
 end
