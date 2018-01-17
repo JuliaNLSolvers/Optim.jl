@@ -16,8 +16,9 @@
     for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
                    Optim.NGMRES, Optim.OACCEL)
         debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
-
         res = Optim.optimize(fcomplex, gcomplex!, x0, method())
+        debug_printing && print_with_color(:red, "Iter\tf-calls\tg-calls\n")
+        debug_printing && print_with_color(:green, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
         @test Optim.converged(res)
         @test Optim.minimizer(res) ≈ A\b rtol=1e-2
     end
