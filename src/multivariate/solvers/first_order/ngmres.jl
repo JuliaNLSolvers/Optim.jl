@@ -55,7 +55,7 @@ NGMRES(;
 ## Description
 This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
 and proposes an accelerated step by minimizing an approximation of
-the \ell_2 residual of the gradient on a subspace spanned by the previous
+the \(\ell_2\) residual of the gradient on a subspace spanned by the previous
 `wmax` iterates.
 
 N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
@@ -81,7 +81,7 @@ function NGMRES(;manifold::Manifold = Flat(),
 end
 
 """
-# OACCEL
+# O-ACCEL
 ## Constructor
 ```julia
 OACCEL(;manifold::Manifold = Flat(),
