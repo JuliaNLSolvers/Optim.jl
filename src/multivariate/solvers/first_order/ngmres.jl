@@ -342,7 +342,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         #state.dphi0_previous = state.nlpreconstate.dphi0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
         # state.x_previous and state.x are dealt with by reference
 
-        lssuccess = perform_linesearch!(state, method, d)
+        lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
         @. state.x = state.x + state.alpha * state.s
         # Manifold start
         retract!(method.manifold, real_to_complex(d,state.x))
