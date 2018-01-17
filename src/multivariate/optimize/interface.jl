@@ -17,6 +17,9 @@ function check_kwargs(kwargs, fallback_method)
 end
 
 default_options(method::AbstractOptimizer) = Dict{Symbol, Any}()
+function default_options(method::AbstractNGMRES)
+    Dict(:allow_f_increases => true)
+end
 
 function add_default_opts!(opts::Dict{Symbol, Any}, method::AbstractOptimizer)
     for newopt in default_options(method)
