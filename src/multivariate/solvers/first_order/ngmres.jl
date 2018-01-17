@@ -2,54 +2,9 @@
 - Check that Manifold optimization is done correctly??
 - How to deal with f_increased (as state and preconstate shares the same x and x_previous vectors)
 - Check whether this makes sense for other preconditioners than GradientDescent and L-BFGS
-  * There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
-  * Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
+* There might be some issue of dealing with x_current and x_previous in MomentumGradientDescent
+* Trust region based methods may not work because we assume the preconditioner calls perform_linesearch!
 =#
-
-"""
-Krylov subspace-type acceleration for optimization, N-GMRES.
-Originally developed for solving nonlinear systems~\cite{washio1997krylov}, and reduces to
-GMRES for linear problems.
-
-A slight tweak that accelerates against the objective, instead of the norm of the gradient, is also implemented as O-ACCEL~\cite{riseth2017objective}.
-
-Application of the algorithm to optimization is covered, for example, in~\cite{sterck2013steepest}.
-
-@article{washio1997krylov,
-  title={Krylov subspace acceleration for nonlinear multigrid schemes},
-  author={Washio, T and Oosterlee, CW},
-  journal={Electronic Transactions on Numerical Analysis},
-  volume={6},
-  number={271-290},
-  pages={3--1},
-  year={1997}
-}
-
-@article{sterck2013steepest,
-  title={Steepest descent preconditioning for nonlinear GMRES optimization},
-  author={Sterck, Hans De},
-  journal={Numerical Linear Algebra with Applications},
-  volume={20},
-  number={3},
-  pages={453--471},
-  year={2013},
-  publisher={Wiley Online Library}
-}
-
-@article{riseth2017objective,
-   author = {Riseth, Asbj{\o}rn N.},
-    title = "{Objective acceleration for unconstrained optimization}",
-  journal = {ArXiv e-prints},
-archivePrefix = "arXiv",
-   eprint = {1710.05200},
- primaryClass = "math.OC",
- keywords = {Mathematics - Optimization and Control, Mathematics - Numerical Analysis, 49M05, 65B99, 65K10},
-     year = 2017,
-    month = oct,
-   adsurl = {http://adsabs.harvard.edu/abs/2017arXiv171005200N},
-  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
-"""
 
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
@@ -79,6 +34,38 @@ end
 Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.nlprecon))"
 Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.nlprecon))"
 
+"""
+# N-GMRES
+## Constructor
+```julia
+NGMRES(;
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        manifold = Flat(),
+        wmax::Int = 10,
+        ϵ0 = 1e-12,
+        nlprecon = GradientDescent(
+            alphaguess = LineSearches.InitialPrevious(),
+            linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+            manifold = manifold),
+        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+      )
+```
+
+## Description
+This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
+and proposes an accelerated step by minimizing an approximation of
+the \ell_2 residual of the gradient on a subspace spanned by the previous
+`wmax` iterates.
+
+N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
+GMRES for linear problems.
+Application of the algorithm to optimization is covered, for example, in [2].
+
+## References
+[1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
+[2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
+"""
 function NGMRES(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
@@ -87,12 +74,39 @@ function NGMRES(;manifold::Manifold = Flat(),
                     linesearch = LineSearches.Static(alpha=1e-4,scaled=true), # Step length arbitrary
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
+                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     NGMRES(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
+"""
+# OACCEL
+## Constructor
+```julia
+OACCEL(;manifold::Manifold = Flat(),
+       alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
+       nlprecon = GradientDescent(
+           alphaguess = LineSearches.InitialPrevious(),
+           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+           manifold = manifold),
+       nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+       ϵ0 = 1e-12,
+       wmax::Int = 10)
+```
+
+## Description
+This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
+and proposes an accelerated step by minimizing an approximation of
+the objective on a subspace spanned by the previous
+`wmax` iterates.
+
+O-ACCEL is a slight tweak of N-GMRES, first presented in [1].
+
+## References
+[1] Riseth. Objective acceleration for unconstrained optimization. 2018.
+"""
 function OACCEL(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
