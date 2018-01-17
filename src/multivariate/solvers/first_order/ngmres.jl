@@ -93,9 +93,11 @@ end
 
 function OACCEL(;
                 alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.MoreThuente(),
-                nlprecon = GradientDescent(alphaguess = LineSearches.InitialPrevious(),
-                                           linesearch = LineSearches.Static(alpha=1e-4,scaled=true)), # Step length arbitrary
+                linesearch = LineSearches.HagerZhang(),
+                nlprecon = GradientDescent(
+                    alphaguess = LineSearches.InitialPrevious(),
+                    linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+                    manifold = manifold), # Step length arbitrary
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
