@@ -16,6 +16,16 @@ function check_kwargs(kwargs, fallback_method)
     kws, method
 end
 
+default_options(method::AbstractOptimizer) = Dict{Symbol, Any}()
+
+function add_default_opts!(opts::Dict{Symbol, Any}, method::AbstractOptimizer)
+    for newopt in default_options(method)
+        if !haskey(opts, newopt[1])
+            opts[newopt[1]] = newopt[2]
+        end
+    end
+end
+
 fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
 fallback_method(f, g!, h!) = Newton()
@@ -46,6 +56,8 @@ function optimize(f::Tuple, initial_x::AbstractArray; kwargs...)
     method = fallback_method(f...)
     d = promote_objtype(method, initial_x, f...)
     checked_kwargs, method = check_kwargs(kwargs, method)
+    add_default_opts!(checked_kwargs, method)
+
     options = Options(; checked_kwargs...)
     optimize(d, initial_x, method, options)
 end
@@ -57,16 +69,21 @@ optimize(f, g!,     initial_x::AbstractArray, options::Options) = optimize((f, g
 optimize(f, g!, h!, initial_x::AbstractArray, options::Options) = optimize((f, g!, h!), initial_x, fallback_method(f), options)
 
 # potentially everything is supplied (besides caches)
-optimize(f,         initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f,),        initial_x, method, options)
-optimize(f, g!,     initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f, g!),     initial_x, method, options)
-optimize(f, g!, h!, initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options()) = optimize((f, g!, h!), initial_x, method, options)
-function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer, options::Options = Options())
+optimize(f,         initial_x::AbstractArray, method::AbstractOptimizer,
+         options::Options = Options(;default_options(method)...)) = optimize((f,),        initial_x, method, options)
+optimize(f, g!,     initial_x::AbstractArray, method::AbstractOptimizer,
+         options::Options = Options(;default_options(method)...)) = optimize((f, g!),     initial_x, method, options)
+optimize(f, g!, h!, initial_x::AbstractArray, method::AbstractOptimizer,
+         options::Options = Options(;default_options(method)...)) = optimize((f, g!, h!), initial_x, method, options)
+function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer,
+                  options::Options = Options(;default_options(method)...))
     d = promote_objtype(method, initial_x, f...)
 
     optimize(d, initial_x, method, options)
 end
 
-function optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer, options::Options = Options()) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
+function optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer,
+                  options::Options = Options(;default_options(method)...)) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
     d = promote_objtype(method, initial_x, d)
     optimize(d, initial_x, method, options)
 end
