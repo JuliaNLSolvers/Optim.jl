@@ -21,7 +21,7 @@ struct Options{T, TCallback}
     extended_trace::Bool
     show_every::Int
     callback::TCallback
-    time_limit::T
+    time_limit::Float64
 end
 
 function Options(;
@@ -43,7 +43,7 @@ function Options(;
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options(x_tol, f_tol, g_tol, f_calls_limit, g_calls_limit, h_calls_limit,
+    Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, Int(iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, time_limit)
 end
