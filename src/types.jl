@@ -65,7 +65,7 @@ struct OptimizationState{T <: AbstractOptimizer}
     metadata::Dict
 end
 
-OptimizationTrace{T} = Vector{OptimizationState{T}}
+const OptimizationTrace{T} = Vector{OptimizationState{T}}
 
 abstract type OptimizationResults end
 
@@ -87,7 +87,7 @@ mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer,T,N,M} <: Op
     g_tol::T
     g_residual::T
     f_increased::Bool
-    trace::OptimizationTrace{M}
+    trace::M
     f_calls::Int
     g_calls::Int
     h_calls::Int
