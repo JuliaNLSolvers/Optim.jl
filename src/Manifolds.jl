@@ -31,10 +31,6 @@ end
 function NLSolversBase.value(obj::ManifoldObjective)
     value(obj.inner_obj)
 end
-function NLSolversBase.value!!(obj::ManifoldObjective, x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
-    value!!(obj.inner_obj, xin)
-end
 function NLSolversBase.gradient(obj::ManifoldObjective)
     gradient(obj.inner_obj)
 end
@@ -47,26 +43,12 @@ function NLSolversBase.gradient!(obj::ManifoldObjective,x)
     project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
     return gradient(obj.inner_obj)
 end
-function NLSolversBase.gradient!!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
-    gradient!!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
-    return gradient(obj.inner_obj)
-end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value_gradient!(obj.inner_obj,xin)
     project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
     return value(obj.inner_obj)
 end
-
-function NLSolversBase.value_gradient!!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
-    value_gradient!!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
-    return value(obj.inner_obj)
-end
-
 
 # fallback for out-of-place ops
 project_tangent(M::Manifold,x) = project_tangent!(M, similar(x), x)

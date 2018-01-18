@@ -17,13 +17,16 @@
                    Optim.NGMRES, Optim.OACCEL)
         debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
         res = Optim.optimize(fcomplex, gcomplex!, x0, method())
-        debug_printing && print_with_color(:red, "Iter\tf-calls\tg-calls\n")
-        debug_printing && print_with_color(:green, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
+        debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
+        debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
         @test Optim.converged(res)
         @test Optim.minimizer(res) ≈ A\b rtol=1e-2
     end
 
     debug_printing && print_with_color(:green, "Solver: $(summary(MomentumGradientDescent(mu=0.0)))\n")
     res = Optim.optimize(fcomplex, gcomplex!, x0, Optim.MomentumGradientDescent(mu=0.0))
+    debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
+    debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
     @test Optim.converged(res)
+    @test Optim.minimizer(res) ≈ A\b rtol=1e-2
 end
