@@ -1,5 +1,3 @@
-# TODO: add specialized tests
-
 @testset "N-GMRES" begin
     method = NGMRES
     solver = method()
@@ -40,10 +38,11 @@
                                  defopts...))
 
     @test Optim.converged(res)
+    # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
-    @test Optim.iterations(res) == 65
-    @test Optim.f_calls(res) == 235
-    @test Optim.g_calls(res) == 235
+    @test 64 < Optim.iterations(res) < 84
+    @test 234 < Optim.f_calls(res) <  286
+    @test 234 < Optim.g_calls(res) < 286
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(manifold=Optim.Sphere(), nlprecon = GradientDescent())
@@ -86,10 +85,12 @@ end
                    Optim.Options(extended_trace=true, store_trace=true;
                                  defopts...))
     @test Optim.converged(res)
+    # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
-    @test Optim.iterations(res) == 87
-    @test Optim.f_calls(res) == 291
-    @test Optim.g_calls(res) == 291
+    @test 72 < Optim.iterations(res) < 88
+    @test 245 < Optim.f_calls(res) <  292
+    @test 245 < Optim.g_calls(res) <  292
+
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(manifold=Optim.Sphere(), nlprecon = GradientDescent())
