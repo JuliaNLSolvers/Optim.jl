@@ -22,6 +22,9 @@
         if !Optim.converged(res)
             display(res)
         end
+        ressum = summary(res) # Just check that no errors arise when doing display(res)
+        @test typeof(fcomplex(x0)) == typeof(Optim.minimum(res))
+        @test eltype(x0) == eltype(Optim.minimizer(res))
         @test Optim.converged(res)
         @test Optim.minimizer(res) ≈ A\b rtol=1e-2
     end
@@ -31,6 +34,9 @@
     debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
     debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
     display(res)
+    ressum = summary(res) # Just check that no errors arise when doing display(res)
+    @test typeof(fcomplex(x0)) == typeof(Optim.minimum(res))
+    @test eltype(x0) == eltype(Optim.minimizer(res))
     @test Optim.converged(res)
     @test Optim.minimizer(res) ≈ A\b rtol=1e-2
 end
