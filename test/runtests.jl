@@ -3,7 +3,7 @@ using OptimTestProblems
 UP = OptimTestProblems.UnconstrainedProblems
 using Base.Test
 
-debug_printing = false
+debug_printing = true
 
 general_tests = [
     "api",
@@ -35,33 +35,33 @@ univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
 
 multivariate_tests = [
     # optimize
-    "optimize/interface",
-    "optimize/optimize",
-    # solvers
-    ## constrained
-    "solvers/constrained/constrained",
-    ## first order
-    "solvers/first_order/accelerated_gradient_descent",
-    "solvers/first_order/bfgs",
-    "solvers/first_order/cg",
-    "solvers/first_order/gradient_descent",
-    "solvers/first_order/l_bfgs",
-    "solvers/first_order/momentum_gradient_descent",
+    # "optimize/interface",
+    # "optimize/optimize",
+    # # solvers
+    # ## constrained
+    # "solvers/constrained/constrained",
+    # ## first order
+    # "solvers/first_order/accelerated_gradient_descent",
+    # "solvers/first_order/bfgs",
+    # "solvers/first_order/cg",
+    # "solvers/first_order/gradient_descent",
+    # "solvers/first_order/l_bfgs",
+    # "solvers/first_order/momentum_gradient_descent",
     "solvers/first_order/ngmres",
-    ## second order
-    "solvers/second_order/newton",
-    "solvers/second_order/newton_trust_region",
-    "solvers/second_order/krylov_trust_region",
-    ## zeroth order
-    "solvers/zeroth_order/grid_search",
-    "solvers/zeroth_order/nelder_mead",
-    "solvers/zeroth_order/particle_swarm",
-    "solvers/zeroth_order/simulated_annealing",
-    # other
-    "array",
-    "extrapolate",
-    "lsthrow",
-    "precon",
+    # ## second order
+    # "solvers/second_order/newton",
+    # "solvers/second_order/newton_trust_region",
+    # "solvers/second_order/krylov_trust_region",
+    # ## zeroth order
+    # "solvers/zeroth_order/grid_search",
+    # "solvers/zeroth_order/nelder_mead",
+    # "solvers/zeroth_order/particle_swarm",
+    # "solvers/zeroth_order/simulated_annealing",
+    # # other
+    # "array",
+    # "extrapolate",
+    # "lsthrow",
+    # "precon",
     "manifolds",
     "complex",
 ]
@@ -126,18 +126,18 @@ function run_optim_tests(method; convergence_exceptions = (),
     end
 end
 
-@testset "general" begin
-    for my_test in general_tests
-        println(my_test)
-        @time include(my_test)
-    end
-end
-@testset "univariate" begin
-    for my_test in univariate_tests
-        println(my_test)
-        @time include(my_test)
-    end
-end
+# @testset "general" begin
+#     for my_test in general_tests
+#         println(my_test)
+#         @time include(my_test)
+#     end
+# end
+# @testset "univariate" begin
+#     for my_test in univariate_tests
+#         println(my_test)
+#         @time include(my_test)
+#     end
+# end
 @testset "multivariate" begin
     for my_test in multivariate_tests
         println(my_test)
