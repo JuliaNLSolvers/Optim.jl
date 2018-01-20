@@ -3,7 +3,7 @@ Optim.jl
 
 Univariate and multivariate optimization in Julia.
 
-Optim.jl is part of the [JuliaNLSolvers](https://julianlsolvers.github.io) family.
+Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
 
 | **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 | **References to cite** |
 |:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|:-:|
