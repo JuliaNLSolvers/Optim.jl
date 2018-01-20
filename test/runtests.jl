@@ -96,8 +96,11 @@ function run_optim_tests(method; convergence_exceptions = (),
         dopts = Optim.default_options(method)
         if haskey(dopts, :allow_f_increases)
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
+            delete!(dopts, :allow_f_increases)
         end
-        options = Optim.Options(allow_f_increases = allow_f_increases, iterations = iters, show_trace = show_trace)
+        options = Optim.Options(allow_f_increases = allow_f_increases,
+                                iterations = iters, show_trace = show_trace;
+                                dopts...)
 
         # Use finite difference if it is not differentiable enough
         if  !(name in skip)
