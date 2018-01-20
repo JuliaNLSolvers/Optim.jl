@@ -258,7 +258,7 @@ nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, me
 nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
 function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
-                                   method::Union{LBFGS,BFGS})  where X where T
+                                   method::LBFGS)  where X where T
     state.nlpreconstate.pseudo_iteration += 1
     update_h!(d, state.nlpreconstate, method)
 end

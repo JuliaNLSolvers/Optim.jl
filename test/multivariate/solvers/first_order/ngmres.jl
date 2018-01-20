@@ -46,6 +46,18 @@
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(manifold=Optim.Sphere(), nlprecon = GradientDescent())
+
+    for nlprec in (LBFGS, BFGS)
+        solver = method(nlprecon=nlprec())
+        clear!(df)
+        res = optimize(df, prob.initial_x, solver)
+
+        if !Optim.converged(res)
+            display(res)
+        end
+        @test Optim.converged(res)
+        @test Optim.minimum(res) < 1e-10
+    end
 end
 
 
@@ -94,4 +106,16 @@ end
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(manifold=Optim.Sphere(), nlprecon = GradientDescent())
+
+    for nlprec in (LBFGS, BFGS)
+        solver = method(nlprecon=nlprec())
+        clear!(df)
+        res = optimize(df, prob.initial_x, solver)
+
+        if !Optim.converged(res)
+            display(res)
+        end
+        @test Optim.converged(res)
+        @test Optim.minimum(res) < 1e-10
+    end
 end
