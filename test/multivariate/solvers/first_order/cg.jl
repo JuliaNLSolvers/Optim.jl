@@ -1,6 +1,6 @@
 @testset "Conjugate Gradient" begin
     # TODO: Investigate the exceptions (could be they just need more iterations?)
-    # Test Optim.cg for all differentiable functions in OptimTestProblems.UnconstrainedProblems.examples
+    # Test Optim.cg for all differentiable functions in MultivariateProblems.UnconstrainedProblems.examples
     # Trigonometric gets stuck in a local minimum?
     skip = ("Trigonometric",)
     run_optim_tests(ConjugateGradient(),
