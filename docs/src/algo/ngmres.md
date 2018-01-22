@@ -42,6 +42,8 @@ GMRES for linear problems.
 Application of the algorithm to optimization is covered, for example, in [2].
 A description of O-ACCEL and its connection to N-GMRES can be found in [3].
 
+*We recommend trying [LBFGS](lbfgs.md) on your problem before N-GMRES or O-ACCEL. All three algorithms have similar computational cost and memory requirements, however, L-BFGS is more efficient for many problems.*
+
 ## Example
 
 This example shows how to accelerate `GradientDescent` on the Extended Rosenbrock problem.
