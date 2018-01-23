@@ -3,14 +3,14 @@
     fd_input_tuple(method::Optim.SecondOrderOptimizer, prob) = ((UP.objective(prob),), (UP.objective(prob), UP.gradient(prob)))
 
     function run_optim_fd_tests(method; convergence_exceptions = (),
-                          minimizer_exceptions = (),
-                          minimum_exceptions = (),
-                          f_increase_exceptions = (),
-                          iteration_exceptions = (),
-                          skip = (),
-                          show_name = false,
-                          show_trace = false,
-                          show_res = false)
+                                minimizer_exceptions = (),
+                                minimum_exceptions = (),
+                                f_increase_exceptions = (),
+                                iteration_exceptions = (),
+                                skip = (),
+                                show_name = false,
+                                show_trace = false,
+                                show_res = false)
         # Loop over unconstrained problems
         for (name, prob) in OptimTestProblems.UnconstrainedProblems.examples
             if !isfinite(prob.minimum) || !any(isfinite, prob.solutions)
@@ -55,6 +55,15 @@
     end
 
     skip = ("Trigonometric",)
-    run_optim_fd_tests(LBFGS(), skip = skip,
-                       show_name=debug_printing)
+    @testset "Timing with LBFGS" begin
+        debug_printing && print_with_color(:blue, "#####################\nSolver: L-BFGS\n")
+        run_optim_fd_tests(LBFGS(), skip = skip,
+                           show_name=debug_printing)
+    end
+
+    @testset "Timing with Newton" begin
+        debug_printing && print_with_color(:blue, "#####################\nSolver: Newton\n")
+        run_optim_fd_tests(Newton(), skip = skip,
+                           show_name=debug_printing)
+    end
 end
