@@ -34,8 +34,9 @@
 
                     # Loop over appropriate input combinations of f, g!, and h!
                     results = Optim.optimize(input..., prob.initial_x, method, options)
+                    debug_printing && print_with_color(:red, "f-calls: $(Optim.f_calls(results))\n")
                     @time Optim.optimize(input..., prob.initial_x, method, options)
-                    @test isa(summary(results), String)
+
                     show_res && println(results)
                     if !((name, i) in convergence_exceptions)
                         @test Optim.converged(results)
@@ -55,5 +56,5 @@
 
     skip = ("Trigonometric",)
     run_optim_fd_tests(LBFGS(), skip = skip,
-                       show_name=true, show_res=true)
+                       show_name=debug_printing)
 end

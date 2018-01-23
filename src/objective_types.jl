@@ -1,10 +1,10 @@
-function OnceDifferentiable(f, x_seed::AbstractArray{T}, F = zero(T); autodiff = :finite) where T
+function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = zero(T),
+                            DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F),
+                            ; autodiff = :finite) where T
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-
-        #gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, nothing, nothing, nothing, Val{:central})
+        gcache = DiffEqDiffTools.GradientCache(DF, x_seed, nothing, nothing, nothing, Val{:central})
         function g!(storage, x)
-            #DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
             DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
             return
         end
@@ -24,7 +24,7 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F = zero(T); autodiff =
     else
         error("The autodiff value $autodiff is not support. Use :finite or :forward.")
     end
-    OnceDifferentiable(f, g!, fg!, x_seed, F)
+    OnceDifferentiable(f, g!, fg!, x_seed, F, DF)
 end
 
 function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
@@ -68,10 +68,12 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
     return TwiceDifferentiable(d.f, d.df, d.fdf, h!, x_seed, F, gradient(d))
 end
 
-function TwiceDifferentiable(f, x::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
+function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = zero(T),
+                             DF::AbstractArray = NLSolversBase.alloc_DF(x,F);
+                             autodiff = :finite) where T
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
-        #gcache = DiffEqDiffTools.GradientCache(x, x, nothing, nothing, nothing, Val{:central})
+        gcache = DiffEqDiffTools.GradientCache(DF, x, nothing, nothing, nothing, Val{:central})
         function g!(storage, x)
             DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
             return
@@ -99,5 +101,5 @@ function TwiceDifferentiable(f, x::AbstractVector{T}, F = zero(T); autodiff = :f
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
-    TwiceDifferentiable(f, g!, fg!, h!, x, F)
+    TwiceDifferentiable(f, g!, fg!, h!, x, F, DF)
 end
