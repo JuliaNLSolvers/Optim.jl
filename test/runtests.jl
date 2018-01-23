@@ -65,6 +65,7 @@ multivariate_tests = [
     "precon",
     "manifolds",
     "complex",
+    "fdtime",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
