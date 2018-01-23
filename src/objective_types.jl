@@ -3,9 +3,9 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = zero(T),
                             autodiff = :finite) where T
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-        gcache = DiffEqDiffTools.GradientCache(DF, x_seed, nothing, nothing, nothing, Val{:central})
+        gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, nothing, nothing, nothing, Val{:central})
         function g!(storage, x)
-            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
+            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
             return
         end
         function fg!(storage, x)
@@ -35,11 +35,11 @@ function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = zero(T)
     end
     if autodiff == :finite
         # TODO: Create / request Hessian functionality in DiffEqDiffTools?
+        #       (Or is it better to use the finite difference Jacobian of a gradient?)
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
         jcache = DiffEqDiffTools.JacobianCache(x_seed, nothing, nothing, nothing, Val{:central})
         function h!(storage, x)
             DiffEqDiffTools.finite_difference_jacobian!(storage, g!, x, jcache)
-            #Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
     elseif autodiff == :forward
@@ -58,11 +58,11 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
                              F::Real = zero(T); autodiff = :finite) where T<:Real
     if autodiff == :finite
         # TODO: Create / request Hessian functionality in DiffEqDiffTools?
+        #       (Or is it better to use the finite difference Jacobian of a gradient?)
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
         jcache = DiffEqDiffTools.JacobianCache(x_seed, nothing, nothing, nothing, Val{:central})
         function h!(storage, x)
             DiffEqDiffTools.finite_difference_jacobian!(storage, d.df, x, jcache)
-            #Calculus.finite_difference_hessian!(d.f, x, storage)
             return
         end
     elseif autodiff == :forward
@@ -76,25 +76,21 @@ end
 
 function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = zero(T);
                              autodiff = :finite) where T
-    # TODO: Assigning DF in input parameters is ambiguous with NLSolversBase
-    DF= NLSolversBase.alloc_DF(x,F)
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
-        gcache = DiffEqDiffTools.GradientCache(DF, x, nothing, nothing, nothing, Val{:central})
+        gcache = DiffEqDiffTools.GradientCache(x, x, nothing, nothing, nothing, Val{:central})
         function g!(storage, x)
-            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
+            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
             return
         end
         function fg!(storage::Vector, x::Vector)
             g!(storage, x)
             return f(x)
         end
-        # TODO: Create / request Hessian functionality in DiffEqDiffTools?
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-        jcache = DiffEqDiffTools.JacobianCache(x, nothing, nothing, nothing, Val{:central})
         function h!(storage::Matrix, x::Vector)
-            DiffEqDiffTools.finite_difference_jacobian!(storage, g!, x, jcache)
-            #Calculus.finite_difference_hessian!(f, x, storage)
+            # TODO: Wait to use DiffEqDiffTools until they introduce the Hessian feature
+            Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
     elseif autodiff == :forward
@@ -112,5 +108,5 @@ function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = zero(T);
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
-    TwiceDifferentiable(f, g!, fg!, h!, x, F, DF)
+    TwiceDifferentiable(f, g!, fg!, h!, x, F)
 end
