@@ -5,7 +5,8 @@ module Optim
     using Compat
     using LineSearches
     using NLSolversBase
-    using Calculus
+using Calculus
+    using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
 

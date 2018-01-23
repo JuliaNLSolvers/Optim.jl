@@ -1,7 +1,11 @@
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F = zero(T); autodiff = :finite) where T
     if autodiff == :finite
+        # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
+
+        #gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, nothing, nothing, nothing, Val{:central})
         function g!(storage, x)
-            Calculus.finite_difference!(f, x, storage, :central)
+            #DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
+            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
             return
         end
         function fg!(storage, x)
@@ -20,7 +24,7 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F = zero(T); autodiff =
     else
         error("The autodiff value $autodiff is not support. Use :finite or :forward.")
     end
-    OnceDifferentiable(f, g!, fg!, x_seed)
+    OnceDifferentiable(f, g!, fg!, x_seed, F)
 end
 
 function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
@@ -30,7 +34,10 @@ function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F = zero(T); auto
         return f(x)
     end
     if autodiff == :finite
+        # TODO: Create / request Hessian functionality in DiffEqDiffTools?
+        # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
         function h!(storage, x)
+            #DiffeqDiffTools.finite_difference_jacobian!(storage, g!, )
             Calculus.finite_difference_hessian!(f, x, storage)
             return
         end
@@ -60,11 +67,13 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
     end
     return TwiceDifferentiable(d.f, d.df, d.fdf, h!, x_seed, F, gradient(d))
 end
-    
+
 function TwiceDifferentiable(f, x::AbstractVector{T}, F = zero(T); autodiff = :finite) where T
     if autodiff == :finite
-        function g!(storage::Vector, x::Vector)
-            Calculus.finite_difference!(f, x, storage, :central)
+        # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
+        #gcache = DiffEqDiffTools.GradientCache(x, x, nothing, nothing, nothing, Val{:central})
+        function g!(storage, x)
+            DiffEqDiffTools.finite_difference_gradient!(storage, f, x, Val{:central})
             return
         end
         function fg!(storage::Vector, x::Vector)
