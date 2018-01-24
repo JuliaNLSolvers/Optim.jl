@@ -4,7 +4,7 @@
 
     function run_optim_fd_tests(method;
                                 problems = ("Extended Rosenbrock", "Large Polynomial", "Powell",
-                                            "Paraboloid Diagonal"),
+                                            "Paraboloid Diagonal", "Penalty Function I",),
                                 show_name = false, show_trace = false,
                                 show_time = false, show_res = false)
 

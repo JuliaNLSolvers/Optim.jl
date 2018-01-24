@@ -1,4 +1,4 @@
-function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = zero(T),
+function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T)),
                             DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F);
                             autodiff = :finite) where T
     if autodiff == :finite
@@ -27,7 +27,7 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = zero(T),
     OnceDifferentiable(f, g!, fg!, x_seed, F, DF)
 end
 
-function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = zero(T); autodiff = :finite) where T
+function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = real(zero(T)); autodiff = :finite) where T
     n_x = length(x_seed)
     function fg!(storage, x)
         g!(storage, x)
@@ -51,11 +51,11 @@ function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = zero(T)
     TwiceDifferentiable(f, g!, fg!, h!, x_seed, F)
 end
 
-TwiceDifferentiable(d::NonDifferentiable, x_seed::AbstractVector{T} = d.x_f, F::Real = zero(T); autodiff = :finite) where {T<:Real} =
+TwiceDifferentiable(d::NonDifferentiable, x_seed::AbstractVector{T} = d.x_f, F::Real = real(zero(T)); autodiff = :finite) where {T<:Real} =
     TwiceDifferentiable(d.f, x_seed, F; autodiff = autodiff)
 
 function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = d.x_f,
-                             F::Real = zero(T); autodiff = :finite) where T<:Real
+                             F::Real = real(zero(T)); autodiff = :finite) where T<:Real
     if autodiff == :finite
         # TODO: Create / request Hessian functionality in DiffEqDiffTools?
         #       (Or is it better to use the finite difference Jacobian of a gradient?)
@@ -74,7 +74,7 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
     return TwiceDifferentiable(d.f, d.df, d.fdf, h!, x_seed, F, gradient(d))
 end
 
-function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = zero(T);
+function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = real(zero(T));
                              autodiff = :finite) where T
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
