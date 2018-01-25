@@ -14,8 +14,10 @@
 
     @testset "Finite difference" begin
         oda1 = OnceDifferentiable(fcomplex, x0)
-        NLSolversBase.value_gradient!(oda1, x0)
-        @test gcomplex(x0) ≈ NLSolversBase.gradient(oda1)
+        # TODO: We should update NLSolversBase to accept Complex-valued arrays
+        fx = NLSolversBase.value_gradient!(oda1, NLSolversBase.complex_to_real(x0))
+        @test fx == fcomplex(x0)
+        @test gcomplex(x0) ≈ NLSolversBase.real_to_complex(NLSolversBase.gradient(oda1))
     end
 
     # TODO: AcceleratedGradientDescent fail to converge?
