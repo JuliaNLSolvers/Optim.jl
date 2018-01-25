@@ -6,3 +6,4 @@ Calculus
 NLSolversBase 4.0.0
 ForwardDiff 0.5.0
 DiffEqDiffTools 0.2.1 # TODO: update when they release Gradient PR
+Calculus # TODO: Remove when DiffEqDiffTools release Hessian PR
