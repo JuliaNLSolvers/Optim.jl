@@ -27,16 +27,17 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{T, N, F<:Base.LinAlg.Cholesky} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T, N}
+mutable struct NewtonState{Tx, T, F<:Base.LinAlg.Cholesky} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     f_x_previous::T
     F::F
-    s::Array{T, N}
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
+function initial_state(method::Newton, options, d, initial_x)
+    T = eltype(initial_x)
     n = length(initial_x)
     # Maintain current gradient in gr
     s = similar(initial_x)
@@ -54,7 +55,7 @@ function initial_state(method::Newton, options, d, initial_x::Array{T}) where T
                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::NewtonState{T}, method::Newton) where T
+function update_state!(d, state::NewtonState, method::Newton)
     # Search direction is always the negative gradient divided by
     # a matrix encoding the absolute values of the curvatures
     # represented by H. It deviates from the usual "add a scaled
@@ -62,10 +63,19 @@ function update_state!(d, state::NewtonState{T}, method::Newton) where T
     # information can be found in the discussion at issue #153.
     update_h!(d, state, method)
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
-        state.s .= -NLSolversBase.hessian(d)\gradient(d)
+        state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
-        state.F = cholfact!(Positive, NLSolversBase.hessian(d))
-        state.s .= -(state.F\gradient(d))
+        if typeof(gradient(d)) <: Array
+            state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+            A_ldiv_B!(state.s, state.F, -gradient(d))
+        else
+            state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+            T = eltype(state.x)
+            s = -(state.F\convert(Vector{T}, gradient(d)))
+            for i = 1:length(s)
+                state.s[i] = s[i]
+            end
+        end
     end
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)

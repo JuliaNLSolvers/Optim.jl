@@ -17,16 +17,17 @@ function MomentumGradientDescent(; mu::Real = 0.01,
     MomentumGradientDescent(Float64(mu), alphaguess, linesearch, manifold)
 end
 
-mutable struct MomentumGradientDescentState{T,N} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
-    x_momentum::Array{T,N}
+mutable struct MomentumGradientDescentState{Tx, T} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
+    x_momentum::Tx
     f_x_previous::T
-    s::Array{T,N}
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::MomentumGradientDescent, options, d, initial_x::Array{T}) where T
+function initial_state(method::MomentumGradientDescent, options, d, initial_x)
+    T = eltype(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
 
@@ -42,7 +43,7 @@ function initial_state(method::MomentumGradientDescent, options, d, initial_x::A
                                  @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent) where T
+function update_state!(d, state::MomentumGradientDescentState, method::MomentumGradientDescent)
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)

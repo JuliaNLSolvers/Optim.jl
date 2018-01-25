@@ -21,18 +21,18 @@ function AcceleratedGradientDescent(;
     AcceleratedGradientDescent(alphaguess, linesearch, manifold)
 end
 
-mutable struct AcceleratedGradientDescentState{T,N} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct AcceleratedGradientDescentState{T, Tx} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     f_x_previous::T
     iteration::Int
-    y::Array{T,N}
-    y_previous::Array{T,N}
-    s::Array{T,N}
+    y::Tx
+    y_previous::Tx
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::Array{T}) where T
+function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
 
@@ -40,8 +40,8 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
 
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
 
-    AcceleratedGradientDescentState(initial_x, # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
+    AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
+                         similar(initial_x), # Maintain previous state in state.x_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
                          copy(initial_x), # Maintain intermediary current state in state.y
@@ -50,7 +50,7 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
+function update_state!(d, state::AcceleratedGradientDescentState, method::AcceleratedGradientDescent)
     value_gradient!(d, state.x)
     state.iteration += 1
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))

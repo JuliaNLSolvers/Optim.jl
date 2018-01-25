@@ -43,20 +43,20 @@ function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark def
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
 
-mutable struct BFGSState{T,N,G} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     g_previous::G
     f_x_previous::T
-    dx::Array{T,N}
-    dg::Array{T,N}
-    u::Array{T,N}
-    invH::Matrix{T}
-    s::Array{T,N}
+    dx::Tx
+    dg::Tx
+    u::Tx
+    invH::Tm
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::BFGS, options, d, initial_x::Array{T}) where T
+function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
@@ -79,7 +79,7 @@ function initial_state(method::BFGS, options, d, initial_x::Array{T}) where T
 end
 
 
-function update_state!(d, state::BFGSState{T}, method::BFGS) where T
+function update_state!(d, state::BFGSState, method::BFGS)
     n = length(state.x)
 
     # Set the search direction

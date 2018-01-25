@@ -7,14 +7,14 @@ g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
 g_residual(g) = vecnorm(g, Inf)
 
 # Used by fminbox
-function assess_convergence(x::Array,
-                            x_previous::Array,
-                            f_x::Real,
-                            f_x_previous::Real,
-                            g::Array,
-                            x_tol::Real,
-                            f_tol::Real,
-                            g_tol::Real)
+function assess_convergence(x,
+                            x_previous,
+                            f_x,
+                            f_x_previous,
+                            g,
+                            x_tol,
+                            f_tol,
+                            g_tol)
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
     if x_abschange(x, x_previous) ≤ x_tol

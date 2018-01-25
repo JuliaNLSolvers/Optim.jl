@@ -90,20 +90,21 @@ function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
                       manifold)
 end
 
-mutable struct ConjugateGradientState{T,N,G} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     g_previous::G
     f_x_previous::T
-    y::Array{T,N}
-    py::Array{T,N}
-    pg::Array{T,N}
-    s::Array{T,N}
+    y::Tx
+    py::Tx
+    pg::Tx
+    s::Tx
     @add_linesearch_fields()
 end
 
 
-function initial_state(method::ConjugateGradient, options, d, initial_x::Array{T}) where T
+function initial_state(method::ConjugateGradient, options, d, initial_x)
+    T = eltype(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
 
@@ -145,7 +146,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x::Array{T
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGradient) where T
+function update_state!(d, state::ConjugateGradientState, method::ConjugateGradient)
         # Search direction is predetermined
 
         # Maintain a record of the previous gradient
@@ -178,7 +179,7 @@ function update_state!(d, state::ConjugateGradientState{T}, method::ConjugateGra
         # -----------------
         method.precondprep!(method.P, real_to_complex(d,state.x))
         dPd = dot(real_to_complex(d,state.s), method.P, real_to_complex(d,state.s))
-        etak::T = method.eta * vecdot(state.s, state.g_previous) / dPd
+        etak::eltype(state.x) = method.eta * vecdot(state.s, state.g_previous) / dPd
         state.y .= gradient(d) .- state.g_previous
         ydots = vecdot(state.y, state.s)
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
