@@ -12,7 +12,7 @@
         for name in problems
             prob = UP.examples[name]
             show_name && print_with_color(:green, "Problem: ", name, "\n")
-            options = Optim.Options(show_trace = show_trace)
+            options = Optim.Options(allow_f_increases=true, show_trace = show_trace)
             for (i, input) in enumerate(fd_input_tuple(method, prob))
                 # Loop over appropriate input combinations of f, g!, and h!
                 results = Optim.optimize(input..., prob.initial_x, method, options)

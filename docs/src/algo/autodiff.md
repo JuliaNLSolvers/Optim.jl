@@ -1,12 +1,15 @@
 # Automatic Differentiation
-As mentioned in the [Minimizing a function](http://www.juliaopt.org/Optim.jl/latest/user/minimization/) section,
+As mentioned in the [Minimizing a function](../user/minimization.md) section,
 it is possible to avoid passing gradients even when using gradient based methods.
-This is because Optim will call the finite central differences functionality
-in [Calculus.jl](https://github.com/johnmyleswhite/Calculus.jl/issues) in those cases.
+This is because Optim will call the finite central differences
+functionality in
+[DiffEqDiffTools.jl](https://github.com/JuliaDiffEq/DiffEqDiffTools.jl)
+in those cases.
 The advantages are clear: you do not have to write the gradients yourself, and
 it works for any function you can pass to Optim. However, there is another good
-way of making the computer provide gradients: automatic differentiation. Again, the
-advantage is that you can easily get gradients from the objective function alone.
+way of making the computer provide gradients: *automatic
+differentiation*. Again, the advantage is that you can easily get
+gradients from the objective function alone.
 As opposed to finite difference, these gradients are exact and we also get Hessians for
 Newton's method. They can perform better than a finite differences scheme, depending
 on the exact problem.
@@ -48,7 +51,7 @@ julia> Optim.minimizer(optimize(f, g!, h!, initial_x, Newton()))
  1.0
 ```
 This is indeed the case. Now let us use finite differences for BFGS.
-```jlcon    
+```jlcon
 julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 2-element Array{Float64,1}:
  1.0
