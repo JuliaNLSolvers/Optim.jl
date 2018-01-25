@@ -14,6 +14,8 @@ import Compat.String
     f_prob = UP.objective(prob)
     for g_free in (NelderMead(), SimulatedAnnealing())
         res = Optim.optimize(f_prob, prob.initial_x, g_free)
+        @test typeof(f_prob(prob.initial_x)) == typeof(Optim.minimum(res))
+        @test eltype(prob.initial_x) == eltype(Optim.minimizer(res))
 
         io = IOBuffer()
         show(io, res)
@@ -42,6 +44,8 @@ import Compat.String
     end
 
     res = Optim.optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, LBFGS())
+    @test typeof(f_prob(prob.initial_x)) == typeof(Optim.minimum(res))
+    @test eltype(prob.initial_x) == eltype(Optim.minimizer(res))
 
     io = IOBuffer()
     show(io, res)
