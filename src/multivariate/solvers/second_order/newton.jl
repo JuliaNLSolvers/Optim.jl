@@ -65,16 +65,14 @@ function update_state!(d, state::NewtonState, method::Newton)
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
+        state.F = cholfact!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
-            state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+            # is this actually StridedArray?
             A_ldiv_B!(state.s, state.F, -gradient(d))
         else
-            state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+            # not Array, we can't do inplace ldiv 
             T = eltype(state.x)
-            s = -(state.F\convert(Vector{T}, gradient(d)))
-            for i = 1:length(s)
-                state.s[i] = s[i]
-            end
+            state.s .= -(state.F\convert(Vector{T}, gradient(d)))
         end
     end
     # Determine the distance of movement along the search line
