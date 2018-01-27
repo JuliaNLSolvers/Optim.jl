@@ -8,8 +8,8 @@
 # Alan Edelman, Tomás A. Arias, and Steven T. Smith
 # SIAM. J. Matrix Anal. & Appl., 20(2), 303–353. (51 pages)
 
-# Optimization Algorithms on Matrix Manifolds 
-# P.-A. Absil, R. Mahony, R. Sepulchre 
+# Optimization Algorithms on Matrix Manifolds
+# P.-A. Absil, R. Mahony, R. Sepulchre
 # Princeton University Press, 2008
 
 
@@ -23,7 +23,7 @@ mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolver
     inner_obj::T
 end
 iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
-# TODO is it safe here to call retract! and change x?
+# TODO: is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
     value!(obj.inner_obj, xin)
@@ -104,7 +104,7 @@ e.g. the product of 2x2 Stiefel manifolds of dimension N x n would be a N x n x 
 """
 struct PowerManifold<:Manifold
     "Type of embedded manifold"
-    inner_manifold::Manifold 
+    inner_manifold::Manifold
     "Dimension of the embedded manifolds"
     inner_dims::Tuple
     "Number of embedded manifolds"

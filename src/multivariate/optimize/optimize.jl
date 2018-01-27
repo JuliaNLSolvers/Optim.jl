@@ -13,8 +13,9 @@ update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
-function optimize(d::D, initial_x::AbstractArray{T, N}, method::M,
-    options::Options = Options(), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, T, N}
+function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
+                  options::Options = Options(;default_options(method)...),
+                  state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx, N}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
@@ -51,7 +52,7 @@ function optimize(d::D, initial_x::AbstractArray{T, N}, method::M,
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS)
+        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         update_g!(d, state, method)
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
@@ -78,10 +79,11 @@ function optimize(d::D, initial_x::AbstractArray{T, N}, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    elty = typeof(value(d))
+    T = typeof(options.f_tol)
+    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
-   
-    return MultivariateOptimizationResults{typeof(method), T, N, typeof(tr)}(method,
+
+    return MultivariateOptimizationResults{typeof(method), T, Tx, Tf, N, typeof(tr)}(method,
                                         NLSolversBase.iscomplex(d),
                                         real_to_complex(d, initial_x),
                                         real_to_complex(d, pick_best_x(f_incr_pick, state)),
@@ -89,13 +91,13 @@ function optimize(d::D, initial_x::AbstractArray{T, N}, method::M,
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
-                                        convert(elty, options.x_tol),
+                                        options.x_tol,
                                         x_abschange(state),
                                         f_converged,
-                                        convert(elty, options.f_tol),
+                                        options.f_tol,
                                         f_abschange(d, state),
                                         g_converged,
-                                        convert(elty, options.g_tol),
+                                        options.g_tol,
                                         g_residual(d),
                                         f_increased,
                                         tr,

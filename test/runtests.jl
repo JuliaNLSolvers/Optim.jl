@@ -34,10 +34,10 @@ univariate_tests = [
 univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
 
 multivariate_tests = [
-    # optimize
+    ## optimize
     "optimize/interface",
     "optimize/optimize",
-    # solvers
+    ## solvers
     ## constrained
     "solvers/constrained/constrained",
     ## first order
@@ -47,6 +47,7 @@ multivariate_tests = [
     "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
     "solvers/first_order/momentum_gradient_descent",
+    "solvers/first_order/ngmres",
     ## second order
     "solvers/second_order/newton",
     "solvers/second_order/newton_trust_region",
@@ -56,7 +57,7 @@ multivariate_tests = [
     "solvers/zeroth_order/nelder_mead",
     "solvers/zeroth_order/particle_swarm",
     "solvers/zeroth_order/simulated_annealing",
-    # other
+    ## other
     "array",
     "extrapolate",
     "lsthrow",
@@ -91,7 +92,15 @@ function run_optim_tests(method; convergence_exceptions = (),
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        options = Optim.Options(allow_f_increases = name in f_increase_exceptions, iterations = iters, show_trace = show_trace)
+        allow_f_increases = (name in f_increase_exceptions)
+        dopts = Optim.default_options(method)
+        if haskey(dopts, :allow_f_increases)
+            allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
+            delete!(dopts, :allow_f_increases)
+        end
+        options = Optim.Options(allow_f_increases = allow_f_increases,
+                                iterations = iters, show_trace = show_trace;
+                                dopts...)
 
         # Use finite difference if it is not differentiable enough
         if  !(name in skip)
