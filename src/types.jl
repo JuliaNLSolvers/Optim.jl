@@ -69,11 +69,11 @@ const OptimizationTrace{T} = Vector{OptimizationState{T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tf, N, M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tf, M} <: OptimizationResults
     method::O
     iscomplex::Bool
-    initial_x::Array{Tx,N}
-    minimizer::Array{Tx,N}
+    initial_x::Tx
+    minimizer::Tx
     minimum::Tf
     iterations::Int
     iteration_converged::Bool
