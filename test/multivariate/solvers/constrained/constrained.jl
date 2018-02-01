@@ -69,4 +69,29 @@ Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
     # TODO: come up with a better test
     #results = Optim.optimize(_objective, initial_x, l, u, Fminbox(); optimizer_o = Optim.Options(iterations = 2))
     #@test Optim.iterations(results) == 470
+    @testset "simple input" begin
+        function exponential(x)
+            return exp((2.0 - x[1])^2) + exp((3.0 - x[2])^2)
+        end
+
+        function exponential_gradient!(storage, x)
+            storage[1] = -2.0 * (2.0 - x[1]) * exp((2.0 - x[1])^2)
+            storage[2] = -2.0 * (3.0 - x[2]) * exp((3.0 - x[2])^2)
+        end
+
+        initial_x = [0.0, 0.0]
+        optimize(exponential, exponential_gradient!, initial_x, BFGS())
+        lb = fill(-0.1, 2)
+        ub = fill(1.1, 2)
+        od = OnceDifferentiable(exponential, initial_x)
+        optimize(od, initial_x, lb, ub, Fminbox())
+        od_forward = OnceDifferentiable(exponential, initial_x; autodiff = :forward)
+        optimize(od_forward, initial_x, lb, ub, Fminbox())
+        optimize(exponential, initial_x, lb, ub, Fminbox())
+        optimize(exponential, exponential_gradient!, initial_x, lb, ub, Fminbox())
+        optimize(od, initial_x, lb, ub)
+        optimize(od_forward, initial_x, lb, ub)
+        optimize(exponential, initial_x, lb, ub)
+        optimize(exponential, exponential_gradient!, initial_x, lb, ub)
+    end
 end

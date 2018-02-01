@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initial_mu(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001) where T
+function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001) where T
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -16,7 +16,7 @@ function initial_mu(gfunc::Array{T}, gbarrier::Array{T}; mu0::T = convert(T, NaN
     return mu
 end
 
-function barrier_box(g, x::Array{T}, l::Array{T}, u::Array{T}) where T
+function barrier_box(g, x::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArray{T}) where T
     n = length(x)
     calc_g = !(g === nothing)
 
@@ -52,7 +52,7 @@ function barrier_box(g, x::Array{T}, l::Array{T}, u::Array{T}) where T
     return v
 end
 
-function function_barrier(gfunc, gbarrier, x::Array{T}, f::F, fbarrier::FB) where {T, F<:Function, FB<:Function}
+function function_barrier(gfunc, gbarrier, x::AbstractArray{T}, f::F, fbarrier::FB) where {T, F<:Function, FB<:Function}
     vbarrier = fbarrier(gbarrier, x)
     if isfinite(vbarrier)
         vfunc = f(gfunc, x)
@@ -62,7 +62,7 @@ function function_barrier(gfunc, gbarrier, x::Array{T}, f::F, fbarrier::FB) wher
     return vfunc, vbarrier
 end
 
-function barrier_combined(gfunc, gbarrier, g, x::Array{T}, fb::FB, mu::T) where {T, FB<:Function}
+function barrier_combined(gfunc, gbarrier, g, x::AbstractArray{T}, fb::FB, mu::T) where {T, FB<:Function}
     calc_g = !(g === nothing)
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if calc_g
@@ -71,7 +71,7 @@ function barrier_combined(gfunc, gbarrier, g, x::Array{T}, fb::FB, mu::T) where 
     return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
 end
 
-function limits_box(x::Array{T}, d::Array{T}, l::Array{T}, u::Array{T}) where T
+function limits_box(x::AbstractArray{T}, d::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArray{T}) where T
     alphamax = convert(T, Inf)
     for i = 1:length(x)
         if d[i] < 0
@@ -99,28 +99,28 @@ Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
 
 function optimize(obj,
-                  initial_x::Array{T},
-                  l::Array{T},
-                  u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(obj, initial_x, zero(T)), l, u, F; kwargs...)
+                  initial_x::AbstractArray{T},
+                  l::AbstractArray{T},
+                  u::AbstractArray{T},
+                  F::Fminbox{O} = Fminbox(); kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
+     optimize(OnceDifferentiable(obj, initial_x, zero(T)), initial_x, l, u, F; kwargs...)
 end
 
 function optimize(f,
                   g!,
-                  initial_x::Array{T},
-                  l::Array{T},
-                  u::Array{T},
-                  F::Fminbox{O}; kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), l, u, F; kwargs...)
+                  initial_x::AbstractArray{T},
+                  l::AbstractArray{T},
+                  u::AbstractArray{T},
+                  F::Fminbox{O} = Fminbox(); kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
+     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), initial_x, l, u, F; kwargs...)
 end
 
 function optimize(
         df::OnceDifferentiable,
-        initial_x::Array{T},
-        l::Array{T},
-        u::Array{T},
-        ::Fminbox{O};
+        initial_x::AbstractArray{T},
+        l::AbstractArray{T},
+        u::AbstractArray{T},
+        ::Fminbox{O} = Fminbox();
         x_tol::T = eps(T),
         f_tol::T = sqrt(eps(T)),
         g_tol::T = sqrt(eps(T)),
