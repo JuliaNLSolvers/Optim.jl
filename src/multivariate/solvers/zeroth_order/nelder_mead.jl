@@ -63,7 +63,7 @@ function NelderMead(; kwargs...)
 end
 
 # centroid except h-th vertex
-function centroid!(c::Array{T}, simplex, h=0) where T
+function centroid!(c::AbstractArray{T}, simplex, h=0) where T
     n = length(c)
     fill!(c, zero(T))
     @inbounds for i in 1:n+1
@@ -105,7 +105,7 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-mutable struct NelderMeadState{Tx, T} <: ZerothOrderState
+mutable struct NelderMeadState{Tx, T, Tfs} <: ZerothOrderState
     x::Tx
     m::Int
     simplex::Vector{Tx}
@@ -115,7 +115,7 @@ mutable struct NelderMeadState{Tx, T} <: ZerothOrderState
     x_highest::Tx
     x_reflect::Tx
     x_cache::Tx
-    f_simplex::Tx
+    f_simplex::Tfs
     nm_x::T
     f_lowest::T
     i_order::Vector{Int}
