@@ -70,11 +70,17 @@ using RecursiveArrayTools
 
     ap = ArrayPartition(rand(1), rand(2))
 
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ConjugateGradient())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NelderMead())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ParticleSwarm())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, SimulatedAnnealing())
+
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, GradientDescent())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, AcceleratedGradientDescent())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, MomentumGradientDescent())
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ConjugateGradient())
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, BFGS())
-
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, LBFGS())
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, Newton())
