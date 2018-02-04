@@ -58,14 +58,14 @@ function print_header(method::AbstractOptimizer)
         @printf "Iter     Function value   Gradient norm \n"
 end
 
-struct OptimizationState{T <: AbstractOptimizer}
+struct OptimizationState{Tf, T <: AbstractOptimizer}
     iteration::Int
-    value::Float64
-    g_norm::Float64
+    value::Tf
+    g_norm::Tf
     metadata::Dict
 end
 
-const OptimizationTrace{T} = Vector{OptimizationState{T}}
+const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 

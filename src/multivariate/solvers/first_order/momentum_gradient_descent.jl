@@ -1,8 +1,8 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-struct MomentumGradientDescent{IL,L} <: FirstOrderOptimizer
-    mu::Float64
+struct MomentumGradientDescent{Tf, IL,L} <: FirstOrderOptimizer
+    mu::Tf
     alphaguess!::IL
     linesearch!::L
     manifold::Manifold
@@ -14,7 +14,7 @@ function MomentumGradientDescent(; mu::Real = 0.01,
                                  alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
                                  linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
                                  manifold::Manifold=Flat())
-    MomentumGradientDescent(Float64(mu), alphaguess, linesearch, manifold)
+    MomentumGradientDescent(mu, alphaguess, linesearch, manifold)
 end
 
 mutable struct MomentumGradientDescentState{Tx, T} <: AbstractOptimizerState
