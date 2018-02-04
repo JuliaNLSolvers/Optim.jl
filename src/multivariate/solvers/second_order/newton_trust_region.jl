@@ -64,12 +64,13 @@ end
 #  hard_case - Whether or not it was a "hard case" as described by N&W
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
-function solve_tr_subproblem!(gr::Vector{T},
-                              H::Matrix{T},
-                              delta::T,
-                              s::Vector{T};
-                              tolerance::T=1e-10,
-                              max_iters::Int=5) where T
+function solve_tr_subproblem!(gr,
+                              H,
+                              delta,
+                              s;
+                              tolerance=1e-10,
+                              max_iters=5)
+    T = eltype(gr)
     n = length(gr)
     delta_sq = delta^2
 
@@ -206,12 +207,12 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
-mutable struct NewtonTrustRegionState{T,N,G} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct NewtonTrustRegionState{Tx, T, G} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     g_previous::G
     f_x_previous::T
-    s::Array{T,N}
+    s::Tx
     hard_case::Bool
     reached_subproblem_solution::Bool
     interior::Bool
@@ -221,7 +222,8 @@ mutable struct NewtonTrustRegionState{T,N,G} <: AbstractOptimizerState
     rho::T
 end
 
-function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T}) where T
+function initial_state(method::NewtonTrustRegion, options, d, initial_x)
+    T = eltype(initial_x)
     n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
@@ -257,7 +259,8 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x::Array{T
 end
 
 
-function update_state!(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion) where T
+function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+    T = eltype(state.x)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)

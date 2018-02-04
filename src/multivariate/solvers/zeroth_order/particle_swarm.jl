@@ -8,11 +8,11 @@ ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, 
 
 Base.summary(::ParticleSwarm) = "Particle Swarm"
 
-mutable struct ParticleSwarmState{T,N} <: ZerothOrderState
-    x::Array{T,N}
+mutable struct ParticleSwarmState{Tx,T} <: ZerothOrderState
+    x::Tx
     iteration::Int
-    lower::Array{T,N}
-    upper::Array{T,N}
+    lower::Tx
+    upper::Tx
     c1::T # Weight variable; currently not exposed to users
     c2::T # Weight variable; currently not exposed to users
     w::T  # Weight variable; currently not exposed to users
@@ -28,8 +28,8 @@ mutable struct ParticleSwarmState{T,N} <: ZerothOrderState
     iterations::Int
 end
 
-function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) where T
-
+function initial_state(method::ParticleSwarm, options, d, initial_x)
+    T = eltype(initial_x)
     #=
     Variable X represents the whole swarm of solutions with
     the columns being the individual particles (= solutions to
@@ -76,9 +76,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::Array{T}) w
     c2 = 2.0
     w = 1.0
 
-    X = Array{T}(n, n_particles)
-    V = Array{T}(n, n_particles)
-    X_best = Array{T}(n, n_particles)
+    X = Array{T,2}(n, n_particles)
+    V = Array{T,2}(n, n_particles)
+    X_best = Array{T,2}(n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
     x = similar(initial_x)

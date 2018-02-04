@@ -5,19 +5,17 @@
 # Here alpha is a cache that parallels betas
 # It is not the step-size
 # q is also a cache
-function twoloop!(s::Vector,
-                  gr::Vector,
-                  rho::Vector,
-                  dx_history::Matrix,
-                  dg_history::Matrix,
+function twoloop!(s,
+                  gr,
+                  rho,
+                  dx_history,
+                  dg_history,
                   m::Integer,
                   pseudo_iteration::Integer,
-                  alpha::Vector,
-                  q::Vector,
+                  alpha,
+                  q,
                   scaleinvH0::Bool,
-                  precon,
-                  devec_fun #all data is passed to this function is flat vectors, but precon might expect something different. this function undoes the flattening
-                  )
+                  precon)
     # Count number of parameters
     n = length(s)
 
@@ -34,8 +32,8 @@ function twoloop!(s::Vector,
             continue
         end
         i   = mod1(index, m)
-        dgi = view(dg_history, :, i)
-        dxi = view(dx_history, :, i)
+        dgi = dg_history[i]
+        dxi = dx_history[i]
         @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
         @inbounds q .-= alpha[i] .* dgi
     end
@@ -54,12 +52,12 @@ function twoloop!(s::Vector,
         TODO: Maybe we can still use the scaling as long as iteration > 1?
         =#
         i = mod1(upper, m)
-        dxi = view(dx_history, :, i)
-        dgi = view(dg_history, :, i)
+        dxi = dx_history[i]
+        dgi = dg_history[i]
         scaling = dot(dxi, dgi) / sum(abs2, dgi)
         @. s = scaling*q
     else
-        A_ldiv_B!(devec_fun(s), precon, devec_fun(q))
+        A_ldiv_B!(s, precon, q)
     end
     # Forward pass
     for index in lower:1:upper
@@ -67,8 +65,8 @@ function twoloop!(s::Vector,
             continue
         end
         i = mod1(index, m)
-        dgi = view(dg_history, :, i)
-        dxi = view(dx_history, :, i)
+        dgi = dg_history[i]
+        dxi = dx_history[i]
         @inbounds beta = rho[i] * vecdot(dgi, s)
         @inbounds s .+= dxi .* (alpha[i] - beta)
     end
@@ -133,25 +131,26 @@ end
 
 Base.summary(::LBFGS) = "L-BFGS"
 
-mutable struct LBFGSState{T,N,M,G} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct LBFGSState{Tx, Tdx, Tdg, T, G} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     g_previous::G
     rho::Vector{T}
-    dx_history::Array{T,M}
-    dg_history::Array{T,M}
-    dx::Array{T,N}
-    dg::Array{T,N}
-    u::Array{T,N}
+    dx_history::Tdx
+    dg_history::Tdg
+    dx::Tx
+    dg::Tx
+    u::Tx
     f_x_previous::T
     twoloop_q
     twoloop_alpha
     pseudo_iteration::Int
-    s::Array{T,N}
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::LBFGS, options, d, initial_x::Array{T}) where T
+function initial_state(method::LBFGS, options, d, initial_x)
+    T = eltype(initial_x)
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
@@ -163,8 +162,8 @@ function initial_state(method::LBFGS, options, d, initial_x::Array{T}) where T
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
               Vector{T}(method.m), # state.rho
-              Matrix{T}(n, method.m), # Store changes in position in state.dx_history
-              Matrix{T}(n, method.m), # Store changes in gradient in state.dg_history
+              [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
+              [similar(gradient(d)) for i = 1:method.m], # Store changes in position in state.dg_history
               similar(initial_x), # Buffer for new entry in state.dx_history
               similar(initial_x), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
@@ -176,7 +175,7 @@ function initial_state(method::LBFGS, options, d, initial_x::Array{T}) where T
               @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
+function update_state!(d, state::LBFGSState, method::LBFGS)
     n = length(state.x)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
@@ -187,10 +186,9 @@ function update_state!(d, state::LBFGSState{T}, method::LBFGS) where T
     method.precondprep!(method.P, real_to_complex(d,state.x))
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
-    devec_fun(x) = real_to_complex(d,reshape(x, size(state.s)))
-    twoloop!(vec(state.s), vec(gradient(d)), vec(state.rho), state.dx_history, state.dg_history,
+    twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
-             state.twoloop_alpha, vec(state.twoloop_q), method.scaleinvH0, method.P, devec_fun)
+             state.twoloop_alpha, state.twoloop_q, method.scaleinvH0, method.P)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Save g value to prepare for update_g! call
@@ -220,8 +218,8 @@ function update_h!(d, state, method::LBFGS)
         return true
     end
     idx = mod1(state.pseudo_iteration, method.m)
-    @inbounds state.dx_history[:, idx] .= vec(state.dx)
-    @inbounds state.dg_history[:, idx] .= vec(state.dg)
+    @inbounds state.dx_history[idx] .= state.dx
+    @inbounds state.dg_history[idx] .= state.dg
     @inbounds state.rho[idx] = rho_iteration
 end
 

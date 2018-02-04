@@ -69,23 +69,23 @@ const OptimizationTrace{T} = Vector{OptimizationState{T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tf, N, M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, Tf, M} <: OptimizationResults
     method::O
     iscomplex::Bool
-    initial_x::Array{Tx,N}
-    minimizer::Array{Tx,N}
+    initial_x::Tx
+    minimizer::Tx
     minimum::Tf
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool
     x_tol::T
-    x_abschange::T
+    x_abschange::Tc
     f_converged::Bool
     f_tol::T
-    f_abschange::T
+    f_abschange::Tc
     g_converged::Bool
     g_tol::T
-    g_residual::T
+    g_residual::Tc
     f_increased::Bool
     trace::M
     f_calls::Int
@@ -118,17 +118,19 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
+    first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
+
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" summary(r)
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else
-        @printf io " * Starting Point: [%s, ...]\n" join(initial_state(r)[1:2], ",")
+        @printf io " * Starting Point: [%s, ...]\n" join(first_two(initial_state(r)), ",")
     end
     if length(join(minimizer(r), ",")) < 40
         @printf io " * Minimizer: [%s]\n" join(minimizer(r), ",")
     else
-        @printf io " * Minimizer: [%s, ...]\n" join(minimizer(r)[1:2], ",")
+        @printf io " * Minimizer: [%s, ...]\n" join(first_two(minimizer(r)), ",")
     end
     @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)

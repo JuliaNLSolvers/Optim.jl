@@ -120,28 +120,28 @@ function OACCEL(;manifold::Manifold = Flat(),
 end
 
 
-mutable struct NGMRESState{P,T,N} <: AbstractOptimizerState where P <: AbstractOptimizerState
-    x::Array{T,N}             # Reference to nlpreconstate.x
-    x_previous::Array{T,N}    # Reference to nlpreconstate.x_previous
-    x_previous_0::Array{T,N}  # Used to deal with assess_convergence of NGMRES
+mutable struct NGMRESState{P,Tx,Te,T} <: AbstractOptimizerState where P <: AbstractOptimizerState
+    x::Tx             # Reference to nlpreconstate.x
+    x_previous::Tx    # Reference to nlpreconstate.x_previous
+    x_previous_0::Tx  # Used to deal with assess_convergence of NGMRES
     f_x_previous::T
     f_x_previous_0::T         # Used to deal with assess_convergence of NGMRES
     f_xP::T                   # For tracing purposes
     grnorm_xP::T              # For tracing purposes
-    s::Array{T,N}             # Search direction for linesearch between xP and xA
+    s::Tx                     # Search direction for linesearch between xP and xA
     nlpreconstate::P          # Nonlinear preconditioner state
     X::Array{T,2}             # Solution vectors in the window
     R::Array{T,2}             # Gradient vectors in the window
     Q::Array{T,2}             # Storage to create linear system (TODO: make Symmetric?)
-    ξ::Array{T}               # Storage to create linear system
+    ξ::Te                     # Storage to create linear system
     curw::Int                 # Counter for current window size
     A::Array{T,2}             # Container for Aα = b
-    b::Array{T,1}             # Container for Aα = b
+    b::Vector{T}                     # Container for Aα = b
     xA::Vector{T}             # Container for accelerated step
     k::Int                    # Used for indexing where to put values in the Storage containers
     restart::Bool             # Restart flag
     g_tol::T                  # Exit tolerance to be checked after nonlinear preconditioner apply
-    subspacealpha::Array{T,1} # Storage for coefficients in the subspace for the acceleration step
+    subspacealpha::Vector{T}  # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
 

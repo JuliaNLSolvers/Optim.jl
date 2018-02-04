@@ -2,7 +2,7 @@ log_temperature(t::Real) = 1 / log(t)
 
 constant_temperature(t::Real) = 1.0
 
-function default_neighbor!(x::Array, x_proposal::Array)
+function default_neighbor!(x::AbstractArray, x_proposal::AbstractArray)
     @assert size(x) == size(x_proposal)
     for i in 1:length(x)
         @inbounds x_proposal[i] = x[i] + randn()
@@ -23,11 +23,11 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
 
 Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
-mutable struct SimulatedAnnealingState{T, N} <: ZerothOrderState
-    x::Array{T,N}
+mutable struct SimulatedAnnealingState{Tx,T} <: ZerothOrderState
+    x::Tx
     iteration::Int
-    x_current::Array{T, N}
-    x_proposal::Array{T, N}
+    x_current::Tx
+    x_proposal::Tx
     f_x_current::T
     f_proposal::T
 end
@@ -35,7 +35,7 @@ end
 pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
 pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
-function initial_state(method::SimulatedAnnealing, options, d, initial_x::Array{T}) where T
+function initial_state(method::SimulatedAnnealing, options, d, initial_x::AbstractArray{T}) where T
 
     value!!(d, initial_x)
 

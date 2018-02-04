@@ -42,3 +42,47 @@
         end
     end
 end
+
+using RecursiveArrayTools
+@testset "arraypartition input" begin
+
+    function polynomial(x)
+            return (10.0 - x[1])^2 + (7.0 - x[2])^4 + (108.0 - x[3])^4
+        end
+
+    function polynomial_gradient!(storage, x)
+            storage[1] = -2.0 * (10.0 - x[1])
+            storage[2] = -4.0 * (7.0 - x[2])^3
+            storage[3] = -4.0 * (108.0 - x[3])^3
+        end
+
+    function polynomial_hessian!(storage, x)
+            storage[1, 1] = 2.0
+            storage[1, 2] = 0.0
+            storage[1, 3] = 0.0
+            storage[2, 1] = 0.0
+            storage[2, 2] = 12.0 * (7.0 - x[2])^2
+            storage[2, 3] = 0.0
+            storage[3, 1] = 0.0
+            storage[3, 2] = 0.0
+            storage[3, 3] = 12.0 * (108.0 - x[3])^2
+        end
+
+    ap = ArrayPartition(rand(1), rand(2))
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NelderMead())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ParticleSwarm())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, SimulatedAnnealing())
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, GradientDescent())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, AcceleratedGradientDescent())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, MomentumGradientDescent())
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ConjugateGradient())
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, BFGS())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, LBFGS())
+
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, Newton())
+    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NewtonTrustRegion())
+end

@@ -36,15 +36,15 @@ function GradientDescent(; alphaguess = LineSearches.InitialPrevious(), # TODO: 
     GradientDescent(alphaguess, linesearch, P, precondprep, manifold)
 end
 
-mutable struct GradientDescentState{T,N} <: AbstractOptimizerState
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct GradientDescentState{Tx, T} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     f_x_previous::T
-    s::Array{T,N}
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state(method::GradientDescent, options, d, initial_x::Array{T}) where T
+function initial_state(method::GradientDescent, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
 

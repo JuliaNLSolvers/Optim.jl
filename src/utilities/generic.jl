@@ -8,7 +8,7 @@ end
 
 @def add_linesearch_fields begin
     dphi0_previous::T
-    x_ls::Array{T,N}
+    x_ls::Tx
     alpha::T
     mayterminate::Bool
     lsr::LineSearches.LineSearchResults

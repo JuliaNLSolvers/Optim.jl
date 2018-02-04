@@ -6,9 +6,9 @@ struct AffineSimplexer <: Simplexer
 end
 AffineSimplexer(;a = 0.025, b = 0.5) = AffineSimplexer(a, b)
 
-function simplexer(S::AffineSimplexer, initial_x::Array{T,N}) where {T,N}
+function simplexer(S::AffineSimplexer, initial_x::Tx) where Tx
     n = length(initial_x)
-    initial_simplex = Array{T, N}[copy(initial_x) for i = 1:n+1]
+    initial_simplex = Tx[copy(initial_x) for i = 1:n+1]
     for j = 1:n
         initial_simplex[j+1][j] = (1+S.b) * initial_simplex[j+1][j] + S.a
     end
@@ -63,7 +63,7 @@ function NelderMead(; kwargs...)
 end
 
 # centroid except h-th vertex
-function centroid!(c::Array{T}, simplex, h=0) where T
+function centroid!(c::AbstractArray{T}, simplex, h=0) where T
     n = length(c)
     fill!(c, zero(T))
     @inbounds for i in 1:n+1
@@ -105,17 +105,17 @@ function Base.show(io::IO, t::OptimizationState{NelderMead})
     return
 end
 
-mutable struct NelderMeadState{T, N} <: ZerothOrderState
-    x::Array{T,N}
+mutable struct NelderMeadState{Tx, T, Tfs} <: ZerothOrderState
+    x::Tx
     m::Int
-    simplex::Vector{Array{T,N}}
-    x_centroid::Array{T,N}
-    x_lowest::Array{T,N}
-    x_second_highest::Array{T,N}
-    x_highest::Array{T,N}
-    x_reflect::Array{T,N}
-    x_cache::Array{T,N}
-    f_simplex::Array{T,N}
+    simplex::Vector{Tx}
+    x_centroid::Tx
+    x_lowest::Tx
+    x_second_highest::Tx
+    x_highest::Tx
+    x_reflect::Tx
+    x_cache::Tx
+    f_simplex::Tfs
     nm_x::T
     f_lowest::T
     i_order::Vector{Int}
@@ -126,7 +126,8 @@ mutable struct NelderMeadState{T, N} <: ZerothOrderState
     step_type::String
 end
 
-function initial_state(method::NelderMead, options, d::F, initial_x::Array{T}) where {F, T}
+function initial_state(method::NelderMead, options, d, initial_x)
+    T = eltype(initial_x)
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)
@@ -258,7 +259,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     false
 end
 
-function after_while!(f::F, state, method::NelderMead, options) where F
+function after_while!(f, state, method::NelderMead, options)
     sortperm!(state.i_order, state.f_simplex)
     x_centroid_min = centroid(state.simplex, state.i_order[state.m])
     f_centroid_min = value(f, x_centroid_min)
