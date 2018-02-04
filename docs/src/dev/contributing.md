@@ -31,10 +31,10 @@ Minim(; alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.Hag
   Minim(linesearch, minim_parameter)
 
 type MinimState{T,N,G}
-  x::Array{T,N}
-  x_previous::Array{T,N}
+  x::AbstractArray{T,N}
+  x_previous::AbstractArray{T,N}
   f_x_previous::T
-  s::Array{T,N}
+  s::AbstractArray{T,N}
   @add_linesearch_fields()
 end
 
