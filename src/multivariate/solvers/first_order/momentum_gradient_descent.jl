@@ -1,8 +1,8 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-struct MomentumGradientDescent{IL,L} <: FirstOrderOptimizer
-    mu::Float64
+struct MomentumGradientDescent{Tf, IL,L} <: FirstOrderOptimizer
+    mu::Tf
     alphaguess!::IL
     linesearch!::L
     manifold::Manifold

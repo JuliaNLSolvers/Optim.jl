@@ -73,9 +73,9 @@ to the `AffineSimplexer` above, but with a small twist. Instead of always adding
 a constant is only added to entries that are zero. If the entry is non-zero, five
 percent of the level is added. This might be implemented (by the user) as
 ```julia
-struct MatlabSimplexer <: Optim.Simplexer
-    a::Float64
-    b::Float64
+struct MatlabSimplexer{T} <: Optim.Simplexer
+    a::T
+    b::T
 end
 MatlabSimplexer(;a = 0.00025, b = 0.05) = MatlabSimplexer(a, b)
 
