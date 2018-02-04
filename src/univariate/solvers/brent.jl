@@ -82,7 +82,7 @@ function optimize(
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
+    tr = OptimizationTrace{T, typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 

@@ -14,7 +14,7 @@ function MomentumGradientDescent(; mu::Real = 0.01,
                                  alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
                                  linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
                                  manifold::Manifold=Flat())
-    MomentumGradientDescent(Float64(mu), alphaguess, linesearch, manifold)
+    MomentumGradientDescent(mu, alphaguess, linesearch, manifold)
 end
 
 mutable struct MomentumGradientDescentState{Tx, T} <: AbstractOptimizerState

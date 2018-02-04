@@ -84,7 +84,7 @@ function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
                              precondprep = (P, x) -> nothing,
                              manifold::Manifold=Flat())
 
-    ConjugateGradient(Float64(eta),
+    ConjugateGradient(eta,
                       P, precondprep,
                       alphaguess, linesearch,
                       manifold)

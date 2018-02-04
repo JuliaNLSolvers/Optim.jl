@@ -279,9 +279,10 @@ function get_swarm_state(X, score, best_point, previous_state)
     # the weighing factors c1 and c2 are adapted.
     # New state is not only depending on the current swarm state,
     # but also from the previous state.
+    T = eltype(X)
     n, n_particles = size(X)
     f_best, i_best = findmin(score)
-    d = zeros(Float64, n_particles)
+    d = zeros(T, n_particles)
     for i in 1:n_particles
         dd = 0.0
         for k in 1:n_particles
@@ -297,7 +298,7 @@ function get_swarm_state(X, score, best_point, previous_state)
     dmax = Base.maximum(d)
 
     f = (dg - dmin) / (dmax - dmin)
-    mu = zeros(Float64, 4)
+    mu = zeros(T, 4)
     mu[1] = get_mu_1(f)
     mu[2] = get_mu_2(f)
     mu[3] = get_mu_3(f)

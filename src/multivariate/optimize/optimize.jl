@@ -25,7 +25,7 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
     initial_x = complex_to_real(d, initial_x)
 
     n = length(initial_x)
-    tr = OptimizationTrace{typeof(method)}()
+    tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false

@@ -65,7 +65,7 @@ struct OptimizationState{Tf, T <: AbstractOptimizer}
     metadata::Dict
 end
 
-const OptimizationTrace{T} = Vector{OptimizationState{T}}
+const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 

@@ -4,9 +4,9 @@ import Compat.String
 @testset "Types" begin
     solver = NelderMead()
     T = typeof(solver)
-    trace = OptimizationTrace{T}()
-    push!(trace,OptimizationState{T}(1,1.0,1.0,Dict()))
-    push!(trace,OptimizationState{T}(2,1.0,1.0,Dict()))
+    trace = OptimizationTrace{Float64, T}()
+    push!(trace,OptimizationState{Float64, T}(1,1.0,1.0,Dict()))
+    push!(trace,OptimizationState{Float64, T}(2,1.0,1.0,Dict()))
     @test length(trace) == 2
     @test trace[end].iteration == 2
 

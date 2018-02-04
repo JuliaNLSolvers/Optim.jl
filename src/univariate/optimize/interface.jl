@@ -1,4 +1,3 @@
-
 # Univariate Options
 function optimize(f::F,
      lower::T,
@@ -31,23 +30,23 @@ function optimize(f::F,
 end
 
 function optimize(f::F,
-     lower::Real,
-     upper::Real;
-     kwargs...) where F<:Function
-    optimize(f,
-             Float64(lower),
-             Float64(upper);
-             kwargs...)
+    lower::Union{Integer, Real},
+    upper::Union{Integer, Real};
+    kwargs...) where F<:Function
+   optimize(f,
+            Float64(lower),
+            Float64(upper);
+            kwargs...)
 end
 
 function optimize(f::F,
-     lower::Real,
-     upper::Real,
-     mo::Union{Brent, GoldenSection};
-     kwargs...) where F<:Function
-    optimize(f,
-             Float64(lower),
-             Float64(upper),
-             mo;
-             kwargs...)
+    lower::Union{Integer, Real},
+    upper::Union{Integer, Real},
+    mo::Union{Brent, GoldenSection};
+    kwargs...) where F<:Function
+   optimize(f,
+            Float64(lower),
+            Float64(upper),
+            mo;
+            kwargs...)
 end
