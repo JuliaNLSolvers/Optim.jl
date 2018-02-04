@@ -61,7 +61,10 @@ function update_state!(d, state::NewtonState, method::Newton)
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
+    T = eltype(state.x)
+    
     update_h!(d, state, method)
+    
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
@@ -71,7 +74,6 @@ function update_state!(d, state::NewtonState, method::Newton)
             A_ldiv_B!(state.s, state.F, -gradient(d))
         else
             # not Array, we can't do inplace ldiv 
-            T = eltype(state.x)
             gv = Vector{T}(length(gradient(d)))
             copy!(gv, -gradient(d))
             copy!(state.s, state.F\gv)
