@@ -1,7 +1,9 @@
-checked_dphi0!(state, d, method) = vecdot(gradient(d), state.s)
+#checked_dphi0!(state, d, method) = vecdot(gradient(d), state.s)
+checked_dphi0!(state, d, method) = sum(gradient(d).*state.s)
 function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
     # If invH is not positive definite, reset it
-    dphi0 = vecdot(gradient(d), state.s)
+    #dphi0 = vecdot(gradient(d), state.s)
+    dphi0 = sum(gradient(d).*state.s)
     if dphi0 >= zero(dphi0)
         # "reset" Hessian approximation
         if M <: BFGS
@@ -12,16 +14,17 @@ function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
 
         # Re-calculate direction
         state.s .= .-gradient(d)
-        dphi0 = vecdot(gradient(d), state.s)
+        #dphi0 = vecdot(gradient(d), state.s)
+        dphi0 = sum(gradient(d).*state.s)
     end
     return dphi0
 end
 function checked_dphi0!(state, d, method::ConjugateGradient)
     # Reset the search direction if it becomes corrupted
-    dphi0 = vecdot(gradient(d), state.s)
+    dphi0 = sum(gradient(d).*state.s)
     if dphi0 >= zero(dphi0)
         state.s .= .-state.pg
-        dphi0 = vecdot(gradient(d), state.s)
+        dphi0 = sum(gradient(d).*state.s)
     end
     dphi0
 end
