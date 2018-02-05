@@ -16,7 +16,7 @@ after_while!(d, state, method, options) = nothing
 initial_convergence(d, state, method, initial_x, options) = false 
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
  
-function initial_convergence(d, state, method::FirstOrderOptimizer, initial_x, options) 
+function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options) 
     gradient!(d, initial_x)
     vecnorm(gradient(d), Inf) < options.g_tol
 end 
