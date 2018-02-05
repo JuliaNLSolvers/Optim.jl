@@ -13,6 +13,14 @@ update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
+initial_convergence(d, state, method, initial_x, options) = false 
+initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
+ 
+function initial_convergence(d, state, method::FirstOrderOptimizer, initial_x, options) 
+    gradient!(d, initial_x)
+    vecnorm(gradient(d), Inf) < options.g_tol
+end 
+
 function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
                   options::Options = Options(;default_options(method)...),
                   state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx, N}
@@ -31,16 +39,7 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased = false, false, false
 
-    g_converged = if typeof(method) <: NelderMead
-        nmobjective(state.f_simplex, state.m, n) < options.g_tol
-    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
-        # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
-        false
-    else
-        gradient!(d, initial_x)
-        vecnorm(gradient(d), Inf) < options.g_tol
-    end
-
+    g_converged = initial_convergence(d, state, method, initial_x, options)
     converged = g_converged
 
     # prepare iteration counter (used to make "initial state" trace entry)
