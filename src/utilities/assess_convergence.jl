@@ -63,11 +63,13 @@ function default_convergence_assessment(state::AbstractOptimizerState, d, option
         f_increased = true
     end
 
-    if g_residual(gradient(d)) ≤ options.g_tol
-        g_converged = true
-    end
-
+    g_converged = gradient_convergence_assessment(state,d,options)
+    
     converged = x_converged || f_converged || g_converged
 
     return x_converged, f_converged, g_converged, converged, f_increased
 end
+
+gradient_convergence_assessment(state::AbstractOptimizerState, d, options) = g_residual(gradient(d)) ≤ options.g_tol
+gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
+

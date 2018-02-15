@@ -281,6 +281,10 @@ function assess_convergence(state::NelderMeadState, d, options)
     return false, false, g_converged, g_converged, false
 end
 
+function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
+    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
+end 
+
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()
     if options.extended_trace
