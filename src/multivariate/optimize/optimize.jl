@@ -77,10 +77,9 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_tol)
-    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
-    return MultivariateOptimizationResults{typeof(method), T, Tx, Tf, N, typeof(tr)}(method,
+    return MultivariateOptimizationResults(method,
                                         NLSolversBase.iscomplex(d),
                                         real_to_complex(d, initial_x),
                                         real_to_complex(d, pick_best_x(f_incr_pick, state)),

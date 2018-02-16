@@ -2,8 +2,8 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T))
                             DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F);
                             autodiff = :finite) where T
     if autodiff == :finite
-        # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-        gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, nothing, nothing, nothing, Val{:central})
+        # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex} (requires care when using :forward I think)
+        gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, Val{:central})
         function g!(storage, x)
             DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
             return
@@ -37,7 +37,7 @@ function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = real(ze
         # TODO: Create / request Hessian functionality in DiffEqDiffTools?
         #       (Or is it better to use the finite difference Jacobian of a gradient?)
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-        jcache = DiffEqDiffTools.JacobianCache(x_seed, nothing, nothing, nothing, Val{:central})
+        jcache = DiffEqDiffTools.JacobianCache(x_seed, Val{:central})
         function h!(storage, x)
             DiffEqDiffTools.finite_difference_jacobian!(storage, g!, x, jcache)
             return
@@ -60,7 +60,7 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
         # TODO: Create / request Hessian functionality in DiffEqDiffTools?
         #       (Or is it better to use the finite difference Jacobian of a gradient?)
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex}
-        jcache = DiffEqDiffTools.JacobianCache(x_seed, nothing, nothing, nothing, Val{:central})
+        jcache = DiffEqDiffTools.JacobianCache(x_seed, Val{:central})
         function h!(storage, x)
             DiffEqDiffTools.finite_difference_jacobian!(storage, d.df, x, jcache)
             return
@@ -78,7 +78,7 @@ function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = real(zero(T));
                              autodiff = :finite) where T
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
-        gcache = DiffEqDiffTools.GradientCache(x, x, nothing, nothing, nothing, Val{:central})
+        gcache = DiffEqDiffTools.GradientCache(x, x, Val{:central})
         function g!(storage, x)
             DiffEqDiffTools.finite_difference_gradient!(storage, f, x, gcache)
             return
