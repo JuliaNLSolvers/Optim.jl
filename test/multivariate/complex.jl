@@ -5,12 +5,20 @@
     n = 4
     A = randn(n,n) + im*randn(n,n)
     A = A'A + I
-    b = randn(4) + im*randn(4)
+    b = randn(n) + im*randn(n)
 
     fcomplex(x) = real(vecdot(x,A*x)/2 - vecdot(b,x))
     gcomplex(x) = A*x-b
     gcomplex!(stor,x) = copy!(stor,gcomplex(x))
     x0 = randn(n)+im*randn(n)
+
+    @testset "Finite difference" begin
+        oda1 = OnceDifferentiable(fcomplex, x0)
+        # TODO: We should update NLSolversBase to accept Complex-valued arrays
+        fx = NLSolversBase.value_gradient!(oda1, NLSolversBase.complex_to_real(x0))
+        @test fx == fcomplex(x0)
+        @test gcomplex(x0) ≈ NLSolversBase.real_to_complex(NLSolversBase.gradient(oda1))
+    end
 
     # TODO: AcceleratedGradientDescent fail to converge?
     for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
@@ -39,6 +47,12 @@
         @test eltype(x0) == eltype(Optim.minimizer(res))
         @test Optim.converged(res)
         @test Optim.minimizer(res) ≈ A\b rtol=1e-2
+
+        @testset "Finite difference" begin
+            res = Optim.optimize(fcomplex, x0, solver, options)
+            @test Optim.converged(res)
+            @test Optim.minimizer(res) ≈ A\b rtol=1e-2
+        end
     end
 
     solver = Optim.MomentumGradientDescent(mu=0.0) # mu = 0 is basically GradienDescent?
@@ -63,4 +77,9 @@
     @test eltype(x0) == eltype(Optim.minimizer(res))
     @test Optim.converged(res)
     @test Optim.minimizer(res) ≈ A\b rtol=1e-2
+    @testset "Finite difference" begin
+        res = Optim.optimize(fcomplex, x0, solver, options)
+        @test Optim.converged(res)
+        @test Optim.minimizer(res) ≈ A\b rtol=1e-2
+    end
 end

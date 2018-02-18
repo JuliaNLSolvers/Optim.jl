@@ -5,3 +5,5 @@ LineSearches 3.2.4
 Calculus
 NLSolversBase 4.0.0
 ForwardDiff 0.5.0
+DiffEqDiffTools 0.4.0
+Calculus # TODO: Remove when DiffEqDiffTools release Hessian PR

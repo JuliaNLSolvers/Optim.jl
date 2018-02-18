@@ -6,6 +6,7 @@ module Optim
     using LineSearches
     using NLSolversBase
     using Calculus
+    using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
 

@@ -13,10 +13,10 @@ update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
-function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options) 
+function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
     vecnorm(gradient(d), Inf) < options.g_tol
-end 
+end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
 function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
@@ -77,7 +77,6 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_tol)
-    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
     return MultivariateOptimizationResults(method,
