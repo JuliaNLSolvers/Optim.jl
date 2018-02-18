@@ -8,7 +8,7 @@
                     show_name = debug_printing)
 
     # Specialized tests
-    prob = MVP.examples["Rosenbrock"]
+    prob = MVP.UnconstrainedProblems.examples["Rosenbrock"]
     df = OnceDifferentiable(MVP.objective(prob),
                             MVP.gradient(prob),
                             prob.initial_x)
@@ -69,7 +69,7 @@ end
                     iteration_exceptions = (("Penalty Function I", 10000), ),
                     show_name = debug_printing)
 
-    prob = MVP.examples["Rosenbrock"]
+    prob = MVP.UnconstrainedProblems.examples["Rosenbrock"]
     df = OnceDifferentiable(MVP.objective(prob),
                             MVP.gradient(prob),
                             prob.initial_x)
