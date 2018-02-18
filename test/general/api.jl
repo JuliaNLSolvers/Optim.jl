@@ -1,9 +1,9 @@
 # Test multivariate optimization
 @testset "Multivariate API" begin
-    rosenbrock = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
-    f = UP.objective(rosenbrock)
-    g! = UP.gradient(rosenbrock)
-    h! = UP.hessian(rosenbrock)
+    rosenbrock = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
+    f = MVP.objective(rosenbrock)
+    g! = MVP.gradient(rosenbrock)
+    h! = MVP.hessian(rosenbrock)
     initial_x = rosenbrock.initial_x
     T = eltype(initial_x)
     d1 = OnceDifferentiable(f, initial_x)

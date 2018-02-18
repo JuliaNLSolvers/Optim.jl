@@ -7,8 +7,8 @@
     end
     for optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS, Newton, AcceleratedGradientDescent, MomentumGradientDescent)
         debug_printing && println("Testing $(string(optimizer))")
-        prob = OptimTestProblems.UnconstrainedProblems.examples["Exponential"]
-        @test_warn "Linesearch failed" optimize(UP.objective(prob), prob.initial_x,
+        prob = MultivariateProblems.UnconstrainedProblems.examples["Exponential"]
+        @test_warn "Linesearch failed" optimize(MVP.objective(prob), prob.initial_x,
                                                 optimizer(alphaguess = LineSearches.InitialPrevious(),
                                                           linesearch = ls))
     end

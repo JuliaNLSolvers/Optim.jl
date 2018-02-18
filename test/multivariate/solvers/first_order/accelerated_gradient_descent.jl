@@ -13,7 +13,7 @@
 
     # TODO: Check why skip problems fail
     skip = ("Trigonometric", "Large Polynomial", "Parabola", "Paraboloid Random Matrix",
-            "Paraboloid Diagonal", "Extended Rosenbrock", "Penalty Function I",
+            "Paraboloid Diagonal", "Extended Rosenbrock", "Penalty Function I", "Beale"
              )
     run_optim_tests(AcceleratedGradientDescent();
                     skip = skip,
