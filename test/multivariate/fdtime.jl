@@ -1,6 +1,6 @@
 @testset "Finite difference timing" begin
-    fd_input_tuple(method::Optim.FirstOrderOptimizer, prob) = ((UP.objective(prob),),)
-    fd_input_tuple(method::Optim.SecondOrderOptimizer, prob) = ((UP.objective(prob),), (UP.objective(prob), UP.gradient(prob)))
+    fd_input_tuple(method::Optim.FirstOrderOptimizer, prob) = ((MVP.objective(prob),),)
+    fd_input_tuple(method::Optim.SecondOrderOptimizer, prob) = ((MVP.objective(prob),), (MVP.objective(prob), MVP.gradient(prob)))
 
     function run_optim_fd_tests(method;
                                 problems = ("Extended Rosenbrock", "Large Polynomial", "Powell",
@@ -10,7 +10,7 @@
 
         # Loop over unconstrained problems
         for name in problems
-            prob = UP.examples[name]
+            prob = MVP.UnconstrainedProblems.examples[name]
             show_name && print_with_color(:green, "Problem: ", name, "\n")
             options = Optim.Options(allow_f_increases=true, show_trace = show_trace)
             for (i, input) in enumerate(fd_input_tuple(method, prob))
