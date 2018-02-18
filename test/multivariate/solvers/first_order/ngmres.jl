@@ -8,9 +8,9 @@
                     show_name = debug_printing)
 
     # Specialized tests
-    prob = UP.examples["Rosenbrock"]
-    df = OnceDifferentiable(UP.objective(prob),
-                            UP.gradient(prob),
+    prob = MVP.examples["Rosenbrock"]
+    df = OnceDifferentiable(MVP.objective(prob),
+                            MVP.gradient(prob),
                             prob.initial_x)
 
     @test solver.nlpreconopts.iterations == 1
@@ -69,9 +69,9 @@ end
                     iteration_exceptions = (("Penalty Function I", 10000), ),
                     show_name = debug_printing)
 
-    prob = UP.examples["Rosenbrock"]
-    df = OnceDifferentiable(UP.objective(prob),
-                            UP.gradient(prob),
+    prob = MVP.examples["Rosenbrock"]
+    df = OnceDifferentiable(MVP.objective(prob),
+                            MVP.gradient(prob),
                             prob.initial_x)
     @test solver.nlpreconopts.iterations == 1
     @test solver.nlpreconopts.allow_f_increases == true
