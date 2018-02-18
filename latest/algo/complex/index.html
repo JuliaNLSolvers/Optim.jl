@@ -150,6 +150,14 @@
             
     <li class="toctree-l3"><a href="#complex-optimization">Complex optimization</a></li>
     
+        <ul>
+        
+            <li><a class="toctree-l4" href="#examples">Examples</a></li>
+        
+            <li><a class="toctree-l4" href="#references">References</a></li>
+        
+        </ul>
+    
 
     </ul>
                 </li>
@@ -217,9 +225,26 @@
               
                 <p><a id='Complex-optimization-1'></a></p>
 <h1 id="complex-optimization">Complex optimization</h1>
-<p>Optimization of functions defined on complex inputs (C^n to R) is supported by simply passing a complex <code>x0</code> as input. All zeroth and first order optimization algorithms are supported. For now, only explicit gradients are supported.</p>
-<p>The gradient of a complex-to-real function is defined as the only vector <code>g</code> such that <code>f(x+h) = f(x) + real(g' * h) + O(h^2)</code>. This is sometimes written <code>g = df/d(z*) = df/d(re(z)) + i df/d(im(z))</code>.</p>
-<p>The gradient of a C^n to R function is a C^n to C^n map. Even if it is differentiable when seen as a function of R^2n to R^2n, it might not be complex-differentiable. For instance, take f(z) = Re(z)^2. Then g(z) = 2 Re(z), which is not complex-differentiable (holomorphic). Therefore, the Hessian of a C^n to R function is in general not well-defined as a n x n complex matrix (only as a 2n x 2n real matrix), and therefore second-order optimization algorithms are not applicable directly. To use second-order optimization, convert to real variables. </p>
+<p>Optimization of functions defined on complex inputs ($\mathbb{C}^n \to \mathbb{R}$) is supported by simply passing a complex $x$ as input. All zeroth and first order optimization algorithms are supported.</p>
+<p>The gradient of a complex-to-real function is defined as the only vector $g$ such that</p>
+<p>
+<script type="math/tex; mode=display">
+f(x+h) = f(x) + \mbox{Re}(g' * h) + \mathcal{O}(h^2).
+</script>
+</p>
+<p>This is sometimes written</p>
+<p>
+<script type="math/tex; mode=display">
+g = \frac{df}{d(z*)} = \frac{df}{d(\mbox{Re}(z))} + i \frac{df}{d(\mbox{Im(z)})}.
+</script>
+</p>
+<p>The gradient of a $\mathbb{C}^n \to \mathbb{R}$ function is a $\mathbb{C}^n \to \mathbb{C}^n$ map. Even if it is differentiable when seen as a function of R^2n to R^2n, it might not be complex-differentiable. For instance, take $f(z) = \mbox{Re}(z)^2$. Then $g(z) = 2 \mbox{Re}(z)$, which is not complex-differentiable (holomorphic). Therefore, the Hessian of a $\mathbb{C}^n \to \mathbb{R}$ function is in general not well-defined as a $n \times n$ complex matrix (only as a $2n \times 2n$ real matrix), and therefore second-order optimization algorithms are not applicable directly. To use second-order optimization, convert to real variables.</p>
+<p><a id='Examples-1'></a></p>
+<h2 id="examples">Examples</h2>
+<p><strong>TODO</strong></p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p><strong>TODO</strong></p>
               
             </div>
           </div>
