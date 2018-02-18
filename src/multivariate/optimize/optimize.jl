@@ -65,7 +65,7 @@ function optimize(d::D, initial_x::Tx, method::M,
         end
 
         # Check time_limit; if none is provided it is NaN and the comparison
-        # will always return false.xas
+        # will always return false.
         stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
