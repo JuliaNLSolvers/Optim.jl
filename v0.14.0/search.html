@@ -5,22 +5,15 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Pure Julia implementations of optimization algorithms.">
+  
   <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="./img/favicon.ico">
-  <title>Home - Optim.jl</title>
+  <title>Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="./css/theme.css" type="text/css" />
   <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
   <link rel="stylesheet" href="./css/highlight.css">
-  
-  <script>
-    // Current page data
-    var mkdocs_page_name = "Home";
-    var mkdocs_page_input_path = "index.md";
-    var mkdocs_page_url = "/";
-  </script>
   
   <script src="./js/jquery-2.1.1.min.js"></script>
   <script src="./js/modernizr-2.8.3.min.js"></script>
@@ -47,27 +40,9 @@
 	<ul class="current">
 	  
           
-            <li class="toctree-l1 current">
+            <li class="toctree-l1">
 		
-    <a class="current" href=".">Home</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l2"><a href="#optimjl">Optim.jl</a></li>
-    
-        <ul>
-        
-            <li><a class="toctree-l3" href="#what">What</a></li>
-        
-            <li><a class="toctree-l3" href="#why">Why</a></li>
-        
-            <li><a class="toctree-l3" href="#how">How</a></li>
-        
-            <li><a class="toctree-l3" href="#but">But...</a></li>
-        
-        </ul>
-    
-
-    </ul>
+    <a class="" href=".">Home</a>
 	    </li>
           
             <li class="toctree-l1">
@@ -208,13 +183,8 @@
   <ul class="wy-breadcrumbs">
     <li><a href=".">Docs</a> &raquo;</li>
     
-      
     
-    <li>Home</li>
     <li class="wy-breadcrumbs-aside">
-      
-        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/index.md"
-          class="icon icon-github"> Edit on GitHub</a>
       
     </li>
   </ul>
@@ -223,38 +193,22 @@
           <div role="main">
             <div class="section">
               
-                <p><a id='Optim.jl-1'></a></p>
-<h1 id="optimjl">Optim.jl</h1>
-<p><a id='What-1'></a></p>
-<h2 id="what">What</h2>
-<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained and Riemannian optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>).</p>
-<p><a id='Why-1'></a></p>
-<h2 id="why">Why</h2>
-<p>There are many solvers available from both free and commercial sources, and many of them are accessible from Julia. Few of them are written in Julia. Performance-wise this is rarely a problem, as they are often written in either Fortran or C. However, solvers written directly in Julia does come with some advantages.</p>
-<p>When writing Julia software (packages) that require something to be optimized, the programmer can either choose to write their own optimization routine, or use one of the many available solvers. For example, this could be something from the <a href="https://github.com/JuliaOpt/NLopt.jl">NLOpt</a> suite. This means adding a dependency which is not written in Julia, and more assumptions have to be made as to the environment the user is in. Does the user have the proper compilers? Is it possible to use GPL'ed code in the project? Optim is released under the MIT license, and installation is a simple <code>Pkg.add</code>, so it really doesn't get much freer, easier, and lightweight than that.</p>
-<p>It is also true, that using a solver written in C or Fortran makes it impossible to leverage one of the main benefits of Julia: multiple dispatch. Since Optim is entirely written in Julia, we can currently use the dispatch system to ease the use of custom preconditioners. A planned feature along these lines is to allow for user controlled choice of solvers for various steps in the algorithm, entirely based on dispatch, and not predefined possibilities chosen by the developers of Optim.</p>
-<p>Being a Julia package also means that Optim has access to the automatic differentiation features through the packages in <a href="http://www.juliadiff.org/">JuliaDiff</a>.</p>
-<p><a id='How-1'></a></p>
-<h2 id="how">How</h2>
-<p>Optim is registered in <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a>. This means that all you need to do to install Optim, is to run</p>
-<div class="codehilite"><pre><span></span><span class="n">Pkg</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;Optim&quot;</span><span class="p">)</span>
-</pre></div>
+
+  <h1 id="search">Search Results</h1>
+
+  <form id="content_search" action="search.html">
+    <span role="status" aria-live="polite" class="ui-helper-hidden-accessible"></span>
+    <input name="q" id="mkdocs-search-query" type="text" class="search_input search-query ui-autocomplete-input" placeholder="Search the Docs" autocomplete="off" autofocus>
+  </form>
+
+  <div id="mkdocs-search-results" class="search-results">
+    Searching...
+  </div>
 
 
-<p><a id='But...-1'></a></p>
-<h2 id="but">But...</h2>
-<p>Optim is a work in progress. There are still some rough edges to be sanded down, and features we want to implement. There are also planned breaking changes that are good to be aware of. Please see the section on Planned Changes.</p>
-              
             </div>
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="user/minimization/" class="btn btn-neutral float-right" title="Minimizing a function">Next <span class="icon icon-circle-arrow-right"></span></a>
-      
-      
-    </div>
   
 
   <hr/>
@@ -281,8 +235,6 @@
       
       
       
-        <span style="margin-left: 15px"><a href="user/minimization/" style="color: #fcfcfc">Next &raquo;</a></span>
-      
     </span>
 </div>
     <script>var base_url = '.';</script>
@@ -294,8 +246,3 @@
 
 </body>
 </html>
-
-<!--
-MkDocs version : 0.17.2
-Build Date UTC : 2018-02-19 19:50:12
--->
