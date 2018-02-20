@@ -3,6 +3,7 @@ using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 MVP = MultivariateProblems
 using Base.Test
+using Suppressor
 
 debug_printing = false
 
