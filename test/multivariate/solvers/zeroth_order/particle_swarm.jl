@@ -28,7 +28,6 @@
                              options)
     @test norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
     @suppress_out begin
-    # TODO: Is there a way to suppress the trace results?
         options = Optim.Options(iterations=300, show_trace=true, extended_trace=true, store_trace=true)
         res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles), options)
         @test summary(res) == "Particle Swarm"
