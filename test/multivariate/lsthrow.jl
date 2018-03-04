@@ -1,6 +1,6 @@
 @testset "Line search errors" begin
-    function ls(df,x,s,xtmp,lsr,c,mayterminate)
-        LineSearches._hagerzhang!(df,x,s,xtmp,lsr,c,mayterminate,
+    function ls(df,x,s,xtmp,phi0,dphi0,c,mayterminate)
+        LineSearches._hagerzhang!(df,x,s,xtmp,phi0,dphi0,c,mayterminate,
                                  0.1,0.9,
                                  Inf,5.,1e-6,0.66,
                                  2)
