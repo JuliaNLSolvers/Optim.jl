@@ -20,7 +20,8 @@ bibliography: paper.bib
 ---
 
 # Summary
-`Optim.jl` provides a range of optimization capabilities written in
+[Optim](https://github.com/JuliaNLSolvers/Optim.jl/)
+provides a range of optimization capabilities written in
 the Julia programming language [@bezanson2017julia].  The package
 supports optimization on manifolds, functions of complex numbers, and
 input types such as arbitrary precision vectors and matrices.  We have
@@ -59,50 +60,6 @@ The derivative based methods use line searches to assist
 convergence. Multiple line search algorithms are available, including
 interpolating backtracking and methods that aim to satisfy the Wolfe
 conditions.
-
-## Example usage
-
-We provide short example of how one can use Optim to minimize the
-Rosenbrock function, defined by
-
-$$
-f(x,y) = {(1-x)}^2 + 100\times {(y-x^2)}^2.
-$$
-
-In the following code, we define the objective and tell Optim to
-minimize the objective using BFGS with a second-order backtracking
-line search.
-
-``` julia
-using Optim, LineSearches
-rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-x0 = zeros(2)
-result = optimize(rosenbrock, x0, BFGS(linesearch = BackTracking(order=2))
-```
-
-When the gradient is not provided, the default behaviour is to
-approximate derivatives using finite differences. The summary output
-from the optimization is stored in `result`, and prints
-
-``` julia
-Results of Optimization Algorithm
- * Algorithm: BFGS
- * Starting Point: [0.0,0.0]
- * Minimizer: [0.9999999926655744,0.9999999853309254]
- * Minimum: 5.379380e-17
- * Iterations: 23
- * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false
-     |x - x'| = 1.13e-09
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
-     |f(x) - f(x')| = 1.57e-01 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true
-     |g(x)| = 8.79e-11
-   * Stopped by an increasing objective: false
-   * Reached Maximum Number of Iterations: false
- * Objective Calls: 31
- * Gradient Calls: 24
-```
 
 # Usage in research and industry
 The optimization routines in this package have been used in both
