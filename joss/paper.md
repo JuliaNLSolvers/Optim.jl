@@ -1,5 +1,5 @@
 ---
-title: 'Optim: An optimization package for Julia'
+title: 'Optim: A mathematical optimization package for Julia'
 tags:
   - Optimization
   - Julia
@@ -20,18 +20,28 @@ bibliography: paper.bib
 ---
 
 # Summary
-[Optim](https://github.com/JuliaNLSolvers/Optim.jl/)
-provides a range of optimization capabilities written in
-the Julia programming language [@bezanson2017julia].  The package
-supports optimization on manifolds, functions of complex numbers, and
-input types such as arbitrary precision vectors and matrices.  We have
-implemented routines for derivative free, first-order, and
-second-order optimization methods.  The user can provide derivatives
-themselves, or request that they are calculated using automatic
-differentiation or finite difference methods.  The main focus of the
-package has currently been on unconstrained optimization, however,
-box-constrained optimization is supported, and a more comprehensive
-support for constraints is underway.
+[Optim](https://github.com/JuliaNLSolvers/Optim.jl/) provides a range
+of optimization capabilities written in the Julia programming language
+[@bezanson2017julia]. Our aim is to enable researchers, users, and
+other Julia packages to solve optimization problems without writing
+such algorithms themselves.
+The package supports optimization on manifolds,
+functions of complex numbers, and input types such as arbitrary
+precision vectors and matrices.  We have implemented routines for
+derivative free, first-order, and second-order optimization methods.
+The user can provide derivatives themselves, or request that they are
+calculated using automatic differentiation or finite difference
+methods.  The main focus of the package has currently been on
+unconstrained optimization, however, box-constrained optimization is
+supported, and a more comprehensive support for constraints is
+underway.  Similar to Optim, the C library
+[NLopt](http://ab-initio.mit.edu/nlopt) [@johnson2018nlopt] contains a
+collection of nonlinear optimization routines. Within the Julia
+community, the packages
+[BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
+and
+[Optimize.jl](https://github.com/JuliaSmoothOptimizers/Optimize.jl)
+provide optimization capabilities with a different focus.
 
 ## Optimization routines
 As of version 0.14, the following optimization routines are available.
