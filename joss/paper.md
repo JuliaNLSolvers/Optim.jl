@@ -41,7 +41,8 @@ community, the packages
 [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
 and
 [Optimize.jl](https://github.com/JuliaSmoothOptimizers/Optimize.jl)
-provide optimization capabilities with a different focus.
+provide optimization capabilities focusing on derivative-free and
+large-scale smooth problems respectively.
 
 ## Optimization routines
 As of version 0.14, the following optimization routines are available.
