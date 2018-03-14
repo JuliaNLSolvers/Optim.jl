@@ -32,10 +32,10 @@ function NLSolversBase.value(obj::ManifoldObjective)
     value(obj.inner_obj)
 end
 function NLSolversBase.gradient(obj::ManifoldObjective)
-    gradient(obj.inner_obj)
+    LinearAlgebra.gradient(obj.inner_obj)
 end
 function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
-    gradient(obj.inner_obj,i)
+    LinearAlgebra.gradient(obj.inner_obj,i)
 end
 function NLSolversBase.gradient!(obj::ManifoldObjective,x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))

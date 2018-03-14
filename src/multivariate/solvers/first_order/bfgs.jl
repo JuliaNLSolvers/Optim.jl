@@ -38,7 +38,7 @@ approximations as well as the gradient. See also the limited memory variant
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = x -> eye(eltype(x), length(x)),
+                initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
                 manifold::Manifold=Flat())
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
@@ -84,12 +84,12 @@ function update_state!(d, state::BFGSState, method::BFGS)
 
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
-    scale!(state.s, -1)
+    mul!(vec(state.s), state.invH, vec(gradient(d)))
+    rmul!(state.s, -1)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Maintain a record of the previous gradient
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
@@ -114,7 +114,7 @@ function update_h!(d, state, method::BFGS)
     if dx_dg == 0.0
         return true # force stop
     end
-    A_mul_B!(vec(state.u), state.invH, vec(state.dg))
+    mul!(vec(state.u), state.invH, vec(state.dg))
 
     c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
     c2 = 1 / dx_dg
@@ -122,8 +122,15 @@ function update_h!(d, state, method::BFGS)
     # TODO BLASify this
     # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
     for i in 1:n
-        @simd for j in 1:n
-            @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
+        state_dxi = state.dx[i]
+        state_ui = state.u[i]
+        @simd for j in 1:i
+            @inbounds state.invH[j, i] += c1 * state_dxi * state.dx[j] - c2 * (state_ui * state.dx[j] + state.u[j] * state_dxi)
+        end
+    end
+    for i in 1:n
+        for j in i+1:n
+            @inbounds state.invH[j, i] = state.invH[i, j]
         end
     end
 end

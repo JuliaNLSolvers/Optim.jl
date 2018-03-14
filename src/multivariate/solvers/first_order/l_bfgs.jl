@@ -77,7 +77,7 @@ function twoloop!(s,
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
     linesearch!::L
@@ -96,7 +96,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat(),
-scaleinvH0::Bool = true && (typeof(P) <: Void))
+scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -125,7 +125,7 @@ function LBFGS(; m::Integer = 10,
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
-                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+                 scaleinvH0::Bool = true && (typeof(P) <: Nothing) )
     LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 

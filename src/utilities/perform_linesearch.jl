@@ -5,7 +5,7 @@ function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
     if dphi0 >= zero(dphi0)
         # "reset" Hessian approximation
         if M <: BFGS
-            copy!(state.invH, method.initial_invH(state.x))
+            copyto!(state.invH, method.initial_invH(state.x))
         elseif M <: LBFGS
             state.pseudo_iteration = 1
         end
@@ -40,7 +40,7 @@ function perform_linesearch!(state, method::M, d) where M
 
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi0
-    copy!(state.x_previous, state.x)
+    copyto!(state.x_previous, state.x)
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try

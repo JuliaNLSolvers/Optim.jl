@@ -8,7 +8,7 @@
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
-immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
     manifold::Manifold
@@ -18,7 +18,7 @@ immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     wmax::Int             # Maximum window size
 end
 
-immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
     manifold::Manifold
@@ -53,7 +53,7 @@ NGMRES(;
 ## Description
 This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
 and proposes an accelerated step by minimizing an approximation of
-the \(\ell_2\) residual of the gradient on a subspace spanned by the previous
+the ell residual of the gradient on a subspace spanned by the previous
 `wmax` iterates.
 
 N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
@@ -63,7 +63,7 @@ Application of the algorithm to optimization is covered, for example, in [2].
 ## References
 [1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
 [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
-"""
+"""#ell  \(\ell_2\)
 function NGMRES(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
