@@ -35,6 +35,7 @@ pages:
             - Gradient Free:
                 - Nelder Mead: 'algo/nelder_mead.md'
                 - Simulated Annealing: 'algo/simulated_annealing.md'
+                - Particle Swarm: 'algo/particle_swarm.md'
 #                - Univariate:
 #                    - Brent's Method: 'algo/brent.md'
 #                    - Golden Section: 'algo/goldensection.md'
