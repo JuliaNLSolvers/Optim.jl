@@ -8,7 +8,7 @@
   
   <meta name="author" content="JuliaNLSolvers">
   <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Newton - Optim.jl</title>
+  <title>Particle Swarm - Optim.jl</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
@@ -17,9 +17,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Newton";
-    var mkdocs_page_input_path = "algo/newton.md";
-    var mkdocs_page_url = "/algo/newton/";
+    var mkdocs_page_name = "Particle Swarm";
+    var mkdocs_page_input_path = "algo/particle_swarm.md";
+    var mkdocs_page_url = "/algo/particle_swarm/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -79,7 +79,7 @@
                     
     <span class="caption-text">Solvers</span>
     <ul class="subnav">
-                <li class="toctree-l3">
+                <li class="toctree-l3 current">
                     
     <span class="caption-text">Gradient Free</span>
     <ul class="subnav">
@@ -91,9 +91,25 @@
                     
     <a class="" href="../simulated_annealing/">Simulated Annealing</a>
                 </li>
-                <li class="toctree-l4">
+                <li class="toctree-l4 current">
                     
-    <a class="" href="../particle_swarm/">Particle Swarm</a>
+    <a class="current" href="./">Particle Swarm</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#particle-swarm">Particle Swarm</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
                 </li>
     </ul>
                 </li>
@@ -119,31 +135,13 @@
                 </li>
     </ul>
                 </li>
-                <li class="toctree-l3 current">
+                <li class="toctree-l3">
                     
     <span class="caption-text">Hessian Required</span>
     <ul class="subnav">
-                <li class="toctree-l4 current">
+                <li class="toctree-l4">
                     
-    <a class="current" href="./">Newton</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l5"><a href="#newtons-method">Newton's Method</a></li>
-    
-        <ul>
-        
-            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
-        
-            <li><a class="toctree-l6" href="#description">Description</a></li>
-        
-            <li><a class="toctree-l6" href="#example">Example</a></li>
-        
-            <li><a class="toctree-l6" href="#references">References</a></li>
-        
-        </ul>
-    
-
-    </ul>
+    <a class="" href="../newton/">Newton</a>
                 </li>
                 <li class="toctree-l4">
                     
@@ -218,14 +216,14 @@
         
       
         
-          <li>Hessian Required &raquo;</li>
+          <li>Gradient Free &raquo;</li>
         
       
     
-    <li>Newton</li>
+    <li>Particle Swarm</li>
     <li class="wy-breadcrumbs-aside">
       
-        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/newton.md"
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/particle_swarm.md"
           class="icon icon-github"> Edit on GitHub</a>
       
     </li>
@@ -235,61 +233,28 @@
           <div role="main">
             <div class="section">
               
-                <p><a id='Newton's-Method-1'></a></p>
-<h1 id="newtons-method">Newton's Method</h1>
+                <p><a id='Particle-Swarm-1'></a></p>
+<h1 id="particle-swarm">Particle Swarm</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">Newton</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
-         <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">())</span>
+<div class="codehilite"><pre><span></span><span class="n">ParticleSwarm</span><span class="p">(;</span> <span class="n">lower</span> <span class="o">=</span> <span class="p">[],</span>
+                <span class="n">upper</span> <span class="o">=</span> <span class="p">[],</span>
+                <span class="n">n_particles</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
 </pre></div>
 
 
-<p>The constructor takes two keywords:</p>
+<p>The constructor takes three keywords:</p>
 <ul>
-<li><code>linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)</code>, a function performing line search, see the line search section.</li>
-<li><code>alphaguess = a(state, dphi0, d)</code>, a function for setting the initial guess for the line search algorithm, see the line search section.</li>
+<li><code>lower = []</code>, a vector of lower bounds, unbounded below if empty or <code>Inf</code>'s</li>
+<li><code>upper = []</code>, a vector of upper bounds, unbounded above if empty or <code>Inf</code>'s</li>
+<li><code>n_particles = 0</code>, number of particles in the swarm, defaults to least three</li>
 </ul>
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
-<p>Newton's method for optimization has a long history, and is in some sense the gold standard in unconstrained optimization of smooth functions, at least from a theoretical viewpoint. The main benefit is that it has a quadratic rate of convergence near a local optimum. The main disadvantage is that the user has to provide a Hessian. This can be difficult, complicated, or simply annoying. It can also be computationally expensive to calculate it.</p>
-<p>Newton's method for optimization consists of applying Newton's method for solving systems of equations, where the equations are the first order conditions, saying that the gradient should equal the zero vector.</p>
-<p>
-<script type="math/tex; mode=display">
-\nabla f(x) = 0
-</script>
-</p>
-<p>A second order Taylor expansion of the left-hand side leads to the iterative scheme</p>
-<p>
-<script type="math/tex; mode=display">
-x_{n+1} = x_n - H(x_n)^{-1}\nabla f(x_n)
-</script>
-</p>
-<p>where the inverse is not calculated directly, but the step size is instead calculated by solving</p>
-<p>
-<script type="math/tex; mode=display">
-H(x) \textbf{s} = \nabla f(x_n).
-</script>
-</p>
-<p>This is equivalent to minimizing a quadratic model, $m_k$ around the current $x_n$</p>
-<p>
-<script type="math/tex; mode=display">
-m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s}
-</script>
-</p>
-<p>For functions where $H(x_n)$ is difficult, or computationally expensive to obtain, we might replace the Hessian with another positive definite matrix that approximates it. Such methods are called Quasi-Newton methods; see (L-)BFGS and Gradient Descent.</p>
-<p>In a sufficiently small neighborhood around the minimizer, Newton's method has quadratic convergence, but globally it might have slower convergence, or it might even diverge. To ensure convergence, a line search is performed for each $\textbf{s}$. This amounts to replacing the step formula above with</p>
-<p>
-<script type="math/tex; mode=display">
-x_{n+1} = x_n - \alpha \textbf{s}
-</script>
-</p>
-<p>and finding a scalar $\alpha$ such that we get sufficient descent; see the line search section for more information.</p>
-<p>Additionally, if the function is locally concave, the step taken in the formulas above will go in a direction of ascent,  as the Hessian will not be positive (semi)definite. To avoid this, we use a specialized method to calculate the step direction. If the Hessian is positive semidefinite then the method used is standard, but if it is not, a correction is made using the functionality in <a href="https://github.com/timholy/PositiveFactorizations.jl">PositiveFactorizations.jl</a>.</p>
-<p><a id='Example-1'></a></p>
-<h2 id="example">Example</h2>
-<p>show the example from the issue</p>
+<p>The Particle Swarm implementation in Optim.jl is the so-called Adaptive Particle Swarm algorithm in [1]. It attempts to improve global coverage and convergence by switching between four evolutionary states: exploration, exploitation, convergence, and jumping out. In the jumping out state it intentially tries to take the best particle and move it away from its (potentially and probably) local optimum, to improve the ability to find a global optimum. Of course, this comes a the cost of slower convergence, but hopefully converges to the global optimum as a result.</p>
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
+<p>[1] Zhan, Zhang, and Chung. Adaptive particle swarm optimization, IEEE Transactions on Systems, Man, and Cybernetics, Part B: CyberneticsVolume 39, Issue 6, 2009, Pages 1362-1381 (2009)</p>
               
             </div>
           </div>
@@ -297,10 +262,10 @@ x_{n+1} = x_n - \alpha \textbf{s}
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../newton_trust_region/" class="btn btn-neutral float-right" title="Newton with Trust Region">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../cg/" class="btn btn-neutral float-right" title="Conjugate Gradient">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../ngmres/" class="btn btn-neutral" title="Acceleration"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../simulated_annealing/" class="btn btn-neutral" title="Simulated Annealing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -328,10 +293,10 @@ x_{n+1} = x_n - \alpha \textbf{s}
           <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
       
       
-        <span><a href="../ngmres/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../simulated_annealing/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../newton_trust_region/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../cg/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
