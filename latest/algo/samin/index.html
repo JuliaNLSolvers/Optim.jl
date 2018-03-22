@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Simulated Annealing w/ bounds - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Simulated Annealing w/ bounds";
+    var mkdocs_page_input_path = "algo/samin.md";
+    var mkdocs_page_url = "/algo/samin/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">Simulated Annealing w/ bounds</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#samin">SAMIN</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructor">Constructor</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#example">Example</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../particle_swarm/">Particle Swarm</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../cg/">Conjugate Gradient</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../ngmres/">Acceleration</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../manifolds/">Manifolds</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Gradient Free &raquo;</li>
+        
+      
+    
+    <li>Simulated Annealing w/ bounds</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/samin.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='SAMIN-1'></a></p>
+<h1 id="samin">SAMIN</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<div class="codehilite"><pre><span></span><span class="n">SAMIN</span><span class="p">(;</span> <span class="n">nt</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>     <span class="c"># reduce temperature every nt*ns*dim(x_init) evaluations</span>
+        <span class="n">ns</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>     <span class="c"># adjust bounds every ns*dim(x_init) evaluations</span>
+        <span class="n">rt</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">0.5</span>     <span class="c"># geometric temperature reduction factor: when temp changes, new temp is t=rt*t</span>
+        <span class="n">neps</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>   <span class="c"># number of previous best values the final result is compared to</span>
+        <span class="n">f_tol</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">1e-8</span> <span class="c"># the required tolerance level for function value comparisons</span>
+        <span class="n">x_tol</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">1e-5</span> <span class="c"># the required tolerance level for x</span>
+        <span class="n">coverage_ok</span><span class="o">::</span><span class="kt">Bool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span> <span class="c"># increase temperature until parameter space is covered</span>
+        <span class="n">verbosity</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="c"># scalar: 0, 1, 2 or 3 (default = 0).</span>
+</pre></div>
+
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The <code>SAMIN</code> method implements the Simulated Annealing algorithm for problems with bounds constrains a described in Goffe et. al. (1994) and Goffe (1996). The algorithm requires bounds, although these bounds are often set rather wide, and are not necessarily meant to reflect constraints in the model, but rather bounds that are there to improve the search. If the final <code>x</code>s are very close to the boundary, it is a good idea to restart the optimizer with wider bounds, unless the bounds actually reflect hard constraints on <code>x</code>.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<div class="codehilite"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
+
+<span class="n">julia</span><span class="o">&gt;</span> <span class="n">prob</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
+
+<span class="n">julia</span><span class="o">&gt;</span> <span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">fill</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">SAMIN</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">20000</span><span class="p">))</span>
+<span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
+ <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">SAMIN</span>
+ <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span><span class="mf">1.0</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="p">[</span><span class="mf">1.0170012560033472</span><span class="p">,</span><span class="mf">1.0343750729202243</span><span class="p">]</span>
+ <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="mf">2.897402e-04</span>
+ <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">5901</span>
+ <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="kc">false</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
+     <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">=</span> <span class="nb">NaN</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|:</span> <span class="kc">false</span>
+     <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span>
+   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
+     <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span>
+   <span class="o">*</span> <span class="n">Stopped</span> <span class="n">by</span> <span class="n">an</span> <span class="n">increasing</span> <span class="n">objective</span><span class="o">:</span> <span class="kc">false</span>
+   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="kt">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="o">:</span> <span class="kc">false</span>
+ <span class="o">*</span> <span class="n">Objective</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">5901</span>
+ <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">0</span>
+</pre></div>
+
+
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<ul>
+<li>Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.</li>
+<li>Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics &amp; Econometrics, Oct96, Vol. 1 Issue 3.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../particle_swarm/" class="btn btn-neutral float-right" title="Particle Swarm">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../simulated_annealing/" class="btn btn-neutral" title="Simulated Annealing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../simulated_annealing/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../particle_swarm/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>

@@ -93,6 +93,10 @@
                 </li>
                 <li class="toctree-l4">
                     
+    <a class="" href="../samin/">Simulated Annealing w/ bounds</a>
+                </li>
+                <li class="toctree-l4">
+                    
     <a class="" href="../particle_swarm/">Particle Swarm</a>
                 </li>
     </ul>
@@ -283,9 +287,9 @@
 <p>$\rho_k &lt; \rho_{lower} \Rightarrow \Delta_{k+1} = 0.25 \Delta_k$. Finally, we only accept a point if its decrease is appreciable compared to the quadratic approximation.  Specifically, a step is only accepted $\rho_k &gt; \eta$.  As long as we choose $\eta$ to be less than $\rho_{lower}$, we will shrink the trust region whenever we reject a step.  Eventually, if the objective function is locally quadratic, $\Delta_k$ will become small enough that a quadratic approximation will be accurate enough to make progress again.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
-<span class="n">prob</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">NewtonTrustRegion</span><span class="p">())</span>
+<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
+<span class="n">prob</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">NewtonTrustRegion</span><span class="p">())</span>
 </pre></div>
 
 
