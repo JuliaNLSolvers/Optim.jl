@@ -13,7 +13,37 @@ SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
 ## Description
 The `SAMIN` method implements the Simulated Annealing algorithm for problems with
 bounds constrains a described in Goffe et. al. (1994) and Goffe (1996). The
-algorithm
+algorithm requires bounds, although these bounds are often set rather wide, and
+are not necessarily meant to reflect constraints in the model, but rather bounds
+that are there to improve the search. If the final `x`s are very close to the boundary,
+it is a good idea to restart the optimizer with wider bounds, unless the bounds
+actually reflect hard constraints on `x`.
+
+## Example
+```julia
+julia> using Optim, OptimTestProblems
+
+julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
+
+julia> res = Optim.optimize(prob.f, prob.initial_x, fill(-100.0, 2), fill(100.0, 2), SAMIN(), Optim.Options(iterations=20000))
+Results of Optimization Algorithm
+ * Algorithm: SAMIN
+ * Starting Point: [-1.2,1.0]
+ * Minimizer: [1.0170012560033472,1.0343750729202243]
+ * Minimum: 2.897402e-04
+ * Iterations: 5901
+ * Convergence: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = NaN |f(x)|
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 5901
+ * Gradient Calls: 0
+```
 
 ## References
  - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.

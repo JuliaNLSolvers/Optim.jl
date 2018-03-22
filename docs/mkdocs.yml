@@ -31,10 +31,11 @@ pages:
         - Configurable Options: 'user/config.md'
         - Tips and tricks: 'user/tipsandtricks.md'
     - Algorithms:
-        - Unconstrained:
+        - Solvers:
             - Gradient Free:
                 - Nelder Mead: 'algo/nelder_mead.md'
                 - Simulated Annealing: 'algo/simulated_annealing.md'
+                - Simulated Annealing w/ bounds: 'algo/samin.md'
 #                - Univariate:
 #                    - Brent's Method: 'algo/brent.md'
 #                    - Golden Section: 'algo/goldensection.md'
@@ -46,8 +47,6 @@ pages:
             - Hessian Required:
                 - Newton: 'algo/newton.md'
                 - Newton with Trust Region: 'algo/newton_trust_region.md'
-        - Constrained:
-            - Simulated Annealing: 'algo/samin.md'
         - Automatic Differentiation: 'algo/autodiff.md'
         - Linesearch: 'algo/linesearch.md'
         - Preconditioners: 'algo/precondition.md'

@@ -54,6 +54,7 @@ end
 #     * 2 = summary every temperature change, without param values
 #     * 3 = summary every temperature change, with param values
 #         covered by the trial values. 1: start decreasing temperature immediately
+Base.summary(::SAMIN) = "SAMIN"
 
 function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray, method::SAMIN, options::Options = Options())
     hline = "="^80

@@ -51,9 +51,9 @@ Finally, we only accept a point if its decrease is appreciable compared to the q
 ## Example
 
 ```julia
-using Optim
-prob = Optim.UnconstrainedProblems.examples["Rosenbrock"];
-res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=NewtonTrustRegion())
+using Optim, OptimTestProblems
+prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
+res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion())
 ```
 
 ## References
