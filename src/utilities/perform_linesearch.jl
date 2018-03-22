@@ -32,7 +32,7 @@ function perform_linesearch!(state, method::M, d) where M
     phi_0  = value(d)
 
     # Guess an alpha
-    method.alphaguess!(state, phi_0, dphi_0, d)
+    method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
@@ -40,9 +40,9 @@ function perform_linesearch!(state, method::M, d) where M
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try
-        state.alpha =
+        state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.x_ls, phi_0, dphi_0,
-                               state.alpha, state.mayterminate)
+                               state.alpha)
         state.dphi_0_previous = dphi_0
         return true # lssuccess = true
     catch ex
