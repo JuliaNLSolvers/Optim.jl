@@ -81,9 +81,7 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
     # check for out-of-bounds starting values
     for i = 1:n
         if(( x[i] > ub[i]) || (x[i] < lb[i]))
-            @printf("samin: initial parameter %d out of bounds\n", i)
-            converge = 0
-            return xopt, fopt, converge, details
+            error("samin: initial parameter %d out of bounds\n", i)
         end
     end
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
