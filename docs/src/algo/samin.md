@@ -25,23 +25,23 @@ julia> using Optim, OptimTestProblems
 
 julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
 
-julia> res = Optim.optimize(prob.f, prob.initial_x, fill(-100.0, 2), fill(100.0, 2), SAMIN(), Optim.Options(iterations=20000))
-Results of Optimization Algorithm
+julia> res = Optim.optimize(prob.f, prob.initial_x, fill(-100.0, 2), fill(100.0, 2), SAMIN(rt=0.9), Optim.Options(iterations=20000))
+Results of Optimization AlgorithmResults of Optimization Algorithm
  * Algorithm: SAMIN
  * Starting Point: [-1.2,1.0]
- * Minimizer: [1.0170012560033472,1.0343750729202243]
- * Minimum: 2.897402e-04
- * Iterations: 5901
+ * Minimizer: [1.0000002252116529,1.0000004516135839]
+ * Minimum: 5.086195e-14
+ * Iterations: 19851
  * Convergence: false
-   * |x - x'| ≤ 0.0e+00: false
-     |x - x'| = NaN
+   * |x - x'| ≤ 0.0e+00: false 
+     |x - x'| = NaN 
    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = NaN |f(x)|
-   * |g(x)| ≤ 0.0e+00: false
-     |g(x)| = NaN
+   * |g(x)| ≤ 0.0e+00: false 
+     |g(x)| = NaN 
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
- * Objective Calls: 5901
+ * Objective Calls: 19851
  * Gradient Calls: 0
 ```
 
