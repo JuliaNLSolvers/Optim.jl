@@ -1,9 +1,10 @@
 using Optim, Compat
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
-MVP = MultivariateProblems
 using Base.Test
 using Suppressor
+
+const MVP = MultivariateProblems
 
 debug_printing = false
 

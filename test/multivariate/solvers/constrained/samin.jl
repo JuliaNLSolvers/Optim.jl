@@ -1,6 +1,5 @@
 @testset "SAMIN" begin
-    MVP.UnconstrainedProblems.examples
-    prob = probs["Himmelblau"]
+    prob = MVP.UnconstrainedProblems.examples["Himmelblau"]
 
     xtrue = prob.solutions
     f = OptimTestProblems.MultivariateProblems.objective(prob)
