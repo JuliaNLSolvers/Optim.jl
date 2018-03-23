@@ -21,13 +21,13 @@ multiple times to verify that the same solution is found each time. If this is n
 increase rt. When in doubt, start with a conservative rt, for example, rt=0.95, and allow for
 a generous iteration limit. The algorithm requires lower and upper bounds on the parameters,
 although these bounds are often set rather wide, and are not necessarily meant to reflect
-constraints in the model,but rather bounds that enclose the parameter space. If the final
+constraints in the model, but rather bounds that enclose the parameter space. If the final
 `x`s are very close to the boundary (which can be checked by setting verbosity=1), it is a
 good idea to restart the optimizer with wider bounds, unless the bounds actually reflect
 hard constraints on `x`.
 
 ## Example
-This is example shows a successful minimization:
+This example shows a successful minimization:
 ```julia
 julia> using Optim, OptimTestProblems
 
@@ -65,7 +65,7 @@ Results of Optimization Algorithm
  * Gradient Calls: 0
 ```
 ## Example
-This is example shows an unsuccessful minimization, because the cooling rate,
+This example shows an unsuccessful minimization, because the cooling rate,
 rt=0.5, is too rapid:
 ```julia
 julia> using Optim, OptimTestProblems
