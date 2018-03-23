@@ -143,7 +143,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
                          -pg, # Maintain current search direction in state.s
-                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+                         @initial_linesearch()...) 
 end
 
 function update_state!(d, state::ConjugateGradientState, method::ConjugateGradient)

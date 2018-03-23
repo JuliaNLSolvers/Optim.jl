@@ -75,7 +75,7 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
               similar(initial_x), # Buffer stored in state.u
               method.initial_invH(initial_x), # Store current invH in state.invH
               similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...)
 end
 
 

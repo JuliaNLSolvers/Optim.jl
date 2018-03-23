@@ -47,7 +47,7 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
                          copy(initial_x), # Maintain intermediary current state in state.y
                          similar(initial_x), # Maintain intermediary state in state.y_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+                         @initial_linesearch()...)
 end
 
 function update_state!(d, state::AcceleratedGradientDescentState, method::AcceleratedGradientDescent)

@@ -172,7 +172,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
               Vector{T}(method.m), #Buffer for use by twoloop
               0,
               similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...)
 end
 
 function update_state!(d, state::LBFGSState, method::LBFGS)
