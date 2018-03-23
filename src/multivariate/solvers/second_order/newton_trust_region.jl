@@ -82,7 +82,7 @@ function solve_tr_subproblem!(gr,
     # symmetric.  (Julia issue #17093)
     H_eig = eigfact(Symmetric(H))
     min_H_ev, max_H_ev = H_eig[:values][1], H_eig[:values][n]
-    H_ridged = copyto(H)
+    H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.
     qg = similar(gr)
@@ -232,7 +232,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
     @assert(method.rho_lower >= 0.)
     # Keep track of trust region sizes
-    delta = copyto(method.initial_delta)
+    delta = copy(method.initial_delta)
 
     # Record attributes of the subproblem in the trace.
     hard_case = false
@@ -244,7 +244,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     hessian!!(d, initial_x)
 
 
-    NewtonTrustRegionState(copyto(initial_x), # Maintain current state in state.x
+    NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
@@ -266,14 +266,14 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
 
     # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
+    copyto!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
 
     # Update current position
     state.x .+= state.s
 
     # Update the function value and gradient
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
     state.f_x_previous = value(d)
     value_gradient!(d, state.x)
 
@@ -313,8 +313,8 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
 
         d.F = state.f_x_previous
-        copy!(state.x, state.x_previous)
-        copy!(gradient(d), state.g_previous)
+        copyto!(state.x, state.x_previous)
+        copyto!(gradient(d), state.g_previous)
     end
 
     false
@@ -343,10 +343,10 @@ end
 function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options)
     dt = Dict()
     if options.extended_trace
-        dt["x"] = copyto(state.x)
-        dt["g(x)"] = copyto(gradient(d))
-        dt["h(x)"] = copyto(NLSolversBase.hessian(d))
-        dt["delta"] = copyto(state.delta)
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["delta"] = copy(state.delta)
         dt["interior"] = state.interior
         dt["hard case"] = state.hard_case
         dt["reached_subproblem_solution"] = state.reached_subproblem_solution
