@@ -22,12 +22,12 @@
 ```julia
 SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
         ns::Int = 5     # adjust bounds every ns*dim(x_init) evaluations
-        rt::T = 0.5     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+        rt::T = 0.9     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
         neps::Int = 5   # number of previous best values the final result is compared to
-        f_tol::T = 1e-8 # the required tolerance level for function value comparisons
-        x_tol::T = 1e-5 # the required tolerance level for x
-        coverage_ok::Bool = false, # increase temperature until parameter space is covered
-        verbosity::Int = 0) # scalar: 0, 1, 2 or 3 (default = 0).
+        f_tol::T = 1e-12 # the required tolerance level for function value comparisons
+        x_tol::T = 1e-6 # the required tolerance level for x
+        coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
+        verbosity::Int = 1) # scalar: 0, 1, 2 or 3 (default = 1).
 ```
 ## Description
 The `SAMIN` method implements the Simulated Annealing algorithm for problems with
@@ -41,12 +41,12 @@ algorithm
 @with_kw struct SAMIN{T}<:AbstractOptimizer
     nt::Int = 5 # reduce temperature every nt*ns*dim(x_init) evaluations
     ns::Int = 5 # adjust bounds every ns*dim(x_init) evaluations
-    rt::T = 0.5 # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+    rt::T = 0.9 # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
     neps::Int = 5 # number of previous best values the final result is compared to
-    f_tol::T = 1e-8 # the required tolerance level for function value comparisons
-    x_tol::T = 1e-5 # the required tolerance level for x
-    coverage_ok::Bool = false # increase temperature until parameter space is covered
-    verbosity::Int = 0 # scalar: 0, 1, 2 or 3 (default = 0).
+    f_tol::T = 1e-12 # the required tolerance level for function value comparisons
+    x_tol::T = 1e-6 # the required tolerance level for x
+    coverage_ok::Bool = false # if false, increase temperature until initial parameter space is covered
+    verbosity::Int = 1 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
 end
 # * verbosity: scalar: 0, 1, 2 or 3 (default = 1).
 #     * 0 = no screen output
@@ -205,7 +205,7 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
         end
 
         # intermediate output, if desired
-        if verbose
+        if verbosity > 1
             println(hline)
             println("samin: intermediate results before next temperature change")
             println("temperature: ", round(t,5))
@@ -251,23 +251,26 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
             end
             # Like to see the final results?
             if (converge > 0)
-                if (verbosity >= 1)
+                if verbose
+                    println(hline)
+                    println("SAMIN results")
+                    if (converge == 1)
+                        println("==> Normal convergence <==")
+                    end
                     if (converge == 2)
-                        println(hline)
-                        println("SAMIN results")
                         print_with_color(:red, "==> WARNING <==\n")
                         println("Last point satisfies convergence criteria, but is near")
                         println("boundary of parameter space.")
                         println(lnobds, " out of  ", (nup+ndown+nrej), " evaluations were out of bounds in the last round.")
                         println("Expand bounds and re-run, unless this is a constrained minimization.")
-                        println("total number of objective function evaluations: ", f_calls(d))
-                        @printf("\n     Obj. value:  %16.10f\n\n", fopt)
-                        println("       parameter      search width")
-                        for i=1:n
-                            @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
-                        end
-                        println(hline*"\n")
+                    end    
+                    println("total number of objective function evaluations: ", f_calls(d))
+                    @printf("\n     Obj. value:  %16.10f\n\n", fopt)
+                    println("       parameter      search width")
+                    for i=1:n
+                        @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                     end
+                    println(hline*"\n")
                 end
             end
             # Reduce temperature, record current function value in the
