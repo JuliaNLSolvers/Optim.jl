@@ -35,13 +35,8 @@ function perform_linesearch!(state, method::M, d) where M
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
     # Store current x and f(x) for next iteration
-<<<<<<< HEAD
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)
-=======
-    state.f_x_previous = phi_0
-    copyto!(state.x_previous, state.x)
->>>>>>> LSM
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try
