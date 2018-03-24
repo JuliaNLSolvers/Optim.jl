@@ -97,7 +97,7 @@ end
 struct Fminbox{T<:AbstractOptimizer} <: AbstractOptimizer end
 Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
-Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O(T)))"
+Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
 
 function optimize(obj,
                   initial_x::AbstractArray{T},
@@ -242,7 +242,7 @@ function optimize(
                 linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialPrevious(alpha=one(T), alphamin=zero(T), alphamax=T(Inf))
+                alphaguess = LineSearches.InitialPrevious{T}()
             end
             _optimizer = O(T, alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
         elseif O in (NelderMead, SimulatedAnnealing)
@@ -281,7 +281,7 @@ function optimize(
     Tx = typeof(x)
     _x_abschange = maxdiff(x,xold)
     _minimizer = minimizer(results)
-    _minimum = minimum(results)
+    _minimum = df.f(_minimizer)
     _results::MultivariateOptimizationResults{Fminbox{O}, T, Tx, typeof(_x_abschange), typeof(_minimum), typeof(results.trace)} = MultivariateOptimizationResults{Fminbox{O}, T, Tx, typeof(_x_abschange), typeof(_minimum), typeof(results.trace)}(
         Fminbox{O}(), false, initial_x, _minimizer, _minimum,
             iteration, results.iteration_converged,

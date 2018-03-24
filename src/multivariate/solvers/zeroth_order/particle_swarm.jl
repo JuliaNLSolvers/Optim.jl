@@ -426,7 +426,7 @@ function update_swarm_params!(c1, c2, w, current_state, f)
         c2 = c2 / c_total * 4
     end
 
-    w = 1 / (1 + T(3)/2 * exp(-T(13)/50 * f))
+    w = 1 / (1 + T(3)/2 * exp(-T(13)/5 * f))
     return w, c1, c2
 end
 
