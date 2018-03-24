@@ -45,9 +45,59 @@ function Options(;
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
+  #  T = promote_type(typeof(x_tol), typeof(f_tol), typeof(g_tol))
     Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, time_limit)
+end
+
+
+InternalUseOptions(::Union{AbstractObjective,AbstractOptimizer}) = InternalUseOptions()
+
+""""
+For internal use / when type stability is important.
+Will hopefully no longer be needed someday.
+"""
+function InternalUseOptions(
+        x_tol::T1,
+        f_tol::T2,
+        g_tol::T3,
+        f_calls_limit::Int,
+        g_calls_limit::Int,
+        h_calls_limit::Int,
+        allow_f_increases::Bool,
+        successive_f_tol::Int,
+        iterations::Integer,
+        store_trace::Bool,
+        show_trace::Bool,
+        extended_trace::Bool,
+        show_every::Integer,
+        time_limit,
+        callback::T4) where {T1<:Real,T2<:Real,T3<:Real,T4}
+    #if extended_trace && callback == nothing
+    #    show_trace = true
+    #end
+    Options{promote_type(T1,T2,T3),T4}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), callback, time_limit)
+end
+function InternalUseOptions(
+        x_tol::T1 = 1e-32,
+        f_tol::T2 = 1e-32,
+        g_tol::T3 = 1e-8,
+        f_calls_limit::Int = 0,
+        g_calls_limit::Int = 0,
+        h_calls_limit::Int = 0,
+        allow_f_increases::Bool = false,
+        successive_f_tol::Int = 0,
+        iterations::Integer = 1_000,
+        store_trace::Bool = false,
+        show_trace::Bool = false,
+        extended_trace::Bool = false,
+        show_every::Integer = 1,
+        time_limit = NaN) where {T1<:Real,T2<:Real,T3<:Real}
+    #if extended_trace && callback == nothing
+    #    show_trace = true
+    #end
+    Options{promote_type(T1,T2,T3),Cvoid}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), nothing, time_limit)
 end
 
 function print_header(options::Options)

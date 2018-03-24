@@ -20,7 +20,7 @@ end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
 function optimize(d::D, initial_x::Tx, method::M,
-                  options::Options = Options(;default_options(method)...),
+                  options::Options = InternalUseOptions(method),
                   state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
@@ -83,17 +83,18 @@ function optimize(d::D, initial_x::Tx, method::M,
     # in variables besides the option settings
     T = typeof(options.f_tol)
     f_incr_pick = f_increased && !options.allow_f_increases
-
-    return MultivariateOptimizationResults(method,
+    x_absc = x_abschange(state)
+    minf = pick_best_f(f_incr_pick, state, d)
+    return MultivariateOptimizationResults{M,T,Tx,typeof(x_absc),typeof(minf),typeof(tr)}(method,
                                         NLSolversBase.iscomplex(d),
                                         real_to_complex(d, initial_x),
                                         real_to_complex(d, pick_best_x(f_incr_pick, state)),
-                                        pick_best_f(f_incr_pick, state, d),
+                                        minf,
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
                                         T(options.x_tol),
-                                        x_abschange(state),
+                                        x_absc,
                                         f_converged,
                                         T(options.f_tol),
                                         f_abschange(d, state),

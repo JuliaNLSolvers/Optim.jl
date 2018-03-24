@@ -18,8 +18,8 @@ end
 
 
 # Fake objective function implementing a retraction
-mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
-    manifold::Manifold
+mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective, M <: Manifold} <: NLSolversBase.AbstractObjective
+    manifold::M
     inner_obj::T
 end
 iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
@@ -32,10 +32,10 @@ function NLSolversBase.value(obj::ManifoldObjective)
     value(obj.inner_obj)
 end
 function NLSolversBase.gradient(obj::ManifoldObjective)
-    LinearAlgebra.gradient(obj.inner_obj)
+    gradient(obj.inner_obj)
 end
 function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
-    LinearAlgebra.gradient(obj.inner_obj,i)
+    gradient(obj.inner_obj,i)
 end
 function NLSolversBase.gradient!(obj::ManifoldObjective,x)
     xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))

@@ -114,7 +114,6 @@ function optimize(f,
                   F::Fminbox{O} = Fminbox(); kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
      optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), initial_x, l, u, F; kwargs...)
 end
-
 function optimize(
         df::OnceDifferentiable,
         initial_x::AbstractArray{T},
@@ -137,9 +136,11 @@ function optimize(
         mu0::T = convert(T, NaN),
         mufactor::T = convert(T, 0.001),
         precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
-        optimizer_o = Options(store_trace = store_trace,
-                                          show_trace = show_trace,
-                                          extended_trace = extended_trace),
+        optimizer_o = InternalUseOptions(1e-32, 1e-32, 1e-8, 0, 0, 0, false,
+                        0, 1_000, store_trace, show_trace, extended_trace),
+        # Options(store_trace = store_trace,
+        #                                   show_trace = show_trace,
+        #                                   extended_trace = extended_trace),
         nargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
 
     O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")

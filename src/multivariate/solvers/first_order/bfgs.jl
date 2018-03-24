@@ -2,11 +2,11 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H<:Function} <: FirstOrderOptimizer
+struct BFGS{IL, L, H<:Function, M <: Manifold} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
-    manifold::Manifold
+    manifold::M
 end
 
 Base.summary(::BFGS) = "BFGS"
@@ -83,9 +83,26 @@ function update_state!(d, state::BFGSState, method::BFGS)
     n = length(state.x)
 
     # Set the search direction
-    # Search direction is the negative gradient divided by the approximate Hessian
-    mul!(vec(state.s), state.invH, vec(gradient(d)))
-    rmul!(state.s, -1)
+    # # Search direction is the negative gradient divided by the approximate Hessian
+    T = eltype(state.invH)
+    if T <: BLAS.BlasFloat
+        # If T is a BlasFloat, then we can condense operations.
+        BLAS.gemm!('N', 'N', -one(T), state.invH, vec(gradient(d)), zero(T), vec(state.s))
+    else
+        # else, I wouldn't trust there to be a gemm! fallback.
+        # using Compat.LinearAlgebra hasn't been working with
+        # the mul! functions, so I'm using this hack.
+        # Haven't double checked if v"0.7.0-DEV.393" is
+        # the correct commit for this change.
+        @static if VERSION >= v"0.7.0-DEV.393"
+            mul!(vec(state.s), state.invH, vec(gradient(d)))
+            rmul!(vec(state.s), -1)
+        else
+            A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
+            scale!(vec(state.s), -1)
+        end
+    end
+
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Maintain a record of the previous gradient
@@ -114,7 +131,14 @@ function update_h!(d, state, method::BFGS)
     if dx_dg == 0.0
         return true # force stop
     end
-    mul!(vec(state.u), state.invH, vec(state.dg))
+
+    @static if VERSION >= v"0.7.0-DEV.393"
+        mul!(vec(state.u), state.invH, vec(state.dg))
+    else
+        A_mul_B!(vec(state.u), state.invH, vec(state.dg))
+    end
+
+    
 
     c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
     c2 = 1 / dx_dg

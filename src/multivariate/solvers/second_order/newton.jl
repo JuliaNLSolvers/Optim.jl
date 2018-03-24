@@ -27,7 +27,7 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{Tx, T, F<:LinearAlgebra.Cholesky} <: AbstractOptimizerState
+mutable struct NewtonState{Tx, T, F<:Cholesky} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
@@ -49,8 +49,8 @@ function initial_state(method::Newton, options, d, initial_x)
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
                 @static(VERSION >= v"0.7.0-DEV.393" ?
-                        LinearAlgebra.Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)) :
-                        LinearAlgebra.Cholesky(similar(d.H, T, 0, 0), :U)),
+                        Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)) :
+                        Base.LinAlg.Cholesky(similar(d.H, T, 0, 0), :U)),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...)
 end

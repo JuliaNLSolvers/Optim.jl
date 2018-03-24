@@ -28,6 +28,9 @@ module Optim
                           NonDifferentiable,
                           OnceDifferentiable,
                           TwiceDifferentiable
+                          
+    import Compat.LinearAlgebra:    dot,
+                                    A_ldiv_B!
 
     export optimize,
            NonDifferentiable,

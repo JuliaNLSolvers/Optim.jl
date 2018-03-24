@@ -41,8 +41,7 @@ function perform_linesearch!(state, method::M, d) where M
     # Perform line search; catch LineSearchException to allow graceful exit
     try
         state.alpha, ϕalpha =
-            method.linesearch!(d, state.x, state.s, state.x_ls, phi_0, dphi_0,
-                               state.alpha)
+            method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
         state.dphi_0_previous = dphi_0
         return true # lssuccess = true
     catch ex

@@ -70,20 +70,20 @@ optimize(f, g!, h!, initial_x::AbstractArray, options::Options) = optimize((f, g
 
 # potentially everything is supplied (besides caches)
 optimize(f,         initial_x::AbstractArray, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...)) = optimize((f,),        initial_x, method, options)
+         options::Options = InternalUseOptions(method)) = optimize((f,),        initial_x, method, options)
 optimize(f, g!,     initial_x::AbstractArray, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...)) = optimize((f, g!),     initial_x, method, options)
+         options::Options = InternalUseOptions(method)) = optimize((f, g!),     initial_x, method, options)
 optimize(f, g!, h!, initial_x::AbstractArray, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...)) = optimize((f, g!, h!), initial_x, method, options)
+         options::Options = InternalUseOptions(method)) = optimize((f, g!, h!), initial_x, method, options)
 function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer,
-                  options::Options = Options(;default_options(method)...))
+                  options::Options = InternalUseOptions(method))
     d = promote_objtype(method, initial_x, f...)
 
     optimize(d, initial_x, method, options)
 end
 
 function optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer,
-                  options::Options = Options(;default_options(method)...)) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
+                  options::Options = InternalUseOptions(method)) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
     d = promote_objtype(method, initial_x, d)
     optimize(d, initial_x, method, options)
 end
