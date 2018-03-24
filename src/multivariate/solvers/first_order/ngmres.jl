@@ -431,3 +431,7 @@ end
 function assess_convergence(state::NGMRESState, d, options)
     default_convergence_assessment(state, d, options)
 end
+
+function default_options(method::AbstractNGMRES)
+    Dict(:allow_f_increases => true)
+end

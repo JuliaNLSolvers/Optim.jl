@@ -47,7 +47,7 @@ Base.summary(::NelderMead) = "Nelder-Mead"
 function NelderMead(::Type{T}=Float64; kwargs...) where T
     KW = Dict(kwargs)
     if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
-        initial_simplex, parameters = AffineSimplexer(T), AdaptiveParameters()
+        initial_simplex, parameters = AffineSimplexer(T), AdaptiveParameters(T)
         haskey(KW, :initial_simplex) && (initial_simplex = KW[:initial_simplex])
         haskey(KW, :parameters) && (parameters = KW[:parameters])
         return NelderMead(initial_simplex, parameters)
@@ -274,6 +274,10 @@ function assess_convergence(state::NelderMeadState, d, options)
     g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged, false
 end
+
+function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
+    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
+end 
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()

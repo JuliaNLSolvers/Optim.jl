@@ -45,19 +45,19 @@ end
 end
 
 @testset "Stock test problems" begin
-    for (name, prob) in OptimTestProblems.UnconstrainedProblems.examples
+    for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
       if prob.istwicedifferentiable
             hv!(storage::Vector, x::Vector, v::Vector) = begin
                 n = length(x)
                 H = Matrix{Float64}(n, n)
-                UP.hessian(prob)(H, x)
+                MVP.hessian(prob)(H, x)
                 storage .= H * v
             end
             fg!(g::Vector, x::Vector) = begin
-                UP.gradient(prob)(g,x)
-                UP.objective(prob)(x)
+                MVP.gradient(prob)(g,x)
+                MVP.objective(prob)(x)
             end
-        ddf = Optim.TwiceDifferentiableHV(UP.objective(prob), fg!, hv!, prob.initial_x)
+        ddf = Optim.TwiceDifferentiableHV(MVP.objective(prob), fg!, hv!, prob.initial_x)
         result = Optim.optimize(ddf, prob.initial_x, Optim.KrylovTrustRegion())
         @test norm(Optim.minimizer(result) - prob.solutions) < 1e-2
       end

@@ -6,8 +6,11 @@ module Optim
     using LineSearches
     using NLSolversBase
     using Calculus
+    using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
+
+    import Parameters: @with_kw, @unpack
 
     import Compat.String
     import Compat.view
@@ -34,7 +37,6 @@ module Optim
            BFGS,
            Brent,
            ConjugateGradient,
-           Fminbox,
            GoldenSection,
            GradientDescent,
            NGMRES,
@@ -46,6 +48,9 @@ module Optim
            NewtonTrustRegion,
            SimulatedAnnealing,
            ParticleSwarm,
+
+           Fminbox,
+           SAMIN,
 
            Manifold,
            Flat,
@@ -101,6 +106,7 @@ module Optim
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
+    include("multivariate/solvers/constrained/samin.jl")
 
     # Univariate methods
     include("univariate/solvers/golden_section.jl")

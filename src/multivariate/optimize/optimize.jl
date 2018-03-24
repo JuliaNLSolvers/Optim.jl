@@ -13,6 +13,12 @@ update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
+function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
+    gradient!(d, initial_x)
+    vecnorm(gradient(d), Inf) < options.g_tol
+end
+initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
+
 function optimize(d::D, initial_x::Tx, method::M,
                   options::Options{T, TCallback} = Options(;default_options(method)...), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx<:AbstractArray, T, TCallback}
 
@@ -24,23 +30,13 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     initial_x = complex_to_real(d, initial_x)
 
-    n = length(initial_x)
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
-    x_converged, f_converged, f_increased = false, false, false
+    x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged = if typeof(method) <: NelderMead
-        nmobjective(state.f_simplex, state.m, n) < options.g_tol
-    elseif  typeof(method) <: ParticleSwarm || typeof(method) <: SimulatedAnnealing
-        # TODO: remove KrylovTrustRegion when TwiceDifferentiableHV is in NLSolversBase
-        false
-    else
-        gradient!(d, initial_x)
-        vecnorm(gradient(d), Inf) < options.g_tol
-    end
-
+    g_converged = initial_convergence(d, state, method, initial_x, options)
     converged = g_converged
 
     # prepare iteration counter (used to make "initial state" trace entry)
@@ -53,9 +49,13 @@ function optimize(d::D, initial_x::Tx, method::M,
         iteration += 1
 
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
-        update_g!(d, state, method)
+        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
+        # For some problems it may be useful to require `f_converged` to be hit multiple times
+        # TODO: Do the same for x_tol?
+        counter_f_tol = f_converged ? counter_f_tol+1 : 0
+        converged = converged | (counter_f_tol > options.successive_f_tol)
 
         !converged && update_h!(d, state, method) # only relevant if not converged
 
@@ -64,6 +64,8 @@ function optimize(d::D, initial_x::Tx, method::M,
             stopped_by_callback = trace!(tr, d, state, iteration, method, options)
         end
 
+        # Check time_limit; if none is provided it is NaN and the comparison
+        # will always return false.
         stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false

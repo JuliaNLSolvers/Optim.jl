@@ -278,6 +278,7 @@ function optimize(
         f_increased && !allow_f_increases && break
     end
 
+    Tx = typeof(x)
     _x_abschange = maxdiff(x,xold)
     _minimizer = minimizer(results)
     _minimum = minimum(results)

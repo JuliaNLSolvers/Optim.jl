@@ -15,6 +15,7 @@ struct Options{T, TCallback}
     g_calls_limit::Int
     h_calls_limit::Int
     allow_f_increases::Bool
+    successive_f_tol::Int
     iterations::Int
     store_trace::Bool
     show_trace::Bool
@@ -32,6 +33,7 @@ function Options(;
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
         allow_f_increases::Bool = false,
+        successive_f_tol::Int = 0,
         iterations::Integer = 1_000,
         store_trace::Bool = false,
         show_trace::Bool = false,

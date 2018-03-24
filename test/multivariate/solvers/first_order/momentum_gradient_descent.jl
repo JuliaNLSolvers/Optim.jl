@@ -1,7 +1,7 @@
 @testset "Momentum Gradient Descent" begin
     # TODO: check the skips and exceptions, maybe it's enough to increase number of iterations?
     skip = ("Rosenbrock", "Extended Powell", "Extended Rosenbrock",
-            "Trigonometric", "Penalty Function I")
+            "Trigonometric", "Penalty Function I", "Beale")
     run_optim_tests(MomentumGradientDescent(),
                     skip = skip,
                     convergence_exceptions = (("Large Polynomial",1),  ("Himmelblau",1),
