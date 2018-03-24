@@ -71,7 +71,7 @@ function NGMRES(::Type{T}=Float64; manifold::Manifold = Flat(),
                     linesearch = LineSearches.Static{T}(alpha=T(1)/10^4,scaled=true), # Step length arbitrary
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = T(1)/10^12), # ϵ0 = 1e-12  -- number was an arbitrary choice#
+                ϵ0 = T(1)/10^12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
                 wmax::Int = 10) where T# wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     NGMRES(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
