@@ -1,4 +1,5 @@
 function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
+    T = eltype(state.x)
     dt = Dict()
     if options.extended_trace
         dt["x"] = copy(state.x)
@@ -6,7 +7,7 @@ function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
     update!(tr,
             state.iteration,
             d.F,
-            NaN,
+            T(NaN),
             dt,
             options.store_trace,
             options.show_trace,

@@ -10,6 +10,7 @@
 #  lambda_1_multiplicity: The number of times the lowest eigenvalue is repeated,
 #                         which is only correct if hard_case is true.
 function check_hard_case_candidate(H_eigv, qg)
+    T = eltype(qg)
     @assert length(H_eigv) == length(qg)
     if H_eigv[1] >= 0
         # The hard case is only when the smallest eigenvalue is negative.
@@ -21,11 +22,11 @@ function check_hard_case_candidate(H_eigv, qg)
     while !hard_case_check_done
         if lambda_index > length(H_eigv)
             hard_case_check_done = true
-        elseif abs(H_eigv[1] - H_eigv[lambda_index]) > 1e-10
+        elseif abs(H_eigv[1] - H_eigv[lambda_index]) > T(1)/10^10
             # The eigenvalues are reported in order.
             hard_case_check_done = true
         else
-            if abs(qg[lambda_index]) > 1e-10
+            if abs(qg[lambda_index]) > T(1)/10^10
                 hard_case_check_done = true
                 hard_case = false
             end
@@ -64,13 +65,12 @@ end
 #  hard_case - Whether or not it was a "hard case" as described by N&W
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
-function solve_tr_subproblem!(gr,
+function solve_tr_subproblem!(gr::AbstractArray{T},
                               H,
                               delta,
                               s;
-                              tolerance=1e-10,
-                              max_iters=5)
-    T = eltype(gr)
+                              tolerance=T(1)/10^10,
+                              max_iters=5) where {T}
     n = length(gr)
     delta_sq = delta^2
 
@@ -96,7 +96,7 @@ function solve_tr_subproblem!(gr,
     hard_case = false
     reached_solution = true
 
-    if min_H_ev >= 1e-8 && p_sq_norm(zero(T), 1, n, qg, H_eig) <= delta_sq
+    if min_H_ev >= T(1)/10^8 && p_sq_norm(zero(T), 1, n, qg, H_eig) <= delta_sq
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
         reached_solution = true
@@ -112,7 +112,7 @@ function solve_tr_subproblem!(gr,
 
         # Solutions smaller than this lower bound on lambda are not allowed:
         # they don't ridge H enough to make H_ridge PSD.
-        lambda_lb = -min_H_ev + max(1e-8, 1e-8 * (max_H_ev - min_H_ev))
+        lambda_lb = -min_H_ev + max(T(1)/10^8, T(1)/10^8 * (max_H_ev - min_H_ev))
         lambda = lambda_lb
 
         hard_case = false
@@ -127,7 +127,7 @@ function solve_tr_subproblem!(gr,
                 # Then we can simply solve using root finding.
                 # Set a starting point greater than the minimum based on the
                 # range between the largest and smallest eigenvalues.
-                lambda = lambda_lb + 0.01 * (max_H_ev - min_H_ev)
+                lambda = lambda_lb + T(1)/100 * (max_H_ev - min_H_ev)
             else
                 hard_case = true
                 reached_solution = true
@@ -169,8 +169,8 @@ function solve_tr_subproblem!(gr,
 
                 # Check that lambda is not less than lambda_lb, and if so, go
                 # half the way to lambda_lb.
-                if lambda < (lambda_lb + 1e-8)
-                    lambda = 0.5 * (lambda_previous - lambda_lb) + lambda_lb
+                if lambda < (lambda_lb + T(1)/10^8)
+                    lambda = T(1)/2 * (lambda_previous - lambda_lb) + lambda_lb
                 end
 
                 for i=1:n
@@ -185,7 +185,7 @@ function solve_tr_subproblem!(gr,
         end
     end
 
-    m = vecdot(gr, s) + 0.5 * vecdot(s, H * s)
+    m = vecdot(gr, s) + T(1)/2 * vecdot(s, H * s)
 
     return m, interior, lambda, hard_case, reached_solution
 end
@@ -198,11 +198,11 @@ struct NewtonTrustRegion{T <: Real} <: SecondOrderOptimizer
     rho_upper::T
 end
 
-NewtonTrustRegion(; initial_delta::Real = 1.0,
-                    delta_hat::Real = 100.0,
-                    eta::Real = 0.1,
-                    rho_lower::Real = 0.25,
-                    rho_upper::Real = 0.75) =
+NewtonTrustRegion(::Type{T}=Float64; initial_delta::Real = one(T),
+                    delta_hat::Real = T(100),
+                    eta::Real = T(1)/10,
+                    rho_lower::Real = T(25)/100,
+                    rho_upper::Real = T(75)/100) where T =
                     NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
@@ -230,7 +230,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     @assert(0 < method.initial_delta < method.delta_hat, "delta must be in (0, delta_hat)")
     @assert(0 <= method.eta < method.rho_lower, "eta must be in [0, rho_lower)")
     @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
-    @assert(method.rho_lower >= 0.)
+    @assert(method.rho_lower >= 0)
     # Keep track of trust region sizes
     delta = copy(method.initial_delta)
 
@@ -238,7 +238,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     hard_case = false
     reached_subproblem_solution = true
     interior = true
-    lambda = NaN
+    lambda = T(NaN)
 
     value_gradient!!(d, initial_x)
     hessian!!(d, initial_x)
@@ -284,18 +284,18 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     if abs(m) <= eps(T)
         # This should only happen when the step is very small, in which case
         # we should accept the step and assess_convergence().
-        state.rho = 1.0
+        state.rho = one(T)
     elseif m > 0
         # This can happen if the trust region radius is too large and the
         # Hessian is not positive definite.  We should shrink the trust
         # region.
-        state.rho = method.rho_lower - 1.0
+        state.rho = method.rho_lower - one(T)
     else
         state.rho = f_x_diff / (0 - m)
     end
 
     if state.rho < method.rho_lower
-        state.delta *= 0.25
+        state.delta *= T(25)/100
     elseif (state.rho > method.rho_upper) && (!state.interior)
         state.delta = min(2 * state.delta, method.delta_hat)
     else
@@ -310,7 +310,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # steps reducing delta by constant factors while each solution
         # will be the same.
         x_diff = state.x - state.x_previous
-        delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
+        delta = T(25)/100 * sqrt(vecdot(x_diff, x_diff))
 
         d.F = state.f_x_previous
         copy!(state.x, state.x_previous)

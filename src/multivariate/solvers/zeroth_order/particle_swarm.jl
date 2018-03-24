@@ -72,9 +72,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
       # user did not define number of particles
        n_particles = maximum([3, length(initial_x)])
     end
-    c1 = 2.0
-    c2 = 2.0
-    w = 1.0
+    c1 = T(2)
+    c2 = T(2)
+    w = T(1)
 
     X = Array{T,2}(n, n_particles)
     V = Array{T,2}(n, n_particles)
@@ -95,9 +95,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
         for i in 1:n_particles
             for j in 1:n
                 ww = upper[j] - lower[j]
-                X[j, i] = lower[j] + ww * rand()
+                X[j, i] = lower[j] + ww * rand(T)
                 X_best[j, i] = X[j, i]
-                V[j, i] = ww * (rand() * 2.0 - 1.0) / 10.0
+                V[j, i] = ww * (rand(T) * 2 - 1) / 10
             end
         end
     else
@@ -107,12 +107,12 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
                     if abs(initial_x[i]) > 0.0
                         dx[j] = abs(initial_x[i])
                     else
-                        dx[j] = 1.0
+                        dx[j] = T(1)
                     end
                 end
-                X[j, i] = initial_x[j] + dx[j] * rand()
+                X[j, i] = initial_x[j] + dx[j] * rand(T)
                 X_best[j, i] = X[j, i]
-                V[j, i] = abs(X[j, i]) * (rand() * 2.0 - 1.0)
+                V[j, i] = abs(X[j, i]) * (rand(T) * 2 - 1)
             end
         end
     end
@@ -141,7 +141,7 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
         options.iterations)
 end
 
-function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) where T
+function update_state!(f, state::ParticleSwarmState{Tx,T}, method::ParticleSwarm) where {Tx,T}
     n = length(state.x)
     if state.limit_search_space
         limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
@@ -171,13 +171,13 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
         state.x_learn[k] = state.x[k]
     end
     random_index = rand(1:n)
-    random_value = randn()
-    sigma_learn = 1 - (1 - 0.1) * state.iteration / state.iterations
+    random_value = randn(T)
+    sigma_learn = 1 - (1 - T(1)/10) * state.iteration / state.iterations
 
-    r3 = randn() * sigma_learn
+    r3 = randn(T) * sigma_learn
 
     if state.limit_search_space
-        state.x_learn[random_index] = state.x_learn[random_index] + (state.upper[random_index] - state.lower[random_index]) / 3.0 * r3
+        state.x_learn[random_index] = state.x_learn[random_index] + (state.upper[random_index] - state.lower[random_index]) / T(3) * r3
     else
         state.x_learn[random_index] = state.x_learn[random_index] + state.x_learn[random_index] * r3
     end
@@ -192,7 +192,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     score_learn = value(f, state.x_learn)
     if score_learn < f.F
-        f.F = score_learn * 1.0
+        f.F = T(score_learn)
         for j in 1:n
             state.X_best[j, i_worst] = state.x_learn[j]
             state.X[j, i_worst] = state.x_learn[j]
@@ -214,10 +214,11 @@ end
 function update_swarm!(X, X_best, best_point, n, n_particles, V,
                        w, c1, c2)
   # compute new positions for the swarm particles
+  T = eltype(X)
   for i in 1:n_particles
       for j in 1:n
-          r1 = rand()
-          r2 = rand()
+          r1 = rand(T)
+          r2 = rand(T)
           vx = X_best[j, i] - X[j, i]
           vg = best_point[j] - X[j, i]
           V[j, i] = V[j, i]*w + c1*r1*vx + c2*r2*vg
@@ -226,51 +227,51 @@ function update_swarm!(X, X_best, best_point, n, n_particles, V,
     end
 end
 
-function get_mu_1(f)
-    if 0 <= f <= 0.4
-        return 0.0
-    elseif 0.4 < f <= 0.6
-        return 5. * f - 2.0
-    elseif 0.6 < f <= 0.7
-        return 1.0
-    elseif 0.7 < f <= 0.8
-        return -10. * f + 8.0
+function get_mu_1(f::T) where T
+    if T(0) <= f <= T(2)/5
+        return T(0)
+    elseif T(2)/5 < f <= T(3)/5
+        return 5 * f - 2
+    elseif T(3)/5 < f <= T(7)/10
+        return T(1)
+    elseif T(7)/10 < f <= T(4)/5
+        return -10 * f + 8
     else
-        return 0.0
+        return T(0)
     end
 end
 
-function get_mu_2(f)
-    if 0 <= f <= 0.2
-        return 0.0
-    elseif 0.2 < f <= 0.3
-        return 10. * f - 2.0
-    elseif 0.3 < f <= 0.4
-        return 1.0
-    elseif 0.4 < f <= 0.6
-        return -5. * f + 3.0
+function get_mu_2(f::T) where T
+    if T(0) <= f <= T(1)/5
+        return T(0)
+    elseif T(1)/5 < f <= T(3)/10
+        return 10 * f - 2
+    elseif T(3)/10 < f <= T(2)/5
+        return T(1)
+    elseif T(2)/5 < f <= T(3)/5
+        return -5 * f + 3
     else
-        return 0.0
+        return T(0)
     end
 end
 
-function get_mu_3(f)
-    if 0 <= f <= 0.1
-        return 1.0
-    elseif 0.1 < f <= 0.3
-        return -5. * f + 1.5
+function get_mu_3(f::T) where T
+    if T(0) <= f <= T(1)/10
+        return T(1)
+    elseif T(1)/10 < f <= T(3)/10
+        return -5 * f + T(3)/2
     else
-        return 0.0
+        return T(0)
     end
 end
 
-function get_mu_4(f)
-    if 0 <= f <= 0.7
-        return 0.0
-    elseif 0.7 < f <= 0.9
-        return 5. * f - 3.5
+function get_mu_4(f::T) where T
+    if T(0) <= f <= T(7)/10
+        return T(0)
+    elseif T(7)/10 < f <= T(9)/10
+        return 5 * f - T(7)/2
     else
-        return 1.0
+        return T(1)
     end
 end
 
@@ -284,7 +285,7 @@ function get_swarm_state(X, score, best_point, previous_state)
     f_best, i_best = findmin(score)
     d = zeros(T, n_particles)
     for i in 1:n_particles
-        dd = 0.0
+        dd = T(0)
         for k in 1:n_particles
             for dim in 1:n
                 @inbounds ddd = (X[dim, i] - X[dim, k])
@@ -362,42 +363,43 @@ end
 
 function update_swarm_params!(c1, c2, w, current_state, f)
 
-    delta_c1 = 0.05 + rand() / 20.
-    delta_c2 = 0.05 + rand() / 20.
+    T = promote_type(typeof(c1), typeof(c2), typeof(f))
+    delta_c1 = T(1)/20 + rand(T) / 20
+    delta_c2 = T(1)/20 + rand(T) / 20
 
     if current_state == 1
         c1 += delta_c1
         c2 -= delta_c2
     elseif current_state == 2
-        c1 += delta_c1 / 2.
-        c2 -= delta_c2 / 2.
+        c1 += delta_c1 / 2
+        c2 -= delta_c2 / 2
     elseif current_state == 3
-        c1 += delta_c1 / 2.
-        c2 += delta_c2 / 2.
+        c1 += delta_c1 / 2
+        c2 += delta_c2 / 2
     elseif current_state == 4
         c1 -= delta_c1
         c2 -= delta_c2
     end
 
-    if c1 < 1.5
-        c1 = 1.5
-    elseif c1 > 2.5
-        c1 = 2.5
+    if c1 < T(3)/2
+        c1 = T(3)/2
+    elseif c1 > T(5)/2
+        c1 = T(5)/2
     end
 
-    if c2 < 1.5
-        c2 = 2.5
-    elseif c2 > 2.5
-        c2 = 2.5
+    if c2 < T(3)/2
+        c2 = T(5)/2
+    elseif c2 > T(5)/2
+        c2 = T(5)/2
     end
 
-    if c1 + c2 > 4.0
+    if c1 + c2 > T(4)
         c_total = c1 + c2
         c1 = c1 / c_total * 4
         c2 = c2 / c_total * 4
     end
 
-    w = 1 / (1 + 1.5 * exp(-2.6 * f))
+    w = 1 / (1 + T(3)/2 * exp(-T(13)/50 * f))
     return w, c1, c2
 end
 

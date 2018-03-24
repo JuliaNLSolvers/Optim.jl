@@ -33,9 +33,10 @@ function optimize(f::F,
     lower::Union{Integer, Real},
     upper::Union{Integer, Real};
     kwargs...) where F<:Function
+    T = promote_type(typeof(lower/1), typeof(upper/1))
    optimize(f,
-            Float64(lower),
-            Float64(upper);
+            T(lower),
+            T(upper);
             kwargs...)
 end
 
@@ -44,9 +45,10 @@ function optimize(f::F,
     upper::Union{Integer, Real},
     mo::Union{Brent, GoldenSection};
     kwargs...) where F<:Function
+    T = promote_type(typeof(lower/1), typeof(upper/1))
    optimize(f,
-            Float64(lower),
-            Float64(upper),
+            T(lower),
+            T(upper),
             mo;
             kwargs...)
 end

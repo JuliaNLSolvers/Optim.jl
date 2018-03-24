@@ -56,11 +56,13 @@ Base.summary(::ConjugateGradient) = "Conjugate Gradient"
 # Conjugate Gradient Descent
 ## Constructor
 ```julia
-ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
-linesearch = LineSearches.HagerZhang(),
-eta = 0.4,
-P = nothing,
-precondprep = (P, x) -> nothing)
+ConjugateGradient(::Type{T}=Float64; 
+    alphaguess = LineSearches.InitialHagerZhang{T}(),
+linesearch = LineSearches.HagerZhang{T}(),
+    eta::Real = T(4)/10,
+P::Any = nothing,
+precondprep = (P, x) -> nothing,
+manifold::Manifold=Flat()) where {T}
 ```
 The strictly positive constant ``eta`` is used in determining
 the next step direction, and the default here deviates from the one used in the
@@ -77,12 +79,12 @@ Zhang (2006).
  - W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
  - W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
 """
-function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
-                             linesearch = LineSearches.HagerZhang(),
-                             eta::Real = 0.4,
+function ConjugateGradient(::Type{T}=Float64; alphaguess = LineSearches.InitialHagerZhang{T}(),
+                             linesearch = LineSearches.HagerZhang{T}(),
+                             eta::Real = T(4)/10,
                              P::Any = nothing,
                              precondprep = (P, x) -> nothing,
-                             manifold::Manifold=Flat())
+                             manifold::Manifold=Flat()) where {T}
 
     ConjugateGradient(eta,
                       P, precondprep,

@@ -12,10 +12,12 @@ Base.summary(::GradientDescent) = "Gradient Descent"
 # Gradient Descent
 ## Constructor
 ```julia
-GradientDescent(; alphaguess = LineSearches.InitialHagerZhang(),
-linesearch = LineSearches.HagerZhang(),
+GradientDescent(::Type{T}=Float64; 
+    alphaguess = LineSearches.InitialPrevious{T}(),
+linesearch = LineSearches.HagerZhang{T}(),
 P = nothing,
-precondprep = (P, x) -> nothing)
+precondprep = (P, x) -> nothing,
+manifold::Manifold=Flat()) where {T}
 ```
 Keywords are used to control choice of line search, and preconditioning.
 
@@ -28,11 +30,11 @@ Wright (ch. 2.2, 1999) for an explanation of the approach.
 ## References
  - Nocedal, J. and Wright, S. J. (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function GradientDescent(; alphaguess = LineSearches.InitialPrevious(), # TODO: Investigate good defaults.
-                           linesearch = LineSearches.HagerZhang(),      # TODO: Investigate good defaults
+function GradientDescent(::Type{T}=Float64; alphaguess = LineSearches.InitialPrevious{T}(), # TODO: Investigate good defaults.
+                           linesearch = LineSearches.HagerZhang{T}(),      # TODO: Investigate good defaults
                            P = nothing,
                            precondprep = (P, x) -> nothing,
-                           manifold::Manifold=Flat())
+                           manifold::Manifold=Flat()) where {T}
     GradientDescent(alphaguess, linesearch, P, precondprep, manifold)
 end
 

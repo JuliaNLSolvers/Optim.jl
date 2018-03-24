@@ -90,13 +90,14 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, mu)
-    @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
+    T = eltype(x)
+    @. P.diag = 1/(mu*(1/max(x-l, sqrt(realmin(T)))^2 + 1/max(u-x, sqrt(realmin(T)))^2) + 1)
 end
 
 struct Fminbox{T<:AbstractOptimizer} <: AbstractOptimizer end
 Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
 
-Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
+Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O(T)))"
 
 function optimize(obj,
                   initial_x::AbstractArray{T},
@@ -162,11 +163,11 @@ function optimize(
         thisu = u[i]
 
         if thisx == thisl
-            thisx = 0.99*thisl+0.01*thisu
+            thisx = T(99)/100*thisl+T(1)/100*thisu
             x[i] = thisx
             push!(boundaryidx,i)
         elseif thisx == thisu
-            thisx = 0.01*thisl+0.99*thisu
+            thisx = T(1)/100*thisl+T(99)/100*thisu
             x[i] = thisx
             push!(boundaryidx,i)
         elseif thisx < thisl || thisx > thisu
@@ -213,47 +214,47 @@ function optimize(
         #       in the optimization algorithms will imply a lot of extra work here
         if O == ConjugateGradient || O == Newton
             if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
+                linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialHagerZhang()
+                alphaguess = LineSearches.InitialHagerZhang{T}()
             end
             _optimizer = ConjugateGradient(eta = eta, alphaguess = alphaguess,
                                            linesearch = linesearch, P = P, precondprep = pcp)
         elseif O == LBFGS
             if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
+                linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialStatic()
+                alphaguess = LineSearches.InitialStatic{T}()
             end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
+            _optimizer = O(T, alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
         elseif O == BFGS
             if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
+                linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialStatic()
+                alphaguess = LineSearches.InitialStatic{T}()
             end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
+            _optimizer = O(T, alphaguess = alphaguess, linesearch = linesearch)
         elseif O == GradientDescent
             if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
+                linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialPrevious()
+                alphaguess = LineSearches.InitialPrevious(alpha=one(T), alphamin=zero(T), alphamax=T(Inf))
             end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
+            _optimizer = O(T, alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
         elseif O in (NelderMead, SimulatedAnnealing)
-            _optimizer = O()
+            _optimizer = O(T)
         else
             if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
+                linesearch = LineSearches.HagerZhang{T}()
             end
             if alphaguess == nothing
-                alphaguess = LineSearches.InitialPrevious()
+                alphaguess = LineSearches.InitialPrevious{T}()
             end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
+            _optimizer = O(T, alphaguess = alphaguess, linesearch = linesearch)
         end
         resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
         if first
@@ -276,11 +277,17 @@ function optimize(
         results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
         f_increased && !allow_f_increases && break
     end
-    return MultivariateOptimizationResults(Fminbox{O}(), false, initial_x, minimizer(results), df.f(minimizer(results)),
+
+    _x_abschange = maxdiff(x,xold)
+    _minimizer = minimizer(results)
+    _minimum = minimum(results)
+    _results::MultivariateOptimizationResults{Fminbox{O}, T, Tx, typeof(_x_abschange), typeof(_minimum), typeof(results.trace)} = MultivariateOptimizationResults{Fminbox{O}, T, Tx, typeof(_x_abschange), typeof(_minimum), typeof(results.trace)}(
+        Fminbox{O}(), false, initial_x, _minimizer, _minimum,
             iteration, results.iteration_converged,
-            results.x_converged, results.x_tol, vecnorm(x - xold),
-            results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),
-            results.g_converged, results.g_tol, vecnorm(g, Inf),
+        results.x_converged, results.x_tol, _x_abschange,
+        results.f_converged, results.f_tol, f_abschange(_minimum, fval0),
+        results.g_converged, results.g_tol, maximum(abs, g),
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
+    return _results
 end

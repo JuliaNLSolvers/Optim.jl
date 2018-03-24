@@ -13,9 +13,9 @@ update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
-function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
-                  options::Options = Options(;default_options(method)...),
-                  state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx, N}
+function optimize(d::D, initial_x::Tx, method::M,
+                  options::Options{T, TCallback} = Options(;default_options(method)...), state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx<:AbstractArray, T, TCallback}
+
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
@@ -79,11 +79,10 @@ function optimize(d::D, initial_x::AbstractArray{Tx, N}, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    T = typeof(options.f_tol)
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
-    return MultivariateOptimizationResults(method,
+    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr)}(method,
                                         NLSolversBase.iscomplex(d),
                                         real_to_complex(d, initial_x),
                                         real_to_complex(d, pick_best_x(f_incr_pick, state)),

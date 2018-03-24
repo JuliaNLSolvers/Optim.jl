@@ -36,18 +36,17 @@ Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.nlprecon))"
 # N-GMRES
 ## Constructor
 ```julia
-NGMRES(;
-        alphaguess = LineSearches.InitialStatic(),
-        linesearch = LineSearches.HagerZhang(),
-        manifold = Flat(),
-        wmax::Int = 10,
-        ϵ0 = 1e-12,
+NGMRES(::Type{T}=Float64; 
+        manifold::Manifold = Flat(),
+        alphaguess = LineSearches.InitialStatic{T}(),
+        linesearch = LineSearches.HagerZhang{T}(),
         nlprecon = GradientDescent(
-            alphaguess = LineSearches.InitialPrevious(),
-            linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+            alphaguess = LineSearches.InitialPrevious{T}(),
+            linesearch = LineSearches.Static{T}(alpha=T(1)/10^4,scaled=true),
             manifold = manifold),
         nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-      )
+        ϵ0 = T(1)/10^12),
+        wmax::Int = 10) where T
 ```
 
 ## Description
@@ -64,16 +63,16 @@ Application of the algorithm to optimization is covered, for example, in [2].
 [1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
 [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
 """
-function NGMRES(;manifold::Manifold = Flat(),
-                alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.HagerZhang(),
+function NGMRES(::Type{T}=Float64; manifold::Manifold = Flat(),
+                alphaguess = LineSearches.InitialStatic{T}(),
+                linesearch = LineSearches.HagerZhang{T}(),
                 nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialPrevious(),
-                    linesearch = LineSearches.Static(alpha=1e-4,scaled=true), # Step length arbitrary
+                    alphaguess = LineSearches.InitialPrevious{T}(),
+                    linesearch = LineSearches.Static{T}(alpha=T(1)/10^4,scaled=true), # Step length arbitrary
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
+                ϵ0 = T(1)/10^12), # ϵ0 = 1e-12  -- number was an arbitrary choice#
+                wmax::Int = 10) where T# wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     NGMRES(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
@@ -82,16 +81,17 @@ end
 # O-ACCEL
 ## Constructor
 ```julia
-OACCEL(;manifold::Manifold = Flat(),
-       alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
-       nlprecon = GradientDescent(
-           alphaguess = LineSearches.InitialPrevious(),
-           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+OACCEL(::Type{T}=Float64;
+        manifold::Manifold = Flat(),
+        alphaguess = LineSearches.InitialStatic{T}(),
+        linesearch = LineSearches.HagerZhang{T}(),
+        nlprecon = GradientDescent(T,
+            alphaguess = LineSearches.InitialPrevious{T}(),
+            linesearch = LineSearches.Static{T}(alpha=T(1)/10^4,scaled=true),
            manifold = manifold),
        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-       ϵ0 = 1e-12,
-       wmax::Int = 10)
+        ϵ0 = T(1)/10^12,
+        wmax::Int = 10) where T
 ```
 
 ## Description
@@ -105,16 +105,16 @@ O-ACCEL is a slight tweak of N-GMRES, first presented in [1].
 ## References
 [1] Riseth. Objective acceleration for unconstrained optimization. 2018.
 """
-function OACCEL(;manifold::Manifold = Flat(),
-                alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.HagerZhang(),
-                nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialPrevious(),
-                    linesearch = LineSearches.Static(alpha=1e-4,scaled=true), # Step length arbitrary
+function OACCEL(::Type{T}=Float64;manifold::Manifold = Flat(),
+                alphaguess = LineSearches.InitialStatic{T}(),
+                linesearch = LineSearches.HagerZhang{T}(),
+                nlprecon = GradientDescent(T,
+                    alphaguess = LineSearches.InitialPrevious{T}(),
+                    linesearch = LineSearches.Static{T}(alpha=T(1)/10^4,scaled=true), # Step length arbitrary
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
+                ϵ0 = T(1)/10^12, # ϵ0 = 1e-12  -- number was an arbitrary choice
+                wmax::Int = 10) where T # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     OACCEL(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end

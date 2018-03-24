@@ -10,10 +10,10 @@ end
 
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
-function MomentumGradientDescent(; mu::Real = 0.01,
-                                 alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
-                                 linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
-                                 manifold::Manifold=Flat())
+function MomentumGradientDescent(::Type{T}=Float64; mu::Real = T(1)/100,
+                                 alphaguess = LineSearches.InitialPrevious{T}(), # TODO: investigate good defaults
+                                 linesearch = LineSearches.HagerZhang{T}(),        # TODO: investigate good defaults
+                                 manifold::Manifold=Flat()) where T
     MomentumGradientDescent(mu, alphaguess, linesearch, manifold)
 end
 

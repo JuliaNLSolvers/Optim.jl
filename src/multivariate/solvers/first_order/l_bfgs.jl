@@ -90,13 +90,14 @@ end
 # LBFGS
 ## Constructor
 ```julia
-LBFGS(; m::Integer = 10,
-alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.HagerZhang(),
+LBFGS(::Type{T}=Float64; 
+    m::Integer = 10,
+alphaguess = LineSearches.InitialStatic{T}(),
+linesearch = LineSearches.HagerZhang{T}(),
 P=nothing,
 precondprep = (P, x) -> nothing,
-manifold = Flat(),
-scaleinvH0::Bool = true && (typeof(P) <: Void))
+manifold::Manifold=Flat(),
+scaleinvH0::Bool = true && (typeof(P) <: Void) ) where T
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -119,13 +120,13 @@ past approximations as well as the gradient.
  - Wright, S. J. and J. Nocedal (2006), Numerical optimization, 2nd edition. Springer
  - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
 """
-function LBFGS(; m::Integer = 10,
-                 alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
-                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
+function LBFGS(::Type{T}=Float64; m::Integer = 10,
+                 alphaguess = LineSearches.InitialStatic{T}(), # TODO: benchmark defaults
+                 linesearch = LineSearches.HagerZhang{T}(),  # TODO: benchmark defaults
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
-                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+                 scaleinvH0::Bool = true && (typeof(P) <: Void) ) where T
     LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 

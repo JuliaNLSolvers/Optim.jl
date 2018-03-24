@@ -95,7 +95,7 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
     n = length(state.x)
     x, g, d, r, z, Hd = state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
 
-    fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
+    fill!(z, zero(T))  # the search direction is initialized to the 0 vector,
     r .= g  # so at first the whole gradient is the residual.
     d .= -r # the first direction is the direction of steepest descent.
     rho0 = 1e100  # just a big number
@@ -105,13 +105,13 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
         state.cg_iters += 1
         hv_product!(objective, x, d)
         dHd = dot(d, Hd)
-        if -1e-15 < dHd < 1e-15
+        if T(-1)/10^15 < dHd < T(1)/10^15
             break
         end
 
         alpha = dot(r, r) / dHd
 
-        if dHd < 0. || norm(z .+ alpha .* d) >= state.radius
+        if dHd < zero(T) || norm(z .+ alpha .* d) >= state.radius
             a_ = dot(d, d)
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
@@ -136,22 +136,22 @@ function cg_steihaug!(objective::TwiceDifferentiableHV,
     end
 
     hv_product!(objective, x, z)
-    return dot(g, z) + 0.5 * dot(z, Hd)
+    return dot(g, z) + T(1)/2 * dot(z, Hd)
 end
 
 
 function update_state!(objective::TwiceDifferentiableHV,
-                          state::KrylovTrustRegionState,
-                          method::KrylovTrustRegion)
+                          state::KrylovTrustRegionState{T},
+                          method::KrylovTrustRegion) where T
     state.m_diff = cg_steihaug!(objective, state, method)
     @assert state.m_diff <= 0
 
     state.f_diff = value(objective, state.x .+ state.s) - value(objective)
     state.rho = state.f_diff / state.m_diff
-    state.interior = norm(state.s) < 0.9 * state.radius
+    state.interior = norm(state.s) < T(9)/10 * state.radius
 
     if state.rho < method.rho_lower
-        state.radius *= 0.25
+        state.radius *= T(25)/100
     elseif (state.rho > method.rho_upper) && (!state.interior)
         state.radius = min(2 * state.radius, method.max_radius)
     end
@@ -174,7 +174,7 @@ function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrust
 end
 
 
-function assess_convergence(state::KrylovTrustRegionState, d, options)
+function assess_convergence(state::KrylovTrustRegionState, d, options::Options{T}) where {T}
     if !state.accept_step
         return state.radius < options.x_tol, false, false, false, false
     end

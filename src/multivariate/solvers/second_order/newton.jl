@@ -7,8 +7,9 @@ end
 # Newton
 ## Constructor
 ```julia
-Newton(; alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.HagerZhang())
+Newton(::Type{T}=Float64; 
+    alphaguess = LineSearches.InitialStatic{T}(),
+linesearch = LineSearches.HagerZhang{T}()) where T
 ```
 
 ## Description
@@ -20,8 +21,8 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 ## References
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function Newton(; alphaguess = LineSearches.InitialStatic(), # Good default for Newton
-                linesearch = LineSearches.HagerZhang())    # Good default for Newton
+function Newton(::Type{T}=Float64; alphaguess = LineSearches.InitialStatic{T}(), # Good default for Newton
+                linesearch = LineSearches.HagerZhang{T}()) where T   # Good default for Newton
     Newton(alphaguess, linesearch)
 end
 

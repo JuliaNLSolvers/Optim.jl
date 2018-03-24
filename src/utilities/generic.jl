@@ -11,7 +11,7 @@ end
     x_ls::Tx
     alpha::T
     mayterminate::Bool
-    lsr::LineSearches.LineSearchResults
+    lsr::LineSearches.LineSearchResults{T}
 end
 
 @def initial_linesearch begin

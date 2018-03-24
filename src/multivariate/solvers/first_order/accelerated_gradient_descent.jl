@@ -14,10 +14,10 @@ end
 
 Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
 
-function AcceleratedGradientDescent(;
-                                    alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
-                                    linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
-                                    manifold::Manifold=Flat())
+function AcceleratedGradientDescent(::Type{T}=Float64;
+                                    alphaguess = LineSearches.InitialPrevious{T}(), # TODO: investigate good defaults
+                                    linesearch = LineSearches.HagerZhang{T}(),        # TODO: investigate good defaults
+                                    manifold::Manifold=Flat()) where {T}
     AcceleratedGradientDescent(alphaguess, linesearch, manifold)
 end
 
@@ -50,7 +50,7 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
                          @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
 end
 
-function update_state!(d, state::AcceleratedGradientDescentState, method::AcceleratedGradientDescent)
+function update_state!(d, state::AcceleratedGradientDescentState{T}, method::AcceleratedGradientDescent) where T
     value_gradient!(d, state.x)
     state.iteration += 1
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
@@ -66,7 +66,7 @@ function update_state!(d, state::AcceleratedGradientDescentState, method::Accele
     retract!(method.manifold, real_to_complex(d,state.y))
 
     # Update current position with Nesterov correction
-    scaling = (state.iteration - 1) / (state.iteration + 2)
+    scaling = T(state.iteration - 1) / (state.iteration + 2)
     state.x .= state.y .+ scaling.*(state.y .- state.y_previous)
     retract!(method.manifold, real_to_complex(d,state.x))
 

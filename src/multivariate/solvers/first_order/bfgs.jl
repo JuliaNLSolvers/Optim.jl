@@ -15,10 +15,11 @@ Base.summary(::BFGS) = "BFGS"
 # BFGS
 ## Constructor
 ```julia
-BFGS(; alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
+BFGS(::Type{T}=Float64; 
+    alphaguess = LineSearches.InitialStatic{T}(),
+       linesearch = LineSearches.HagerZhang{T}(),
        initial_invH = x -> eye(eltype(x), length(x)),
-       manifold = Flat())
+       manifold = Flat()) where T
 ```
 
 ## Description
@@ -36,10 +37,10 @@ approximations as well as the gradient. See also the limited memory variant
  - Goldfarb, D. (1970), A Family of Variable Metric Updates Derived by Variational Means, Mathematics of Computation, 24 (109): 23–26,
  - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
 """
-function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
-                linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
+function BFGS(::Type{T}=Float64; alphaguess = LineSearches.InitialStatic{T}(), # TODO: benchmark defaults
+                linesearch = LineSearches.HagerZhang{T}(),  # TODO: benchmark defaults
                 initial_invH = x -> eye(eltype(x), length(x)),
-                manifold::Manifold=Flat())
+                manifold::Manifold=Flat()) where T
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
 
@@ -106,12 +107,13 @@ end
 
 function update_h!(d, state, method::BFGS)
     n = length(state.x)
+    T = eltype(state.x)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = vecdot(state.dx, state.dg)
-    if dx_dg == 0.0
+    if dx_dg == zero(T)
         return true # force stop
     end
     A_mul_B!(vec(state.u), state.invH, vec(state.dg))

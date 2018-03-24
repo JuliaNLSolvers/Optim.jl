@@ -1,10 +1,10 @@
 abstract type Simplexer end
 
-struct AffineSimplexer <: Simplexer
-    a::Float64
-    b::Float64
+struct AffineSimplexer{T} <: Simplexer
+    a::T
+    b::T
 end
-AffineSimplexer(;a = 0.025, b = 0.5) = AffineSimplexer(a, b)
+AffineSimplexer(::Type{T}=Float64; a = T(25)/1000, b = T(1)/2) where T = AffineSimplexer(a, b)
 
 function simplexer(S::AffineSimplexer, initial_x::Tx) where Tx
     n = length(initial_x)
@@ -17,24 +17,24 @@ end
 
 abstract type NMParameters end
 
-struct AdaptiveParameters <: NMParameters
-    α::Float64
-    β::Float64
-    γ::Float64
-    δ::Float64
+struct AdaptiveParameters{T} <: NMParameters
+    α::T
+    β::T
+    γ::T
+    δ::T
 end
 
-AdaptiveParameters(;  α = 1.0, β = 1.0, γ = 0.75 , δ = 1.0) = AdaptiveParameters(α, β, γ, δ)
-parameters(P::AdaptiveParameters, n::Integer) = (P.α, P.β + 2/n, P.γ - 1/2n, P.δ - 1/n)
+AdaptiveParameters(::Type{T}=Float64; α = one(T), β = one(T), γ = T(75)/100 , δ = one(T)) where T = AdaptiveParameters(α, β, γ, δ)
+parameters(P::AdaptiveParameters{T}, n::Integer) where T = (P.α, P.β + T(2)/n, P.γ - T(1)/2n, P.δ - T(1)/n)
 
-struct FixedParameters <: NMParameters
-    α::Float64
-    β::Float64
-    γ::Float64
-    δ::Float64
+struct FixedParameters{T} <: NMParameters
+    α::T
+    β::T
+    γ::T
+    δ::T
 end
 
-FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
+FixedParameters(::Type{T}=Float64; α = T(1), β = T(2), γ = T(1)/2, δ = T(1)/2) where T = FixedParameters(α, β, γ, δ)
 parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 
 struct NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: ZerothOrderOptimizer
@@ -44,21 +44,15 @@ end
 
 Base.summary(::NelderMead) = "Nelder-Mead"
 
-function NelderMead(; kwargs...)
+function NelderMead(::Type{T}=Float64; kwargs...) where T
     KW = Dict(kwargs)
-    if haskey(KW, :a) || haskey(KW, :g) || haskey(KW, :b)
-        a, g, b = 1.0, 2.0, 0.5
-        haskey(KW, :a) && (a = KW[:a])
-        haskey(KW, :g) && (g = KW[:g])
-        haskey(KW, :b) && (b = KW[:b])
-        return NelderMead(a, g, b)
-    elseif haskey(KW, :initial_simplex) || haskey(KW, :parameters)
-        initial_simplex, parameters = AffineSimplexer(), AdaptiveParameters()
+    if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
+        initial_simplex, parameters = AffineSimplexer(T), AdaptiveParameters()
         haskey(KW, :initial_simplex) && (initial_simplex = KW[:initial_simplex])
         haskey(KW, :parameters) && (parameters = KW[:parameters])
         return NelderMead(initial_simplex, parameters)
     else
-        return NelderMead(AffineSimplexer(), AdaptiveParameters())
+        return NelderMead(AffineSimplexer(T), AdaptiveParameters(T))
     end
 end
 
@@ -74,12 +68,12 @@ function centroid!(c::AbstractArray{T}, simplex, h=0) where T
             end
         end
     end
-    scale!(c, 1/n)
+    scale!(c, T(1)/n)
 end
 
 centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
 
-nmobjective(y::Vector, m::Integer, n::Integer) = sqrt(var(y) * (m / n))
+nmobjective(y::Vector{T}, m::Integer, n::Integer) where T = sqrt(var(y) * (T(m) / n))
 
 function print_header(method::NelderMead)
     @printf "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
