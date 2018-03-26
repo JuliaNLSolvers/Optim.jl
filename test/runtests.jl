@@ -4,6 +4,8 @@ using OptimTestProblems.MultivariateProblems
 using Base.Test
 using Suppressor
 
+import LineSearches, ForwardDiff
+
 const MVP = MultivariateProblems
 
 debug_printing = false
