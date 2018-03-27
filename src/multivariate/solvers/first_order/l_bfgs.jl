@@ -24,7 +24,7 @@ function twoloop!(s,
     upper = pseudo_iteration - 1
 
     # Copy gr into q for backward pass
-    copy!(q, gr)
+    copyto!(q, gr)
 
     # Backward pass
     for index in upper:-1:lower
@@ -35,7 +35,7 @@ function twoloop!(s,
         dgi = dg_history[i]
         dxi = dx_history[i]
         @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
-        @inbounds q .-= alpha[i] .* dgi
+        @inbounds (q .-= alpha[i] .* dgi; nothing)
     end
 
     # Copy q into s for forward pass
@@ -68,12 +68,16 @@ function twoloop!(s,
         dgi = dg_history[i]
         dxi = dx_history[i]
         @inbounds beta = rho[i] * vecdot(dgi, s)
-        @inbounds s .+= dxi .* (alpha[i] - beta)
+        @inbounds (s .+= dxi .* (alpha[i] - beta); nothing)
     end
 
     # Negate search direction
-    scale!(s, -1)
 
+    @static if VERSION >= v"0.7.0-DEV.393"
+        rmul!(s,-1)
+    else
+        scale!(s, -1)
+    end
     return
 end
 
@@ -161,7 +165,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
-              Vector{T}(method.m), # state.rho
+              Vector{T}(undef, method.m), # state.rho
               [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
               [similar(gradient(d)) for i = 1:method.m], # Store changes in position in state.dg_history
               similar(initial_x), # Buffer for new entry in state.dx_history
@@ -169,7 +173,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
               similar(initial_x), # Buffer stored in state.u
               T(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
-              Vector{T}(method.m), #Buffer for use by twoloop
+              Vector{T}(undef, method.m), #Buffer for use by twoloop
               0,
               similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...)
@@ -192,7 +196,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
 
     # Save g value to prepare for update_g! call
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -218,8 +222,8 @@ function update_h!(d, state, method::LBFGS)
         return true
     end
     idx = mod1(state.pseudo_iteration, method.m)
-    @inbounds state.dx_history[idx] .= state.dx
-    @inbounds state.dg_history[idx] .= state.dg
+    @inbounds (state.dx_history[idx] .= state.dx; nothing)
+    @inbounds (state.dg_history[idx] .= state.dg; nothing)
     @inbounds state.rho[idx] = rho_iteration
 end
 

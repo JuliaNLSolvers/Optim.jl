@@ -1,8 +1,10 @@
 using Optim, Compat
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
-using Base.Test
+using Compat.Test
 using Suppressor
+
+using Compat.LinearAlgebra, Compat.Random
 
 import LineSearches, ForwardDiff
 
@@ -95,7 +97,7 @@ function run_optim_tests(method; convergence_exceptions = (),
         end
         show_name && print_with_color(:green, "Problem: ", name, "\n")
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = find(n[1] == name for n in iteration_exceptions)
+        iter_id = find(n[1] == name for n in collect(iteration_exceptions))
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options

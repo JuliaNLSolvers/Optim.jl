@@ -90,7 +90,8 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, mu)
-    @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
+    ((@. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)); nothing)
+    P.diag
 end
 
 struct Fminbox{T<:AbstractOptimizer} <: AbstractOptimizer end
@@ -156,7 +157,7 @@ function optimize(
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
-    boundaryidx = Array{Int,1}()
+    boundaryidx = Array{Int,1}(undef,0)
     for i = 1:length(gbarrier)
         thisx = x[i]
         thisl = l[i]
@@ -187,7 +188,7 @@ function optimize(
     end
 
     g = similar(x)
-    fval_all = Array{Vector{T}}(0)
+    fval_all = Array{Vector{T}}(undef, 0)
 
     # Count the total number of outer iterations
     iteration = 0
@@ -201,7 +202,7 @@ function optimize(
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        copy!(xold, x)
+        copyto!(xold, x)
         # Optimize with current setting of mu
         funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu)
         fval0 = funcc(nothing, x)
@@ -263,7 +264,7 @@ function optimize(
         else
             append!(results, resultsnew)
         end
-        copy!(x, minimizer(results))
+        copyto!(x, minimizer(results))
         if show_trace > 0
             println("x: ", x)
         end

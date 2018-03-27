@@ -58,8 +58,8 @@ function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T
                            zero(T),            # model change
                            zero(T),            # observed f change
                            zero(T),            # state.rho
-                           Vector{T}(n),       # residual vector
-                           Vector{T}(n),       # direction to consider
+                           Vector{T}(undef, n),       # residual vector
+                           Vector{T}(undef, n),       # direction to consider
                            0)                  # cg_iters
 end
 

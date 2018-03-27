@@ -71,10 +71,14 @@ function update_state!(d, state::NewtonState, method::Newton)
         state.F = cholfact!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
             # is this actually StridedArray?
-            A_ldiv_B!(state.s, state.F, -gradient(d))
+            @static if VERSION >= v"0.7.0-DEV.393"
+                ldiv!(state.s, state.F, -gradient(d))
+            else
+                A_ldiv_B!(state.s, state.F, -gradient(d))
+            end
         else
             # not Array, we can't do inplace ldiv
-            gv = Vector{T}(length(gradient(d)))
+            gv = Vector{T}(undef, length(gradient(d)))
             copy!(gv, -gradient(d))
             copy!(state.s, state.F\gv)
         end

@@ -4,10 +4,10 @@
     # Test case: find eigenbasis for first two eigenvalues of a symmetric matrix by minimizing the Rayleigh quotient under orthogonality constraints
     n = 4
     m = 2
-    A = Diagonal(linspace(1,2,n))
+    A = Diagonal(range(1,stop=2,length=n))
     fmanif(x) = real(vecdot(x,A*x)/2)
     gmanif(x) = A*x
-    gmanif!(stor,x) = copy!(stor,gmanif(x))
+    gmanif!(stor,x) = copyto!(stor,gmanif(x))
     # A[2,2] /= 10 #optional: reduce the gap to make the problem artificially harder
     x0 = randn(n,m)+im*randn(n,m)
 

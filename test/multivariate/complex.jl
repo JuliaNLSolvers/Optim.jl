@@ -9,7 +9,7 @@
 
     fcomplex(x) = real(vecdot(x,A*x)/2 - vecdot(b,x))
     gcomplex(x) = A*x-b
-    gcomplex!(stor,x) = copy!(stor,gcomplex(x))
+    gcomplex!(stor,x) = copyto!(stor,gcomplex(x))
     x0 = randn(n)+im*randn(n)
 
     @testset "Finite difference" begin

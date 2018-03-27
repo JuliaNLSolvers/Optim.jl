@@ -65,7 +65,11 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
     method.precondprep!(method.P, real_to_complex(d,state.x))
     A_ldiv_B!(real_to_complex(d,state.s), method.P, real_to_complex(d,gradient(d)))
-    scale!(state.s,-1)
+    @static if VERSION >= v"0.7.0-DEV.393"
+        rmul!(state.s,-1)
+    else
+        scale!(state.s,-1)
+    end
     if method.P != nothing
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
     end
