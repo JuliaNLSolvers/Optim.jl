@@ -5,7 +5,7 @@ using Compat.Test
 using Suppressor
 
 using Compat.LinearAlgebra, Compat.SparseArrays, Compat.Random
-using Distributed: clear!
+using Compat.Distributed: clear!
 
 import NLSolversBase
 
