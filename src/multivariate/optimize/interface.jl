@@ -36,17 +36,18 @@ fallback_method(d::TwiceDifferentiable) = Newton()
 # promote the objective (tuple of callables or an AbstractObjective) according to method requirement
 promote_objtype(method, initial_x, obj_args...) = error("No default objective type for $method and $obj_args.")
 # actual promotions, notice that (args...) captures FirstOrderOptimizer and NonDifferentiable, etc
-promote_objtype(method::ZerothOrderOptimizer, x, args...) = NonDifferentiable(args..., x, real(zero(eltype(x))))
-promote_objtype(method::FirstOrderOptimizer,  x, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))))
-promote_objtype(method::FirstOrderOptimizer,  x, f, g!, h!) = OnceDifferentiable(f, g!, x, real(zero(eltype(x))))
-promote_objtype(method::SecondOrderOptimizer, x, args...) = TwiceDifferentiable(args..., x, real(zero(eltype(x))))
+promote_objtype(method::ZerothOrderOptimizer, x, ::Val{S}, args...) where S = NonDifferentiable(args..., x, real(zero(eltype(x))), Val{S}())
+promote_objtype(method::FirstOrderOptimizer,  x, ::Val{S}, args...) where S = OnceDifferentiable(args..., x, real(zero(eltype(x))), Val{:central}(), Val{S}())
+promote_objtype(method::FirstOrderOptimizer,  x, ::Val{S}, f, g!, h!) where S = OnceDifferentiable(f, g!, x, real(zero(eltype(x))), Val{:central}(), Val{S}())
+promote_objtype(method::SecondOrderOptimizer, x, ::Val{S}, args...) where S = TwiceDifferentiable(args..., x, real(zero(eltype(x))), Val{:central}(), Val{S}())
 # no-op
-promote_objtype(method::ZerothOrderOptimizer, x, nd::NonDifferentiable)  = nd
-promote_objtype(method::ZerothOrderOptimizer, x, od::OnceDifferentiable) = od
-promote_objtype(method::FirstOrderOptimizer,  x, od::OnceDifferentiable) = od
-promote_objtype(method::ZerothOrderOptimizer, x, td::TwiceDifferentiable) = td
-promote_objtype(method::FirstOrderOptimizer,  x, td::TwiceDifferentiable) = td
-promote_objtype(method::SecondOrderOptimizer, x, td::TwiceDifferentiable) = td
+promote_objtype(method::ZerothOrderOptimizer, x, ::Val, nd::NonDifferentiable)  = nd
+promote_objtype(method::ZerothOrderOptimizer, x, ::Val, od::OnceDifferentiable) = od
+promote_objtype(method::FirstOrderOptimizer,  x, ::Val, od::OnceDifferentiable) = od
+promote_objtype(method::ZerothOrderOptimizer, x, ::Val, td::TwiceDifferentiable) = td
+promote_objtype(method::FirstOrderOptimizer,  x, ::Val, td::TwiceDifferentiable) = td
+promote_objtype(method::SecondOrderOptimizer, x, ::Val, td::TwiceDifferentiable) = td
+
 
 # if on method or options are present
 optimize(f,         initial_x::AbstractArray; kwargs...) = optimize((f,),        initial_x; kwargs...)
@@ -75,9 +76,9 @@ optimize(f, g!,     initial_x::AbstractArray, method::AbstractOptimizer,
          options::Options = InternalUseOptions(method)) = optimize((f, g!),     initial_x, method, options)
 optimize(f, g!, h!, initial_x::AbstractArray, method::AbstractOptimizer,
          options::Options = InternalUseOptions(method)) = optimize((f, g!, h!), initial_x, method, options)
-function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer,
-                  options::Options = InternalUseOptions(method))
-    d = promote_objtype(method, initial_x, f...)
+@inline function optimize(f::Tuple, initial_x::AbstractArray, method::AbstractOptimizer,
+                  options::Options{T, TCallback, S} = InternalUseOptions(method)) where {T, TCallback, S}
+    d = promote_objtype(method, initial_x, Val{S}(), f...)
 
     optimize(d, initial_x, method, options)
 end

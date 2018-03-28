@@ -7,7 +7,10 @@ abstract type UnivariateOptimizer  <: AbstractOptimizer end
 abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
-struct Options{T, TCallback}
+@inline specialize(::Val{T}) where T = T
+@inline specialize(x) = x
+
+struct Options{T, TCallback, S}
     x_tol::T
     f_tol::T
     g_tol::T
@@ -26,9 +29,9 @@ struct Options{T, TCallback}
 end
 
 function Options(;
-        x_tol::Real = 1e-32,
-        f_tol::Real = 1e-32,
-        g_tol::Real = 1e-8,
+        x_tol::T1 = 1e-32,
+        f_tol::T2 = 1e-32,
+        g_tol::T3 = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
@@ -39,14 +42,15 @@ function Options(;
         show_trace::Bool = false,
         extended_trace::Bool = false,
         show_every::Integer = 1,
-        callback = nothing,
-        time_limit = NaN)
+        callback::T4 = nothing,
+        time_limit = NaN,
+        specialize::Val{S} = Val{true}()) where {T1<:Real,T2<:Real,T3<:Real,T4,S}
     show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
   #  T = promote_type(typeof(x_tol), typeof(f_tol), typeof(g_tol))
-    Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+    Options{promote_type(T1,T2,T3),T4,S}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, time_limit)
 end
@@ -73,11 +77,12 @@ function InternalUseOptions(
         extended_trace::Bool,
         show_every::Integer,
         time_limit,
-        callback::T4) where {T1<:Real,T2<:Real,T3<:Real,T4}
+        callback::T4,
+        specialize::S) where {T1<:Real,T2<:Real,T3<:Real,T4,S}
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options{promote_type(T1,T2,T3),T4}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), callback, time_limit)
+    Options{promote_type(T1,T2,T3),T4,S}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), callback, time_limit)
 end
 function InternalUseOptions(
         x_tol::T1 = 1e-32,
@@ -97,7 +102,7 @@ function InternalUseOptions(
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options{promote_type(T1,T2,T3),Cvoid}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), nothing, time_limit)
+    Options{promote_type(T1,T2,T3),Cvoid,true}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit, allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace, Int(max(show_every, 1)), nothing, time_limit)
 end
 
 function print_header(options::Options)
