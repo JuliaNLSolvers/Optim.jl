@@ -2,10 +2,9 @@ __precompile__(true)
 
 module Optim
     using Compat
-    using Compat.LinearAlgebra
+    using Compat.LinearAlgebra, Compat.SparseArrays
     using Compat.Printf
     using PositiveFactorizations
-    using Compat
     using LineSearches
     using NLSolversBase
     using Calculus
