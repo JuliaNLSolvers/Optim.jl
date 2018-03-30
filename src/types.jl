@@ -52,7 +52,7 @@ function Options(;
   #  T = promote_type(typeof(x_tol), typeof(f_tol), typeof(g_tol))
     Options{promote_type(T1,T2,T3),T4,S}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
-        Int(show_every), callback, time_limit)
+        Int(show_every), callback, Float64(time_limit))
 end
 
 
