@@ -85,9 +85,11 @@ function update_state!(d, state::BFGSState, method::BFGS)
     # Set the search direction
     # # Search direction is the negative gradient divided by the approximate Hessian
     T = eltype(state.invH)
-    if T <: BLAS.BlasFloat
+    if T <: BLAS.BlasFloat && isa(state.invH, Array{T}) && isa(state.s, Array{T})
         # If T is a BlasFloat, then we can condense operations.
-        BLAS.gemm!('N', 'N', -one(T), state.invH, vec(gradient(d)), zero(T), vec(state.s))
+        # we could also make this symv! and drop the second set of for loops in update_h!
+        # But that's not guaranteed to be faster.
+        BLAS.gemv!('N', -one(T), state.invH, vec(gradient(d)), zero(T), vec(state.s))
     else
         # else, I wouldn't trust there to be a gemm! fallback.
         # using Compat.LinearAlgebra hasn't been working with

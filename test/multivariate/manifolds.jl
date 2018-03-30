@@ -4,7 +4,11 @@
     # Test case: find eigenbasis for first two eigenvalues of a symmetric matrix by minimizing the Rayleigh quotient under orthogonality constraints
     n = 4
     m = 2
-    A = Diagonal(range(1,stop=2,length=n))
+    @static if VERSION >= v"0.7.0-DEV.393"
+        A = Diagonal(range(1,stop=2,length=n))
+    else
+        A = Diagonal(linspace(1,2,n))
+    end
     fmanif(x) = real(vecdot(x,A*x)/2)
     gmanif(x) = A*x
     gmanif!(stor,x) = copyto!(stor,gmanif(x))
