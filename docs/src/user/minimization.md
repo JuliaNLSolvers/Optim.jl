@@ -67,6 +67,18 @@ because of the potentially low accuracy of approximations to the Hessians. Other
 than Newton's method, none of the algorithms provided by the Optim package employ
 exact Hessians.
 
+## Nonlinear constrained optimization
+
+A Newton based primal-dual interior-point algorithm for nonlinear constrained
+optimization is available with the additional package `ConstrainedOptim.jl`.
+See the [`ConstrainedOptim` README](https://github.com/JuliaNLSolvers/ConstrainedOptim.jl)
+for examples of how to solve nonlinear, constrained optimization problems.
+
+Development of good algorithms and a good interface for constrained optimization
+is being developed in `ConstrainedOptim` with a plan to merge it with `Optim` in
+the future.
+
+
 ## Box minimization
 
 A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:
