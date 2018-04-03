@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>(L-)BFGS - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "(L-)BFGS";
+    var mkdocs_page_input_path = "algo/lbfgs.md";
+    var mkdocs_page_url = "/algo/lbfgs/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3 current">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../cg/">Conjugate Gradient</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4 current">
+                    
+    <a class="current" href="./">(L-)BFGS</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l5"><a href="#l-bfgs">(L-)BFGS</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l6" href="#constructors">Constructors</a></li>
+        
+            <li><a class="toctree-l6" href="#description">Description</a></li>
+        
+            <li><a class="toctree-l6" href="#example">Example</a></li>
+        
+            <li><a class="toctree-l6" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../ngmres/">Acceleration</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../manifolds/">Manifolds</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Solvers &raquo;</li>
+        
+      
+        
+          <li>Gradient Required &raquo;</li>
+        
+      
+    
+    <li>(L-)BFGS</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/lbfgs.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='(L-)BFGS-1'></a></p>
+<h1 id="l-bfgs">(L-)BFGS</h1>
+<p>This page contains information about BFGS and its limited memory version L-BFGS.</p>
+<p><a id='Constructors-1'></a></p>
+<h2 id="constructors">Constructors</h2>
+<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
+       <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
+       <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
+       <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="codehilite"><pre><span></span><span class="n">LBFGS</span><span class="p">(;</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
+        <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
+        <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">,</span>
+        <span class="n">manifold</span> <span class="o">=</span> <span class="n">Flat</span><span class="p">(),</span>
+        <span class="n">scaleinvH0</span><span class="o">::</span><span class="kt">Bool</span> <span class="o">=</span> <span class="kc">true</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">typeof</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;:</span> <span class="kt">Void</span><span class="p">))</span>
+</pre></div>
+
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>This means that it takes steps according to</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - P^{-1}\nabla f(x_n)
+</script>
+</p>
+<p>where $P$ is a positive definite matrix. If $P$ is the Hessian, we get Newton's method. In (L-)BFGS, the matrix is an approximation to the Hessian built using differences in the gradient across iterations. As long as the initial matrix is positive definite  it is possible to show that all the follow matrices will be as well. The starting matrix could simply be the identity matrix, such that the first step is identical to the Gradient Descent algorithm, or even the actual Hessian.</p>
+<p>There are two versions of BFGS in the package: BFGS, and L-BFGS. The latter is different from the former because it doesn't use a complete history of the iterative procedure to construct $P$, but rather only the latest $m$ steps. It doesn't actually build the Hessian approximation matrix either, but computes the direction directly. This makes more suitable for large scale problems, as the memory requirement to store the relevant vectors will grow quickly in large problems.</p>
+<p>As with the other quasi-Newton solvers in this package, a scalar $\alpha$ is introduced as follows</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
+</script>
+</p>
+<p>and is chosen by a linesearch algorithm such that each step gives sufficient descent.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>Wright, Stephen, and Jorge Nocedal (2006) "Numerical optimization." Springer</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../ngmres/" class="btn btn-neutral float-right" title="Acceleration">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../gradientdescent/" class="btn btn-neutral" title="Gradient Descent"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../gradientdescent/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../ngmres/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>

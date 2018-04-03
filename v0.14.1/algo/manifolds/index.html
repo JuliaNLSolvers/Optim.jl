@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Manifolds - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Manifolds";
+    var mkdocs_page_input_path = "algo/manifolds.md";
+    var mkdocs_page_url = "/algo/manifolds/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../cg/">Conjugate Gradient</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../ngmres/">Acceleration</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../autodiff/">Automatic Differentiation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Manifolds</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#manifold-optimization">Manifold optimization</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#howto">Howto</a></li>
+        
+            <li><a class="toctree-l4" href="#supported-solvers-and-manifolds">Supported solvers and manifolds</a></li>
+        
+            <li><a class="toctree-l4" href="#references">References</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Algorithms &raquo;</li>
+        
+      
+    
+    <li>Manifolds</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/manifolds.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Manifold-optimization-1'></a></p>
+<h1 id="manifold-optimization">Manifold optimization</h1>
+<p>Optim.jl supports the minimization of functions defined on Riemannian manifolds, i.e. with simple constraints such as normalization and orthogonality. The basic idea of such algorithms is to project back ("retract") each iterate of an unconstrained minimization method onto the manifold. This is used by passing a <code>manifold</code> keyword argument to the optimizer.</p>
+<p><a id='Howto-1'></a></p>
+<h2 id="howto">Howto</h2>
+<p>Here is a simple test case where we minimize the Rayleigh quotient <code>&lt;x, A x&gt;</code> of a symmetric matrix <code>A</code> under the constraint <code>||x|| = 1</code>, finding an eigenvector associated with the lowest eigenvalue of <code>A</code>.</p>
+<div class="codehilite"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">A</span> <span class="o">=</span> <span class="kt">Diagonal</span><span class="p">(</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
+<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">vecdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">A</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+<span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">A</span><span class="o">*</span><span class="n">x</span>
+<span class="n">g!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">copy!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">x0</span> <span class="o">=</span> <span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+<span class="n">manif</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Sphere</span><span class="p">()</span>
+<span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">Optim</span><span class="o">.</span><span class="n">ConjugateGradient</span><span class="p">(</span><span class="n">manifold</span><span class="o">=</span><span class="n">manif</span><span class="p">))</span>
+</pre></div>
+
+
+<p><a id='Supported-solvers-and-manifolds-1'></a></p>
+<h2 id="supported-solvers-and-manifolds">Supported solvers and manifolds</h2>
+<p>All first-order optimization methods are supported.</p>
+<p>The following manifolds are currently supported:</p>
+<ul>
+<li>Flat: Euclidean space, default. Standard unconstrained optimization.</li>
+<li>Sphere: spherical constraint <code>||x|| = 1</code></li>
+<li>Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. <code>X'*X = I</code></li>
+</ul>
+<p>The following meta-manifolds construct manifolds out of pre-existing ones:</p>
+<ul>
+<li>PowerManifold: identical copies of a specified manifold</li>
+<li>ProductManifold: product of two (potentially different) manifolds</li>
+</ul>
+<p>See <code>test/multivariate/manifolds.jl</code> for usage examples.</p>
+<p>Implementing new manifolds is as simple as adding methods <code>project_tangent!(M::YourManifold,x)</code> and <code>retract!(M::YourManifold,g,x)</code>. If you implement another manifold or optimization method, please contribute a PR!</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. &amp; Appl., 20(2), 303–353</p>
+<p>Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../../dev/contributing/" class="btn btn-neutral float-right" title="Contributing">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../complex/" class="btn btn-neutral" title="Complex optimization"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../complex/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../../dev/contributing/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>

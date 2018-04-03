@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="JuliaNLSolvers">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Automatic Differentiation - Optim.jl</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Automatic Differentiation";
+    var mkdocs_page_input_path = "algo/autodiff.md";
+    var mkdocs_page_url = "/algo/autodiff/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Optim.jl</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">General information</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../user/minimization/">Minimizing a function</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/config/">Configurable Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../user/tipsandtricks/">Tips and tricks</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Algorithms</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <span class="caption-text">Solvers</span>
+    <ul class="subnav">
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Free</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../nelder_mead/">Nelder Mead</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../simulated_annealing/">Simulated Annealing</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Gradient Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../cg/">Conjugate Gradient</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../gradientdescent/">Gradient Descent</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../lbfgs/">(L-)BFGS</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../ngmres/">Acceleration</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l3">
+                    
+    <span class="caption-text">Hessian Required</span>
+    <ul class="subnav">
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton/">Newton</a>
+                </li>
+                <li class="toctree-l4">
+                    
+    <a class="" href="../newton_trust_region/">Newton with Trust Region</a>
+                </li>
+    </ul>
+                </li>
+    </ul>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Automatic Differentiation</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#automatic-differentiation">Automatic Differentiation</a></li>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../linesearch/">Linesearch</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../precondition/">Preconditioners</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../complex/">Complex optimization</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../manifolds/">Manifolds</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Contributing</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../dev/contributing/">Contributing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../LICENSE/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Optim.jl</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Algorithms &raquo;</li>
+        
+      
+    
+    <li>Automatic Differentiation</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/autodiff.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><a id='Automatic-Differentiation-1'></a></p>
+<h1 id="automatic-differentiation">Automatic Differentiation</h1>
+<p>As mentioned in the <a href="../../user/minimization/">Minimizing a function</a> section, it is possible to avoid passing gradients even when using gradient based methods. This is because Optim will call the finite central differences functionality in <a href="https://github.com/JuliaDiffEq/DiffEqDiffTools.jl">DiffEqDiffTools.jl</a> in those cases. The advantages are clear: you do not have to write the gradients yourself, and it works for any function you can pass to Optim. However, there is another good way of making the computer provide gradients: <em>automatic differentiation</em>. Again, the advantage is that you can easily get gradients from the objective function alone. As opposed to finite difference, these gradients are exact and we also get Hessians for Newton's method. They can perform better than a finite differences scheme, depending on the exact problem. The disadvantage is that the objective function has to be written using only Julia code, so no calls to BLAS or Fortran functions.</p>
+<p>Let us consider the Rosenbrock example again.</p>
+<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="n">g!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="n">h!</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1200.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">400.0</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span>
+<span class="k">end</span>
+
+<span class="n">initial_x</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Let us see if BFGS and Newton's Method can solve this problem with the functions provided.</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">h!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">()))</span>
+<span class="go">2-element Array{Float64,1}:</span>
+<span class="go"> 1.0</span>
+<span class="go"> 1.0</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">h!</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">Newton</span><span class="p">()))</span>
+
+<span class="go">2-element Array{Float64,1}:</span>
+<span class="go"> 1.0</span>
+<span class="go"> 1.0</span>
+</pre></div>
+
+
+<p>This is indeed the case. Now let us use finite differences for BFGS.</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">()))</span>
+<span class="go">2-element Array{Float64,1}:</span>
+<span class="go"> 1.0</span>
+<span class="go"> 1.0</span>
+</pre></div>
+
+
+<p>Still looks good. Returning to automatic differentiation, let us try both solvers using this method.  We enable <a href="https://github.com/JuliaDiff/ForwardDiff.jl">forward mode</a> automatic differentiation by adding <code>autodiff = :forward</code> when we construct a <code>OnceDifferentiable</code> instance.</p>
+<div class="codehilite"><pre><span></span><span class="gp">julia&gt;</span> <span class="n">od</span> <span class="o">=</span> <span class="n">OnceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">;</span> <span class="n">autodiff</span> <span class="o">=</span> <span class="o">:</span><span class="n">forward</span><span class="p">);</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">od</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">BFGS</span><span class="p">()))</span>
+<span class="go">2-element Array{Float64,1}:</span>
+<span class="go"> 1.0</span>
+<span class="go"> 1.0</span>
+
+<span class="gp">julia&gt;</span> <span class="n">td</span> <span class="o">=</span> <span class="n">TwiceDifferentiable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">;</span> <span class="n">autodiff</span> <span class="o">=</span> <span class="o">:</span><span class="n">forward</span><span class="p">)</span>
+
+<span class="gp">julia&gt;</span> <span class="n">Optim</span><span class="o">.</span><span class="n">minimizer</span><span class="p">(</span><span class="n">optimize</span><span class="p">(</span><span class="n">td</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">Newton</span><span class="p">()))</span>
+<span class="go">2-element Array{Float64,1}:</span>
+<span class="go"> 1.0</span>
+<span class="go"> 1.0</span>
+</pre></div>
+
+
+<p>Indeed, the minimizer was found, without providing any gradients or Hessians.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../linesearch/" class="btn btn-neutral float-right" title="Linesearch">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../newton_trust_region/" class="btn btn-neutral" title="Newton with Trust Region"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../newton_trust_region/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../linesearch/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script>
+
+</body>
+</html>
