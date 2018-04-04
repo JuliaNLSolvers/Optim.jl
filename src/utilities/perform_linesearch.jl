@@ -28,29 +28,25 @@ end
 
 function perform_linesearch!(state, method::M, d) where M
     # Calculate search direction dphi0
-    dphi0 = checked_dphi0!(state, d, method)
-    phi0  = value(d)
-
-    # Refresh the line search cache
-    LineSearches.clear!(state.lsr)
-    push!(state.lsr, zero(phi0), phi0, dphi0)
+    dphi_0 = checked_dphi0!(state, d, method)
+    phi_0  = value(d)
 
     # Guess an alpha
-    method.alphaguess!(state, dphi0, d)
+    method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
     # Store current x and f(x) for next iteration
-    state.f_x_previous = phi0
+    state.f_x_previous = phi_0
     copy!(state.x_previous, state.x)
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try
-        state.alpha =
-            method.linesearch!(d, state.x, state.s, state.x_ls, state.lsr,
-                               state.alpha, state.mayterminate)
-        state.dphi0_previous = dphi0
+        state.alpha, ϕalpha =
+            method.linesearch!(d, state.x, state.s, state.alpha,
+                               state.x_ls, phi_0, dphi_0)
+        state.dphi_0_previous = dphi_0
         return true # lssuccess = true
     catch ex
-        state.dphi0_previous = dphi0
+        state.dphi_0_previous = dphi_0
         if isa(ex, LineSearches.LineSearchException)
             state.alpha = ex.alpha
             Base.warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.")
