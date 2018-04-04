@@ -7,8 +7,8 @@ abstract type UnivariateOptimizer  <: AbstractOptimizer end
 abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
-@inline specialize(::Val{T}) where T = T
-@inline specialize(x) = x
+# @inline specialize(::Val{T}) where T = T
+# @inline specialize(x) = x
 
 struct Options{T, TCallback, S}
     x_tol::T

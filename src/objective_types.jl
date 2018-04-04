@@ -1,3 +1,17 @@
+const gradient_caches = []
+const gradient_configs = []
+const hessian_configs = []
+const gradient_res = [DiffResults.MutableDiffResult(0.0, (initial_x,))];
+
+
+function fd_g!(out,x,f)
+    ForwardDiff.gradient!(out, f, x, gradient_configs[Threads.threadid()])
+end
+function fd_gf!(out,x,f)
+    ForwardDiff.gradient!(gr_res, f, x, gcfg)
+    DiffResults.value(gr_res)
+end
+
 
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T)),
                             DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F);
@@ -18,9 +32,9 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T))
         g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
 
         fg! = (out, x) -> begin
-            gr_res = DiffBase.DiffResult(zero(T), out)
+            gr_res = DiffResults.value(zero(T), out)
             ForwardDiff.gradient!(gr_res, f, x, gcfg)
-            DiffBase.value(gr_res)
+            DiffResults.value(gr_res)
         end
     else
         error("The autodiff value $autodiff is not support. Use :finite or :forward.")
@@ -41,13 +55,23 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F, ::Val{finite}, ::Val
     OnceDifferentiable(f, g!, fg!, x_seed, F, Val{S}())
 end
 
-# To do: move gr_res out of fg!, and make sure it is stable through the closures.
-function OnceDifferentiable(f, x_seed::AbstractArray{T}, F, ::Val{:forward}, ::Val{S}) where {T, S}
-    gcfg = ForwardDiff.GradientConfig(f, x_seed)
+# gr_res seems stable through the closures on 0.7. @codewarntype on od.fdf shows:
+#  #self#::getfield(Main, Symbol("##112#114")){typeof(rosenbrock),ForwardDiff.GradientConfig{ForwardDiff.Tag{typeof(rosenbrock),Float64},Float64,2,Array{ForwardDiff.Dual{ForwardDiff.Tag{typeof(rosenbrock),Float64},Float64,2},1}},DiffResults.MutableDiffResult{1,Float64,Tuple{Array{Float64,1}}}}
+#   out::Array{Float64,1}
+#   x::Array{Float64,1}
+# Creation of OnceDifferentiable object for Val(:forward) is not type stable, because of ForwardDiff.Chunk(x_seed).
+# I am now just exposing that API here, to make it easier to specify manually through Optim.
+# Odds are though, that if someone really wants to configure their differentiation, they'd just construct
+# the once differentiable object with an f, g!, and fg! themselves.
+# I think pointing people that way would make more sense than adding this to Optim.Options?
+# 
+# Instability in gcfg contaminates g! and fg!
+# Therefore, it may be a good idea to have Val(:forward) default to creating untyped OnceDifferentiables.
+function OnceDifferentiable(f, x_seed::AbstractArray{T}, F, ::Val{:forward}, ::Val{S}, ::ForwardDiff.Chunk{N} = ForwardDiff.Chunk(x_seed)) where {T, S, N}
+    gcfg = ForwardDiff.GradientConfig(f, x_seed, ForwardDiff.Chunk{N}())
     g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
-    gr_res = DiffBase.DiffResult(zero(T), out)
+    gr_res = DiffBase.DiffResult(F, x_seed)
     fg! = (out, x) -> begin
-        
         ForwardDiff.gradient!(gr_res, f, x, gcfg)
         DiffBase.value(gr_res)
     end
