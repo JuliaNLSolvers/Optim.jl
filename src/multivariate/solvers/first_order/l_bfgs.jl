@@ -167,7 +167,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
               similar(initial_x), # Buffer for new entry in state.dx_history
               similar(initial_x), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
               Vector{T}(method.m), #Buffer for use by twoloop
               0,

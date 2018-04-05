@@ -69,7 +69,7 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     BFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               copy(gradient(d)), # Store previous gradient in state.g_previous
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Store changes in position in state.dx
               similar(initial_x), # Store changes in gradient in state.dg
               similar(initial_x), # Buffer stored in state.u
