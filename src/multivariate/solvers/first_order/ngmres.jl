@@ -232,10 +232,10 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
     NGMRESState(nlpreconstate.x,          # Maintain current state in state.x. Use same vector as preconditioner.
                 nlpreconstate.x_previous, # Maintain  in state.x_previous. Use same vector as preconditioner.
                 similar(nlpreconstate.x), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
-                T(NaN),                   # Store previous f in state.f_x_previous
-                T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
-                T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
-                T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
+                real(T)(NaN),                   # Store previous f in state.f_x_previous
+                real(T)(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
+                real(T)(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
+                real(T)(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
                 similar(initial_x),       # Maintain current search direction in state.s
                 nlpreconstate,            # State storage for preconditioner
                 X,
