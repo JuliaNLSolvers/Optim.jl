@@ -112,7 +112,6 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
 
     project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
     pg = copy(gradient(d))
-    @assert typeof(value(d)) == T
 
     # Could move this out? as a general check?
     #=
@@ -178,14 +177,14 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # extra copy, which is probably minimal overhead.
         # -----------------
         method.precondprep!(method.P, real_to_complex(d,state.x))
-        dPd = dot(real_to_complex(d,state.s), method.P, real_to_complex(d,state.s))
-        etak::eltype(state.x) = method.eta * vecdot(state.s, state.g_previous) / dPd
+        dPd = real(dot(real_to_complex(d,state.s), method.P, real_to_complex(d,state.s)))
+        etak = method.eta * real(vecdot(state.s, state.g_previous)) / dPd
         state.y .= gradient(d) .- state.g_previous
-        ydots = vecdot(state.y, state.s)
+        ydots = real(vecdot(state.y, state.s))
         copy!(state.py, state.pg)        # below, store pg - pg_previous in py
         A_ldiv_B!(real_to_complex(d,state.pg), method.P, real_to_complex(d,gradient(d)))
         state.py .= state.pg .- state.py
-        betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
+        betak = (real(vecdot(state.y, state.pg)) - real(vecdot(state.y, state.py)) * real(vecdot(gradient(d), state.s)) / ydots) / ydots
         beta = max(betak, etak)
         state.s .= beta.*state.s .- state.pg
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
