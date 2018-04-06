@@ -111,8 +111,8 @@ Results of Optimization Algorithm
  * Minimum: 2.107853e+00
  * Iterations: 5
  * Convergence: false
-   * |x - x'| < 1.0e-32: false
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+   * |x - x'| < 0.0: false
+   * |f(x) - f(x')| / |f(x)| < 0.0: false
    * |g(x)| < 1.0e-08: false
    * Reached Maximum Number of Iterations: true
  * Objective Function Calls: 23
@@ -135,8 +135,8 @@ Results of Optimization Algorithm
  * Minimum: 2.107802e+00
  * Iterations: 5
  * Convergence: false
-   * |x - x'| < 1.0e-32: false
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+   * |x - x'| < 0.0: false
+   * |f(x) - f(x')| / |f(x)| < 0.0: false
    * |g(x)| < 1.0e-08: false
    * Reached Maximum Number of Iterations: true
  * Objective Function Calls: 23
