@@ -1,21 +1,6 @@
-const gradient_caches = []
-const gradient_configs = []
-const hessian_configs = []
-const gradient_res = [DiffResults.MutableDiffResult(0.0, (initial_x,))];
-
-
-function fd_g!(out,x,f)
-    ForwardDiff.gradient!(out, f, x, gradient_configs[Threads.threadid()])
-end
-function fd_gf!(out,x,f)
-    ForwardDiff.gradient!(gr_res, f, x, gcfg)
-    DiffResults.value(gr_res)
-end
-
-
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T)),
-                            DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F);
-                            autodiff = :finite) where T
+                            DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F), ::Val{S} = Val{true}();
+                            autodiff = :finite) where {T,S,N}
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex} (requires care when using :forward I think)
         gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, Val{:central})
@@ -28,18 +13,18 @@ function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T))
             return f(x)
         end
     elseif autodiff == :forward
-        gcfg = ForwardDiff.GradientConfig(f, x_seed)
+        gcfg = ForwardDiff.GradientConfig(f, x_seed, ForwardDiff.Chunk(x_seed))
         g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
-
+        gr_res = DiffResults.MutableDiffResult(zero(T), (x_seed,))
         fg! = (out, x) -> begin
-            gr_res = DiffResults.value(zero(T), out)
+            gr_res.derivs = (out,)
             ForwardDiff.gradient!(gr_res, f, x, gcfg)
             DiffResults.value(gr_res)
         end
     else
         error("The autodiff value $autodiff is not support. Use :finite or :forward.")
     end
-    OnceDifferentiable(f, g!, fg!, x_seed, F, DF)
+    OnceDifferentiable(f, g!, fg!, x_seed, F, DF, Val{S}())
 end
 # Val{:central} default?
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F, ::Val{finite}, ::Val{S} ) where {T, finite, S}
@@ -70,10 +55,11 @@ end
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F, ::Val{:forward}, ::Val{S}, ::ForwardDiff.Chunk{N} = ForwardDiff.Chunk(x_seed)) where {T, S, N}
     gcfg = ForwardDiff.GradientConfig(f, x_seed, ForwardDiff.Chunk{N}())
     g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
-    gr_res = DiffBase.DiffResult(F, x_seed)
+    gr_res = DiffResults.MutableDiffResult(zero(T), (x_seed,))
     fg! = (out, x) -> begin
+        gr_res.derivs = (out,)
         ForwardDiff.gradient!(gr_res, f, x, gcfg)
-        DiffBase.value(gr_res)
+        DiffResults.value(gr_res)
     end
     OnceDifferentiable(f, g!, fg!, x_seed, F, Val{S}())
 end
@@ -154,8 +140,8 @@ function TwiceDifferentiable(d::OnceDifferentiable, x_seed::AbstractVector{T} = 
     return TwiceDifferentiable(d.f, d.df, d.fdf, h!, x_seed, F, gradient(d))
 end
 
-function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = real(zero(T));
-                             autodiff = :finite) where T
+function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = real(zero(T)), ::Val{S} = Val{true}();
+                             autodiff = :finite) where {S, T}
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, Val{:complex}
         gcache = DiffEqDiffTools.GradientCache(x, x, Val{:central})
@@ -175,16 +161,21 @@ function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real = real(zero(T));
         end
     elseif autodiff == :forward
         gcfg = ForwardDiff.GradientConfig(f, x)
-        g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
-
-        fg! = (out, x) -> begin
-            gr_res = DiffBase.DiffResult(zero(T), out)
-            ForwardDiff.gradient!(gr_res, f, x, gcfg)
-            DiffBase.value(gr_res)
-        end
-
         hcfg = ForwardDiff.HessianConfig(f, x)
-        h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
+        g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
+        h_res = DiffResults.MutableDiffResult(zero(T), (x,Matrix{T}(undef,0,0)))
+        fg! = (out, x) -> begin
+            h_res.derivs = ( out, h_res.derivs[2] )
+            ForwardDiff.gradient!(h_res, f, x, hcfg)
+            DiffResults.value(h_res)
+        end
+    
+        h! = (out, x) -> begin
+            h_res.derivs = ( h_res.derivs[1], out )
+            ForwardDiff.hessian!(h_res, f, x, hcfg)
+            out
+        end
+        TwiceDifferentiable(f, g!, fg!, h!, x, F, Val{S}())
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")
     end
@@ -212,17 +203,18 @@ function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real, ::Val{finite}, ::
     TwiceDifferentiable(f, g!, fg!, h!, x, F, Val{S}())
 end
 
-function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real, ::Val{:forward}, ::Val{S}) where {T,S}
-    gcfg = ForwardDiff.GradientConfig(f, x)
+function TwiceDifferentiable(f, x::AbstractVector{T}, F::Real, ::Val{:forward}, ::Val{S}, ::ForwardDiff.Chunk{N} = ForwardDiff.Chunk(x)) where {T,S,N}
+    gcfg = ForwardDiff.GradientConfig(f, x, ForwardDiff.Chunk{N}())
+    hcfg = ForwardDiff.HessianConfig(f, x, ForwardDiff.Chunk{N}())
     g! = (out, x) -> ForwardDiff.gradient!(out, f, x, gcfg)
-
-    gr_res = DiffBase.DiffResult(zero(T), out)
+    g_res = DiffResults.MutableDiffResult(zero(T), (x, ))
+    h_res = DiffResults.HessianResult(x)
     fg! = (out, x) -> begin
-        ForwardDiff.gradient!(gr_res, f, x, gcfg)
-        DiffBase.value(gr_res)
+        g_res.derivs = ( out, )
+        ForwardDiff.gradient!(g_res, f, x, gcfg)
+        DiffResults.value(g_res)
     end
 
-    hcfg = ForwardDiff.HessianConfig(f, x)
     h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
     TwiceDifferentiable(f, g!, fg!, h!, x, F, Val{S}())
 end
