@@ -79,8 +79,8 @@ function update_state!(d, state::NewtonState, method::Newton)
         else
             # not Array, we can't do inplace ldiv
             gv = Vector{T}(undef, length(gradient(d)))
-            copy!(gv, -gradient(d))
-            copy!(state.s, state.F\gv)
+            copyto!(gv, -gradient(d))
+            copyto!(state.s, state.F\gv)
         end
     end
     # Determine the distance of movement along the search line

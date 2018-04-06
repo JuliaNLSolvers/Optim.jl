@@ -13,6 +13,7 @@
             res = optimize(f, g!, [1., 0., 1., 0.], m())
             @test typeof(Optim.minimizer(res)) <: Vector
             if !(m in (NelderMead, SimulatedAnnealing))
+                vecnorm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8 || @show m
                 @test vecnorm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
             end
         end

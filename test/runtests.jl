@@ -125,8 +125,13 @@ function run_optim_tests(method; convergence_exceptions = (),
                 results = Optim.optimize(input..., prob.initial_x, method, options)
                 @test isa(summary(results), String)
                 show_res && println(results)
+                if name == "Extended Rosenbrock"
+                    @show name, i
+                    println(results)
+                end
                 if !((name, i) in convergence_exceptions)
                     Optim.converged(results) || println(results)
+                    Optim.converged(results) || @show name, i
                     Optim.converged(results) || @show prob.minimum
                     Optim.converged(results) || @show prob.solutions
                     Optim.converged(results) || @show input
