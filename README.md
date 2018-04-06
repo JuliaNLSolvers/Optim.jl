@@ -37,9 +37,9 @@ Results of Optimization Algorithm
  * Iterations: 16
 
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
+   * |x - x'| ≤ 0.0e+00: false 
      |x - x'| = 3.47e-07 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 1.20e+03 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 2.33e-09 

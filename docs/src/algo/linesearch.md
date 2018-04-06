@@ -45,9 +45,9 @@ This gives the result
  * Minimum: 3.081488e-31
  * Iterations: 14
  * Convergence: true
-   * |x - x'| < 1.0e-32: false
+   * |x - x'| < 0.0: false
      |x - x'| = 3.06e-09
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
+   * |f(x) - f(x')| / |f(x)| < 0.0: false
      |f(x) - f(x')| / |f(x)| = 2.94e+13
    * |g(x)| < 1.0e-08: true
      |g(x)| = 1.11e-15
@@ -73,7 +73,7 @@ Results of Optimization Algorithm
  * Minimum: 2.032549e-29
  * Iterations: 14
  * Convergence: true
-   * |x - x'| < 1.0e-32: false
+   * |x - x'| < 0.0e+00: false
      |x - x'| = 3.67e-08
    * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
      |f(x) - f(x')| / |f(x)| = 1.66e+13

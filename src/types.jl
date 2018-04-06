@@ -26,8 +26,8 @@ struct Options{T, TCallback}
 end
 
 function Options(;
-        x_tol::Real = 1e-32,
-        f_tol::Real = 1e-32,
+        x_tol::Real = 0.0,
+        f_tol::Real = 0.0,
         g_tol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
