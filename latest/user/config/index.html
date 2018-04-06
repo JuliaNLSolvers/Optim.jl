@@ -269,9 +269,9 @@
 <h3 id="general-options">General Options</h3>
 <p>In addition to the solver, you can alter the behavior of the Optim package by using the following keywords:</p>
 <ul>
-<li><code>x_tol</code>: What is the threshold for determining convergence in the input vector? Defaults to <code>1e-32</code>.</li>
-<li><code>f_tol</code>: What is the threshold for determining convergence in the objective value? Defaults to <code>1e-32</code>.</li>
-<li><code>g_tol</code>: What is the threshold for determining convergence in the gradient? Defaults to <code>1e-8</code>. For gradient free methods, this will control the main convergence tolerance, which is solver specific.</li>
+<li><code>x_tol</code>: Absolute tolerance in changes of the input vector <code>x</code>, in infinity norm. Defaults to <code>0.0</code>.</li>
+<li><code>f_tol</code>: Relative tolerance in changes of the objective value. Defaults to <code>0.0</code>.</li>
+<li><code>g_tol</code>: Absolute tolerance in the gradient, in infinity norm. Defaults to <code>1e-8</code>. For gradient free methods, this will control the main convergence tolerance, which is solver specific.</li>
 <li><code>f_calls_limit</code>: A soft upper limit on the number of objective calls. Defaults to <code>0</code> (unlimited).</li>
 <li><code>g_calls_limit</code>: A soft upper limit on the number of gradient calls. Defaults to <code>0</code> (unlimited).</li>
 <li><code>h_calls_limit</code>: A soft upper limit on the number of Hessian calls. Defaults to <code>0</code> (unlimited).</li>
