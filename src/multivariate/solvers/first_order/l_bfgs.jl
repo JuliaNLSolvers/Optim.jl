@@ -34,7 +34,7 @@ function twoloop!(s,
         i   = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
+        @inbounds alpha[i] = rho[i] * real(vecdot(dxi, q))
         @inbounds q .-= alpha[i] .* dgi
     end
 
@@ -54,7 +54,7 @@ function twoloop!(s,
         i = mod1(upper, m)
         dxi = dx_history[i]
         dgi = dg_history[i]
-        scaling = dot(dxi, dgi) / sum(abs2, dgi)
+        scaling = real(dot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
         A_ldiv_B!(s, precon, q)
@@ -67,7 +67,7 @@ function twoloop!(s,
         i = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds beta = rho[i] * vecdot(dgi, s)
+        @inbounds beta = rho[i] * real(vecdot(dgi, s))
         @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
@@ -150,7 +150,7 @@ mutable struct LBFGSState{Tx, Tdx, Tdg, T, G} <: AbstractOptimizerState
 end
 
 function initial_state(method::LBFGS, options, d, initial_x)
-    T = eltype(initial_x)
+    T = real(eltype(initial_x))
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, real_to_complex(d,initial_x))
@@ -212,7 +212,7 @@ function update_h!(d, state, method::LBFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = one(eltype(state.dx)) / vecdot(state.dx, state.dg)
+    rho_iteration = one(eltype(state.dx)) / real(vecdot(state.dx, state.dg))
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
