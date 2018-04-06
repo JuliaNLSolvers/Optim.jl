@@ -5,4 +5,5 @@
     f = OptimTestProblems.MultivariateProblems.objective(prob)
     x0 = prob.initial_x
     optimize(f, x0, x0.-100., x0.+100.0, Optim.SAMIN(), Optim.Options(iterations=1000000))
+    @test Optim.minimum(res) < 1e-6
 end
