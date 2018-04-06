@@ -76,7 +76,7 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
     xopt = copy(x)
     f_old = value(d, x)
     fopt = copy(f_old) # give it something to compare to
-    details = [f_calls(d) t fopt]
+    details = [f_calls(d) t fopt xopt']
     bounds = ub - lb
     # check for out-of-bounds starting values
     for i = 1:n
@@ -123,7 +123,7 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
                                 xopt = copy(xp)
                                 fopt = copy(fp)
                                 nnew +=1
-                                details = [details; [f_calls(d) t fp]]
+                                details = [details; [f_calls(d) t fp xp']]
                             end
                         # If the point is higher, use the Metropolis criteria to decide on
                         # acceptance or rejection.
