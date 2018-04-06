@@ -50,7 +50,8 @@
     ls = LineSearches.Static()
 
     for solver in (AcceleratedGradientDescent, BFGS, ConjugateGradient,
-                   GradientDescent, LBFGS, MomentumGradientDescent)
+                   GradientDescent, LBFGS, MomentumGradientDescent,
+                   NGMRES, OACCEL)
         fcounter(true); gcounter(true)
         res = Optim.optimize(f, g!, prob.initial_x,
                              solver(linesearch = ls))
