@@ -54,7 +54,7 @@ function twoloop!(s,
         i = mod1(upper, m)
         dxi = dx_history[i]
         dgi = dg_history[i]
-        scaling = real(dot(dxi, dgi)) / sum(abs2, dgi)
+        scaling = real(vecdot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
         A_ldiv_B!(s, precon, q)
