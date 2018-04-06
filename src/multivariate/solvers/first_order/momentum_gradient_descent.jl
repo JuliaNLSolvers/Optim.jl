@@ -38,9 +38,9 @@ function initial_state(method::MomentumGradientDescent, options, d, initial_x)
     MomentumGradientDescentState(initial_x, # Maintain current state in state.x
                                  copy(initial_x), # Maintain previous state in state.x_previous
                                  similar(initial_x), # Record momentum correction direction in state.x_momentum
-                                 T(NaN), # Store previous f in state.f_x_previous
+                                 real(T)(NaN), # Store previous f in state.f_x_previous
                                  similar(initial_x), # Maintain current search direction in state.s
-                                 @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+                                 @initial_linesearch()...)
 end
 
 function update_state!(d, state::MomentumGradientDescentState, method::MomentumGradientDescent)

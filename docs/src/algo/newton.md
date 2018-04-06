@@ -7,7 +7,7 @@ Newton(; alphaguess = LineSearches.InitialStatic(),
 
 The constructor takes two keywords:
 
-* `linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)`, a function performing line search, see the line search section.
+* `linesearch = a(d, x, p, x_new, g_new, phi0, dphi0, c)`, a function performing line search, see the line search section.
 * `alphaguess = a(state, dphi0, d)`, a function for setting the initial guess for the line search algorithm, see the line search section.
 
 ## Description
