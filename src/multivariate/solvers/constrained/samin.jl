@@ -157,9 +157,8 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
 
                             # this should controlled by a convergence condition somewhere
                             return MultivariateOptimizationResults(method,
-                                                                    NLSolversBase.iscomplex(d),
-                                                                    x0,# real_to_complex(d, initial_x),
-                                                                    xopt, #real_to_complex(d, pick_best_x(f_incr_pick, state)),
+                                                                    x0,# initial_x,
+                                                                    xopt, #pick_best_x(f_incr_pick, state),
                                                                     fopt, # pick_best_f(f_incr_pick, state, d),
                                                                     f_calls(d), #iteration,
                                                                     false, #iteration == options.iterations,
@@ -288,9 +287,8 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
         end
     end
     return MultivariateOptimizationResults(method,
-                                            NLSolversBase.iscomplex(d),
-                                            x0,# real_to_complex(d, initial_x),
-                                            xopt, #real_to_complex(d, pick_best_x(f_incr_pick, state)),
+                                            x0,# initial_x,
+                                            xopt, #pick_best_x(f_incr_pick, state),
                                             fopt, # pick_best_f(f_incr_pick, state, d),
                                             f_calls(d), #iteration,
                                             f_calls(d) >= options.iterations, #iteration == options.iterations,

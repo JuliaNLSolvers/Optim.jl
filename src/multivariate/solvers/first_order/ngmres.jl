@@ -275,9 +275,9 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
-    res = optimize(d, real_to_complex(d,state.x), method.nlprecon, method.nlpreconopts, state.nlpreconstate)
+    res = optimize(d, state.x, method.nlprecon, method.nlpreconopts, state.nlpreconstate)
     # TODO: Is project_tangent! necessary, or is it called by nlprecon before exit?
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
 
     if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
         warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
@@ -289,7 +289,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     # but there are corner cases where we need this.
     state.f_xP = value_gradient!(d, state.x)
     # Manifold start
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
     # Manifold stop
     gP = gradient(d)
     state.grnorm_xP = g_residual(gP)
@@ -332,7 +332,6 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         state.xA .= (1.0-sum(α)).*vec(state.x) .+
             sum(state.X[:,k]*α[k] for k = 1:curw)
 
-        devec_fun(x) = real_to_complex(d, reshape(x, size(state.x)))
         state.s .=  reshape(state.xA, size(state.x)) .- state.x
     end
 
@@ -356,7 +355,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
         @. state.x = state.x + state.alpha * state.s
         # Manifold start
-        retract!(method.manifold, real_to_complex(d,state.x))
+        retract!(method.manifold, state.x)
         # Manifold stop
 
         # TODO: Move these into `nlprecon_post_accelerate!` ?
@@ -379,7 +378,7 @@ function update_g!(d, state, method::AbstractNGMRES)
     # Update the function value and gradient
     # TODO: do we need a retract! on state.x here?
     value_gradient!(d, state.x)
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
 
     if state.restart == false
         state.curw = min(state.curw + 1, method.wmax)

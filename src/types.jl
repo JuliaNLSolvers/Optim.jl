@@ -73,7 +73,6 @@ abstract type OptimizationResults end
 
 mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, Tf, M} <: OptimizationResults
     method::O
-    iscomplex::Bool
     initial_x::Tx
     minimizer::Tx
     minimum::Tf
@@ -94,7 +93,6 @@ mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, 
     g_calls::Int
     h_calls::Int
 end
-iscomplex(r::MultivariateOptimizationResults) = r.iscomplex
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
 pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
