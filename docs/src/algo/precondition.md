@@ -40,8 +40,8 @@ initial_x = zeros(100)
 plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
 plap1(x) = ForwardDiff.gradient(plap,x)
 precond(n) = spdiagm((-ones(n-1), 2*ones(n), -ones(n-1)), (-1,0,1), n, n)*(n+1)
-df = OnceDifferentiable(x -> plap([0; x; 0]),
-                            (g, x) -> copy!(g, (plap1([0; x; 0]))[2:end-1]))
+f(x) = plap([0; x; 0])
+g!(G, x) = copy!(G, (plap1([0; x; 0]))[2:end-1])
 result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))
 result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = precond(100)))
 ```
