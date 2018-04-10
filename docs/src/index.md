@@ -57,7 +57,7 @@ and features we want to implement. There are also planned breaking changes that
 are good to be aware of. Please see the section on Planned Changes.
 
 
-[github-img-url]: https://github.com/badges/shields/blob/master/logo/github.svg
+[github-img-url]: https://img.shields.io/badge/GitHub-source-green.svg
 [github-repo-url]: https://github.com/JuliaNLSolvers/Optim.jl
 
 [build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master
