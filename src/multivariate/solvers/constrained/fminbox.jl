@@ -99,7 +99,7 @@ struct Fminbox{T} <: AbstractOptimizer
     mufactor
     precondprep
 end
-function Fminbox(; method = BFGS(),
+function Fminbox(method = BFGS();
         mu0 = NaN,
         mufactor = 0.001,
         precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))

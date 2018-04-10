@@ -11,6 +11,9 @@ struct Options{T, TCallback}
     x_tol::T
     f_tol::T
     g_tol::T
+    outer_x_tol::T
+    outer_f_tol::T
+    outer_g_tol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
@@ -53,7 +56,7 @@ function Options(;
     #    show_trace = true
     #end
     Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
-        allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
+        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, Float64(time_limit))
 end
 
