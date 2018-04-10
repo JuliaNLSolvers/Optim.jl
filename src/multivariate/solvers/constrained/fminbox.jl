@@ -244,7 +244,7 @@ function optimize(
                 alphaguess = LineSearches.InitialPrevious()
             end
             _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
-        elseif O in (NelderMead, SimulatedAnnealing)
+        elseif O in (NelderMead, SimulatedAnnealing, ParticleSwarm)
             _optimizer = O()
         else
             if linesearch == nothing
