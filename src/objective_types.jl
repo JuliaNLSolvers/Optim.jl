@@ -1,6 +1,6 @@
 function OnceDifferentiable(f, x_seed::AbstractArray{T}, F::Real = real(zero(T)),
                             DF::AbstractArray = NLSolversBase.alloc_DF(x_seed, F), ::Val{S} = Val{true}();
-                            autodiff = :finite) where {T,S,N}
+                            autodiff = :finite) where {T,S}
     if autodiff == :finite
         # TODO: Allow user to specify Val{:central}, Val{:forward}, :Val{:complex} (requires care when using :forward I think)
         gcache = DiffEqDiffTools.GradientCache(x_seed, x_seed, Val{:central})
