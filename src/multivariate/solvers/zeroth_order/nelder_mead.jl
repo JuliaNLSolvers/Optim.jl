@@ -46,13 +46,7 @@ Base.summary(::NelderMead) = "Nelder-Mead"
 
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)
-    if haskey(KW, :a) || haskey(KW, :g) || haskey(KW, :b)
-        a, g, b = 1.0, 2.0, 0.5
-        haskey(KW, :a) && (a = KW[:a])
-        haskey(KW, :g) && (g = KW[:g])
-        haskey(KW, :b) && (b = KW[:b])
-        return NelderMead(a, g, b)
-    elseif haskey(KW, :initial_simplex) || haskey(KW, :parameters)
+    if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
         initial_simplex, parameters = AffineSimplexer(), AdaptiveParameters()
         haskey(KW, :initial_simplex) && (initial_simplex = KW[:initial_simplex])
         haskey(KW, :parameters) && (parameters = KW[:parameters])

@@ -26,8 +26,8 @@ struct Options{T, TCallback}
 end
 
 function Options(;
-        x_tol::Real = 1e-32,
-        f_tol::Real = 1e-32,
+        x_tol::Real = 0.0,
+        f_tol::Real = 0.0,
         g_tol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
@@ -47,7 +47,7 @@ function Options(;
     #end
     Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
-        Int(show_every), callback, time_limit)
+        Int(show_every), callback, Float64(time_limit))
 end
 
 function print_header(options::Options)
