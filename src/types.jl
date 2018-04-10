@@ -15,8 +15,10 @@ struct Options{T, TCallback}
     g_calls_limit::Int
     h_calls_limit::Int
     allow_f_increases::Bool
+    allow_outer_f_increases::Bool
     successive_f_tol::Int
     iterations::Int
+    outer_iterations::Int
     store_trace::Bool
     show_trace::Bool
     extended_trace::Bool
@@ -29,12 +31,17 @@ function Options(;
         x_tol::Real = 0.0,
         f_tol::Real = 0.0,
         g_tol::Real = 1e-8,
+        outer_x_tol::Real = 0.0,
+        outer_f_tol::Real = 0.0,
+        outer_g_tol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
         allow_f_increases::Bool = false,
+        allow_outer_f_increases::Bool = false,
         successive_f_tol::Int = 0,
         iterations::Integer = 1_000,
+        outer_iterations = 1000,
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
@@ -45,7 +52,7 @@ function Options(;
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+    Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, Float64(time_limit))
 end
