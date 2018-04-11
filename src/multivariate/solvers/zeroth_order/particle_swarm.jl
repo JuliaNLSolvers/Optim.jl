@@ -324,7 +324,8 @@ function get_swarm_state(X, score, best_point, previous_state)
     dmin = Base.minimum(d)
     dmax = Base.maximum(d)
 
-    f = (dg - dmin) / (dmax - dmin)
+    f = (dg - dmin) / max(dmax - dmin, sqrt(eps(T)))
+
     mu = zeros(T, 4)
     mu[1] = get_mu_1(f)
     mu[2] = get_mu_2(f)
