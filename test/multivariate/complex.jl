@@ -19,6 +19,12 @@
         @test gcomplex(x0) ≈ NLSolversBase.gradient(oda1)
     end
 
+    for method in (Optim.NelderMead,Optim.ParticleSwarm,Optim.Newton)
+        @test_throws Any Optim.optimize(fcomplex, gcomplex!, x0, method())
+    end
+    #not supposed to converge, but it should at least go through without errors
+    res = Optim.optimize(fcomplex, gcomplex!, x0, Optim.SimulatedAnnealing())
+
     # TODO: AcceleratedGradientDescent fail to converge?
     for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
                    Optim.NGMRES, Optim.OACCEL)
