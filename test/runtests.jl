@@ -40,6 +40,7 @@ multivariate_tests = [
     ## optimize
     "optimize/interface",
     "optimize/optimize",
+    "optimize/inplace",
     ## solvers
     ## constrained
     "solvers/constrained/constrained",
