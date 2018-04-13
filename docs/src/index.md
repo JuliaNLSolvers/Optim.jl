@@ -50,8 +50,3 @@ This means that all you need to do to install Optim, is to run
 ```julia
 Pkg.add("Optim")
 ```
-
-## But...
-Optim is a work in progress. There are still some rough edges to be sanded down,
-and features we want to implement. There are also planned breaking changes that
-are good to be aware of. Please see the section on Planned Changes.
