@@ -56,7 +56,7 @@ end
 #         covered by the trial values. 1: start decreasing temperature immediately
 Base.summary(::SAMIN) = "SAMIN"
 
-function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray, method::SAMIN, options::Options = Options())
+function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray, method::SAMIN, options::Options = Options())
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
@@ -263,7 +263,7 @@ function optimize(obj_fn, x::AbstractArray, lb::AbstractArray, ub::AbstractArray
                         println("boundary of parameter space.")
                         println(lnobds, " out of  ", (nup+ndown+nrej), " evaluations were out of bounds in the last round.")
                         println("Expand bounds and re-run, unless this is a constrained minimization.")
-                    end    
+                    end
                     println("total number of objective function evaluations: ", f_calls(d))
                     @printf("\n     Obj. value:  %16.10f\n\n", fopt)
                     println("       parameter      search width")

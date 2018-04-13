@@ -126,8 +126,8 @@ function optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
 
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
+function optimize(f, g, h, initial_x::AbstractArray{T}, method::AbstractOptimizer,
+         options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite) where T
 
     g! = inplace ? g : (G, x) -> copy!(G, g(x))
     h! = inplace ? h : (H, x) -> copy!(H, h(x))
