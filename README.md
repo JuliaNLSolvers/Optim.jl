@@ -101,8 +101,8 @@ search: LBFGS
 
 # Documentation
 For more details and options, see the documentation
-[STABLE][docs-stable-url] — most recently tagged version of the documentation.
-[LATEST][docs-latest-url] — in-development version of the documentation.
+- [STABLE][docs-stable-url] — most recently tagged version of the documentation.
+- [LATEST][docs-latest-url] — in-development version of the documentation.
 
 # Installation
 
