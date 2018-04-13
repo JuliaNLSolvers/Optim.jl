@@ -233,6 +233,35 @@
               
                 <p><a id='Optim.jl-1'></a></p>
 <h1 id="optimjl">Optim.jl</h1>
+<p>Univariate and multivariate optimization in Julia.</p>
+<p>Optim.jl is part of the <a href="https://github.com/JuliaNLSolvers">JuliaNLSolvers</a> family.</p>
+<table>
+<thead>
+<tr>
+<th align="center"><strong>Source</strong></th>
+<th align="center"><strong>PackageEvaluator</strong></th>
+<th align="center"><strong>Build Status</strong></th>
+<th align="center"><strong>Social</strong></th>
+<th align="center"><strong>References to cite</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">[![Source][github-img-url]][github-repo-url]</td>
+<td align="center">[![][pkg-0.6-img]][pkg-0.6-url]</td>
+<td align="center">[![Build Status][build-img]][build-url]</td>
+<td align="center">[![][gitter-img]][gitter-url]</td>
+<td align="center">[![JOSS][joss-img]][joss-url]</td>
+</tr>
+<tr>
+<td align="center">[![Codecov branch][cov-img]][cov-url]</td>
+<td align="center">[![][pkg-0.5-img]][pkg-0.5-url]</td>
+<td align="center">[![Build Status][winbuild-img]][winbuild-url]</td>
+<td align="center"></td>
+<td align="center">[![DOI][zenodo-img]][zenodo-url]</td>
+</tr>
+</tbody>
+</table>
 <p><a id='What-1'></a></p>
 <h2 id="what">What</h2>
 <p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained and Riemannian optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>).</p>
@@ -252,6 +281,14 @@
 <p><a id='But...-1'></a></p>
 <h2 id="but">But...</h2>
 <p>Optim is a work in progress. There are still some rough edges to be sanded down, and features we want to implement. There are also planned breaking changes that are good to be aware of. Please see the section on Planned Changes.</p>
+<p>[github-img-url]: https://img.shields.io/badge/GitHub-source-green.svg [github-repo-url]: https://github.com/JuliaNLSolvers/Optim.jl</p>
+<p>[build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master [build-url]: https://travis-ci.org/JuliaNLSolvers/Optim.jl</p>
+<p>[winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true [winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl</p>
+<p>[pkg-0.5-img]: http://pkg.julialang.org/badges/Optim_0.5.svg [pkg-0.5-url]: http://pkg.julialang.org/?pkg=Optim&amp;ver=0.5 [pkg-0.6-img]: http://pkg.julialang.org/badges/Optim_0.6.svg [pkg-0.6-url]: http://pkg.julialang.org/?pkg=Optim&amp;ver=0.6</p>
+<p>[cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000 [cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl</p>
+<p>[gitter-url]: https://gitter.im/JuliaNLSolvers/Optim.jl [gitter-img]: https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg</p>
+<p>[zenodo-url]: https://zenodo.org/badge/latestdoi/3933868 [zenodo-img]: https://zenodo.org/badge/3933868.svg</p>
+<p>[joss-url]: https://doi.org/10.21105/joss.00615 [joss-img]: http://joss.theoj.org/papers/10.21105/joss.00615/status.svg</p>
               
             </div>
           </div>
@@ -305,5 +342,5 @@
 
 <!--
 MkDocs version : 0.17.3
-Build Date UTC : 2018-04-09 07:57:51
+Build Date UTC : 2018-04-13 14:51:12
 -->
