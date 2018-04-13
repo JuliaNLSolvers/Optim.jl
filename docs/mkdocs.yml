@@ -5,12 +5,6 @@ site_author:      JuliaNLSolvers
 
 theme: readthedocs
 
-
-extra:
-  palette:
-    primary: 'indigo'
-    accent:  'blue'
-
 markdown_extensions:
   - codehilite
   - extra
