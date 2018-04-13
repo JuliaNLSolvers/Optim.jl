@@ -33,7 +33,7 @@ julia> using Optim, OptimTestProblems
 
 julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
 
-julia> res = Optim.optimize(prob.f, prob.initial_x, fill(-100.0, 2), fill(100.0, 2), SAMIN(), Optim.Options(iterations=10^6))
+julia> res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(), Optim.Options(iterations=10^6))
 ================================================================================
 SAMIN results
 ==> Normal convergence <==
@@ -42,8 +42,8 @@ total number of objective function evaluations: 23701
      Obj. value:      0.0000000000
 
        parameter      search width
-         1.00000           0.00000 
-         1.00000           0.00000 
+         1.00000           0.00000
+         1.00000           0.00000
 ================================================================================
 
 Results of Optimization Algorithm
@@ -53,12 +53,12 @@ Results of Optimization Algorithm
  * Minimum: 5.522977e-16
  * Iterations: 23701
  * Convergence: false
-   * |x - x'| ≤ 0.0e+00: false 
-     |x - x'| = NaN 
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = NaN |f(x)|
-   * |g(x)| ≤ 0.0e+00: false 
-     |g(x)| = NaN 
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 23701
@@ -71,7 +71,7 @@ rt=0.5, is too rapid:
 julia> using Optim, OptimTestProblems
 
 julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
-julia> res = Optim.optimize(prob.f, prob.initial_x, fill(-100.0, 2), fill(100.0, 2), SAMIN(rt=0.5), Optim.Options(iterations=10^6))
+julia> res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(rt=0.5), Optim.Options(iterations=10^6))
 ================================================================================
 SAMIN results
 ==> Normal convergence <==
@@ -80,8 +80,8 @@ total number of objective function evaluations: 12051
      Obj. value:      0.0011613045
 
        parameter      search width
-         0.96592           0.00000 
-         0.93301           0.00000 
+         0.96592           0.00000
+         0.93301           0.00000
 ================================================================================
 
 Results of Optimization Algorithm
@@ -91,12 +91,12 @@ Results of Optimization Algorithm
  * Minimum: 1.161304e-03
  * Iterations: 12051
  * Convergence: false
-   * |x - x'| ≤ 0.0e+00: false 
-     |x - x'| = NaN 
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = NaN |f(x)|
-   * |g(x)| ≤ 0.0e+00: false 
-     |g(x)| = NaN 
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 12051

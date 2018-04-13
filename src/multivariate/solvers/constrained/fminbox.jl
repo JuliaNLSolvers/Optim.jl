@@ -130,27 +130,29 @@ end
 
 
 function optimize(obj,
-                  initial_x::AbstractArray{T},
                   l::AbstractArray{T},
                   u::AbstractArray{T},
+                  initial_x::AbstractArray{T},
                   F::Fminbox{O} = Fminbox()) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(obj, initial_x, zero(T)), initial_x, l, u, F)
+    od = OnceDifferentiable(obj, initial_x, zero(T))
+    optimize(od, l, u, initial_x, F)
 end
 
 function optimize(f,
                   g!,
-                  initial_x::AbstractArray{T},
                   l::AbstractArray{T},
                   u::AbstractArray{T},
+                  initial_x::AbstractArray{T},
                   F::Fminbox{O} = Fminbox()) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), initial_x, l, u, F)
+    od = OnceDifferentiable(f, g!, initial_x, zero(T))
+    optimize(od, l, u, initial_x, F)
 end
 
 function optimize(
         df::OnceDifferentiable,
-        initial_x::AbstractArray{T},
         l::AbstractArray{T},
         u::AbstractArray{T},
+        initial_x::AbstractArray{T},
         F::Fminbox{O} = Fminbox(),
         options = Options()) where {T<:AbstractFloat,O<:AbstractOptimizer}
 
@@ -251,7 +253,9 @@ function optimize(
         # Test for convergence
         g .= gfunc .+ mu[].*gbarrier
 
-        results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, options.x_tol, options.f_tol, options.g_tol)
+        results.x_converged, results.f_converged,
+        results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
+                                                                         options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
         f_increased && !allow_outer_f_increases && break
     end
     return MultivariateOptimizationResults(F, false, initial_x, minimizer(results), df.f(minimizer(results)),

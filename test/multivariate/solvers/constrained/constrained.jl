@@ -41,7 +41,7 @@
     u = fill(boxl, N)
     initial_x = (rand(N) .- 0.5) .* boxl
     for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS())
-        results = Optim.optimize(_objective, initial_x, l, u, Fminbox(_optimizer))
+        results = Optim.optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
         @test Optim.converged(results)
         @test summary(results) == "Fminbox with $(summary(_optimizer))"
 
@@ -53,7 +53,7 @@
     end
 
     # tests for #180
-    results = Optim.optimize(_objective, initial_x, l, u, Fminbox(), Optim.Options(outer_iterations = 2))
+    results = Optim.optimize(_objective, l, u, initial_x, Fminbox(), Optim.Options(outer_iterations = 2))
     @test Optim.iterations(results) == 2
     @test Optim.minimum(results) == _objective.f(Optim.minimizer(results))
 
@@ -62,7 +62,7 @@
     initial_x = rand([-1,1],N)*boxl
     @test_warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.
 Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
-               Optim.optimize(_objective, initial_x, l, u, Fminbox(), Optim.Options(outer_iterations = 1)))
+               Optim.optimize(_objective, l, u, initial_x, Fminbox(), Optim.Options(outer_iterations = 1)))
 
     # might fail if changes are made to Optim.jl
     # TODO: come up with a better test
@@ -83,14 +83,14 @@ Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
         lb = fill(-0.1, 2)
         ub = fill(1.1, 2)
         od = OnceDifferentiable(exponential, initial_x)
-        optimize(od, initial_x, lb, ub, Fminbox())
+        optimize(od, lb, ub, initial_x, Fminbox())
         od_forward = OnceDifferentiable(exponential, initial_x; autodiff = :forward)
-        optimize(od_forward, initial_x, lb, ub, Fminbox())
-        optimize(exponential, initial_x, lb, ub, Fminbox())
-        optimize(exponential, exponential_gradient!, initial_x, lb, ub, Fminbox())
-        optimize(od, initial_x, lb, ub)
-        optimize(od_forward, initial_x, lb, ub)
-        optimize(exponential, initial_x, lb, ub)
-        optimize(exponential, exponential_gradient!, initial_x, lb, ub)
+        optimize(od_forward, lb, ub, initial_x, Fminbox())
+        optimize(exponential, lb, ub, initial_x, Fminbox())
+        optimize(exponential, exponential_gradient!, lb, ub, initial_x, Fminbox())
+        optimize(od, lb, ub, initial_x)
+        optimize(od_forward, lb, ub, initial_x)
+        optimize(exponential, lb, ub, initial_x)
+        optimize(exponential, exponential_gradient!, lb, ub, initial_x)
     end
 end
