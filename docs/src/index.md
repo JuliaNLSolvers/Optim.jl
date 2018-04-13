@@ -1,5 +1,15 @@
 # Optim.jl
 
+Univariate and multivariate optimization in Julia.
+
+Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
+
+| **Source**  | **PackageEvaluator** | **Build Status** | **Social** | **References to cite** |
+|:-:|:-:|:-:|:-:|:-:|
+| [![Source][github-img-url]][github-repo-url] | [![][pkg-0.6-img]][pkg-0.6-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
+| [![Codecov branch][cov-img]][cov-url]  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  | [![DOI][zenodo-img]][zenodo-url] |
+
+
 ## What
 Optim is a Julia package for optimizing functions of
 various kinds. While there is some support for box constrained and Riemannian optimization, most
@@ -45,3 +55,30 @@ Pkg.add("Optim")
 Optim is a work in progress. There are still some rough edges to be sanded down,
 and features we want to implement. There are also planned breaking changes that
 are good to be aware of. Please see the section on Planned Changes.
+
+
+[github-img-url]: https://img.shields.io/badge/GitHub-source-green.svg
+[github-repo-url]: https://github.com/JuliaNLSolvers/Optim.jl
+
+[build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master
+[build-url]: https://travis-ci.org/JuliaNLSolvers/Optim.jl
+
+[winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true
+[winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl
+
+[pkg-0.5-img]: http://pkg.julialang.org/badges/Optim_0.5.svg
+[pkg-0.5-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.5
+[pkg-0.6-img]: http://pkg.julialang.org/badges/Optim_0.6.svg
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.6
+
+[cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000
+[cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl
+
+[gitter-url]: https://gitter.im/JuliaNLSolvers/Optim.jl
+[gitter-img]: https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg
+
+[zenodo-url]: https://zenodo.org/badge/latestdoi/3933868
+[zenodo-img]: https://zenodo.org/badge/3933868.svg
+
+[joss-url]: https://doi.org/10.21105/joss.00615
+[joss-img]: http://joss.theoj.org/papers/10.21105/joss.00615/status.svg
