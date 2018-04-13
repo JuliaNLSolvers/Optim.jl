@@ -59,16 +59,16 @@
             @test Optim.converged(res)
             @test Optim.minimizer(res) ≈ xref rtol=1e-4
 
-            # To compare with the equivalent real solvers
-            to_cplx(x) = x[1:n] + im*x[n+1:2n]
-            from_cplx(x) = [real(x);imag(x)]
-            freal(x) = fcomplex(to_cplx(x))
-            greal!(stor,x) = copy!(stor, from_cplx(gcomplex(to_cplx(x))))
-            opt = Optim.Options(allow_f_increases=true,show_trace=true)
-            println("$(summary(method)) cplx")
-            res_cplx = Optim.optimize(fcomplex,gcomplex!,x0,method,opt)
-            println("$(summary(method)) real")
-            res_real = Optim.optimize(freal,greal!,from_cplx(x0),method,opt)
+            # # To compare with the equivalent real solvers
+            # to_cplx(x) = x[1:n] + im*x[n+1:2n]
+            # from_cplx(x) = [real(x);imag(x)]
+            # freal(x) = fcomplex(to_cplx(x))
+            # greal!(stor,x) = copy!(stor, from_cplx(gcomplex(to_cplx(x))))
+            # opt = Optim.Options(allow_f_increases=true,show_trace=true)
+            # println("$(summary(method)) cplx")
+            # res_cplx = Optim.optimize(fcomplex,gcomplex!,x0,method,opt)
+            # println("$(summary(method)) real")
+            # res_real = Optim.optimize(freal,greal!,from_cplx(x0),method,opt)
         end
     end
 end
