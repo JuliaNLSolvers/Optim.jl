@@ -15,7 +15,7 @@ after_while!(d, state, method, options) = nothing
 
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
-    vecnorm(gradient(d), Inf) < options.g_tol
+    vecnorm(gradient(d), Inf) <= options.g_tol
 end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
