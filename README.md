@@ -5,10 +5,10 @@ Univariate and multivariate optimization in Julia.
 
 Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
 
-| **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 | **References to cite** |
-|:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|:-:|
+| **Documentation**  | **PackageEvaluator** | **Build Status** | **Social** | **References to cite** |
+|:-:|:-:|:-:|:-:|:-:|
 | [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
-| [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  | [![DOI][zenodo-img]][zenodo-url] |
+|  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  | [![DOI][zenodo-img]][zenodo-url] |
 | |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  || |
 
 # Optimization
@@ -20,7 +20,7 @@ using Optim
 rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 result = optimize(rosenbrock, zeros(2), BFGS())
 ```
-This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function) 
+This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function)
 
 <img src="https://user-images.githubusercontent.com/8431156/31627324-2bbc9ebc-b2ad-11e7-916f-857ad8dcb714.gif" title="f(x,y) = (a-x)^2+b(y-x^2)^2" />
 
@@ -37,12 +37,12 @@ Results of Optimization Algorithm
  * Iterations: 16
 
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
-     |x - x'| = 3.47e-07 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.47e-07
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 1.20e+03 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true 
-     |g(x)| = 2.33e-09 
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 2.33e-09
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 53
@@ -92,13 +92,17 @@ search: LBFGS
 
     •    Wright, S. J. and J. Nocedal (2006), Numerical
         optimization, 2nd edition. Springer
-      
+
     •    Liu, D. C. and Nocedal, J. (1989). "On the
         Limited Memory Method for Large Scale
         Optimization". Mathematical Programming B. 45
-        (3): 503–528   
+        (3): 503–528
 ```
-For more details and options, see the documentation ([stable](https://julianlsolvers.github.io/Optim.jl/stable) | [latest](https://julianlsolvers.github.io/Optim.jl/latest)).
+
+# Documentation
+For more details and options, see the documentation
+- [STABLE][docs-stable-url] — most recently tagged version of the documentation.
+- [LATEST][docs-latest-url] — in-development version of the documentation.
 
 # Installation
 
