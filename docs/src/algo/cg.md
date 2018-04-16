@@ -35,11 +35,11 @@ Results of Optimization Algorithm
  * Minimum: 5.144946e-18
  * Iterations: 21
  * Convergence: true
-   * |x - x'| < 1.0e-32: false
+   * |x - x'| ≤ 0.0e+00: false
      |x - x'| = 2.09e-10
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
-     |f(x) - f(x')| / |f(x)| = 1.55e+00
-   * |g(x)| < 1.0e-08: true
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.55e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
      |g(x)| = 3.36e-09
    * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
@@ -57,11 +57,11 @@ We can compare this to the default first order solver in Optim.jl
   * Minimum: 7.645684e-21
   * Iterations: 16
   * Convergence: true
-    * |x - x'| < 1.0e-32: false
+    * |x - x'| ≤ 0.0e+00: false
       |x - x'| = 3.48e-07
-    * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
-      |f(x) - f(x')| / |f(x)| = 9.03e+06
-    * |g(x)| < 1.0e-08: true
+    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+      |f(x) - f(x')| = 9.03e+06 |f(x)|
+    * |g(x)| ≤ 1.0e-08: true
       |g(x)| = 2.32e-09
     * stopped by an increasing objective: false
     * Reached Maximum Number of Iterations: false

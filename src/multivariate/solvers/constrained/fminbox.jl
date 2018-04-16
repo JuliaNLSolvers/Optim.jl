@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}; mu0::T = convert(T, NaN), mu0factor::T = 0.001) where T
+function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = 0.001, mu0::T = convert(T, NaN)) where T
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -90,57 +90,76 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, mu)
-    @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
+    @. P.diag = 1/(mu[]*(1/(x-l)^2 + 1/(u-x)^2) + 1)
 end
 
-struct Fminbox{T<:AbstractOptimizer} <: AbstractOptimizer end
-Fminbox() = Fminbox{ConjugateGradient}() # default optimizer
+struct Fminbox{T, Tf, P} <: AbstractConstrainedOptimizer
+    method::T
+    mu0::Tf
+    mufactor::Tf
+    precondprep::P
+end
+Fminbox() = Fminbox(LBFGS(); mu0 = NaN, mufactor = 0.001, precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
+function Fminbox(method;
+        mu0 = NaN,
+        mufactor = 0.001,
+        precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
 
-Base.summary(::Fminbox{O}) where {O} = "Fminbox with $(summary(O()))"
+Fminbox(method, promote(mu0, mufactor)..., precondprep) # default optimizer
+end
+
+Base.summary(F::Fminbox) = "Fminbox with $(summary(F.method))"
+
+function barrier_method(F, P, mu, l, u)
+    # Define the barrier-aware preconditioner once and for all (mu is mutable 1-element vector)
+    pcp = (P, x) -> F.precondprep(P, x, l, u, mu)
+
+    O = F.method
+    if typeof(O) <: ConjugateGradient
+        return ConjugateGradient(eta = O.eta, alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
+    elseif typeof(O) <: LBFGS
+        return LBFGS(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
+    elseif typeof(O) <: GradientDescent
+        return GradientDescent(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
+    elseif typeof(O) <: Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS}
+        return O
+    else
+        error("You need to specify a valid inner optimizer, please consult the documentation.")
+    end
+end
+
 
 function optimize(obj,
-                  initial_x::AbstractArray{T},
                   l::AbstractArray{T},
                   u::AbstractArray{T},
-                  F::Fminbox{O} = Fminbox(); kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(obj, initial_x, zero(T)), initial_x, l, u, F; kwargs...)
+                  initial_x::AbstractArray{T},
+                  F::Fminbox{O} = Fminbox()) where {T<:AbstractFloat,O<:AbstractOptimizer}
+    od = OnceDifferentiable(obj, initial_x, zero(T))
+    optimize(od, l, u, initial_x, F)
 end
 
 function optimize(f,
                   g!,
-                  initial_x::AbstractArray{T},
                   l::AbstractArray{T},
                   u::AbstractArray{T},
-                  F::Fminbox{O} = Fminbox(); kwargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
-     optimize(OnceDifferentiable(f, g!, initial_x, zero(T)), initial_x, l, u, F; kwargs...)
+                  initial_x::AbstractArray{T},
+                  F::Fminbox{O} = Fminbox()) where {T<:AbstractFloat,O<:AbstractOptimizer}
+    od = OnceDifferentiable(f, g!, initial_x, zero(T))
+    optimize(od, l, u, initial_x, F)
 end
 
 function optimize(
         df::OnceDifferentiable,
-        initial_x::AbstractArray{T},
         l::AbstractArray{T},
         u::AbstractArray{T},
-        ::Fminbox{O} = Fminbox();
-        x_tol::T = eps(T),
-        f_tol::T = sqrt(eps(T)),
-        g_tol::T = sqrt(eps(T)),
-        allow_f_increases::Bool = true,
-        iterations::Integer = 1_000,
-        store_trace::Bool = false,
-        show_trace::Bool = false,
-        extended_trace::Bool = false,
-        callback = nothing,
-        show_every::Integer = 1,
-        alphaguess = nothing,
-        linesearch = nothing,
-        eta::Real = convert(T,0.4),
-        mu0::T = convert(T, NaN),
-        mufactor::T = convert(T, 0.001),
-        precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
-        optimizer_o = Options(store_trace = store_trace,
-                                          show_trace = show_trace,
-                                          extended_trace = extended_trace),
-        nargs...) where {T<:AbstractFloat,O<:AbstractOptimizer}
+        initial_x::AbstractArray{T},
+        F::Fminbox{O} = Fminbox(),
+        options = Options()) where {T<:AbstractFloat,O<:AbstractOptimizer}
+
+
+    outer_iterations = options.outer_iterations
+    allow_outer_f_increases = options.allow_outer_f_increases
+    show_trace, store_trace, extended_trace = options.show_trace, options.store_trace, options.extended_trace
 
     O == Newton && warn("Newton is not supported as the inner optimizer. Defaulting to ConjugateGradient.")
     x = copy(initial_x)
@@ -178,11 +197,18 @@ function optimize(
     if length(boundaryidx) > 0
         warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
-    df.df(gfunc, x)
-    mu = isnan(mu0) ? initial_mu(gfunc, gbarrier; mu0factor=mufactor) : mu0
+
+    gradient!(df, x)
+    gfunc .= gradient(df)
+
+    mu = Ref(initial_mu(gfunc, gbarrier, F.mufactor, F.mu0))
+
+    # Create barrier-aware method instance (precondition relevance)
+    _optimizer = barrier_method(F, P, mu, l, u)
+
     if show_trace > 0
         println("######## fminbox ########")
-        println("Initial mu = ", mu)
+        println("Initial mu = ", mu[])
     end
 
     g = similar(x)
@@ -196,66 +222,20 @@ function optimize(
     local results
     first = true
     fval0 = zero(T)
-    while !converged && iteration < iterations
+
+    while !converged && iteration < outer_iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
         copy!(xold, x)
         # Optimize with current setting of mu
-        funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu)
+        funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu[])
         fval0 = funcc(nothing, x)
         dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x, zero(T))
         if show_trace > 0
-            println("#### Calling optimizer with mu = ", mu, " ####")
+            println("#### Calling optimizer with mu = ", mu[], " ####")
         end
-        pcp = (P, x) -> precondprep(P, x, l, u, mu)
-        # TODO: Changing the default linesearch and alphaguesses
-        #       in the optimization algorithms will imply a lot of extra work here
-        if O == ConjugateGradient || O == Newton
-            if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
-            end
-            if alphaguess == nothing
-                alphaguess = LineSearches.InitialHagerZhang()
-            end
-            _optimizer = ConjugateGradient(eta = eta, alphaguess = alphaguess,
-                                           linesearch = linesearch, P = P, precondprep = pcp)
-        elseif O == LBFGS
-            if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
-            end
-            if alphaguess == nothing
-                alphaguess = LineSearches.InitialStatic()
-            end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
-        elseif O == BFGS
-            if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
-            end
-            if alphaguess == nothing
-                alphaguess = LineSearches.InitialStatic()
-            end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
-        elseif O == GradientDescent
-            if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
-            end
-            if alphaguess == nothing
-                alphaguess = LineSearches.InitialPrevious()
-            end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch, P = P, precondprep = pcp)
-        elseif O in (NelderMead, SimulatedAnnealing)
-            _optimizer = O()
-        else
-            if linesearch == nothing
-                linesearch = LineSearches.HagerZhang()
-            end
-            if alphaguess == nothing
-                alphaguess = LineSearches.InitialPrevious()
-            end
-            _optimizer = O(alphaguess = alphaguess, linesearch = linesearch)
-        end
-        resultsnew = optimize(dfbox, x, _optimizer, optimizer_o)
+        resultsnew = optimize(dfbox, x, _optimizer, options)
         if first
             results = resultsnew
             first = false
@@ -268,15 +248,18 @@ function optimize(
         end
 
         # Decrease mu
-        mu *= mufactor
+        mu[] *= F.mufactor
 
         # Test for convergence
-        g .= gfunc .+ mu.*gbarrier
+        g .= gfunc .+ mu[].*gbarrier
 
-        results.x_converged, results.f_converged, results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g, x_tol, f_tol, g_tol)
-        f_increased && !allow_f_increases && break
+        results.x_converged, results.f_converged,
+        results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
+                                                                         options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
+        f_increased && !allow_outer_f_increases && break
     end
-    return MultivariateOptimizationResults(Fminbox{O}(), initial_x, minimizer(results), df.f(minimizer(results)),
+
+    return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_tol, vecnorm(x - xold),
             results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),

@@ -65,9 +65,9 @@ Results of Optimization Algorithm
  * Minimum: 2.898230e-01
  * Iterations: 1000
  * Convergence: false
-   * |x - x'| ≤ 1.0e-32: false 
+   * |x - x'| ≤ 0.0e+00: false 
      |x - x'| = 4.02e-04 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 2.38e-03 |f(x)|
    * |g(x)| ≤ 1.0e-08: false 
      |g(x)| = 8.23e-02 
@@ -94,9 +94,9 @@ Results of Optimization Algorithm
  * Minimum: 3.255053e-17
  * Iterations: 87
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
+   * |x - x'| ≤ 0.0e+00: false 
      |x - x'| = 6.51e-08 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 7.56e+02 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 1.06e-09 
@@ -120,9 +120,9 @@ Results of Optimization Algorithm
  * Minimum: 9.218164e-20
  * Iterations: 50
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
+   * |x - x'| ≤ 0.0e+00: false 
      |x - x'| = 2.76e-07 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 5.18e+06 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 4.02e-11 
@@ -146,9 +146,9 @@ Results of Optimization Algorithm
  * Minimum: 5.375569e-19
  * Iterations: 63
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
+   * |x - x'| ≤ 0.0e+00: false 
      |x - x'| = 9.94e-09 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 1.29e+03 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 4.94e-11 

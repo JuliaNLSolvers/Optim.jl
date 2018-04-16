@@ -1,4 +1,5 @@
 abstract type AbstractOptimizer end
+abstract type AbstractConstrainedOptimizer end
 abstract type ZerothOrderOptimizer <: AbstractOptimizer end
 abstract type FirstOrderOptimizer  <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
@@ -11,12 +12,17 @@ struct Options{T, TCallback}
     x_tol::T
     f_tol::T
     g_tol::T
+    outer_x_tol::T
+    outer_f_tol::T
+    outer_g_tol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
     allow_f_increases::Bool
+    allow_outer_f_increases::Bool
     successive_f_tol::Int
     iterations::Int
+    outer_iterations::Int
     store_trace::Bool
     show_trace::Bool
     extended_trace::Bool
@@ -26,27 +32,32 @@ struct Options{T, TCallback}
 end
 
 function Options(;
-        x_tol::Real = 1e-32,
-        f_tol::Real = 1e-32,
+        x_tol::Real = 0.0,
+        f_tol::Real = 0.0,
         g_tol::Real = 1e-8,
+        outer_x_tol::Real = 0.0,
+        outer_f_tol::Real = 0.0,
+        outer_g_tol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
         allow_f_increases::Bool = false,
+        allow_outer_f_increases::Bool = false,
         successive_f_tol::Int = 0,
-        iterations::Integer = 1_000,
+        iterations::Int = 1_000,
+        outer_iterations::Int = 1000,
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
-        show_every::Integer = 1,
+        show_every::Int = 1,
         callback = nothing,
         time_limit = NaN)
     show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
-        allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
+    Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, Float64(time_limit))
 end
 
@@ -71,7 +82,7 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, Tf, M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx

@@ -2,9 +2,10 @@ using Documenter, Optim
 
 # use include("Rosenbrock.jl") etc
 
-# assuming linux.
-#run('mv ../LICENSE.md ./LICENSE.md')
-#run('mv ../CONTRIBUTING.md ./dev/CONTRIBUTING.md')
+odir = Pkg.dir("Optim")
+run(`cp $odir/LICENSE.md $odir/docs/src/LICENSE.md`)
+
+#run('mv ../CONTRIBUTING.md ./dev/CONTRIBUTING.md') # TODO: Should we use the $odir/CONTRIBUTING.md file instead?
 makedocs(
     doctest = false
 )
