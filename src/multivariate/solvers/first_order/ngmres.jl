@@ -287,7 +287,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
 
     # Calling value_gradient! in normally done on state.x in optimize or update_g! above,
     # but there are corner cases where we need this.
-    state.f_xP = value_gradient!(d, state.x)
+    state.f_xP, _g = value_gradient!(d, state.x)
     # Manifold start
     project_tangent!(method.manifold, gradient(d), state.x)
     # Manifold stop
