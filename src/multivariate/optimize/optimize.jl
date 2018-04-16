@@ -21,14 +21,12 @@ initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) 
 
 function optimize(d::D, initial_x::Tx, method::M,
                   options::Options = Options(;default_options(method)...),
-                  state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-
-    initial_x = complex_to_real(d, initial_x)
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
@@ -85,9 +83,8 @@ function optimize(d::D, initial_x::Tx, method::M,
     f_incr_pick = f_increased && !options.allow_f_increases
 
     return MultivariateOptimizationResults(method,
-                                        NLSolversBase.iscomplex(d),
-                                        real_to_complex(d, initial_x),
-                                        real_to_complex(d, pick_best_x(f_incr_pick, state)),
+                                        initial_x,
+                                        pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),
                                         iteration,
                                         iteration == options.iterations,

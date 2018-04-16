@@ -258,7 +258,8 @@ function optimize(
                                                                          options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
         f_increased && !allow_outer_f_increases && break
     end
-    return MultivariateOptimizationResults(F, false, initial_x, minimizer(results), df.f(minimizer(results)),
+
+    return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_tol, vecnorm(x - xold),
             results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),

@@ -1,5 +1,5 @@
 function maxdiff(x::AbstractArray, y::AbstractArray)
-    res = zero(x[1] - y[1])
+    res = real(zero(x[1] - y[1]))
     @inbounds for i in 1:length(x)
         delta = abs(x[i] - y[i])
         if delta > res

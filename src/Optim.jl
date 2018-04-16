@@ -21,8 +21,7 @@ module Optim
            Base.getindex,
            Base.setindex!
 
-    import NLSolversBase: iscomplex,
-                          NonDifferentiable,
+    import NLSolversBase: NonDifferentiable,
                           OnceDifferentiable,
                           TwiceDifferentiable
 

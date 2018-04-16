@@ -29,22 +29,22 @@ end
 function initial_state(method::MomentumGradientDescent, options, d, initial_x)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
 
     MomentumGradientDescentState(initial_x, # Maintain current state in state.x
                                  copy(initial_x), # Maintain previous state in state.x_previous
                                  similar(initial_x), # Record momentum correction direction in state.x_momentum
-                                 T(NaN), # Store previous f in state.f_x_previous
+                                 real(T)(NaN), # Store previous f in state.f_x_previous
                                  similar(initial_x), # Maintain current search direction in state.s
                                  @initial_linesearch()...)
 end
 
 function update_state!(d, state::MomentumGradientDescentState, method::MomentumGradientDescent)
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
 
@@ -55,7 +55,7 @@ function update_state!(d, state::MomentumGradientDescentState, method::MomentumG
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     state.x .+= state.alpha.*state.s .+ method.mu.*state.x_momentum
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
     lssuccess == false # break on linesearch error
 end
 

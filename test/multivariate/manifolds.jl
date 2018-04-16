@@ -17,7 +17,7 @@
     for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
                    Optim.NGMRES, Optim.OACCEL)
         debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
-        res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif))
+        res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif), Optim.Options(allow_f_increases=true))
         debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
         debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
         @test Optim.converged(res)

@@ -22,10 +22,9 @@ mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolver
     manifold::Manifold
     inner_obj::T
 end
-iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
 # TODO: is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     value!(obj.inner_obj, xin)
 end
 function NLSolversBase.value(obj::ManifoldObjective)
@@ -38,15 +37,15 @@ function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
     gradient(obj.inner_obj,i)
 end
 function NLSolversBase.gradient!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     gradient!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
     return gradient(obj.inner_obj)
 end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     value_gradient!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
     return value(obj.inner_obj)
 end
 
