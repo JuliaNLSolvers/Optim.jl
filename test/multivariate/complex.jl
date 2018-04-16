@@ -20,7 +20,7 @@
 
     @testset "Finite difference setup" begin
         oda1 = OnceDifferentiable(fcomplex, x0)
-        fx = NLSolversBase.value_gradient!(oda1, x0)
+        fx, gx = NLSolversBase.value_gradient!(oda1, x0)
         @test fx == fcomplex(x0)
         @test gcomplex(x0) ≈ NLSolversBase.gradient(oda1)
     end
