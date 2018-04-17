@@ -1,241 +1,210 @@
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <meta name="author" content="JuliaNLSolvers">
-  <link rel="shortcut icon" href="../../img/favicon.ico">
-  <title>Tips and tricks - Optim.jl</title>
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="JuliaNLSolvers">
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Tips and tricks - Optim.jl</title>
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.5.0.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
 
-  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../../css/highlight.css">
-  
-  <script>
-    // Current page data
-    var mkdocs_page_name = "Tips and tricks";
-    var mkdocs_page_input_path = "user/tipsandtricks.md";
-    var mkdocs_page_url = "/user/tipsandtricks/";
-  </script>
-  
-  <script src="../../js/jquery-2.1.1.min.js"></script>
-  <script src="../../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
-  
-</head>
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script> 
+    </head>
 
-<body class="wy-body-for-nav" role="document">
+    <body>
 
-  <div class="wy-grid-for-nav">
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
 
-    
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-      <div class="wy-side-nav-search">
-        <a href="../.." class="icon icon-home"> Optim.jl</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-  </form>
-</div>
-      </div>
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="../..">Optim.jl</a>
+        </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-	<ul class="current">
-	  
-          
-            <li class="toctree-l1">
-		
-    <a class="" href="../..">Home</a>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">General information</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../minimization/">Minimizing a function</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../config/">Configurable Options</a>
-                </li>
-                <li class=" current">
-                    
-    <a class="current" href="./">Tips and tricks</a>
-    <ul class="subnav">
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                    <li >
+                        <a href="../..">Home</a>
+                    </li>
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">General information <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            
+<li >
+    <a href="../minimization/">Minimizing a function</a>
+</li>
+                            
+<li >
+    <a href="../config/">Configurable Options</a>
+</li>
+                            
+<li class="active">
+    <a href="./">Tips and tricks</a>
+</li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Algorithms <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            
+  <li class="dropdown-submenu">
+    <a href="#">Solvers</a>
+    <ul class="dropdown-menu">
             
-    <li class="toctree-l3"><a href="#dealing-with-constant-parameters">Dealing with constant parameters</a></li>
-    
-
-    <li class="toctree-l3"><a href="#avoid-repeating-computations">Avoid repeating computations</a></li>
-    
-
-    <li class="toctree-l3"><a href="#provide-gradients">Provide gradients</a></li>
-    
-
-    <li class="toctree-l3"><a href="#separating-time-spent-in-optims-code-and-user-provided-functions">Separating time spent in Optim's code and user provided functions</a></li>
-    
-
-    <li class="toctree-l3"><a href="#early-stopping">Early stopping</a></li>
-    
-
+  <li class="dropdown-submenu">
+    <a href="#">Gradient Free</a>
+    <ul class="dropdown-menu">
+            
+<li >
+    <a href="../../algo/nelder_mead/">Nelder Mead</a>
+</li>
+            
+<li >
+    <a href="../../algo/simulated_annealing/">Simulated Annealing</a>
+</li>
+            
+<li >
+    <a href="../../algo/samin/">Simulated Annealing w/ bounds</a>
+</li>
+            
+<li >
+    <a href="../../algo/particle_swarm/">Particle Swarm</a>
+</li>
     </ul>
-                </li>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#">Gradient Required</a>
+    <ul class="dropdown-menu">
+            
+<li >
+    <a href="../../algo/cg/">Conjugate Gradient</a>
+</li>
+            
+<li >
+    <a href="../../algo/gradientdescent/">Gradient Descent</a>
+</li>
+            
+<li >
+    <a href="../../algo/lbfgs/">(L-)BFGS</a>
+</li>
+            
+<li >
+    <a href="../../algo/ngmres/">Acceleration</a>
+</li>
     </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Algorithms</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <span class="caption-text">Solvers</span>
-    <ul class="subnav">
-                <li class="toctree-l3">
-                    
-    <span class="caption-text">Gradient Free</span>
-    <ul class="subnav">
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/nelder_mead/">Nelder Mead</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/simulated_annealing/">Simulated Annealing</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/samin/">Simulated Annealing w/ bounds</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/particle_swarm/">Particle Swarm</a>
-                </li>
+  </li>
+            
+  <li class="dropdown-submenu">
+    <a href="#">Hessian Required</a>
+    <ul class="dropdown-menu">
+            
+<li >
+    <a href="../../algo/newton/">Newton</a>
+</li>
+            
+<li >
+    <a href="../../algo/newton_trust_region/">Newton with Trust Region</a>
+</li>
     </ul>
-                </li>
-                <li class="toctree-l3">
-                    
-    <span class="caption-text">Gradient Required</span>
-    <ul class="subnav">
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/cg/">Conjugate Gradient</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/gradientdescent/">Gradient Descent</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/lbfgs/">(L-)BFGS</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/ngmres/">Acceleration</a>
-                </li>
+  </li>
     </ul>
-                </li>
-                <li class="toctree-l3">
-                    
-    <span class="caption-text">Hessian Required</span>
-    <ul class="subnav">
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/newton/">Newton</a>
-                </li>
-                <li class="toctree-l4">
-                    
-    <a class="" href="../../algo/newton_trust_region/">Newton with Trust Region</a>
-                </li>
-    </ul>
-                </li>
-    </ul>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../algo/autodiff/">Automatic Differentiation</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../algo/linesearch/">Linesearch</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../algo/precondition/">Preconditioners</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../algo/complex/">Complex optimization</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../../algo/manifolds/">Manifolds</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Contributing</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../../dev/contributing/">Contributing</a>
-                </li>
-    </ul>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <a class="" href="../../LICENSE/">License</a>
-	    </li>
-          
-        </ul>
-      </div>
-      &nbsp;
-    </nav>
+  </li>
+                            
+<li >
+    <a href="../../algo/autodiff/">Automatic Differentiation</a>
+</li>
+                            
+<li >
+    <a href="../../algo/linesearch/">Linesearch</a>
+</li>
+                            
+<li >
+    <a href="../../algo/precondition/">Preconditioners</a>
+</li>
+                            
+<li >
+    <a href="../../algo/complex/">Complex optimization</a>
+</li>
+                            
+<li >
+    <a href="../../algo/manifolds/">Manifolds</a>
+</li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            
+<li >
+    <a href="../../dev/contributing/">Contributing</a>
+</li>
+                        </ul>
+                    </li>
+                    <li >
+                        <a href="../../LICENSE/">License</a>
+                    </li>
+                </ul>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../..">Optim.jl</a>
-      </nav>
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="../..">Docs</a> &raquo;</li>
-    
-      
-        
-          <li>General information &raquo;</li>
-        
-      
-    
-    <li>Tips and tricks</li>
-    <li class="wy-breadcrumbs-aside">
-      
-        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/user/tipsandtricks.md"
-          class="icon icon-github"> Edit on GitHub</a>
-      
-    </li>
-  </ul>
-  <hr/>
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                    <li >
+                        <a rel="next" href="../config/">
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../../algo/nelder_mead/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/user/tipsandtricks.md"><i class="fa fa-github"></i> Edit on GitHub</a>
+                    </li>
+            </ul>
+        </div>
+    </div>
 </div>
-          <div role="main">
-            <div class="section">
-              
-                <p><a id='Dealing-with-constant-parameters-1'></a></p>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#dealing-with-constant-parameters">Dealing with constant parameters</a></li>
+        <li class="main "><a href="#avoid-repeating-computations">Avoid repeating computations</a></li>
+        <li class="main "><a href="#provide-gradients">Provide gradients</a></li>
+        <li class="main "><a href="#separating-time-spent-in-optims-code-and-user-provided-functions">Separating time spent in Optim's code and user provided functions</a></li>
+        <li class="main "><a href="#early-stopping">Early stopping</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<p><a id='Dealing-with-constant-parameters-1'></a></p>
 <h2 id="dealing-with-constant-parameters">Dealing with constant parameters</h2>
 <p>In many applications, there may be factors that are relevant to the function evaluations, but are fixed throughout the optimization. An obvious example is using data in a likelihood function, but it could also be parameters we wish to hold constant.</p>
 <p>Consider a squared error loss function that depends on some data <code>x</code> and <code>y</code>, and parameters <code>betas</code>. As far as the solver is concerned, there should only be one input argument to the function we want to minimize, call it <code>sqerror</code>.</p>
@@ -512,58 +481,84 @@
 <span class="go">   *  √(Σ(yᵢ-ȳ)²)/n &lt; 1.0e-08: false</span>
 <span class="go">   * Reached Maximum Number of Iterations: false</span>
 <span class="go"> * Objective Function Calls: 24</span>
-</pre></div>
-              
-            </div>
-          </div>
-          <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../../algo/nelder_mead/" class="btn btn-neutral float-right" title="Nelder Mead">Next <span class="icon icon-circle-arrow-right"></span></a>
-      
-      
-        <a href="../config/" class="btn btn-neutral" title="Configurable Options"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-      
-    </div>
-  
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-    
-  </div>
-
-  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
-      
+</pre></div></div>
         </div>
-      </div>
 
-    </section>
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>var base_url = '../..';</script>
+        <script src="../../js/base.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+        <script src="../../assets/mathjaxhelper.js"></script>
+        <script src="../../search/require.js"></script>
+        <script src="../../search/search.js"></script>
 
-  </div>
-
-  <div class="rst-versions" role="note" style="cursor: pointer">
-    <span class="rst-current-version" data-toggle="rst-current-version">
-      
-          <a href="https://github.com/JuliaNLSolvers/Optim.jl/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
-      
-      
-        <span><a href="../config/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      
-      
-        <span style="margin-left: 15px"><a href="../../algo/nelder_mead/" style="color: #fcfcfc">Next &raquo;</a></span>
-      
-    </span>
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>&larr;</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>&rarr;</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
 </div>
-    <script>var base_url = '../..';</script>
-    <script src="../../js/theme.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
-      <script src="../../assets/mathjaxhelper.js"></script>
-      <script src="../../search/require.js"></script>
-      <script src="../../search/search.js"></script>
 
-</body>
+
+    </body>
 </html>
