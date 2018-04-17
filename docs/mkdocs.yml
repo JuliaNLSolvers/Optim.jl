@@ -3,7 +3,7 @@ repo_url:         https://github.com/JuliaNLSolvers/Optim.jl/
 site_description: Pure Julia implementations of optimization algorithms.
 site_author:      JuliaNLSolvers
 
-theme: readthedocs
+#theme: readthedocs
 
 markdown_extensions:
   - codehilite
