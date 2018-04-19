@@ -19,16 +19,16 @@ optimize(f, x0)
 Optim will default to using the Nelder-Mead method in the multivariate case, as we did not provide a gradient. This can also
 be explicitly specified using:
 ```jl
-optimize(f, [0.0, 0.0], NelderMead())
+optimize(f, x0, NelderMead())
 ```
 Other solvers are available. Below, we use L-BFGS, a quasi-Newton method that requires a gradient.
 If we pass `f` alone, Optim will construct an approximate gradient for us using central finite differencing:
 ```jl
-optimize(f, [0.0, 0.0], LBFGS())
+optimize(f, x0, LBFGS())
 ```
 For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the `autodiff` keyword and setting it to `:forward`:
 ```julia
-optimize(f, [0.0, 0.0], LBFGS(); autodiff = :forward)
+optimize(f, x0, LBFGS(); autodiff = :forward)
 ```
 
 For the Rosenbrock example, the analytical gradient can be shown to be:
@@ -46,11 +46,11 @@ where `g` is a function of `x` only.
 
 Returning to our in-place version, you simply pass `g!` together with `f` from before to use the gradient:
 ```jl
-optimize(f, g!, [0.0, 0.0], LBFGS())
+optimize(f, g!, x0, LBFGS())
 ```
 For some methods, like simulated annealing, the gradient will be ignored:
 ```jl
-optimize(f, g!, [0.0, 0.0], SimulatedAnnealing())
+optimize(f, g!, x0, SimulatedAnnealing())
 ```
 In addition to providing gradients, you can provide a Hessian function `h!` as well. In our current case this is:
 ```jl
@@ -63,11 +63,11 @@ end
 ```
 Now we can use Newton's method for optimization by running:
 ```jl
-optimize(f, g!, h!, [0.0, 0.0])
+optimize(f, g!, h!, x0)
 ```
 Which defaults to `Newton()` since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:
 ```jl
-optimize(f, g!, h!, [0.0, 0.0], LBFGS())
+optimize(f, g!, h!, x0, LBFGS())
 ```
 Note that Optim will not generate approximate Hessians using finite differencing
 because of the potentially low accuracy of approximations to the Hessians. Other
