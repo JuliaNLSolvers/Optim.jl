@@ -86,10 +86,9 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p>Nelder-Mead is currently the standard algorithm when no derivatives are provided.</p>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">NelderMead</span><span class="p">(;</span> <span class="n">parameters</span> <span class="o">=</span> <span class="n">AdaptiveParameters</span><span class="p">(),</span>
-             <span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">AffineSimplexer</span><span class="p">())</span>
-</pre></div>
-
+<pre><code class="julia">NelderMead(; parameters = AdaptiveParameters(),
+             initial_simplex = AffineSimplexer())
+</code></pre>
 
 <p>The keywords in the constructor are used to control the following parts of the solver:</p>
 <ul>
@@ -116,31 +115,29 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </p>
 <p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
 <p>If a specific simplex is wanted, it is possible to construct the $(n+1)$-vector of $n$-dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span>
-<span class="n">struct</span> <span class="n">MySimplexer</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span> <span class="k">end</span>
-<span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">S</span><span class="o">::</span><span class="n">MySimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">)</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="p">(</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="o">.</span><span class="mi">0</span><span class="p">],</span> <span class="n">NelderMead</span><span class="p">(</span><span class="n">initial_simplex</span> <span class="o">=</span> <span class="n">MySimplexer</span><span class="p">()))</span>
-</pre></div>
-
+<pre><code class="julia">using Optim
+struct MySimplexer &lt;: Optim.Simplexer end
+Optim.simplexer(S::MySimplexer, initial_x) = [rand(length(initial_x)) for i = 1:length(initial_x)+1]
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+optimize(f, [.0, .0], NelderMead(initial_simplex = MySimplexer()))
+</code></pre>
 
 <p>Say we want to implement the initial simplex as in Matlab's <code>fminsearch</code>. This is very close to the <code>AffineSimplexer</code> above, but with a small twist. Instead of always adding the <code>a</code>, a constant is only added to entries that are zero. If the entry is non-zero, five percent of the level is added. This might be implemented (by the user) as</p>
-<div class="codehilite"><pre><span></span><span class="n">struct</span> <span class="n">MatlabSimplexer</span><span class="p">{</span><span class="n">T</span><span class="p">}</span> <span class="o">&lt;:</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Simplexer</span>
-    <span class="n">a</span><span class="o">::</span><span class="n">T</span>
-    <span class="n">b</span><span class="o">::</span><span class="n">T</span>
-<span class="k">end</span>
-<span class="n">MatlabSimplexer</span><span class="p">(;</span><span class="n">a</span> <span class="o">=</span> <span class="mf">0.00025</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">)</span> <span class="o">=</span> <span class="n">MatlabSimplexer</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+<pre><code class="julia">struct MatlabSimplexer{T} &lt;: Optim.Simplexer
+    a::T
+    b::T
+end
+MatlabSimplexer(;a = 0.00025, b = 0.05) = MatlabSimplexer(a, b)
 
-<span class="k">function</span> <span class="n">Optim</span><span class="o">.</span><span class="n">simplexer</span><span class="p">(</span><span class="n">A</span><span class="o">::</span><span class="n">MatlabSimplexer</span><span class="p">,</span> <span class="n">initial_x</span><span class="o">::</span><span class="kt">AbstractArray</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">})</span> <span class="n">where</span> <span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">initial_x</span><span class="p">)</span>
-    <span class="n">initial_simplex</span> <span class="o">=</span> <span class="kt">Array</span><span class="p">{</span><span class="n">T</span><span class="p">,</span> <span class="n">N</span><span class="p">}[</span><span class="n">initial_x</span> <span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="o">:</span><span class="n">n</span>
-        <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">zero</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">?</span> <span class="n">S</span><span class="o">.</span><span class="n">b</span> <span class="o">*</span> <span class="n">initial_simplex</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">:</span> <span class="n">S</span><span class="o">.</span><span class="n">a</span>
-    <span class="k">end</span>
-    <span class="n">initial_simplex</span>
-<span class="k">end</span>
-</pre></div>
-
+function Optim.simplexer(A::MatlabSimplexer, initial_x::AbstractArray{T, N}) where {T, N}
+    n = length(initial_x)
+    initial_simplex = Array{T, N}[initial_x for i = 1:n+1]
+    for j = 1:n
+        initial_simplex[j+1][j] += initial_simplex[j+1][j] == zero(T) ? S.b * initial_simplex[j+1][j] : S.a
+    end
+    initial_simplex
+end
+</code></pre>
 
 <p><a id='The-parameters-of-Nelder-Mead-1'></a></p>
 <h3 id="the-parameters-of-nelder-mead">The parameters of Nelder-Mead</h3>

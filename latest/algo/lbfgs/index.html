@@ -87,22 +87,20 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p>This page contains information about BFGS and its limited memory version L-BFGS.</p>
 <p><a id='Constructors-1'></a></p>
 <h2 id="constructors">Constructors</h2>
-<div class="codehilite"><pre><span></span><span class="n">BFGS</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
-       <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-       <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-       <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
-</pre></div>
+<pre><code class="julia">BFGS(; alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
+       P = nothing,
+       precondprep = (P, x) -&gt; nothing)
+</code></pre>
 
-
-<div class="codehilite"><pre><span></span><span class="n">LBFGS</span><span class="p">(;</span> <span class="n">m</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
-        <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-        <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-        <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">,</span>
-        <span class="n">manifold</span> <span class="o">=</span> <span class="n">Flat</span><span class="p">(),</span>
-        <span class="n">scaleinvH0</span><span class="o">::</span><span class="kt">Bool</span> <span class="o">=</span> <span class="kc">true</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">typeof</span><span class="p">(</span><span class="n">P</span><span class="p">)</span> <span class="o">&lt;:</span> <span class="kt">Void</span><span class="p">))</span>
-</pre></div>
-
+<pre><code class="julia">LBFGS(; m = 10,
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        P = nothing,
+        precondprep = (P, x) -&gt; nothing,
+        manifold = Flat(),
+        scaleinvH0::Bool = true &amp;&amp; (typeof(P) &lt;: Void))
+</code></pre>
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>

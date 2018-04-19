@@ -61,12 +61,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../autodiff/" class="btn btn-xs btn-default pull-right">
+      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../autodiff/" class="btn btn-xs btn-link">
-        Automatic Differentiation
+      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
+        Contributing
       </a>
     </div>
     
@@ -86,13 +86,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="newtons-method-with-a-trust-region">Newton's Method With a Trust Region</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">NewtonTrustRegion</span><span class="p">(;</span> <span class="n">initial_delta</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
-                    <span class="n">delta_hat</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
-                    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-                    <span class="n">rho_lower</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
-                    <span class="n">rho_upper</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">NewtonTrustRegion(; initial_delta = 1.0,
+                    delta_hat = 100.0,
+                    eta = 0.1,
+                    rho_lower = 0.25,
+                    rho_upper = 0.75)
+</code></pre>
 
 <p>The constructor takes keywords that determine the initial and maximal size of the trust region, when to grow and shrink the region, and how close the function should be to the quadratic approximation.  The notation follows chapter four of Numerical Optimization.  Below, <code>rho</code> $=\rho$ refers to the ratio of the actual function change to the change in the quadratic approximation for a given step.</p>
 <ul>
@@ -130,11 +129,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p>$\rho_k &lt; \rho_{lower} \Rightarrow \Delta_{k+1} = 0.25 \Delta_k$. Finally, we only accept a point if its decrease is appreciable compared to the quadratic approximation.  Specifically, a step is only accepted $\rho_k &gt; \eta$.  As long as we choose $\eta$ to be less than $\rho_{lower}$, we will shrink the trust region whenever we reject a step.  Eventually, if the objective function is locally quadratic, $\Delta_k$ will become small enough that a quadratic approximation will be accurate enough to make progress again.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
-<span class="n">prob</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">NewtonTrustRegion</span><span class="p">())</span>
-</pre></div>
-
+<pre><code class="julia">using Optim, OptimTestProblems
+prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion())
+</code></pre>
 
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>
@@ -146,12 +144,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../autodiff/" class="btn btn-xs btn-default pull-right">
+      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../autodiff/" class="btn btn-xs btn-link">
-        Automatic Differentiation
+      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
+        Contributing
       </a>
     </div>
     

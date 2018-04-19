@@ -86,13 +86,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="conjugate-gradient-descent">Conjugate Gradient Descent</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">ConjugateGradient</span><span class="p">(;</span> <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialHagerZhang</span><span class="p">(),</span>
-                    <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-                    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span>
-                    <span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">,</span>
-                    <span class="n">precondprep</span> <span class="o">=</span> <span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">nothing</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
+                    linesearch = LineSearches.HagerZhang(),
+                    eta = 0.4,
+                    P = nothing,
+                    precondprep = (P, x) -&gt; nothing)
+</code></pre>
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
@@ -100,16 +99,15 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>Let's optimize the 2D Rosenbrock function. The function and gradient are given by</p>
-<div class="codehilite"><pre><span></span><span class="nx">f</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">^</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
-<span class="kd">function</span> <span class="nx">g</span><span class="o">!</span><span class="p">(</span><span class="nx">storage</span><span class="p">,</span> <span class="nx">x</span><span class="p">)</span>
-    <span class="nx">storage</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mf">400.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="nx">storage</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">200.0</span> <span class="o">*</span> <span class="p">(</span><span class="nx">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nx">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">^</span><span class="mi">2</span><span class="p">)</span>
-<span class="nx">end</span>
-</pre></div>
-
+<pre><code>f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+function g!(storage, x)
+    storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+    storage[2] = 200.0 * (x[2] - x[1]^2)
+end
+</code></pre>
 
 <p>we can then try to optimize this function from <code>x=[0.0, 0.0]</code></p>
-<div class="codehilite"><pre><span></span>julia&gt; optimize(f, g!, zeros(2), ConjugateGradient())
+<pre><code>julia&gt; optimize(f, g!, zeros(2), ConjugateGradient())
 Results of Optimization Algorithm
  * Algorithm: Conjugate Gradient
  * Starting Point: [0.0,0.0]
@@ -117,21 +115,20 @@ Results of Optimization Algorithm
  * Minimum: 5.144946e-18
  * Iterations: 21
  * Convergence: true
-   * |x - x&#39;| ≤ 0.0e+00: false
-     |x - x&#39;| = 2.09e-10
-   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x&#39;)| = 1.55e+00 |f(x)|
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 2.09e-10
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.55e+00 |f(x)|
    * |g(x)| ≤ 1.0e-08: true
      |g(x)| = 3.36e-09
    * stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 54
  * Gradient Calls: 39
-</pre></div>
-
+</code></pre>
 
 <p>We can compare this to the default first order solver in Optim.jl</p>
-<div class="codehilite"><pre><span></span> julia&gt; optimize(f, g!, zeros(2))
+<pre><code> julia&gt; optimize(f, g!, zeros(2))
 
  Results of Optimization Algorithm
   * Algorithm: L-BFGS
@@ -140,18 +137,17 @@ Results of Optimization Algorithm
   * Minimum: 7.645684e-21
   * Iterations: 16
   * Convergence: true
-    * |x - x&#39;| ≤ 0.0e+00: false
-      |x - x&#39;| = 3.48e-07
-    * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-      |f(x) - f(x&#39;)| = 9.03e+06 |f(x)|
+    * |x - x'| ≤ 0.0e+00: false
+      |x - x'| = 3.48e-07
+    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+      |f(x) - f(x')| = 9.03e+06 |f(x)|
     * |g(x)| ≤ 1.0e-08: true
       |g(x)| = 2.32e-09
     * stopped by an increasing objective: false
     * Reached Maximum Number of Iterations: false
   * Objective Calls: 53
   * Gradient Calls: 53
-</pre></div>
-
+</code></pre>
 
 <p>We see that for this objective and starting point, <code>ConjugateGradient()</code> requires fewer gradient evaluations to reach convergence.</p>
 <p><a id='References-1'></a></p>

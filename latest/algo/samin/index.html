@@ -87,16 +87,15 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="samin">SAMIN</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">SAMIN</span><span class="p">(;</span> <span class="n">nt</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>     <span class="c"># reduce temperature every nt*ns*dim(x_init) evaluations</span>
-        <span class="n">ns</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>     <span class="c"># adjust bounds every ns*dim(x_init) evaluations</span>
-        <span class="n">rt</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">0.9</span>     <span class="c"># geometric temperature reduction factor: when temp changes, new temp is t=rt*t</span>
-        <span class="n">neps</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">5</span>   <span class="c"># number of previous best values the final result is compared to</span>
-        <span class="n">f_tol</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">1e-12</span> <span class="c"># the required tolerance level for function value comparisons</span>
-        <span class="n">x_tol</span><span class="o">::</span><span class="n">T</span> <span class="o">=</span> <span class="mf">1e-6</span> <span class="c"># the required tolerance level for x</span>
-        <span class="n">coverage_ok</span><span class="o">::</span><span class="kt">Bool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">,</span> <span class="c"># if false, increase temperature until initial parameter space is covered</span>
-        <span class="n">verbosity</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="c"># scalar: 0, 1, 2 or 3 (default = 0).</span>
-</pre></div>
-
+<pre><code class="julia">SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
+        ns::Int = 5     # adjust bounds every ns*dim(x_init) evaluations
+        rt::T = 0.9     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+        neps::Int = 5   # number of previous best values the final result is compared to
+        f_tol::T = 1e-12 # the required tolerance level for function value comparisons
+        x_tol::T = 1e-6 # the required tolerance level for x
+        coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
+        verbosity::Int = 0) # scalar: 0, 1, 2 or 3 (default = 0).
+</code></pre>
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
@@ -104,81 +103,80 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>This example shows a successful minimization:</p>
-<div class="codehilite"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
+<pre><code class="julia">julia&gt; using Optim, OptimTestProblems
 
-<span class="n">julia</span><span class="o">&gt;</span> <span class="n">prob</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
+julia&gt; prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
 
-<span class="n">julia</span><span class="o">&gt;</span> <span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">fill</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">SAMIN</span><span class="p">(),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="o">^</span><span class="mi">6</span><span class="p">))</span>
-<span class="o">================================================================================</span>
-<span class="n">SAMIN</span> <span class="n">results</span>
-<span class="o">==&gt;</span> <span class="n">Normal</span> <span class="n">convergence</span> <span class="o">&lt;==</span>
-<span class="n">total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">objective</span> <span class="k">function</span> <span class="n">evaluations</span><span class="o">:</span> <span class="mi">23701</span>
+julia&gt; res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(), Optim.Options(iterations=10^6))
+================================================================================
+SAMIN results
+==&gt; Normal convergence &lt;==
+total number of objective function evaluations: 23701
 
-     <span class="n">Obj</span><span class="o">.</span> <span class="n">value</span><span class="o">:</span>      <span class="mf">0.0000000000</span>
+     Obj. value:      0.0000000000
 
-       <span class="n">parameter</span>      <span class="n">search</span> <span class="n">width</span>
-         <span class="mf">1.00000</span>           <span class="mf">0.00000</span>
-         <span class="mf">1.00000</span>           <span class="mf">0.00000</span>
-<span class="o">================================================================================</span>
+       parameter      search width
+         1.00000           0.00000
+         1.00000           0.00000
+================================================================================
 
-<span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
- <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">SAMIN</span>
- <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span><span class="mf">1.0</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.9999999893140956</span><span class="p">,</span><span class="mf">0.9999999765350857</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="mf">5.522977e-16</span>
- <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">23701</span>
- <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">=</span> <span class="nb">NaN</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span>
-   <span class="o">*</span> <span class="n">Stopped</span> <span class="n">by</span> <span class="n">an</span> <span class="n">increasing</span> <span class="n">objective</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="kt">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="o">:</span> <span class="kc">false</span>
- <span class="o">*</span> <span class="n">Objective</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">23701</span>
- <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">0</span>
-</pre></div>
-
+Results of Optimization Algorithm
+ * Algorithm: SAMIN
+ * Starting Point: [-1.2,1.0]
+ * Minimizer: [0.9999999893140956,0.9999999765350857]
+ * Minimum: 5.522977e-16
+ * Iterations: 23701
+ * Convergence: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = NaN |f(x)|
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 23701
+ * Gradient Calls: 0
+</code></pre>
 
 <p><a id='Example-2'></a></p>
 <h2 id="example_1">Example</h2>
 <p>This example shows an unsuccessful minimization, because the cooling rate, rt=0.5, is too rapid:</p>
-<div class="codehilite"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span> <span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
+<pre><code class="julia">julia&gt; using Optim, OptimTestProblems
 
-<span class="n">julia</span><span class="o">&gt;</span> <span class="n">prob</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">];</span>
-<span class="n">julia</span><span class="o">&gt;</span> <span class="n">res</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">fill</span><span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">SAMIN</span><span class="p">(</span><span class="n">rt</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="o">^</span><span class="mi">6</span><span class="p">))</span>
-<span class="o">================================================================================</span>
-<span class="n">SAMIN</span> <span class="n">results</span>
-<span class="o">==&gt;</span> <span class="n">Normal</span> <span class="n">convergence</span> <span class="o">&lt;==</span>
-<span class="n">total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">objective</span> <span class="k">function</span> <span class="n">evaluations</span><span class="o">:</span> <span class="mi">12051</span>
+julia&gt; prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+julia&gt; res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(rt=0.5), Optim.Options(iterations=10^6))
+================================================================================
+SAMIN results
+==&gt; Normal convergence &lt;==
+total number of objective function evaluations: 12051
 
-     <span class="n">Obj</span><span class="o">.</span> <span class="n">value</span><span class="o">:</span>      <span class="mf">0.0011613045</span>
+     Obj. value:      0.0011613045
 
-       <span class="n">parameter</span>      <span class="n">search</span> <span class="n">width</span>
-         <span class="mf">0.96592</span>           <span class="mf">0.00000</span>
-         <span class="mf">0.93301</span>           <span class="mf">0.00000</span>
-<span class="o">================================================================================</span>
+       parameter      search width
+         0.96592           0.00000
+         0.93301           0.00000
+================================================================================
 
-<span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
- <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">SAMIN</span>
- <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="o">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span><span class="mf">1.0</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.9659220825756248</span><span class="p">,</span><span class="mf">0.9330054696322896</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="mf">1.161304e-03</span>
- <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">12051</span>
- <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">=</span> <span class="nb">NaN</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="nb">NaN</span>
-   <span class="o">*</span> <span class="n">Stopped</span> <span class="n">by</span> <span class="n">an</span> <span class="n">increasing</span> <span class="n">objective</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="kt">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="o">:</span> <span class="kc">false</span>
- <span class="o">*</span> <span class="n">Objective</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">12051</span>
- <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">0</span>
-</pre></div>
+Results of Optimization Algorithm
+ * Algorithm: SAMIN
+ * Starting Point: [-1.2,1.0]
+ * Minimizer: [0.9659220825756248,0.9330054696322896]
+ * Minimum: 1.161304e-03
+ * Iterations: 12051
+ * Convergence: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = NaN |f(x)|
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 12051
+ * Gradient Calls: 0
 
+</code></pre>
 
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>

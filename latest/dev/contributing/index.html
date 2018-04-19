@@ -69,10 +69,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
     </div>
     
     <div class="wm-article-nav">
-      <a href="../../algo/manifolds/" class="btn btn-xs btn-default pull-left">
+      <a href="../../algo/newton_trust_region/" class="btn btn-xs btn-default pull-left">
         <i class="fa fa-chevron-left" aria-hidden="true"></i>
-        Previous</a><a href="../../algo/manifolds/" class="btn btn-xs btn-link">
-        Manifolds
+        Previous</a><a href="../../algo/newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
       </a>
     </div>
     
@@ -96,33 +96,33 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Adding-a-solver-1'></a></p>
 <h3 id="adding-a-solver">Adding a solver</h3>
 <p>If you're contributing a new solver, you shouldn't need to touch any of the code in <code>src/optimize.jl</code>. You should rather add a file named (<code>solver</code> is the name of the solver) <code>solver.jl</code> in <code>src</code>, and make sure that you define an <code>Optimizer</code> subtype <code>struct Solver &lt;: Optimizer end</code> with appropriate fields, a default constructor with a keyword for each field, a state type that holds all variables that are (re)used throughout the iterative procedure, an <code>initial_state</code> that initializes such a state, and  an <code>update!</code> method that does the actual work. Say you want to contribute a solver called <code>Minim</code>, then your <code>src/minim.jl</code> file would look something like</p>
-<div class="codehilite"><pre><span></span><span class="nx">struct</span> <span class="nx">Minim</span><span class="p">{</span><span class="nx">IF</span><span class="p">,</span> <span class="nx">F</span><span class="o">&lt;:</span><span class="nb">Function</span><span class="p">,</span> <span class="nx">T</span><span class="p">}</span> <span class="o">&lt;:</span> <span class="nx">Optimizer</span>
-    <span class="nx">alphaguess</span><span class="o">!::</span><span class="nx">IF</span>
-    <span class="nx">linesearch</span><span class="o">!::</span><span class="nx">F</span>
-    <span class="nx">minim_parameter</span><span class="o">::</span><span class="nx">T</span>
-<span class="nx">end</span>
+<pre><code>struct Minim{IF, F&lt;:Function, T} &lt;: Optimizer
+    alphaguess!::IF
+    linesearch!::F
+    minim_parameter::T
+end
 
-<span class="nx">Minim</span><span class="p">(;</span> <span class="nx">alphaguess</span> <span class="o">=</span> <span class="nx">LineSearches</span><span class="p">.</span><span class="nx">InitialStatic</span><span class="p">(),</span> <span class="nx">linesearch</span> <span class="o">=</span> <span class="nx">LineSearches</span><span class="p">.</span><span class="nx">HagerZhang</span><span class="p">(),</span> <span class="nx">minim_parameter</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">=</span>
-  <span class="nx">Minim</span><span class="p">(</span><span class="nx">linesearch</span><span class="p">,</span> <span class="nx">minim_parameter</span><span class="p">)</span>
+Minim(; alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang(), minim_parameter = 1.0) =
+  Minim(linesearch, minim_parameter)
 
-<span class="nx">type</span> <span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">,</span><span class="nx">G</span><span class="p">}</span>
-  <span class="nx">x</span><span class="o">::</span><span class="nx">AbstractArray</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
-  <span class="nx">x_previous</span><span class="o">::</span><span class="nx">AbstractArray</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
-  <span class="nx">f_x_previous</span><span class="o">::</span><span class="nx">T</span>
-  <span class="nx">s</span><span class="o">::</span><span class="nx">AbstractArray</span><span class="p">{</span><span class="nx">T</span><span class="p">,</span><span class="nx">N</span><span class="p">}</span>
-  <span class="kd">@add_linesearch_fields</span><span class="p">()</span>
-<span class="nx">end</span>
+type MinimState{T,N,G}
+  x::AbstractArray{T,N}
+  x_previous::AbstractArray{T,N}
+  f_x_previous::T
+  s::AbstractArray{T,N}
+  @add_linesearch_fields()
+end
 
-<span class="kd">function</span> <span class="nx">initial_state</span><span class="p">(</span><span class="nx">method</span><span class="o">::</span><span class="nx">Minim</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="nx">d</span><span class="p">,</span> <span class="nx">initial_x</span><span class="p">)</span>
-<span class="err">#</span> <span class="nx">prepare</span> <span class="nx">cache</span> <span class="nx">variables</span> <span class="nx">etc</span> <span class="nx">here</span>
+function initial_state(method::Minim, options, d, initial_x)
+# prepare cache variables etc here
 
-<span class="nx">end</span>
+end
 
-<span class="kd">function</span> <span class="nx">update</span><span class="o">!</span><span class="p">{</span><span class="nx">T</span><span class="p">}(</span><span class="nx">d</span><span class="p">,</span> <span class="nx">state</span><span class="o">::</span><span class="nx">MinimState</span><span class="p">{</span><span class="nx">T</span><span class="p">},</span> <span class="nx">method</span><span class="o">::</span><span class="nx">Minim</span><span class="p">)</span>
-    <span class="err">#</span> <span class="nx">code</span> <span class="k">for</span> <span class="nx">Minim</span> <span class="nx">here</span>
-    <span class="kc">false</span> <span class="err">#</span> <span class="nx">should</span> <span class="nx">the</span> <span class="nx">procedure</span> <span class="nx">force</span> <span class="nx">quit</span><span class="o">?</span>
-<span class="nx">end</span>
-</pre></div>
+function update!{T}(d, state::MinimState{T}, method::Minim)
+    # code for Minim here
+    false # should the procedure force quit?
+end
+</code></pre>
 
   <br>
     
@@ -140,10 +140,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
     </div>
     
     <div class="wm-article-nav">
-      <a href="../../algo/manifolds/" class="btn btn-xs btn-default pull-left">
+      <a href="../../algo/newton_trust_region/" class="btn btn-xs btn-default pull-left">
         <i class="fa fa-chevron-left" aria-hidden="true"></i>
-        Previous</a><a href="../../algo/manifolds/" class="btn btn-xs btn-link">
-        Manifolds
+        Previous</a><a href="../../algo/newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
       </a>
     </div>
     

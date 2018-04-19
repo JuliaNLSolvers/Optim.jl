@@ -86,33 +86,31 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="acceleration-methods-n-gmres-and-o-accel">Acceleration methods: N-GMRES and O-ACCEL</h1>
 <p><a id='Constructors-1'></a></p>
 <h2 id="constructors">Constructors</h2>
-<div class="codehilite"><pre><span></span><span class="n">NGMRES</span><span class="p">(;</span>
-        <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
-        <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-        <span class="n">manifold</span> <span class="o">=</span> <span class="n">Flat</span><span class="p">(),</span>
-        <span class="n">wmax</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-        <span class="n">ϵ0</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
-        <span class="n">nlprecon</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">(</span>
-            <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialPrevious</span><span class="p">(),</span>
-            <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">Static</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span><span class="n">scaled</span><span class="o">=</span><span class="kc">true</span><span class="p">),</span>
-            <span class="n">manifold</span> <span class="o">=</span> <span class="n">manifold</span><span class="p">),</span>
-        <span class="n">nlpreconopts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">allow_f_increases</span> <span class="o">=</span> <span class="kc">true</span><span class="p">),</span>
-      <span class="p">)</span>
-</pre></div>
+<pre><code class="julia">NGMRES(;
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        manifold = Flat(),
+        wmax::Int = 10,
+        ϵ0 = 1e-12,
+        nlprecon = GradientDescent(
+            alphaguess = LineSearches.InitialPrevious(),
+            linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+            manifold = manifold),
+        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+      )
+</code></pre>
 
-
-<div class="codehilite"><pre><span></span><span class="n">OACCEL</span><span class="p">(;</span><span class="n">manifold</span><span class="o">::</span><span class="n">Manifold</span> <span class="o">=</span> <span class="n">Flat</span><span class="p">(),</span>
-       <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span>
-       <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">(),</span>
-       <span class="n">nlprecon</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">(</span>
-           <span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialPrevious</span><span class="p">(),</span>
-           <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">Static</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span><span class="n">scaled</span><span class="o">=</span><span class="kc">true</span><span class="p">),</span>
-           <span class="n">manifold</span> <span class="o">=</span> <span class="n">manifold</span><span class="p">),</span>
-       <span class="n">nlpreconopts</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="n">iterations</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">allow_f_increases</span> <span class="o">=</span> <span class="kc">true</span><span class="p">),</span>
-       <span class="n">ϵ0</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
-       <span class="n">wmax</span><span class="o">::</span><span class="kt">Int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">OACCEL(;manifold::Manifold = Flat(),
+       alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
+       nlprecon = GradientDescent(
+           alphaguess = LineSearches.InitialPrevious(),
+           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+           manifold = manifold),
+       nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+       ϵ0 = 1e-12,
+       wmax::Int = 10)
+</code></pre>
 
 <p><a id='Description-1'></a></p>
 <h2 id="description">Description</h2>
@@ -129,117 +127,109 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>This example shows how to accelerate <code>GradientDescent</code> on the Extended Rosenbrock problem. First, we try to optimize using <code>GradientDescent</code>.</p>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">OptimTestProblems</span>
-<span class="n">UP</span> <span class="o">=</span> <span class="n">OptimTestProblems</span><span class="o">.</span><span class="n">UnconstrainedProblems</span>
-<span class="n">prob</span> <span class="o">=</span> <span class="n">UP</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Extended Rosenbrock&quot;</span><span class="p">]</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">UP</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">UP</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">GradientDescent</span><span class="p">())</span>
-</pre></div>
-
+<pre><code class="julia">using Optim, OptimTestProblems
+UP = OptimTestProblems.UnconstrainedProblems
+prob = UP.examples[&quot;Extended Rosenbrock&quot;]
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, GradientDescent())
+</code></pre>
 
 <p>The algorithm does not converge within 1000 iterations.</p>
-<div class="codehilite"><pre><span></span>Results of Optimization Algorithm
+<pre><code>Results of Optimization Algorithm
  * Algorithm: Gradient Descent
  * Starting Point: [-1.2,1.0, ...]
  * Minimizer: [0.8923389282461412,0.7961268644300445, ...]
  * Minimum: 2.898230e-01
  * Iterations: 1000
  * Convergence: false
-   * |x - x&#39;| ≤ 0.0e+00: false 
-     |x - x&#39;| = 4.02e-04 
-   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x&#39;)| = 2.38e-03 |f(x)|
+   * |x - x'| ≤ 0.0e+00: false 
+     |x - x'| = 4.02e-04 
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 2.38e-03 |f(x)|
    * |g(x)| ≤ 1.0e-08: false 
      |g(x)| = 8.23e-02 
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: true
  * Objective Calls: 2525
  * Gradient Calls: 2525
-</pre></div>
-
+</code></pre>
 
 <p>Now, we use <code>OACCEL</code> to accelerate <code>GradientDescent</code>.</p>
-<div class="codehilite"><pre><span></span><span class="c"># Default nonlinear procenditioner for `OACCEL`</span>
-<span class="n">nlprecon</span> <span class="o">=</span>  <span class="n">GradientDescent</span><span class="p">(</span><span class="n">linesearch</span><span class="o">=</span><span class="n">LineSearches</span><span class="o">.</span><span class="n">Static</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span><span class="n">scaled</span><span class="o">=</span><span class="kc">true</span><span class="p">))</span>
-<span class="c"># Default size of subspace that OACCEL accelerates over is `wmax = 10`</span>
-<span class="n">oacc10</span> <span class="o">=</span> <span class="n">OACCEL</span><span class="p">(</span><span class="n">nlprecon</span><span class="o">=</span><span class="n">nlprecon</span><span class="p">,</span> <span class="n">wmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">UP</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">UP</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">oacc10</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia"># Default nonlinear procenditioner for `OACCEL`
+nlprecon =  GradientDescent(linesearch=LineSearches.Static(alpha=1e-4,scaled=true))
+# Default size of subspace that OACCEL accelerates over is `wmax = 10`
+oacc10 = OACCEL(nlprecon=nlprecon, wmax=10)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, oacc10)
+</code></pre>
 
 <p>This drastically improves the <code>GradientDescent</code> algorithm, converging in 87 iterations.</p>
-<div class="codehilite"><pre><span></span>Results of Optimization Algorithm
+<pre><code>Results of Optimization Algorithm
  * Algorithm: O-ACCEL preconditioned with Gradient Descent
  * Starting Point: [-1.2,1.0, ...]
  * Minimizer: [1.0000000011361219,1.0000000022828495, ...]
  * Minimum: 3.255053e-17
  * Iterations: 87
  * Convergence: true
-   * |x - x&#39;| ≤ 0.0e+00: false 
-     |x - x&#39;| = 6.51e-08 
-   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x&#39;)| = 7.56e+02 |f(x)|
+   * |x - x'| ≤ 0.0e+00: false 
+     |x - x'| = 6.51e-08 
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 7.56e+02 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 1.06e-09 
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 285
  * Gradient Calls: 285
-</pre></div>
-
+</code></pre>
 
 <p>We can improve the acceleration further by changing the acceleration subspace size <code>wmax</code>.</p>
-<div class="codehilite"><pre><span></span><span class="n">oacc5</span> <span class="o">=</span> <span class="n">OACCEL</span><span class="p">(</span><span class="n">nlprecon</span><span class="o">=</span><span class="n">nlprecon</span><span class="p">,</span> <span class="n">wmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">UP</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">UP</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">oacc5</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">oacc5 = OACCEL(nlprecon=nlprecon, wmax=5)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, oacc5)
+</code></pre>
 
 <p>Now, the O-ACCEL algorithm has accelerated <code>GradientDescent</code> to converge in 50 iterations.</p>
-<div class="codehilite"><pre><span></span>Results of Optimization Algorithm
+<pre><code>Results of Optimization Algorithm
  * Algorithm: O-ACCEL preconditioned with Gradient Descent
  * Starting Point: [-1.2,1.0, ...]
  * Minimizer: [0.9999999999392858,0.9999999998784691, ...]
  * Minimum: 9.218164e-20
  * Iterations: 50
  * Convergence: true
-   * |x - x&#39;| ≤ 0.0e+00: false 
-     |x - x&#39;| = 2.76e-07 
-   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x&#39;)| = 5.18e+06 |f(x)|
+   * |x - x'| ≤ 0.0e+00: false 
+     |x - x'| = 2.76e-07 
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 5.18e+06 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 4.02e-11 
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 181
  * Gradient Calls: 181
-</pre></div>
-
+</code></pre>
 
 <p>As a final comparison, we can do the same with N-GMRES.</p>
-<div class="codehilite"><pre><span></span><span class="n">ngmres5</span> <span class="o">=</span> <span class="n">NGMRES</span><span class="p">(</span><span class="n">nlprecon</span><span class="o">=</span><span class="n">nlprecon</span><span class="p">,</span> <span class="n">wmax</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
-<span class="n">optimize</span><span class="p">(</span><span class="n">UP</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">UP</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">prob</span><span class="p">),</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">ngmres5</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">ngmres5 = NGMRES(nlprecon=nlprecon, wmax=5)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, ngmres5)
+</code></pre>
 
 <p>Again, this significantly improves the <code>GradientDescent</code> algorithm, and converges in 63 iterations.</p>
-<div class="codehilite"><pre><span></span>Results of Optimization Algorithm
+<pre><code>Results of Optimization Algorithm
  * Algorithm: Nonlinear GMRES preconditioned with Gradient Descent
  * Starting Point: [-1.2,1.0, ...]
  * Minimizer: [0.9999999998534468,0.9999999997063993, ...]
  * Minimum: 5.375569e-19
  * Iterations: 63
  * Convergence: true
-   * |x - x&#39;| ≤ 0.0e+00: false 
-     |x - x&#39;| = 9.94e-09 
-   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x&#39;)| = 1.29e+03 |f(x)|
+   * |x - x'| ≤ 0.0e+00: false 
+     |x - x'| = 9.94e-09 
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.29e+03 |f(x)|
    * |g(x)| ≤ 1.0e-08: true 
      |g(x)| = 4.94e-11 
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 222
  * Gradient Calls: 222
-</pre></div>
-
+</code></pre>
 
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>

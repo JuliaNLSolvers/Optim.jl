@@ -60,12 +60,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
-        Contributing
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
       </a>
     </div>
     
@@ -87,17 +87,16 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Howto-1'></a></p>
 <h2 id="howto">Howto</h2>
 <p>Here is a simple test case where we minimize the Rayleigh quotient <code>&lt;x, A x&gt;</code> of a symmetric matrix <code>A</code> under the constraint <code>||x|| = 1</code>, finding an eigenvector associated with the lowest eigenvalue of <code>A</code>.</p>
-<div class="codehilite"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="n">A</span> <span class="o">=</span> <span class="kt">Diagonal</span><span class="p">(</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">n</span><span class="p">))</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">vecdot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">A</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
-<span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">A</span><span class="o">*</span><span class="n">x</span>
-<span class="n">g!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">copy!</span><span class="p">(</span><span class="n">stor</span><span class="p">,</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
-<span class="n">x0</span> <span class="o">=</span> <span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<pre><code class="julia">n = 10
+A = Diagonal(linspace(1,2,n))
+f(x) = vecdot(x,A*x)/2
+g(x) = A*x
+g!(stor,x) = copy!(stor,g(x))
+x0 = randn(n)
 
-<span class="n">manif</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">Sphere</span><span class="p">()</span>
-<span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">Optim</span><span class="o">.</span><span class="n">ConjugateGradient</span><span class="p">(</span><span class="n">manifold</span><span class="o">=</span><span class="n">manif</span><span class="p">))</span>
-</pre></div>
-
+manif = Optim.Sphere()
+Optim.optimize(f, g!, x0, Optim.ConjugateGradient(manifold=manif))
+</code></pre>
 
 <p><a id='Supported-solvers-and-manifolds-1'></a></p>
 <h2 id="supported-solvers-and-manifolds">Supported solvers and manifolds</h2>
@@ -126,12 +125,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
-        Contributing
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
       </a>
     </div>
     

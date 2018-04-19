@@ -86,11 +86,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="simulated-annealing">Simulated Annealing</h1>
 <p><a id='Constructor-1'></a></p>
 <h2 id="constructor">Constructor</h2>
-<div class="codehilite"><pre><span></span><span class="n">SimulatedAnnealing</span><span class="p">(;</span> <span class="n">neighbor</span> <span class="o">=</span> <span class="n">default_neighbor!</span><span class="p">,</span>
-                    <span class="n">T</span> <span class="o">=</span> <span class="n">default_temperature</span><span class="p">,</span>
-                    <span class="n">p</span> <span class="o">=</span> <span class="n">kirkpatrick</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">SimulatedAnnealing(; neighbor = default_neighbor!,
+                    T = default_temperature,
+                    p = kirkpatrick)
+</code></pre>
 
 <p>The constructor takes three keywords:</p>
 <ul>
@@ -102,18 +101,16 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h2 id="description">Description</h2>
 <p>Simulated Annealing is a derivative free method for optimization. It is based on the Metropolis-Hastings algorithm that was originally used to generate samples from a thermodynamics system, and is often used to generate draws from a posterior when doing Bayesian inference. As such, it is a probabilistic method for finding the minimum of a function, often over a quite large domains. For the historical reasons given above, the algorithm uses terms such as cooling, temperature, and acceptance probabilities.</p>
 <p>As the constructor shows, a simulated annealing implementation is characterized by a temperature, a neighbor function, and an acceptance probability. The temperature controls how volatile the changes in minimizer candidates are allowed to be, as it enters the acceptance probability. For example, the original Kirkpatrick et al. acceptance probability function can be written as follows</p>
-<div class="codehilite"><pre><span></span><span class="n">p</span><span class="p">(</span><span class="n">f_proposal</span><span class="p">,</span> <span class="n">f_current</span><span class="p">,</span> <span class="n">T</span><span class="p">)</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">f_proposal</span> <span class="o">-</span> <span class="n">f_current</span><span class="p">)</span><span class="o">/</span><span class="n">T</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">p(f_proposal, f_current, T) = exp(-(f_proposal - f_current)/T)
+</code></pre>
 
 <p>A high temperature makes it more likely that a draw is accepted, by pushing acceptance probability to 1. As in the Metropolis-Hastings algorithm, we always accept a smaller function value, but we also sometimes accept a larger value. As the temperature decreases, we're more and more likely to only accept candidate <code>x</code>'s that lowers the function value. To obtain a new <code>f_proposal</code>, we need a neighbor function. A simple neighbor function adds a standard normal draw to each dimension of <code>x</code></p>
-<div class="codehilite"><pre><span></span><span class="k">function</span> <span class="n">neighbor!</span><span class="p">(</span><span class="n">x_proposal</span><span class="o">::</span><span class="kt">Array</span><span class="p">,</span> <span class="n">x</span><span class="o">::</span><span class="kt">Array</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="kp">in</span> <span class="n">eachindex</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">x_proposal</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">randn</span><span class="p">()</span>
-    <span class="k">end</span>
-<span class="k">end</span>
-</pre></div>
-
+<pre><code class="julia">function neighbor!(x_proposal::Array, x::Array)
+    for i in eachindex(x)
+        x_proposal[i] = x[i]+randn()
+    end
+end
+</code></pre>
 
 <p>As we see, it is not really possible to disentangle the role of the different components of the algorithm. For example, both the functional form of the acceptance function, the temperature and (indirectly) the neighbor function determine if the next draw of <code>x</code> is accepted or not.</p>
 <p>The current implementation of Simulated Annealing is very rough.  It lacks quite a few features which are normally part of a proper SA implementation. A better implementation is under way, see <a href="https://github.com/JuliaNLSolvers/Optim.jl/issues/200">this issue</a>.</p>

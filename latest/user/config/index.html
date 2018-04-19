@@ -59,12 +59,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../tipsandtricks/" class="btn btn-xs btn-default pull-right">
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../tipsandtricks/" class="btn btn-xs btn-link">
-        Tips and tricks
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-link">
+        Automatic Differentiation
       </a>
     </div>
     
@@ -134,26 +134,24 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <li><code>time_limit</code>: A soft upper limit on the total run time. Defaults to <code>NaN</code> (unlimited).</li>
 </ul>
 <p>We currently recommend the statically dispatched interface by using the <code>Optim.Options</code> constructor:</p>
-<div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span>
-               <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-               <span class="n">GradientDescent</span><span class="p">(),</span>
-               <span class="n">Optim</span><span class="o">.</span><span class="n">Options</span><span class="p">(</span><span class="n">g_tol</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
-                             <span class="n">iterations</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-                             <span class="n">store_trace</span> <span class="o">=</span> <span class="kc">true</span><span class="p">,</span>
-                             <span class="n">show_trace</span> <span class="o">=</span> <span class="kc">false</span><span class="p">))</span>
-</pre></div>
-
+<pre><code class="jl">res = optimize(f, g!,
+               [0.0, 0.0],
+               GradientDescent(),
+               Optim.Options(g_tol = 1e-12,
+                             iterations = 10,
+                             store_trace = true,
+                             show_trace = false))
+</code></pre>
 
 <p>Another interface is also available, based directly on keywords:</p>
-<div class="codehilite"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">optimize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g!</span><span class="p">,</span>
-               <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
-               <span class="n">method</span> <span class="o">=</span> <span class="n">GradientDescent</span><span class="p">(),</span>
-               <span class="n">g_tol</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
-               <span class="n">iterations</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-               <span class="n">store_trace</span> <span class="o">=</span> <span class="kc">true</span><span class="p">,</span>
-               <span class="n">show_trace</span> <span class="o">=</span> <span class="kc">false</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="jl">res = optimize(f, g!,
+               [0.0, 0.0],
+               method = GradientDescent(),
+               g_tol = 1e-12,
+               iterations = 10,
+               store_trace = true,
+               show_trace = false)
+</code></pre>
 
 <p>Notice the need to specify the method using a keyword if this syntax is used. This approach might be deprecated in the future, and as a result we recommend writing code that has to maintained using the <code>Optim.Options</code> approach.</p>
 
@@ -163,12 +161,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../tipsandtricks/" class="btn btn-xs btn-default pull-right">
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../tipsandtricks/" class="btn btn-xs btn-link">
-        Tips and tricks
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-link">
+        Automatic Differentiation
       </a>
     </div>
     

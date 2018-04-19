@@ -102,62 +102,58 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h2 id="example">Example</h2>
 <p>This example compares two different line search algorithms on the Rosenbrock problem.</p>
 <p>First, run <code>Newton</code> with the default line search algorithm:</p>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">Optim</span><span class="p">,</span> <span class="n">LineSearches</span>
-<span class="n">prob</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">UnconstrainedProblems</span><span class="o">.</span><span class="n">examples</span><span class="p">[</span><span class="s">&quot;Rosenbrock&quot;</span><span class="p">]</span>
+<pre><code class="julia">using Optim, LineSearches
+prob = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
 
-<span class="n">algo_hz</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">HagerZhang</span><span class="p">())</span>
-<span class="n">res_hz</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_hz</span><span class="p">)</span>
-</pre></div>
-
+algo_hz = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang())
+res_hz = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_hz)
+</code></pre>
 
 <p>This gives the result</p>
-<div class="codehilite"><pre><span></span> <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">Newton</span><span class="o">&#39;</span><span class="n">s</span> <span class="kt">Method</span>
- <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.9999999999999994</span><span class="p">,</span><span class="mf">0.9999999999999989</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="mf">3.081488e-31</span>
- <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">14</span>
- <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="kc">true</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">=</span> <span class="mf">3.06e-09</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="mf">2.94e+13</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">1.0e-08</span><span class="o">:</span> <span class="kc">true</span>
-     <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="mf">1.11e-15</span>
-   <span class="o">*</span> <span class="n">stopped</span> <span class="n">by</span> <span class="n">an</span> <span class="n">increasing</span> <span class="n">objective</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="kt">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="o">:</span> <span class="kc">false</span>
- <span class="o">*</span> <span class="n">Objective</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">44</span>
- <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">44</span>
- <span class="o">*</span> <span class="n">Hessian</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">14</span>
-</pre></div>
-
+<pre><code class="julia"> * Algorithm: Newton's Method
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999999999994,0.9999999999999989]
+ * Minimum: 3.081488e-31
+ * Iterations: 14
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.06e-09
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 2.94e+13 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.11e-15
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 44
+ * Gradient Calls: 44
+ * Hessian Calls: 14
+</code></pre>
 
 <p>Now we can try <code>Newton</code> with the More-Thuente line search:</p>
-<div class="codehilite"><pre><span></span><span class="n">algo_mt</span> <span class="o">=</span> <span class="n">Newton</span><span class="p">(;</span><span class="n">alphaguess</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">InitialStatic</span><span class="p">(),</span> <span class="n">linesearch</span> <span class="o">=</span> <span class="n">LineSearches</span><span class="o">.</span><span class="n">MoreThuente</span><span class="p">())</span>
-<span class="n">res_mt</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">prob</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">g!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">h!</span><span class="p">,</span> <span class="n">prob</span><span class="o">.</span><span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">algo_mt</span><span class="p">)</span>
-</pre></div>
-
+<pre><code class="julia">algo_mt = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.MoreThuente())
+res_mt = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_mt)
+</code></pre>
 
 <p>This gives the following result, reducing the number of function and gradient calls:</p>
-<div class="codehilite"><pre><span></span><span class="n">Results</span> <span class="n">of</span> <span class="n">Optimization</span> <span class="n">Algorithm</span>
- <span class="o">*</span> <span class="n">Algorithm</span><span class="o">:</span> <span class="n">Newton</span><span class="o">&#39;</span><span class="n">s</span> <span class="kt">Method</span>
- <span class="o">*</span> <span class="n">Starting</span> <span class="n">Point</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimizer</span><span class="o">:</span> <span class="p">[</span><span class="mf">0.9999999999999992</span><span class="p">,</span><span class="mf">0.999999999999998</span><span class="p">]</span>
- <span class="o">*</span> <span class="n">Minimum</span><span class="o">:</span> <span class="mf">2.032549e-29</span>
- <span class="o">*</span> <span class="n">Iterations</span><span class="o">:</span> <span class="mi">14</span>
- <span class="o">*</span> <span class="n">Convergence</span><span class="o">:</span> <span class="kc">true</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">≤</span> <span class="mf">0.0e+00</span><span class="o">:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">x</span> <span class="o">-</span> <span class="n">x</span><span class="o">&#39;|</span> <span class="o">=</span> <span class="mf">3.67e-08</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">0.0e00</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|:</span> <span class="kc">false</span>
-     <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">&#39;</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="mf">1.66e+13</span> <span class="o">|</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span>
-   <span class="o">*</span> <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">≤</span> <span class="mf">1.0e-08</span><span class="o">:</span> <span class="kc">true</span>
-     <span class="o">|</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">|</span> <span class="o">=</span> <span class="mf">1.76e-13</span>
-   <span class="o">*</span> <span class="n">stopped</span> <span class="n">by</span> <span class="n">an</span> <span class="n">increasing</span> <span class="n">objective</span><span class="o">:</span> <span class="kc">false</span>
-   <span class="o">*</span> <span class="n">Reached</span> <span class="n">Maximum</span> <span class="kt">Number</span> <span class="n">of</span> <span class="n">Iterations</span><span class="o">:</span> <span class="kc">false</span>
- <span class="o">*</span> <span class="n">Objective</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">17</span>
- <span class="o">*</span> <span class="n">Gradient</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">17</span>
- <span class="o">*</span> <span class="n">Hessian</span> <span class="n">Calls</span><span class="o">:</span> <span class="mi">14</span>
-</pre></div>
-
+<pre><code class="julia">Results of Optimization Algorithm
+ * Algorithm: Newton's Method
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999999999992,0.999999999999998]
+ * Minimum: 2.032549e-29
+ * Iterations: 14
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.67e-08
+   * |f(x) - f(x')| ≤ 0.0e00 |f(x)|: false
+     |f(x) - f(x')| = 1.66e+13 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.76e-13
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 17
+ * Gradient Calls: 17
+ * Hessian Calls: 14
+</code></pre>
 
 <p><a id='References-1'></a></p>
 <h2 id="references">References</h2>

@@ -94,26 +94,24 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <li><code>dot(x, P, y) = dot(x, P * y)</code></li>
 </ul>
 <p>Finally, it is possible to update the preconditioner as the state variable <code>x</code> changes. This is done through  <code>precondprep!</code> which is passed to the optimizers as kw-argument, e.g.,</p>
-<div class="codehilite"><pre><span></span>   <span class="n">method</span><span class="o">=</span><span class="n">ConjugateGradient</span><span class="p">(</span><span class="n">P</span> <span class="o">=</span> <span class="n">precond</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span> <span class="n">precondprep!</span> <span class="o">=</span> <span class="n">precond</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
-</pre></div>
-
+<pre><code class="jl">   method=ConjugateGradient(P = precond(100), precondprep! = precond(100))
+</code></pre>
 
 <p>though in this case it would always return the same matrix. (See <code>fminbox.jl</code> for a more natural example.)</p>
 <p>Apart from preconditioning with matrices, <code>Optim.jl</code> provides a type <code>InverseDiagonal</code>, which represents a diagonal matrix by its inverse elements.</p>
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>Below, we see an example where a function is minimized without and with a preconditioner applied.</p>
-<div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">ForwardDiff</span>
-<span class="n">initial_x</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-<span class="n">plap</span><span class="p">(</span><span class="n">U</span><span class="p">;</span> <span class="n">n</span> <span class="o">=</span> <span class="n">length</span><span class="p">(</span><span class="n">U</span><span class="p">))</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sum</span><span class="p">((</span><span class="mf">0.1</span> <span class="o">+</span> <span class="n">diff</span><span class="p">(</span><span class="n">U</span><span class="p">)</span><span class="o">.^</span><span class="mi">2</span><span class="p">)</span><span class="o">.^</span><span class="mi">2</span> <span class="p">)</span> <span class="o">-</span> <span class="n">sum</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">plap1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">ForwardDiff</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">plap</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
-<span class="n">precond</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">=</span> <span class="n">spdiagm</span><span class="p">((</span><span class="o">-</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="o">*</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="o">-</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">plap</span><span class="p">([</span><span class="mi">0</span><span class="p">;</span> <span class="n">x</span><span class="p">;</span> <span class="mi">0</span><span class="p">])</span>
-<span class="n">g!</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">copy!</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="p">(</span><span class="n">plap1</span><span class="p">([</span><span class="mi">0</span><span class="p">;</span> <span class="n">x</span><span class="p">;</span> <span class="mi">0</span><span class="p">]))[</span><span class="mi">2</span><span class="o">:</span><span class="k">end</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">ConjugateGradient</span><span class="p">(</span><span class="n">P</span> <span class="o">=</span> <span class="nb">nothing</span><span class="p">))</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">Optim</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">initial_x</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">ConjugateGradient</span><span class="p">(</span><span class="n">P</span> <span class="o">=</span> <span class="n">precond</span><span class="p">(</span><span class="mi">100</span><span class="p">)))</span>
-</pre></div>
-
+<pre><code class="jl">using ForwardDiff
+initial_x = zeros(100)
+plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
+plap1(x) = ForwardDiff.gradient(plap,x)
+precond(n) = spdiagm((-ones(n-1), 2*ones(n), -ones(n-1)), (-1,0,1), n, n)*(n+1)
+f(x) = plap([0; x; 0])
+g!(G, x) = copy!(G, (plap1([0; x; 0]))[2:end-1])
+result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))
+result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = precond(100)))
+</code></pre>
 
 <p>The former optimize call converges at a slower rate than the latter. Looking at a  plot of the 2D version of the function shows the problem.</p>
 <p><img alt="plap" src="../plap.png" /></p>
