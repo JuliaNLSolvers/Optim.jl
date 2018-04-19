@@ -6,7 +6,7 @@ site_author:      JuliaNLSolvers
 theme: windmill
 
 markdown_extensions:
-  - codehilite
+#  - codehilite
   - extra
   - tables
   - fenced_code
