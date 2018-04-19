@@ -103,15 +103,15 @@ optimize(f, x0)
 
 <p><em>Note</em>: it is important to pass <code>initial_x</code> as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write <code>optimize(x-&gt;f(first(x)), [initial_x])</code> which make sure the input is an array, but the anonymous function automatically passes the first (and only) element onto your given <code>f</code>.</p>
 <p>Optim will default to using the Nelder-Mead method in the multivariate case, as we did not provide a gradient. This can also be explicitly specified using:</p>
-<pre><code class="jl">optimize(f, [0.0, 0.0], NelderMead())
+<pre><code class="jl">optimize(f, x0, NelderMead())
 </code></pre>
 
 <p>Other solvers are available. Below, we use L-BFGS, a quasi-Newton method that requires a gradient. If we pass <code>f</code> alone, Optim will construct an approximate gradient for us using central finite differencing:</p>
-<pre><code class="jl">optimize(f, [0.0, 0.0], LBFGS())
+<pre><code class="jl">optimize(f, x0, LBFGS())
 </code></pre>
 
 <p>For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the <code>autodiff</code> keyword and setting it to <code>:forward</code>:</p>
-<pre><code class="julia">optimize(f, [0.0, 0.0], LBFGS(); autodiff = :forward)
+<pre><code class="julia">optimize(f, x0, LBFGS(); autodiff = :forward)
 </code></pre>
 
 <p>For the Rosenbrock example, the analytical gradient can be shown to be:</p>
@@ -127,11 +127,11 @@ end
 
 <p>where <code>g</code> is a function of <code>x</code> only.</p>
 <p>Returning to our in-place version, you simply pass <code>g!</code> together with <code>f</code> from before to use the gradient:</p>
-<pre><code class="jl">optimize(f, g!, [0.0, 0.0], LBFGS())
+<pre><code class="jl">optimize(f, g!, x0, LBFGS())
 </code></pre>
 
 <p>For some methods, like simulated annealing, the gradient will be ignored:</p>
-<pre><code class="jl">optimize(f, g!, [0.0, 0.0], SimulatedAnnealing())
+<pre><code class="jl">optimize(f, g!, x0, SimulatedAnnealing())
 </code></pre>
 
 <p>In addition to providing gradients, you can provide a Hessian function <code>h!</code> as well. In our current case this is:</p>
@@ -144,11 +144,11 @@ end
 </code></pre>
 
 <p>Now we can use Newton's method for optimization by running:</p>
-<pre><code class="jl">optimize(f, g!, h!, [0.0, 0.0])
+<pre><code class="jl">optimize(f, g!, h!, x0)
 </code></pre>
 
 <p>Which defaults to <code>Newton()</code> since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:</p>
-<pre><code class="jl">optimize(f, g!, h!, [0.0, 0.0], LBFGS())
+<pre><code class="jl">optimize(f, g!, h!, x0, LBFGS())
 </code></pre>
 
 <p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
