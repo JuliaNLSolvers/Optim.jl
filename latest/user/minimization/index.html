@@ -32,9 +32,9 @@
       var is_top_frame = false;
         
         var pageToc = [
-          {title: "Minimizing a multivariate function", url: "#minimizing-a-multivariate-function", children: [
+          {title: "Unconstrained Optimization", url: "#unconstrained-optimization", children: [
           ]},
-          {title: "Box minimization", url: "#box-minimization", children: [
+          {title: "Box Constrianed Optimization", url: "#box-constrianed-optimization", children: [
           ]},
           {title: "Minimizing a univariate function on a bounded interval", url: "#minimizing-a-univariate-function-on-a-bounded-interval", children: [
           ]},
@@ -89,20 +89,20 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 
     
 
-    <p><a id='Minimizing-a-multivariate-function-1'></a></p>
-<h2 id="minimizing-a-multivariate-function">Minimizing a multivariate function</h2>
-<p>To show how the Optim package can be used, we implement the <a href="http://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a>, a classic problem in numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager. First, we load Optim and define the Rosenbrock function:</p>
+    <p><a id='Unconstrained-Optimization-1'></a></p>
+<h2 id="unconstrained-optimization">Unconstrained Optimization</h2>
+<p>To show how the Optim package can be used, we minimize the <a href="http://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a>, a classical test problem for numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager. First, we load Optim and define the Rosenbrock function:</p>
 <pre><code class="jl">using Optim
 f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 </code></pre>
 
-<p>Once we've defined this function, we can find the minimum of the Rosenbrock function using any of our favorite optimization algorithms. With a function defined, we just specify an initial point <code>x</code> and run:</p>
-<pre><code class="jl">optimize(f, [0.0, 0.0])
+<p>Once we've defined this function, we can find the minimizer (the input that minimizes the objective) and the minimum (the value of the objective at the minimizer) using any of our favorite optimization algorithms. With a function defined, we just specify an initial point <code>x</code> and call <code>optimize</code> with a starting point <code>x0</code>:</p>
+<pre><code class="jl">x0 = [0.0, 0.0]
+optimize(f, x0)
 </code></pre>
 
-<p>!!! note
-    It is important to pass <code>initial_x</code> as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write <code>optimize(x-&gt;f(first(x)), [initial_x], ...)</code></p>
-<p>Optim will default to using the Nelder-Mead method in this case, as we did not provide a gradient. This can also be explicitly specified using:</p>
+<p><em>Note</em>: it is important to pass <code>initial_x</code> as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write <code>optimize(x-&gt;f(first(x)), [initial_x])</code> which make sure the input is an array, but the anonymous function automatically passes the first (and only) element onto your given <code>f</code>.</p>
+<p>Optim will default to using the Nelder-Mead method in the multivariate case, as we did not provide a gradient. This can also be explicitly specified using:</p>
 <pre><code class="jl">optimize(f, [0.0, 0.0], NelderMead())
 </code></pre>
 
@@ -110,14 +110,23 @@ f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 <pre><code class="jl">optimize(f, [0.0, 0.0], LBFGS())
 </code></pre>
 
-<p>For better performance and greater precision, you can pass your own gradient function. For the Rosenbrock example, the analytical gradient can be shown to be:</p>
-<pre><code class="jl">function g!(storage, x)
-storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
-storage[2] = 200.0 * (x[2] - x[1]^2)
+<p>For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the <code>autodiff</code> keyword and setting it to <code>:forward</code>:</p>
+<pre><code class="julia">optimize(f, [0.0, 0.0], LBFGS(); autodiff = :forward)
+</code></pre>
+
+<p>For the Rosenbrock example, the analytical gradient can be shown to be:</p>
+<pre><code class="jl">function g!(G, x)
+G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+G[2] = 200.0 * (x[2] - x[1]^2)
 end
 </code></pre>
 
-<p>Note that the functions we're using to calculate the gradient (and later the Hessian <code>h!</code>) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called <code>storage</code>. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the <code>g!</code> or <code>h!</code> functions. You can use <code>Optim</code> without manually defining a gradient or Hessian function, but if you do define these functions, they must take these two arguments in this order. Returning to our optimization problem, you simply pass <code>g!</code> together with <code>f</code> from before to use the gradient:</p>
+<p>Note, that the functions we're using to calculate the gradient (and later the Hessian <code>h!</code>) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called <code>G</code> (or <code>H</code> for the Hessian) in these examples. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the <code>g!</code> or <code>h!</code> functions. If you prefer to have your gradients simply accept an <code>x</code>, you can still use <code>optimize</code> by setting the <code>inplace</code> keyword to <code>false</code>:</p>
+<pre><code class="jl">optimize(f, g, x0; inplace = false)
+</code></pre>
+
+<p>where <code>g</code> is a function of <code>x</code> only.</p>
+<p>Returning to our in-place version, you simply pass <code>g!</code> together with <code>f</code> from before to use the gradient:</p>
 <pre><code class="jl">optimize(f, g!, [0.0, 0.0], LBFGS())
 </code></pre>
 
@@ -126,11 +135,11 @@ end
 </code></pre>
 
 <p>In addition to providing gradients, you can provide a Hessian function <code>h!</code> as well. In our current case this is:</p>
-<pre><code class="jl">function h!(storage, x)
-    storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
-    storage[1, 2] = -400.0 * x[1]
-    storage[2, 1] = -400.0 * x[1]
-    storage[2, 2] = 200.0
+<pre><code class="jl">function h!(H, x)
+    H[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+    H[1, 2] = -400.0 * x[1]
+    H[2, 1] = -400.0 * x[1]
+    H[2, 2] = 200.0
 end
 </code></pre>
 
@@ -138,35 +147,35 @@ end
 <pre><code class="jl">optimize(f, g!, h!, [0.0, 0.0])
 </code></pre>
 
-<p>Which defaults to <code>Newton()</code> since a Hessian was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:</p>
+<p>Which defaults to <code>Newton()</code> since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:</p>
 <pre><code class="jl">optimize(f, g!, h!, [0.0, 0.0], LBFGS())
 </code></pre>
 
 <p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
-<p><a id='Box-minimization-1'></a></p>
-<h2 id="box-minimization">Box minimization</h2>
-<p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is also available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:</p>
+<p><a id='Box-Constrianed-Optimization-1'></a></p>
+<h2 id="box-constrianed-optimization">Box Constrianed Optimization</h2>
+<p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:</p>
 <pre><code class="jl">lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
-results = optimize(f, g!, upper, initial_x, Fminbox(GradientDescent()))
+inner_optimizer = GradientDescent()
+results = optimize(f, g!, upper, initial_x, Fminbox(inner_optimizer))
 </code></pre>
 
-<p>This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen <code>optimizer</code> (<code>GradientDescent</code> above) for convergence at each step. Notice that the <code>Optimizer</code> type, not an instance should be passed (<code>GradientDescent</code>, not <code>GradientDescent()</code>).</p>
+<p>This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen <code>inner_optimizer</code> (<code>GradientDescent()</code> above) for convergence at each step.</p>
 <p>This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use <code>ConjugateGradient</code> or <code>LBFGS</code> with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.</p>
-<p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For this reason, the options syntax is a bit different from the rest of the package. All parameters regarding the outer iterations are passed as keyword arguments, and options for the interior optimizer is passed as an <code>Optim.Options</code> type using the keyword <code>optimizer_o</code>.</p>
-<p>For example, the following restricts the optimization to 2 major iterations</p>
+<p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For example, the following restricts the optimization to 2 major iterations</p>
 <pre><code class="julia">results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(outer_iterations = 2))
 </code></pre>
 
-<p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient</code> optimization to 2</p>
-<pre><code class="julia">results = Optim.optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(iterations = 2))
+<p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient()</code> optimization to 2</p>
+<pre><code class="julia">results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(iterations = 2))
 </code></pre>
 
 <p><a id='Minimizing-a-univariate-function-on-a-bounded-interval-1'></a></p>
 <h2 id="minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</h2>
 <p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
-<pre><code class="jl">    optimize(f, lower, upper, method; kwargs...)
+<pre><code class="jl">optimize(f, lower, upper, method; kwargs...)
 </code></pre>
 
 <p>Notice the lack of initial <code>x</code>. A specific example is the following quadratic function.</p>
@@ -206,7 +215,7 @@ Results of Optimization Algorithm
 </code></pre>
 
 <p>If we can't remember what method we used, we simply use</p>
-<pre><code class="jl">Optim.summary(res)
+<pre><code class="jl">summary(res)
 </code></pre>
 
 <p>which will return <code>"Nelder Mead"</code>. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using</p>
@@ -256,7 +265,7 @@ julia&gt; Optim.minimum(res)
 </ul>
 <p><a id='Input-types-1'></a></p>
 <h2 id="input-types">Input types</h2>
-<p>Most users will input <code>Vector</code>'s as their <code>initial_x</code>'s, and get an <code>Optim.minimizer(res)</code> out that is also a vector. For zeroth and first order methods, it is also possible to pass in matrices, or even higher dimensional arrays. The only restriction imposed by leaving the <code>Vector</code> case is, that it is no longer possible to use finite difference approximations or autmatic differentiation. Second order methods (variants of Newton's method) do not support this more general input type.</p>
+<p>Most users will input <code>Vector</code>'s as their <code>initial_x</code>'s, and get an <code>Optim.minimizer(res)</code> out that is also a vector. For zeroth and first order methods, it is also possible to pass in matrices, or even higher dimensional arrays. The only restriction imposed by leaving the <code>Vector</code> case is, that it is no longer possible to use finite difference approximations or automatic differentiation. Second order methods (variants of Newton's method) do not support this more general input type.</p>
 <p><a id='Notes-on-convergence-flags-and-checks-1'></a></p>
 <h2 id="notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</h2>
 <p>Currently, it is possible to access a minimizer using <code>Optim.minimizer(result)</code> even if all convergence flags are <code>false</code>. This means that the user has to be a bit careful when using the output from the solvers. It is advised to include checks for convergence if the minimizer or minimum is used to carry out further calculations.</p>
