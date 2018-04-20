@@ -255,14 +255,19 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 @initial_linesearch()...)
 end
 
-nlprecon_post_optimize!(d, state, method) = hessian!(d, state.nlpreconstate.x)
+# Update the Hessian
+update_h!(d, state, method) = nothing
+update_h!(d, state, method::BFGS) = bfgs_update!(d, state)
+update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
-nlprecon_post_accelerate!(d, state, method) = hessian!(d, state.nlpreconstate.x)
+nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
+
+nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
 function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
                                    method::LBFGS)  where X where T
     state.nlpreconstate.pseudo_iteration += 1
-    hessian!(d, state.nlpreconstate.x)
+    lbfgs_update!(d, state.nlpreconstate, method.m)
 end
 
 
@@ -353,6 +358,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # state.x_previous and state.x are dealt with by reference
 
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
+
         @. state.x = state.x + state.alpha * state.s
         # Manifold start
         retract!(method.manifold, state.x)
@@ -371,7 +377,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     copy!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
 
-    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    update_g!(d, state, method)
 
     lssuccess == false # Break on linesearch error
 end

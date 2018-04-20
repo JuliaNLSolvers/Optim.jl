@@ -101,9 +101,17 @@ function update_state!(d, state::BFGSState, method::BFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
     value_gradient!(d, state.x)
+
+    bfgs_update!(d, state)
+
+    lssuccess == false # break on linesearch error
+end
+
+function bfgs_update!(d, state)
+    # Update the inverse Hessian approximation using Sherman-Morrison
+    n = length(state.x)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
-
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = real(vecdot(state.dx, state.dg))
     if dx_dg == 0.0
@@ -121,8 +129,6 @@ function update_state!(d, state::BFGSState, method::BFGS)
             @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
         end
     end
-
-    lssuccess == false # break on linesearch error
 end
 
 function assess_convergence(state::BFGSState, d, options)
