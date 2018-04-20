@@ -56,6 +56,9 @@ function update_state!(d, state::MomentumGradientDescentState, method::MomentumG
 
     state.x .+= state.alpha.*state.s .+ method.mu.*state.x_momentum
     retract!(method.manifold, state.x)
+
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
     lssuccess == false # break on linesearch error
 end
 

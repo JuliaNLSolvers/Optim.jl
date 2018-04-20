@@ -202,6 +202,9 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
 
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    update_h!(d, state, method) # only relevant if not converged
+
     lssuccess == false # break on linesearch error
 end
 

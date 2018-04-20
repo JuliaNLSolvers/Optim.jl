@@ -63,7 +63,8 @@ function update_state!(d, state::NewtonState, method::Newton)
     # information can be found in the discussion at issue #153.
     T = eltype(state.x)
 
-    update_h!(d, state, method)
+    # Is this needed here, or shouldn't it be at the end?
+    #update_h!(d, state, method)
 
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
@@ -84,6 +85,10 @@ function update_state!(d, state::NewtonState, method::Newton)
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
+
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    update_h!(d, state, method)
+
     lssuccess == false # break on linesearch error
 end
 

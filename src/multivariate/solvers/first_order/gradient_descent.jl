@@ -76,6 +76,8 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
     retract!(method.manifold, state.x)
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
     lssuccess == false # break on linesearch error
 end
 

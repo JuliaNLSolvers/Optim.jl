@@ -371,6 +371,8 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     copy!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
 
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
     lssuccess == false # Break on linesearch error
 end
 

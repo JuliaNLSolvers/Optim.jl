@@ -17,8 +17,6 @@ KrylovTrustRegion(; initial_radius::Real = 1.0,
                     KrylovTrustRegion(initial_radius, max_radius, eta,
                                   rho_lower, rho_upper, cg_tol)
 
-update_h!(d, state, method::KrylovTrustRegion) = nothing
-
 
 # TODO: support x::Array{T,N} et al.?
 mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
@@ -161,16 +159,18 @@ function update_state!(objective::TwiceDifferentiableHV,
         state.x .+= state.s
     end
 
-    return false
-end
-
-
-function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrustRegion)
     if state.accept_step
         # Update the function value and gradient
         state.f_x_previous = value(objective)
         value_gradient!(objective, state.x)
     end
+
+    return false
+end
+
+
+function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrustRegion)
+
 end
 
 

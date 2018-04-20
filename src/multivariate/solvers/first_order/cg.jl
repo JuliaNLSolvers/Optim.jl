@@ -142,7 +142,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
                          -pg, # Maintain current search direction in state.s
-                         @initial_linesearch()...) 
+                         @initial_linesearch()...)
 end
 
 function update_state!(d, state::ConjugateGradientState, method::ConjugateGradient)
@@ -188,6 +188,9 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         beta = max(betak, etak)
         state.s .= beta.*state.s .- state.pg
         project_tangent!(method.manifold, state.s, state.x)
+
+        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
         lssuccess == false # break on linesearch error
 end
 

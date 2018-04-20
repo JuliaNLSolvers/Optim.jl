@@ -70,6 +70,8 @@ function update_state!(d, state::AcceleratedGradientDescentState, method::Accele
     state.x .= state.y .+ scaling.*(state.y .- state.y_previous)
     retract!(method.manifold, state.x)
 
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
     lssuccess == false # break on linesearch error
 end
 
