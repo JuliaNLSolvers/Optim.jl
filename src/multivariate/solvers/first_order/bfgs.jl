@@ -100,7 +100,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
-    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    value_gradient!(d, state.x)
     update_h!(d, state, method) # only relevant if not converged
 
     lssuccess == false # break on linesearch error

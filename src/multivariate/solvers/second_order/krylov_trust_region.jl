@@ -168,12 +168,6 @@ function update_state!(objective::TwiceDifferentiableHV,
     return false
 end
 
-
-function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrustRegion)
-
-end
-
-
 function assess_convergence(state::KrylovTrustRegionState, d, options)
     if !state.accept_step
         return state.radius < options.x_tol, false, false, false, false

@@ -86,7 +86,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
 
-    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    value_gradient!(d, state.x)
     update_h!(d, state, method)
 
     lssuccess == false # break on linesearch error
