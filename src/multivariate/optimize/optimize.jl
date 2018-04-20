@@ -1,6 +1,3 @@
-# Update the Hessian
-update_h!(d, state, method) = nothing
-update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
 after_while!(d, state, method, options) = nothing
 
@@ -44,7 +41,7 @@ function optimize(d::D, initial_x::Tx, method::M,
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = converged | (counter_f_tol > options.successive_f_tol)
-        
+
         if tracing
             # update trace; callbacks can stop routine early by returning true
             stopped_by_callback = trace!(tr, d, state, iteration, method, options)

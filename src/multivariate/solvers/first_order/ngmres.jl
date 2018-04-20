@@ -255,14 +255,14 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 @initial_linesearch()...)
 end
 
-nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
+nlprecon_post_optimize!(d, state, method) = hessian!(d, state.nlpreconstate.x)
 
-nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
+nlprecon_post_accelerate!(d, state, method) = hessian!(d, state.nlpreconstate.x)
 
 function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
                                    method::LBFGS)  where X where T
     state.nlpreconstate.pseudo_iteration += 1
-    update_h!(d, state.nlpreconstate, method)
+    hessian!(d, state.nlpreconstate.x)
 end
 
 
@@ -298,7 +298,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         return false # Exit on gradient norm convergence
     end
 
-    # Deals with update_h! etc for preconditioner, if needed
+    # Deals with hessian! etc for preconditioner, if needed
     nlprecon_post_optimize!(d, state, method.nlprecon)
 
     # Step 2: Do acceleration calculation
@@ -361,7 +361,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # TODO: Move these into `nlprecon_post_accelerate!` ?
         state.nlpreconstate.f_x_previous = state.f_x_previous
         state.nlpreconstate.dphi_0_previous = state.dphi_0_previous
-        # Deals with update_h! etc. for preconditioner, if needed
+        # Deals with hessian! etc. for preconditioner, if needed
         nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
     #=

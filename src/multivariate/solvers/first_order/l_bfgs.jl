@@ -203,14 +203,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     retract!(method.manifold, state.x)
 
     value_gradient!(d, state.x)
-    update_h!(d, state, method) # only relevant if not converged
 
-    lssuccess == false # break on linesearch error
-end
-
-
-function update_h!(d, state, method::LBFGS)
-    n = length(state.x)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
 
@@ -224,6 +217,8 @@ function update_h!(d, state, method::LBFGS)
     @inbounds state.dx_history[idx] .= state.dx
     @inbounds state.dg_history[idx] .= state.dg
     @inbounds state.rho[idx] = rho_iteration
+    
+    lssuccess == false # break on linesearch error
 end
 
 function assess_convergence(state::LBFGSState, d, options)

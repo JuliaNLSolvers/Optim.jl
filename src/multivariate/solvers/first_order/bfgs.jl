@@ -101,13 +101,6 @@ function update_state!(d, state::BFGSState, method::BFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
     value_gradient!(d, state.x)
-    update_h!(d, state, method) # only relevant if not converged
-
-    lssuccess == false # break on linesearch error
-end
-
-function update_h!(d, state, method::BFGS)
-    n = length(state.x)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
 
@@ -128,6 +121,8 @@ function update_h!(d, state, method::BFGS)
             @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
         end
     end
+
+    lssuccess == false # break on linesearch error
 end
 
 function assess_convergence(state::BFGSState, d, options)
