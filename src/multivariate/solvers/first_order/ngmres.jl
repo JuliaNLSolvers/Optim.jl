@@ -255,6 +255,11 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 @initial_linesearch()...)
 end
 
+# Update the Hessian
+update_h!(d, state, method) = nothing
+update_h!(d, state, method::BFGS) = bfgs_update!(d, state)
+update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
+
 nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
 nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
@@ -262,7 +267,7 @@ nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, 
 function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
                                    method::LBFGS)  where X where T
     state.nlpreconstate.pseudo_iteration += 1
-    update_h!(d, state.nlpreconstate, method)
+    lbfgs_update!(d, state.nlpreconstate, method.m)
 end
 
 
@@ -298,7 +303,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         return false # Exit on gradient norm convergence
     end
 
-    # Deals with update_h! etc for preconditioner, if needed
+    # Deals with hessian! etc for preconditioner, if needed
     nlprecon_post_optimize!(d, state, method.nlprecon)
 
     # Step 2: Do acceleration calculation
@@ -353,6 +358,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # state.x_previous and state.x are dealt with by reference
 
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
+
         @. state.x = state.x + state.alpha * state.s
         # Manifold start
         retract!(method.manifold, state.x)
@@ -361,7 +367,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # TODO: Move these into `nlprecon_post_accelerate!` ?
         state.nlpreconstate.f_x_previous = state.f_x_previous
         state.nlpreconstate.dphi_0_previous = state.dphi_0_previous
-        # Deals with update_h! etc. for preconditioner, if needed
+        # Deals with hessian! etc. for preconditioner, if needed
         nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
     #=
@@ -370,6 +376,8 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     =#
     copy!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
+
+    update_g!(d, state, method)
 
     lssuccess == false # Break on linesearch error
 end

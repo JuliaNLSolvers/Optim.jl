@@ -63,8 +63,6 @@ function update_state!(d, state::NewtonState, method::Newton)
     # information can be found in the discussion at issue #153.
     T = eltype(state.x)
 
-    update_h!(d, state, method)
-
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
@@ -84,6 +82,10 @@ function update_state!(d, state::NewtonState, method::Newton)
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
+
+    value_gradient!(d, state.x)
+    hessian!(d, state.x)
+
     lssuccess == false # break on linesearch error
 end
 

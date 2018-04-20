@@ -56,6 +56,9 @@ function update_state!(d, state::MomentumGradientDescentState, method::MomentumG
 
     state.x .+= state.alpha.*state.s .+ method.mu.*state.x_momentum
     retract!(method.manifold, state.x)
+
+    value_gradient!(d, state.x)
+
     lssuccess == false # break on linesearch error
 end
 

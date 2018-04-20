@@ -202,12 +202,14 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
 
+    value_gradient!(d, state.x)
+
+    lbfgs_update!(d, state, method.m)
+
     lssuccess == false # break on linesearch error
 end
 
-
-function update_h!(d, state, method::LBFGS)
-    n = length(state.x)
+function lbfgs_update!(d, state, m)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
 
@@ -217,7 +219,7 @@ function update_h!(d, state, method::LBFGS)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
     end
-    idx = mod1(state.pseudo_iteration, method.m)
+    idx = mod1(state.pseudo_iteration, m)
     @inbounds state.dx_history[idx] .= state.dx
     @inbounds state.dg_history[idx] .= state.dg
     @inbounds state.rho[idx] = rho_iteration

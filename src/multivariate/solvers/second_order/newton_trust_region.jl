@@ -317,6 +317,8 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         copy!(gradient(d), state.g_previous)
     end
 
+    value_gradient!(d, state.x)
+    hessian!(d, state.x)
     false
 end
 
