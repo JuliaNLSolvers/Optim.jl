@@ -44,7 +44,7 @@ function initial_state(method::Newton, options, d, initial_x)
 
     value_gradient!!(d, initial_x)
     hessian!!(d, initial_x)
-    
+
     NewtonState(copy(initial_x), # Maintain current state in state.x
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
@@ -62,9 +62,10 @@ function update_state!(d, state::NewtonState, method::Newton)
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
     T = eltype(state.x)
-    
-    update_h!(d, state, method)
-    
+
+    # Is this needed here, or shouldn't it be at the end?
+    #update_h!(d, state, method)
+
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
@@ -73,7 +74,7 @@ function update_state!(d, state::NewtonState, method::Newton)
             # is this actually StridedArray?
             A_ldiv_B!(state.s, state.F, -gradient(d))
         else
-            # not Array, we can't do inplace ldiv 
+            # not Array, we can't do inplace ldiv
             gv = Vector{T}(length(gradient(d)))
             copy!(gv, -gradient(d))
             copy!(state.s, state.F\gv)
@@ -84,6 +85,10 @@ function update_state!(d, state::NewtonState, method::Newton)
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
+
+    update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+    update_h!(d, state, method)
+
     lssuccess == false # break on linesearch error
 end
 

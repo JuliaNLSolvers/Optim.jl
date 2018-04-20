@@ -189,6 +189,9 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         beta = max(betak, etak)
         state.s .= beta.*state.s .- state.pg
         project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+
+        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
         lssuccess == false # break on linesearch error
 end
 

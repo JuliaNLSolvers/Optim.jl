@@ -1,12 +1,3 @@
-update_g!(d, state, method) = nothing
-function update_g!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton}
-    # Update the function value and gradient
-    value_gradient!(d, state.x)
-end
-update_fg!(d, state, method) = nothing
-update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
-update_fg!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton} = value_gradient!(d, state.x)
-
 # Update the Hessian
 update_h!(d, state, method) = nothing
 update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
@@ -49,16 +40,13 @@ function optimize(d::D, initial_x::Tx, method::M,
         iteration += 1
 
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
-        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = converged | (counter_f_tol > options.successive_f_tol)
-
-        !converged && update_h!(d, state, method) # only relevant if not converged
-
+        
         if tracing
             # update trace; callbacks can stop routine early by returning true
             stopped_by_callback = trace!(tr, d, state, iteration, method, options)

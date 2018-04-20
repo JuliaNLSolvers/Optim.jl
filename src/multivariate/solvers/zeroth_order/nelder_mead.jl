@@ -256,6 +256,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     end
 
     state.nm_x = nmobjective(state.f_simplex, n, m)
+
     false
 end
 
@@ -283,7 +284,7 @@ end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
-end 
+end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()
