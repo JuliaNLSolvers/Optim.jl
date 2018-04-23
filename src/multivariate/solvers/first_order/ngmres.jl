@@ -401,7 +401,7 @@ function trace!(tr, d, state, iteration, method::AbstractNGMRES, options)
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
-        dt["subspace-α"] = state.subspacealpha[1:state.curw]
+        dt["subspace-α"] = state.subspacealpha[1:state.curw-1]
         if state.restart == true
             dt["Current step size"] = NaN
         else
