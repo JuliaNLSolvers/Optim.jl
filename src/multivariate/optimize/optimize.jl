@@ -20,15 +20,13 @@ end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
 function optimize(d::D, initial_x::Tx, method::M,
-                  options::Options = InternalUseOptions(method),
-                  state = initial_state(method, options, d, complex_to_real(d, initial_x))) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+                  options::Options = Options(;default_options(method)...),
+                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-
-    initial_x = complex_to_real(d, initial_x)
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
@@ -66,7 +64,7 @@ function optimize(d::D, initial_x::Tx, method::M,
 
         # Check time_limit; if none is provided it is NaN and the comparison
         # will always return false.
-        stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
+        stopped_by_time_limit = time()-t0 > options.time_limit
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
         h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
@@ -83,13 +81,11 @@ function optimize(d::D, initial_x::Tx, method::M,
     # in variables besides the option settings
     T = typeof(options.f_tol)
     f_incr_pick = f_increased && !options.allow_f_increases
-    x_absc = x_abschange(state)
-    minf = pick_best_f(f_incr_pick, state, d)
-    return MultivariateOptimizationResults{M,T,Tx,typeof(x_absc),typeof(minf),typeof(tr)}(method,
-                                        NLSolversBase.iscomplex(d),
-                                        real_to_complex(d, initial_x),
-                                        real_to_complex(d, pick_best_x(f_incr_pick, state)),
-                                        minf,
+
+    return MultivariateOptimizationResults(method,
+                                        initial_x,
+                                        pick_best_x(f_incr_pick, state),
+                                        pick_best_f(f_incr_pick, state, d),
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,

@@ -80,7 +80,7 @@ function TwiceDifferentiable(f, g!, x_seed::AbstractVector{T}, F::Real = real(ze
             return
         end
     elseif autodiff == :forward
-        hcfg = ForwardDiff.HessianConfig(similar(x_seed))
+        hcfg = ForwardDiff.HessianConfig(f, similar(x_seed))
         h! = (out, x) -> ForwardDiff.hessian!(out, f, x, hcfg)
     else
         error("The autodiff value $(autodiff) is not supported. Use :finite or :forward.")

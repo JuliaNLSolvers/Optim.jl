@@ -46,15 +46,15 @@ end
 
 function initial_state(method::GradientDescent, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
 
     GradientDescentState(initial_x, # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
-                         T(NaN), # Store previous f in state.f_x_previous
+                         real(T(NaN)), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          @initial_linesearch()...)
 end
@@ -62,16 +62,12 @@ end
 function update_state!(d, state::GradientDescentState{T}, method::GradientDescent) where T
     value_gradient!(d, state.x)
     # Search direction is always the negative preconditioned gradient
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
-    method.precondprep!(method.P, real_to_complex(d,state.x))
-    A_ldiv_B!(real_to_complex(d,state.s), method.P, real_to_complex(d,gradient(d)))
-    @static if VERSION >= v"0.7.0-DEV.393"
-        rmul!(state.s,-1)
-    else
-        scale!(state.s,-1)
-    end
+    project_tangent!(method.manifold, gradient(d), state.x)
+    method.precondprep!(method.P, state.x)
+    A_ldiv_B!(state.s, method.P, gradient(d))
+    scale!(state.s,-1)
     if method.P != nothing
-        project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+        project_tangent!(method.manifold, state.s, state.x)
     end
 
     # Determine the distance of movement along the search line
@@ -79,7 +75,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
     lssuccess == false # break on linesearch error
 end
 

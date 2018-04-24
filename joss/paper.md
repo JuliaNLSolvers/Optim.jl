@@ -106,7 +106,7 @@ have also been tested within the Optim framework.
 John Myles White initiated the development of the Optim code base
 in 2012.  We owe much to him and Timothy Holy for creating a solid
 package for optimization that the rest of the Julia community could
-further improve upon.  We would also like to thank everyone that have
+further improve upon.  We would also like to thank everyone who has
 contributed with code and discussions to help improve the package.  In
 particular, Antoine Levitt, Christoph Ortner, and Chris Rackauckas
 have been helpful in providing suggestions and code contributions

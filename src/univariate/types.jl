@@ -12,4 +12,3 @@ mutable struct UnivariateOptimizationResults{Tb,Tt,Tf, Tx,M,O<:UnivariateOptimiz
     trace::OptimizationTrace{M}
     f_calls::Int
 end
-iscomplex(r::UnivariateOptimizationResults) = false

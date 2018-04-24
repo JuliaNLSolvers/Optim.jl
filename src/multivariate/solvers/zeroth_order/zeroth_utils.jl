@@ -19,4 +19,4 @@ function assess_convergence(state::ZerothOrderState, d, options)
 end
 
 f_abschange(d::AbstractObjective, state::ZerothOrderState) = convert(typeof(value(d)), NaN)
-x_abschange(state::ZerothOrderState) = convert(eltype(state.x), NaN)
+x_abschange(state::ZerothOrderState) = convert(real(eltype(state.x)), NaN)
