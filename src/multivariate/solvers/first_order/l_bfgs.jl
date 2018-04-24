@@ -34,8 +34,8 @@ function twoloop!(s,
         i   = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
-        @inbounds (q .-= alpha[i] .* dgi; nothing)
+        @inbounds alpha[i] = rho[i] * real(vecdot(dxi, q))
+        @inbounds q .-= alpha[i] .* dgi
     end
 
     # Copy q into s for forward pass
@@ -54,7 +54,7 @@ function twoloop!(s,
         i = mod1(upper, m)
         dxi = dx_history[i]
         dgi = dg_history[i]
-        scaling = dot(dxi, dgi) / sum(abs2, dgi)
+        scaling = real(vecdot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
         A_ldiv_B!(s, precon, q)
@@ -67,8 +67,8 @@ function twoloop!(s,
         i = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds beta = rho[i] * vecdot(dgi, s)
-        @inbounds (s .+= dxi .* (alpha[i] - beta); nothing)
+        @inbounds beta = rho[i] * real(vecdot(dgi, s))
+        @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
     # Negate search direction
@@ -154,14 +154,14 @@ mutable struct LBFGSState{Tx, Tdx, Tdg, T, G} <: AbstractOptimizerState
 end
 
 function initial_state(method::LBFGS, options, d, initial_x)
-    T = eltype(initial_x)
+    T = real(eltype(initial_x))
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -171,7 +171,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
               similar(initial_x), # Buffer for new entry in state.dx_history
               similar(initial_x), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
               Vector{T}(undef, method.m), #Buffer for use by twoloop
               0,
@@ -184,16 +184,16 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
 
     # update the preconditioner
-    method.precondprep!(method.P, real_to_complex(d,state.x))
+    method.precondprep!(method.P, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
     twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.scaleinvH0, method.P)
-    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, state.s, state.x)
 
     # Save g value to prepare for update_g! call
     copyto!(state.g_previous, gradient(d))
@@ -204,7 +204,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Update current position
     state.dx .= state.alpha .* state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end
@@ -216,7 +216,7 @@ function update_h!(d, state, method::LBFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = one(eltype(state.dx)) / vecdot(state.dx, state.dg)
+    rho_iteration = one(eltype(state.dx)) / real(vecdot(state.dx, state.dg))
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true

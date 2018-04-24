@@ -78,7 +78,7 @@ function update_state!(d, state::NewtonState, method::Newton)
             end
         else
             # not Array, we can't do inplace ldiv
-            gv = Vector{T}(undef, length(gradient(d)))
+            gv = Vector{T}(length(gradient(d)))
             copy!(gv, -gradient(d))
             copy!(state.s, state.F\gv)
         end

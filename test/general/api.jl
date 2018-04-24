@@ -119,8 +119,6 @@
     @test Optim.x_converged(res) == false
     @test Optim.f_converged(res) == false
     @test Optim.g_converged(res) == false
-    @test Optim.x_tol(res) == 1e-32
-    @test Optim.f_tol(res) == 1e-32
     @test Optim.g_tol(res) == 1e-12
     @test Optim.iteration_limit_reached(res) == true
     @test Optim.initial_state(res) == [-1.2, 1.0]

@@ -1,4 +1,5 @@
 abstract type AbstractOptimizer end
+abstract type AbstractConstrainedOptimizer end
 abstract type ZerothOrderOptimizer <: AbstractOptimizer end
 abstract type FirstOrderOptimizer  <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
@@ -14,12 +15,17 @@ struct Options{T, TCallback, S}
     x_tol::T
     f_tol::T
     g_tol::T
+    outer_x_tol::T
+    outer_f_tol::T
+    outer_g_tol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
     allow_f_increases::Bool
+    allow_outer_f_increases::Bool
     successive_f_tol::Int
     iterations::Int
+    outer_iterations::Int
     store_trace::Bool
     show_trace::Bool
     extended_trace::Bool
@@ -29,30 +35,33 @@ struct Options{T, TCallback, S}
 end
 
 function Options(;
-        x_tol::T1 = 1e-32,
-        f_tol::T2 = 1e-32,
-        g_tol::T3 = 1e-8,
+        x_tol::Real = 0.0,
+        f_tol::Real = 0.0,
+        g_tol::Real = 1e-8,
+        outer_x_tol::Real = 0.0,
+        outer_f_tol::Real = 0.0,
+        outer_g_tol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
         allow_f_increases::Bool = false,
+        allow_outer_f_increases::Bool = false,
         successive_f_tol::Int = 0,
-        iterations::Integer = 1_000,
+        iterations::Int = 1_000,
+        outer_iterations::Int = 1000,
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
-        show_every::Integer = 1,
-        callback::T4 = nothing,
-        time_limit = NaN,
-        specialize::Val{S} = Val{true}()) where {T1<:Real,T2<:Real,T3<:Real,T4,S}
+        show_every::Int = 1,
+        callback = nothing,
+        time_limit = NaN)
     show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-  #  T = promote_type(typeof(x_tol), typeof(f_tol), typeof(g_tol))
-    Options{promote_type(T1,T2,T3),T4,S}(promote(x_tol, f_tol, g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
-        allow_f_increases, successive_f_tol, Int(iterations), store_trace, show_trace, extended_trace,
-        Int(show_every), callback, time_limit)
+    Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, show_trace, extended_trace,
+        Int(show_every), callback, Float64(time_limit))
 end
 
 
@@ -126,9 +135,8 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, Tf, M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M} <: OptimizationResults
     method::O
-    iscomplex::Bool
     initial_x::Tx
     minimizer::Tx
     minimum::Tf
@@ -149,7 +157,6 @@ mutable struct MultivariateOptimizationResults{O<:AbstractOptimizer, T, Tx, Tc, 
     g_calls::Int
     h_calls::Int
 end
-iscomplex(r::MultivariateOptimizationResults) = r.iscomplex
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
 pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x

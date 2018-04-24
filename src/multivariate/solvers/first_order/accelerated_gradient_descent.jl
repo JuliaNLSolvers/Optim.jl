@@ -34,15 +34,15 @@ end
 
 function initial_state(method::AcceleratedGradientDescent, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
 
     AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
-                         T(NaN), # Store previous f in state.f_x_previous
+                         real(T)(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
                          copy(initial_x), # Maintain intermediary current state in state.y
                          similar(initial_x), # Maintain intermediary state in state.y_previous
@@ -53,7 +53,7 @@ end
 function update_state!(d, state::AcceleratedGradientDescentState, method::AcceleratedGradientDescent)
     value_gradient!(d, state.x)
     state.iteration += 1
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
     # Search direction is always the negative gradient
     state.s .= .-gradient(d)
 
@@ -63,12 +63,12 @@ function update_state!(d, state::AcceleratedGradientDescentState, method::Accele
     # Make one move in the direction of the gradient
     copyto!(state.y_previous, state.y)
     state.y .= state.x .+ state.alpha.*state.s
-    retract!(method.manifold, real_to_complex(d,state.y))
+    retract!(method.manifold, state.y)
 
     # Update current position with Nesterov correction
     scaling = (state.iteration - 1) / (state.iteration + 2)
     state.x .= state.y .+ scaling.*(state.y .- state.y_previous)
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end

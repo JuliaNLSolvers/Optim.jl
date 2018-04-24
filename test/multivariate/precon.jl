@@ -26,8 +26,7 @@
             for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
                 results = Optim.optimize(f, g!, copy(initial_x),
                                          optimizer(P = P),
-                                         Optim.Options(f_tol = 1e-32,
-                                                             g_tol = GRTOL, allow_f_increases = true))
+                                         Optim.Options(g_tol = GRTOL, allow_f_increases = true))
                 debug_printing && println(optimizer, wwo,
                                           " preconditioning : g_calls = ", Optim.g_calls(results),
                                           ", f_calls = ", Optim.f_calls(results))

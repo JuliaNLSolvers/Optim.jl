@@ -106,13 +106,12 @@ end
 function initial_state(method::ConjugateGradient, options, d, initial_x)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
     pg = copy(gradient(d))
-    @assert typeof(value(d)) == T
 
     # Could move this out? as a general check?
     #=
@@ -129,16 +128,16 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
-    method.precondprep!(method.P, real_to_complex(d,initial_x))
-    A_ldiv_B!(real_to_complex(d,pg), method.P, real_to_complex(d,gradient(d)))
+    method.precondprep!(method.P, initial_x)
+    A_ldiv_B!(pg, method.P, gradient(d))
     if method.P != nothing
-        project_tangent!(method.manifold, real_to_complex(d,pg), real_to_complex(d,initial_x))
+        project_tangent!(method.manifold, pg, initial_x)
     end
 
     ConjugateGradientState(initial_x, # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
-                         T(NaN), # Store previous f in state.f_x_previous
+                         real(T)(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Intermediate value in CG calculation
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
@@ -157,11 +156,11 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
 
         # Update current position # x = x + alpha * s
         @. state.x = state.x + state.alpha * state.s
-        retract!(method.manifold, real_to_complex(d,state.x))
+        retract!(method.manifold, state.x)
 
         # Update the function value and gradient
         value_gradient!(d, state.x)
-        project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+        project_tangent!(method.manifold, gradient(d), state.x)
 
         # Check sanity of function and gradient
         if !isfinite(value(d))
@@ -177,18 +176,18 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # but I am worried about round-off here, so instead we make an
         # extra copy, which is probably minimal overhead.
         # -----------------
-        method.precondprep!(method.P, real_to_complex(d,state.x))
-        dPd = dot(real_to_complex(d,state.s), method.P, real_to_complex(d,state.s))
-        etak::eltype(state.x) = method.eta * vecdot(state.s, state.g_previous) / dPd
+        method.precondprep!(method.P, state.x)
+        dPd = real(dot(state.s, method.P, state.s))
+        etak = method.eta * real(vecdot(state.s, state.g_previous)) / dPd
         state.y .= gradient(d) .- state.g_previous
-        ydots = vecdot(state.y, state.s)
-        copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
-        A_ldiv_B!(real_to_complex(d,state.pg), method.P, real_to_complex(d,gradient(d)))
+        ydots = real(vecdot(state.y, state.s))
+        copy!(state.py, state.pg)        # below, store pg - pg_previous in py
+        A_ldiv_B!(state.pg, method.P, gradient(d))
         state.py .= state.pg .- state.py
-        betak = (vecdot(state.y, state.pg) - vecdot(state.y, state.py) * vecdot(gradient(d), state.s) / ydots) / ydots
+        betak = (real(vecdot(state.y, state.pg)) - real(vecdot(state.y, state.py)) * real(vecdot(gradient(d), state.s)) / ydots) / ydots
         beta = max(betak, etak)
         state.s .= beta.*state.s .- state.pg
-        project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+        project_tangent!(method.manifold, state.s, state.x)
         lssuccess == false # break on linesearch error
 end
 
