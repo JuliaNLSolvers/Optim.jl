@@ -87,7 +87,7 @@ OACCEL(;manifold::Manifold = Flat(),
        linesearch = LineSearches.HagerZhang(),
        nlprecon = GradientDescent(
            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
-           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+           linesearch = LineSearches.Static(),
            manifold = manifold),
        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
        ϵ0 = 1e-12,
