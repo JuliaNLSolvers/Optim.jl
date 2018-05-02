@@ -181,7 +181,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         etak = method.eta * real(vecdot(state.s, state.g_previous)) / dPd
         state.y .= gradient(d) .- state.g_previous
         ydots = real(vecdot(state.y, state.s))
-        copy!(state.py, state.pg)        # below, store pg - pg_previous in py
+        copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
         A_ldiv_B!(state.pg, method.P, gradient(d))
         state.py .= state.pg .- state.py
         betak = (real(vecdot(state.y, state.pg)) - real(vecdot(state.y, state.py)) * real(vecdot(gradient(d), state.s)) / ydots) / ydots
