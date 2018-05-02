@@ -43,8 +43,8 @@ NGMRES(;
         wmax::Int = 10,
         ϵ0 = 1e-12,
         nlprecon = GradientDescent(
-            alphaguess = LineSearches.InitialPrevious(),
-            linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+            linesearch = LineSearches.Static(),
             manifold = manifold),
         nlpreconopts = Options(iterations = 1, allow_f_increases = true),
       )
@@ -68,8 +68,8 @@ function NGMRES(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
                 nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialPrevious(),
-                    linesearch = LineSearches.Static(alpha=1e-4,scaled=true), # Step length arbitrary
+                    alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true), # Step length arbitrary,
+                    linesearch = LineSearches.Static(),
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
@@ -86,8 +86,8 @@ OACCEL(;manifold::Manifold = Flat(),
        alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        nlprecon = GradientDescent(
-           alphaguess = LineSearches.InitialPrevious(),
-           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+           alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+           linesearch = LineSearches.Static(),
            manifold = manifold),
        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
        ϵ0 = 1e-12,
@@ -109,8 +109,8 @@ function OACCEL(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
                 nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialPrevious(),
-                    linesearch = LineSearches.Static(alpha=1e-4,scaled=true), # Step length arbitrary
+                    alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true), # Step length arbitrary
+                    linesearch = LineSearches.Static(),
                     manifold = manifold),
                 nlpreconopts = Options(iterations = 1, allow_f_increases = true),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
@@ -401,6 +401,7 @@ function trace!(tr, d, state, iteration, method::AbstractNGMRES, options)
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
+        dt["subspace-α"] = state.subspacealpha[1:state.curw-1]
         if state.restart == true
             dt["Current step size"] = NaN
         else
