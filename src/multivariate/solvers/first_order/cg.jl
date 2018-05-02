@@ -41,7 +41,7 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-struct ConjugateGradient{Tf, T, Tprep<:Union{Function, Void}, IL, L} <: FirstOrderOptimizer
+struct ConjugateGradient{Tf, T, Tprep<:Union{Function, Nothing}, IL, L} <: FirstOrderOptimizer
     eta::Tf
     P::T
     precondprep!::Tprep
@@ -149,7 +149,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # Search direction is predetermined
 
         # Maintain a record of the previous gradient
-        copy!(state.g_previous, gradient(d))
+        copyto!(state.g_previous, gradient(d))
 
         # Determine the distance of movement along the search line
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))

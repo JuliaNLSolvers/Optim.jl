@@ -27,7 +27,7 @@ end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{Tx, T, F<:Base.LinAlg.Cholesky} <: AbstractOptimizerState
+mutable struct NewtonState{Tx, T, F<:Cholesky} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
@@ -49,7 +49,7 @@ function initial_state(method::Newton, options, d, initial_x)
                 similar(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
                 @static(VERSION >= v"0.7.0-DEV.393" ?
-                        Base.LinAlg.Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)) :
+                        Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)) :
                         Base.LinAlg.Cholesky(similar(d.H, T, 0, 0), :U)),
                 similar(initial_x), # Maintain current search direction in state.s
                 @initial_linesearch()...)
@@ -71,12 +71,16 @@ function update_state!(d, state::NewtonState, method::Newton)
         state.F = cholfact!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
             # is this actually StridedArray?
-            A_ldiv_B!(state.s, state.F, -gradient(d))
+            @static if VERSION >= v"0.7.0-DEV.393"
+                ldiv!(state.s, state.F, -gradient(d))
+            else
+                A_ldiv_B!(state.s, state.F, -gradient(d))
+            end
         else
             # not Array, we can't do inplace ldiv
-            gv = Vector{T}(length(gradient(d)))
-            copy!(gv, -gradient(d))
-            copy!(state.s, state.F\gv)
+            gv = Vector{T}(undef, length(gradient(d)))
+            copyto!(gv, -gradient(d))
+            copyto!(state.s, state.F\gv)
         end
     end
     # Determine the distance of movement along the search line

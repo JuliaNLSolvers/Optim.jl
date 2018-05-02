@@ -14,7 +14,7 @@ function update!(tr::OptimizationTrace{Tf, T},
     if show_trace
         if iteration % show_every == 0
             show(os)
-            flush(STDOUT)
+            flush(stdout)
         end
     end
     if callback != nothing && (iteration % show_every == 0)

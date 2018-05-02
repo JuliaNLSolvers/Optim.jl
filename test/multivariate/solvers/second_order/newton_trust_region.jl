@@ -46,9 +46,9 @@ end
     srand(42)
     n = 5
     H = rand(n, n)
-    H = H' * H + 4 * eye(n)
+    H = H' * H + 4 * Matrix{Float64}(I, n, n)
     H_eig = eigfact(H)
-    U = H_eig[:vectors]
+    U = H_eig.vectors
 
     gr = zeros(n)
     gr[1] = 1.
@@ -113,7 +113,7 @@ end
     # Now check an actual had case problem
     L = fill(0.1, n)
     L[1] = -1.
-    H = U * diagm(L) * U'
+    H = U * Diagonal(L) * U'
     H = 0.5 * (H' + H)
     @test issymmetric(H)
     gr = U[:,2][:]

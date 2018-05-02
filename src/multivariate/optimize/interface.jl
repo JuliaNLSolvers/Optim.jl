@@ -121,7 +121,7 @@ end
 function optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
          options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
 
-    g! = inplace ? g : (G, x) -> copy!(G, g(x))
+    g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     d = promote_objtype(method, initial_x, autodiff, f, g!)
 
     optimize(d, initial_x, method, options)
@@ -129,8 +129,8 @@ end
 function optimize(f, g, h, initial_x::AbstractArray{T}, method::AbstractOptimizer,
          options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite) where T
 
-    g! = inplace ? g : (G, x) -> copy!(G, g(x))
-    h! = inplace ? h : (H, x) -> copy!(H, h(x))
+    g! = inplace ? g : (G, x) -> copyto!(G, g(x))
+    h! = inplace ? h : (H, x) -> copyto!(H, h(x))
     d = promote_objtype(method, initial_x, autodiff, f, g!, h!)
 
     optimize(d, initial_x, method, options)

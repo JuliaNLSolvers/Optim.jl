@@ -75,9 +75,10 @@
     end
     hv!(out, x, v) = begin
         n = length(x)
-        H = Matrix{Float64}(n, n)
+        H = Matrix{Float64}(undef, n, n)
         h!(H, x)
-        out .= H * v
+        (out .= H * v; nothing)
+        out
     end
     begin
         solver = Optim.KrylovTrustRegion()

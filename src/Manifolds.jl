@@ -18,8 +18,8 @@ end
 
 
 # Fake objective function implementing a retraction
-mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
-    manifold::Manifold
+mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective, M <: Manifold} <: NLSolversBase.AbstractObjective
+    manifold::M
     inner_obj::T
 end
 # TODO: is it safe here to call retract! and change x?
@@ -68,7 +68,7 @@ project_tangent!(M::Flat, g, x) = g
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
-project_tangent!(S::Sphere,g,x) = (g .= g .- real(vecdot(x,g)).*x)
+project_tangent!(S::Sphere,g,x) = (((g .= g .- real(vecdot(x,g)).*x);nothing);g)
 
 """
 N x n matrices with orthonormal columns, i.e. such that X'X = I.
@@ -87,13 +87,15 @@ function Stiefel(retraction=:SVD)
 end
 function retract!(S::Stiefel_SVD, X)
     U,S,V = svd(X)
-    X .= U*V'
+    (X .= U*V';nothing)
+    X
 end
 function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
-    X .= X/chol(overlap)
+    (X .= X/chol(overlap);nothing)
+    X
 end
-project_tangent!(S::Stiefel, G, X) = (G .-= X*((X'G .+ G'X)./2))
+project_tangent!(S::Stiefel, G, X) =  (((G .-= X*((X'G .+ G'X)./2));nothing);G)
 
 
 
