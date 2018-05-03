@@ -24,7 +24,7 @@ function twoloop!(s,
     upper = pseudo_iteration - 1
 
     # Copy gr into q for backward pass
-    copy!(q, gr)
+    copyto!(q, gr)
 
     # Backward pass
     for index in upper:-1:lower
@@ -34,7 +34,7 @@ function twoloop!(s,
         i   = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds alpha[i] = rho[i] * vecdot(dxi, q)
+        @inbounds alpha[i] = rho[i] * real(vecdot(dxi, q))
         @inbounds q .-= alpha[i] .* dgi
     end
 
@@ -54,7 +54,7 @@ function twoloop!(s,
         i = mod1(upper, m)
         dxi = dx_history[i]
         dgi = dg_history[i]
-        scaling = dot(dxi, dgi) / sum(abs2, dgi)
+        scaling = real(vecdot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
         A_ldiv_B!(s, precon, q)
@@ -67,17 +67,21 @@ function twoloop!(s,
         i = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds beta = rho[i] * vecdot(dgi, s)
+        @inbounds beta = rho[i] * real(vecdot(dgi, s))
         @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
     # Negate search direction
-    scale!(s, -1)
 
+    @static if VERSION >= v"0.7.0-DEV.393"
+        rmul!(s,-1)
+    else
+        scale!(s, -1)
+    end
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
     linesearch!::L
@@ -96,7 +100,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat(),
-scaleinvH0::Bool = true && (typeof(P) <: Void))
+scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -125,7 +129,7 @@ function LBFGS(; m::Integer = 10,
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
-                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+                 scaleinvH0::Bool = true && (typeof(P) <: Nothing) )
     LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
@@ -150,29 +154,29 @@ mutable struct LBFGSState{Tx, Tdx, Tdg, T, G} <: AbstractOptimizerState
 end
 
 function initial_state(method::LBFGS, options, d, initial_x)
-    T = eltype(initial_x)
+    T = real(eltype(initial_x))
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
-              Vector{T}(method.m), # state.rho
+              Vector{T}(undef, method.m), # state.rho
               [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
               [similar(gradient(d)) for i = 1:method.m], # Store changes in position in state.dg_history
               similar(initial_x), # Buffer for new entry in state.dx_history
               similar(initial_x), # Buffer for new entry in state.dg_history
               similar(initial_x), # Buffer stored in state.u
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
-              Vector{T}(method.m), #Buffer for use by twoloop
+              Vector{T}(undef, method.m), #Buffer for use by twoloop
               0,
               similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...)
 end
 
 function update_state!(d, state::LBFGSState, method::LBFGS)
@@ -180,19 +184,19 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, gradient(d), state.x)
 
     # update the preconditioner
-    method.precondprep!(method.P, real_to_complex(d,state.x))
+    method.precondprep!(method.P, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
     twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,
              method.m, state.pseudo_iteration,
              state.twoloop_alpha, state.twoloop_q, method.scaleinvH0, method.P)
-    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, state.s, state.x)
 
     # Save g value to prepare for update_g! call
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -200,7 +204,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Update current position
     state.dx .= state.alpha .* state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end
@@ -212,14 +216,14 @@ function update_h!(d, state, method::LBFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = one(eltype(state.dx)) / vecdot(state.dx, state.dg)
+    rho_iteration = one(eltype(state.dx)) / real(vecdot(state.dx, state.dg))
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true
     end
     idx = mod1(state.pseudo_iteration, method.m)
-    @inbounds state.dx_history[idx] .= state.dx
-    @inbounds state.dg_history[idx] .= state.dg
+    @inbounds (state.dx_history[idx] .= state.dx; nothing)
+    @inbounds (state.dg_history[idx] .= state.dg; nothing)
     @inbounds state.rho[idx] = rho_iteration
 end
 

@@ -22,6 +22,9 @@
 
                 show_time && @time Optim.optimize(input..., prob.initial_x, method, options)
 
+                Optim.converged(results) || @show results
+                Optim.converged(results) || @show prob.minimum
+                Optim.converged(results) || @show prob.solutions
                 @test Optim.converged(results)
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
                 @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2

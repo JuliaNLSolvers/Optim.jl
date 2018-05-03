@@ -2,11 +2,11 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H<:Function} <: FirstOrderOptimizer
+struct BFGS{IL, L, H<:Function, M <: Manifold} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
-    manifold::Manifold
+    manifold::M
 end
 
 Base.summary(::BFGS) = "BFGS"
@@ -38,7 +38,7 @@ approximations as well as the gradient. See also the limited memory variant
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = x -> eye(eltype(x), length(x)),
+                initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
                 manifold::Manifold=Flat())
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
@@ -59,23 +59,23 @@ end
 function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               copy(gradient(d)), # Store previous gradient in state.g_previous
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Store changes in position in state.dx
               similar(initial_x), # Store changes in gradient in state.dg
               similar(initial_x), # Buffer stored in state.u
               method.initial_invH(initial_x), # Store current invH in state.invH
               similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...)
 end
 
 
@@ -83,13 +83,32 @@ function update_state!(d, state::BFGSState, method::BFGS)
     n = length(state.x)
 
     # Set the search direction
-    # Search direction is the negative gradient divided by the approximate Hessian
-    A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
-    scale!(state.s, -1)
-    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+    # # Search direction is the negative gradient divided by the approximate Hessian
+    T = eltype(state.invH)
+    if T <: BLAS.BlasFloat && isa(state.invH, Array{T}) && isa(state.s, Array{T})
+        # If T is a BlasFloat, then we can condense operations.
+        # we could also make this symv! and drop the second set of for loops in update_h!
+        # But that's not guaranteed to be faster.
+        BLAS.gemv!('N', -one(T), state.invH, vec(gradient(d)), zero(T), vec(state.s))
+    else
+        # else, I wouldn't trust there to be a gemm! fallback.
+        # using Compat.LinearAlgebra hasn't been working with
+        # the mul! functions, so I'm using this hack.
+        # Haven't double checked if v"0.7.0-DEV.393" is
+        # the correct commit for this change.
+        @static if VERSION >= v"0.7.0-DEV.393"
+            mul!(vec(state.s), state.invH, vec(gradient(d)))
+            rmul!(vec(state.s), -1)
+        else
+            A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
+            scale!(vec(state.s), -1)
+        end
+    end
+
+    project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
@@ -99,7 +118,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     # Update current position
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end
@@ -110,20 +129,34 @@ function update_h!(d, state, method::BFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
-    dx_dg = vecdot(state.dx, state.dg)
+    dx_dg = real(vecdot(state.dx, state.dg))
     if dx_dg == 0.0
         return true # force stop
     end
-    A_mul_B!(vec(state.u), state.invH, vec(state.dg))
 
-    c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
+    @static if VERSION >= v"0.7.0-DEV.393"
+        mul!(vec(state.u), state.invH, vec(state.dg))
+    else
+        A_mul_B!(vec(state.u), state.invH, vec(state.dg))
+    end
+
+    
+
+    c1 = (dx_dg + real(vecdot(state.dg, state.u))) / (dx_dg' * dx_dg)
     c2 = 1 / dx_dg
 
     # TODO BLASify this
     # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
     for i in 1:n
-        @simd for j in 1:n
-            @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
+        state_dxi = state.dx[i]
+        state_ui = state.u[i]
+        @simd for j in 1:i
+            @inbounds state.invH[j, i] += c1 * state_dxi * state.dx[j] - c2 * (state_ui * state.dx[j] + state.u[j] * state_dxi)
+        end
+    end
+    for i in 1:n
+        for j in i+1:n
+            @inbounds state.invH[j, i] = state.invH[i, j]
         end
     end
 end

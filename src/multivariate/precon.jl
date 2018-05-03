@@ -22,7 +22,8 @@
 #      these can also be over-written if necessary.
 
 # an inner product w.r.t. a metric P (=preconditioner)
-Base.dot(x, P, y) = vecdot(x, A_mul_B!(similar(x), P, y))
+# dot(x, P, y) = vecdot(x, A_mul_B!(similar(x), P, y))
+dot(x, P, y) = vecdot(x, P * y)
 
 # default preconditioner update
 precondprep!(P, x) = nothing
@@ -33,9 +34,9 @@ precondprep!(P, x) = nothing
 #
 
 # out =  P^{-1} * A
-Base.A_ldiv_B!(out, ::Void, A) = copy!(out, A)
+A_ldiv_B!(out, ::Nothing, A) = copyto!(out, A)
 # A' * P B
-Base.dot(A, ::Void, B) = vecdot(A, B)
+dot(A, ::Nothing, B) = vecdot(A, B)
 
 
 #####################################################
@@ -44,8 +45,8 @@ Base.dot(A, ::Void, B) = vecdot(A, B)
 #      unfortunately, Base does not implement
 #      A_ldiv_B!(a, P, b) or A_mul_B! for this type, so we do it by hand
 #      TODO: maybe implement this in Base
-Base.A_ldiv_B!(out::Array, P::Diagonal, A::Array) = copy!(out, A ./ P.diag)
-Base.dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
+A_ldiv_B!(out::Array, P::Diagonal, A::Array) = copyto!(out, A ./ P.diag)
+dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
 
 #####################################################
 #  [3] Inverse Diagonal preconditioner
@@ -54,8 +55,8 @@ Base.dot(A::Array, P::Diagonal, B::Array) = vecdot(A, P.diag .* B)
 mutable struct InverseDiagonal
    diag
 end
-Base.A_ldiv_B!(out::Array, P::InverseDiagonal, A::Array) = copy!(out, A .* P.diag)
-Base.dot(A::Array, P::InverseDiagonal, B::Vector) = vecdot(A, B ./ P.diag)
+A_ldiv_B!(out::Array, P::InverseDiagonal, A::Array) = copyto!(out, A .* P.diag)
+dot(A::Array, P::InverseDiagonal, B::Vector) = vecdot(A, B ./ P.diag)
 
 #####################################################
 #  [4] Matrix Preconditioner
@@ -63,4 +64,4 @@ Base.dot(A::Array, P::InverseDiagonal, B::Vector) = vecdot(A, B ./ P.diag)
 #     > A_ldiv_B! is about to be moved to Base, so we need a temporary hack
 #     > A_mul_B! is already in Base, which defines `dot`
 #  nothing to do!
-Base.A_ldiv_B!(x, P::AbstractMatrix, b) = copy!(x, P \ b)
+A_ldiv_B!(x, P::AbstractMatrix, b) = copyto!(x, P \ b)

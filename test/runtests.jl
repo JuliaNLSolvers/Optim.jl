@@ -1,8 +1,17 @@
 using Optim, Compat
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
-MVP = MultivariateProblems
-using Base.Test
+using Compat.Test
+using Suppressor
+
+using Compat.LinearAlgebra, Compat.SparseArrays, Compat.Random
+using Compat.Distributed: clear!
+
+import NLSolversBase
+
+import LineSearches, ForwardDiff
+
+const MVP = MultivariateProblems
 
 debug_printing = false
 
@@ -38,9 +47,11 @@ multivariate_tests = [
     ## optimize
     "optimize/interface",
     "optimize/optimize",
+    "optimize/inplace",
     ## solvers
     ## constrained
     "solvers/constrained/constrained",
+    "solvers/constrained/samin",
     ## first order
     "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/bfgs",
@@ -90,7 +101,7 @@ function run_optim_tests(method; convergence_exceptions = (),
         end
         show_name && print_with_color(:green, "Problem: ", name, "\n")
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = find(n[1] == name for n in iteration_exceptions)
+        iter_id = findall(n -> n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
@@ -115,7 +126,19 @@ function run_optim_tests(method; convergence_exceptions = (),
                 results = Optim.optimize(input..., prob.initial_x, method, options)
                 @test isa(summary(results), String)
                 show_res && println(results)
+                if name == "Extended Rosenbrock"
+                    @show name, i
+                    println(results)
+                end
                 if !((name, i) in convergence_exceptions)
+                    Optim.converged(results) || println(results)
+                    Optim.converged(results) || @show name, i
+                    Optim.converged(results) || @show prob.minimum
+                    Optim.converged(results) || @show prob.solutions
+                    Optim.converged(results) || @show input
+                    Optim.converged(results) || @show method
+                    Optim.converged(results) || @show options
+                    Optim.converged(results) || @show prob.initial_x
                     @test Optim.converged(results)
                 end
                 if !((name, i) in minimum_exceptions)

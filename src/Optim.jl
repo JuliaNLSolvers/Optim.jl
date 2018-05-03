@@ -1,14 +1,18 @@
 __precompile__(true)
 
 module Optim
-    using PositiveFactorizations
     using Compat
+    using Compat.LinearAlgebra, Compat.SparseArrays
+    using Compat.Printf
+    using PositiveFactorizations
     using LineSearches
     using NLSolversBase
     using Calculus
     using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
+
+    import Parameters: @with_kw, @unpack
 
     import Compat.String
     import Compat.view
@@ -19,10 +23,12 @@ module Optim
            Base.getindex,
            Base.setindex!
 
-    import NLSolversBase: iscomplex,
-                          NonDifferentiable,
+    import NLSolversBase: NonDifferentiable,
                           OnceDifferentiable,
                           TwiceDifferentiable
+                          
+    import Compat.LinearAlgebra:    dot,
+                                    A_ldiv_B!
 
     export optimize,
            NonDifferentiable,
@@ -35,7 +41,6 @@ module Optim
            BFGS,
            Brent,
            ConjugateGradient,
-           Fminbox,
            GoldenSection,
            GradientDescent,
            NGMRES,
@@ -47,6 +52,9 @@ module Optim
            NewtonTrustRegion,
            SimulatedAnnealing,
            ParticleSwarm,
+
+           Fminbox,
+           SAMIN,
 
            Manifold,
            Flat,
@@ -102,6 +110,7 @@ module Optim
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
+    include("multivariate/solvers/constrained/samin.jl")
 
     # Univariate methods
     include("univariate/solvers/golden_section.jl")

@@ -8,8 +8,8 @@ NGMRES(;
         wmax::Int = 10,
         ϵ0 = 1e-12,
         nlprecon = GradientDescent(
-            alphaguess = LineSearches.InitialPrevious(),
-            linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+            linesearch = LineSearches.Static(),
             manifold = manifold),
         nlpreconopts = Options(iterations = 1, allow_f_increases = true),
       )
@@ -20,8 +20,8 @@ OACCEL(;manifold::Manifold = Flat(),
        alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        nlprecon = GradientDescent(
-           alphaguess = LineSearches.InitialPrevious(),
-           linesearch = LineSearches.Static(alpha=1e-4,scaled=true),
+           alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+           linesearch = LineSearches.Static(),
            manifold = manifold),
        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
        ϵ0 = 1e-12,
@@ -65,22 +65,23 @@ Results of Optimization Algorithm
  * Minimum: 2.898230e-01
  * Iterations: 1000
  * Convergence: false
-   * |x - x'| ≤ 1.0e-32: false 
-     |x - x'| = 4.02e-04 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 4.02e-04
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 2.38e-03 |f(x)|
-   * |g(x)| ≤ 1.0e-08: false 
-     |g(x)| = 8.23e-02 
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 8.23e-02
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: true
  * Objective Calls: 2525
  * Gradient Calls: 2525
-```        
+```
 
 Now, we use `OACCEL` to accelerate `GradientDescent`.
 ```julia
 # Default nonlinear procenditioner for `OACCEL`
-nlprecon =  GradientDescent(linesearch=LineSearches.Static(alpha=1e-4,scaled=true))
+nlprecon = GradientDescent(alphaguess=LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+                           linesearch=LineSearches.Static())
 # Default size of subspace that OACCEL accelerates over is `wmax = 10`
 oacc10 = OACCEL(nlprecon=nlprecon, wmax=10)
 optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, oacc10)
@@ -94,12 +95,12 @@ Results of Optimization Algorithm
  * Minimum: 3.255053e-17
  * Iterations: 87
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
-     |x - x'| = 6.51e-08 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 6.51e-08
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 7.56e+02 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true 
-     |g(x)| = 1.06e-09 
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.06e-09
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 285
@@ -120,12 +121,12 @@ Results of Optimization Algorithm
  * Minimum: 9.218164e-20
  * Iterations: 50
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
-     |x - x'| = 2.76e-07 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 2.76e-07
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 5.18e+06 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true 
-     |g(x)| = 4.02e-11 
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 4.02e-11
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 181
@@ -146,12 +147,12 @@ Results of Optimization Algorithm
  * Minimum: 5.375569e-19
  * Iterations: 63
  * Convergence: true
-   * |x - x'| ≤ 1.0e-32: false 
-     |x - x'| = 9.94e-09 
-   * |f(x) - f(x')| ≤ 1.0e-32 |f(x)|: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 9.94e-09
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
      |f(x) - f(x')| = 1.29e+03 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true 
-     |g(x)| = 4.94e-11 
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 4.94e-11
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 222

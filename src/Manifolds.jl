@@ -18,14 +18,13 @@ end
 
 
 # Fake objective function implementing a retraction
-mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
-    manifold::Manifold
+mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective, M <: Manifold} <: NLSolversBase.AbstractObjective
+    manifold::M
     inner_obj::T
 end
-iscomplex(obj::ManifoldObjective) = iscomplex(obj.inner_obj)
 # TODO: is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     value!(obj.inner_obj, xin)
 end
 function NLSolversBase.value(obj::ManifoldObjective)
@@ -38,15 +37,15 @@ function NLSolversBase.gradient(obj::ManifoldObjective,i::Int)
     gradient(obj.inner_obj,i)
 end
 function NLSolversBase.gradient!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     gradient!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
     return gradient(obj.inner_obj)
 end
 function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
-    xin = complex_to_real(obj, retract(obj.manifold, real_to_complex(obj,x)))
+    xin = retract(obj.manifold, x)
     value_gradient!(obj.inner_obj,xin)
-    project_tangent!(obj.manifold,real_to_complex(obj,gradient(obj.inner_obj)),real_to_complex(obj,xin))
+    project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
     return value(obj.inner_obj)
 end
 
@@ -69,7 +68,7 @@ project_tangent!(M::Flat, g, x) = g
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
-project_tangent!(S::Sphere,g,x) = (g .= g .- real(vecdot(x,g)).*x)
+project_tangent!(S::Sphere,g,x) = (((g .= g .- real(vecdot(x,g)).*x);nothing);g)
 
 """
 N x n matrices with orthonormal columns, i.e. such that X'X = I.
@@ -88,13 +87,15 @@ function Stiefel(retraction=:SVD)
 end
 function retract!(S::Stiefel_SVD, X)
     U,S,V = svd(X)
-    X .= U*V'
+    (X .= U*V';nothing)
+    X
 end
 function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
-    X .= X/chol(overlap)
+    (X .= X/chol(overlap);nothing)
+    X
 end
-project_tangent!(S::Stiefel, G, X) = (G .-= X*((X'G .+ G'X)./2))
+project_tangent!(S::Stiefel, G, X) =  (((G .-= X*((X'G .+ G'X)./2));nothing);G)
 
 
 

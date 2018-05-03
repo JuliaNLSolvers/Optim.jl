@@ -50,7 +50,8 @@
     ls = LineSearches.Static()
 
     for solver in (AcceleratedGradientDescent, BFGS, ConjugateGradient,
-                   GradientDescent, LBFGS, MomentumGradientDescent)
+                   GradientDescent, LBFGS, MomentumGradientDescent,
+                   NGMRES, OACCEL)
         fcounter(true); gcounter(true)
         res = Optim.optimize(f, g!, prob.initial_x,
                              solver(linesearch = ls))
@@ -74,9 +75,10 @@
     end
     hv!(out, x, v) = begin
         n = length(x)
-        H = Matrix{Float64}(n, n)
+        H = Matrix{Float64}(undef, n, n)
         h!(H, x)
-        out .= H * v
+        (out .= H * v; nothing)
+        out
     end
     begin
         solver = Optim.KrylovTrustRegion()

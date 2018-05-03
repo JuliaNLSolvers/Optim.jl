@@ -4,10 +4,14 @@
     # Test case: find eigenbasis for first two eigenvalues of a symmetric matrix by minimizing the Rayleigh quotient under orthogonality constraints
     n = 4
     m = 2
-    A = Diagonal(linspace(1,2,n))
+    @static if VERSION >= v"0.7.0-DEV.393"
+        A = Diagonal(range(1,stop=2,length=n))
+    else
+        A = Diagonal(linspace(1,2,n))
+    end
     fmanif(x) = real(vecdot(x,A*x)/2)
     gmanif(x) = A*x
-    gmanif!(stor,x) = copy!(stor,gmanif(x))
+    gmanif!(stor,x) = copyto!(stor,gmanif(x))
     # A[2,2] /= 10 #optional: reduce the gap to make the problem artificially harder
     x0 = randn(n,m)+im*randn(n,m)
 
@@ -17,7 +21,7 @@
     for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
                    Optim.NGMRES, Optim.OACCEL)
         debug_printing && print_with_color(:green, "Solver: $(summary(method()))\n")
-        res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif))
+        res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif), Optim.Options(allow_f_increases=true))
         debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
         debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
         @test Optim.converged(res)
