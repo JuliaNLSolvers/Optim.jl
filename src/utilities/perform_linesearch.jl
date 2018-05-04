@@ -36,7 +36,7 @@ function perform_linesearch!(state, method::M, d) where M
 
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
-    copy!(state.x_previous, state.x)
+    copyto!(state.x_previous, state.x)
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try

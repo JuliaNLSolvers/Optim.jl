@@ -53,13 +53,15 @@ function Options(;
         show_trace::Bool = false,
         extended_trace::Bool = false,
         show_every::Int = 1,
-        callback = nothing,
-        time_limit = NaN)
+        callback::TCallback = nothing,
+        time_limit = NaN,
+        specialize::Val{S} = Val{true}()) where {TCallback, S}
     show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback == nothing
     #    show_trace = true
     #end
-    Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+    T = promote_type(typeof(x_tol), typeof(f_tol), typeof(g_tol), typeof(outer_x_tol), typeof(outer_f_tol), typeof(outer_g_tol))
+    Options{T,TCallback,S}(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, show_trace, extended_trace,
         Int(show_every), callback, Float64(time_limit))
 end
