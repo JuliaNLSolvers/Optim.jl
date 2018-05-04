@@ -63,7 +63,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     value_gradient!(d, state.x)
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, gradient(d), state.x)
-    method.precondprep!(method.P, real_to_complex(d,state.x))
+    method.precondprep!(method.P, state.x)
     A_ldiv_B!(state.s, method.P, gradient(d))
     @static if VERSION >= v"0.7.0-DEV.393"
         rmul!(state.s,-1)
