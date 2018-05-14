@@ -82,7 +82,7 @@ lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
 inner_optimizer = GradientDescent()
-results = optimize(f, g!, upper, initial_x, Fminbox(inner_optimizer))
+results = optimize(f, g!, lower, upper, initial_x, Fminbox(inner_optimizer))
 ```
 
 This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `inner_optimizer` (`GradientDescent()` above) for convergence at each step.
