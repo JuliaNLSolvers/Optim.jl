@@ -121,7 +121,7 @@ function barrier_method(F, P, mu, l, u)
         return LBFGS(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
     elseif typeof(O) <: GradientDescent
         return GradientDescent(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
-    elseif typeof(O) <: Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS}
+    elseif typeof(O) <: Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES}
         return O
     else
         error("You need to specify a valid inner optimizer, please consult the documentation.")

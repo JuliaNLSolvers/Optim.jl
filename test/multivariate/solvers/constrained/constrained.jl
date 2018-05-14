@@ -40,7 +40,8 @@
     l = fill(-boxl, N)
     u = fill(boxl, N)
     initial_x = (rand(N) .- 0.5) .* boxl
-    for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS())
+    for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS(), NGMRES(), OACCEL())
+        debug_printing && print_with_color(:green, "Solver: ", summary(_optimizer), "\n")
         results = Optim.optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
         @test Optim.converged(results)
         @test summary(results) == "Fminbox with $(summary(_optimizer))"
