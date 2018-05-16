@@ -1,4 +1,4 @@
-@testset "Constrained" begin
+@testset "Fminbox" begin
     # Quadratic objective function
     # For (A*x-b)^2/2
     function quadratic!(g, x, AtA, Atb, tmp)
