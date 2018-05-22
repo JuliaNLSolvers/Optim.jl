@@ -317,12 +317,18 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         end
     end
 
-    # The outer max is to avoid δ=0, which may occur if A=0, e.g. at numerical convergence
-    δ = method.ϵ0*max(maximum(diag(state.A)[1:curw]), method.ϵ0)
-
-    #state.α[1:curw] .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
     α = view(state.subspacealpha, 1:curw)
-    α .= (state.A[1:curw,1:curw] + δ*I) \ state.b[1:curw]
+    Aview = view(state.A, 1:curw, 1:curw)
+    bview = view(state.b, 1:curw)
+    # The outer max is to avoid δ=0, which may occur if A=0, e.g. at numerical convergence
+    δ = method.ϵ0*max(maximum(diag(Aview)), method.ϵ0)
+    try
+        α .= (Aview + δ*I) \ bview
+    catch e
+        Base.warn("Calculating α failed in $(summary(method)).")
+        Base.warn("Exception info:\n $e")
+        α .= NaN
+    end
     if any(isnan, α)
         Base.warn("Calculated α is NaN in $(summary(method)). Restarting ...")
         state.s .= zero(eltype(state.s))
