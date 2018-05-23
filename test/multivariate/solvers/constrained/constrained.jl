@@ -3,7 +3,11 @@
     # For (A*x-b)^2/2
     function quadratic!(g, x, AtA, Atb, tmp)
         calc_grad = !(g === nothing)
-        A_mul_B!(tmp, AtA, x)
+        @static if VERSION >= v"0.7.0-DEV.393"
+            mul!(tmp, AtA, x)
+        else
+            A_mul_B!(tmp, AtA, x)
+        end
         v = dot(x,tmp)/2 + dot(Atb,x)
         if calc_grad
             for i = 1:length(g)

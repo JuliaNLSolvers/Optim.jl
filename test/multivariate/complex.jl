@@ -11,9 +11,7 @@
 
     fcomplex(x) = real(vecdot(x,A*x)/2 - vecdot(b,x)) + μ*sum(abs.(x).^4)
     gcomplex(x) = A*x-b + 4μ*(abs.(x).^2).*x
-    gcomplex!(stor,x) = copy!(stor,gcomplex(x))
-
-
+    gcomplex!(stor,x) = copyto!(stor,gcomplex(x))
     x0 = randn(n)+im*randn(n)
 
     xref = Optim.minimizer(Optim.optimize(fcomplex, gcomplex!, x0, Optim.LBFGS()))

@@ -1,8 +1,10 @@
 __precompile__(true)
 
 module Optim
-    using PositiveFactorizations
     using Compat
+    using Compat.LinearAlgebra, Compat.SparseArrays
+    using Compat.Printf
+    using PositiveFactorizations
     using LineSearches
     using NLSolversBase
     using Calculus
@@ -24,6 +26,9 @@ module Optim
     import NLSolversBase: NonDifferentiable,
                           OnceDifferentiable,
                           TwiceDifferentiable
+                          
+    import Compat.LinearAlgebra:    dot,
+                                    A_ldiv_B!
 
     export optimize,
            NonDifferentiable,

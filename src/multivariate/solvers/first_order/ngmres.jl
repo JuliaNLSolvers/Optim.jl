@@ -8,7 +8,7 @@
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
-immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
     manifold::Manifold
@@ -18,7 +18,7 @@ immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     wmax::Int             # Maximum window size
 end
 
-immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
     manifold::Manifold
@@ -53,7 +53,7 @@ NGMRES(;
 ## Description
 This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
 and proposes an accelerated step by minimizing an approximation of
-the \(\ell_2\) residual of the gradient on a subspace spanned by the previous
+the ell residual of the gradient on a subspace spanned by the previous
 `wmax` iterates.
 
 N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
@@ -63,7 +63,7 @@ Application of the algorithm to optimization is covered, for example, in [2].
 ## References
 [1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
 [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
-"""
+"""#ell  \(\ell_2\)
 function NGMRES(;manifold::Manifold = Flat(),
                 alphaguess = LineSearches.InitialStatic(),
                 linesearch = LineSearches.HagerZhang(),
@@ -217,17 +217,17 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
 
     n = length(nlpreconstate.x)
     wmax = method.wmax
-    X = Array{eTx}(n, wmax)
-    R = Array{eTx}(n, wmax)
-    Q = Array{T}(wmax, wmax)
+    X = Array{eTx}(undef, n, wmax)
+    R = Array{eTx}(undef, n, wmax)
+    Q = Array{T}(undef, wmax, wmax)
     ξ = if typeof(method) <: OACCEL
-        Array{T}(wmax, 2)
+        Array{T}(undef, wmax, 2)
     else
-        Array{T}(wmax)
+        Array{T}(undef, wmax)
     end
 
-    copy!(view(X,:,1), nlpreconstate.x)
-    copy!(view(R,:,1), gradient(d))
+    copyto!(view(X,:,1), nlpreconstate.x)
+    copyto!(view(R,:,1), gradient(d))
 
     _updateQ!(Q, 1, 1, X, R, method)
 
@@ -245,13 +245,13 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 Q,
                 ξ,
                 1,                        # curw
-                Array{T}(wmax, wmax),     # A
-                Array{T}(wmax),           # b
+                Array{T}(undef, wmax, wmax),     # A
+                Array{T}(undef, wmax),           # b
                 vec(similar(initial_x)),  # xA
                 0,                        # iteration counter
                 false,                    # Restart flag
                 options.g_tol,            # Exit tolerance check after nonlinear preconditioner apply
-                Array{T}(wmax),           # subspacealpha
+                Array{T}(undef, wmax),           # subspacealpha
                 @initial_linesearch()...)
 end
 
@@ -268,7 +268,7 @@ end
 
 function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
     # Maintain a record of previous position, for convergence assessment
-    copy!(state.x_previous_0, state.x)
+    copyto!(state.x_previous_0, state.x)
     state.f_x_previous_0 = value(d)
 
     state.k += 1
@@ -374,7 +374,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     Update x_previous and f_x_previous to be the values at the beginning
     of the N-GMRES iteration. For convergence assessment purposes.
     =#
-    copy!(state.x_previous, state.x_previous_0)
+    copyto!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
 
     lssuccess == false # Break on linesearch error
@@ -394,8 +394,8 @@ function update_g!(d, state, method::AbstractNGMRES)
     end
     j = mod(state.k, method.wmax) + 1
 
-    copy!(view(state.X,:,j), vec(state.x))
-    copy!(view(state.R,:,j), vec(gradient(d)))
+    copyto!(view(state.X,:,j), vec(state.x))
+    copyto!(view(state.R,:,j), vec(gradient(d)))
 
     for i = 1:state.curw
         _updateQ!(state.Q, i, j, state.X, state.R, method)
