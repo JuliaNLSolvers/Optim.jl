@@ -48,12 +48,12 @@ function function_barrier(gfunc, gbarrier, x::AbstractArray,
 end
 
 function barrier_combined(gfunc, gbarrier, g, x::AbstractArray,
-                          fb::Function, mu::Real)
+                          fb::Function, mu::Ref{<:Real})
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if g !== nothing
-        g .= gfunc .+ mu.*gbarrier
+        g .= gfunc .+ mu[].*gbarrier
     end
-    return convert(eltype(x), valfunc + mu*valbarrier) # FIXME make this unnecessary
+    return convert(eltype(x), valfunc + mu[]*valbarrier) # FIXME make this unnecessary
 end
 
 function limits_box(x::AbstractArray{T}, d::AbstractArray{T},
@@ -204,6 +204,12 @@ function optimize(
     # Count the total number of outer iterations
     iteration = 0
 
+    # define the function (dfbox) to optimize by the inner optimizer
+    funcc = (g, x) -> barrier_combined(gfunc, gbarrier, g, x, fb, mu)
+    dfbox = OnceDifferentiable(x -> funcc(nothing, x),
+                               (g, x) -> (funcc(g, x); g),
+                               funcc, initial_x, zero(T))
+
     xold = similar(x)
     converged = false
     local results
@@ -216,9 +222,7 @@ function optimize(
 
         copy!(xold, x)
         # Optimize with current setting of mu
-        funcc = (g, x) -> barrier_combined(gfunc, gbarrier,  g, x, fb, mu[])
         fval0 = funcc(nothing, x)
-        dfbox = OnceDifferentiable(x->funcc(nothing, x), (g, x)->(funcc(g, x); g), funcc, initial_x, zero(T))
         if show_trace > 0
             println("#### Fminbox #$iteration: Calling optimizer with mu = ", mu[], " ####")
         end
