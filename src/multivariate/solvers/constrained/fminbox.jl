@@ -17,67 +17,53 @@ function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0fact
 end
 
 function barrier_box(g, x::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArray{T}) where T
-    n = length(x)
-    calc_g = !(g === nothing)
+    calc_g = g !== nothing
 
     v = zero(T)
-    for i = 1:n
+    @inbounds for i in eachindex(x)
         thisl = l[i]
         if isfinite(thisl)
             dx = x[i] - thisl
-            if dx <= 0
-                return convert(T, Inf)
-            end
+            (dx <= zero(T)) && return convert(T, Inf)
             v -= log(dx)
-            if calc_g
-                g[i] = -one(T)/dx
-            end
+            calc_g && (g[i] = -one(T)/dx)
         else
-            if calc_g
-                g[i] = zero(T)
-            end
+            calc_g && (g[i] = zero(T))
         end
         thisu = u[i]
         if isfinite(thisu)
             dx = thisu - x[i]
-            if dx <= 0
-                return convert(T, Inf)
-            end
+            (dx <= zero(T)) && return convert(T, Inf)
             v -= log(dx)
-            if calc_g
-                g[i] += one(T)/dx
-            end
+            calc_g && (g[i] += one(T)/dx)
         end
     end
     return v
 end
 
-function function_barrier(gfunc, gbarrier, x::AbstractArray{T}, f::F, fbarrier::FB) where {T, F<:Function, FB<:Function}
+function function_barrier(gfunc, gbarrier, x::AbstractArray,
+                          f::Function, fbarrier::Function)
     vbarrier = fbarrier(gbarrier, x)
-    if isfinite(vbarrier)
-        vfunc = f(gfunc, x)
-    else
-        vfunc = vbarrier
-    end
-    return vfunc, vbarrier
+    return (isfinite(vbarrier) ? f(gfunc, x) : vbarrier), vbarrier
 end
 
-function barrier_combined(gfunc, gbarrier, g, x::AbstractArray{T}, fb::FB, mu::T) where {T, FB<:Function}
-    calc_g = !(g === nothing)
+function barrier_combined(gfunc, gbarrier, g, x::AbstractArray,
+                          fb::Function, mu::Real)
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
-    if calc_g
+    if g !== nothing
         g .= gfunc .+ mu.*gbarrier
     end
-    return convert(T, valfunc + mu*valbarrier) # FIXME make this unnecessary
+    return convert(eltype(x), valfunc + mu*valbarrier) # FIXME make this unnecessary
 end
 
-function limits_box(x::AbstractArray{T}, d::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArray{T}) where T
+function limits_box(x::AbstractArray{T}, d::AbstractArray{T},
+                    l::AbstractArray{T}, u::AbstractArray{T}) where T
     alphamax = convert(T, Inf)
-    for i = 1:length(x)
-        if d[i] < 0
-            @inbounds alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
+    @simd for i in eachindex(x)
+        @inbounds if d[i] < 0
+            alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
         elseif d[i] > 0
-            @inbounds alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
+            alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
         end
     end
     epsilon = eps(max(alphamax, one(T)))
@@ -175,8 +161,8 @@ function optimize(
     # initialization only makes use of the magnitude, we can fix this
     # by using the sum of the absolute values of the contributions
     # from each edge.
-    boundaryidx = Array{Int,1}()
-    for i = 1:length(gbarrier)
+    boundaryidx = Vector{Int}()
+    for i in eachindex(gbarrier)
         thisx = x[i]
         thisl = l[i]
         thisu = u[i]
@@ -213,7 +199,7 @@ function optimize(
     end
 
     g = similar(x)
-    fval_all = Array{Vector{T}}(0)
+    fval_all = Vector{Vector{T}}(0)
 
     # Count the total number of outer iterations
     iteration = 0
