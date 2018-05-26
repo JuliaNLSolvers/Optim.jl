@@ -11,11 +11,11 @@
                       MomentumGradientDescent)
 
         res = optimize(f, g!, [0.], Optimizer())
-        @test isapprox(Optim.minimizer(res)[1], 0.)
+        @test Optim.minimizer(res)[1] ≈ 0.
     end
 
     for Optimizer in (Newton, NewtonTrustRegion)
         res = optimize(f, g!, h!, [0.], Optimizer())
-        @test isapprox(Optim.minimizer(res)[1], 0.)
+        @test Optim.minimizer(res)[1] ≈ 0.
     end
 end
