@@ -98,24 +98,28 @@ end
 
 Base.summary(F::Fminbox) = "Fminbox with $(summary(F.method))"
 
-function barrier_method(F, P, mu, l, u)
-    # Define the barrier-aware preconditioner once and for all (mu is mutable 1-element vector)
-    pcp = (P, x) -> F.precondprep(P, x, l, u, mu)
+# barrier_method() constructs an optimizer to solve the barrier problem using Fminbox.method as the reference.
+# Essentially it only updates the P and precondprep fields of `m`.
 
-    O = F.method
-    if typeof(O) <: ConjugateGradient
-        return ConjugateGradient(eta = O.eta, alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
-    elseif typeof(O) <: LBFGS
-        return LBFGS(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
-    elseif typeof(O) <: GradientDescent
-        return GradientDescent(alphaguess = O.alphaguess!, linesearch = O.linesearch!, P = P, precondprep = pcp)
-    elseif typeof(O) <: Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES}
-        return O
-    else
-        error("You need to specify a valid inner optimizer, please consult the documentation.")
-    end
-end
+# fallback
+barrier_method(m::AbstractOptimizer, P, precondprep::Function) =
+    error("You need to specify a valid inner optimizer for Fminbox, $m is not supported. Please consult the documentation.")
 
+barrier_method(m::ConjugateGradient, P, precondprep::Function) =
+    ConjugateGradient(eta = m.eta, alphaguess = m.alphaguess!,
+                      linesearch = m.linesearch!, P = P,
+                      precondprep = precondprep)
+
+barrier_method(m::LBFGS, P, precondprep::Function) =
+    LBFGS(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
+          precondprep = precondprep)
+
+barrier_method(m::GradientDescent, P, precondprep::Function) =
+    GradientDescent(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
+                    precondprep = precondprep)
+
+barrier_method(m::Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES},
+               P, precondprep::Function) = m # use `m` as is
 
 function optimize(obj,
                   l::AbstractArray{T},
@@ -190,8 +194,9 @@ function optimize(
 
     mu = Ref(initial_mu(gfunc, gbarrier, F.mufactor, F.mu0))
 
-    # Create barrier-aware method instance (precondition relevance)
-    _optimizer = barrier_method(F, P, mu, l, u)
+    # Use the barrier-aware preconditioner to define
+    # barrier-aware optimization method instance (precondition relevance)
+    _optimizer = barrier_method(F.method, P, (P, x) -> F.precondprep(P, x, l, u, mu))
 
     if show_trace > 0
         println("######## fminbox ########")
