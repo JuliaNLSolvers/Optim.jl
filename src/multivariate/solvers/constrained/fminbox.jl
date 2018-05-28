@@ -24,18 +24,26 @@ function barrier_box(g, x::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArr
         thisl = l[i]
         if isfinite(thisl)
             dx = x[i] - thisl
-            (dx <= zero(T)) && return convert(T, Inf)
+            if dx <= zero(T)
+                return convert(T, Inf)
+            end
             v -= log(dx)
-            calc_g && (g[i] = -one(T)/dx)
-        else
-            calc_g && (g[i] = zero(T))
+            if calc_g
+                g[i] = -one(T)/dx
+            end
+        elseif calc_g
+            g[i] = zero(T)
         end
         thisu = u[i]
         if isfinite(thisu)
             dx = thisu - x[i]
-            (dx <= zero(T)) && return convert(T, Inf)
+            if dx <= zero(T)
+                return convert(T, Inf)
+            end
             v -= log(dx)
-            calc_g && (g[i] += one(T)/dx)
+            if calc_g
+                g[i] += one(T)/dx
+            end
         end
     end
     return v
