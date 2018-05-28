@@ -97,28 +97,28 @@ end
 
 Base.summary(F::Fminbox) = "Fminbox with $(summary(F.method))"
 
-# barrier_method() constructs an optimizer to solve the barrier problem using Fminbox.method as the reference.
+# barrier_method() constructs an optimizer to solve the barrier problem using m = Fminbox.method as the reference.
 # Essentially it only updates the P and precondprep fields of `m`.
 
 # fallback
-barrier_method(m::AbstractOptimizer, P, precondprep::Function) =
+barrier_method(m::AbstractOptimizer, P, precondprep) =
     error("You need to specify a valid inner optimizer for Fminbox, $m is not supported. Please consult the documentation.")
 
-barrier_method(m::ConjugateGradient, P, precondprep::Function) =
+barrier_method(m::ConjugateGradient, P, precondprep) =
     ConjugateGradient(eta = m.eta, alphaguess = m.alphaguess!,
                       linesearch = m.linesearch!, P = P,
                       precondprep = precondprep)
 
-barrier_method(m::LBFGS, P, precondprep::Function) =
+barrier_method(m::LBFGS, P, precondprep) =
     LBFGS(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
           precondprep = precondprep)
 
-barrier_method(m::GradientDescent, P, precondprep::Function) =
+barrier_method(m::GradientDescent, P, precondprep) =
     GradientDescent(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
                     precondprep = precondprep)
 
 barrier_method(m::Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES},
-               P, precondprep::Function) = m # use `m` as is
+               P, precondprep) = m # use `m` as is
 
 function optimize(obj,
                   l::AbstractArray{T},
