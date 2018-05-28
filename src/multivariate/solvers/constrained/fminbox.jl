@@ -59,8 +59,8 @@ end
 function limits_box(x::AbstractArray{T}, d::AbstractArray{T},
                     l::AbstractArray{T}, u::AbstractArray{T}) where T
     alphamax = convert(T, Inf)
-    @simd for i in eachindex(x)
-        @inbounds if d[i] < 0
+    @inbounds for i in eachindex(x)
+        if d[i] < 0
             alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
         elseif d[i] > 0
             alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
