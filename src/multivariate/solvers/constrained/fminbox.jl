@@ -31,8 +31,10 @@ function barrier_box(g, x::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArr
             if calc_g
                 g[i] = -one(T)/dx
             end
-        elseif calc_g
-            g[i] = zero(T)
+        else
+            if calc_g
+                g[i] = zero(T)
+            end
         end
         thisu = u[i]
         if isfinite(thisu)
