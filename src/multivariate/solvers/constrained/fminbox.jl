@@ -41,14 +41,13 @@ function barrier_box(g, x::AbstractArray{T}, l::AbstractArray{T}, u::AbstractArr
     return v
 end
 
-function function_barrier(gfunc, gbarrier, x::AbstractArray,
-                          f::Function, fbarrier::Function)
+function function_barrier(gfunc, gbarrier, x::AbstractArray, f, fbarrier)
     vbarrier = fbarrier(gbarrier, x)
     return (isfinite(vbarrier) ? f(gfunc, x) : vbarrier), vbarrier
 end
 
 function barrier_combined(gfunc, gbarrier, g, x::AbstractArray,
-                          fb::Function, mu::Ref{<:Real})
+                          fb, mu::Ref{<:Real})
     valfunc, valbarrier = fb(gbarrier, x, gfunc)
     if g !== nothing
         g .= gfunc .+ mu[].*gbarrier
