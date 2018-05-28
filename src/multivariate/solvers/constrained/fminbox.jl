@@ -78,7 +78,7 @@ function precondprepbox!(P, x, l, u, mu)
     @. P.diag = 1/(mu[]*(1/(x-l)^2 + 1/(u-x)^2) + 1)
 end
 
-struct Fminbox{O<:AbstractOptimizer, T, P<:Function} <: AbstractConstrainedOptimizer
+struct Fminbox{O<:AbstractOptimizer, T, P} <: AbstractConstrainedOptimizer
     method::O
     mu0::T
     mufactor::T
