@@ -18,9 +18,9 @@
                     show_name = debug_printing)
 
     @testset "matrix input" begin
-        objective(X, B) = sum((X.-B).^2)/2
+        cg_objective(X, B) = sum(abs2, X .- B)/2
 
-        function objective_gradient!(G, X, B)
+        function cg_objective_gradient!(G, X, B)
             for i = 1:length(G)
                 G[i] = X[i]-B[i]
             end
@@ -28,7 +28,7 @@
 
         srand(1)
         B = rand(2,2)
-        results = Optim.optimize(X -> objective(X, B), (G, X) -> objective_gradient!(G, X, B), rand(2,2), ConjugateGradient())
+        results = Optim.optimize(X -> cg_objective(X, B), (G, X) -> cg_objective_gradient!(G, X, B), rand(2,2), ConjugateGradient())
         @test Optim.converged(results)
         @test Optim.minimum(results) < 1e-8
     end

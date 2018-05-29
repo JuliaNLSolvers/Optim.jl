@@ -39,8 +39,9 @@ end
 # Function 4.39 in N&W
 function p_sq_norm(lambda::T, min_i, n, qg, H_eig) where T
     p_sum = zero(T)
+    H_eigvals = H_eig[:values]
     for i = min_i:n
-        p_sum += qg[i]^2 / (lambda + H_eig[:values][i])^2
+        p_sum += qg[i]^2 / (lambda + H_eigvals[i])^2
     end
     p_sum
 end

@@ -1,34 +1,31 @@
-checked_dphi0!(state, d, method) = real(vecdot(gradient(d), state.s))
-function checked_dphi0!(state, d, method::M) where M<:Union{BFGS, LBFGS}
-    # If invH is not positive definite, reset it
-    dphi0 = real(vecdot(gradient(d), state.s))
-    if dphi0 >= zero(dphi0)
-        # "reset" Hessian approximation
-        if M <: BFGS
-            copy!(state.invH, method.initial_invH(state.x))
-        elseif M <: LBFGS
-            state.pseudo_iteration = 1
-        end
+# Reset the search direction if it becomes corrupted
+# return true if the direction was changed
+reset_search_direction!(state, d, method) = false # no-op
 
-        # Re-calculate direction
-        state.s .= .-gradient(d)
-        dphi0 = real(vecdot(gradient(d), state.s))
-    end
-    return dphi0
-end
-function checked_dphi0!(state, d, method::ConjugateGradient)
-    # Reset the search direction if it becomes corrupted
-    dphi0 = real(vecdot(gradient(d), state.s))
-    if dphi0 >= zero(dphi0)
-        state.s .= .-state.pg
-        dphi0 = real(vecdot(gradient(d), state.s))
-    end
-    dphi0
+function reset_search_direction!(state, d, method::BFGS)
+    copy!(state.invH, method.initial_invH(state.x))
+    state.s .= .-gradient(d)
+    return true
 end
 
-function perform_linesearch!(state, method::M, d) where M
+function reset_search_direction!(state, d, method::LBFGS)
+    state.pseudo_iteration = 1
+    state.s .= .-gradient(d)
+    return true
+end
+
+function reset_search_direction!(state, d, method::ConjugateGradient)
+    state.s .= .-state.pg
+    return true
+end
+
+function perform_linesearch!(state, method, d)
     # Calculate search direction dphi0
-    dphi_0 = checked_dphi0!(state, d, method)
+    dphi_0 = real(vecdot(gradient(d), state.s))
+    # reset the direction if it becomes corrupted
+    if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, d, method)
+        dphi_0 = real(vecdot(gradient(d), state.s)) # update after direction reset
+    end
     phi_0  = value(d)
 
     # Guess an alpha

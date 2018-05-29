@@ -110,8 +110,8 @@
                        options_ext)
 
     @test summary(res) == "BFGS"
-    @test isapprox(Optim.minimum(res), 1.2580194638225255)
-    @test isapprox(Optim.minimizer(res), [-0.116688, 0.0031153]; rtol=0.001)
+    @test Optim.minimum(res) ≈ 1.2580194638225255
+    @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol=0.001
     @test Optim.iterations(res) == 10
     @test Optim.f_calls(res) == 38
     @test Optim.g_calls(res) == 38
