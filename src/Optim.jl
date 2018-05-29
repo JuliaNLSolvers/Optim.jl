@@ -5,11 +5,11 @@ module Optim
     using Compat
     using LineSearches
     using NLSolversBase
-    using Calculus
+    #using Calculus
     using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
-
+    import NaNMath
     import Parameters: @with_kw, @unpack
 
     import Compat.String
@@ -23,12 +23,17 @@ module Optim
 
     import NLSolversBase: NonDifferentiable,
                           OnceDifferentiable,
-                          TwiceDifferentiable
+                          TwiceDifferentiable,
+                          nconstraints,
+                          nconstraints_x
 
     export optimize,
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
+
+           TwiceDifferentiableConstraints,
+
            OptimizationState,
            OptimizationTrace,
 
@@ -54,7 +59,9 @@ module Optim
            Manifold,
            Flat,
            Sphere,
-           Stiefel
+           Stiefel,
+
+           IPNewton
 
     # Types
     include("types.jl")
@@ -135,5 +142,19 @@ module Optim
 
     # API
     include("api.jl")
+
+    ## Interior point includes
+    # Types
+    include("multivariate/solvers/constrained/ipnewton/types.jl")
+    # Tracing
+    include("multivariate/solvers/constrained/ipnewton/utilities/update.jl")
+    # Constrained optimization
+    include("multivariate/solvers/constrained/ipnewton/iplinesearch.jl")
+    include("multivariate/solvers/constrained/ipnewton/interior.jl")
+    include("multivariate/solvers/constrained/ipnewton/ipnewton.jl")
+    # Convergence
+    include("multivariate/solvers/constrained/ipnewton/utilities/assess_convergence.jl")
+    # Traces
+    include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 
 end
