@@ -110,8 +110,8 @@
                        options_ext)
 
     @test summary(res) == "BFGS"
-    @test isapprox(Optim.minimum(res), 1.2580194638225255)
-    @test isapprox(Optim.minimizer(res), [-0.116688, 0.0031153]; rtol=0.001)
+    @test Optim.minimum(res) ≈ 1.2580194638225255
+    @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol=0.001
     @test Optim.iterations(res) == 10
     @test Optim.f_calls(res) == 38
     @test Optim.g_calls(res) == 38
@@ -119,8 +119,6 @@
     @test Optim.x_converged(res) == false
     @test Optim.f_converged(res) == false
     @test Optim.g_converged(res) == false
-    @test Optim.x_tol(res) == 1e-32
-    @test Optim.f_tol(res) == 1e-32
     @test Optim.g_tol(res) == 1e-12
     @test Optim.iteration_limit_reached(res) == true
     @test Optim.initial_state(res) == [-1.2, 1.0]

@@ -59,23 +59,23 @@ end
 function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where T
     n = length(initial_x)
     initial_x = copy(initial_x)
-    retract!(method.manifold, real_to_complex(d,initial_x))
+    retract!(method.manifold, initial_x)
 
     value_gradient!!(d, initial_x)
 
-    project_tangent!(method.manifold, real_to_complex(d,gradient(d)), real_to_complex(d,initial_x))
+    project_tangent!(method.manifold, gradient(d), initial_x)
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               copy(gradient(d)), # Store previous gradient in state.g_previous
-              T(NaN), # Store previous f in state.f_x_previous
+              real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), # Store changes in position in state.dx
               similar(initial_x), # Store changes in gradient in state.dg
               similar(initial_x), # Buffer stored in state.u
               method.initial_invH(initial_x), # Store current invH in state.invH
               similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+              @initial_linesearch()...)
 end
 
 
@@ -86,7 +86,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     # Search direction is the negative gradient divided by the approximate Hessian
     A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
     scale!(state.s, -1)
-    project_tangent!(method.manifold, real_to_complex(d,state.s), real_to_complex(d,state.x))
+    project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient
     copy!(state.g_previous, gradient(d))
@@ -99,7 +99,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     # Update current position
     state.dx .= state.alpha.*state.s
     state.x .= state.x .+ state.dx
-    retract!(method.manifold, real_to_complex(d,state.x))
+    retract!(method.manifold, state.x)
 
     lssuccess == false # break on linesearch error
 end
@@ -110,20 +110,20 @@ function update_h!(d, state, method::BFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
-    dx_dg = vecdot(state.dx, state.dg)
+    dx_dg = real(vecdot(state.dx, state.dg))
     if dx_dg == 0.0
         return true # force stop
     end
     A_mul_B!(vec(state.u), state.invH, vec(state.dg))
 
-    c1 = (dx_dg + vecdot(state.dg, state.u)) / (dx_dg * dx_dg)
+    c1 = (dx_dg + real(vecdot(state.dg, state.u))) / (dx_dg' * dx_dg)
     c2 = 1 / dx_dg
 
     # TODO BLASify this
     # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
     for i in 1:n
         @simd for j in 1:n
-            @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j] - c2 * (state.u[i] * state.dx[j] + state.u[j] * state.dx[i])
+            @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
         end
     end
 end

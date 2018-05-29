@@ -1,8 +1,10 @@
 using Optim, Compat
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
-MVP = MultivariateProblems
 using Base.Test
+using Suppressor
+
+const MVP = MultivariateProblems
 
 debug_printing = false
 
@@ -38,9 +40,11 @@ multivariate_tests = [
     ## optimize
     "optimize/interface",
     "optimize/optimize",
+    "optimize/inplace",
     ## solvers
     ## constrained
-    "solvers/constrained/constrained",
+    "solvers/constrained/fminbox",
+    "solvers/constrained/samin",
     ## first order
     "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/bfgs",

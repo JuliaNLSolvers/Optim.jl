@@ -17,4 +17,4 @@ script:
 after_success:
     - julia -e 'cd(Pkg.dir("Optim")); Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
     - julia -e 'Pkg.add("Documenter")'
-    - julia -e 'cd(Pkg.dir("Optim")); include(joinpath("docs", "make.jl"))'
+    - julia -e 'cd(joinpath(Pkg.dir("Optim"), "docs")); include("make.jl")'

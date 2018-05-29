@@ -1,8 +1,9 @@
 # Complex optimization
 Optimization of functions defined on complex inputs (``\mathbb{C}^n
 \to \mathbb{R}``) is supported by simply passing a complex ``x`` as
-input. All zeroth and first order optimization algorithms are
-supported.
+input. The algorithms supported are all those which can naturally be
+extended to work with complex numbers: simulated annealing and all the
+first-order methods.
 
 The gradient of a complex-to-real function is defined as the only
 vector ``g`` such that

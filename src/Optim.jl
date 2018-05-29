@@ -10,6 +10,8 @@ module Optim
 #    using ReverseDiff
     using ForwardDiff
 
+    import Parameters: @with_kw, @unpack
+
     import Compat.String
     import Compat.view
 
@@ -19,8 +21,7 @@ module Optim
            Base.getindex,
            Base.setindex!
 
-    import NLSolversBase: iscomplex,
-                          NonDifferentiable,
+    import NLSolversBase: NonDifferentiable,
                           OnceDifferentiable,
                           TwiceDifferentiable
 
@@ -35,7 +36,6 @@ module Optim
            BFGS,
            Brent,
            ConjugateGradient,
-           Fminbox,
            GoldenSection,
            GradientDescent,
            NGMRES,
@@ -48,6 +48,9 @@ module Optim
            SimulatedAnnealing,
            ParticleSwarm,
 
+           Fminbox,
+           SAMIN,
+
            Manifold,
            Flat,
            Sphere,
@@ -55,7 +58,6 @@ module Optim
 
     # Types
     include("types.jl")
-    include("objective_types.jl")
 
     # Manifolds
     include("Manifolds.jl")
@@ -102,6 +104,7 @@ module Optim
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
+    include("multivariate/solvers/constrained/samin.jl")
 
     # Univariate methods
     include("univariate/solvers/golden_section.jl")

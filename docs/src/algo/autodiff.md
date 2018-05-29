@@ -22,16 +22,16 @@ function f(x)
     return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 end
 
-function g!(storage, x)
-    storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
-    storage[2] = 200.0 * (x[2] - x[1]^2)
+function g!(G, x)
+    G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+    G[2] = 200.0 * (x[2] - x[1]^2)
 end
 
-function h!(storage, x)
-    storage[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
-    storage[1, 2] = -400.0 * x[1]
-    storage[2, 1] = -400.0 * x[1]
-    storage[2, 2] = 200.0
+function h!(H, x)
+    H[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+    H[1, 2] = -400.0 * x[1]
+    H[2, 1] = -400.0 * x[1]
+    H[2, 2] = 200.0
 end
 
 initial_x = zeros(2)
@@ -59,19 +59,14 @@ julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 ```
 Still looks good. Returning to automatic differentiation, let us try both solvers using this
 method.  We enable [forward mode](https://github.com/JuliaDiff/ForwardDiff.jl) automatic
-differentiation by adding `autodiff = :forward` when we construct a `OnceDifferentiable`
-instance.
+differentiation by using the `autodiff = :forward` keyword.
 ```jlcon
-julia> od = OnceDifferentiable(f, initial_x; autodiff = :forward);
-
-julia> Optim.minimizer(optimize(od, initial_x, BFGS()))
+julia> Optim.minimizer(optimize(f, initial_x, BFGS(); autodiff = :forward))
 2-element Array{Float64,1}:
  1.0
  1.0
 
-julia> td = TwiceDifferentiable(f, initial_x; autodiff = :forward)
-
-julia> Optim.minimizer(optimize(td, initial_x, Newton()))
+julia> Optim.minimizer(optimize(f, initial_x, Newton(); autodiff = :forward))
 2-element Array{Float64,1}:
  1.0
  1.0
