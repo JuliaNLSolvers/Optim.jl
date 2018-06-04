@@ -12,7 +12,7 @@ Base.summary(::IPNewton) = "Interior Point Newton"
 # Interior-point Newton
 ## Constructor
 ```jl
-IPNewton(; linesearch::Function = ConstrainedOptim.backtrack_constrained_grad,
+IPNewton(; linesearch::Function = Optim.backtrack_constrained_grad,
          μ0::Union{Symbol,Number} = :auto,
          show_linesearch::Bool = false)
 ```
