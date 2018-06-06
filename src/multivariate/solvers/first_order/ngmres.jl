@@ -355,7 +355,11 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         # This may be used in perform_linesearch!/alphaguess! when moving from x^P to x^A
         # TODO: make this a function?
         state.f_x_previous = state.nlpreconstate.f_x_previous
-        state.dphi_0_previous = state.nlpreconstate.dphi_0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
+        if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
+            if typeof(state.nlpreconstate.alphaguess!) <: LineSearches.InitialConstantChange
+                method.alphaguess!.dphi_0_previous = state.nlpreconstate.alphaguess!.dphi_0_previous # assumes precon is a linesearch based method. TODO: Deal with trust region based methods
+            end
+        end
         # state.x_previous and state.x are dealt with by reference
 
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -366,7 +370,11 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
 
         # TODO: Move these into `nlprecon_post_accelerate!` ?
         state.nlpreconstate.f_x_previous = state.f_x_previous
-        state.nlpreconstate.dphi_0_previous = state.dphi_0_previous
+        if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
+            if typeof(state.nlpreconstate.alphaguess!) <: LineSearches.InitialConstantChange
+                state.nlpreconstate.alphaguess!.dphi_0_previous = method.alphaguess!.dphi_0_previous
+            end
+        end
         # Deals with update_h! etc. for preconditioner, if needed
         nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
