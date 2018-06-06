@@ -1,3 +1,5 @@
+## REMEMBER TO UPDATE TESTS FOR BOTH THE N-GMRES and the O-ACCEL TEST SETS
+
 @testset "N-GMRES" begin
     method = NGMRES
     solver = method()
@@ -58,8 +60,24 @@
         @test Optim.converged(res)
         @test Optim.minimum(res) < 1e-10
     end
-end
 
+    # O-ACCEL handles the InitialConstantChange functionality in a special way,
+    # so we should test that it works well.
+    for nlprec in (GradientDescent(),
+                   GradientDescent(alphaguess = LineSearches.InitialConstantChange()))
+        solver = method(nlprecon = nlprec,
+                        alphaguess = LineSearches.InitialConstantChange())
+        clear!(df)
+
+        res = optimize(df, prob.initial_x, solver)
+
+        if !Optim.converged(res)
+            display(res)
+        end
+        @test Optim.converged(res)
+        @test Optim.minimum(res) < 1e-10
+    end
+end
 
 @testset "O-ACCEL" begin
     method = OACCEL
@@ -110,6 +128,23 @@ end
     for nlprec in (LBFGS, BFGS)
         solver = method(nlprecon=nlprec())
         clear!(df)
+        res = optimize(df, prob.initial_x, solver)
+
+        if !Optim.converged(res)
+            display(res)
+        end
+        @test Optim.converged(res)
+        @test Optim.minimum(res) < 1e-10
+    end
+
+    # O-ACCEL handles the InitialConstantChange functionality in a special way,
+    # so we should test that it works well.
+    for nlprec in (GradientDescent(),
+                   GradientDescent(alphaguess = LineSearches.InitialConstantChange()))
+        solver = method(nlprecon = nlprec,
+                        alphaguess = LineSearches.InitialConstantChange())
+        clear!(df)
+
         res = optimize(df, prob.initial_x, solver)
 
         if !Optim.converged(res)
