@@ -93,4 +93,10 @@ Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
         optimize(exponential, lb, ub, initial_x)
         optimize(exponential, exponential_gradient!, lb, ub, initial_x)
     end
+
+    @testset "inplace and autodiff keywords #616" begin
+    end
+
+    @testset "error for second order methods #616" begin
+    end
 end

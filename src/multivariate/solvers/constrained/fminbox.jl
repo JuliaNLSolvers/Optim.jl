@@ -98,7 +98,7 @@ end
 function Fminbox(method::AbstractOptimizer = LBFGS();
                  mu0::Real = NaN, mufactor::Real = 0.001,
                  precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
-    if method isa Newton
+    if method isa Newton || method isa NewtonTrustRegion
         error("Newton is not supported as the Fminbox optimizer.")
     end
     Fminbox(method, promote(mu0, mufactor)..., precondprep) # default optimizer
