@@ -98,9 +98,8 @@ end
 function Fminbox(method::AbstractOptimizer = LBFGS();
                  mu0::Real = NaN, mufactor::Real = 0.001,
                  precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
-    if method isa Newton
-        warn("Newton is not supported as the Fminbox optimizer. Defaulting to LBFGS.")
-        method = LBFGS()
+    if method isa Newton || method isa NewtonTrustRegion
+        throw(ArgumentError("Newton is not supported as the Fminbox optimizer."))
     end
     Fminbox(method, promote(mu0, mufactor)..., precondprep) # default optimizer
 end
@@ -140,12 +139,25 @@ function optimize(obj,
 end
 
 function optimize(f,
-                  g!,
+                  g,
                   l::AbstractArray{T},
                   u::AbstractArray{T},
                   initial_x::AbstractArray{T},
-                  F::Fminbox = Fminbox()) where T<:AbstractFloat
+                  F::Fminbox = Fminbox(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+
+    g! = inplace ? g : (G, x) -> copy!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
+
+    optimize(od, l, u, initial_x, F)
+end
+
+function optimize(f,
+                  l::AbstractArray{T},
+                  u::AbstractArray{T},
+                  initial_x::AbstractArray{T},
+                  F::Fminbox = Fminbox(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+
+    od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
     optimize(od, l, u, initial_x, F)
 end
 

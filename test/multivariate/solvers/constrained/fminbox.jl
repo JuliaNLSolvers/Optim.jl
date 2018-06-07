@@ -76,6 +76,14 @@ Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
         function exponential_gradient!(storage, x)
             storage[1] = -2.0 * (2.0 - x[1]) * exp((2.0 - x[1])^2)
             storage[2] = -2.0 * (3.0 - x[2]) * exp((3.0 - x[2])^2)
+            storage
+        end
+
+        function exponential_gradient(x)
+            storage = similar(x)
+            storage[1] = -2.0 * (2.0 - x[1]) * exp((2.0 - x[1])^2)
+            storage[2] = -2.0 * (3.0 - x[2]) * exp((3.0 - x[2])^2)
+            storage
         end
 
         initial_x = [0.0, 0.0]
@@ -92,5 +100,15 @@ Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
         optimize(od_forward, lb, ub, initial_x)
         optimize(exponential, lb, ub, initial_x)
         optimize(exponential, exponential_gradient!, lb, ub, initial_x)
+        @testset "inplace and autodiff keywords #616" begin
+            optimize(exponential, lb, ub, initial_x, Fminbox())
+            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = :finite)
+            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = :forward)
+            optimize(exponential, exponential_gradient, lb, ub, initial_x, Fminbox(), inplace = false)
+        end
+        @testset "error for second order methods #616" begin
+            @test_throws ArgumentError optimize(x->x, (G,x)->x, rand(1),rand(1),rand(1), Fminbox(Newton()))
+            @test_throws ArgumentError optimize(x->x, (G,x)->x, rand(1),rand(1),rand(1), Fminbox(NewtonTrustRegion()))
+        end
     end
 end
