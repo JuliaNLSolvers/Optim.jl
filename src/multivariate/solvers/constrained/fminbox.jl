@@ -129,15 +129,6 @@ barrier_method(m::GradientDescent, P, precondprep) =
 barrier_method(m::Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES},
                P, precondprep) = m # use `m` as is
 
-function optimize(obj,
-                  l::AbstractArray{T},
-                  u::AbstractArray{T},
-                  initial_x::AbstractArray{T},
-                  F::Fminbox = Fminbox()) where T<:AbstractFloat
-    od = OnceDifferentiable(obj, initial_x, zero(T))
-    optimize(od, l, u, initial_x, F)
-end
-
 function optimize(f,
                   g,
                   l::AbstractArray{T},
