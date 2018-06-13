@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Simulated Annealing w/ bounds - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "SAMIN", url: "#samin", children: [
+              {title: "Constructor", url: "#constructor" },
+              {title: "Description", url: "#description" },
+              {title: "Example", url: "#example" },
+              {title: "Example", url: "#example_1" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../particle_swarm/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../particle_swarm/" class="btn btn-xs btn-link">
+        Particle Swarm
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../simulated_annealing/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../simulated_annealing/" class="btn btn-xs btn-link">
+        Simulated Annealing
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='SAMIN-1'></a></p>
+<h1 id="samin">SAMIN</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<pre><code class="julia">SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
+        ns::Int = 5     # adjust bounds every ns*dim(x_init) evaluations
+        rt::T = 0.9     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+        neps::Int = 5   # number of previous best values the final result is compared to
+        f_tol::T = 1e-12 # the required tolerance level for function value comparisons
+        x_tol::T = 1e-6 # the required tolerance level for x
+        coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
+        verbosity::Int = 0) # scalar: 0, 1, 2 or 3 (default = 0).
+</code></pre>
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The <code>SAMIN</code> method implements the Simulated Annealing algorithm for problems with bounds constraints as described in Goffe et. al. (1994) and Goffe (1996). A key control parameter is rt, the geometric temperature reduction rate, which should be between zero and one. Setting rt lower will cause the algorithm to contract the search space more quickly, reducing the run time. Setting rt too low will cause the algorithm to narrow the search too quickly, and the true minimizer may be skipped over. If possible, run the algorithm multiple times to verify that the same solution is found each time. If this is not the case, increase rt. When in doubt, start with a conservative rt, for example, rt=0.95, and allow for a generous iteration limit. The algorithm requires lower and upper bounds on the parameters, although these bounds are often set rather wide, and are not necessarily meant to reflect constraints in the model, but rather bounds that enclose the parameter space. If the final <code>x</code>s are very close to the boundary (which can be checked by setting verbosity=1), it is a good idea to restart the optimizer with wider bounds, unless the bounds actually reflect hard constraints on <code>x</code>.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>This example shows a successful minimization:</p>
+<pre><code class="julia">julia&gt; using Optim, OptimTestProblems
+
+julia&gt; prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+
+julia&gt; res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(), Optim.Options(iterations=10^6))
+================================================================================
+SAMIN results
+==&gt; Normal convergence &lt;==
+total number of objective function evaluations: 23701
+
+     Obj. value:      0.0000000000
+
+       parameter      search width
+         1.00000           0.00000
+         1.00000           0.00000
+================================================================================
+
+Results of Optimization Algorithm
+ * Algorithm: SAMIN
+ * Starting Point: [-1.2,1.0]
+ * Minimizer: [0.9999999893140956,0.9999999765350857]
+ * Minimum: 5.522977e-16
+ * Iterations: 23701
+ * Convergence: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = NaN |f(x)|
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 23701
+ * Gradient Calls: 0
+</code></pre>
+
+<p><a id='Example-2'></a></p>
+<h2 id="example_1">Example</h2>
+<p>This example shows an unsuccessful minimization, because the cooling rate, rt=0.5, is too rapid:</p>
+<pre><code class="julia">julia&gt; using Optim, OptimTestProblems
+
+julia&gt; prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+julia&gt; res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(rt=0.5), Optim.Options(iterations=10^6))
+================================================================================
+SAMIN results
+==&gt; Normal convergence &lt;==
+total number of objective function evaluations: 12051
+
+     Obj. value:      0.0011613045
+
+       parameter      search width
+         0.96592           0.00000
+         0.93301           0.00000
+================================================================================
+
+Results of Optimization Algorithm
+ * Algorithm: SAMIN
+ * Starting Point: [-1.2,1.0]
+ * Minimizer: [0.9659220825756248,0.9330054696322896]
+ * Minimum: 1.161304e-03
+ * Iterations: 12051
+ * Convergence: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = NaN
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = NaN |f(x)|
+   * |g(x)| ≤ 0.0e+00: false
+     |g(x)| = NaN
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 12051
+ * Gradient Calls: 0
+
+</code></pre>
+
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<ul>
+<li>Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.</li>
+<li>Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics &amp; Econometrics, Oct96, Vol. 1 Issue 3.</li>
+</ul>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../particle_swarm/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../particle_swarm/" class="btn btn-xs btn-link">
+        Particle Swarm
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../simulated_annealing/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../simulated_annealing/" class="btn btn-xs btn-link">
+        Simulated Annealing
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
