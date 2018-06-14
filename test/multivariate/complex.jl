@@ -2,7 +2,7 @@
     srand(0)
 
     # Test case: minimize quadratic plus quartic
-    # μ is the strength of the quartic. μ = 0 is just a linear problem
+    # μ is the strength of the quartic. μ = 0 is just a quadratic problem
     n = 4
     A = randn(n,n) + im*randn(n,n)
     A = A'A + I
