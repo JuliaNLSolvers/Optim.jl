@@ -20,21 +20,37 @@ macro goldensectiontrace()
     end)
 end
 
-struct GoldenSection <: Optimizer end
+"""
+# GoldenSection
+## Constructor
+```julia
+    GoldenSection(;)
+```
+
+## Description
+The `GoldenSection` method seeks to minimize a univariate function on an interval
+`[a, b]`. At all times the algorithm maintains a tuple of three minimizer candidates
+`(c, d, e)` where ``c<d<e`` such that the ratio of the largest to the smallest interval
+is the Golden Ratio.
+
+## References
+https://en.wikipedia.org/wiki/Golden-section_search
+"""
+struct GoldenSection <: UnivariateOptimizer end
 
 Base.summary(::GoldenSection) = "Golden Section Search"
 
-function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
-                                      mo::GoldenSection;
-                                      rel_tol::T = sqrt(eps(T)),
-                                      abs_tol::T = eps(T),
-                                      iterations::Integer = 1_000,
-                                      store_trace::Bool = false,
-                                      show_trace::Bool = false,
-                                      callback = nothing,
-                                      show_every = 1,
-                                      extended_trace::Bool = false,
-                                      nargs...)
+function optimize(f::F, x_lower::T, x_upper::T,
+     mo::GoldenSection;
+     rel_tol::T = sqrt(eps(T)),
+     abs_tol::T = eps(T),
+     iterations::Integer = 1_000,
+     store_trace::Bool = false,
+     show_trace::Bool = false,
+     callback = nothing,
+     show_every = 1,
+     extended_trace::Bool = false,
+     nargs...) where {F<:Function, T <: AbstractFloat}
     if x_lower > x_upper
         error("x_lower must be less than x_upper")
     end
@@ -43,7 +59,7 @@ function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
     initial_lower = x_lower
     initial_upper = x_upper
 
-    const golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
+    golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
 
     new_minimizer = x_lower + golden_ratio*(x_upper-x_lower)
     new_minimum = f(new_minimizer)
@@ -54,7 +70,7 @@ function optimize{F<:Function, T <: AbstractFloat}(f::F, x_lower::T, x_upper::T,
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
+    tr = OptimizationTrace{T, typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @goldensectiontrace
 

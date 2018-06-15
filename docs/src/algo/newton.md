@@ -1,14 +1,14 @@
 # Newton's Method
 ## Constructor
 ```julia
-Newton(; linesearch = LineSearches.HagerZhang(),
-         resetalpha = true)
+Newton(; alphaguess = LineSearches.InitialStatic(),
+         linesearch = LineSearches.HagerZhang())
 ```
 
 The constructor takes two keywords:
 
-* `linesearch = a(d, x, p, x_new, g_new, lsr, c, mayterminate)`, a function performing line search, see the line search section.
-* `resetalpha`, a boolean flag that determines, for each new search direction, whether the initial line search step length should be reset to 1.0, or kept as in the previous Newton iteration.
+* `linesearch = a(d, x, p, x_new, g_new, phi0, dphi0, c)`, a function performing line search, see the line search section.
+* `alphaguess = a(state, dphi0, d)`, a function for setting the initial guess for the line search algorithm, see the line search section.
 
 ## Description
 Newton's method for optimization has a long history, and is in some sense the
@@ -21,32 +21,42 @@ Newton's method for optimization consists of applying Newton's method for solvin
 systems of equations, where the equations are the first order conditions, saying
 that the gradient should equal the zero vector.
 
-$ \nabla f(x) = 0 $
+```math
+\nabla f(x) = 0
+```
 
 A second order Taylor expansion of the left-hand side leads to the iterative scheme
 
-$ x_{n+1} = x_n - H(x_n)^{-1}\nabla f(x_n)$
+```math
+x_{n+1} = x_n - H(x_n)^{-1}\nabla f(x_n)
+```
 
 where the inverse is not calculated directly, but the step size is instead calculated by solving
 
-$ H(x) \textbf{s} = \nabla f(x_n) $.
+```math
+H(x) \textbf{s} = \nabla f(x_n).
+```
 
-This is equivalent to minimizing a quadratic model, $m_k$ around the current $x_n$
+This is equivalent to minimizing a quadratic model, ``m_k`` around the current ``x_n``
 
-$ m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s} $
+```math
+m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s}
+```
 
-For functions where $H(x_n)$ is difficult, or computationally expensive to obtain, we might
+For functions where ``H(x_n)`` is difficult, or computationally expensive to obtain, we might
 replace the Hessian with another positive definite matrix that approximates it.
 Such methods are called Quasi-Newton methods; see (L-)BFGS and Gradient Descent.
 
 In a sufficiently small neighborhood around the minimizer, Newton's method has
 quadratic convergence, but globally it might have slower convergence, or it might
-even diverge. To ensure convergence, a line search is performed for each $\textbf{s}$.
+even diverge. To ensure convergence, a line search is performed for each ``\textbf{s}``.
 This amounts to replacing the step formula above with
 
-$ x_{n+1} = x_n - \alpha \textbf{s}$
+```math
+x_{n+1} = x_n - \alpha \textbf{s}
+```
 
-and finding a scalar $\alpha$ such that we get sufficient descent; see the line search section for more information.
+and finding a scalar ``\alpha`` such that we get sufficient descent; see the line search section for more information.
 
 Additionally, if the function is locally
 concave, the step taken in the formulas above will go in a direction of ascent,

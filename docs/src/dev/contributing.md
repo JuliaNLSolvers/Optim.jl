@@ -2,7 +2,7 @@
 We are always happy to get help from people who normally do not contribute to the package. However, to make the process run smoothly, we ask you to read this page before creating your pull request. That way it is more probable that your changes will be incorporated, and in the end it will mean less work for everyone.
 
 ### Things to consider
-When proposing a change to `Optim.jl`, there are a few things to consider. If you're in doubt feel free to reach out. A simple way to get in touch, is to join our [gitter channel](https://gitter.im/JuliaOpt/Optim.jl).
+When proposing a change to `Optim.jl`, there are a few things to consider. If you're in doubt feel free to reach out. A simple way to get in touch, is to join our [gitter channel](https://gitter.im/JuliaNLSolvers/Optim.jl).
 
 Before submitting a pull request, please consider the following bullets:
 * Did you remember to provide tests for your changes? If not, please do so, or ask for help.
@@ -21,19 +21,20 @@ that does the actual work. Say you want to contribute a solver called
 `Minim`, then your `src/minim.jl` file would look something like
 
 ```
-struct Minim{F<:Function, T} <: Optimizer
+struct Minim{IF, F<:Function, T} <: Optimizer
+    alphaguess!::IF
     linesearch!::F
     minim_parameter::T
 end
 
-Minim(; linesearch = LineSearches.HagerZhang(), minim_parameter = 1.0) =
+Minim(; alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang(), minim_parameter = 1.0) =
   Minim(linesearch, minim_parameter)
 
 type MinimState{T,N,G}
-  x::Array{T,N}
-  x_previous::Array{T,N}
+  x::AbstractArray{T,N}
+  x_previous::AbstractArray{T,N}
   f_x_previous::T
-  s::Array{T,N}
+  s::AbstractArray{T,N}
   @add_linesearch_fields()
 end
 

@@ -37,10 +37,11 @@ function check_hard_case_candidate(H_eigv, qg)
 end
 
 # Function 4.39 in N&W
-function p_sq_norm{T}(lambda::T, min_i, n, qg, H_eig)
+function p_sq_norm(lambda::T, min_i, n, qg, H_eig) where T
     p_sum = zero(T)
+    H_eigvals = H_eig[:values]
     for i = min_i:n
-        p_sum += qg[i]^2 / (lambda + H_eig[:values][i])^2
+        p_sum += qg[i]^2 / (lambda + H_eigvals[i])^2
     end
     p_sum
 end
@@ -64,12 +65,13 @@ end
 #  hard_case - Whether or not it was a "hard case" as described by N&W
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
-function solve_tr_subproblem!{T}(gr::Vector{T},
-                                 H::Matrix{T},
-                                 delta::T,
-                                 s::Vector{T};
-                                 tolerance::T=1e-10,
-                                 max_iters::Int=5)
+function solve_tr_subproblem!(gr,
+                              H,
+                              delta,
+                              s;
+                              tolerance=1e-10,
+                              max_iters=5)
+    T = eltype(gr)
     n = length(gr)
     delta_sq = delta^2
 
@@ -159,7 +161,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
 
                 # Version 0.5 requires an exactly symmetric matrix, but
                 # version 0.4 does not have this function signature for chol().
-                R = VERSION < v"0.5-" ? chol(H_ridged): chol(Hermitian(H_ridged))
+                R = VERSION < v"0.5-" ? chol(H_ridged) : chol(Hermitian(H_ridged))
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = vecdot(s, s)
@@ -189,7 +191,7 @@ function solve_tr_subproblem!{T}(gr::Vector{T},
     return m, interior, lambda, hard_case, reached_solution
 end
 
-struct NewtonTrustRegion{T <: Real} <: Optimizer
+struct NewtonTrustRegion{T <: Real} <: SecondOrderOptimizer
     initial_delta::T
     delta_hat::T
     eta::T
@@ -206,12 +208,12 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
-mutable struct NewtonTrustRegionState{T,N,G}
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct NewtonTrustRegionState{Tx, T, G} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
     g_previous::G
     f_x_previous::T
-    s::Array{T,N}
+    s::Tx
     hard_case::Bool
     reached_subproblem_solution::Bool
     interior::Bool
@@ -221,7 +223,8 @@ mutable struct NewtonTrustRegionState{T,N,G}
     rho::T
 end
 
-function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Array{T})
+function initial_state(method::NewtonTrustRegion, options, d, initial_x)
+    T = eltype(initial_x)
     n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
@@ -237,8 +240,11 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
     reached_subproblem_solution = true
     interior = true
     lambda = NaN
-    value_gradient!(d, initial_x)
-    hessian!(d, initial_x)
+
+    value_gradient!!(d, initial_x)
+    hessian!!(d, initial_x)
+
+
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -254,20 +260,18 @@ function initial_state{T}(method::NewtonTrustRegion, options, d, initial_x::Arra
 end
 
 
-function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTrustRegion)
-    n = length(state.x)
-
+function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+    T = eltype(state.x)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
 
     # Maintain a record of previous position
     copy!(state.x_previous, state.x)
+    state.f_x_previous  = value(d)
 
     # Update current position
-    @simd for i in 1:n
-        @inbounds state.x[i] = state.x[i] + state.s[i]
-    end
+    state.x .+= state.s
 
     # Update the function value and gradient
     copy!(state.g_previous, gradient(d))
@@ -309,10 +313,54 @@ function update_state!{T}(d, state::NewtonTrustRegionState{T}, method::NewtonTru
         x_diff = state.x - state.x_previous
         delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
 
-        d.f_x = state.f_x_previous
+        d.F = state.f_x_previous
         copy!(state.x, state.x_previous)
         copy!(gradient(d), state.g_previous)
     end
 
     false
+end
+
+function assess_convergence(state::NewtonTrustRegionState, d, options)
+    x_converged, f_converged, g_converged, converged, f_increased = false, false, false, false, false
+    if state.rho > state.eta
+        # Accept the point and check convergence
+        x_converged,
+        f_converged,
+        g_converged,
+        converged,
+        f_increased = assess_convergence(state.x,
+                                       state.x_previous,
+                                       value(d),
+                                       state.f_x_previous,
+                                       gradient(d),
+                                       options.x_tol,
+                                       options.f_tol,
+                                       options.g_tol)
+    end
+    x_converged, f_converged, g_converged, converged, f_increased
+end
+
+function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options)
+    dt = Dict()
+    if options.extended_trace
+        dt["x"] = copy(state.x)
+        dt["g(x)"] = copy(gradient(d))
+        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["delta"] = copy(state.delta)
+        dt["interior"] = state.interior
+        dt["hard case"] = state.hard_case
+        dt["reached_subproblem_solution"] = state.reached_subproblem_solution
+        dt["lambda"] = state.lambda
+    end
+    g_norm = norm(gradient(d), Inf)
+    update!(tr,
+            iteration,
+            value(d),
+            g_norm,
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
 end

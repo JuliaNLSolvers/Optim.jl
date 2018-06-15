@@ -1,4 +1,4 @@
-function grid_search{F<:Function, T<:Real}(f::F, grid::Vector{T})
+function grid_search(f, grid)
     min_value = f(grid[1])
     arg_min_value = grid[1]
 

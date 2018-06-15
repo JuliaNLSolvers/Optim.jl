@@ -1,9 +1,9 @@
 @testset "Callbacks" begin
-    problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+    problem = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
 
-    f = problem.f
-    g! = problem.g!
-    h! = problem.h!
+    f = MVP.objective(problem)
+    g! = MVP.gradient(problem)
+    h! = MVP.hessian(problem)
     initial_x = problem.initial_x
     d2 = OnceDifferentiable(f, g!, initial_x)
     d3 = TwiceDifferentiable(f, g!, h!, initial_x)

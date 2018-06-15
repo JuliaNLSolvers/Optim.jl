@@ -1,4 +1,5 @@
 @testset "Particle Swarm" begin
+    # TODO: Run on MultivariateProblems.UnconstrainedProblems?
     srand(100)
 
     function f_s(x::Vector)
@@ -26,10 +27,11 @@
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles),
                              options)
     @test norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
-
-    options = Optim.Options(iterations=300, show_trace=true, extended_trace=true, store_trace=true)
-    res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles), options)
-    @test summary(res) == "Particle Swarm"
-    res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles), options)
-    @test summary(res) == "Particle Swarm"
+    @suppress_out begin
+        options = Optim.Options(iterations=300, show_trace=true, extended_trace=true, store_trace=true)
+        res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles), options)
+        @test summary(res) == "Particle Swarm"
+        res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles), options)
+        @test summary(res) == "Particle Swarm"
+    end
 end

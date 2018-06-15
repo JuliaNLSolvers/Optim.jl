@@ -7,15 +7,11 @@ macro def(name, definition)
 end
 
 @def add_linesearch_fields begin
-    x_ls::Array{T,N}
+    x_ls::Tx
     alpha::T
-    mayterminate::Bool
-    lsr::LineSearches.LineSearchResults
 end
 
 @def initial_linesearch begin
     (similar(initial_x), # Buffer of x for line search in state.x_ls
-    LineSearches.alphainit(one(T), initial_x, gradient(d), value(d)), # Keep track of step size in state.alpha
-    false, # state.mayterminate
-    LineSearches.LineSearchResults(T))
+    real(one(T)))             # Keep track of step size in state.alpha
 end

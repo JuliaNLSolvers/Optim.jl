@@ -1,3 +1,9 @@
 @testset "L-BFGS" begin
-    run_optim_tests(LBFGS(), convergence_exceptions = (("Rosenbrock", 1), ("Polynomial", 1)))
+    # Trigonometric gets stuck in a local minimum?
+    skip = ("Trigonometric",)
+
+    run_optim_tests(LBFGS(),
+                    f_increase_exceptions = ("Extended Rosenbrock",),
+                    skip=skip,
+                    show_name = debug_printing)
 end

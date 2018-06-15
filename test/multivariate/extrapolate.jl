@@ -3,7 +3,8 @@ import LineSearches
 @testset "Extrapolation" begin
     methods = [LBFGS(),
                ConjugateGradient(),
-               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2))]
+               LBFGS(alphaguess = LineSearches.InitialQuadratic(),
+                     linesearch = LineSearches.BackTracking(order=2))]
     msgs = ["LBFGS Default Options: ",
             "CG Default Options: ",
             "LBFGS + Backtracking + Extrapolation: "]
@@ -24,9 +25,9 @@ import LineSearches
         println("p-Laplacian Example (preconditioned): ")
         println("--------------------------------------")
     end
-    plap(U; n=length(U)) = (n-1) * sum( (0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
-    plap1(U; n=length(U), dU = diff(U), dW = 4 * (0.1 + dU.^2) .* dU) =
-                            (n-1) * ([0.0; dW] - [dW; 0.0]) - ones(U) / (n-1)
+    plap(U; n=length(U)) = (n-1) * sum((0.1 .+ diff(U).^2).^2) - sum(U) / (n-1)
+    plap1(U; n=length(U), dU = diff(U), dW = 4 .* (0.1 .+ dU.^2) .* dU) =
+                            (n - 1) .* ([0.0; dW] .- [dW; 0.0]) .- ones(U) / (n - 1)
     precond(x::Vector) = precond(length(x))
     precond(n::Number) = spdiagm(( -ones(n-1), 2*ones(n), -ones(n-1) ),
                          (-1,0,1), n, n) * (n+1)
@@ -37,7 +38,8 @@ import LineSearches
     P = precond(initial_x)
     methods = [LBFGS(P=P),
                ConjugateGradient(P=P),
-               LBFGS(extrapolate=true, linesearch = LineSearches.BackTracking(order=2), P=P)]
+               LBFGS(alphaguess = LineSearches.InitialQuadratic(),
+                     linesearch = LineSearches.BackTracking(order=2), P=P)]
 
     for (method, msg) in zip(methods, msgs)
         results = Optim.optimize(f, g!, copy(initial_x), method)

@@ -110,9 +110,8 @@ end
         Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
     @test !hard_case
 
-
     # Now check an actual had case problem
-    L = zeros(Float64, n) + 0.1
+    L = fill(0.1, n)
     L[1] = -1.
     H = U * diagm(L) * U'
     H = 0.5 * (H' + H)
@@ -148,9 +147,12 @@ end
         storage[1, 1] = 12.0 * (x[1] - 5.0)^2
     end
 
-    d = TwiceDifferentiable(f, g!, h!, [0.0])
+    d = TwiceDifferentiable(f, g!, h!, [0.0,])
 
-    results = Optim.optimize(d, [0.0], NewtonTrustRegion())
+    options = Optim.Options(store_trace = false, show_trace = false,
+                            extended_trace = true)
+    results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
+    @test_throws ErrorException Optim.x_trace(results)
     @test length(results.trace) == 0
     @test results.g_converged
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
@@ -181,9 +183,10 @@ end
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
     # Test Optim.newton for all twice differentiable functions in
-    # Optim.UnconstrainedProblems.examples
+    # MultivariateProblems.UnconstrainedProblems.examples
     @testset "Optim problems" begin
-        run_optim_tests(NewtonTrustRegion())
+        run_optim_tests(NewtonTrustRegion(); skip = ("Trigonometric", ),
+                        show_name = debug_printing)
     end
 end
 

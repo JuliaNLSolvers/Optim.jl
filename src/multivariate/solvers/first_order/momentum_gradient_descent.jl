@@ -1,57 +1,68 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
-# L should be function or any other callable
-struct MomentumGradientDescent{L} <: Optimizer
-    mu::Float64
+struct MomentumGradientDescent{Tf, IL,L} <: FirstOrderOptimizer
+    mu::Tf
+    alphaguess!::IL
     linesearch!::L
+    manifold::Manifold
 end
-
-#= uncomment for v0.8.0
-MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang()) =
-  MomentumGradientDescent(Float64(mu), linesearch)
-=#
 
 Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
 
-function MomentumGradientDescent(; mu::Real = 0.01, linesearch = LineSearches.HagerZhang())
-    MomentumGradientDescent(Float64(mu), linesearch)
+function MomentumGradientDescent(; mu::Real = 0.01,
+                                 alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
+                                 linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
+                                 manifold::Manifold=Flat())
+    MomentumGradientDescent(mu, alphaguess, linesearch, manifold)
 end
 
-mutable struct MomentumGradientDescentState{T,N}
-    x::Array{T,N}
-    x_previous::Array{T,N}
+mutable struct MomentumGradientDescentState{Tx, T} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx
+    x_momentum::Tx
     f_x_previous::T
-    s::Array{T,N}
+    s::Tx
     @add_linesearch_fields()
 end
 
-function initial_state{T}(method::MomentumGradientDescent, options, d, initial_x::Array{T})
-    value_gradient!(d, initial_x)
+function initial_state(method::MomentumGradientDescent, options, d, initial_x)
+    T = eltype(initial_x)
+    initial_x = copy(initial_x)
+    retract!(method.manifold, initial_x)
 
-    MomentumGradientDescentState(copy(initial_x), # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
-                         T(NaN), # Store previous f in state.f_x_previous
-                         similar(initial_x), # Maintain current search direction in state.s
-                         @initial_linesearch()...) # Maintain a cache for line search results in state.lsr
+    value_gradient!!(d, initial_x)
+
+    project_tangent!(method.manifold, gradient(d), initial_x)
+
+    MomentumGradientDescentState(initial_x, # Maintain current state in state.x
+                                 copy(initial_x), # Maintain previous state in state.x_previous
+                                 similar(initial_x), # Record momentum correction direction in state.x_momentum
+                                 real(T)(NaN), # Store previous f in state.f_x_previous
+                                 similar(initial_x), # Maintain current search direction in state.s
+                                 @initial_linesearch()...)
 end
 
-function update_state!{T}(d, state::MomentumGradientDescentState{T}, method::MomentumGradientDescent)
-    n = length(state.x)
+function update_state!(d, state::MomentumGradientDescentState, method::MomentumGradientDescent)
+    project_tangent!(method.manifold, gradient(d), state.x)
     # Search direction is always the negative gradient
-    @simd for i in 1:n
-        @inbounds state.s[i] = -gradient(d, i)
-    end
+    state.s .= .-gradient(d)
+
+    # Update position, and backup current one
+    state.x_momentum .= state.x .- state.x_previous
 
     # Determine the distance of movement along the search line
-    lssuccess = perform_linesearch!(state, method, d)
+    lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Update current position
-    @simd for i in 1:n
-        # Need to move x into x_previous while using x_previous and creating "x_new"
-        @inbounds tmp = state.x_previous[i]
-        @inbounds state.x_previous[i] = state.x[i]
-        @inbounds state.x[i] = state.x[i] + state.alpha * state.s[i] + method.mu * (state.x[i] - tmp)
-    end
+    state.x .+= state.alpha.*state.s .+ method.mu.*state.x_momentum
+    retract!(method.manifold, state.x)
     lssuccess == false # break on linesearch error
+end
+
+function assess_convergence(state::MomentumGradientDescentState, d, options)
+  default_convergence_assessment(state, d, options)
+end
+
+function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options)
+  common_trace!(tr, d, state, iteration, method, options)
 end

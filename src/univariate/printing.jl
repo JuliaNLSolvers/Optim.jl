@@ -1,10 +1,10 @@
 
-function print_header(method::Union{Brent, GoldenSection})
+function print_header(method::Union{Brent})
     @printf "Iter     Function value      Lower bound       Upper bound       Best bound\n"
 end
 
 
-function Base.show{T<:Union{Brent, GoldenSection}}(io::IO, trace::OptimizationTrace{T})
+function Base.show(io::IO, trace::OptimizationTrace{Brent})
     @printf io "Iter     Function value      Lower bound       Upper bound       Best bound\n"
     @printf io "------   --------------      -----------       -----------       ----------\n"
     for state in trace.states
@@ -13,8 +13,27 @@ function Base.show{T<:Union{Brent, GoldenSection}}(io::IO, trace::OptimizationTr
     return
 end
 
-function Base.show{T<:Union{Brent, GoldenSection}}(io::IO, t::OptimizationState{T})
+function Base.show(io::IO, t::OptimizationState{Brent})
     @printf io "%6d   %14e    %14e    %14e      %s\n" t.iteration t.value t.metadata["x_lower"] t.metadata["x_upper"] t.metadata["best bound"]
+
+    return
+end
+
+function print_header(method::Union{GoldenSection})
+    @printf "Iter     Function value      Lower bound       Upper bound\n"
+end
+
+function Base.show(io::IO, trace::OptimizationTrace{GoldenSection})
+    @printf io "Iter     Function value      Lower bound       Upper bound"
+    @printf io "------   --------------      -----------       -----------"
+    for state in trace.states
+        show(io, state)
+    end
+    return
+end
+
+function Base.show(io::IO, t::OptimizationState{GoldenSection})
+    @printf io "%6d   %14e    %14e    %14e\n" t.iteration t.value t.metadata["x_lower"] t.metadata["x_upper"]
 
     return
 end

@@ -5,9 +5,12 @@ module Optim
     using Compat
     using LineSearches
     using NLSolversBase
-    using Calculus
+    #using Calculus
+    using DiffEqDiffTools
 #    using ReverseDiff
     using ForwardDiff
+    import NaNMath
+    import Parameters: @with_kw, @unpack
 
     import Compat.String
     import Compat.view
@@ -18,11 +21,19 @@ module Optim
            Base.getindex,
            Base.setindex!
 
+    import NLSolversBase: NonDifferentiable,
+                          OnceDifferentiable,
+                          TwiceDifferentiable,
+                          nconstraints,
+                          nconstraints_x
+
     export optimize,
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
-           OptimizationOptions,
+
+           TwiceDifferentiableConstraints,
+
            OptimizationState,
            OptimizationTrace,
 
@@ -30,20 +41,33 @@ module Optim
            BFGS,
            Brent,
            ConjugateGradient,
-           Fminbox,
            GoldenSection,
            GradientDescent,
+           NGMRES,
+           OACCEL,
            LBFGS,
            MomentumGradientDescent,
            NelderMead,
            Newton,
            NewtonTrustRegion,
            SimulatedAnnealing,
-           ParticleSwarm
+           ParticleSwarm,
+
+           Fminbox,
+           SAMIN,
+
+           Manifold,
+           Flat,
+           Sphere,
+           Stiefel,
+
+           IPNewton
 
     # Types
     include("types.jl")
-    include("objective_types.jl")
+
+    # Manifolds
+    include("Manifolds.jl")
 
     # Generic stuff
     include("utilities/generic.jl")
@@ -80,10 +104,14 @@ module Optim
     # Newton
     include("multivariate/solvers/second_order/newton.jl")
     include("multivariate/solvers/second_order/newton_trust_region.jl")
+    include("multivariate/solvers/second_order/krylov_trust_region.jl")
+
+    # Nonlinear GMRES
+    include("multivariate/solvers/first_order/ngmres.jl")
 
     # Constrained optimization
     include("multivariate/solvers/constrained/fminbox.jl")
-
+    include("multivariate/solvers/constrained/samin.jl")
 
     # Univariate methods
     include("univariate/solvers/golden_section.jl")
@@ -107,6 +135,7 @@ module Optim
 
     # Convergence
     include("utilities/assess_convergence.jl")
+    include("multivariate/solvers/zeroth_order/zeroth_utils.jl")
 
     # Traces
     include("utilities/trace.jl")
@@ -114,7 +143,18 @@ module Optim
     # API
     include("api.jl")
 
-    # Examples for testing
-    include(joinpath("problems", "unconstrained.jl"))
-    include(joinpath("problems", "univariate.jl"))
+    ## Interior point includes
+    # Types
+    include("multivariate/solvers/constrained/ipnewton/types.jl")
+    # Tracing
+    include("multivariate/solvers/constrained/ipnewton/utilities/update.jl")
+    # Constrained optimization
+    include("multivariate/solvers/constrained/ipnewton/iplinesearch.jl")
+    include("multivariate/solvers/constrained/ipnewton/interior.jl")
+    include("multivariate/solvers/constrained/ipnewton/ipnewton.jl")
+    # Convergence
+    include("multivariate/solvers/constrained/ipnewton/utilities/assess_convergence.jl")
+    # Traces
+    include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
+
 end

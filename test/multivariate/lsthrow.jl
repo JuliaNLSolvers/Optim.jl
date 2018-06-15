@@ -1,13 +1,11 @@
 @testset "Line search errors" begin
-    function ls(df,x,s,xtmp,lsr,c,mayterminate)
-        LineSearches._hagerzhang!(df,x,s,xtmp,lsr,c,mayterminate,
-                                 0.1,0.9,
-                                 Inf,5.,1e-6,0.66,
-                                 2)
-    end
+    hz = LineSearches.HagerZhang(; delta = 0.1, sigma = 0.9, alphamax = Inf,
+                      rho = 5.0, epsilon = 1e-6, gamma = 0.66, linesearchmax = 2)
     for optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS, Newton, AcceleratedGradientDescent, MomentumGradientDescent)
-        println("Testing $(string(optimizer))")
-        prob = Optim.UnconstrainedProblems.examples["Exponential"]
-        @test_warn "Linesearch failed" optimize(prob.f, prob.initial_x, optimizer(linesearch = ls))
+        debug_printing && println("Testing $(string(optimizer))")
+        prob = MultivariateProblems.UnconstrainedProblems.examples["Exponential"]
+        @test_warn "Linesearch failed" optimize(MVP.objective(prob), prob.initial_x,
+                                                optimizer(alphaguess = LineSearches.InitialPrevious(),
+                                                          linesearch = hz))
     end
 end

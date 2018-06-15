@@ -21,11 +21,29 @@ macro brenttrace()
     end)
 end
 
-struct Brent <: Optimizer end
+"""
+# Brent
+## Constructor
+```julia
+    Brent(;)
+```
+
+## Description
+Also known as the Brent-Dekker algorith, `Brent` is a univariate optimization
+algorithm for minimizing functions on some interval `[a,b]`. The method uses bisection
+to find a zero of the gradient. If the original interval contains a minimum,
+bisection will reliably find the solution, but can be slow. To this end `Brent`
+combines bisection with the secant method and inverse quadratic interpolation to
+accelerate convergence.
+
+## References
+R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover edition.
+"""
+struct Brent <: UnivariateOptimizer end
 
 Base.summary(::Brent) = "Brent's Method"
 
-function optimize{F <: Function, T <: AbstractFloat}(
+function optimize(
         f::F, x_lower::T, x_upper::T,
         mo::Brent;
         rel_tol::T = sqrt(eps(T)),
@@ -35,7 +53,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
         show_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        extended_trace::Bool = false)
+        extended_trace::Bool = false) where {F <: Function, T <: AbstractFloat}
 
     if x_lower > x_upper
         error("x_lower must be less than x_upper")
@@ -45,7 +63,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
     initial_lower = x_lower
     initial_upper = x_upper
 
-    const golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
+    golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
 
     new_minimizer = x_lower + golden_ratio*(x_upper-x_lower)
     new_minimum = f(new_minimizer)
@@ -64,7 +82,7 @@ function optimize{F <: Function, T <: AbstractFloat}(
     converged = false
 
     # Trace the history of states visited
-    tr = OptimizationTrace{typeof(mo)}()
+    tr = OptimizationTrace{T, typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
     @brenttrace
 

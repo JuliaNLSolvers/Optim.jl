@@ -2,7 +2,7 @@ log_temperature(t::Real) = 1 / log(t)
 
 constant_temperature(t::Real) = 1.0
 
-function default_neighbor!(x::Array, x_proposal::Array)
+function default_neighbor!(x::AbstractArray, x_proposal::AbstractArray)
     @assert size(x) == size(x_proposal)
     for i in 1:length(x)
         @inbounds x_proposal[i] = x[i] + randn()
@@ -10,7 +10,7 @@ function default_neighbor!(x::Array, x_proposal::Array)
     return
 end
 
-struct SimulatedAnnealing{Tn, Ttemp} <: Optimizer
+struct SimulatedAnnealing{Tn, Ttemp} <: ZerothOrderOptimizer
     neighbor!::Tn
     temperature::Ttemp
     keep_best::Bool # not used!?
@@ -23,26 +23,28 @@ SimulatedAnnealing(;neighbor = default_neighbor!,
 
 Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
-mutable struct SimulatedAnnealingState{T, N}
-    x::Array{T,N}
+mutable struct SimulatedAnnealingState{Tx,T} <: ZerothOrderState
+    x::Tx
     iteration::Int
-    x_current::Array{T, N}
-    x_proposal::Array{T, N}
+    x_current::Tx
+    x_proposal::Tx
     f_x_current::T
     f_proposal::T
 end
+# We don't have an f_x_previous in SimulatedAnnealing, so we need to special case these
+pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
+pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
-function initial_state{T}(method::SimulatedAnnealing, options, f, initial_x::Array{T})
-    # Count number of parameters
-    n = length(initial_x)
-    value!(f, initial_x)
+function initial_state(method::SimulatedAnnealing, options, d, initial_x::AbstractArray{T}) where T
+
+    value!!(d, initial_x)
 
     # Store the best state ever visited
     best_x = copy(initial_x)
-    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), f.f_x, f.f_x)
+    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), value(d), value(d))
 end
 
-function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing)
+function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing) where T
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)
@@ -59,8 +61,8 @@ function update_state!{T}(nd, state::SimulatedAnnealingState{T}, method::Simulat
         state.f_x_current = state.f_proposal
 
         # If the new state is the best state yet, keep a record of it
-        if state.f_proposal < nd.f_x
-            nd.f_x = state.f_proposal
+        if state.f_proposal < value(nd)
+            nd.F = state.f_proposal
             copy!(state.x, state.x_proposal)
         end
     else

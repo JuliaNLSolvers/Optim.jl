@@ -3,11 +3,13 @@ Optim.jl
 
 Univariate and multivariate optimization in Julia.
 
-| **Documentation**                                         | **PackageEvaluator**                      |**Build Status** |**Social**                                 |
-|:---------------------------------------------------------:|:-----------------------------------------:|:---:|:------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]|
-| [![][docs-latest-img]][docs-latest-url]  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  |
-| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  ||
+Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
+
+| **Documentation**  | **PackageEvaluator** | **Build Status** | **Social** | **References to cite** |
+|:-:|:-:|:-:|:-:|:-:|
+| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
+|  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  | [![DOI][zenodo-img]][zenodo-url] |
+| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  || |
 
 # Optimization
 
@@ -18,7 +20,14 @@ using Optim
 rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 result = optimize(rosenbrock, zeros(2), BFGS())
 ```
-Which gives the output
+This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function)
+
+<img src="https://user-images.githubusercontent.com/8431156/31627324-2bbc9ebc-b2ad-11e7-916f-857ad8dcb714.gif" title="f(x,y) = (a-x)^2+b(y-x^2)^2" />
+
+with a = 1, b = 100 and the initial values x=0, y=0.
+The minimum is at (a,a^2).
+
+The above code gives the output
 ```jlcon
 Results of Optimization Algorithm
  * Algorithm: BFGS
@@ -26,19 +35,74 @@ Results of Optimization Algorithm
  * Minimizer: [0.9999999926033423,0.9999999852005353]
  * Minimum: 5.471433e-17
  * Iterations: 16
+
  * Convergence: true
-   * |x - x'| < 1.0e-32: false 
-     |x - x'| = 3.47e-07 
-   * |f(x) - f(x')| / |f(x)| < 1.0e-32: false
-     |f(x) - f(x')| / |f(x)| = NaN 
-   * |g(x)| < 1.0e-08: true 
-     |g(x)| = 2.33e-09 
-   * stopped by an increasing objective: false
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.47e-07
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.20e+03 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 2.33e-09
+   * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
  * Objective Calls: 53
  * Gradient Calls: 53
 ```
-For more details and options, see the documentation ([stable](https://julianlsolvers.github.io/Optim.jl/stable) | [latest](https://julianlsolvers.github.io/Optim.jl/latest)).
+To get information on the keywords used to construct method instances, use the Julia REPL help prompt (`?`)
+```
+help?> LBFGS
+search: LBFGS
+
+     LBFGS
+    ≡≡≡≡≡≡≡
+
+     Constructor
+    =============
+
+  LBFGS(; m::Integer = 10,
+  alphaguess = LineSearches.InitialStatic(),
+  linesearch = LineSearches.HagerZhang(),
+  P=nothing,
+  precondprep = (P, x) -> nothing,
+  manifold = Flat(),
+  scaleinvH0::Bool = true && (typeof(P) <: Void))
+
+  LBFGS has two special keywords; the memory length m, and
+  the scaleinvH0 flag. The memory length determines how many
+  previous Hessian approximations to store. When scaleinvH0
+  == true, then the initial guess in the two-loop recursion
+  to approximate the inverse Hessian is the scaled identity,
+  as can be found in Nocedal and Wright (2nd edition) (sec.
+  7.2).
+
+  In addition, LBFGS supports preconditioning via the P and
+  precondprep keywords.
+
+     Description
+    =============
+
+  The LBFGS method implements the limited-memory BFGS
+  algorithm as described in Nocedal and Wright (sec. 7.2,
+  2006) and original paper by Liu & Nocedal (1989). It is a
+  quasi-Newton method that updates an approximation to the
+  Hessian using past approximations as well as the gradient.
+
+     References
+    ============
+
+    •    Wright, S. J. and J. Nocedal (2006), Numerical
+        optimization, 2nd edition. Springer
+
+    •    Liu, D. C. and Nocedal, J. (1989). "On the
+        Limited Memory Method for Large Scale
+        Optimization". Mathematical Programming B. 45
+        (3): 503–528
+```
+
+# Documentation
+For more details and options, see the documentation
+- [STABLE][docs-stable-url] — most recently tagged version of the documentation.
+- [LATEST][docs-latest-url] — in-development version of the documentation.
 
 # Installation
 
@@ -46,6 +110,23 @@ The package is registered in `METADATA.jl` and can be installed with `Pkg.add`.
 
 ```julia
 julia> Pkg.add("Optim")
+```
+
+# Citation
+
+If you use `Optim.jl` in your work, please cite the following.
+
+```tex
+@article{mogensen2018optim,
+  author  = {Mogensen, Patrick Kofod and Riseth, Asbj{\o}rn Nilsen},
+  title   = {Optim: A mathematical optimization package for {Julia}},
+  journal = {Journal of Open Source Software},
+  year    = {2018},
+  volume  = {3},
+  number  = {24},
+  pages   = {615},
+  doi     = {10.21105/joss.00615}
+}
 ```
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
@@ -72,3 +153,9 @@ julia> Pkg.add("Optim")
 
 [gitter-url]: https://gitter.im/JuliaNLSolvers/Optim.jl
 [gitter-img]: https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg
+
+[zenodo-url]: https://zenodo.org/badge/latestdoi/3933868
+[zenodo-img]: https://zenodo.org/badge/3933868.svg
+
+[joss-url]: https://doi.org/10.21105/joss.00615
+[joss-img]: http://joss.theoj.org/papers/10.21105/joss.00615/status.svg

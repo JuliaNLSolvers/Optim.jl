@@ -15,8 +15,9 @@
     Optim.optimize(NonDifferentiable(f_1, initial_x), [0.0], Newton())
     Optim.optimize(OnceDifferentiable(f_1, g!_1, initial_x), [0.0], Newton())
 
-    results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton())
-
+    options = Optim.Options(store_trace = false, show_trace = false,
+                            extended_trace = true)
+    results = Optim.optimize(f_1, g!_1, h!_1, [0.0], Newton(), options)
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
@@ -46,12 +47,12 @@
     @test summary(results) == "Newton's Method"
 
     @testset "newton in concave region" begin
-        prob=Optim.UnconstrainedProblems.examples["Himmelblau"]
-        res = optimize(prob.f, prob.g!, prob.h!, [0., 0.], Newton())
+        prob=MultivariateProblems.UnconstrainedProblems.examples["Himmelblau"]
+        res = optimize(MVP.objective(prob), MVP.gradient(prob), MVP.hessian(prob), [0., 0.], Newton())
         @test norm(Optim.minimizer(res) - prob.solutions) < 1e-9
     end
 
     @testset "Optim problems" begin
-        run_optim_tests(Newton())
+        run_optim_tests(Newton(); skip = ("Trigonometric",), show_name = debug_printing)
     end
 end
