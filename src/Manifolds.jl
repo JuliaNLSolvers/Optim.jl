@@ -16,6 +16,9 @@
 abstract type Manifold
 end
 
+# fallback for out-of-place ops
+project_tangent(M::Manifold,x) = project_tangent!(M, similar(x), x)
+retract(M::Manifold,x) = retract!(M, copy(x))
 
 # Fake objective function implementing a retraction
 mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <: NLSolversBase.AbstractObjective
@@ -49,10 +52,6 @@ function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     return value(obj.inner_obj)
 end
 
-# fallback for out-of-place ops
-project_tangent(M::Manifold,x) = project_tangent!(M, similar(x), x)
-retract(M::Manifold,x) = retract!(M, copy(x))
-
 """Flat Euclidean space {R,C}^N, with projections equal to the identity."""
 struct Flat <: Manifold
 end
@@ -68,12 +67,13 @@ project_tangent!(M::Flat, g, x) = g
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
-project_tangent!(S::Sphere,g,x) = (g .= g .- real(vecdot(x,g)).*x)
+project_tangent!(S::Sphere,g,x) = (g .-= real(vecdot(x,g)).*x)
 
 """
 N x n matrices with orthonormal columns, i.e. such that X'X = I.
 Special cases: N x 1 = sphere, N x N = orthogonal/unitary group.
-Stiefel() uses a SVD algorithm to compute the retraction. To use a Cholesky-based orthogonalization, use Stiefel_CholQR()
+Stiefel() uses a SVD algorithm to compute the retraction. To use a Cholesky-based orthogonalization (faster but less stable), use Stiefel(:CholQR).
+When the function to be optimized depends only on the subspace X*X' spanned by a point X in the Stiefel manifold, first-order optimization algorithms are equivalent for the Stiefel and Grassmann manifold, so there is no separate Grassmann manifold.
 """
 abstract type Stiefel <: Manifold end
 struct Stiefel_CholQR <: Stiefel end
@@ -93,7 +93,9 @@ function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
     X .= X/chol(overlap)
 end
-project_tangent!(S::Stiefel, G, X) = (G .-= X*((X'G .+ G'X)./2))
+#For functions depending only on the subspace spanned by X, we always have G = A*X for some A, and so X'G = G'X, and Stiefel == Grassmann
+#Edelman et al. have G .-= X*G'X (2.53), which I think is incorrect? (eg this projection does not leave the tangent space invariant). Following Absil et al. here.
+project_tangent!(S::Stiefel, G, X) = (XG = X'G; G .-= X*((XG .+ XG')./2))
 
 
 
