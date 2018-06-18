@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Minimizing a function - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Unconstrained Optimization", url: "#unconstrained-optimization", children: [
+          ]},
+          {title: "Box Constrianed Optimization", url: "#box-constrianed-optimization", children: [
+          ]},
+          {title: "Minimizing a univariate function on a bounded interval", url: "#minimizing-a-univariate-function-on-a-bounded-interval", children: [
+          ]},
+          {title: "Obtaining results", url: "#obtaining-results", children: [
+              {title: "Complete list of functions", url: "#complete-list-of-functions" },
+          ]},
+          {title: "Input types", url: "#input-types", children: [
+          ]},
+          {title: "Notes on convergence flags and checks", url: "#notes-on-convergence-flags-and-checks", children: [
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../config/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../config/" class="btn btn-xs btn-link">
+        Configurable Options
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../.." class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../.." class="btn btn-xs btn-link">
+        Home
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Unconstrained-Optimization-1'></a></p>
+<h2 id="unconstrained-optimization">Unconstrained Optimization</h2>
+<p>To show how the Optim package can be used, we minimize the <a href="http://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a>, a classical test problem for numerical optimization. We'll assume that you've already installed the Optim package using Julia's package manager. First, we load Optim and define the Rosenbrock function:</p>
+<pre><code class="jl">using Optim
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+</code></pre>
+
+<p>Once we've defined this function, we can find the minimizer (the input that minimizes the objective) and the minimum (the value of the objective at the minimizer) using any of our favorite optimization algorithms. With a function defined, we just specify an initial point <code>x</code> and call <code>optimize</code> with a starting point <code>x0</code>:</p>
+<pre><code class="jl">x0 = [0.0, 0.0]
+optimize(f, x0)
+</code></pre>
+
+<p><em>Note</em>: it is important to pass <code>initial_x</code> as an array. If your problem is one-dimensional, you have to wrap it in an array. An easy way to do so is to write <code>optimize(x-&gt;f(first(x)), [initial_x])</code> which make sure the input is an array, but the anonymous function automatically passes the first (and only) element onto your given <code>f</code>.</p>
+<p>Optim will default to using the Nelder-Mead method in the multivariate case, as we did not provide a gradient. This can also be explicitly specified using:</p>
+<pre><code class="jl">optimize(f, x0, NelderMead())
+</code></pre>
+
+<p>Other solvers are available. Below, we use L-BFGS, a quasi-Newton method that requires a gradient. If we pass <code>f</code> alone, Optim will construct an approximate gradient for us using central finite differencing:</p>
+<pre><code class="jl">optimize(f, x0, LBFGS())
+</code></pre>
+
+<p>For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the <code>autodiff</code> keyword and setting it to <code>:forward</code>:</p>
+<pre><code class="julia">optimize(f, x0, LBFGS(); autodiff = :forward)
+</code></pre>
+
+<p>For the Rosenbrock example, the analytical gradient can be shown to be:</p>
+<pre><code class="jl">function g!(G, x)
+G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+G[2] = 200.0 * (x[2] - x[1]^2)
+end
+</code></pre>
+
+<p>Note, that the functions we're using to calculate the gradient (and later the Hessian <code>h!</code>) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called <code>G</code> (or <code>H</code> for the Hessian) in these examples. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the <code>g!</code> or <code>h!</code> functions. If you prefer to have your gradients simply accept an <code>x</code>, you can still use <code>optimize</code> by setting the <code>inplace</code> keyword to <code>false</code>:</p>
+<pre><code class="jl">optimize(f, g, x0; inplace = false)
+</code></pre>
+
+<p>where <code>g</code> is a function of <code>x</code> only.</p>
+<p>Returning to our in-place version, you simply pass <code>g!</code> together with <code>f</code> from before to use the gradient:</p>
+<pre><code class="jl">optimize(f, g!, x0, LBFGS())
+</code></pre>
+
+<p>For some methods, like simulated annealing, the gradient will be ignored:</p>
+<pre><code class="jl">optimize(f, g!, x0, SimulatedAnnealing())
+</code></pre>
+
+<p>In addition to providing gradients, you can provide a Hessian function <code>h!</code> as well. In our current case this is:</p>
+<pre><code class="jl">function h!(H, x)
+    H[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+    H[1, 2] = -400.0 * x[1]
+    H[2, 1] = -400.0 * x[1]
+    H[2, 2] = 200.0
+end
+</code></pre>
+
+<p>Now we can use Newton's method for optimization by running:</p>
+<pre><code class="jl">optimize(f, g!, h!, x0)
+</code></pre>
+
+<p>Which defaults to <code>Newton()</code> since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:</p>
+<pre><code class="jl">optimize(f, g!, h!, x0, LBFGS())
+</code></pre>
+
+<p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
+<p><a id='Box-Constrianed-Optimization-1'></a></p>
+<h2 id="box-constrianed-optimization">Box Constrianed Optimization</h2>
+<p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:</p>
+<pre><code class="jl">lower = [1.25, -2.1]
+upper = [Inf, Inf]
+initial_x = [2.0, 2.0]
+inner_optimizer = GradientDescent()
+results = optimize(f, g!, lower, upper, initial_x, Fminbox(inner_optimizer))
+</code></pre>
+
+<p>This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen <code>inner_optimizer</code> (<code>GradientDescent()</code> above) for convergence at each step.</p>
+<p>This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use <code>ConjugateGradient</code> or <code>LBFGS</code> with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.</p>
+<p>There are two iterations parameters: an outer iterations parameter used to control <code>Fminbox</code> and an inner iterations parameter used to control the inner optimizer. For example, the following restricts the optimization to 2 major iterations</p>
+<pre><code class="julia">results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(outer_iterations = 2))
+</code></pre>
+
+<p>In contrast, the following sets the maximum number of iterations for each <code>ConjugateGradient()</code> optimization to 2</p>
+<pre><code class="julia">results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(iterations = 2))
+</code></pre>
+
+<p><a id='Minimizing-a-univariate-function-on-a-bounded-interval-1'></a></p>
+<h2 id="minimizing-a-univariate-function-on-a-bounded-interval">Minimizing a univariate function on a bounded interval</h2>
+<p>Minimization of univariate functions without derivatives is available through the <code>optimize</code> interface:</p>
+<pre><code class="jl">optimize(f, lower, upper, method; kwargs...)
+</code></pre>
+
+<p>Notice the lack of initial <code>x</code>. A specific example is the following quadratic function.</p>
+<pre><code class="jl">julia&gt; f_univariate(x) = 2x^2+3x+1
+f_univariate (generic function with 1 method)
+
+julia&gt; optimize(f_univariate, -2.0, 1.0)
+Results of Optimization Algorithm
+ * Algorithm: Brent's Method
+ * Search Interval: [-2.000000, 1.000000]
+ * Minimizer: -7.500000e-01
+ * Minimum: -1.250000e-01
+ * Iterations: 7
+ * Convergence: max(|x - x_upper|, |x - x_lower|) &lt;= 2*(1.5e-08*|x|+2.2e-16): true
+ * Objective Function Calls: 8
+</code></pre>
+
+<p>The output shows that we provided an initial lower and upper bound, that there is a final minimizer and minimum, and that it used seven major iterations. Importantly, we also see that convergence was declared. The default method is Brent's method, which is one out of two available methods:</p>
+<ul>
+<li>Brent's method, the default (can be explicitly selected with <code>Brent()</code>).</li>
+<li>Golden section search, available with <code>GoldenSection()</code>.</li>
+</ul>
+<p>If we want to manually specify this method, we use the usual syntax as for multivariate optimization.</p>
+<pre><code class="jl">    optimize(f, lower, upper, Brent(); kwargs...)
+    optimize(f, lower, upper, GoldenSection(); kwargs...)
+</code></pre>
+
+<p>Keywords are used to set options for this special type of optimization. In addition to the <code>iterations</code>, <code>store_trace</code>, <code>show_trace</code> and <code>extended_trace</code> options, the following options are also available:</p>
+<ul>
+<li><code>rel_tol</code>: The relative tolerance used for determining convergence. Defaults to <code>sqrt(eps(T))</code>.</li>
+<li><code>abs_tol</code>: The absolute tolerance used for determining convergence. Defaults to <code>eps(T)</code>.</li>
+</ul>
+<p><a id='Obtaining-results-1'></a></p>
+<h2 id="obtaining-results">Obtaining results</h2>
+<p>After we have our results in <code>res</code>, we can use the API for getting optimization results. This consists of a collection of functions. They are not exported, so they have to be prefixed by <code>Optim.</code>. Say we do the following optimization:</p>
+<pre><code class="jl">res = optimize(x-&gt;dot(x,[1 0. 0; 0 3 0; 0 0 1]*x), zeros(3))
+</code></pre>
+
+<p>If we can't remember what method we used, we simply use</p>
+<pre><code class="jl">summary(res)
+</code></pre>
+
+<p>which will return <code>"Nelder Mead"</code>. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using</p>
+<pre><code class="jlcon">julia&gt; Optim.minimizer(res)
+3-element Array{Float64,1}:
+ -0.499921
+ -0.3333
+ -1.49994
+
+julia&gt; Optim.minimum(res)
+ -2.8333333205768865
+</code></pre>
+
+<p><a id='Complete-list-of-functions-1'></a></p>
+<h3 id="complete-list-of-functions">Complete list of functions</h3>
+<p>A complete list of functions can be found below.</p>
+<p>Defined for all methods:</p>
+<ul>
+<li><code>summary(res)</code></li>
+<li><code>minimizer(res)</code></li>
+<li><code>minimum(res)</code></li>
+<li><code>iterations(res)</code></li>
+<li><code>iteration_limit_reached(res)</code></li>
+<li><code>trace(res)</code></li>
+<li><code>x_trace(res)</code></li>
+<li><code>f_trace(res)</code></li>
+<li><code>f_calls(res)</code></li>
+<li><code>converged(res)</code></li>
+</ul>
+<p>Defined for univariate optimization:</p>
+<ul>
+<li><code>lower_bound(res)</code></li>
+<li><code>upper_bound(res)</code></li>
+<li><code>x_lower_trace(res)</code></li>
+<li><code>x_upper_trace(res)</code></li>
+<li><code>rel_tol(res)</code></li>
+<li><code>abs_tol(res)</code></li>
+</ul>
+<p>Defined for multivariate optimization:</p>
+<ul>
+<li><code>g_norm_trace(res)</code></li>
+<li><code>g_calls(res)</code></li>
+<li><code>x_converged(res)</code></li>
+<li><code>f_converged(res)</code></li>
+<li><code>g_converged(res)</code></li>
+<li><code>initial_state(res)</code></li>
+</ul>
+<p><a id='Input-types-1'></a></p>
+<h2 id="input-types">Input types</h2>
+<p>Most users will input <code>Vector</code>'s as their <code>initial_x</code>'s, and get an <code>Optim.minimizer(res)</code> out that is also a vector. For zeroth and first order methods, it is also possible to pass in matrices, or even higher dimensional arrays. The only restriction imposed by leaving the <code>Vector</code> case is, that it is no longer possible to use finite difference approximations or automatic differentiation. Second order methods (variants of Newton's method) do not support this more general input type.</p>
+<p><a id='Notes-on-convergence-flags-and-checks-1'></a></p>
+<h2 id="notes-on-convergence-flags-and-checks">Notes on convergence flags and checks</h2>
+<p>Currently, it is possible to access a minimizer using <code>Optim.minimizer(result)</code> even if all convergence flags are <code>false</code>. This means that the user has to be a bit careful when using the output from the solvers. It is advised to include checks for convergence if the minimizer or minimum is used to carry out further calculations.</p>
+<p>A related note is that first and second order methods makes a convergence check on the gradient before entering the optimization loop. This is done to prevent line search errors if <code>initial_x</code> is a stationary point. Notice, that this is only a first order check. If <code>initial_x</code> is any type of stationary point, <code>g_converged</code> will be true. This includes local minima, saddle points, and local maxima. If <code>iterations</code> is <code>0</code> and <code>g_converged</code> is <code>true</code>, the user needs to keep this point in mind.</p>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../config/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../config/" class="btn btn-xs btn-link">
+        Configurable Options
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../.." class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../.." class="btn btn-xs btn-link">
+        Home
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

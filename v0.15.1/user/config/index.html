@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Configurable Options - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Configurable options", url: "#configurable-options", children: [
+              {title: "Solver options", url: "#solver-options" },
+              {title: "General Options", url: "#general-options" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-link">
+        Automatic Differentiation
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../minimization/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../minimization/" class="btn btn-xs btn-link">
+        Minimizing a function
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Configurable-options-1'></a></p>
+<h2 id="configurable-options">Configurable options</h2>
+<p>There are several options that simply take on some default values if the user doensn't supply anything else than a function (and gradient) and a starting point.</p>
+<p><a id='Solver-options-1'></a></p>
+<h3 id="solver-options">Solver options</h3>
+<p>There quite a few different solvers available in Optim, and they are all listed below. Notice that the constructors are written without input here, but they generally take keywords to tweak the way they work. See the pages describing each solver for more detail.</p>
+<p>Requires only a function handle:</p>
+<ul>
+<li><code>NelderMead()</code></li>
+<li><code>SimulatedAnnealing()</code></li>
+</ul>
+<p>Requires a function and gradient (will be approximated if omitted):</p>
+<ul>
+<li><code>BFGS()</code></li>
+<li><code>LBFGS()</code></li>
+<li><code>ConjugateGradient()</code></li>
+<li><code>GradientDescent()</code></li>
+<li><code>MomentumGradientDescent()</code></li>
+<li><code>AcceleratedGradientDescent()</code></li>
+</ul>
+<p>Requires a function, a gradient, and a Hessian (cannot be omitted):</p>
+<ul>
+<li><code>Newton()</code></li>
+<li><code>NewtonTrustRegion()</code></li>
+</ul>
+<p>Box constrained minimization:</p>
+<ul>
+<li><code>Fminbox()</code></li>
+</ul>
+<p>Special methods for bounded univariate optimization:</p>
+<ul>
+<li><code>Brent()</code></li>
+<li><code>GoldenSection()</code></li>
+</ul>
+<p><a id='General-Options-1'></a></p>
+<h3 id="general-options">General Options</h3>
+<p>In addition to the solver, you can alter the behavior of the Optim package by using the following keywords:</p>
+<ul>
+<li><code>x_tol</code>: Absolute tolerance in changes of the input vector <code>x</code>, in infinity norm. Defaults to <code>0.0</code>.</li>
+<li><code>f_tol</code>: Relative tolerance in changes of the objective value. Defaults to <code>0.0</code>.</li>
+<li><code>g_tol</code>: Absolute tolerance in the gradient, in infinity norm. Defaults to <code>1e-8</code>. For gradient free methods, this will control the main convergence tolerance, which is solver specific.</li>
+<li><code>f_calls_limit</code>: A soft upper limit on the number of objective calls. Defaults to <code>0</code> (unlimited).</li>
+<li><code>g_calls_limit</code>: A soft upper limit on the number of gradient calls. Defaults to <code>0</code> (unlimited).</li>
+<li><code>h_calls_limit</code>: A soft upper limit on the number of Hessian calls. Defaults to <code>0</code> (unlimited).</li>
+<li><code>allow_f_increases</code>: Allow steps that increase the objective value. Defaults to <code>false</code>. Note that, when setting this to <code>true</code>, the last iterate will be returned as the minimizer even if the objective increased.</li>
+<li><code>iterations</code>: How many iterations will run before the algorithm gives up? Defaults to <code>1_000</code>.</li>
+<li><code>store_trace</code>: Should a trace of the optimization algorithm's state be stored? Defaults to <code>false</code>.</li>
+<li><code>show_trace</code>: Should a trace of the optimization algorithm's state be shown on <code>STDOUT</code>? Defaults to <code>false</code>.</li>
+<li><code>extended_trace</code>: Save additional information. Solver dependent. Defaults to <code>false</code>.</li>
+<li><code>show_every</code>: Trace output is printed every <code>show_every</code>th iteration.</li>
+<li><code>callback</code>: A function to be called during tracing. A return value of <code>true</code> stops the <code>optimize</code> call.</li>
+<li><code>time_limit</code>: A soft upper limit on the total run time. Defaults to <code>NaN</code> (unlimited).</li>
+</ul>
+<p>We currently recommend the statically dispatched interface by using the <code>Optim.Options</code> constructor:</p>
+<pre><code class="jl">res = optimize(f, g!,
+               [0.0, 0.0],
+               GradientDescent(),
+               Optim.Options(g_tol = 1e-12,
+                             iterations = 10,
+                             store_trace = true,
+                             show_trace = false))
+</code></pre>
+
+<p>Another interface is also available, based directly on keywords:</p>
+<pre><code class="jl">res = optimize(f, g!,
+               [0.0, 0.0],
+               method = GradientDescent(),
+               g_tol = 1e-12,
+               iterations = 10,
+               store_trace = true,
+               show_trace = false)
+</code></pre>
+
+<p>Notice the need to specify the method using a keyword if this syntax is used. This approach might be deprecated in the future, and as a result we recommend writing code that has to maintained using the <code>Optim.Options</code> approach.</p>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../algo/autodiff/" class="btn btn-xs btn-link">
+        Automatic Differentiation
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../minimization/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../minimization/" class="btn btn-xs btn-link">
+        Minimizing a function
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

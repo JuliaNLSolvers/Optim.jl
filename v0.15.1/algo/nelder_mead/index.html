@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Nelder Mead - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Nelder-Mead", url: "#nelder-mead", children: [
+              {title: "Constructor", url: "#constructor" },
+              {title: "Description", url: "#description" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script>
+      <script src="../../search/require.js"></script>
+      <script src="../../search/search.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../simulated_annealing/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../simulated_annealing/" class="btn btn-xs btn-link">
+        Simulated Annealing
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Nelder-Mead-1'></a></p>
+<h1 id="nelder-mead">Nelder-Mead</h1>
+<p>Nelder-Mead is currently the standard algorithm when no derivatives are provided.</p>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<pre><code class="julia">NelderMead(; parameters = AdaptiveParameters(),
+             initial_simplex = AffineSimplexer())
+</code></pre>
+
+<p>The keywords in the constructor are used to control the following parts of the solver:</p>
+<ul>
+<li><code>parameters</code> is a an instance of either <code>AdaptiveParameters</code> or <code>FixedParameters</code>, and is</li>
+</ul>
+<p>used to generate parameters for the Nelder-Mead Algorithm.</p>
+<ul>
+<li><code>initial_simplex</code> is an instance of <code>AffineSimplexer</code>. See more</li>
+</ul>
+<p>details below.</p>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Our current implementation of the Nelder-Mead algorithm is based on Nelder and Mead (1965) and Gao and Han (2010). Gradient free methods can be a bit sensitive to starting values and tuning parameters, so it is a good idea to be careful with the defaults provided in Optim.</p>
+<p>Instead of using gradient information, Nelder-Mead is a direct search method. It keeps track of the function value at a number of points in the search space. Together, the points form a simplex. Given a simplex, we can perform one of four actions: reflect, expand, contract, or shrink. Basically, the goal is to iteratively replace the worst point with a better point. More information can be found in Nelder and Mead (1965), Lagarias, et al (1998) or Gao and Han (2010).</p>
+<p>The stopping rule is the same as in the original paper, and is the standard error of the function values at the vertices. To set the tolerance level for this convergence criterion, set the <code>g_tol</code> level as described in the Configurable Options section.</p>
+<p>When the solver finishes, we return a minimizer which is either the centroid or one of the vertices. The function value at the centroid adds a function evaluation, as we need to evaluate the objection at the centroid to choose the smallest function value. However, even if the function value at the centroid can be returned as the minimum, we do not trace it during the optimization iterations. This is to avoid too many evaluations of the objective function which can be computationally expensive. Typically, there should be no more than twice as many <code>f_calls</code> than <code>iterations</code>.  Adding an evaluation at the centroid when tracing could considerably increase the total run-time of the algorithm.</p>
+<p><a id='Specifying-the-initial-simplex-1'></a></p>
+<h3 id="specifying-the-initial-simplex">Specifying the initial simplex</h3>
+<p>The default choice of <code>initial_simplex</code> is <code>AffineSimplexer()</code>. A simplex is represented by an $(n+1)$-dimensional vector of $n$-dimensional vectors. It is used together  with the initial <code>x</code> to create the initial simplex. To construct the $i$th vertex, it simply multiplies entry $i$ in the initial vector with a constant <code>b</code>, and adds a constant <code>a</code>. This means that the $i$th of the $n$ additional vertices is of the form</p>
+<p>
+<script type="math/tex; mode=display">
+(x_0^1, x_0^2, \ldots, x_0^i, \ldots, 0,0) + (0, 0, \ldots, x_0^i\cdot b+a,\ldots, 0,0)
+</script>
+</p>
+<p>If an $x_0^i$ is zero, we need the $a$ to make sure all vertices are unique. Generally, it is advised to start with a relatively large simplex.</p>
+<p>If a specific simplex is wanted, it is possible to construct the $(n+1)$-vector of $n$-dimensional vectors, and pass it to the solver using a new type definition and a new method for the function <code>simplexer</code>. For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements that are simply standard uniform draws.</p>
+<pre><code class="julia">using Optim
+struct MySimplexer &lt;: Optim.Simplexer end
+Optim.simplexer(S::MySimplexer, initial_x) = [rand(length(initial_x)) for i = 1:length(initial_x)+1]
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+optimize(f, [.0, .0], NelderMead(initial_simplex = MySimplexer()))
+</code></pre>
+
+<p>Say we want to implement the initial simplex as in Matlab's <code>fminsearch</code>. This is very close to the <code>AffineSimplexer</code> above, but with a small twist. Instead of always adding the <code>a</code>, a constant is only added to entries that are zero. If the entry is non-zero, five percent of the level is added. This might be implemented (by the user) as</p>
+<pre><code class="julia">struct MatlabSimplexer{T} &lt;: Optim.Simplexer
+    a::T
+    b::T
+end
+MatlabSimplexer(;a = 0.00025, b = 0.05) = MatlabSimplexer(a, b)
+
+function Optim.simplexer(A::MatlabSimplexer, initial_x::AbstractArray{T, N}) where {T, N}
+    n = length(initial_x)
+    initial_simplex = Array{T, N}[initial_x for i = 1:n+1]
+    for j = 1:n
+        initial_simplex[j+1][j] += initial_simplex[j+1][j] == zero(T) ? S.b * initial_simplex[j+1][j] : S.a
+    end
+    initial_simplex
+end
+</code></pre>
+
+<p><a id='The-parameters-of-Nelder-Mead-1'></a></p>
+<h3 id="the-parameters-of-nelder-mead">The parameters of Nelder-Mead</h3>
+<p>The different types of steps in the algorithm are governed by four parameters: $\alpha$ for the reflection, $\beta$ for the expansion, $\gamma$ for the contraction, and $\delta$ for the shrink step. We default to the adaptive parameters scheme in Gao and Han (2010). These are based on the dimensionality of the problem, and are given by</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1, \quad \beta = 1+2/n,\quad \gamma =0.75 + 1/2n,\quad \delta = 1-1/n
+</script>
+</p>
+<p>It is also possible to specify the original parameters from Nelder and Mead (1965)</p>
+<p>
+<script type="math/tex; mode=display">
+\alpha = 1,\quad \beta = 2, \quad\gamma = 1/2, \quad\delta = 1/2
+</script>
+</p>
+<p>by specifying <code>parameters  = Optim.FixedParameters()</code>. For specifying custom values, <code>parameters  = Optim.FixedParameters(α = a, β = b, γ = g, δ = d)</code> is used, where a, b, g, d are the chosen values. If another parameter specification is wanted, it is possible to create a custom sub-type of<code>Optim.NMParameters</code>, and add a method to the <code>parameters</code> function. It should take the new type as the first positional argument, and the dimensionality of <code>x</code> as the second positional argument, and return a 4-tuple of parameters. However, it will often be easier to simply supply the wanted parameters to <code>FixedParameters</code>.</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.</p>
+<p>Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on optimization 9.1 (1998): 112-147.</p>
+<p>Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]</p>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../simulated_annealing/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../simulated_annealing/" class="btn btn-xs btn-link">
+        Simulated Annealing
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
