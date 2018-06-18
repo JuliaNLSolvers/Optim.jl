@@ -108,7 +108,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     mc = nconstraints(constraints)
     constr_c = Array{T}(mc)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
-    # we can also update `initial_convergence` for ConstrainedOptimizer in ipnewton.jl
+    # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
     if !isinterior(constraints, initial_x, constr_c)
         warn("Initial guess is not an interior point")
