@@ -94,7 +94,7 @@ function retract!(S::Stiefel_CholQR, X)
     X .= X/chol(overlap)
 end
 #For functions depending only on the subspace spanned by X, we always have G = A*X for some A, and so X'G = G'X, and Stiefel == Grassmann
-#Edelman et al. have G .-= X*G'X (2.53), which I think is incorrect? (eg this projection does not leave the tangent space invariant). Following Absil et al. here.
+#Edelman et al. have G .-= X*G'X (2.53), corresponding to a different metric ("canonical metric"). We follow Absil et al. here and use the metric inherited from Nxn matrices.
 project_tangent!(S::Stiefel, G, X) = (XG = X'G; G .-= X*((XG .+ XG')./2))
 
 
