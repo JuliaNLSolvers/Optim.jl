@@ -134,7 +134,8 @@ function optimize(f,
                   l::AbstractArray{T},
                   u::AbstractArray{T},
                   initial_x::AbstractArray{T},
-                  F::Fminbox = Fminbox(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+                  F::Fminbox = Fminbox(),
+                  options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
     g! = inplace ? g : (G, x) -> copy!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
@@ -146,7 +147,8 @@ function optimize(f,
                   l::AbstractArray{T},
                   u::AbstractArray{T},
                   initial_x::AbstractArray{T},
-                  F::Fminbox = Fminbox(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+                  F::Fminbox = Fminbox(),
+                  options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
     od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
     optimize(od, l, u, initial_x, F)
