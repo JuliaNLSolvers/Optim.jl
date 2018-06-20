@@ -48,6 +48,8 @@ function optimize(d::D, initial_x::Tx, method::M,
 
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+        project_tangent!(method.manifold, gradient(d), state.x)
+
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
