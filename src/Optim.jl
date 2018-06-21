@@ -1,115 +1,136 @@
 __precompile__(true)
 
 module Optim
-    using PositiveFactorizations
-    using Compat
-    using LineSearches
-    using NLSolversBase
-    #using Calculus
-    using DiffEqDiffTools
-#    using ReverseDiff
-    using ForwardDiff
-    import NaNMath
-    import Parameters: @with_kw, @unpack
+    using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
+    using PositiveFactorizations # for globalization strategy in Newton
+    using LineSearches           # for globalization strategy in Quasi-Newton algs
+    using DiffEqDiffTools        # for finite difference derivatives
+#    using ReverseDiff           # for reverse mode AD (not really suitable for scalar output)
+    using ForwardDiff            # for forward mode AD
+    import NaNMath               # for functions that ignore NaNs (no poisoning)
 
-    import Compat.String
-    import Compat.view
+    import Parameters: @with_kw, # for types where constructors are simply defined
+                       @unpack   # by their default values, and simple unpacking
+                                 # of fields
 
-    import Base.length,
-           Base.push!,
-           Base.show,
-           Base.getindex,
-           Base.setindex!
+    using Compat                 # for compatibility across multiple julia versions
+    import Compat.String         # for remake of strings in v0.7/v1.0
+    import Compat.view           # for new views syntax in v0.7/v1.0
 
-    import NLSolversBase: NonDifferentiable,
-                          OnceDifferentiable,
-                          TwiceDifferentiable,
-                          nconstraints,
-                          nconstraints_x
+    # for extensions of functions defined in Base.
+    import Base: length, push!, show, getindex, setindex!
 
-    export optimize,
+    # objective and constraints types and functions relevant to them.
+    import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
+                          nconstraints, nconstraints_x
+
+    # exported functions and types
+    export optimize, # main function
+
+           # Re-export objective types from NLSolversBase
            NonDifferentiable,
            OnceDifferentiable,
            TwiceDifferentiable,
 
+           # Re-export constraint types from NLSolversBase
            TwiceDifferentiableConstraints,
 
+           # I don't think these should be here [pkofod]
            OptimizationState,
            OptimizationTrace,
 
-           AcceleratedGradientDescent,
-           BFGS,
-           Brent,
-           ConjugateGradient,
-           GoldenSection,
+           # Optimization algorithms
+           ## Zeroth order methods (heuristics)
+           NelderMead,
+           ParticleSwarm,
+           SimulatedAnnealing,
+
+           ## First order
+           ### Quasi-Newton
            GradientDescent,
+           BFGS,
+           LBFGS,
+
+           ### Conjugate gradient
+           ConjugateGradient,
+
+           ### Acceleration methods
+           AcceleratedGradientDescent,
+           MomentumGradientDescent,
+
+           ### Nonlinear GMRES
            NGMRES,
            OACCEL,
-           LBFGS,
-           MomentumGradientDescent,
-           NelderMead,
-           Newton,
-           NewtonTrustRegion,
-           SimulatedAnnealing,
-           ParticleSwarm,
 
+           ## Second order
+           ### (Quasi-)Newton
+           Newton,
+
+           ### Trust region
+           NewtonTrustRegion,
+
+           # Constrained
+           ## Box constraints, x_i in [lb_i, ub_i]
+           ### Specifically Univariate, R -> R
+           GoldenSection,
+           Brent,
+           ### Multivariate, R^N -> R
            Fminbox,
            SAMIN,
 
+           ## Manifold constraints
            Manifold,
            Flat,
            Sphere,
            Stiefel,
 
+           ## Non-linear constraints
            IPNewton
 
-    # Types
-    include("types.jl")
 
-    # Manifolds
-    include("Manifolds.jl")
+    include("types.jl") # types used throughout
+    include("Manifolds.jl") # code to handle manifold constraints
+    include("multivariate/precon.jl") # preconditioning functionality
 
-    # Generic stuff
-    include("utilities/generic.jl")
+    # utilities
+    include("utilities/generic.jl") # generic utilities
+    include("utilities/maxdiff.jl") # find largest difference
+    include("utilities/update.jl")  # trace code
 
-    # Maxdiff
-    include("utilities/maxdiff.jl")
-
-    # Tracing
-    include("utilities/update.jl")
-
-    # Grid Search
+    # Unconstrained optimization
+    ## Grid Search
     include("multivariate/solvers/zeroth_order/grid_search.jl")
 
-    # Heuristic Optimization Methods
+    ## Zeroth order (Heuristic) Optimization Methods
     include("multivariate/solvers/zeroth_order/nelder_mead.jl")
     include("multivariate/solvers/zeroth_order/simulated_annealing.jl")
     include("multivariate/solvers/zeroth_order/particle_swarm.jl")
 
-    # preconditioning functionality
-    include("multivariate/precon.jl")
-
-    # Gradient Descent
+    ## Quasi-Newton
     include("multivariate/solvers/first_order/gradient_descent.jl")
-    include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
-    include("multivariate/solvers/first_order/momentum_gradient_descent.jl")
-
-    # Conjugate gradient
-    include("multivariate/solvers/first_order/cg.jl")
-
-    # (L-)BFGS
     include("multivariate/solvers/first_order/bfgs.jl")
     include("multivariate/solvers/first_order/l_bfgs.jl")
 
-    # Newton
-    include("multivariate/solvers/second_order/newton.jl")
-    include("multivariate/solvers/second_order/newton_trust_region.jl")
-    include("multivariate/solvers/second_order/krylov_trust_region.jl")
+    ## Acceleration methods
+    include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
+    include("multivariate/solvers/first_order/momentum_gradient_descent.jl")
 
-    # Nonlinear GMRES
+    ## Conjugate gradient
+    include("multivariate/solvers/first_order/cg.jl")
+
+
+    ## Newton
+    ### Line search
+    include("multivariate/solvers/second_order/newton.jl")
+    include("multivariate/solvers/second_order/krylov_trust_region.jl")
+    ### Trust region
+    include("multivariate/solvers/second_order/newton_trust_region.jl")
+
+    ## Nonlinear GMRES
     include("multivariate/solvers/first_order/ngmres.jl")
 
     # Constrained optimization
+    ## Box constraints
     include("multivariate/solvers/constrained/fminbox.jl")
     include("multivariate/solvers/constrained/samin.jl")
 
@@ -144,7 +165,6 @@ module Optim
     include("api.jl")
 
     ## Interior point includes
-    # Types
     include("multivariate/solvers/constrained/ipnewton/types.jl")
     # Tracing
     include("multivariate/solvers/constrained/ipnewton/utilities/update.jl")

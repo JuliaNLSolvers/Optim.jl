@@ -1,5 +1,3 @@
-
-
 # Some Boiler-plate code for preconditioning
 #
 # Meaning of P:
