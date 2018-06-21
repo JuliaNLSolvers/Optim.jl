@@ -1,5 +1,11 @@
 # # Nonlinear constrained optimization
-
+#
+#-
+#md # !!! tip
+#md #     This example is also available as a Jupyter notebook:
+#md #     [`ipnewton_basics.ipynb`](@__NBVIEWER_ROOT_URL__examples/generated/ipnewton_basics.ipynb)
+#-
+#
 # The nonlinear constrained optimization interface in
 # `Optim` assumes that the user can write the optimization
 # problem in the following way.
@@ -15,14 +21,12 @@
 # Likewise, setting ``l_j=-\infty`` or ``u_j=\infty`` means that the
 # constraint is bounded from below or above respectively.
 
-using Optim, NLSolversBase
+using Optim, NLSolversBase #hide
 
 # # Constrained optimization with `IPNewton`
 
 # We will go through examples on how to use the constraints interface
-# with the interior-point Newton optimization algorithm `IPNewton`.
-
-# **TODO:** Add link to alg/ipnewton.md file
+# with the interior-point Newton optimization algorithm [IPNewton](../../algo/ipnewton.md).
 
 # Throughout these examples we work with the standard Rosenbrock function.
 # The objective and its derivatives are given by
@@ -201,3 +205,12 @@ lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
 dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
                                      lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
+
+#md # ## [Plain Program](@id ipnewton_basics-plain-program)
+#md #
+#md # Below follows a version of the program without any comments.
+#md # The file is also available here: [ipnewton_basics.jl](ipnewton_basics.jl)
+#md #
+#md # ```julia
+#md # @__CODE__
+#md # ```

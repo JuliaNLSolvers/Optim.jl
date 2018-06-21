@@ -47,5 +47,6 @@ pages:
         - Hessian Required:
             - Newton: 'algo/newton.md'
             - Newton with Trust Region: 'algo/newton_trust_region.md'
+            - Interior point Newton: 'algo/ipnewton.md'
     - Contributing: 'dev/contributing.md'
     - License: 'LICENSE.md'
