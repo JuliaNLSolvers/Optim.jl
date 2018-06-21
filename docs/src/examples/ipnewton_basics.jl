@@ -67,10 +67,13 @@ end;
 x0 = [0.0, 0.0]
 df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
 
-lx = [-0.5, -0.5]; ux = [1.0, 1.0]
+lx = [-0.5, -0.5]; ux = [0.5, 0.5]
 dfc = TwiceDifferentiableConstraints(lx, ux)
 
 res = optimize(df, dfc, x0, IPNewton())
+## Test the results             #src
+using Base.Test                 #src
+@test Optim.minimum(res) ≈ 0.25 #src
 
 # If we only want to set lower bounds, use `ux = fill(Inf, 2)`
 
@@ -79,7 +82,7 @@ dfc = TwiceDifferentiableConstraints(lx, ux)
 
 clear!(df)
 res = optimize(df, dfc, x0, IPNewton())
-
+@test Optim.minimum(res) < 0.0 + sqrt(eps()) #src
 
 # ## Defining "unconstrained" problems
 
@@ -92,13 +95,14 @@ dfc = TwiceDifferentiableConstraints(lx, ux)
 
 clear!(df)
 res = optimize(df, dfc, x0, IPNewton())
+@test Optim.minimum(res) < 0.0 + sqrt(eps()) #src
 
 lx = Float64[]; ux = Float64[]
 dfc = TwiceDifferentiableConstraints(lx, ux)
 
 clear!(df)
 res = optimize(df, dfc, x0, IPNewton())
-
+@test Optim.minimum(res) < 0.0 + sqrt(eps()) #src
 
 # ### Generic nonlinear constraints
 
@@ -147,7 +151,7 @@ lc = [-Inf]; uc = [0.5^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
-
+@test Optim.minimum(res) ≈ 0.2966215688829263 #src
 
 # We can add a lower bound on the constraint, and thus
 # optimize the objective on the annulus with
@@ -156,7 +160,11 @@ res = optimize(df, dfc, x0, IPNewton())
 lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
-res = optimize(df, dfc, x0, IPNewton())
+@suppress begin                                   #src
+    res = optimize(df, dfc, x0, IPNewton())
+    @test Optim.minimum(res) ≈ 0.2966215688829255 #src
+end                                               #src
+
 
 # **Note that the algorithm warns that the Initial guess is not an
 # interior point.** `IPNewton` can often handle this, however, if the
@@ -205,6 +213,8 @@ lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
 dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
                                      lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
+@test Optim.minimum(res) ≈ 1.0                                   #src
+@test isapprox(Optim.minimizer(res), zeros(2), atol=sqrt(eps())) #src
 
 #md # ## [Plain Program](@id ipnewton_basics-plain-program)
 #md #

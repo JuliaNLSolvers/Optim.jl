@@ -219,3 +219,6 @@ end
         @time include(my_test)
     end
 end
+
+println("Literate examples")
+@time include("examples.jl")
