@@ -1,6 +1,8 @@
 using Documenter, Optim
 
 # use include("Rosenbrock.jl") etc
+# Generate examples
+include("generate.jl")
 
 odir = Pkg.dir("Optim")
 run(`cp $odir/LICENSE.md $odir/docs/src/LICENSE.md`)

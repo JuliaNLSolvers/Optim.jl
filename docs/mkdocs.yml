@@ -27,8 +27,9 @@ pages:
         - Linesearch: 'algo/linesearch.md'
         - Preconditioners: 'algo/precondition.md'
         - Complex optimization: 'algo/complex.md'
-        - Manifolds: 'algo/manifolds.md'    
+        - Manifolds: 'algo/manifolds.md'
         - Tips and tricks: 'user/tipsandtricks.md'
+        - Interior point Newton: 'examples/generated/ipnewton_basics.md'
     - Algorithms:
         - Gradient Free:
             - Nelder Mead: 'algo/nelder_mead.md'
@@ -46,6 +47,5 @@ pages:
         - Hessian Required:
             - Newton: 'algo/newton.md'
             - Newton with Trust Region: 'algo/newton_trust_region.md'
-    - 'Contributing':
-        - 'Contributing': 'dev/contributing.md'
+    - Contributing: 'dev/contributing.md'
     - License: 'LICENSE.md'
