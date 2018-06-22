@@ -63,7 +63,7 @@ function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff 
 end
 function optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
 
-    method = fallback_method(f)
+    method = fallback_method(f, g)
     checked_kwargs, method = check_kwargs(kwargs, method)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
     add_default_opts!(checked_kwargs, method)
