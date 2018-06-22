@@ -14,6 +14,7 @@ general_tests = [
     "callables",
     "callbacks",
     "convergence",
+    "default_solvers",
     "deprecate",
     "initial_convergence",
     "objective_types",
