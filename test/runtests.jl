@@ -222,3 +222,9 @@ end
 
 println("Literate examples")
 @time include("examples.jl")
+
+
+# Build the docs
+if get(ENV, "TRAVIS_OS_NAME", "") == "linux" && get(ENV, "TRAVIS_JULIA_VERSION", "") == "0.6"
+    include(joinpath(@__DIR__, "../docs/make.jl"))
+end
