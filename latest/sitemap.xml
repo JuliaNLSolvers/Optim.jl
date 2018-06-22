@@ -46,6 +46,16 @@
      <changefreq>daily</changefreq>
     </url>
     <url>
+     <loc>/examples/generated/ipnewton_basics/</loc>
+     <lastmod>2018-06-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>/examples/generated/ipnewton_basics/</loc>
+     <lastmod>2018-06-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
      <loc>/algo/nelder_mead/</loc>
      <lastmod>2018-06-22</lastmod>
      <changefreq>daily</changefreq>
@@ -92,6 +102,11 @@
     </url>
     <url>
      <loc>/algo/newton_trust_region/</loc>
+     <lastmod>2018-06-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>/algo/ipnewton/</loc>
      <lastmod>2018-06-22</lastmod>
      <changefreq>daily</changefreq>
     </url>

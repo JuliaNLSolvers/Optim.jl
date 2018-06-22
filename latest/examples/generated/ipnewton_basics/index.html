@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Maximum likelihood estimation - Optim.jl</title>
+    <link href="../../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Nonlinear constrained optimization", url: "#nonlinear-constrained-optimization", children: [
+          ]},
+          {title: "Constrained optimization with IPNewton", url: "#constrained-optimization-with-ipnewton", children: [
+              {title: "Optimization interface", url: "#optimization-interface" },
+              {title: "Box minimzation", url: "#box-minimzation" },
+              {title: "Defining \"unconstrained\" problems", url: "#defining-unconstrained-problems" },
+              {title: "Plain Program", url: "#plain-program" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../../assets/mathjaxhelper.js"></script>
+      <script src="../../../search/require.js"></script>
+      <script src="../../../search/search.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
+        Nelder Mead
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="./" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="./" class="btn btn-xs btn-link">
+        Interior point Newton
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Nonlinear-constrained-optimization-1'></a></p>
+<h1 id="nonlinear-constrained-optimization">Nonlinear constrained optimization</h1>
+<p>!!! tip
+    This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/latest/examples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p>
+<p>The nonlinear constrained optimization interface in <code>Optim</code> assumes that the user can write the optimization problem in the following way.</p>
+<p>
+<script type="math/tex; mode=display">
+\min_{x\in\mathbb{R}^n} f(x) \quad \text{such that}\\
+l_x \leq \phantom{c(}x\phantom{)} \leq u_x \\
+l_c \leq c(x) \leq u_c.
+</script>
+</p>
+<p>For inequality constraints on $x_j$ or $c(x)_j$ you set that particular entry the bounds to be equal, $l_j=u_j$. Likewise, setting $l_j=-\infty$ or $u_j=\infty$ means that the constraint is bounded from below or above respectively.</p>
+<p><a id='Constrained-optimization-with-IPNewton-1'></a></p>
+<h1 id="constrained-optimization-with-ipnewton">Constrained optimization with <code>IPNewton</code></h1>
+<p>We will go through examples on how to use the constraints interface with the interior-point Newton optimization algorithm <a href="../../../algo/ipnewton/">IPNewton</a>.</p>
+<p>Throughout these examples we work with the standard Rosenbrock function. The objective and its derivatives are given by</p>
+<pre><code class="julia">fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+
+function fun_grad!(g, x)
+g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+g[2] = 200.0 * (x[2] - x[1]^2)
+end
+
+function fun_hess!(h, x)
+h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+h[1, 2] = -400.0 * x[1]
+h[2, 1] = -400.0 * x[1]
+h[2, 2] = 200.0
+end;
+</code></pre>
+
+<p><a id='Optimization-interface-1'></a></p>
+<h2 id="optimization-interface">Optimization interface</h2>
+<p>To solve a constrained optimization problem we call the <code>optimize</code> method</p>
+<pre><code class="julia">optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::Tx, method::ConstrainedOptimizer, options::Options)
+</code></pre>
+
+<p>We can create instances of <code>AbstractObjective</code> and <code>AbstractConstraints</code> using the types <code>TwiceDifferentiable</code> and <code>TwiceDifferentiableConstraints</code> from the package <code>NLSolversBase.jl</code>.</p>
+<p><a id='Box-minimzation-1'></a></p>
+<h2 id="box-minimzation">Box minimzation</h2>
+<p>We want to optimize the Rosenbrock function in the box $-0.5 \leq x \leq 0.5$, starting from the point $x_0=(0,0)$. Box constraints are defined using, for example, <code>TwiceDifferentiableConstraints(lx, ux)</code>.</p>
+<pre><code class="julia">x0 = [0.0, 0.0]
+df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
+
+lx = [-0.5, -0.5]; ux = [0.5, 0.5]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.5,0.2500000000000883]
+ * Minimum: 2.500000e-01
+ * Iterations: 41
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 8.88e-14
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: true
+     |f(x) - f(x')| = 0.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 1.00e+00
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 63
+ * Gradient Calls: 63
+</code></pre>
+
+<p>If we only want to set lower bounds, use <code>ux = fill(Inf, 2)</code></p>
+<pre><code class="julia">ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999998342594,0.9999999996456271]
+ * Minimum: 7.987239e-20
+ * Iterations: 35
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.54e-10
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 3.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 8.83e-09
+   * Stopped by an increasing objective: true
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 63
+ * Gradient Calls: 63
+</code></pre>
+
+<p><a id='Defining-"unconstrained"-problems-1'></a></p>
+<h2 id="defining-unconstrained-problems">Defining "unconstrained" problems</h2>
+<p>An unconstrained problem can be defined either by passing <code>Inf</code> bounds or empty arrays. <strong>Note that we must pass the correct type information to the empty <code>lx</code> and <code>ux</code></strong></p>
+<pre><code class="julia">lx = fill(-Inf, 2); ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = Float64[]; ux = Float64[]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999992619217,0.9999999985003628]
+ * Minimum: 5.998937e-19
+ * Iterations: 34
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 1.50e-09
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 3.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 7.92e-09
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 63
+ * Gradient Calls: 63
+</code></pre>
+
+<p><a id='Generic-nonlinear-constraints-1'></a></p>
+<h3 id="generic-nonlinear-constraints">Generic nonlinear constraints</h3>
+<p>We now consider the Rosenbrock problem with a constraint on</p>
+<p>
+<script type="math/tex; mode=display">
+   c(x)_1 = x_1^2 + x_2^2.
+</script>
+</p>
+<p>We pass the information about the constraints to <code>optimize</code> by defining a vector function <code>c(x)</code> and its Jacobian <code>J(x)</code>.</p>
+<p>The Hessian information is treated differently, by considering the Lagrangian of the corresponding slack-variable transformed optimization problem. This is similar to how the <a href="https://github.com/JuliaSmoothOptimizers/CUTEst.jl">CUTEst library</a> works. Let $H_j(x)$ represent the Hessian of the $j$th component $c(x)_j$ of the generic constraints. and $\lambda_j$ the corresponding dual variable in the Lagrangian. Then we want the <code>constraint</code> object to add the values of $H_j(x)$ to the Hessian of the objective, weighted by $\lambda_j$.</p>
+<p>The Julian form for the supplied function $c(x)$ and the derivative information is then added in the following way.</p>
+<pre><code class="julia">con_c!(c, x) = (c[1] = x[1]^2 + x[2]^2; c)
+function con_jacobian!(J, x)
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    J
+end
+function con_h!(h, x, λ)
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+end;
+</code></pre>
+
+<p><strong>Note that <code>con_h!</code> adds the <code>λ</code>-weighted Hessian value of each element of <code>c(x)</code> to the Hessian of <code>fun</code>.</strong></p>
+<p>We can then optimize the Rosenbrock function inside the ball of radius $0.5$.</p>
+<pre><code class="julia">lx = Float64[]; ux = Float64[]
+lc = [-Inf]; uc = [0.5^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.45564896414551875,0.2058737998704899]
+ * Minimum: 2.966216e-01
+ * Iterations: 28
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: true
+     |x - x'| = 0.00e+00
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 0.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 7.71e-01
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 109
+ * Gradient Calls: 109
+</code></pre>
+
+<p>We can add a lower bound on the constraint, and thus optimize the objective on the annulus with inner and outer radii $0.1$ and $0.5$ respectively.</p>
+<pre><code class="julia">lc = [0.1^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+    res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<p><strong>Note that the algorithm warns that the Initial guess is not an interior point.</strong> <code>IPNewton</code> can often handle this, however, if the initial guess is such that <code>c(x) = u_c</code>, then the algorithm currently fails. We may fix this in the future.</p>
+<p><a id='Multiple-constraints-1'></a></p>
+<h4 id="multiple-constraints">Multiple constraints</h4>
+<p>The following example illustrates how to add an additional constraint. In particular, we add a constraint function</p>
+<p>
+<script type="math/tex; mode=display">
+   c(x)_2 = x_2\sin(x_1)-x_1
+</script>
+</p>
+<pre><code class="julia">function con2_c!(c, x)
+    c[1] = x[1]^2 + x[2]^2     ## First constraint
+    c[2] = x[2]*sin(x[1])-x[1] ## Second constraint
+    c
+end
+function con2_jacobian!(J, x)
+    # First constraint
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    # Second constraint
+    J[2,1] = x[2]*cos(x[1])-1.0
+    J[2,2] = sin(x[1])
+    J
+end
+function con2_h!(h, x, λ)
+    # First constraint
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+    # Second constraint
+    h[1,1] += λ[2]*x[2]*-sin(x[1])
+    h[1,2] += λ[2]*cos(x[1])
+    # Symmetrize h
+    h[2,1]  = h[1,2]
+    h
+end;
+</code></pre>
+
+<pre><code>WARNING: Initial guess is not an interior point
+
+Stacktrace:
+ [1] initial_state(::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}, ::Optim.Options{Float64,Void}, ::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:115
+ [2] optimize(::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}, ::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/interior.jl:196
+ [3] cd(::Documenter.Expanders.##8#10{Module}, ::String) at ./file.jl:70
+ [4] (::Documenter.Utilities.##19#20{Documenter.Expanders.##7#9{Documenter.Documents.Page,Module},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:593
+ [5] withoutput(::Documenter.Expanders.##7#9{Documenter.Documents.Page,Module}) at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:591
+ [6] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Base.Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:478
+ [7] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Base.Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
+ [8] expand(::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:31
+ [9] runner(::Type{Documenter.Builder.ExpandTemplates}, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Builder.jl:178
+ [10] dispatch(::Type{Documenter.Builder.DocumentPipeline}, ::Documenter.Documents.Document, ::Vararg{Documenter.Documents.Document,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
+ [11] cd(::Documenter.##2#3{Documenter.Documents.Document}, ::String) at ./file.jl:70
+ [12] #makedocs#1(::Bool, ::Array{Any,1}, ::Function) at /home/travis/.julia/v0.6/Documenter/src/Documenter.jl:203
+ [13] (::Documenter.#kw##makedocs)(::Array{Any,1}, ::Documenter.#makedocs) at ./&lt;missing&gt;:0
+ [14] include_from_node1(::String) at ./loading.jl:576
+ [15] include(::String) at ./sysimg.jl:14
+ [16] include_from_node1(::String) at ./loading.jl:576
+ [17] include(::String) at ./sysimg.jl:14
+ [18] process_options(::Base.JLOptions) at ./client.jl:305
+ [19] _start() at ./client.jl:371
+</code></pre>
+
+<p>We generate the constraint objects and call <code>IPNewton</code> with initial guess $x_0 = (0.25,0.25)$.</p>
+<pre><code class="julia">x0 = [0.25, 0.25]
+lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
+dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.25,0.25]
+ * Minimizer: [-1.595442184049669e-19,-1.9465281383022617e-18, ...]
+ * Minimum: 1.000000e+00
+ * Iterations: 29
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 6.90e-10
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.38e-09 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 2.00e+00
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 215
+ * Gradient Calls: 215
+</code></pre>
+
+<p><a id='ipnewton_basics-plain-program-1'></a></p>
+<h2 id="plain-program">Plain Program</h2>
+<p>Below follows a version of the program without any comments. The file is also available here: <a href="../ipnewton_basics.jl">ipnewton_basics.jl</a></p>
+<pre><code class="julia">using Optim, NLSolversBase #hide
+
+fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+
+function fun_grad!(g, x)
+g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+g[2] = 200.0 * (x[2] - x[1]^2)
+end
+
+function fun_hess!(h, x)
+h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+h[1, 2] = -400.0 * x[1]
+h[2, 1] = -400.0 * x[1]
+h[2, 2] = 200.0
+end;
+
+x0 = [0.0, 0.0]
+df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
+
+lx = [-0.5, -0.5]; ux = [0.5, 0.5]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+res = optimize(df, dfc, x0, IPNewton())
+
+ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = fill(-Inf, 2); ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = Float64[]; ux = Float64[]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+con_c!(c, x) = (c[1] = x[1]^2 + x[2]^2; c)
+function con_jacobian!(J, x)
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    J
+end
+function con_h!(h, x, λ)
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+end;
+
+lx = Float64[]; ux = Float64[]
+lc = [-Inf]; uc = [0.5^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+
+lc = [0.1^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+    res = optimize(df, dfc, x0, IPNewton())
+
+function con2_c!(c, x)
+    c[1] = x[1]^2 + x[2]^2     ## First constraint
+    c[2] = x[2]*sin(x[1])-x[1] ## Second constraint
+    c
+end
+function con2_jacobian!(J, x)
+    # First constraint
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    # Second constraint
+    J[2,1] = x[2]*cos(x[1])-1.0
+    J[2,2] = sin(x[1])
+    J
+end
+function con2_h!(h, x, λ)
+    # First constraint
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+    # Second constraint
+    h[1,1] += λ[2]*x[2]*-sin(x[1])
+    h[1,2] += λ[2]*cos(x[1])
+    # Symmetrize h
+    h[2,1]  = h[1,2]
+    h
+end;
+
+x0 = [0.25, 0.25]
+lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
+dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
+</code></pre>
+
+<p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
+        Nelder Mead
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="./" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="./" class="btn btn-xs btn-link">
+        Interior point Newton
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
