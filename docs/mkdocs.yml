@@ -30,6 +30,7 @@ pages:
         - Manifolds: 'algo/manifolds.md'
         - Tips and tricks: 'user/tipsandtricks.md'
         - Interior point Newton: 'examples/generated/ipnewton_basics.md'
+        - Maximum likelihood estimation: 'examples/generated/ipnewton_basics.md'
     - Algorithms:
         - Gradient Free:
             - Nelder Mead: 'algo/nelder_mead.md'
