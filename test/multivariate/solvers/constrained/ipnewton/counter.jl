@@ -1,4 +1,4 @@
-@testset "function counter" begin
+@testset "Function counter" begin
     prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"]
 
     let

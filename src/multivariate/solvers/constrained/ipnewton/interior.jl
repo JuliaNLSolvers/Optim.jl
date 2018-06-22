@@ -1,3 +1,6 @@
+# TODO: when Optim supports sparse arrays, make a SparseMatrixCSC version of jacobianx
+
+
 abstract type AbstractBarrierState end
 
 # These are used not only for the current state, but also for the step and the gradient

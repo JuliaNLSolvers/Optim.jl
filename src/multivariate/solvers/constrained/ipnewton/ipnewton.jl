@@ -50,9 +50,9 @@ type IPNewtonState{T,Tx} <: AbstractBarrierState
     x_previous::Tx
     g::Tx
     f_x_previous::T
-    H::Matrix{T}
-    HP
-    Hd::Vector{Int8}
+    H::Matrix{T}          # Hessian of the Lagrangian?
+    HP # TODO: remove HP? It's not used
+    Hd::Vector{Int8}  # TODO: remove Hd? It's not used
     s::Tx  # step for x
     # Barrier penalty fields
     μ::T                  # coefficient of the barrier penalty
@@ -68,7 +68,7 @@ type IPNewtonState{T,Tx} <: AbstractBarrierState
     Optim.@add_linesearch_fields()
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
-    Htilde
+    Htilde               # Positive Cholesky factorization of H from PositiveFactorizations.jl
 end
 
 # TODO: Do we need this convert thing? I don't have any tests to check that it works
@@ -108,7 +108,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     mc = nconstraints(constraints)
     constr_c = Array{T}(mc)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
-    # we can also update `initial_convergence` for ConstrainedOptimizer in ipnewton.jl
+    # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
     if !isinterior(constraints, initial_x, constr_c)
         warn("Initial guess is not an interior point")
@@ -211,6 +211,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     # non-objective Lagrangian terms to the existing objective Hessian Hxx.
     # This follows the approach by the CUTEst interface
     constraints.h!(Hxx, x, λ)
+
     # Add the Jacobian terms (JI'*Hss*JI)
     JIc = view(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc./bstate.slack_c)
@@ -222,7 +223,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     for (i,j) in enumerate(bounds.ineqx)
         Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
-    state.Htilde = cholfact(Positive, state.H, Val{true})
+    state.Htilde = cholfact(Positive, Hxx, Val{true})
 
     state
 end
