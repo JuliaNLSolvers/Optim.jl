@@ -16,10 +16,10 @@
 # l_c \leq c(x) \leq u_c.
 # ```
 
-# For inequality constraints on ``x_j`` or ``c(x)_j`` you set that
-# particular entry the bounds to be equal, ``l_j=u_j``.
+# For equality constraints on ``x_j`` or ``c(x)_j`` you set those
+# particular entries of bounds to be equal, ``l_j=u_j``.
 # Likewise, setting ``l_j=-\infty`` or ``u_j=\infty`` means that the
-# constraint is bounded from below or above respectively.
+# constraint is unbounded from below or above respectively.
 
 using Optim, NLSolversBase #hide
 
