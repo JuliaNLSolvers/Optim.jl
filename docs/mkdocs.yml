@@ -11,10 +11,14 @@ markdown_extensions:
   - tables
   - fenced_code
   - mdx_math
+  - admonition
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML
   - assets/mathjaxhelper.js
+
+extra_css:
+  - assets/Documenter.css
 
 docs_dir: 'build'
 
@@ -30,7 +34,7 @@ pages:
         - Manifolds: 'algo/manifolds.md'
         - Tips and tricks: 'user/tipsandtricks.md'
         - Interior point Newton: 'examples/generated/ipnewton_basics.md'
-        - Maximum likelihood estimation: 'examples/generated/ipnewton_basics.md'
+        - Maximum likelihood estimation: 'examples/generated/maxlikenlm.md'
     - Algorithms:
         - Gradient Free:
             - Nelder Mead: 'algo/nelder_mead.md'
