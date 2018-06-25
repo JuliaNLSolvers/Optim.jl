@@ -41,7 +41,7 @@ function Options(;
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
-        allow_f_increases::Bool = false,
+        allow_f_increases::Bool = true,
         allow_outer_f_increases::Bool = false,
         successive_f_tol::Int = 0,
         iterations::Int = 1_000,
