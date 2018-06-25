@@ -2,10 +2,18 @@ update_g!(d, state, method) = nothing
 function update_g!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton}
     # Update the function value and gradient
     value_gradient!(d, state.x)
+    if M <: FirstOrderOptimizer #only for methods that support manifold optimization
+        project_tangent!(method.manifold, gradient(d), state.x)
+    end
 end
 update_fg!(d, state, method) = nothing
 update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
-update_fg!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton} = value_gradient!(d, state.x)
+function update_fg!(d, state, method::M) where M<:Union{FirstOrderOptimizer, Newton}
+    value_gradient!(d, state.x)
+    if M <: FirstOrderOptimizer #only for methods that support manifold optimization
+        project_tangent!(method.manifold, gradient(d), state.x)
+    end
+end
 
 # Update the Hessian
 update_h!(d, state, method) = nothing
@@ -48,6 +56,7 @@ function optimize(d::D, initial_x::Tx, method::M,
 
         update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+
         x_converged, f_converged,
         g_converged, converged, f_increased = assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
