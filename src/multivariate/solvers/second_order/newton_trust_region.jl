@@ -88,7 +88,7 @@ function solve_tr_subproblem!(gr,
     # Cache the inner products between the eigenvectors and the gradient.
     qg = similar(gr)
     for i=1:n
-        qg[i] = vecdot(H_eig[:vectors][:, i], gr)
+        qg[i] = dot(H_eig[:vectors][:, i], gr)
     end
 
     # These values describe the outcome of the subproblem.  They will be
@@ -164,8 +164,8 @@ function solve_tr_subproblem!(gr,
                 R = VERSION < v"0.5-" ? chol(H_ridged) : chol(Hermitian(H_ridged))
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
-                norm2_s = vecdot(s, s)
-                lambda_update = norm2_s * (sqrt(norm2_s) - delta) / (delta * vecdot(q_l, q_l))
+                norm2_s = dot(s, s)
+                lambda_update = norm2_s * (sqrt(norm2_s) - delta) / (delta * dot(q_l, q_l))
                 lambda += lambda_update
 
                 # Check that lambda is not less than lambda_lb, and if so, go
@@ -186,7 +186,7 @@ function solve_tr_subproblem!(gr,
         end
     end
 
-    m = vecdot(gr, s) + 0.5 * vecdot(s, H * s)
+    m = dot(gr, s) + 0.5 * dot(s, H * s)
 
     return m, interior, lambda, hard_case, reached_solution
 end
@@ -267,14 +267,14 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
 
     # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
+    copyto!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
 
     # Update current position
     state.x .+= state.s
 
     # Update the function value and gradient
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
     state.f_x_previous = value(d)
     value_gradient!(d, state.x)
 
@@ -311,11 +311,11 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # steps reducing delta by constant factors while each solution
         # will be the same.
         x_diff = state.x - state.x_previous
-        delta = 0.25 * sqrt(vecdot(x_diff, x_diff))
+        delta = 0.25 * sqrt(dot(x_diff, x_diff))
 
         d.F = state.f_x_previous
-        copy!(state.x, state.x_previous)
-        copy!(gradient(d), state.g_previous)
+        copyto!(state.x, state.x_previous)
+        copyto!(gradient(d), state.g_previous)
     end
 
     false

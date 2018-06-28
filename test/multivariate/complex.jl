@@ -9,9 +9,9 @@
     b = randn(n) + im*randn(n)
     μ = 1.0
 
-    fcomplex(x) = real(vecdot(x,A*x)/2 - vecdot(b,x)) + μ*sum(abs.(x).^4)
+    fcomplex(x) = real(dot(x,A*x)/2 - dot(b,x)) + μ*sum(abs.(x).^4)
     gcomplex(x) = A*x-b + 4μ*(abs.(x).^2).*x
-    gcomplex!(stor,x) = copy!(stor,gcomplex(x))
+    gcomplex!(stor,x) = copyto!(stor,gcomplex(x))
 
 
     x0 = randn(n)+im*randn(n)
@@ -63,7 +63,7 @@
             # to_cplx(x) = x[1:n] + im*x[n+1:2n]
             # from_cplx(x) = [real(x);imag(x)]
             # freal(x) = fcomplex(to_cplx(x))
-            # greal!(stor,x) = copy!(stor, from_cplx(gcomplex(to_cplx(x))))
+            # greal!(stor,x) = copyto!(stor, from_cplx(gcomplex(to_cplx(x))))
             # opt = Optim.Options(allow_f_increases=true,show_trace=true)
             # println("$(summary(method)) cplx")
             # res_cplx = Optim.optimize(fcomplex,gcomplex!,x0,method,opt)

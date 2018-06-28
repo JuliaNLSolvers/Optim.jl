@@ -1,4 +1,4 @@
-immutable KrylovTrustRegion{T <: Real} <: SecondOrderOptimizer
+struct KrylovTrustRegion{T <: Real} <: SecondOrderOptimizer
     initial_radius::T
     max_radius::T
     eta::T
@@ -192,7 +192,7 @@ function assess_convergence(state::KrylovTrustRegionState, d, options)
         f_converged = true
     end
 
-    if vecnorm(gradient(d), Inf) < options.g_tol
+    if norm(gradient(d), Inf) < options.g_tol
         g_converged = true
     end
 

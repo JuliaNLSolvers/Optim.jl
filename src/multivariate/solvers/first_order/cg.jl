@@ -41,7 +41,7 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-struct ConjugateGradient{Tf, T, Tprep<:Union{Function, Void}, IL, L} <: FirstOrderOptimizer
+struct ConjugateGradient{Tf, T, Tprep<:Union{Function, Nothing}, IL, L} <: FirstOrderOptimizer
     eta::Tf
     P::T
     precondprep!::Tprep
@@ -127,7 +127,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
     method.precondprep!(method.P, initial_x)
-    A_ldiv_B!(pg, method.P, gradient(d))
+    ldiv!(pg, method.P, gradient(d))
     if method.P != nothing
         project_tangent!(method.manifold, pg, initial_x)
     end
@@ -147,7 +147,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # Search direction is predetermined
 
         # Maintain a record of the previous gradient
-        copy!(state.g_previous, gradient(d))
+        copyto!(state.g_previous, gradient(d))
 
         # Determine the distance of movement along the search line
         lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -167,20 +167,20 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         #  Calculate the beta factor (HZ2012)
         # -----------------
         # Comment on py: one could replace the computation of py with
-        #    ydotpgprev = vecdot(y, pg)
-        #    vecdot(y, py)  >>>  vecdot(y, pg) - ydotpgprev
+        #    ydotpgprev = dot(y, pg)
+        #    dot(y, py)  >>>  dot(y, pg) - ydotpgprev
         # but I am worried about round-off here, so instead we make an
         # extra copy, which is probably minimal overhead.
         # -----------------
         method.precondprep!(method.P, state.x)
         dPd = real(dot(state.s, method.P, state.s))
-        etak = method.eta * real(vecdot(state.s, state.g_previous)) / dPd
+        etak = method.eta * real(dot(state.s, state.g_previous)) / dPd
         state.y .= gradient(d) .- state.g_previous
-        ydots = real(vecdot(state.y, state.s))
-        copy!(state.py, state.pg)        # below, store pg - pg_previous in py
-        A_ldiv_B!(state.pg, method.P, gradient(d))
+        ydots = real(dot(state.y, state.s))
+        copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
+        ldiv!(state.pg, method.P, gradient(d))
         state.py .= state.pg .- state.py
-        betak = (real(vecdot(state.y, state.pg)) - real(vecdot(state.y, state.py)) * real(vecdot(gradient(d), state.s)) / ydots) / ydots
+        betak = (real(dot(state.y, state.pg)) - real(dot(state.y, state.py)) * real(dot(gradient(d), state.s)) / ydots) / ydots
         beta = max(betak, etak)
         state.s .= beta.*state.s .- state.pg
         project_tangent!(method.manifold, state.s, state.x)

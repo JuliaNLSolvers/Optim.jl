@@ -1,9 +1,15 @@
-using Optim, Compat
+using Optim
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
+using Compat
 using Base.Test
 using Suppressor
 using PositiveFactorizations # for the IPNewton tests
+
+import LineSearches
+import ForwardDiff
+import NLSolversBase
+import LinearAlgebra
 
 const MVP = MultivariateProblems
 
@@ -192,7 +198,7 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
             end
             if !(name in minimizer_exceptions)
-                @test vecnorm(Optim.minimizer(results) - prob.solutions) < 1e-2
+                @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
             end
         else
             debug_printing && print_with_color(:blue, "Skipping $name\n")

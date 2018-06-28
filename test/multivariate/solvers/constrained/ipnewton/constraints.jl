@@ -49,7 +49,7 @@
             pgrad = similar(p)
             ftot!(pgrad, p)
             chunksize = min(8, length(p))
-            TD = ForwardDiff.Dual{ForwardDiff.Tag{Void,Float64},eltype(p),chunksize}
+            TD = ForwardDiff.Dual{ForwardDiff.Tag{Nothing,Float64},eltype(p),chunksize}
             xd = similar(x, TD)
             bstated = Optim.BarrierStateVars{TD}(bounds)
             pcmp = similar(p)
@@ -76,8 +76,8 @@
         ## result as the general case. So in the first three
         ## constrained cases below, we compare variable constraints
         ## against the same kind of constraint applied generically.
-        cvar! = (c, x) -> copy!(c, x)
-        cvarJ! = (J, x) -> copy!(J, eye(size(J)...))
+        cvar! = (c, x) -> copyto!(c, x)
+        cvarJ! = (J, x) -> copyto!(J, eye(size(J)...))
         cvarh! = (h, x, λ) -> h  # h! adds to h, it doesn't replace it
 
         ## No constraints
@@ -113,7 +113,7 @@
         constraints = TwiceDifferentiableConstraints(
             (c,x)->nothing, (J,x)->nothing, (H,x,λ)->nothing, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.λxE, bstate.λxE)
+        copyto!(state.bstate.λxE, bstate.λxE)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ [gx; xbar-x]
         n = length(x)
@@ -122,7 +122,7 @@
         bounds = Optim.ConstraintBounds([], [], xbar, xbar)
         constraints = TwiceDifferentiableConstraints(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.λcE, bstate.λxE)
+        copyto!(state.bstate.λcE, bstate.λxE)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ [gx; xbar-x]
         n = length(x)
@@ -177,8 +177,8 @@
         constraints = TwiceDifferentiableConstraints(
             (c,x)->nothing, (J,x)->nothing, (H,x,λ)->nothing, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.slack_x, bstate.slack_x)
-        copy!(state.bstate.λx, bstate.λx)
+        copyto!(state.bstate.slack_x, bstate.slack_x)
+        copyto!(state.bstate.λx, bstate.λx)
         setstate!(state, μ, d0, constraints, method)
         gxs, hxs = zeros(length(x)), zeros(length(x))
         s, λ = state.bstate.slack_x, state.bstate.λx
@@ -198,15 +198,15 @@
         bounds = Optim.ConstraintBounds([], [], lb, ub)
         constraints = TwiceDifferentiableConstraints(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.slack_c, bstate.slack_x)
-        copy!(state.bstate.λc, bstate.λx)
+        copyto!(state.bstate.slack_c, bstate.slack_x)
+        copyto!(state.bstate.λc, bstate.λx)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ gxs
         @test Optim.Hf(constraints, state) ≈ Diagonal(hxs)
         ## Nonlinear equality constraints
         cfun = x->[x[1]^2+x[2]^2, x[2]*x[3]^2]
-        cfun! = (c, x) -> copy!(c, cfun(x))
-        cJ! = (J, x) -> copy!(J, [2*x[1] 2*x[2] 0;
+        cfun! = (c, x) -> copyto!(c, cfun(x))
+        cJ! = (J, x) -> copyto!(J, [2*x[1] 2*x[2] 0;
                                   0 x[3]^2 2*x[2]*x[3]])
         ch! = function(h, x, λ)
             h[1,1] += 2*λ[1]
@@ -230,7 +230,7 @@
         #check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraints(cfun!, cJ!, ch!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.λcE, bstate.λcE)
+        copyto!(state.bstate.λcE, bstate.λcE)
         setstate!(state, μ, d0, constraints, method)
         heq = zeros(length(x), length(x))
         ch!(heq, x, bstate.λcE)
@@ -255,8 +255,8 @@
         #check_autodiff(d0, bounds, x, cfun, bstate, μ)
         constraints = TwiceDifferentiableConstraints(cfun!, cJ!, ch!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, x)
-        copy!(state.bstate.slack_c, bstate.slack_c)
-        copy!(state.bstate.λc, bstate.λc)
+        copyto!(state.bstate.slack_c, bstate.slack_c)
+        copyto!(state.bstate.λc, bstate.λc)
         setstate!(state, μ, d0, constraints, method)
         hineq = zeros(length(x), length(x))
         λ = zeros(size(J, 1))
@@ -282,7 +282,7 @@
         x = [1.0,0.1,0.3,0.4]
         ## A linear objective function (hessian is zero)
         f_g = [1.0,2.0,3.0,4.0]
-        d = TwiceDifferentiable(x->dot(x, f_g), (g,x)->copy!(g, f_g), (h,x)->fill!(h, 0), x)
+        d = TwiceDifferentiable(x->dot(x, f_g), (g,x)->copyto!(g, f_g), (h,x)->fill!(h, 0), x)
         # Variable bounds
         constraints = TwiceDifferentiableConstraints([0.5, 0.0, -Inf, -Inf], [Inf, Inf, 1.0, 0.8])
         state = Optim.initial_state(method, options, d, constraints, x)
@@ -316,7 +316,7 @@
         @test norm(Pfg - Pg) ≈ 0.01*norm(Pfg)
         ## An objective function with a nonzero hessian
         hd = [1.0, 100.0, 0.01, 2.0]   # diagonal terms of hessian
-        d = TwiceDifferentiable(x->sum(hd.*x.^2)/2, (g,x)->copy!(g, hd.*x), (h,x)->copy!(h, Diagonal(hd)), x)
+        d = TwiceDifferentiable(x->sum(hd.*x.^2)/2, (g,x)->copyto!(g, hd.*x), (h,x)->copyto!(h, Diagonal(hd)), x)
         NLSolversBase.gradient!(d, x)
         gx = NLSolversBase.gradient(d)
         hx = Diagonal(hd)
@@ -368,11 +368,11 @@
             # TODO: How do we deal with the new Tags in ForwardDiff?
 
             # TD = ForwardDiff.Dual{chunksize, eltype(y)}
-            TD = ForwardDiff.Dual{ForwardDiff.Tag{Void,Float64}, eltype(p), chunksize}
+            TD = ForwardDiff.Dual{ForwardDiff.Tag{Nothing,Float64}, eltype(p), chunksize}
 
             # TODO: It doesn't seem like it is possible to to create a dual where the values are duals?
             # TD2 = ForwardDiff.Dual{chunksize, ForwardDiff.Dual{chunksize, eltype(p)}}
-            # TD2 = ForwardDiff.Dual{ForwardDiff.Tag{Void,Float64}, typeof(TD), chunksize}
+            # TD2 = ForwardDiff.Dual{ForwardDiff.Tag{Nothing,Float64}, typeof(TD), chunksize}
             Tx = typeof(state.x)
             stated = convert(Optim.IPNewtonState{TD, Tx,1}, state)
             # TODO: Uncomment

@@ -116,7 +116,7 @@ const bsv_seed = sizeof(UInt) == 64 ? 0x145b788192d1cde3 : 0x766a2810
 Base.hash(b::BarrierStateVars, u::UInt) =
     hash(b.λcE, hash(b.λxE, hash(b.λc, hash(b.λx, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
 
-function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
+function dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.slack_x,w.slack_x) +
         dot(v.slack_c, w.slack_c) +
         dot(v.λx, w.λx) +
@@ -125,10 +125,10 @@ function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
         dot(v.λcE, w.λcE)
 end
 
-function Base.vecnorm(b::BarrierStateVars, p::Real)
-    vecnorm(b.slack_x, p) + vecnorm(b.slack_c, p) +
-        vecnorm(b.λx, p) + vecnorm(b.λc, p) +
-        vecnorm(b.λxE, p) + vecnorm(b.λcE, p)
+function norm(b::BarrierStateVars, p::Real)
+    norm(b.slack_x, p) + norm(b.slack_c, p) +
+        norm(b.λx, p) + norm(b.λc, p) +
+        norm(b.λxE, p) + norm(b.λcE, p)
 end
 
 """
@@ -181,7 +181,7 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # TODO: Make sure state.bgrad has been evaluated at initial_x
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
-    vecnorm(gradient(d), Inf) + vecnorm(state.bgrad, Inf) < options.g_tol
+    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_tol
 end
 
 function optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::AbstractArray, method::ConstrainedOptimizer,
@@ -342,7 +342,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
         # Calculate μ and λI
         μ = β * (κperp == 0 ? sqrt(Dperp/DI) : min(sqrt(Dperp/DI), abs(κperp/κI)))
         if !isfinite(μ)
-            Δgtilde = JI'*(1./s)
+            Δgtilde = JI'*(1 ./ s)
             PperpΔgtilde = Δgtilde - JE'*(Cc \ (JE*Δgtilde))
             DItilde = dot(PperpΔgtilde, PperpΔgtilde)
             μ = β*sqrt(Dperp/DItilde)
@@ -376,7 +376,7 @@ function hessian_projections(Hinfo::Tuple{AbstractMatrix,AbstractMatrix}, Pperpg
     κI = dot(Hinfo[2]*Pperpg, Pperpg) + dot(y,y)
     κperp, κI
 end
-hessian_projections(Hinfo::Void, Pperpg::AbstractVector{T}) where T = convert(T, Inf), zero(T)
+hessian_projections(Hinfo::Nothing, Pperpg::AbstractVector{T}) where T = convert(T, Inf), zero(T)
 
 function jacobianE(state, bounds::ConstraintBounds)
     J, x = state.constr_J, state.x
@@ -775,8 +775,8 @@ function isfeasible(constraints, x)
     isfeasible(constraints, x, c)
 end
 isfeasible(constraints::AbstractConstraints, x, c) = isfeasible(constraints.bounds, x, c)
-isfeasible(constraints::Void, state::AbstractBarrierState) = true
-isfeasible(constraints::Void, x) = true
+isfeasible(constraints::Nothing, state::AbstractBarrierState) = true
+isfeasible(constraints::Nothing, x) = true
 
 """
     isinterior(constraints, state) -> Bool
@@ -810,8 +810,8 @@ function isinterior(constraints, x)
     isinterior(constraints, x, c)
 end
 isinterior(constraints::AbstractConstraints, x, c) = isinterior(constraints.bounds, x, c)
-isinterior(constraints::Void, state::AbstractBarrierState) = true
-isinterior(constraints::Void, x) = true
+isinterior(constraints::Nothing, state::AbstractBarrierState) = true
+isinterior(constraints::Nothing, x) = true
 
 ## Utilities for representing total state as single vector
 # TODO: Most of these seem to be unused (IPNewton)?

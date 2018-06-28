@@ -67,7 +67,7 @@ project_tangent!(M::Flat, g, x) = g
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
-project_tangent!(S::Sphere,g,x) = (g .-= real(vecdot(x,g)).*x)
+project_tangent!(S::Sphere,g,x) = (g .-= real(dot(x,g)).*x)
 
 """
 N x n matrices with orthonormal columns, i.e. such that X'X = I.

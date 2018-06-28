@@ -13,7 +13,7 @@
             res = optimize(f, g!, [1., 0., 1., 0.], m())
             @test typeof(Optim.minimizer(res)) <: Vector
             if !(m in (NelderMead, SimulatedAnnealing))
-                @test vecnorm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
+                @test norm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
             end
         end
     end
@@ -23,7 +23,7 @@
             res = optimize(f, g!, eye(2), m())
             @test typeof(Optim.minimizer(res)) <: Matrix
             if !(m in (SimulatedAnnealing, ParticleSwarm))
-                @test vecnorm(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0]) < 10e-8
+                @test norm(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0]) < 10e-8
             end
         end
     end
@@ -37,7 +37,7 @@
             @test typeof(_minimizer) <: Array{Float64, 3}
             @test size(_minimizer) == (2,2,1)
             if !(m in (SimulatedAnnealing, ParticleSwarm))
-                @test vecnorm(_minimizer - [10.0 0.0; 0.0 5.0]) < 10e-8
+                @test norm(_minimizer - [10.0 0.0; 0.0 5.0]) < 10e-8
             end
         end
     end

@@ -24,7 +24,7 @@ function twoloop!(s,
     upper = pseudo_iteration - 1
 
     # Copy gr into q for backward pass
-    copy!(q, gr)
+    copyto!(q, gr)
 
     # Backward pass
     for index in upper:-1:lower
@@ -34,7 +34,7 @@ function twoloop!(s,
         i   = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds alpha[i] = rho[i] * real(vecdot(dxi, q))
+        @inbounds alpha[i] = rho[i] * real(dot(dxi, q))
         @inbounds q .-= alpha[i] .* dgi
     end
 
@@ -54,10 +54,10 @@ function twoloop!(s,
         i = mod1(upper, m)
         dxi = dx_history[i]
         dgi = dg_history[i]
-        scaling = real(vecdot(dxi, dgi)) / sum(abs2, dgi)
+        scaling = real(dot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
-        A_ldiv_B!(s, precon, q)
+        ldiv!(s, precon, q)
     end
     # Forward pass
     for index in lower:1:upper
@@ -67,7 +67,7 @@ function twoloop!(s,
         i = mod1(index, m)
         dgi = dg_history[i]
         dxi = dx_history[i]
-        @inbounds beta = rho[i] * real(vecdot(dgi, s))
+        @inbounds beta = rho[i] * real(dot(dgi, s))
         @inbounds s .+= dxi .* (alpha[i] - beta)
     end
 
@@ -77,7 +77,7 @@ function twoloop!(s,
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
+struct LBFGS{T, IL, L, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
     linesearch!::L
@@ -96,7 +96,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = (P, x) -> nothing,
 manifold = Flat(),
-scaleinvH0::Bool = true && (typeof(P) <: Void))
+scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -125,7 +125,7 @@ function LBFGS(; m::Integer = 10,
                  P=nothing,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
-                 scaleinvH0::Bool = true && (typeof(P) <: Void) )
+                 scaleinvH0::Bool = true && (typeof(P) <: Nothing) )
     LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
@@ -192,7 +192,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     project_tangent!(method.manifold, state.s, state.x)
 
     # Save g value to prepare for update_g! call
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -212,7 +212,7 @@ function update_h!(d, state, method::LBFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the L-BFGS history of positions and gradients
-    rho_iteration = one(eltype(state.dx)) / real(vecdot(state.dx, state.dg))
+    rho_iteration = one(eltype(state.dx)) / real(dot(state.dx, state.dg))
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
         return true

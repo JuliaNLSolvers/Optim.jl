@@ -61,7 +61,7 @@ function update_state!(d, state::AcceleratedGradientDescentState, method::Accele
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Make one move in the direction of the gradient
-    copy!(state.y_previous, state.y)
+    copyto!(state.y_previous, state.y)
     state.y .= state.x .+ state.alpha.*state.s
     retract!(method.manifold, state.y)
 

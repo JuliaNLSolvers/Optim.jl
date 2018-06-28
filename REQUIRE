@@ -1,4 +1,4 @@
-julia 0.6.0
+julia 0.7-beta
 PositiveFactorizations
 Compat 0.18.0
 LineSearches 6.0.1
@@ -8,3 +8,4 @@ DiffEqDiffTools 0.4.0
 Calculus # TODO: Remove when DiffEqDiffTools release Hessian PR
 Parameters
 NaNMath
+StatsBase

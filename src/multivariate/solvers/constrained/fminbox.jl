@@ -137,7 +137,7 @@ function optimize(f,
                   F::Fminbox = Fminbox(),
                   options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
-    g! = inplace ? g : (G, x) -> copy!(G, g(x))
+    g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
 
     optimize(od, l, u, initial_x, F)
@@ -239,7 +239,7 @@ function optimize(
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        copy!(xold, x)
+        copyto!(xold, x)
         # Optimize with current setting of mu
         fval0 = funcc(nothing, x)
         if show_trace > 0
@@ -252,7 +252,7 @@ function optimize(
         else
             append!(results, resultsnew)
         end
-        copy!(x, minimizer(results))
+        copyto!(x, minimizer(results))
         if show_trace > 0
             println("#### Fminbox #$iteration: x=", x)
         end
@@ -274,9 +274,9 @@ function optimize(
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
-            results.x_converged, results.x_tol, vecnorm(x - xold),
+            results.x_converged, results.x_tol, norm(x - xold),
             results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),
-            results.g_converged, results.g_tol, vecnorm(g, Inf),
+            results.g_converged, results.g_tol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
 end

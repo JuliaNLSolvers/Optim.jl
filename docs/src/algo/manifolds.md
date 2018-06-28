@@ -6,9 +6,9 @@ Here is a simple test case where we minimize the Rayleigh quotient `<x, A x>` of
 ```julia
 n = 10
 A = Diagonal(linspace(1,2,n))
-f(x) = vecdot(x,A*x)/2
+f(x) = dot(x,A*x)/2
 g(x) = A*x
-g!(stor,x) = copy!(stor,g(x))
+g!(stor,x) = copyto!(stor,g(x))
 x0 = randn(n)
 
 manif = Optim.Sphere()

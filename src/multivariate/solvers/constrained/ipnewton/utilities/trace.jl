@@ -40,7 +40,7 @@ function trace!(tr, d, state, iteration, method::IPOptimizer, options)
             dt["c"] = copy(state.constr_c)
         end
     end
-    g_norm = vecnorm(state.g, Inf) + vecnorm(state.bgrad, Inf)
+    g_norm = norm(state.g, Inf) + norm(state.bgrad, Inf)
     Optim.update!(tr,
             iteration,
             value(d),
