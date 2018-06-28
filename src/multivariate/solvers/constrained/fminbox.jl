@@ -151,7 +151,7 @@ function optimize(f,
                   options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
     od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
-    optimize(od, l, u, initial_x, F)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(
