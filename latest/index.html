@@ -34,7 +34,7 @@
       var is_top_frame = (window === window.parent);
         
         var pageToc = [
-          {title: "Optim.jl", url: "#optimjl", children: [
+          {title: "Optim.jl", url: "#_top", children: [
               {title: "What", url: "#what" },
               {title: "Why", url: "#why" },
               {title: "How", url: "#how" },
@@ -44,9 +44,7 @@
     </script>
     <script src="./js/base.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
-      <script src="./assets/mathjaxhelper.js"></script>
-      <script src="./search/require.js"></script>
-      <script src="./search/search.js"></script> 
+      <script src="./assets/mathjaxhelper.js"></script> 
 </head>
 
 <body>
@@ -64,7 +62,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
           ><i class="fa fa-search" aria-hidden="true"></i></button>
 
         <div class="input-group input-group-sm wm-top-search">
-          <input type="text" name="q" class="form-control" id="mkdocs-search-query" placeholder="Search">
+          <input type="text" name="q" class="form-control" id="mkdocs-search-query" placeholder="Search" autocomplete="off">
           <span class="input-group-btn" role="search">
             
             <button class="btn btn-default dropdown-toggle collapse" data-toggle="dropdown" type="button"><span class="caret"></span></button>
@@ -199,6 +197,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   </div>
 
 <div class="container-fluid wm-page-content">
+  <a name="_top"></a>
     
 
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
@@ -291,5 +290,5 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </html>
 <!--
 MkDocs version : 0.17.4
-Build Date UTC : 2018-06-26 12:42:23
+Build Date UTC : 2018-06-28 08:08:05
 -->

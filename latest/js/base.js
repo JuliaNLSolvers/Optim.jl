@@ -78,10 +78,10 @@ function updateIframe(enableForwardNav) {
     currentIframeUrl === targetIframeUrl ? "same" : "replacing");
 
   if (currentIframeUrl !== targetIframeUrl) {
-    $(window).scrollTop(0);
     loc.replace(targetIframeUrl);
     onIframeBeforeLoad(targetIframeUrl);
   }
+  document.body.scrollTop = 0;
 }
 
 /**
@@ -380,7 +380,7 @@ function initSearch() {
   var searchResults = $('#mkdocs-search-results');
 
   // Fetch the prebuilt index data, and add to the index.
-  $.getJSON(base_url + '/mkdocs/search_index.json')
+  $.getJSON(base_url + '/search/search_index.json')
   .done(function(data) {
     data.docs.forEach(function(doc) {
       doc.location = base_url + doc.location;
