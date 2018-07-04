@@ -2,14 +2,14 @@ using Optim
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 using Compat
-using Base.Test
+using Test
 using Suppressor
 using PositiveFactorizations # for the IPNewton tests
 
 import LineSearches
 import ForwardDiff
 import NLSolversBase
-import LinearAlgebra
+import LinearAlgebra: norm, diag, I
 
 const MVP = MultivariateProblems
 

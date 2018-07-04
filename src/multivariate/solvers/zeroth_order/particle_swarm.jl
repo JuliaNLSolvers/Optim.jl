@@ -103,9 +103,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
     c2 = 2.0
     w = 1.0
 
-    X = Array{T,2}(n, n_particles)
-    V = Array{T,2}(n, n_particles)
-    X_best = Array{T,2}(n, n_particles)
+    X = Array{T,2}(undef, n, n_particles)
+    V = Array{T,2}(undef, n, n_particles)
+    X_best = Array{T,2}(undef, n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
     x = similar(initial_x)

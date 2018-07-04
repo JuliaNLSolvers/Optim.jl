@@ -72,7 +72,7 @@ function twoloop!(s,
     end
 
     # Negate search direction
-    scale!(s, -1)
+    rmul!(s, eltype(s)(-1))
 
     return
 end

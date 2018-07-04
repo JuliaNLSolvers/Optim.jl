@@ -17,7 +17,7 @@ Base.summary(::BFGS) = "BFGS"
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -> eye(eltype(x), length(x)),
+       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
        manifold = Flat())
 ```
 
@@ -38,7 +38,7 @@ approximations as well as the gradient. See also the limited memory variant
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = x -> eye(eltype(x), length(x)),
+                initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
                 manifold::Manifold=Flat())
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
@@ -81,11 +81,11 @@ end
 
 function update_state!(d, state::BFGSState, method::BFGS)
     n = length(state.x)
-
+    T = eltype(state.s)
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
     mul!(vec(state.s), state.invH, vec(gradient(d)))
-    scale!(state.s, -1)
+    rmul!(state.s, T(-1))
     project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient

@@ -46,7 +46,7 @@ end
     srand(42)
     n = 5
     H = rand(n, n)
-    H = H' * H + 4 * eye(n)
+    H = H' * H + 4 * I
     H_eig = eigfact(H)
     U = H_eig[:vectors]
 

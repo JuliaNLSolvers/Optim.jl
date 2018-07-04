@@ -68,7 +68,7 @@ function centroid!(c::AbstractArray{T}, simplex, h=0) where T
             end
         end
     end
-    scale!(c, 1/n)
+    rmul!(c, T(1/n))
 end
 
 centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
@@ -277,7 +277,7 @@ end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
-end 
+end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()

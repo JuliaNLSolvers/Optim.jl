@@ -44,7 +44,11 @@ import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable
 # var for NelderMead
 import StatsBase: var
 
-import LinearAlgebra: eye, mul!, ldiv!, dot, norm, scale!, Diagonal, Cholesky
+import LinearAlgebra: eye, Diagonal, diag, Hermitian, Symmetric,
+                      rmul!, mul!, ldiv!,
+                      dot, norm,
+                      eigfact, BLAS,
+                      chol, Cholesky # factorizations
 
 # exported functions and types
 export optimize, # main function

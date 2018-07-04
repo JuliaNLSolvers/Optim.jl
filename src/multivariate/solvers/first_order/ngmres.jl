@@ -217,13 +217,13 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
 
     n = length(nlpreconstate.x)
     wmax = method.wmax
-    X = Array{eTx}(n, wmax)
-    R = Array{eTx}(n, wmax)
-    Q = Array{T}(wmax, wmax)
+    X = Array{eTx}(undef, n, wmax)
+    R = Array{eTx}(undef, n, wmax)
+    Q = Array{T}(undef, wmax, wmax)
     ξ = if typeof(method) <: OACCEL
-        Array{T}(wmax, 2)
+        Array{T}(undef, wmax, 2)
     else
-        Array{T}(wmax)
+        Array{T}(undef, wmax)
     end
 
     copyto!(view(X,:,1), nlpreconstate.x)
@@ -245,13 +245,13 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 Q,
                 ξ,
                 1,                        # curw
-                Array{T}(wmax, wmax),     # A
-                Array{T}(wmax),           # b
+                Array{T}(undef, wmax, wmax),     # A
+                Array{T}(undef, wmax),           # b
                 vec(similar(initial_x)),  # xA
                 0,                        # iteration counter
                 false,                    # Restart flag
                 options.g_tol,            # Exit tolerance check after nonlinear preconditioner apply
-                Array{T}(wmax),           # subspacealpha
+                Array{T}(undef, wmax),           # subspacealpha
                 @initial_linesearch()...)
 end
 
