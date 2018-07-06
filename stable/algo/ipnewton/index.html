@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Interior point Newton - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Interior point Newton method", url: "#_top", children: [
+              {title: "Examples", url: "#examples" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
+        Contributing
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../newton_trust_region/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Interior-point-Newton-method-1'></a></p>
+<h1 id="interior-point-newton-method">Interior point Newton method</h1>
+<p><a id='Optim.IPNewton' href='#Optim.IPNewton'>#</a>
+<strong><code>Optim.IPNewton</code></strong> &mdash; <em>Type</em>.</p>
+<p><strong>Interior-point Newton</strong></p>
+<p><strong>Constructor</strong></p>
+<pre><code class="jl">IPNewton(; linesearch::Function = Optim.backtrack_constrained_grad,
+         μ0::Union{Symbol,Number} = :auto,
+         show_linesearch::Bool = false)
+</code></pre>
+
+<p>The initial barrier penalty coefficient <code>μ0</code> can be chosen as a number, or set to <code>:auto</code> to let the algorithm decide its value, see <code>initialize_μ_λ!</code>.</p>
+<p><em>Note</em>: For constrained optimization problems, we recommend always enabling <code>allow_f_increases</code> and <code>successive_f_tol</code> in the options passed to <code>optimize</code>. The default is set to <code>Optim.Options(allow_f_increases = true, successive_f_tol = 2)</code>.</p>
+<p>As of February 2018, the line search algorithm is specialised for constrained interior-point methods. In future we hope to support more algorithms from <code>LineSearches.jl</code>.</p>
+<p><strong>Description</strong></p>
+<p>The <code>IPNewton</code> method implements an interior-point primal-dual Newton algorithm for solving nonlinear, constrained optimization problems. See Nocedal and Wright (Ch. 19, 2006) for a discussion of interior-point methods for constrained optimization.</p>
+<p><strong>References</strong></p>
+<p>The algorithm was <a href="https://github.com/JuliaNLSolvers/Optim.jl/pull/303">originally written by Tim Holy</a> (@timholy, tim.holy@gmail.com).</p>
+<ul>
+<li>J Nocedal, SJ Wright (2006), Numerical optimization, second edition. Springer.</li>
+<li>A Wächter, LT Biegler (2006), On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming. Mathematical Programming 106 (1), 25-57.</li>
+</ul>
+<p><a target='_blank' href='https://github.com/JuliaNLSolvers/Optim.jl/blob/a61b5d420b0d3f503111410e8a4e4b8ddea2137a/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl#L11-L41' class='documenter-source'>source</a><br></p>
+<p><a id='Examples-1'></a></p>
+<h2 id="examples">Examples</h2>
+<ul>
+<li><a href="../../examples/generated/ipnewton_basics/">Nonlinear constrained optimization in Optim</a></li>
+</ul>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../dev/contributing/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../dev/contributing/" class="btn btn-xs btn-link">
+        Contributing
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../newton_trust_region/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

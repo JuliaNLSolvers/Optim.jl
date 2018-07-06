@@ -34,7 +34,7 @@
       var is_top_frame = (window === window.parent);
         
         var pageToc = [
-          {title: "Optim.jl", url: "#optimjl", children: [
+          {title: "Optim.jl", url: "#_top", children: [
               {title: "What", url: "#what" },
               {title: "Why", url: "#why" },
               {title: "How", url: "#how" },
@@ -44,9 +44,7 @@
     </script>
     <script src="./js/base.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
-      <script src="./assets/mathjaxhelper.js"></script>
-      <script src="./search/require.js"></script>
-      <script src="./search/search.js"></script> 
+      <script src="./assets/mathjaxhelper.js"></script> 
 </head>
 
 <body>
@@ -64,7 +62,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
           ><i class="fa fa-search" aria-hidden="true"></i></button>
 
         <div class="input-group input-group-sm wm-top-search">
-          <input type="text" name="q" class="form-control" id="mkdocs-search-query" placeholder="Search">
+          <input type="text" name="q" class="form-control" id="mkdocs-search-query" placeholder="Search" autocomplete="off">
           <span class="input-group-btn" role="search">
             
             <button class="btn btn-default dropdown-toggle collapse" data-toggle="dropdown" type="button"><span class="caret"></span></button>
@@ -129,6 +127,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </li>
       <li class="wm-toc-li wm-toc-lev2 "><a href="user/tipsandtricks/" class="wm-article-link wm-toc-text">Tips and tricks</a>
 </li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="examples/generated/ipnewton_basics/" class="wm-article-link wm-toc-text">Interior point Newton</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="examples/generated/ipnewton_basics/" class="wm-article-link wm-toc-text">Maximum likelihood estimation</a>
+</li>
   </ul>
 </li>
 
@@ -174,21 +176,16 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </li>
       <li class="wm-toc-li wm-toc-lev3 "><a href="algo/newton_trust_region/" class="wm-article-link wm-toc-text">Newton with Trust Region</a>
 </li>
-  </ul>
-</li>
-
-  </ul>
-</li>
-
-        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">Contributing</span>
-</li>
-<li class="wm-toc-li-nested collapse">
-  <ul class="wm-toctree">
-      <li class="wm-toc-li wm-toc-lev2 "><a href="dev/contributing/" class="wm-article-link wm-toc-text">Contributing</a>
+      <li class="wm-toc-li wm-toc-lev3 "><a href="algo/ipnewton/" class="wm-article-link wm-toc-text">Interior point Newton</a>
 </li>
   </ul>
 </li>
 
+  </ul>
+</li>
+
+        <li class="wm-toc-li wm-toc-lev1 "><a href="dev/contributing/" class="wm-article-link wm-toc-text">Contributing</a>
+</li>
         <li class="wm-toc-li wm-toc-lev1 "><a href="LICENSE/" class="wm-article-link wm-toc-text">License</a>
 </li>
   </ul>
@@ -200,6 +197,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   </div>
 
 <div class="container-fluid wm-page-content">
+  <a name="_top"></a>
     
 
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
@@ -292,5 +290,5 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </html>
 <!--
 MkDocs version : 0.17.4
-Build Date UTC : 2018-06-18 21:56:16
+Build Date UTC : 2018-07-06 08:21:12
 -->
