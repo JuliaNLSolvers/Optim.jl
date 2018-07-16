@@ -140,7 +140,7 @@ function optimize(f,
     g! = inplace ? g : (G, x) -> copy!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
 
-    optimize(od, l, u, initial_x, F)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(f,
@@ -161,7 +161,6 @@ function optimize(
         initial_x::AbstractArray{T},
         F::Fminbox = Fminbox(),
         options = Options()) where T<:AbstractFloat
-
 
     outer_iterations = options.outer_iterations
     allow_outer_f_increases = options.allow_outer_f_increases
@@ -206,7 +205,7 @@ function optimize(
     gradient!(df, x)
     gfunc .= gradient(df)
 
-    mu = Ref(initial_mu(gfunc, gbarrier, F.mufactor, F.mu0))
+    mu = Ref(initial_mu(gfunc, gbarrier, T(F.mufactor), T(F.mu0)))
 
     # Use the barrier-aware preconditioner to define
     # barrier-aware optimization method instance (precondition relevance)
