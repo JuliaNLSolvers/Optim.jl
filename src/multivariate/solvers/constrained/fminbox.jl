@@ -95,6 +95,17 @@ struct Fminbox{O<:AbstractOptimizer, T, P} <: AbstractConstrainedOptimizer
     precondprep::P
 end
 
+"""
+# Fminbox
+## Constructor
+```julia
+Fminbox(method::T,
+        mu0::Tf
+        mufactor::Tf
+        precondprep::P)
+```
+"""
+
 function Fminbox(method::AbstractOptimizer = LBFGS();
                  mu0::Real = NaN, mufactor::Real = 0.001,
                  precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
