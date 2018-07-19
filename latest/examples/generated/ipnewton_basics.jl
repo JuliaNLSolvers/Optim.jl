@@ -60,7 +60,7 @@ res = optimize(df, dfc, x0, IPNewton())
 lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
-    res = optimize(df, dfc, x0, IPNewton())
+res = optimize(df, dfc, x0, IPNewton())
 
 function con2_c!(c, x)
     c[1] = x[1]^2 + x[2]^2     ## First constraint
