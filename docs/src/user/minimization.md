@@ -74,7 +74,7 @@ because of the potentially low accuracy of approximations to the Hessians. Other
 than Newton's method, none of the algorithms provided by the Optim package employ
 exact Hessians.
 
-## Box Constrianed Optimization
+## Box Constrained Optimization
 
 A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:
 ```jl
