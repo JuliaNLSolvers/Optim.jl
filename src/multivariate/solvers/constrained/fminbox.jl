@@ -105,7 +105,6 @@ Fminbox(method::T,
         precondprep::P)
 ```
 """
-
 function Fminbox(method::AbstractOptimizer = LBFGS();
                  mu0::Real = NaN, mufactor::Real = 0.001,
                  precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))

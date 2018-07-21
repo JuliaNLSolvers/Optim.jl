@@ -230,7 +230,6 @@ trust-region methods in practice.
 ## References
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-
 NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
                     eta::Real = 0.1,

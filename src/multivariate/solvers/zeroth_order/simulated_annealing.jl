@@ -40,7 +40,6 @@ Bayesian inference. As such, it is a probabilistic method for finding the minimu
 function, often over a quite large domains. For the historical reasons given above, the
 algorithm uses terms such as cooling, temperature, and acceptance probabilities.
 """
-
 SimulatedAnnealing(;neighbor = default_neighbor!,
                     temperature = log_temperature,
                     keep_best::Bool = true) =

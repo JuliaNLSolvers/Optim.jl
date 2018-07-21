@@ -72,7 +72,6 @@ point with a better point. More information can be found in [1], [2] or [3].
 - [2] Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on Optimization 9.1 (1998): 112-147
 - [3] Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications. doi:10.1007/s10589-010-9329-3
 """
-
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)
     if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
