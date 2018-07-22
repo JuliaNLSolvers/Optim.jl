@@ -35,7 +35,7 @@
         var pageToc = [
           {title: "Unconstrained Optimization", url: "#_top", children: [
           ]},
-          {title: "Box Constrianed Optimization", url: "#box-constrianed-optimization", children: [
+          {title: "Box Constrained Optimization", url: "#box-constrained-optimization", children: [
           ]},
           {title: "Minimizing a univariate function on a bounded interval", url: "#minimizing-a-univariate-function-on-a-bounded-interval", children: [
           ]},
@@ -152,8 +152,8 @@ end
 </code></pre>
 
 <p>Note that Optim will not generate approximate Hessians using finite differencing because of the potentially low accuracy of approximations to the Hessians. Other than Newton's method, none of the algorithms provided by the Optim package employ exact Hessians.</p>
-<p><a id='Box-Constrianed-Optimization-1'></a></p>
-<h2 id="box-constrianed-optimization">Box Constrianed Optimization</h2>
+<p><a id='Box-Constrained-Optimization-1'></a></p>
+<h2 id="box-constrained-optimization">Box Constrained Optimization</h2>
 <p>A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:</p>
 <pre><code class="jl">lower = [1.25, -2.1]
 upper = [Inf, Inf]
