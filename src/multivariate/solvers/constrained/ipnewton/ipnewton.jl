@@ -65,13 +65,13 @@ mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     constr_c::Vector{T}   # value of the user-supplied constraints at x
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
-    Optim.@add_linesearch_fields()
+    Optim.@add_linesearch_fields() # x_ls and alpha
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
     Htilde               # Positive Cholesky factorization of H from PositiveFactorizations.jl
 end
 
-# TODO: Do we need this convert thing? I don't have any tests to check that it works
+# TODO: Do we need this convert thing? (It seems to be used with `show(IPNewtonState)`)
 function Base.convert(::Type{IPNewtonState{T,Tx}}, state::IPNewtonState{S, Sx}) where {T,Tx,S,Sx}
     IPNewtonState(convert(Tx, state.x),
                   T(state.f_x),
@@ -92,11 +92,8 @@ function Base.convert(::Type{IPNewtonState{T,Tx}}, state::IPNewtonState{S, Sx}) 
                   convert(Vector{T}, state.constr_c),
                   convert(Matrix{T}, state.constr_J),
                   T(state.ev),
-                  T(NaN),
                   convert(Tx, state.x_ls),
                   T(state.alpha),
-                  state.mayterminate,
-                  state.lsr,
                   convert(BarrierLineSearchGrad{T}, state.b_ls),
                   convert(Tx, state.gtilde),
                   state.Htilde,

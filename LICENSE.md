@@ -1,9 +1,9 @@
 Optim.jl is licensed under the MIT License:
 
 > Copyright (c) 2012: John Myles White, Tim Holy, and other contributors.
-> Copyright (c) 2016: Patrick Kofod Mogensen, John Myles White, Tim Holy, 
->                     and other contributors. 
-> Copyright (c) 2017: Patrick Kofod Mogensen, Asbjørn Nilsen Riseth, 
+> Copyright (c) 2016: Patrick Kofod Mogensen, John Myles White, Tim Holy,
+>                     and other contributors.
+> Copyright (c) 2017: Patrick Kofod Mogensen, Asbjørn Nilsen Riseth,
 >                     John Myles White, Tim Holy, and other contributors.
 >
 > Permission is hereby granted, free of charge, to any person

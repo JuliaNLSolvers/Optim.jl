@@ -95,6 +95,16 @@ struct Fminbox{O<:AbstractOptimizer, T, P} <: AbstractConstrainedOptimizer
     precondprep::P
 end
 
+"""
+# Fminbox
+## Constructor
+```julia
+Fminbox(method::T,
+        mu0::Tf
+        mufactor::Tf
+        precondprep::P)
+```
+"""
 function Fminbox(method::AbstractOptimizer = LBFGS();
                  mu0::Real = NaN, mufactor::Real = 0.001,
                  precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
@@ -140,7 +150,7 @@ function optimize(f,
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
 
-    optimize(od, l, u, initial_x, F)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(f,
@@ -151,7 +161,7 @@ function optimize(f,
                   options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
     od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
-    optimize(od, l, u, initial_x, F)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(
@@ -161,7 +171,6 @@ function optimize(
         initial_x::AbstractArray{T},
         F::Fminbox = Fminbox(),
         options = Options()) where T<:AbstractFloat
-
 
     outer_iterations = options.outer_iterations
     allow_outer_f_increases = options.allow_outer_f_increases
@@ -206,7 +215,7 @@ function optimize(
     gradient!(df, x)
     gfunc .= gradient(df)
 
-    mu = Ref(initial_mu(gfunc, gbarrier, F.mufactor, F.mu0))
+    mu = Ref(initial_mu(gfunc, gbarrier, T(F.mufactor), T(F.mu0)))
 
     # Use the barrier-aware preconditioner to define
     # barrier-aware optimization method instance (precondition relevance)
