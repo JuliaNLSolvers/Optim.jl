@@ -92,6 +92,9 @@
         state = Optim.initial_state(method, options, dg, constraints, x)
         @test Optim.gf(bounds, state) ≈ gx
         @test Optim.Hf(constraints, state) ≈ H
+        stateconvert = convert(Optim.IPNewtonState{Float64, Vector{Float64}}, state)
+        @test Optim.gf(bounds, stateconvert) ≈ gx
+        @test Optim.Hf(constraints, stateconvert) ≈ H
         ## Pure equality constraints on variables
         xbar = fill(0.2, length(x))
         bounds = Optim.ConstraintBounds(xbar, xbar, [], [])
