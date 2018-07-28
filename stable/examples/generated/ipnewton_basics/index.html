@@ -11,11 +11,12 @@
     
     <link rel="shortcut icon" href="../../../img/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-    <title>Maximum likelihood estimation - Optim.jl</title>
+    <title>Interior point Newton - Optim.jl</title>
     <link href="../../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
     <link href="../../../css/font-awesome-4.7.0.css" rel="stylesheet">
     <link href="../../../css/base.css" rel="stylesheet">
     <link rel="stylesheet" href="../../../css/highlight.css">
+    <link href="../../../assets/Documenter.css" rel="stylesheet">
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
         <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -38,6 +39,8 @@
               {title: "Optimization interface", url: "#optimization-interface" },
               {title: "Box minimzation", url: "#box-minimzation" },
               {title: "Defining \"unconstrained\" problems", url: "#defining-unconstrained-problems" },
+              {title: "Generic nonlinear constraints", url: "#generic-nonlinear-constraints" },
+              {title: "Multiple constraints", url: "#multiple-constraints" },
               {title: "Plain Program", url: "#plain-program" },
           ]},
         ];
@@ -62,20 +65,20 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+      <a href="../maxlikenlm/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
-        Nelder Mead
+      <a href="../maxlikenlm/" class="btn btn-xs btn-link">
+        Maximum likelihood estimation
       </a>
     </div>
     
     <div class="wm-article-nav">
-      <a href="./" class="btn btn-xs btn-default pull-left">
+      <a href="../../../user/tipsandtricks/" class="btn btn-xs btn-default pull-left">
         <i class="fa fa-chevron-left" aria-hidden="true"></i>
-        Previous</a><a href="./" class="btn btn-xs btn-link">
-        Interior point Newton
+        Previous</a><a href="../../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
       </a>
     </div>
     
@@ -85,8 +88,10 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 
     <p><a id='Nonlinear-constrained-optimization-1'></a></p>
 <h1 id="nonlinear-constrained-optimization">Nonlinear constrained optimization</h1>
-<p>!!! tip
-    This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/v0.15.2/examples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/v0.15.3/examples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p>
+</div>
 <p>The nonlinear constrained optimization interface in <code>Optim</code> assumes that the user can write the optimization problem in the following way.</p>
 <p>
 <script type="math/tex; mode=display">
@@ -216,7 +221,7 @@ res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
 <p><a id='Generic-nonlinear-constraints-1'></a></p>
-<h3 id="generic-nonlinear-constraints">Generic nonlinear constraints</h3>
+<h2 id="generic-nonlinear-constraints">Generic nonlinear constraints</h2>
 <p>We now consider the Rosenbrock problem with a constraint on</p>
 <p>
 <script type="math/tex; mode=display">
@@ -270,12 +275,53 @@ res = optimize(df, dfc, x0, IPNewton())
 <pre><code class="julia">lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
-    res = optimize(df, dfc, x0, IPNewton())
+res = optimize(df, dfc, x0, IPNewton())
+</code></pre>
+
+<pre><code>WARNING: Initial guess is not an interior point
+
+Stacktrace:
+ [1] initial_state(::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}, ::Optim.Options{Float64,Void}, ::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
+ [2] optimize(::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}, ::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/interior.jl:196
+ [3] cd(::Documenter.Expanders.##8#10{Module}, ::String) at ./file.jl:70
+ [4] (::Documenter.Utilities.##19#20{Documenter.Expanders.##7#9{Documenter.Documents.Page,Module},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:593
+ [5] withoutput(::Documenter.Expanders.##7#9{Documenter.Documents.Page,Module}) at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:591
+ [6] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Base.Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:478
+ [7] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Base.Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
+ [8] expand(::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:31
+ [9] runner(::Type{Documenter.Builder.ExpandTemplates}, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Builder.jl:178
+ [10] dispatch(::Type{Documenter.Builder.DocumentPipeline}, ::Documenter.Documents.Document, ::Vararg{Documenter.Documents.Document,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
+ [11] cd(::Documenter.##2#3{Documenter.Documents.Document}, ::String) at ./file.jl:70
+ [12] #makedocs#1(::Bool, ::Array{Any,1}, ::Function) at /home/travis/.julia/v0.6/Documenter/src/Documenter.jl:203
+ [13] (::Documenter.#kw##makedocs)(::Array{Any,1}, ::Documenter.#makedocs) at ./&lt;missing&gt;:0
+ [14] include_from_node1(::String) at ./loading.jl:576
+ [15] include(::String) at ./sysimg.jl:14
+ [16] include_from_node1(::String) at ./loading.jl:576
+ [17] include(::String) at ./sysimg.jl:14
+ [18] process_options(::Base.JLOptions) at ./client.jl:305
+ [19] _start() at ./client.jl:371
+Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.45564896414551953,0.20587379987049065]
+ * Minimum: 2.966216e-01
+ * Iterations: 34
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: true
+     |x - x'| = 0.00e+00
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 0.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 7.71e-01
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 158
+ * Gradient Calls: 158
 </code></pre>
 
 <p><strong>Note that the algorithm warns that the Initial guess is not an interior point.</strong> <code>IPNewton</code> can often handle this, however, if the initial guess is such that <code>c(x) = u_c</code>, then the algorithm currently fails. We may fix this in the future.</p>
 <p><a id='Multiple-constraints-1'></a></p>
-<h4 id="multiple-constraints">Multiple constraints</h4>
+<h2 id="multiple-constraints">Multiple constraints</h2>
 <p>The following example illustrates how to add an additional constraint. In particular, we add a constraint function</p>
 <p>
 <script type="math/tex; mode=display">
@@ -307,30 +353,6 @@ function con2_h!(h, x, λ)
     h[2,1]  = h[1,2]
     h
 end;
-</code></pre>
-
-<pre><code>WARNING: Initial guess is not an interior point
-
-Stacktrace:
- [1] initial_state(::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}, ::Optim.Options{Float64,Void}, ::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:115
- [2] optimize(::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}, ::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/interior.jl:196
- [3] cd(::Documenter.Expanders.##8#10{Module}, ::String) at ./file.jl:70
- [4] (::Documenter.Utilities.##19#20{Documenter.Expanders.##7#9{Documenter.Documents.Page,Module},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:593
- [5] withoutput(::Documenter.Expanders.##7#9{Documenter.Documents.Page,Module}) at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:591
- [6] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Base.Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:478
- [7] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Base.Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
- [8] expand(::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:31
- [9] runner(::Type{Documenter.Builder.ExpandTemplates}, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Builder.jl:178
- [10] dispatch(::Type{Documenter.Builder.DocumentPipeline}, ::Documenter.Documents.Document, ::Vararg{Documenter.Documents.Document,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
- [11] cd(::Documenter.##2#3{Documenter.Documents.Document}, ::String) at ./file.jl:70
- [12] #makedocs#1(::Bool, ::Array{Any,1}, ::Function) at /home/travis/.julia/v0.6/Documenter/src/Documenter.jl:203
- [13] (::Documenter.#kw##makedocs)(::Array{Any,1}, ::Documenter.#makedocs) at ./&lt;missing&gt;:0
- [14] include_from_node1(::String) at ./loading.jl:576
- [15] include(::String) at ./sysimg.jl:14
- [16] include_from_node1(::String) at ./loading.jl:576
- [17] include(::String) at ./sysimg.jl:14
- [18] process_options(::Base.JLOptions) at ./client.jl:305
- [19] _start() at ./client.jl:371
 </code></pre>
 
 <p>We generate the constraint objects and call <code>IPNewton</code> with initial guess $x_0 = (0.25,0.25)$.</p>
@@ -425,7 +447,7 @@ res = optimize(df, dfc, x0, IPNewton())
 lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
-    res = optimize(df, dfc, x0, IPNewton())
+res = optimize(df, dfc, x0, IPNewton())
 
 function con2_c!(c, x)
     c[1] = x[1]^2 + x[2]^2     ## First constraint
@@ -470,20 +492,20 @@ res = optimize(df, dfc, x0, IPNewton())
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
-      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+      <a href="../maxlikenlm/" class="btn btn-xs btn-default pull-right">
         Next
         <i class="fa fa-chevron-right" aria-hidden="true"></i>
       </a>
-      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
-        Nelder Mead
+      <a href="../maxlikenlm/" class="btn btn-xs btn-link">
+        Maximum likelihood estimation
       </a>
     </div>
     
     <div class="wm-article-nav">
-      <a href="./" class="btn btn-xs btn-default pull-left">
+      <a href="../../../user/tipsandtricks/" class="btn btn-xs btn-default pull-left">
         <i class="fa fa-chevron-left" aria-hidden="true"></i>
-        Previous</a><a href="./" class="btn btn-xs btn-link">
-        Interior point Newton
+        Previous</a><a href="../../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
       </a>
     </div>
     
@@ -493,6 +515,10 @@ res = optimize(df, dfc, x0, IPNewton())
 </div>
 
 <footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/examples/generated/ipnewton_basics.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
   <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
 </footer>
 
