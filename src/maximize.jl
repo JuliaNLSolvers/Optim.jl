@@ -1,22 +1,24 @@
+# In v1.0 we should possibly just overload getproperty
+# Base.getproperty(w::WrapVar, s::Symbol) = getfield(w.v, s)
 struct MaxWrap{T}
     res::T
 end
 
-function maximize(f, x0, method, options; kwargs...)
+function maximize(f, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x);G.=-G)
+    gmax = (G,x)->(g(G,x); G.=-G)
     MaxWrap(optimize(fmax, gmax, x0, method, options; kwargs...))
 end
-function maximize(f, g, x0, method, options; kwargs...)
+function maximize(f, g, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x);G.=-G)
+    gmax = (G,x)->(g(G,x); G.=-G)
     MaxWrap(optimize(fmax, gmax, x0, method, options; kwargs...))
 end
 
-function maximize(f, g, h, x0, method, options; kwargs...)
+function maximize(f, g, h, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x);G.=-G)
-    hmax = (H,x)->(h(G,x);H.=-H)
+    gmax = (G,x)->(g(G,x); G.=-G)
+    hmax = (H,x)->(h(G,x); H.=-H)
     MaxWrap(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
 end
 
