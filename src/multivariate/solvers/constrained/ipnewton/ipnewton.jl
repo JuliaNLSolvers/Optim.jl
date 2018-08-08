@@ -108,9 +108,9 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
     if !isinterior(constraints, initial_x, constr_c)
-        warn("Initial guess is not an interior point")
-        Base.show_backtrace(STDERR, backtrace())
-        println(STDERR)
+        @warn("Initial guess is not an interior point")
+        Base.show_backtrace(stderr, backtrace())
+        println(stderr)
     end
     # Allocate fields for the objective function
     n = length(initial_x)

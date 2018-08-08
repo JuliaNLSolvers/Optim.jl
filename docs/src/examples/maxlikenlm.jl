@@ -84,7 +84,7 @@ func = TwiceDifferentiable(vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar 
 opt = optimize(func, ones(nvar+1))
 
 ## Test the results                #src
-using Base.Test                    #src
+using Test                    #src
 @test Optim.converged(opt)         #src
 @test Optim.g_residual(opt) < 1e-8 #src
 

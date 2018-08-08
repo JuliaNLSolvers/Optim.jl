@@ -227,7 +227,7 @@ function optimize(
     end
 
     g = similar(x)
-    fval_all = Vector{Vector{T}}(0)
+    fval_all = Vector{Vector{T}}()
 
     # Count the total number of outer iterations
     iteration = 0
@@ -276,7 +276,7 @@ function optimize(
         results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
         if f_increased && !allow_outer_f_increases
-            warn("f(x) increased: stopping optimization")
+            @warn("f(x) increased: stopping optimization")
             break
         end
     end

@@ -20,7 +20,7 @@ end
 # not matching the equality constraints.  So we allow them to
 # differ, and require that the algorithm can cope with it.
 
-function (::Type{BarrierStateVars{T}})(bounds::ConstraintBounds) where T
+function BarrierStateVars{T}(bounds::ConstraintBounds) where T
     slack_x = Array{T}(length(bounds.ineqx))
     slack_c = Array{T}(length(bounds.ineqc))
     λx = similar(slack_x)

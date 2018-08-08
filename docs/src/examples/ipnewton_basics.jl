@@ -72,7 +72,7 @@ dfc = TwiceDifferentiableConstraints(lx, ux)
 
 res = optimize(df, dfc, x0, IPNewton())
 ## Test the results             #src
-using Base.Test                 #src
+using Test                 #src
 @test Optim.converged(res)      #src
 @test Optim.minimum(res) ≈ 0.25 #src
 

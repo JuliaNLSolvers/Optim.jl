@@ -89,7 +89,7 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
 
     if method.n_particles > 0
         if method.n_particles < 3
-          warn("Number of particles is set to 3 (minimum required)")
+          @warn("Number of particles is set to 3 (minimum required)")
           n_particles = 3
         else
           n_particles = method.n_particles

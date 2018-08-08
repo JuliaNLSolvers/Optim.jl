@@ -67,7 +67,7 @@
         gx = similar(x)
         cfun = x->Float64[]
         c = Float64[]
-        J = Array{Float64}(0,0)
+        J = Array{Float64}(undef, 0,0)
         method = Optim.IPNewton(μ0 = μ)
         options = Optim.Options(; Optim.default_options(method)...)
         ## In the code, variable constraints are special-cased (for
@@ -84,7 +84,7 @@
         bounds = Optim.ConstraintBounds(Float64[], Float64[], Float64[], Float64[])
         bstate = Optim.BarrierStateVars(bounds, x)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, dg, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, dg, bounds, x, Float64[], Array{Float64}(undef, 0,0), bstate, μ)
         @test f_x == L == dg.f(x)
         @test gx == H*x
         constraints = TwiceDifferentiableConstraints(
@@ -136,7 +136,7 @@
         bstate = Optim.BarrierStateVars(bounds, y)
         rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, y, Float64[], Array{Float64}(0,0), bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, y, Float64[], Array{Float64}(undef, 0,0), bstate, μ)
         @test f_x == 0
         @test L ≈ -μ*sum(log, y)
         @test bgrad.slack_x == -μ./y + bstate.λx
@@ -163,7 +163,7 @@
         rand!(bstate.slack_x)  # intentionally displace from the correct value
         rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, Float64[], Array{Float64}(0,0), bstate, μ)
+        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, Float64[], Array{Float64}(undef, 0,0), bstate, μ)
         @test f_x == 0
         s = bounds.σx .* (x[bounds.ineqx] - bounds.bx)
         Ltarget = -μ*sum(log, bstate.slack_x) +
@@ -482,7 +482,7 @@
         method = IPNewton()
 
         for (name, prob) in mcvp
-            debug_printing && print_with_color(:green, "Problem: ", name, "\n")
+            debug_printing && printstyled("Problem: ", name, "\n", color=:green)
             df = TwiceDifferentiable(MVP.objective(prob), MVP.gradient(prob),
                                      MVP.objective_gradient(prob), MVP.hessian(prob), prob.initial_x)
 
@@ -500,10 +500,10 @@
             @test Optim.converged(results)
             @test Optim.minimum(results) < minval + sqrt(eps(minval))
 
-            debug_printing && print_with_color(:red, "Iterations: $(Optim.iterations(results))\n")
-            debug_printing && print_with_color(:red, "f-calls: $(Optim.f_calls(results))\n")
-            debug_printing && print_with_color(:red, "g-calls: $(Optim.g_calls(results))\n")
-            debug_printing && print_with_color(:red, "h-calls: $(Optim.h_calls(results))\n")
+            debug_printing && printstyled("Iterations: $(Optim.iterations(results))\n", color=:red)
+            debug_printing && printstyled("f-calls: $(Optim.f_calls(results))\n", color=:red)
+            debug_printing && printstyled("g-calls: $(Optim.g_calls(results))\n", color=:red)
+            debug_printing && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
         end
 
         # Test constraints on both x and c

@@ -40,10 +40,10 @@
         for method in (Optim.GradientDescent(), Optim.ConjugateGradient(), Optim.LBFGS(), Optim.BFGS(),
                        Optim.NGMRES(), Optim.OACCEL(),Optim.MomentumGradientDescent(mu=0.1))
 
-            debug_printing && print_with_color(:green, "Solver: $(summary(method))\n")
+            debug_printing && printstyled("Solver: $(summary(method))\n", color=:green)
             res = Optim.optimize(fcomplex, gcomplex!, x0, method, options)
-            debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
-            debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
+            debug_printing && printstyled("Iter\tf-calls\tg-calls\n", color=:green)
+            debug_printing && printstyled("$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n", color=:red)
             if !Optim.converged(res)
                 warn("$(summary(method)) failed.")
                 display(res)

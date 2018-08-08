@@ -161,7 +161,7 @@ function solve_tr_subproblem!(gr,
 
                 # Version 0.5 requires an exactly symmetric matrix, but
                 # version 0.4 does not have this function signature for chol().
-                R = VERSION < v"0.5-" ? chol(H_ridged) : chol(Hermitian(H_ridged))
+                R = chol(Hermitian(H_ridged))
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = dot(s, s)

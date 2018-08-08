@@ -4,7 +4,7 @@
     # Test case: find eigenbasis for first two eigenvalues of a symmetric matrix by minimizing the Rayleigh quotient under orthogonality constraints
     n = 4
     m = 2
-    A = Diagonal(linspace(1,2,n))
+    A = Diagonal(range(1, stop=2, length=n))
     fmanif(x) = real(dot(x,A*x)/2)
     gmanif(x) = A*x
     gmanif!(stor,x) = copyto!(stor,gmanif(x))
@@ -17,10 +17,10 @@
     for ls in (Optim.BackTracking,Optim.HagerZhang,Optim.StrongWolfe,Optim.MoreThuente)
         for method in (Optim.GradientDescent, Optim.ConjugateGradient, Optim.LBFGS, Optim.BFGS,
                        Optim.NGMRES, Optim.OACCEL)
-            debug_printing && print_with_color(:green, "Solver: $(summary(method())), linesearch: $(summary(ls()))\n")
+            debug_printing && printstyled("Solver: $(summary(method())), linesearch: $(summary(ls()))\n", color=:green)
             res = Optim.optimize(fmanif, gmanif!, x0, method(manifold=manif,linesearch=ls()), Optim.Options(allow_f_increases=true,g_tol=1e-6))
-            debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
-            debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
+            debug_printing && printstyled("Iter\tf-calls\tg-calls\n", color=:green)
+            debug_printing && printstyled("$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n", color=:red)
             @test Optim.converged(res)
         end
     end
