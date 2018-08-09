@@ -65,7 +65,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     project_tangent!(method.manifold, gradient(d), state.x)
     method.precondprep!(method.P, state.x)
     ldiv!(state.s, method.P, gradient(d))
-    rmul!(state.s,T(-1))
+    rmul!(state.s, eltype(T)(-1))
     if method.P != nothing
         project_tangent!(method.manifold, state.s, state.x)
     end
