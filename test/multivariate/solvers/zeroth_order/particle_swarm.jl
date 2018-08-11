@@ -1,6 +1,6 @@
 @testset "Particle Swarm" begin
     # TODO: Run on MultivariateProblems.UnconstrainedProblems?
-    srand(100)
+    Random.seed!(100)
 
     function f_s(x::Vector)
         (x[1] - 5.0)^4

@@ -2,7 +2,7 @@
     # Quadratic objective function
     # For (A*x-b)^2/2
     function quadratic!(g, x, AtA, Atb, tmp)
-        A_mul_B!(tmp, AtA, x)
+        mul!(tmp, AtA, x)
         v = dot(x,tmp)/2 + dot(Atb,x)
         if g !== nothing
             g .= tmp .+ Atb
@@ -10,7 +10,7 @@
         return v
     end
 
-    srand(1)
+    Random.seed!(1)
     N = 8
     boxl = 2.0
     outbox = false

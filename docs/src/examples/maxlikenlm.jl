@@ -19,8 +19,8 @@
 # and also include the `NLSolversBase` routine:
 #
 
-using Optim, NLSolversBase
-srand(0);                            # Fix random seed generator for reproducibility
+using Optim, NLSolversBase, Random
+Random.seed!(0);                            # Fix random seed generator for reproducibility
 
 #md # !!! tip
 #md #     Add Optim with the following command at the Julia command prompt:

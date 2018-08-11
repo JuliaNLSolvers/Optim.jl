@@ -21,12 +21,12 @@ end
 # differ, and require that the algorithm can cope with it.
 
 function BarrierStateVars{T}(bounds::ConstraintBounds) where T
-    slack_x = Array{T}(length(bounds.ineqx))
-    slack_c = Array{T}(length(bounds.ineqc))
+    slack_x = Array{T}(undef, length(bounds.ineqx))
+    slack_c = Array{T}(undef, length(bounds.ineqc))
     λx = similar(slack_x)
     λc = similar(slack_c)
-    λxE = Array{T}(length(bounds.eqx))
-    λcE = Array{T}(length(bounds.eqc))
+    λxE = Array{T}(undef, length(bounds.eqx))
+    λcE = Array{T}(undef, length(bounds.eqc))
     sv = BarrierStateVars{T}(slack_x, slack_c, λx, λc, λxE, λcE)
 end
 BarrierStateVars(bounds::ConstraintBounds{T}) where T = BarrierStateVars{T}(bounds)
@@ -770,7 +770,7 @@ end
 isfeasible(constraints, state::AbstractBarrierState) = isfeasible(constraints, state.x, state.constraints_c)
 function isfeasible(constraints, x)
     # don't assume c! returns c (which means this is a little more awkward)
-    c = Array{eltype(x)}(constraints.bounds.nc)
+    c = Array{eltype(x)}(undef, constraints.bounds.nc)
     constraints.c!(c, x)
     isfeasible(constraints, x, c)
 end
@@ -805,7 +805,7 @@ function isinterior(bounds::ConstraintBounds, x, c)
 end
 isinterior(constraints, state::AbstractBarrierState) = isinterior(constraints, state.x, state.constraints_c)
 function isinterior(constraints, x)
-    c = Array{eltype(x)}(constraints.bounds.nc)
+    c = Array{eltype(x)}(undef, constraints.bounds.nc)
     constraints.c!(c, x)
     isinterior(constraints, x, c)
 end
@@ -820,7 +820,7 @@ function pack_vec(x, b::BarrierStateVars)
     for fn in fieldnames(b)
         n += length(getfield(b, fn))
     end
-    vec = Array{eltype(x)}(n)
+    vec = Array{eltype(x)}(undef, n)
     pack_vec!(vec, x, b)
 end
 

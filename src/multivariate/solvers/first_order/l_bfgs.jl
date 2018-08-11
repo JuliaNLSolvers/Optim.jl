@@ -161,7 +161,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
               similar(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
-              Vector{T}(method.m), # state.rho
+              Vector{T}(undef, method.m), # state.rho
               [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
               [similar(gradient(d)) for i = 1:method.m], # Store changes in position in state.dg_history
               similar(initial_x), # Buffer for new entry in state.dx_history
@@ -169,7 +169,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
               similar(initial_x), # Buffer stored in state.u
               real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
-              Vector{T}(method.m), #Buffer for use by twoloop
+              Vector{T}(undef, method.m), #Buffer for use by twoloop
               0,
               similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...)

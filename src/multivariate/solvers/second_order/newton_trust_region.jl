@@ -39,7 +39,7 @@ end
 # Function 4.39 in N&W
 function p_sq_norm(lambda::T, min_i, n, qg, H_eig) where T
     p_sum = zero(T)
-    H_eigvals = H_eig[:values]
+    H_eigvals = H_eig.values
     for i = min_i:n
         p_sum += qg[i]^2 / (lambda + H_eigvals[i])^2
     end
@@ -81,14 +81,14 @@ function solve_tr_subproblem!(gr,
 
     # Note that currently the eigenvalues are only sorted if H is perfectly
     # symmetric.  (Julia issue #17093)
-    H_eig = eigfact(Symmetric(H))
-    min_H_ev, max_H_ev = H_eig[:values][1], H_eig[:values][n]
+    H_eig = eigen(Symmetric(H))
+    min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
     H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.
     qg = similar(gr)
     for i=1:n
-        qg[i] = dot(H_eig[:vectors][:, i], gr)
+        qg[i] = dot(H_eig.vectors[:, i], gr)
     end
 
     # These values describe the outcome of the subproblem.  They will be
@@ -101,7 +101,7 @@ function solve_tr_subproblem!(gr,
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
         reached_solution = true
-        s[:] = -(H_eig[:vectors] ./ H_eig[:values]') * H_eig[:vectors]' * gr
+        s[:] = -(H_eig.vectors ./ H_eig.values') * H_eig.vectors' * gr
         lambda = zero(T)
     else
         interior = false
@@ -109,7 +109,7 @@ function solve_tr_subproblem!(gr,
         # The hard case is when the gradient is orthogonal to all
         # eigenvectors associated with the lowest eigenvalue.
         hard_case_candidate, min_H_ev_multiplicity =
-            check_hard_case_candidate(H_eig[:values], qg)
+            check_hard_case_candidate(H_eig.values, qg)
 
         # Solutions smaller than this lower bound on lambda are not allowed:
         # they don't ridge H enough to make H_ridge PSD.
@@ -138,10 +138,10 @@ function solve_tr_subproblem!(gr,
                 # I don't think it matters which eigenvector we pick so take
                 # the first.
                 for i=1:n
-                    s[i] = tau * H_eig[:vectors][i, 1]
+                    s[i] = tau * H_eig.vectors[i, 1]
                     for k=(min_H_ev_multiplicity + 1):n
                         s[i] = s[i] +
-                               qg[k] * H_eig[:vectors][i, k] / (H_eig[:values][k] + lambda)
+                               qg[k] * H_eig.vectors[i, k] / (H_eig.values[k] + lambda)
                     end
                 end
             end
@@ -159,9 +159,7 @@ function solve_tr_subproblem!(gr,
             for iter in 1:max_iters
                 lambda_previous = lambda
 
-                # Version 0.5 requires an exactly symmetric matrix, but
-                # version 0.4 does not have this function signature for chol().
-                R = chol(Hermitian(H_ridged))
+                R = cholesky(Hermitian(H_ridged)).U
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = dot(s, s)

@@ -34,7 +34,8 @@ We show how to minimize a quadratic plus quartic function with
 the `LBFGS` optimization algorithm.
 
 ```jl
-srand(0) # Set the seed for reproducibility
+using Random
+Random.seed!(0) # Set the seed for reproducibility
 # μ is the strength of the quartic. μ = 0 is just a quadratic problem
 n = 4
 A = randn(n,n) + im*randn(n,n)

@@ -77,7 +77,7 @@
         ## constrained cases below, we compare variable constraints
         ## against the same kind of constraint applied generically.
         cvar! = (c, x) -> copyto!(c, x)
-        cvarJ! = (J, x) -> copyto!(J, eye(size(J)...))
+        cvarJ! = (J, x) -> copyto!(J, Matrix{Float64}(I, size(J)...))
         cvarh! = (h, x, λ) -> h  # h! adds to h, it doesn't replace it
 
         ## No constraints
@@ -120,7 +120,8 @@
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ [gx; xbar-x]
         n = length(x)
-        @test Optim.Hf(constraints, state) ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
+        eyen = Matrix{Float64}(I, n, n)
+        @test Optim.Hf(constraints, state) ≈ [eyen -eyen; -eyen zeros(n,n)]
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], xbar, xbar)
         constraints = TwiceDifferentiableConstraints(cvar!, cvarJ!, cvarh!, bounds)
@@ -129,7 +130,8 @@
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ [gx; xbar-x]
         n = length(x)
-        @test Optim.Hf(constraints, state) ≈ [eye(n,n) -eye(n,n); -eye(n,n) zeros(n,n)]
+        eyen = Matrix{Float64}(I, n, n)
+        @test Optim.Hf(constraints, state) ≈ [eyen -eyen; -eyen zeros(n,n)]
         ## Nonnegativity constraints
         bounds = Optim.ConstraintBounds(zeros(length(x)), fill(Inf,length(x)), [], [])
         y = rand(length(x))
@@ -148,16 +150,16 @@
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1 ./ y.^2)
         # Now again using the generic machinery
         bounds = Optim.ConstraintBounds([], [], zeros(length(x)), fill(Inf,length(x)))
         constraints = TwiceDifferentiableConstraints(cvar!, cvarJ!, cvarh!, bounds)
         state = Optim.initial_state(method, options, d0, constraints, y)
         setstate!(state, μ, d0, constraints, method)
         @test Optim.gf(bounds, state) ≈ -μ./y
-        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1./y.^2)
+        @test Optim.Hf(constraints, state) ≈ μ*Diagonal(1 ./ y.^2)
         ## General inequality constraints on variables
-        lb, ub = rand(length(x))-2, rand(length(x))+1
+        lb, ub = rand(length(x)).-2, rand(length(x)).+1
         bounds = Optim.ConstraintBounds(lb, ub, [], [])
         bstate = Optim.BarrierStateVars(bounds, x)
         rand!(bstate.slack_x)  # intentionally displace from the correct value
@@ -238,7 +240,7 @@
         heq = zeros(length(x), length(x))
         ch!(heq, x, bstate.λcE)
         @test Optim.gf(bounds, state) ≈ [gx; cbar-c]
-        @test Optim.Hf(constraints, state) ≈ [full(cholfact(Positive, heq)) -J';
+        @test Optim.Hf(constraints, state) ≈ [Matrix(cholfact(Positive, heq)) -J';
                                                   -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
         bounds = Optim.ConstraintBounds([], [], -rand(length(c))-1, rand(length(c))+2)
@@ -269,14 +271,14 @@
         ch!(hineq, x, λ)
         JI = J[bounds.ineqc,:]
         # # Primal
-        # hxx = μ*JI'*Diagonal(1./bstate.slack_c.^2)*JI - hineq
+        # hxx = μ*JI'*Diagonal(1 ./ bstate.slack_c.^2)*JI - hineq
         # gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ(bgrad.λc ./ bstate.slack_c.^2))
         # Primal-dual
         #        hxx = full(cholfact(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         hxx = -hineq + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
         @test Optim.gf(bounds, state) ≈ gf
-        @test Optim.Hf(constraints, state) ≈ full(cholfact(Positive, hxx, Val{true}))
+        @test Optim.Hf(constraints, state) ≈ Matrix(cholfact(Positive, hxx, Val{true}))
     end
 
     @testset "IPNewton initialization" begin

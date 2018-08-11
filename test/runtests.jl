@@ -1,17 +1,20 @@
+using Test
 using Optim
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
+const MVP = MultivariateProblems
+
 using Compat
-using Test
 using Suppressor
-using PositiveFactorizations # for the IPNewton tests
+import PositiveFactorizations: Positive, cholfact # for the IPNewton tests
+using Random
 
 import LineSearches
 import ForwardDiff
 import NLSolversBase
-import LinearAlgebra: norm, diag, I
-
-const MVP = MultivariateProblems
+import NLSolversBase: clear!
+import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
+import SparseArrays: normalize!, spdiagm
 
 debug_printing = false
 
@@ -107,7 +110,7 @@ function run_optim_tests(method; convergence_exceptions = (),
         end
         show_name && printstyled("Problem: ", name, "\n", color=:green)
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = findall(n[1] == name for n in iteration_exceptions)
+        iter_id = findall(n->n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
@@ -171,7 +174,7 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
         end
         show_name && printstyled("Problem: ", name, "\n", color=:green)
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = findall(n[1] == name for n in iteration_exceptions)
+        iter_id = findall(n->n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options

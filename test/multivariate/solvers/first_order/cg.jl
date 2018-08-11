@@ -26,7 +26,7 @@
             end
         end
 
-        srand(1)
+        Random.seed!(1)
         B = rand(2,2)
         results = Optim.optimize(X -> cg_objective(X, B), (G, X) -> cg_objective_gradient!(G, X, B), rand(2,2), ConjugateGradient())
         @test Optim.converged(results)

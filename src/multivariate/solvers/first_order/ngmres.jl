@@ -203,10 +203,13 @@ end
     real(dot(x, r))
 end
 
-
+const ngmres_oaccel_warned = Ref{Bool}(false)
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{eTx}) where eTx
     if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
-        Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning.")
+        if !ngmres_oaccel_warned[]
+            @warn "Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning."
+            ngmres_oaccel_warned[] = true
+        end
     end
 
     nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, initial_x)
@@ -280,7 +283,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     project_tangent!(method.manifold, gradient(d), state.x)
 
     if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
-        warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
+        @warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
         return true
     end
 
@@ -325,12 +328,12 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     try
         α .= (Aview + δ*I) \ bview
     catch e
-        Base.warn("Calculating α failed in $(summary(method)).")
-        Base.warn("Exception info:\n $e")
+        @warn("Calculating α failed in $(summary(method)).")
+        @warn("Exception info:\n $e")
         α .= NaN
     end
     if any(isnan, α)
-        Base.warn("Calculated α is NaN in $(summary(method)). Restarting ...")
+        @warn("Calculated α is NaN in $(summary(method)). Restarting ...")
         state.s .= zero(eltype(state.s))
         state.restart = true
     else

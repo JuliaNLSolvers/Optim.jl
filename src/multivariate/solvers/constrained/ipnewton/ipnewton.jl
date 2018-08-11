@@ -103,7 +103,7 @@ end
 function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constraints::TwiceDifferentiableConstraints, initial_x::Array{T}) where T
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
-    constr_c = Array{T}(mc)
+    constr_c = Array{T}(undef, mc)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
@@ -114,18 +114,18 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     end
     # Allocate fields for the objective function
     n = length(initial_x)
-    g = Vector{T}(n)
-    s = Vector{T}(n)
+    g = Vector{T}(undef, n)
+    s = Vector{T}(undef, n)
     f_x_previous = NaN
     f_x, g_x = value_gradient!(d, initial_x)
     g .= g_x # needs to be a separate copy of g_x
-    H = Matrix{T}(n, n)
-    Hd = Vector{Int8}(n)
+    H = Matrix{T}(undef, n, n)
+    Hd = Vector{Int8}(undef, n)
     hessian!(d, initial_x)
     copyto!(H, hessian(d))
 
     # More constraints
-    constr_J = Array{T}(mc, n)
+    constr_J = Array{T}(undef, mc, n)
     gtilde = similar(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
@@ -296,7 +296,7 @@ function solve_step!(state::IPNewtonState, constraints, options, show_linesearch
     ΔλE0 = MF \ (gE + JE * (Htilde \ state.gtilde))
     Δx0 = Htilde \ (JE'*ΔλE0 - state.gtilde)
     # Check that the solution to the linear equations represents an improvement
-    Hpstepx, HstepλE = full(Htilde)*Δx0 - JE'*ΔλE0, -JE*Δx0  # TODO: don't use full here
+    Hpstepx, HstepλE = Matrix(Htilde)*Δx0 - JE'*ΔλE0, -JE*Δx0  # TODO: don't use full here
     # TODO: How to handle show_linesearch?
     # This was originally in options.show_linesearch, but I removed it as none of the other Optim algorithms have it there.
     # We should move show_linesearch back to options when we refactor
@@ -381,7 +381,7 @@ end
 # TODO: should we put these elsewhere?
 function Hf(bounds::ConstraintBounds, state)
     JE = jacobianE(state, bounds)
-    Hf = [full(state.Htilde) -JE';
+    Hf = [Matrix(state.Htilde) -JE';
           -JE zeros(eltype(JE), size(JE, 1), size(JE, 1))]
 end
 Hf(constraints, state) = Hf(constraints.bounds, state)

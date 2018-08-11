@@ -1,5 +1,5 @@
 @testset "Manifolds" begin
-    srand(0)
+    Random.seed!(0)
 
     # Test case: find eigenbasis for first two eigenvalues of a symmetric matrix by minimizing the Rayleigh quotient under orthogonality constraints
     n = 4
@@ -31,7 +31,7 @@
     @views fprod(x) = fmanif(x[:,1]) + fmanif(x[:,2])
     @views gprod!(stor,x) = (gmanif!(stor[:, 1],x[:, 1]);gmanif!(stor[:, 2],x[:, 2]);stor)
     m1 = Optim.PowerManifold(Optim.Sphere(), (n,), (2,))
-    srand(0)
+    Random.seed!(0)
     x0 = randn(n,2) + im*randn(n,2)
     res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m1))
     @test Optim.converged(res)
@@ -41,7 +41,7 @@
     @views fprod(x) = fmanif(x[1:n]) + fmanif(x[n+1:2n])
     @views gprod!(stor,x) = (gmanif!(stor[1:n],x[1:n]);gmanif!(stor[n+1:2n],x[n+1:2n]);stor)
     m2 = Optim.ProductManifold(Optim.Sphere(), Optim.Sphere(), (n,), (n,))
-    srand(0)
+    Random.seed!(0)
     x0 = randn(2n) + im*randn(2n)
     res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold=m2))
     @test Optim.converged(res)

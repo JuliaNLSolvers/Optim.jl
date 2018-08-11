@@ -1,5 +1,5 @@
 @testset "Complex numbers" begin
-    srand(0)
+    Random.seed!(0)
 
     # Test case: minimize quadratic plus quartic
     # μ is the strength of the quartic. μ = 0 is just a quadratic problem
@@ -45,7 +45,7 @@
             debug_printing && printstyled("Iter\tf-calls\tg-calls\n", color=:green)
             debug_printing && printstyled("$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n", color=:red)
             if !Optim.converged(res)
-                warn("$(summary(method)) failed.")
+                @warn("$(summary(method)) failed.")
                 display(res)
                 println("########################")
             end

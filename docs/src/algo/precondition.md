@@ -36,10 +36,11 @@ Below, we see an example where a function is minimized without and with a precon
 applied.
 ```jl
 using ForwardDiff
+import SparseArrays: spdiagm
 initial_x = zeros(100)
 plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
 plap1(x) = ForwardDiff.gradient(plap,x)
-precond(n) = spdiagm((-ones(n-1), 2*ones(n), -ones(n-1)), (-1,0,1), n, n)*(n+1)
+precond(n) = spdiagm(-1 => -ones(n-1), 0 => 2*ones(n), 1 => -ones(n-1)))*(n+1)
 f(x) = plap([0; x; 0])
 g!(G, x) = copyto!(G, (plap1([0; x; 0]))[2:end-1])
 result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))

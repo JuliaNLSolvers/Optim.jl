@@ -22,6 +22,7 @@
 # constraint is unbounded from below or above respectively.
 
 using Optim, NLSolversBase #hide
+import NLSolversBase: clear! #hide
 
 # # Constrained optimization with `IPNewton`
 

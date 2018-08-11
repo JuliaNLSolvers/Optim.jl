@@ -20,7 +20,7 @@
 
     @testset "matrix" begin
         for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, ConjugateGradient,  GradientDescent, MomentumGradientDescent, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
-            res = optimize(f, g!, eye(2), m())
+            res = optimize(f, g!, Matrix{Float64}(I, 2, 2), m())
             @test typeof(Optim.minimizer(res)) <: Matrix
             if !(m in (SimulatedAnnealing, ParticleSwarm))
                 @test norm(Optim.minimizer(res) - [10.0 0.0; 0.0 5.0]) < 10e-8
@@ -30,7 +30,7 @@
 
     @testset "tensor" begin
         eye3 = zeros(2,2,1)
-        eye3[:,:,1] = eye(2)
+        eye3[:,:,1] = Matrix{Float64}(I, 2, 2)
         for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, ConjugateGradient,  GradientDescent, MomentumGradientDescent, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
             res = optimize(f, g!, eye3, m())
             _minimizer = Optim.minimizer(res)
