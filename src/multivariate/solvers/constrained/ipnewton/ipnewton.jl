@@ -220,7 +220,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     for (i,j) in enumerate(bounds.ineqx)
         Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
-    state.Htilde = cholfact(Positive, Hxx, Val{true})
+    state.Htilde = cholesky(Positive, Hxx, Val{true})
 
     state
 end
@@ -291,7 +291,7 @@ function solve_step!(state::IPNewtonState, constraints, options, show_linesearch
     gE = [bgrad.λxE;
           bgrad.λcE]
     M = JE*(Htilde \ JE')
-    MF = cholfact(Positive, M, Val{true})
+    MF = cholesky(Positive, M, Val{true})
     # These are a solution to the affine-scaling problem (with μ=0)
     ΔλE0 = MF \ (gE + JE * (Htilde \ state.gtilde))
     Δx0 = Htilde \ (JE'*ΔλE0 - state.gtilde)

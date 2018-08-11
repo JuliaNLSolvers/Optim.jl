@@ -1,5 +1,5 @@
 julia 0.7-beta2
-PositiveFactorizations
+PositiveFactorizations 0.2.1
 Compat 0.18.0
 LineSearches 6.0.1
 NLSolversBase 6.1.1

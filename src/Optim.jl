@@ -17,7 +17,7 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 module Optim
 using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
 using PositiveFactorizations # for globalization strategy in Newton
-import PositiveFactorizations: cholfact!, cholfact
+import PositiveFactorizations: cholesky!, cholesky
 using LineSearches           # for globalization strategy in Quasi-Newton algs
 using DiffEqDiffTools        # for finite difference derivatives
 # using ReverseDiff           # for reverse mode AD (not really suitable for scalar output)

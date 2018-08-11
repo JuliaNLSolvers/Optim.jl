@@ -6,7 +6,7 @@ const MVP = MultivariateProblems
 
 using Compat
 using Suppressor
-import PositiveFactorizations: Positive, cholfact # for the IPNewton tests
+import PositiveFactorizations: Positive, cholesky # for the IPNewton tests
 using Random
 
 import LineSearches

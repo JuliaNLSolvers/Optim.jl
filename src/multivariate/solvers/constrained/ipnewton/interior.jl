@@ -325,7 +325,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
     # Q = QRF[:Q]
     # PEg = Q'*(Q*gf)   # in the subspace of JE
     C = JE*JE'
-    Cc = cholfact(Positive, C)
+    Cc = cholesky(Positive, C)
     Pperpg = gf-JE'*(Cc \ (JE*gf))   # in the nullspace of JE
     # Set μ
     JI = jacobianI(state, bounds)

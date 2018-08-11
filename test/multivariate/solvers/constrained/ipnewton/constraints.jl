@@ -241,7 +241,7 @@
         heq = zeros(length(x), length(x))
         ch!(heq, x, bstate.λcE)
         @test Optim.gf(bounds, state) ≈ [gx; cbar-c]
-        @test Optim.Hf(constraints, state) ≈ [Matrix(cholfact(Positive, heq)) -J';
+        @test Optim.Hf(constraints, state) ≈ [Matrix(cholesky(Positive, heq)) -J';
                                                   -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
         bounds = Optim.ConstraintBounds([], [], .-rand(length(c)).-1, rand(length(c)).+2)
@@ -275,11 +275,11 @@
         # hxx = μ*JI'*Diagonal(1 ./ bstate.slack_c.^2)*JI - hineq
         # gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - μ(bgrad.λc ./ bstate.slack_c.^2))
         # Primal-dual
-        #        hxx = full(cholfact(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
+        #        hxx = full(cholesky(Positive, -hineq)) + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         hxx = -hineq + JI'*Diagonal(bstate.λc./bstate.slack_c)*JI
         gf = -JI'*(bounds.σc .* bstate.λc) + JI'*Diagonal(bounds.σc)*(bgrad.slack_c - (bgrad.λc .* bstate.λc ./ bstate.slack_c))
         @test Optim.gf(bounds, state) ≈ gf
-        @test Optim.Hf(constraints, state) ≈ Matrix(cholfact(Positive, hxx, Val{true}))
+        @test Optim.Hf(constraints, state) ≈ Matrix(cholesky(Positive, hxx, Val{true}))
     end
 
     @testset "IPNewton initialization" begin

@@ -64,7 +64,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
         state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
     else
-        state.F = cholfact!(Positive, NLSolversBase.hessian(d))
+        state.F = cholesky!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
             # is this actually StridedArray?
             ldiv!(state.s, state.F, -gradient(d))
