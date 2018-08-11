@@ -13,7 +13,8 @@
 
     # TODO: Check why skip problems fail
     skip = ("Trigonometric", "Large Polynomial", "Parabola", "Paraboloid Random Matrix",
-            "Paraboloid Diagonal", "Extended Rosenbrock", "Penalty Function I", "Beale"
+            "Paraboloid Diagonal", "Extended Rosenbrock", "Penalty Function I", "Beale",
+            "Extended Powell",
              )
     run_optim_tests(AcceleratedGradientDescent();
                     skip = skip,
@@ -23,7 +24,8 @@
                     iteration_exceptions = (("Powell", 1100),
                                             ("Rosenbrock", 10000),
                                             ("Polynomial", 1500),
-                                            ("Fletcher-Powell", 10000)),
+                                            ("Fletcher-Powell", 10000),
+                                            ("Extended Powell", 8000)),
                     f_increase_exceptions = ("Hosaki", "Polynomial", "Powell", "Himmelblau",
                                              "Extended Powell", "Fletcher-Powell",
                                              "Quadratic Diagonal", "Rosenbrock"),

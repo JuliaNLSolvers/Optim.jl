@@ -60,9 +60,9 @@ multivariate_tests = [
     "solvers/constrained/ipnewton/ipnewton_unconstrained",
     "solvers/constrained/samin",
     # ## first order
-    # "solvers/first_order/accelerated_gradient_descent",
+    "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/bfgs",
-    # "solvers/first_order/cg",
+    "solvers/first_order/cg",
     "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
     "solvers/first_order/momentum_gradient_descent",
@@ -98,7 +98,7 @@ function run_optim_tests(method; convergence_exceptions = (),
                          f_increase_exceptions = (),
                          iteration_exceptions = (),
                          skip = (),
-                         show_name = true,
+                         show_name = false,
                          show_trace = false,
                          show_res = false,
                          show_itcalls = false)
@@ -108,6 +108,7 @@ function run_optim_tests(method; convergence_exceptions = (),
             debug_printing && println("$name has no registered minimum/minimizer. Skipping ...")
             continue
         end
+
         show_name && printstyled("Problem: ", name, "\n", color=:green)
         # Look for name in the first elements of the iteration_exceptions tuples
         iter_id = findall(n->n[1] == name, iteration_exceptions)

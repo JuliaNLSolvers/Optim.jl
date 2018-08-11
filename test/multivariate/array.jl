@@ -10,9 +10,10 @@
     end
     @testset "vector" begin
         for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, NelderMead, GradientDescent, MomentumGradientDescent, NelderMead, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
+            debug_printing && printstyled("Solver: "*string(m); color = :green)
             res = optimize(f, g!, [1., 0., 1., 0.], m())
             @test typeof(Optim.minimizer(res)) <: Vector
-            if !(m in (NelderMead, SimulatedAnnealing))
+            if !(m in (NelderMead, SimulatedAnnealing, ParticleSwarm))
                 @test norm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
             end
         end
