@@ -36,13 +36,13 @@ general_tests = [
 general_tests = map(s->"./general/"*s*".jl", general_tests)
 
 univariate_tests = [
-    # optimize
+    # # optimize
     "optimize/interface",
     "optimize/optimize",
-    # solvers
+    # # solvers
     "solvers/golden_section",
     "solvers/brent",
-    #"initial_convergence",
+    # "initial_convergence",
     "dual",
 ]
 univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
@@ -59,19 +59,19 @@ multivariate_tests = [
     "solvers/constrained/ipnewton/counter",
     "solvers/constrained/ipnewton/ipnewton_unconstrained",
     "solvers/constrained/samin",
-    ## first order
-    "solvers/first_order/accelerated_gradient_descent",
+    # ## first order
+    # "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/bfgs",
-    "solvers/first_order/cg",
+    # "solvers/first_order/cg",
     "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
     "solvers/first_order/momentum_gradient_descent",
     "solvers/first_order/ngmres",
-    ## second order
+    # ## second order
     "solvers/second_order/newton",
     "solvers/second_order/newton_trust_region",
     "solvers/second_order/krylov_trust_region",
-    ## zeroth order
+    # ## zeroth order
     "solvers/zeroth_order/grid_search",
     "solvers/zeroth_order/nelder_mead",
     "solvers/zeroth_order/particle_swarm",
@@ -98,7 +98,7 @@ function run_optim_tests(method; convergence_exceptions = (),
                          f_increase_exceptions = (),
                          iteration_exceptions = (),
                          skip = (),
-                         show_name = false,
+                         show_name = true,
                          show_trace = false,
                          show_res = false,
                          show_itcalls = false)

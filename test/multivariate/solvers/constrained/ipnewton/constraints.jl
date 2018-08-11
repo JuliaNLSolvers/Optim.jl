@@ -192,7 +192,8 @@
             # gxs[j] += -2*μ*bounds.σx[i]/s[i] + μ*(x[j]-bounds.bx[i])/s[i]^2
             # hxs[j] += μ/s[i]^2
             # Primal-dual
-            gstmp, gλtmp = -μ/s[i] + λ[i], s[i] - bounds.σx[i]*(x[j]-bounds.bx[i])
+            gstmp = -μ/s[i] + λ[i]
+            gλtmp = s[i] - bounds.σx[i]*(x[j]-bounds.bx[i])
             htmp = λ[i]/s[i]
             hxs[j] += htmp
             gxs[j] += bounds.σx[i]*(gstmp - λ[i]) - bounds.σx[i]*htmp*gλtmp
@@ -243,7 +244,7 @@
         @test Optim.Hf(constraints, state) ≈ [Matrix(cholfact(Positive, heq)) -J';
                                                   -J zeros(size(J,1), size(J,1))]
         ## Nonlinear inequality constraints
-        bounds = Optim.ConstraintBounds([], [], -rand(length(c))-1, rand(length(c))+2)
+        bounds = Optim.ConstraintBounds([], [], .-rand(length(c)).-1, rand(length(c)).+2)
         bstate = Optim.BarrierStateVars(bounds, x, c)
         rand!(bstate.slack_c)  # intentionally displace from the correct value
         rand!(bstate.λc)
