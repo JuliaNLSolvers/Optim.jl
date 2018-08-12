@@ -11,13 +11,13 @@
         # Loop over unconstrained problems
         for name in problems
             prob = MVP.UnconstrainedProblems.examples[name]
-            show_name && print_with_color(:green, "Problem: ", name, "\n")
+            show_name && printstyled("Problem: ", name, "\n", color=:green)
             options = Optim.Options(allow_f_increases=true, show_trace = show_trace)
             for (i, input) in enumerate(fd_input_tuple(method, prob))
                 # Loop over appropriate input combinations of f, g!, and h!
                 results = Optim.optimize(input..., prob.initial_x, method, options)
 
-                debug_printing && print_with_color(:red, "f-calls: $(Optim.f_calls(results))\n")
+                debug_printing && printstyled("f-calls: $(Optim.f_calls(results))\n", color=:red)
                 show_res && display(results)
 
                 show_time && @time Optim.optimize(input..., prob.initial_x, method, options)
@@ -30,12 +30,12 @@
     end
 
     @testset "Timing with LBFGS" begin
-        debug_printing && print_with_color(:blue, "#####################\nSolver: L-BFGS\n")
+        debug_printing && printstyled("#####################\nSolver: L-BFGS\n", color=:blue)
         run_optim_fd_tests(LBFGS(), show_name=debug_printing, show_time = debug_printing)
     end
 
     @testset "Timing with Newton" begin
-        debug_printing && print_with_color(:blue, "#####################\nSolver: Newton\n")
+        debug_printing && printstyled("#####################\nSolver: Newton\n", color=:blue)
         run_optim_fd_tests(Newton(), show_name=debug_printing, show_time = debug_printing)
     end
 end

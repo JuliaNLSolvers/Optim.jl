@@ -67,7 +67,7 @@ project_tangent!(M::Flat, g, x) = g
 struct Sphere <: Manifold
 end
 retract!(S::Sphere, x) = normalize!(x)
-project_tangent!(S::Sphere,g,x) = (g .-= real(vecdot(x,g)).*x)
+project_tangent!(S::Sphere,g,x) = (g .-= real(dot(x,g)).*x)
 
 """
 N x n matrices with orthonormal columns, i.e. such that X'X = I.
@@ -91,7 +91,7 @@ function retract!(S::Stiefel_SVD, X)
 end
 function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
-    X .= X/chol(overlap)
+    X .= X/cholesky(overlap)
 end
 #For functions depending only on the subspace spanned by X, we always have G = A*X for some A, and so X'G = G'X, and Stiefel == Grassmann
 #Edelman et al. have G .-= X*G'X (2.53), corresponding to a different metric ("canonical metric"). We follow Absil et al. here and use the metric inherited from Nxn matrices.

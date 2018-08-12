@@ -98,7 +98,7 @@ function centroid!(c::AbstractArray{T}, simplex, h=0) where T
             end
         end
     end
-    scale!(c, 1/n)
+    rmul!(c, T(1/n))
 end
 
 centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
@@ -196,9 +196,9 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     n, m = length(state.x), state.m
 
     centroid!(state.x_centroid, state.simplex, state.i_order[m])
-    copy!(state.x_lowest, state.simplex[state.i_order[1]])
-    copy!(state.x_second_highest, state.simplex[state.i_order[n]])
-    copy!(state.x_highest, state.simplex[state.i_order[m]])
+    copyto!(state.x_lowest, state.simplex[state.i_order[1]])
+    copyto!(state.x_second_highest, state.simplex[state.i_order[n]])
+    copyto!(state.x_highest, state.simplex[state.i_order[m]])
     state.f_lowest = state.f_simplex[state.i_order[1]]
     f_second_highest = state.f_simplex[state.i_order[n]]
     f_highest = state.f_simplex[state.i_order[m]]
@@ -217,11 +217,11 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         f_expand = value(f, state.x_cache)
 
         if f_expand < f_reflect
-            copy!(state.simplex[state.i_order[m]], state.x_cache)
+            copyto!(state.simplex[state.i_order[m]], state.x_cache)
             @inbounds state.f_simplex[state.i_order[m]] = f_expand
             state.step_type = "expansion"
         else
-            copy!(state.simplex[state.i_order[m]], state.x_reflect)
+            copyto!(state.simplex[state.i_order[m]], state.x_reflect)
             @inbounds state.f_simplex[state.i_order[m]] = f_reflect
             state.step_type = "reflection"
         end
@@ -232,7 +232,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         end
         state.i_order[1] = i_highest
     elseif f_reflect < f_second_highest
-        copy!(state.simplex[state.i_order[m]], state.x_reflect)
+        copyto!(state.simplex[state.i_order[m]], state.x_reflect)
         @inbounds state.f_simplex[state.i_order[m]] = f_reflect
         state.step_type = "reflection"
         sortperm!(state.i_order, state.f_simplex)
@@ -244,7 +244,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             end
             f_outside_contraction = value(f, state.x_cache)
             if f_outside_contraction < f_reflect
-                copy!(state.simplex[state.i_order[m]], state.x_cache)
+                copyto!(state.simplex[state.i_order[m]], state.x_cache)
                 @inbounds state.f_simplex[state.i_order[m]] = f_outside_contraction
                 state.step_type = "outside contraction"
                 sortperm!(state.i_order, state.f_simplex)
@@ -259,7 +259,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             end
             f_inside_contraction = value(f, state.x_cache)
             if f_inside_contraction < f_highest
-                copy!(state.simplex[state.i_order[m]], state.x_cache)
+                copyto!(state.simplex[state.i_order[m]], state.x_cache)
                 @inbounds state.f_simplex[state.i_order[m]] = f_inside_contraction
                 state.step_type = "inside contraction"
                 sortperm!(state.i_order, state.f_simplex)
@@ -272,7 +272,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     if shrink
         for i = 2:m
             ord = state.i_order[i]
-            copy!(state.simplex[ord], state.x_lowest + state.δ*(state.simplex[ord]-state.x_lowest))
+            copyto!(state.simplex[ord], state.x_lowest + state.δ*(state.simplex[ord]-state.x_lowest))
             state.f_simplex[ord] = value(f, state.simplex[ord])
         end
         step_type = "shrink"
@@ -307,7 +307,7 @@ end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
-end 
+end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options)
     dt = Dict()

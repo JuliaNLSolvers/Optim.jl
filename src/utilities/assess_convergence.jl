@@ -4,7 +4,7 @@ x_abschange(state) = x_abschange(state.x, state.x_previous)
 x_abschange(x, x_previous) = maxdiff(x, x_previous)
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
 g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
-g_residual(g) = vecnorm(g, Inf)
+g_residual(g) = norm(g, Inf)
 gradient_convergence_assessment(state::AbstractOptimizerState, d, options) = g_residual(gradient(d)) ≤ options.g_tol
 gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
 

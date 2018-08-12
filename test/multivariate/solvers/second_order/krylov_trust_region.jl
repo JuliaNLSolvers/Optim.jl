@@ -49,7 +49,7 @@ end
       if prob.istwicedifferentiable
             hv!(storage::Vector, x::Vector, v::Vector) = begin
                 n = length(x)
-                H = Matrix{Float64}(n, n)
+                H = Matrix{Float64}(undef, n, n)
                 MVP.hessian(prob)(H, x)
                 storage .= H * v
             end

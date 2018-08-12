@@ -20,13 +20,13 @@ end
 # not matching the equality constraints.  So we allow them to
 # differ, and require that the algorithm can cope with it.
 
-function (::Type{BarrierStateVars{T}})(bounds::ConstraintBounds) where T
-    slack_x = Array{T}(length(bounds.ineqx))
-    slack_c = Array{T}(length(bounds.ineqc))
+function BarrierStateVars{T}(bounds::ConstraintBounds) where T
+    slack_x = Array{T}(undef, length(bounds.ineqx))
+    slack_c = Array{T}(undef, length(bounds.ineqc))
     λx = similar(slack_x)
     λc = similar(slack_c)
-    λxE = Array{T}(length(bounds.eqx))
-    λcE = Array{T}(length(bounds.eqc))
+    λxE = Array{T}(undef, length(bounds.eqx))
+    λcE = Array{T}(undef, length(bounds.eqc))
     sv = BarrierStateVars{T}(slack_x, slack_c, λx, λc, λxE, λcE)
 end
 BarrierStateVars(bounds::ConstraintBounds{T}) where T = BarrierStateVars{T}(bounds)
@@ -116,7 +116,7 @@ const bsv_seed = sizeof(UInt) == 64 ? 0x145b788192d1cde3 : 0x766a2810
 Base.hash(b::BarrierStateVars, u::UInt) =
     hash(b.λcE, hash(b.λxE, hash(b.λc, hash(b.λx, hash(b.slack_c, hash(b.slack_x, u+bsv_seed))))))
 
-function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
+function dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.slack_x,w.slack_x) +
         dot(v.slack_c, w.slack_c) +
         dot(v.λx, w.λx) +
@@ -125,10 +125,10 @@ function Base.dot(v::BarrierStateVars, w::BarrierStateVars)
         dot(v.λcE, w.λcE)
 end
 
-function Base.vecnorm(b::BarrierStateVars, p::Real)
-    vecnorm(b.slack_x, p) + vecnorm(b.slack_c, p) +
-        vecnorm(b.λx, p) + vecnorm(b.λc, p) +
-        vecnorm(b.λxE, p) + vecnorm(b.λcE, p)
+function norm(b::BarrierStateVars, p::Real)
+    norm(b.slack_x, p) + norm(b.slack_c, p) +
+        norm(b.λx, p) + norm(b.λc, p) +
+        norm(b.λxE, p) + norm(b.λcE, p)
 end
 
 """
@@ -181,7 +181,7 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # TODO: Make sure state.bgrad has been evaluated at initial_x
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
-    vecnorm(gradient(d), Inf) + vecnorm(state.bgrad, Inf) < options.g_tol
+    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_tol
 end
 
 function optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::AbstractArray, method::ConstrainedOptimizer,
@@ -325,7 +325,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
     # Q = QRF[:Q]
     # PEg = Q'*(Q*gf)   # in the subspace of JE
     C = JE*JE'
-    Cc = cholfact(Positive, C)
+    Cc = cholesky(Positive, C)
     Pperpg = gf-JE'*(Cc \ (JE*gf))   # in the nullspace of JE
     # Set μ
     JI = jacobianI(state, bounds)
@@ -342,7 +342,7 @@ function initialize_μ_λ!(state, bounds::ConstraintBounds, Hinfo, μ0::Union{Sy
         # Calculate μ and λI
         μ = β * (κperp == 0 ? sqrt(Dperp/DI) : min(sqrt(Dperp/DI), abs(κperp/κI)))
         if !isfinite(μ)
-            Δgtilde = JI'*(1./s)
+            Δgtilde = JI'*(1 ./ s)
             PperpΔgtilde = Δgtilde - JE'*(Cc \ (JE*Δgtilde))
             DItilde = dot(PperpΔgtilde, PperpΔgtilde)
             μ = β*sqrt(Dperp/DItilde)
@@ -376,7 +376,7 @@ function hessian_projections(Hinfo::Tuple{AbstractMatrix,AbstractMatrix}, Pperpg
     κI = dot(Hinfo[2]*Pperpg, Pperpg) + dot(y,y)
     κperp, κI
 end
-hessian_projections(Hinfo::Void, Pperpg::AbstractVector{T}) where T = convert(T, Inf), zero(T)
+hessian_projections(Hinfo::Nothing, Pperpg::AbstractVector{T}) where T = convert(T, Inf), zero(T)
 
 function jacobianE(state, bounds::ConstraintBounds)
     J, x = state.constr_J, state.x
@@ -770,13 +770,13 @@ end
 isfeasible(constraints, state::AbstractBarrierState) = isfeasible(constraints, state.x, state.constraints_c)
 function isfeasible(constraints, x)
     # don't assume c! returns c (which means this is a little more awkward)
-    c = Array{eltype(x)}(constraints.bounds.nc)
+    c = Array{eltype(x)}(undef, constraints.bounds.nc)
     constraints.c!(c, x)
     isfeasible(constraints, x, c)
 end
 isfeasible(constraints::AbstractConstraints, x, c) = isfeasible(constraints.bounds, x, c)
-isfeasible(constraints::Void, state::AbstractBarrierState) = true
-isfeasible(constraints::Void, x) = true
+isfeasible(constraints::Nothing, state::AbstractBarrierState) = true
+isfeasible(constraints::Nothing, x) = true
 
 """
     isinterior(constraints, state) -> Bool
@@ -805,13 +805,13 @@ function isinterior(bounds::ConstraintBounds, x, c)
 end
 isinterior(constraints, state::AbstractBarrierState) = isinterior(constraints, state.x, state.constraints_c)
 function isinterior(constraints, x)
-    c = Array{eltype(x)}(constraints.bounds.nc)
+    c = Array{eltype(x)}(undef, constraints.bounds.nc)
     constraints.c!(c, x)
     isinterior(constraints, x, c)
 end
 isinterior(constraints::AbstractConstraints, x, c) = isinterior(constraints.bounds, x, c)
-isinterior(constraints::Void, state::AbstractBarrierState) = true
-isinterior(constraints::Void, x) = true
+isinterior(constraints::Nothing, state::AbstractBarrierState) = true
+isinterior(constraints::Nothing, x) = true
 
 ## Utilities for representing total state as single vector
 # TODO: Most of these seem to be unused (IPNewton)?
@@ -820,7 +820,7 @@ function pack_vec(x, b::BarrierStateVars)
     for fn in fieldnames(b)
         n += length(getfield(b, fn))
     end
-    vec = Array{eltype(x)}(n)
+    vec = Array{eltype(x)}(undef, n)
     pack_vec!(vec, x, b)
 end
 

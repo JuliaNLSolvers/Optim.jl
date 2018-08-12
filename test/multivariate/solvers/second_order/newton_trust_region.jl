@@ -43,12 +43,12 @@ end
 @testset "Test problems" begin
     #######################################
     # First test the subproblem.
-    srand(42)
+    Random.seed!(42)
     n = 5
     H = rand(n, n)
-    H = H' * H + 4 * eye(n)
-    H_eig = eigfact(H)
-    U = H_eig[:vectors]
+    H = H' * H + 4 * I
+    H_eig = eigen(H)
+    U = H_eig.vectors
 
     gr = zeros(n)
     gr[1] = 1.
@@ -113,7 +113,7 @@ end
     # Now check an actual had case problem
     L = fill(0.1, n)
     L[1] = -1.
-    H = U * diagm(L) * U'
+    H = U * Matrix(Diagonal(L)) * U'
     H = 0.5 * (H' + H)
     @test issymmetric(H)
     gr = U[:,2][:]

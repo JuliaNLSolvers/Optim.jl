@@ -7,7 +7,7 @@ function common_trace!(tr, d, state, iteration, method::FirstOrderOptimizer, opt
         dt["g(x)"] = copy(gradient(d))
         dt["Current step size"] = state.alpha
     end
-    g_norm = vecnorm(gradient(d), Inf)
+    g_norm = norm(gradient(d), Inf)
     update!(tr,
             iteration,
             value(d),

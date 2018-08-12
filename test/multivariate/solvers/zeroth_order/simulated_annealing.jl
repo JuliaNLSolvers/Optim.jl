@@ -1,5 +1,5 @@
 @testset "Simulated Annealing" begin
-    srand(1)
+    Random.seed!(1)
 
     function f_s(x::Vector)
         (x[1] - 5.0)^4

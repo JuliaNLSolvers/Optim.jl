@@ -2,7 +2,7 @@
     # Quadratic objective function
     # For (A*x-b)^2/2
     function quadratic!(g, x, AtA, Atb, tmp)
-        A_mul_B!(tmp, AtA, x)
+        mul!(tmp, AtA, x)
         v = dot(x,tmp)/2 + dot(Atb,x)
         if g !== nothing
             g .= tmp .+ Atb
@@ -10,7 +10,7 @@
         return v
     end
 
-    srand(1)
+    Random.seed!(1)
     N = 8
     boxl = 2.0
     outbox = false
@@ -39,7 +39,7 @@
     u = fill(boxl, N)
     initial_x = (rand(N) .- 0.5) .* boxl
     for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS(), NGMRES(), OACCEL())
-        debug_printing && print_with_color(:green, "Solver: ", summary(_optimizer), "\n")
+        debug_printing && printstyled("Solver: ", summary(_optimizer), "\n", color=:green)
         results = optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
         @test Optim.converged(results)
         @test summary(results) == "Fminbox with $(summary(_optimizer))"
@@ -60,9 +60,7 @@
 
     # Warn when initial condition is not in the interior of the box
     initial_x = rand([-1,1],N)*boxl
-    @test_warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.
-Element indices affected: [1, 2, 3, 4, 5, 6, 7, 8]",
-               optimize(_objective, l, u, initial_x, Fminbox(), Optim.Options(outer_iterations = 1)))
+    @test_logs (:warn, "Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: [1, 2, 3, 4, 5, 6, 7, 8]") optimize(_objective, l, u, initial_x, Fminbox(), Optim.Options(outer_iterations = 1))
 
     # might fail if changes are made to Optim.jl
     # TODO: come up with a better test

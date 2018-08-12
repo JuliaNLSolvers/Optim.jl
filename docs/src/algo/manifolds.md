@@ -5,10 +5,10 @@ Optim.jl supports the minimization of functions defined on Riemannian manifolds,
 Here is a simple test case where we minimize the Rayleigh quotient `<x, A x>` of a symmetric matrix `A` under the constraint `||x|| = 1`, finding an eigenvector associated with the lowest eigenvalue of `A`.
 ```julia
 n = 10
-A = Diagonal(linspace(1,2,n))
-f(x) = vecdot(x,A*x)/2
+A = Diagonal(range(1, stop=2, length=n))
+f(x) = dot(x,A*x)/2
 g(x) = A*x
-g!(stor,x) = copy!(stor,g(x))
+g!(stor,x) = copyto!(stor,g(x))
 x0 = randn(n)
 
 manif = Optim.Sphere()

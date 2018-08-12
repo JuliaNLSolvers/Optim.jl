@@ -8,7 +8,7 @@
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
-immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
     manifold::Manifold
@@ -18,7 +18,7 @@ immutable NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     wmax::Int             # Maximum window size
 end
 
-immutable OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
     manifold::Manifold
@@ -148,7 +148,7 @@ end
 
 "Update storage Q[i,j] and Q[j,i] for `NGMRES`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::NGMRES)
-    Q[j,i] = real(vecdot(R[:, j], R[:,i]))
+    Q[j,i] = real(dot(R[:, j], R[:,i]))
     if i != j
         Q[i,j] = Q[j, i]          # TODO: Use Symmetric?
     end
@@ -161,7 +161,7 @@ end
 
 "Update storage ξ[i,:] for `NGMRES`"
 @inline function _updateξ!(ξ, i::Int, X, x, R, r, ::NGMRES)
-    ξ[i] = real(vecdot(vec(r), R[:,i]))
+    ξ[i] = real(dot(vec(r), R[:,i]))
 end
 
 "Update storage b[i] for `NGMRES`"
@@ -171,14 +171,14 @@ end
 
 "Update value η for `NGMRES`"
 @inline function _updateη(x, r, ::NGMRES)
-    real(vecdot(r, r))
+    real(dot(r, r))
 end
 
 "Update storage Q[i,j] and Q[j,i] for `OACCEL`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::OACCEL)
-    Q[i,j] = real(vecdot(X[:,i], R[:,j]))
+    Q[i,j] = real(dot(X[:,i], R[:,j]))
     if i != j
-        Q[j,i] = real(vecdot(X[:,j], R[:,i]))
+        Q[j,i] = real(dot(X[:,j], R[:,i]))
     end
 end
 
@@ -189,8 +189,8 @@ end
 
 "Update storage ξ[i,:] for `OACCEL`"
 @inline function _updateξ!(ξ, i::Int, X, x, R, r, ::OACCEL)
-    ξ[i,1] = real(vecdot(X[:,i], r))
-    ξ[i,2] = real(vecdot(x, R[:,i]))
+    ξ[i,1] = real(dot(X[:,i], r))
+    ξ[i,2] = real(dot(x, R[:,i]))
 end
 
 "Update storage b[i] for `OACCEL`"
@@ -200,13 +200,16 @@ end
 
 "Update value η for `OACCEL`"
 @inline function _updateη(x, r, ::OACCEL)
-    real(vecdot(x, r))
+    real(dot(x, r))
 end
 
-
+const ngmres_oaccel_warned = Ref{Bool}(false)
 function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{eTx}) where eTx
     if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
-        Base.warn_once("Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning.")
+        if !ngmres_oaccel_warned[]
+            @warn "Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning."
+            ngmres_oaccel_warned[] = true
+        end
     end
 
     nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, initial_x)
@@ -217,17 +220,17 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
 
     n = length(nlpreconstate.x)
     wmax = method.wmax
-    X = Array{eTx}(n, wmax)
-    R = Array{eTx}(n, wmax)
-    Q = Array{T}(wmax, wmax)
+    X = Array{eTx}(undef, n, wmax)
+    R = Array{eTx}(undef, n, wmax)
+    Q = Array{T}(undef, wmax, wmax)
     ξ = if typeof(method) <: OACCEL
-        Array{T}(wmax, 2)
+        Array{T}(undef, wmax, 2)
     else
-        Array{T}(wmax)
+        Array{T}(undef, wmax)
     end
 
-    copy!(view(X,:,1), nlpreconstate.x)
-    copy!(view(R,:,1), gradient(d))
+    copyto!(view(X,:,1), nlpreconstate.x)
+    copyto!(view(R,:,1), gradient(d))
 
     _updateQ!(Q, 1, 1, X, R, method)
 
@@ -245,13 +248,13 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 Q,
                 ξ,
                 1,                        # curw
-                Array{T}(wmax, wmax),     # A
-                Array{T}(wmax),           # b
+                Array{T}(undef, wmax, wmax),     # A
+                Array{T}(undef, wmax),           # b
                 vec(similar(initial_x)),  # xA
                 0,                        # iteration counter
                 false,                    # Restart flag
                 options.g_tol,            # Exit tolerance check after nonlinear preconditioner apply
-                Array{T}(wmax),           # subspacealpha
+                Array{T}(undef, wmax),           # subspacealpha
                 @initial_linesearch()...)
 end
 
@@ -268,7 +271,7 @@ end
 
 function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
     # Maintain a record of previous position, for convergence assessment
-    copy!(state.x_previous_0, state.x)
+    copyto!(state.x_previous_0, state.x)
     state.f_x_previous_0 = value(d)
 
     state.k += 1
@@ -280,7 +283,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     project_tangent!(method.manifold, gradient(d), state.x)
 
     if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
-        warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
+        @warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
         return true
     end
 
@@ -325,12 +328,12 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     try
         α .= (Aview + δ*I) \ bview
     catch e
-        Base.warn("Calculating α failed in $(summary(method)).")
-        Base.warn("Exception info:\n $e")
+        @warn("Calculating α failed in $(summary(method)).")
+        @warn("Exception info:\n $e")
         α .= NaN
     end
     if any(isnan, α)
-        Base.warn("Calculated α is NaN in $(summary(method)). Restarting ...")
+        @warn("Calculated α is NaN in $(summary(method)). Restarting ...")
         state.s .= zero(eltype(state.s))
         state.restart = true
     else
@@ -342,7 +345,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     end
 
     # 3: Perform condition checks
-    if real(vecdot(state.s, gP)) ≥ 0 || !isfinite(real(vecdot(state.s, gP)))
+    if real(dot(state.s, gP)) ≥ 0 || !isfinite(real(dot(state.s, gP)))
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
@@ -386,7 +389,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     Update x_previous and f_x_previous to be the values at the beginning
     of the N-GMRES iteration. For convergence assessment purposes.
     =#
-    copy!(state.x_previous, state.x_previous_0)
+    copyto!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
 
     lssuccess == false # Break on linesearch error
@@ -406,8 +409,8 @@ function update_g!(d, state, method::AbstractNGMRES)
     end
     j = mod(state.k, method.wmax) + 1
 
-    copy!(view(state.X,:,j), vec(state.x))
-    copy!(view(state.R,:,j), vec(gradient(d)))
+    copyto!(view(state.X,:,j), vec(state.x))
+    copyto!(view(state.R,:,j), vec(gradient(d)))
 
     for i = 1:state.curw
         _updateQ!(state.Q, i, j, state.X, state.R, method)

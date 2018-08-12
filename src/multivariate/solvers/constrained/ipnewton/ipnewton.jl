@@ -44,7 +44,7 @@ IPNewton(; linesearch::Function = backtrack_constrained_grad,
          show_linesearch::Bool = false) =
   IPNewton(linesearch, μ0, show_linesearch)
 
-type IPNewtonState{T,Tx} <: AbstractBarrierState
+mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     x::Tx
     f_x::T
     x_previous::Tx
@@ -72,7 +72,7 @@ type IPNewtonState{T,Tx} <: AbstractBarrierState
 end
 
 # TODO: Do we need this convert thing? (It seems to be used with `show(IPNewtonState)`)
-function Base.convert{T,Tx,S,Sx}(::Type{IPNewtonState{T,Tx}}, state::IPNewtonState{S, Sx})
+function Base.convert(::Type{IPNewtonState{T,Tx}}, state::IPNewtonState{S, Sx}) where {T,Tx,S,Sx}
     IPNewtonState(convert(Tx, state.x),
                   T(state.f_x),
                   convert(Tx, state.x_previous),
@@ -103,29 +103,29 @@ end
 function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constraints::TwiceDifferentiableConstraints, initial_x::Array{T}) where T
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
-    constr_c = Array{T}(mc)
+    constr_c = Array{T}(undef, mc)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
     if !isinterior(constraints, initial_x, constr_c)
-        warn("Initial guess is not an interior point")
-        Base.show_backtrace(STDERR, backtrace())
-        println(STDERR)
+        @warn("Initial guess is not an interior point")
+        Base.show_backtrace(stderr, backtrace())
+        println(stderr)
     end
     # Allocate fields for the objective function
     n = length(initial_x)
-    g = Vector{T}(n)
-    s = Vector{T}(n)
+    g = Vector{T}(undef, n)
+    s = Vector{T}(undef, n)
     f_x_previous = NaN
     f_x, g_x = value_gradient!(d, initial_x)
     g .= g_x # needs to be a separate copy of g_x
-    H = Matrix{T}(n, n)
-    Hd = Vector{Int8}(n)
+    H = Matrix{T}(undef, n, n)
+    Hd = Vector{Int8}(undef, n)
     hessian!(d, initial_x)
-    copy!(H, hessian(d))
+    copyto!(H, hessian(d))
 
     # More constraints
-    constr_J = Array{T}(mc, n)
+    constr_J = Array{T}(undef, mc, n)
     gtilde = similar(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
@@ -160,7 +160,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
         gtilde,
         0)
 
-    Hinfo = (state.H, hessianI(initial_x, constraints, 1./bstate.slack_c, 1))
+    Hinfo = (state.H, hessianI(initial_x, constraints, 1 ./ bstate.slack_c, 1))
     initialize_μ_λ!(state, constraints.bounds, Hinfo, method.μ0)
     update_fg!(d, constraints, state, method)
     update_h!(d, constraints, state, method)
@@ -179,7 +179,7 @@ function update_gtilde!(d, constraints::TwiceDifferentiableConstraints, state, m
     # with μ=0, used in the adaptive setting of μ. Once we calculate μ we'll correct it
     gtilde, bstate, bgrad = state.gtilde, state.bstate, state.bgrad
     bounds = constraints.bounds
-    copy!(gtilde, state.g)
+    copyto!(gtilde, state.g)
     JIc = view(state.constr_J, bounds.ineqc, :)
     if !isempty(JIc)
         Hssc = Diagonal(bstate.λc./bstate.slack_c)
@@ -200,7 +200,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     m, n = size(J, 1), size(J, 2)
 
     hessian!(d, state.x)  # objective's Hessian
-    copy!(Hxx, hessian(d))  # objective's Hessian
+    copyto!(Hxx, hessian(d))  # objective's Hessian
     # accumulate the constraint second derivatives
     λ = userλ(bstate.λc, constraints)
     λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
@@ -220,7 +220,7 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     for (i,j) in enumerate(bounds.ineqx)
         Hxx[j,j] += bstate.λx[i]/bstate.slack_x[i]
     end
-    state.Htilde = cholfact(Positive, Hxx, Val{true})
+    state.Htilde = cholesky(Positive, Hxx, Val{true})
 
     state
 end
@@ -255,7 +255,7 @@ function update_state!(d, constraints::TwiceDifferentiableConstraints, state::IP
         method.linesearch!(ϕ, T(1), αmax, qp; show_linesearch=method.show_linesearch)
 
     # Maintain a record of previous position
-    copy!(state.x_previous, state.x)
+    copyto!(state.x_previous, state.x)
 
     # Update current position # x = x + alpha * s
     ls_update!(state.x, state.x, state.s, state.alpha)
@@ -291,22 +291,22 @@ function solve_step!(state::IPNewtonState, constraints, options, show_linesearch
     gE = [bgrad.λxE;
           bgrad.λcE]
     M = JE*(Htilde \ JE')
-    MF = cholfact(Positive, M, Val{true})
+    MF = cholesky(Positive, M, Val{true})
     # These are a solution to the affine-scaling problem (with μ=0)
     ΔλE0 = MF \ (gE + JE * (Htilde \ state.gtilde))
     Δx0 = Htilde \ (JE'*ΔλE0 - state.gtilde)
     # Check that the solution to the linear equations represents an improvement
-    Hpstepx, HstepλE = full(Htilde)*Δx0 - JE'*ΔλE0, -JE*Δx0  # TODO: don't use full here
+    Hpstepx, HstepλE = Matrix(Htilde)*Δx0 - JE'*ΔλE0, -JE*Δx0  # TODO: don't use full here
     # TODO: How to handle show_linesearch?
     # This was originally in options.show_linesearch, but I removed it as none of the other Optim algorithms have it there.
     # We should move show_linesearch back to options when we refactor
     # LineSearches to work on the function ϕ(α)
     if show_linesearch
-        println("|gx| = $(vecnorm(state.gtilde)), |Hstepx + gx| = $(vecnorm(Hpstepx+state.gtilde))")
-        println("|gE| = $(vecnorm(gE)), |HstepλE + gE| = $(vecnorm(HstepλE+gE))")
+        println("|gx| = $(norm(state.gtilde)), |Hstepx + gx| = $(norm(Hpstepx+state.gtilde))")
+        println("|gE| = $(norm(gE)), |HstepλE + gE| = $(norm(HstepλE+gE))")
     end
-    if vecnorm(gE) + vecnorm(state.gtilde) < max(vecnorm(HstepλE + gE),
-                                           vecnorm(Hpstepx  + state.gtilde))
+    if norm(gE) + norm(state.gtilde) < max(norm(HstepλE + gE),
+                                           norm(Hpstepx  + state.gtilde))
         # Precision problems gave us a worse solution than the one we started with, abort
         fill!(s, 0)
         fill!(bstep, 0)
@@ -332,7 +332,7 @@ function solve_step!(state::IPNewtonState, constraints, options, show_linesearch
     gtildeμ = state.gtilde  - jacobianI(state, bounds)' * μsinv
     ΔλE = MF \ (gE + JE * (Htilde \ gtildeμ))
     Δx = Htilde \ (JE'*ΔλE - gtildeμ)
-    copy!(s, Δx)
+    copyto!(s, Δx)
     k = unpack_vec!(bstep.λxE, ΔλE, 0)
     k = unpack_vec!(bstep.λcE, ΔλE, k)
     k == length(ΔλE) || error("exhausted targets before ΔλE")
@@ -381,7 +381,7 @@ end
 # TODO: should we put these elsewhere?
 function Hf(bounds::ConstraintBounds, state)
     JE = jacobianE(state, bounds)
-    Hf = [full(state.Htilde) -JE';
+    Hf = [Matrix(state.Htilde) -JE';
           -JE zeros(eltype(JE), size(JE, 1), size(JE, 1))]
 end
 Hf(constraints, state) = Hf(constraints.bounds, state)

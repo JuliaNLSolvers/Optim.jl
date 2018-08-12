@@ -81,19 +81,19 @@ function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedA
 
     if state.f_proposal <= state.f_x_current
         # If proposal is superior, we always move to it
-        copy!(state.x_current, state.x_proposal)
+        copyto!(state.x_current, state.x_proposal)
         state.f_x_current = state.f_proposal
 
         # If the new state is the best state yet, keep a record of it
         if state.f_proposal < value(nd)
             nd.F = state.f_proposal
-            copy!(state.x, state.x_proposal)
+            copyto!(state.x, state.x_proposal)
         end
     else
         # If proposal is inferior, we move to it with probability p
         p = exp(-(state.f_proposal - state.f_x_current) / t)
         if rand() <= p
-            copy!(state.x_current, state.x_proposal)
+            copyto!(state.x_current, state.x_proposal)
             state.f_x_current = state.f_proposal
         end
     end

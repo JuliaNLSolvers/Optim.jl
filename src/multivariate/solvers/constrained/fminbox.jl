@@ -147,7 +147,7 @@ function optimize(f,
                   F::Fminbox = Fminbox(),
                   options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
 
-    g! = inplace ? g : (G, x) -> copy!(G, g(x))
+    g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
 
     optimize(od, l, u, initial_x, F, options)
@@ -209,7 +209,7 @@ function optimize(
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
     end
     if length(boundaryidx) > 0
-        warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
+        @warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
 
     gradient!(df, x)
@@ -227,7 +227,7 @@ function optimize(
     end
 
     g = similar(x)
-    fval_all = Vector{Vector{T}}(0)
+    fval_all = Vector{Vector{T}}()
 
     # Count the total number of outer iterations
     iteration = 0
@@ -248,7 +248,7 @@ function optimize(
         # Increment the number of steps we've had to perform
         iteration += 1
 
-        copy!(xold, x)
+        copyto!(xold, x)
         # Optimize with current setting of mu
         fval0 = funcc(nothing, x)
         if show_trace > 0
@@ -261,7 +261,7 @@ function optimize(
         else
             append!(results, resultsnew)
         end
-        copy!(x, minimizer(results))
+        copyto!(x, minimizer(results))
         if show_trace > 0
             println("#### Fminbox #$iteration: x=", x)
         end
@@ -276,16 +276,16 @@ function optimize(
         results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
         if f_increased && !allow_outer_f_increases
-            warn("f(x) increased: stopping optimization")
+            @warn("f(x) increased: stopping optimization")
             break
         end
     end
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
-            results.x_converged, results.x_tol, vecnorm(x - xold),
+            results.x_converged, results.x_tol, norm(x - xold),
             results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),
-            results.g_converged, results.g_tol, vecnorm(g, Inf),
+            results.g_converged, results.g_tol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
 end

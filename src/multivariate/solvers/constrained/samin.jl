@@ -207,8 +207,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if verbosity > 1
             println(hline)
             println("samin: intermediate results before next temperature change")
-            println("temperature: ", round(t,5))
-            println("current best function value: ", round(fopt,5))
+            println("temperature: ", round(t, digits=5))
+            println("current best function value: ", round(fopt, digits=5))
             println("total evaluations so far: ", f_calls(d))
             println("total moves since last temperature reduction: ", nup + ndown + nrej)
             println("downhill: ", nup)
@@ -257,7 +257,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                         println("==> Normal convergence <==")
                     end
                     if (converge == 2)
-                        print_with_color(:red, "==> WARNING <==\n")
+                        printstyled("==> WARNING <==\n", color=:red)
                         println("Last point satisfies convergence criteria, but is near")
                         println("boundary of parameter space.")
                         println(lnobds, " out of  ", (nup+ndown+nrej), " evaluations were out of bounds in the last round.")
