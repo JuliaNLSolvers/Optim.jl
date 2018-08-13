@@ -1,3 +1,5 @@
+**Problems with v0.7 or v1.0? Look here https://github.com/JuliaNLSolvers/Optim.jl/issues/659 **
+
 Optim.jl
 ========
 
