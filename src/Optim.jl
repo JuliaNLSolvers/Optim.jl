@@ -35,7 +35,7 @@ import Compat.String         # for remake of strings in v0.7/v1.0
 import Compat.view           # for new views syntax in v0.7/v1.0
 
 # for extensions of functions defined in Base.
-import Base: length, push!, show, getindex, setindex!
+import Base: length, push!, show, getindex, setindex!, maximum
 
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
