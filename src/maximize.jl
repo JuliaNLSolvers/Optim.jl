@@ -6,8 +6,7 @@ end
 
 function maximize(f, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x); G.=-G)
-    MaxWrap(optimize(fmax, gmax, x0, method, options; kwargs...))
+    MaxWrap(optimize(fmax, x0, method, options; kwargs...))
 end
 function maximize(f, g, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
@@ -33,7 +32,7 @@ for method in (:iterations, :initial_state, :converged, :g_tol, :x_tol, :x_conve
                :g_calls, :h_calls)
    @eval $method(r::MaxWrap) = $method(r.res)
 end
-#=
+
 function Base.show(io::IO, r::MaxWrap)
     first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
 
@@ -73,4 +72,3 @@ function Base.show(io::IO, r::MaxWrap)
     end
     return
 end
-=#
