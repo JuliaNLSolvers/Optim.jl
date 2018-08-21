@@ -192,4 +192,7 @@ include("multivariate/solvers/constrained/ipnewton/utilities/assess_convergence.
 # Traces
 include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 
+# Maximization convenience wrapper
+include("maximize.jl")
+
 end
