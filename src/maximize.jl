@@ -27,11 +27,11 @@ maximizer(r::MaxWrap) = minimizer(r.res)
 maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
 maximum(r::MaxWrap) = -r.res.minimum
 
-for method in (:iterations, :initial_state, :converged, :x_tol, :x_converged,
+for api_method in (:iterations, :initial_state, :converged, :x_tol, :x_converged,
                :x_abschange, :g_tol, :g_converged, :g_residual, :f_tol, :f_converged,
                :f_increased, :f_relchange, :iteration_limit_reached, :f_calls,
                :g_calls, :h_calls)
-   @eval $method(r::MaxWrap) = $method(r.res)
+   @eval $api_method(r::MaxWrap) = $api_method(r.res)
 end
 
 function Base.show(io::IO, r::MaxWrap)
