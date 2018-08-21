@@ -54,7 +54,7 @@ import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
 import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types
-export optimize, maximize # main function
+export optimize, maximize, # main function
 
        # Re-export objective types from NLSolversBase
        NonDifferentiable,
