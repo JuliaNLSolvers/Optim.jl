@@ -22,9 +22,10 @@ function maximize(f, g, h, x0::AbstractArray, method::AbstractOptimizer, options
 end
 
 minimum(r::MaxWrap) = throw(MethodError())
+maximizer(r) = throw(MethodError())
 maximizer(r::MaxWrap) = minimizer(r.res)
+maximum(r) = throw(MethodError())
 maximum(r::MaxWrap) = -r.res.minimum
-iterations(r::MaxWrap) = iterations
 
 for method in (:iterations, :initial_state, :converged, :g_tol, :x_tol, :x_converged,
                :x_abschange, :g_tol, :g_converged, :g_residual, :f_tol, :f_converged,
