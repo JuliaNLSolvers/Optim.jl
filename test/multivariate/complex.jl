@@ -1,5 +1,5 @@
 @testset "Complex numbers" begin
-    srand(0)
+    Random.seed!(0)
 
     # Test case: minimize quadratic plus quartic
     # μ is the strength of the quartic. μ = 0 is just a quadratic problem
@@ -9,9 +9,9 @@
     b = randn(n) + im*randn(n)
     μ = 1.0
 
-    fcomplex(x) = real(vecdot(x,A*x)/2 - vecdot(b,x)) + μ*sum(abs.(x).^4)
+    fcomplex(x) = real(dot(x,A*x)/2 - dot(b,x)) + μ*sum(abs.(x).^4)
     gcomplex(x) = A*x-b + 4μ*(abs.(x).^2).*x
-    gcomplex!(stor,x) = copy!(stor,gcomplex(x))
+    gcomplex!(stor,x) = copyto!(stor,gcomplex(x))
 
 
     x0 = randn(n)+im*randn(n)
@@ -40,12 +40,12 @@
         for method in (Optim.GradientDescent(), Optim.ConjugateGradient(), Optim.LBFGS(), Optim.BFGS(),
                        Optim.NGMRES(), Optim.OACCEL(),Optim.MomentumGradientDescent(mu=0.1))
 
-            debug_printing && print_with_color(:green, "Solver: $(summary(method))\n")
+            debug_printing && printstyled("Solver: $(summary(method))\n", color=:green)
             res = Optim.optimize(fcomplex, gcomplex!, x0, method, options)
-            debug_printing && print_with_color(:green, "Iter\tf-calls\tg-calls\n")
-            debug_printing && print_with_color(:red, "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n")
+            debug_printing && printstyled("Iter\tf-calls\tg-calls\n", color=:green)
+            debug_printing && printstyled("$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n", color=:red)
             if !Optim.converged(res)
-                warn("$(summary(method)) failed.")
+                @warn("$(summary(method)) failed.")
                 display(res)
                 println("########################")
             end
@@ -63,7 +63,7 @@
             # to_cplx(x) = x[1:n] + im*x[n+1:2n]
             # from_cplx(x) = [real(x);imag(x)]
             # freal(x) = fcomplex(to_cplx(x))
-            # greal!(stor,x) = copy!(stor, from_cplx(gcomplex(to_cplx(x))))
+            # greal!(stor,x) = copyto!(stor, from_cplx(gcomplex(to_cplx(x))))
             # opt = Optim.Options(allow_f_increases=true,show_trace=true)
             # println("$(summary(method)) cplx")
             # res_cplx = Optim.optimize(fcomplex,gcomplex!,x0,method,opt)

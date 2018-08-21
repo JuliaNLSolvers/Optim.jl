@@ -28,7 +28,7 @@ function optimize(
                                           extended_trace = extended_trace),
         nargs...) where T<:AbstractFloat
         if !has_deprecated_fminbox[]
-            warn("Fminbox with the optimizer keyword is deprecated, construct Fminbox{optimizer}() and pass it to optimize(...) instead.")
+            @warn("Fminbox with the optimizer keyword is deprecated, construct Fminbox{optimizer}() and pass it to optimize(...) instead.")
             has_deprecated_fminbox[] = true
         end
         optimize(df, initial_x, l, u, Fminbox{optimizer}();

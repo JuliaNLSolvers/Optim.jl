@@ -76,8 +76,8 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
     # do some checks on input parameters
     @assert length(method.lower) == length(method.upper) "lower and upper must be of same length."
     if length(method.lower) > 0
-        lower = copy!(similar(initial_x), copy(method.lower))
-        upper = copy!(similar(initial_x), copy(method.upper))
+        lower = copyto!(similar(initial_x), copy(method.lower))
+        upper = copyto!(similar(initial_x), copy(method.upper))
         limit_search_space = true
         @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
         @assert all(upper .> lower) "upper must be greater than lower"
@@ -89,7 +89,7 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
 
     if method.n_particles > 0
         if method.n_particles < 3
-          warn("Number of particles is set to 3 (minimum required)")
+          @warn("Number of particles is set to 3 (minimum required)")
           n_particles = 3
         else
           n_particles = method.n_particles
@@ -102,9 +102,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
     c2 = 2.0
     w = 1.0
 
-    X = Array{T,2}(n, n_particles)
-    V = Array{T,2}(n, n_particles)
-    X_best = Array{T,2}(n, n_particles)
+    X = Array{T,2}(undef, n, n_particles)
+    V = Array{T,2}(undef, n, n_particles)
+    X_best = Array{T,2}(undef, n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
     x = similar(initial_x)
@@ -175,7 +175,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     compute_cost!(f, state.n_particles, state.X, state.score)
 
     if state.iteration == 0
-        copy!(state.best_score, state.score)
+        copyto!(state.best_score, state.score)
         f.F = Base.minimum(state.score)
     end
     f.F = housekeeping!(state.score,

@@ -75,7 +75,7 @@
     end
     hv!(out, x, v) = begin
         n = length(x)
-        H = Matrix{Float64}(n, n)
+        H = Matrix{Float64}(undef, n, n)
         h!(H, x)
         out .= H * v
     end

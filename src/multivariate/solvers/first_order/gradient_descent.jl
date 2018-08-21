@@ -1,4 +1,4 @@
-struct GradientDescent{IL, L, T, Tprep<:Union{Function, Void}} <: FirstOrderOptimizer
+struct GradientDescent{IL, L, T, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     P::T
@@ -64,8 +64,8 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, gradient(d), state.x)
     method.precondprep!(method.P, state.x)
-    A_ldiv_B!(state.s, method.P, gradient(d))
-    scale!(state.s,-1)
+    ldiv!(state.s, method.P, gradient(d))
+    rmul!(state.s, eltype(state.s)(-1))
     if method.P != nothing
         project_tangent!(method.manifold, state.s, state.x)
     end

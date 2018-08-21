@@ -17,7 +17,7 @@ Base.summary(::BFGS) = "BFGS"
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -> eye(eltype(x), length(x)),
+       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
        manifold = Flat())
 ```
 
@@ -38,7 +38,7 @@ approximations as well as the gradient. See also the limited memory variant
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = x -> eye(eltype(x), length(x)),
+                initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
                 manifold::Manifold=Flat())
     BFGS(alphaguess, linesearch, initial_invH, manifold)
 end
@@ -81,15 +81,15 @@ end
 
 function update_state!(d, state::BFGSState, method::BFGS)
     n = length(state.x)
-
+    T = eltype(state.s)
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    A_mul_B!(vec(state.s), state.invH, vec(gradient(d)))
-    scale!(state.s, -1)
+    mul!(vec(state.s), state.invH, vec(gradient(d)))
+    rmul!(state.s, T(-1))
     project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient
-    copy!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
@@ -110,13 +110,13 @@ function update_h!(d, state, method::BFGS)
     state.dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
-    dx_dg = real(vecdot(state.dx, state.dg))
+    dx_dg = real(dot(state.dx, state.dg))
     if dx_dg == 0.0
         return true # force stop
     end
-    A_mul_B!(vec(state.u), state.invH, vec(state.dg))
+    mul!(vec(state.u), state.invH, vec(state.dg))
 
-    c1 = (dx_dg + real(vecdot(state.dg, state.u))) / (dx_dg' * dx_dg)
+    c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
     c2 = 1 / dx_dg
 
     # TODO BLASify this
@@ -140,7 +140,7 @@ function trace!(tr, d, state, iteration, method::BFGS, options)
         dt["~inv(H)"] = copy(state.invH)
         dt["Current step size"] = state.alpha
     end
-    g_norm = vecnorm(gradient(d), Inf)
+    g_norm = norm(gradient(d), Inf)
     update!(tr,
     iteration,
     value(d),

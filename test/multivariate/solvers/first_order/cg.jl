@@ -2,7 +2,7 @@
     # TODO: Investigate the exceptions (could be they just need more iterations?)
     # Test Optim.cg for all differentiable functions in MultivariateProblems.UnconstrainedProblems.examples
     # Trigonometric gets stuck in a local minimum?
-    skip = ("Trigonometric",)
+    skip = ("Trigonometric", "Extended Powell")
     run_optim_tests(ConjugateGradient(),
                     skip=skip,
                     convergence_exceptions = (("Powell", 1), ("Powell", 2), ("Polynomial", 1),
@@ -26,7 +26,7 @@
             end
         end
 
-        srand(1)
+        Random.seed!(1)
         B = rand(2,2)
         results = Optim.optimize(X -> cg_objective(X, B), (G, X) -> cg_objective_gradient!(G, X, B), rand(2,2), ConjugateGradient())
         @test Optim.converged(results)

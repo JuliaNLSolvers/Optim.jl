@@ -1,4 +1,3 @@
-__precompile__(true)
 """
 # Optim.jl
 Welcome to Optim.jl!
@@ -18,6 +17,7 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 module Optim
 using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
 using PositiveFactorizations # for globalization strategy in Newton
+import PositiveFactorizations: cholesky!, cholesky
 using LineSearches           # for globalization strategy in Quasi-Newton algs
 using DiffEqDiffTools        # for finite difference derivatives
 # using ReverseDiff           # for reverse mode AD (not really suitable for scalar output)
@@ -27,6 +27,8 @@ import NaNMath               # for functions that ignore NaNs (no poisoning)
 import Parameters: @with_kw, # for types where constructors are simply defined
                    @unpack   # by their default values, and simple unpacking
                              # of fields
+
+using Printf                 # For printing, maybe look into other options
 
 using Compat                 # for compatibility across multiple julia versions
 import Compat.String         # for remake of strings in v0.7/v1.0
@@ -38,6 +40,18 @@ import Base: length, push!, show, getindex, setindex!
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
                       nconstraints, nconstraints_x
+
+# var for NelderMead
+import StatsBase: var
+
+import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
+                      rmul!, mul!, ldiv!,
+                      dot, norm, normalize!,
+                      eigen, BLAS,
+                      cholesky, Cholesky, # factorizations
+                      I,
+                      svd
+import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types
 export optimize, # main function

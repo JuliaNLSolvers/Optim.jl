@@ -1,11 +1,20 @@
-using Optim, Compat
+using Test
+using Optim
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
-using Base.Test
-using Suppressor
-using PositiveFactorizations # for the IPNewton tests
-
 const MVP = MultivariateProblems
+
+using Compat
+using Suppressor
+import PositiveFactorizations: Positive, cholesky # for the IPNewton tests
+using Random
+
+import LineSearches
+import ForwardDiff
+import NLSolversBase
+import NLSolversBase: clear!
+import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
+import SparseArrays: normalize!, spdiagm
 
 debug_printing = false
 
@@ -33,7 +42,7 @@ univariate_tests = [
     # solvers
     "solvers/golden_section",
     "solvers/brent",
-    #"initial_convergence",
+    # "initial_convergence",
     "dual",
 ]
 univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
@@ -99,9 +108,10 @@ function run_optim_tests(method; convergence_exceptions = (),
             debug_printing && println("$name has no registered minimum/minimizer. Skipping ...")
             continue
         end
-        show_name && print_with_color(:green, "Problem: ", name, "\n")
+
+        show_name && printstyled("Problem: ", name, "\n", color=:green)
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = find(n[1] == name for n in iteration_exceptions)
+        iter_id = findall(n->n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
@@ -126,10 +136,10 @@ function run_optim_tests(method; convergence_exceptions = (),
                 results = Optim.optimize(input..., prob.initial_x, method, options)
                 @test isa(summary(results), String)
                 show_res && println(results)
-                show_itcalls && print_with_color(:red, "Iterations: $(Optim.iterations(results))\n")
-                show_itcalls && print_with_color(:red, "f-calls: $(Optim.f_calls(results))\n")
-                show_itcalls && print_with_color(:red, "g-calls: $(Optim.g_calls(results))\n")
-                show_itcalls && print_with_color(:red, "h-calls: $(Optim.h_calls(results))\n")
+                show_itcalls && printstyled("Iterations: $(Optim.iterations(results))\n", color=:red)
+                show_itcalls && printstyled("f-calls: $(Optim.f_calls(results))\n", color=:red)
+                show_itcalls && printstyled("g-calls: $(Optim.g_calls(results))\n", color=:red)
+                show_itcalls && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
                 if !((name, i) in convergence_exceptions)
                     @test Optim.converged(results)
                 end
@@ -141,7 +151,7 @@ function run_optim_tests(method; convergence_exceptions = (),
                 end
             end
         else
-            debug_printing && print_with_color(:blue, "Skipping $name\n")
+            debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
 end
@@ -163,9 +173,9 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
             debug_printing && println("$name has no registered minimum/minimizer. Skipping ...")
             continue
         end
-        show_name && print_with_color(:green, "Problem: ", name, "\n")
+        show_name && printstyled("Problem: ", name, "\n", color=:green)
         # Look for name in the first elements of the iteration_exceptions tuples
-        iter_id = find(n[1] == name for n in iteration_exceptions)
+        iter_id = findall(n->n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
@@ -182,10 +192,10 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
             results = optimize(df,constraints,prob.initial_x, method, options)
             @test isa(Optim.summary(results), String)
             show_res && println(results)
-            show_itcalls && print_with_color(:red, "Iterations: $(Optim.iterations(results))\n")
-            show_itcalls && print_with_color(:red, "f-calls: $(Optim.f_calls(results))\n")
-            show_itcalls && print_with_color(:red, "g-calls: $(Optim.g_calls(results))\n")
-            show_itcalls && print_with_color(:red, "h-calls: $(Optim.h_calls(results))\n")
+            show_itcalls && printstyled("Iterations: $(Optim.iterations(results))\n", color=:red)
+            show_itcalls && printstyled("f-calls: $(Optim.f_calls(results))\n", color=:red)
+            show_itcalls && printstyled("g-calls: $(Optim.g_calls(results))\n", color=:red)
+            show_itcalls && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
             if !(name in convergence_exceptions)
                 @test Optim.converged(results)
             end
@@ -193,10 +203,10 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
             end
             if !(name in minimizer_exceptions)
-                @test vecnorm(Optim.minimizer(results) - prob.solutions) < 1e-2
+                @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
             end
         else
-            debug_printing && print_with_color(:blue, "Skipping $name\n")
+            debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
 end

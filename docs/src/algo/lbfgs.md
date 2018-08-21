@@ -15,7 +15,7 @@ LBFGS(; m = 10,
         P = nothing,
         precondprep = (P, x) -> nothing,
         manifold = Flat(),
-        scaleinvH0::Bool = true && (typeof(P) <: Void))
+        scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 ```
 ## Description
 This means that it takes steps according to

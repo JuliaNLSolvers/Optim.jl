@@ -50,7 +50,7 @@ res = optimize(sqerror, [0.0, 0.0])
 Say you are optimizing a function
 ```julia
 f(x) = x[1]^2+x[2]^2
-g!(storage, x) = copy!(storage, [2x[1], 2x[2]])
+g!(storage, x) = copyto!(storage, [2x[1], 2x[2]])
 ```
 In this situation, no calculations from `f` could be reused in `g!`. However, sometimes
 there is a substantial similarity between the objective function, and gradient, and
@@ -60,7 +60,7 @@ Basically, we define
 ```julia
 function calculate_common!(x, last_x, buffer)
     if x != last_x
-        copy!(last_x, x)
+        copyto!(last_x, x)
         #do whatever common calculations and save to buffer
     end
 end

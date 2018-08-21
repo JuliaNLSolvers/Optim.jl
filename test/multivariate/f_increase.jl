@@ -1,6 +1,6 @@
 @testset "f increase behaviour" begin
     f(x) = 2*x[1]^2
-    g!(G, x) = copy!(G, 4*x[1])
+    g!(G, x) = copyto!(G, 4*x[1])
 
     # Returned "minimizers" from one iteration of Gradient Descent
     minimizers = [0.3,  # allow_f_increases = true, alpha = 0.1
