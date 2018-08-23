@@ -1,40 +1,40 @@
 # In v1.0 we should possibly just overload getproperty
 # Base.getproperty(w::WrapVar, s::Symbol) = getfield(w.v, s)
-struct MaxWrap{T}
+struct MaximizationWrapper{T}
     res::T
 end
 
 function maximize(f, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
-    MaxWrap(optimize(fmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, x0, method, options; kwargs...))
 end
 function maximize(f, g, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
     gmax = (G,x)->(g(G,x); G.=-G)
-    MaxWrap(optimize(fmax, gmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, gmax, x0, method, options; kwargs...))
 end
 
 function maximize(f, g, h, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
     gmax = (G,x)->(g(G,x); G.=-G)
     hmax = (H,x)->(h(G,x); H.=-H)
-    MaxWrap(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
 end
 
-minimum(r::MaxWrap) = throw(MethodError())
+minimum(r::MaximizationWrapper) = throw(MethodError())
 maximizer(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
-maximizer(r::MaxWrap) = minimizer(r.res)
+maximizer(r::MaximizationWrapper) = minimizer(r.res)
 maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
-maximum(r::MaxWrap) = -r.res.minimum
+maximum(r::MaximizationWrapper) = -r.res.minimum
 
 for api_method in (:iterations, :initial_state, :converged, :x_tol, :x_converged,
                :x_abschange, :g_tol, :g_converged, :g_residual, :f_tol, :f_converged,
                :f_increased, :f_relchange, :iteration_limit_reached, :f_calls,
                :g_calls, :h_calls)
-   @eval $api_method(r::MaxWrap) = $api_method(r.res)
+   @eval $api_method(r::MaximizationWrapper) = $api_method(r.res)
 end
 
-function Base.show(io::IO, r::MaxWrap)
+function Base.show(io::IO, r::MaximizationWrapper)
     first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
 
     @printf io "Results of Optimization Algorithm\n"
