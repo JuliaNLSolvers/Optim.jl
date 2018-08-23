@@ -3,7 +3,28 @@
 struct MaximizationWrapper{T}
     res::T
 end
+res(r::MaximizationWrapper) = r.res
 
+# ==============================================================================
+# Univariate warppers
+# ==============================================================================
+function maximize(f, lb::Real, ub::Real, method::AbstractOptimizer; kwargs...)
+    fmax = x->-f(x)
+    MaximizationWrapper(optimize(fmax, lb, ub, method; kwargs...))
+end
+
+function maximize(f, lb::Real, ub::Real; kwargs...)
+    fmax = x->-f(x)
+    MaximizationWrapper(optimize(fmax, lb, ub; kwargs...))
+end
+
+# ==============================================================================
+# Multivariate warppers
+# ==============================================================================
+function maximize(f, x0::AbstractArray; kwargs...)
+    fmax = x->-f(x)
+    MaximizationWrapper(optimize(fmax, x0; kwargs...))
+end
 function maximize(f, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
     MaximizationWrapper(optimize(fmax, x0, method, options; kwargs...))
@@ -23,18 +44,31 @@ end
 
 minimum(r::MaximizationWrapper) = throw(MethodError())
 maximizer(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
-maximizer(r::MaximizationWrapper) = minimizer(r.res)
+maximizer(r::MaximizationWrapper) = minimizer(res(r))
 maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
-maximum(r::MaximizationWrapper) = -r.res.minimum
+maximum(r::MaximizationWrapper) = -minimum(res(r))
+Base.summary(r::MaximizationWrapper) = summary(res(r))
 
-for api_method in (:iterations, :initial_state, :converged, :x_tol, :x_converged,
+for api_method in (:lower_bound, :upper_bound, :rel_tol, :abs_tol, :iterations, :initial_state, :converged, :x_tol, :x_converged,
                :x_abschange, :g_tol, :g_converged, :g_residual, :f_tol, :f_converged,
                :f_increased, :f_relchange, :iteration_limit_reached, :f_calls,
                :g_calls, :h_calls)
-   @eval $api_method(r::MaximizationWrapper) = $api_method(r.res)
+   @eval $api_method(r::MaximizationWrapper) = $api_method(res(r))
 end
 
-function Base.show(io::IO, r::MaximizationWrapper)
+function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResults})
+    @printf io "Results of Maximization Algorithm\n"
+    @printf io " * Algorithm: %s\n" summary(r)
+    @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
+    @printf io " * Maximizer: %e\n" maximizer(r)
+    @printf io " * Maximum: %e\n" maximum(r)
+    @printf io " * Iterations: %d\n" iterations(r)
+    @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(r) abs_tol(r) converged(r)
+    @printf io " * Objective Function Calls: %d" f_calls(r)
+    return
+end
+
+function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResults})
     first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
 
     @printf io "Results of Optimization Algorithm\n"

@@ -32,6 +32,7 @@ general_tests = [
     "type_stability",
     "types",
     "counter",
+    "maximize",
 ]
 general_tests = map(s->"./general/"*s*".jl", general_tests)
 
