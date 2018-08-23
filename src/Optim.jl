@@ -35,7 +35,7 @@ import Compat.String         # for remake of strings in v0.7/v1.0
 import Compat.view           # for new views syntax in v0.7/v1.0
 
 # for extensions of functions defined in Base.
-import Base: length, push!, show, getindex, setindex!
+import Base: length, push!, show, getindex, setindex!, maximum
 
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
@@ -54,7 +54,7 @@ import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
 import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types
-export optimize, # main function
+export optimize, maximize, # main function
 
        # Re-export objective types from NLSolversBase
        NonDifferentiable,
@@ -103,6 +103,7 @@ export optimize, # main function
        ### Specifically Univariate, R -> R
        GoldenSection,
        Brent,
+
        ### Multivariate, R^N -> R
        Fminbox,
        SAMIN,
@@ -205,5 +206,8 @@ include("multivariate/solvers/constrained/ipnewton/ipnewton.jl")
 include("multivariate/solvers/constrained/ipnewton/utilities/assess_convergence.jl")
 # Traces
 include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
+
+# Maximization convenience wrapper
+include("maximize.jl")
 
 end
