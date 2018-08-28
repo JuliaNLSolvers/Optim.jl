@@ -16,7 +16,7 @@ Base.summary(::BFGS) = "BFGS"
 ## Constructor
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
+       linesearch = LineSearches.BackTracking(),
        initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
        manifold = Flat())
 ```
@@ -37,7 +37,7 @@ approximations as well as the gradient. See also the limited memory variant
  - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
-                linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
+                linesearch = LineSearches.BackTracking(),  # TODO: benchmark defaults
                 initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
                 manifold::Manifold=Flat())
     BFGS(alphaguess, linesearch, initial_invH, manifold)
