@@ -29,6 +29,7 @@ pages:
         - Gradients and Hessians: 'user/gradientsandhessians.md'
         - Configurable Options: 'user/config.md'
         - Linesearch: 'algo/linesearch.md'
+        - Algorithm choice: 'user/algochoice.md'
         - Preconditioners: 'algo/precondition.md'
         - Complex optimization: 'algo/complex.md'
         - Manifolds: 'algo/manifolds.md'
