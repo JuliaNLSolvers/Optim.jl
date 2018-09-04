@@ -44,13 +44,16 @@
         @test Optim.converged(results)
         @test summary(results) == "Fminbox with $(summary(_optimizer))"
         opt_x = Optim.minimizer(results)
-        g = similar(opt_x)
-        _objective.fdf(g, opt_x)
+        NLSolversBase.gradient!(_objective, opt_x)
+        g = NLSolversBase.gradient(_objective)
         # check first-order constrained optimality conditions
         for i = 1:N
             @test abs(g[i]) < 3e-3 || (opt_x[i] < -boxl+1e-3 && g[i] > 0) || (opt_x[i] > boxl-1e-3 && g[i] < 0)
         end
     end
+
+    # Throw ArgumentError when initial guess is outside the box
+    @test_throws ArgumentError optimize(_objective, l, u, 2u, Fminbox(GradientDescent()))
 
     # tests for #180
     results = optimize(_objective, l, u, initial_x, Fminbox(), Optim.Options(outer_iterations = 2))
