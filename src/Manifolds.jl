@@ -112,7 +112,7 @@ struct PowerManifold<:Manifold
     outer_dims::Tuple
 end
 function retract!(m::PowerManifold, x)
-    for i=1:prod(m.outer_dims)
+    for i=1:prod(m.outer_dims) # TODO: use for i in LinearIndices(m.outer_dims)?
         retract!(m.inner_manifold,get_inner(m, x, i))
     end
     x
@@ -128,10 +128,6 @@ end
     size_outer = prod(m.outer_dims)
     @assert 1 <= i <= size_outer
     return reshape(view(x, (i-1)*size_inner+1:i*size_inner), m.inner_dims)
-end
-@inline function get_inner(m::PowerManifold, x, i::Tuple)
-    s2i = LinearIndices(m.outer_dims)
-    get_inner(m, x, s2i[i...])
 end
 
 
