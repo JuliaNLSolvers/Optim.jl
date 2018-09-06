@@ -26,9 +26,10 @@ pages:
     - Home: 'index.md'
     - Tutorials:
         - Minimizing a function: 'user/minimization.md'
+        - Gradients and Hessians: 'user/gradientsandhessians.md'
         - Configurable Options: 'user/config.md'
-        - Automatic Differentiation: 'algo/autodiff.md'
         - Linesearch: 'algo/linesearch.md'
+        - Algorithm choice: 'user/algochoice.md'
         - Preconditioners: 'algo/precondition.md'
         - Complex optimization: 'algo/complex.md'
         - Manifolds: 'algo/manifolds.md'
