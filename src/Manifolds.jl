@@ -112,7 +112,7 @@ struct PowerManifold<:Manifold
     outer_dims::Tuple
 end
 function retract!(m::PowerManifold, x)
-    for i=1:prod(m.outer_dims)
+    for i=1:prod(m.outer_dims) # TODO: use for i in LinearIndices(m.outer_dims)?
         retract!(m.inner_manifold,get_inner(m, x, i))
     end
     x
@@ -129,13 +129,12 @@ end
     @assert 1 <= i <= size_outer
     return reshape(view(x, (i-1)*size_inner+1:i*size_inner), m.inner_dims)
 end
-@inline get_inner(m::PowerManifold, x, i::Tuple) = get_inner(m, x, ind2sub(m.outer_dims, i...))
 
 
 """
 Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
 P is stored as a flat 1D array, and x1 is before x2 in memory.
-Use get_inner(m, x, {1,2}) to access x1 and x2 in their original format.
+Use get_inner(m, x, {1,2}) to access x1 or x2 in their original format.
 """
 struct ProductManifold<:Manifold
     m1::Manifold
@@ -153,7 +152,7 @@ function project_tangent!(m::ProductManifold, g, x)
     project_tangent!(m.m2, get_inner(m, g, 2), get_inner(m, x, 2))
     g
 end
-function get_inner(m::ProductManifold, x, i)
+function get_inner(m::ProductManifold, x, i::Integer)
     N1 = prod(m.dims1)
     N2 = prod(m.dims2)
     @assert length(x) == N1+N2

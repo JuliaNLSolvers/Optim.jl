@@ -203,7 +203,7 @@ function optimize(
             x[i] = thisx
             push!(boundaryidx,i)
         elseif thisx < thisl || thisx > thisu
-            error("Initial x[$(ind2sub(x, i))]=$thisx is outside of [$thisl, $thisu]")
+            throw(ArgumentError("Initial x[$(Tuple(CartesianIndices(x)[i]))]=$thisx is outside of [$thisl, $thisu]"))
         end
 
         gbarrier[i] = (isfinite(thisl) ? one(T)/(thisx-thisl) : zero(T)) + (isfinite(thisu) ? one(T)/(thisu-thisx) : zero(T))
