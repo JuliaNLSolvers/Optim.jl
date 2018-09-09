@@ -10,10 +10,11 @@
 # reference to a particular point in this paper.
 #
 # Several aspects of the following have also been incorporated:
-#   W. W. Hager and H. Zhang (2012) The limited memory conjugate
+#   W. W. Hager and H. Zhang (2013) The limited memory conjugate
 #     gradient method.
 #
-# This paper will be denoted HZ2012 below.
+# This paper will be denoted HZ2013 below.
+#
 #
 # There are some modifications and/or extensions from what's in the
 # paper (these may or may not be extensions of the cg_descent code
@@ -60,7 +61,8 @@ ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
 linesearch = LineSearches.HagerZhang(),
 eta = 0.4,
 P = nothing,
-precondprep = (P, x) -> nothing)
+precondprep = (P, x) -> nothing,
+manifold = Flat())
 ```
 The strictly positive constant ``eta`` is used in determining
 the next step direction, and the default here deviates from the one used in the
@@ -140,7 +142,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
                          similar(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
                          -pg, # Maintain current search direction in state.s
-                         @initial_linesearch()...) 
+                         @initial_linesearch()...)
 end
 
 function update_state!(d, state::ConjugateGradientState, method::ConjugateGradient)
@@ -164,7 +166,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         isfinite(value(d)) || error("Non-finite f(x) while optimizing ($(value(d)))")
 
         # Determine the next search direction using HZ's CG rule
-        #  Calculate the beta factor (HZ2012)
+        #  Calculate the beta factor (HZ2013)
         # -----------------
         # Comment on py: one could replace the computation of py with
         #    ydotpgprev = dot(y, pg)
@@ -174,14 +176,16 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # -----------------
         method.precondprep!(method.P, state.x)
         dPd = real(dot(state.s, method.P, state.s))
-        etak = method.eta * real(dot(state.s, state.g_previous)) / dPd
+        etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
         state.y .= gradient(d) .- state.g_previous
         ydots = real(dot(state.y, state.s))
         copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
         ldiv!(state.pg, method.P, gradient(d))
         state.py .= state.pg .- state.py
+        # ydots may be zero if f is not strongly convex or the line search does not satisfy Wolfe
         betak = (real(dot(state.y, state.pg)) - real(dot(state.y, state.py)) * real(dot(gradient(d), state.s)) / ydots) / ydots
-        beta = max(betak, etak)
+        # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
+        beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
         state.s .= beta.*state.s .- state.pg
         project_tangent!(method.manifold, state.s, state.x)
         lssuccess == false # break on linesearch error
