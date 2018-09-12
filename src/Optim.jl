@@ -30,9 +30,7 @@ import Parameters: @with_kw, # for types where constructors are simply defined
 
 using Printf                 # For printing, maybe look into other options
 
-using Compat                 # for compatibility across multiple julia versions
-import Compat.String         # for remake of strings in v0.7/v1.0
-import Compat.view           # for new views syntax in v0.7/v1.0
+#using Compat                 # for compatibility across multiple julia versions
 
 # for extensions of functions defined in Base.
 import Base: length, push!, show, getindex, setindex!, maximum

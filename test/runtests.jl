@@ -4,7 +4,6 @@ using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 const MVP = MultivariateProblems
 
-using Compat
 using Suppressor
 import PositiveFactorizations: Positive, cholesky # for the IPNewton tests
 using Random
