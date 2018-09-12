@@ -1,4 +1,4 @@
-using Documenter, Optim
+using Documenter, Optim, Pkg
 
 # use include("Rosenbrock.jl") etc
 # Generate examples
