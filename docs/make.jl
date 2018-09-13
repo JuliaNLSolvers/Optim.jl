@@ -1,4 +1,4 @@
-using Documenter, Optim
+using Documenter, Optim, Pkg
 
 # use include("Rosenbrock.jl") etc
 # Generate examples
@@ -15,5 +15,5 @@ makedocs(
 deploydocs(
     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math", "mkdocs-windmill"),
     repo = "github.com/JuliaNLSolvers/Optim.jl.git",
-    julia = "0.6"
+    julia = "1.0"
 )
