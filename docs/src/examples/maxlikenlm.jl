@@ -20,6 +20,7 @@
 #
 
 using Optim, NLSolversBase, Random
+using LinearAlgebra: diag
 Random.seed!(0);                            # Fix random seed generator for reproducibility
 
 #md # !!! tip
