@@ -15,7 +15,7 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
-debug_printing = false
+debug_printing = true
 
 general_tests = [
     "api",
@@ -49,42 +49,42 @@ univariate_tests = map(s->"./univariate/"*s*".jl", univariate_tests)
 
 multivariate_tests = [
     ## optimize
-    "optimize/interface",
-    "optimize/optimize",
-    "optimize/inplace",
-    ## solvers
-    ## constrained
-    "solvers/constrained/fminbox",
-    "solvers/constrained/ipnewton/constraints",
-    "solvers/constrained/ipnewton/counter",
-    "solvers/constrained/ipnewton/ipnewton_unconstrained",
-    "solvers/constrained/samin",
-    ## first order
-    "solvers/first_order/accelerated_gradient_descent",
-    "solvers/first_order/bfgs",
-    "solvers/first_order/cg",
-    "solvers/first_order/gradient_descent",
+    # "optimize/interface",
+    # "optimize/optimize",
+    # "optimize/inplace",
+    # ## solvers
+    # ## constrained
+    # "solvers/constrained/fminbox",
+    # "solvers/constrained/ipnewton/constraints",
+    # "solvers/constrained/ipnewton/counter",
+    # "solvers/constrained/ipnewton/ipnewton_unconstrained",
+    # "solvers/constrained/samin",
+    # ## first order
+    # "solvers/first_order/accelerated_gradient_descent",
+    # "solvers/first_order/bfgs",
+    # "solvers/first_order/cg",
+    # "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
-    "solvers/first_order/momentum_gradient_descent",
-    "solvers/first_order/ngmres",
-    ## second order
-    "solvers/second_order/newton",
-    "solvers/second_order/newton_trust_region",
-    "solvers/second_order/krylov_trust_region",
-    ## zeroth order
-    "solvers/zeroth_order/grid_search",
-    "solvers/zeroth_order/nelder_mead",
-    "solvers/zeroth_order/particle_swarm",
-    "solvers/zeroth_order/simulated_annealing",
-    ## other
-    "array",
-    "extrapolate",
-    "lsthrow",
-    "precon",
-    "manifolds",
-    "complex",
-    "fdtime",
-    "arbitrary_precision",
+    # "solvers/first_order/momentum_gradient_descent",
+    # "solvers/first_order/ngmres",
+    # ## second order
+    # "solvers/second_order/newton",
+    # "solvers/second_order/newton_trust_region",
+    # "solvers/second_order/krylov_trust_region",
+    # ## zeroth order
+    # "solvers/zeroth_order/grid_search",
+    # "solvers/zeroth_order/nelder_mead",
+    # "solvers/zeroth_order/particle_swarm",
+    # "solvers/zeroth_order/simulated_annealing",
+    # ## other
+    # "array",
+    # "extrapolate",
+    # "lsthrow",
+    # "precon",
+    # "manifolds",
+    # "complex",
+    # "fdtime",
+    # "arbitrary_precision",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
@@ -212,18 +212,18 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
 end
 
 
-@testset "general" begin
-    for my_test in general_tests
-        println(my_test)
-        @time include(my_test)
-    end
-end
-@testset "univariate" begin
-    for my_test in univariate_tests
-        println(my_test)
-        @time include(my_test)
-    end
-end
+# @testset "general" begin
+#     for my_test in general_tests
+#         println(my_test)
+#         @time include(my_test)
+#     end
+# end
+# @testset "univariate" begin
+#     for my_test in univariate_tests
+#         println(my_test)
+#         @time include(my_test)
+#     end
+# end
 @testset "multivariate" begin
     for my_test in multivariate_tests
         println(my_test)
@@ -231,11 +231,11 @@ end
     end
 end
 
-println("Literate examples")
-@time include("examples.jl")
+# println("Literate examples")
+# @time include("examples.jl")
 
 
-# Build the docs
-if get(ENV, "TRAVIS_OS_NAME", "") == "linux" && get(ENV, "TRAVIS_JULIA_VERSION", "") == "0.6"
-    include(joinpath(@__DIR__, "../docs/make.jl"))
-end
+# # Build the docs
+# if get(ENV, "TRAVIS_OS_NAME", "") == "linux" && get(ENV, "TRAVIS_JULIA_VERSION", "") == "0.6"
+#     include(joinpath(@__DIR__, "../docs/make.jl"))
+# end
