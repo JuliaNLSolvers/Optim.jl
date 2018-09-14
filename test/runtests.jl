@@ -128,6 +128,7 @@ function run_optim_tests(method; convergence_exceptions = (),
         # Use finite difference if it is not differentiable enough
         if  !(name in skip)
             for (i, input) in enumerate(input_tuple(method, prob))
+                debug_printing && printstyled("i: ", i, "\n", color=:green)
                 if (!prob.isdifferentiable && i > 1) || (!prob.istwicedifferentiable && i > 2)
                     continue
                 end

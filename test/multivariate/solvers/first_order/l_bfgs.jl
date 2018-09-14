@@ -10,13 +10,13 @@
         convergence_exceptions = ()
     end
 
+    @show skip
+    @show convergence_exceptions
     run_optim_tests(LBFGS(),
                     f_increase_exceptions = ("Extended Rosenbrock",),
                     skip=skip,
                     convergence_exceptions = convergence_exceptions,
                     show_name = debug_printing,
-                    show_itcalls = debug_printing,
                     show_res = debug_printing,
-                    show_trace = debug_printing,
                     )
 end
