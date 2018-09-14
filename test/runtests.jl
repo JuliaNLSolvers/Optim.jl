@@ -15,7 +15,7 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
-debug_printing = true
+debug_printing = false
 
 general_tests = [
     "api",
@@ -206,7 +206,7 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                 # Print on error
                 if !(Optim.converged(results))
                     printstyled(name, "did not converge\n", color=:red)
-                    printstyled(res, "\n", color=:red)
+                    printstyled(results, "\n", color=:red)
                 end
             end
             if !(name in minimum_exceptions)
