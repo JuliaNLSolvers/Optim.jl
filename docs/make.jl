@@ -1,11 +1,16 @@
+if Base.HOME_PROJECT[] !== nothing
+    # JuliaLang/julia/pull/28625
+    Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
+end
+
 using Documenter, Optim
 
 # use include("Rosenbrock.jl") etc
 # Generate examples
 include("generate.jl")
 
-odir = Pkg.dir("Optim")
-run(`cp $odir/LICENSE.md $odir/docs/src/LICENSE.md`)
+cp(joinpath(@__DIR__, "..", "LICENSE.md"),
+   joinpath(@__DIR__, "src", "LICENSE.md"); force = true)
 
 #run('mv ../CONTRIBUTING.md ./dev/CONTRIBUTING.md') # TODO: Should we use the $odir/CONTRIBUTING.md file instead?
 makedocs(
@@ -15,5 +20,5 @@ makedocs(
 deploydocs(
     deps = Deps.pip("pygments", "mkdocs", "python-markdown-math", "mkdocs-windmill"),
     repo = "github.com/JuliaNLSolvers/Optim.jl.git",
-    julia = "0.6"
+    julia = "1.0"
 )

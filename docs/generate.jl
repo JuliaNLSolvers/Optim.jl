@@ -8,7 +8,7 @@ ONLYSTATIC = []
 
 EXAMPLEDIR = joinpath(@__DIR__, "src", "examples")
 GENERATEDDIR = joinpath(@__DIR__, "src", "examples", "generated")
-for example in filter!(r"\.jl$", readdir(EXAMPLEDIR))
+for example in filter!(x -> endswith(x, ".jl"), readdir(EXAMPLEDIR))
     input = abspath(joinpath(EXAMPLEDIR, example))
     script = Literate.script(input, GENERATEDDIR)
     code = strip(read(script, String))
