@@ -19,8 +19,9 @@
 # and also include the `NLSolversBase` routine:
 #
 
-using Optim, NLSolversBase
-srand(0);                            # Fix random seed generator for reproducibility
+using Optim, NLSolversBase, Random
+using LinearAlgebra: diag
+Random.seed!(0);                            # Fix random seed generator for reproducibility
 
 #md # !!! tip
 #md #     Add Optim with the following command at the Julia command prompt:
@@ -84,7 +85,7 @@ func = TwiceDifferentiable(vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar 
 opt = optimize(func, ones(nvar+1))
 
 ## Test the results                #src
-using Base.Test                    #src
+using Test                    #src
 @test Optim.converged(opt)         #src
 @test Optim.g_residual(opt) < 1e-8 #src
 

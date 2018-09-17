@@ -2,122 +2,127 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
      <loc>/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/user/minimization/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>/user/gradientsandhessians/</loc>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/user/config/</loc>
-     <lastmod>2018-07-22</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    <url>
-     <loc>/algo/autodiff/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/linesearch/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>/user/algochoice/</loc>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/precondition/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/complex/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/manifolds/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/user/tipsandtricks/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/examples/generated/ipnewton_basics/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/examples/generated/maxlikenlm/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/nelder_mead/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/simulated_annealing/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/samin/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/particle_swarm/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/cg/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/gradientdescent/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/lbfgs/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/ngmres/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/newton/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/newton_trust_region/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/algo/ipnewton/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/dev/contributing/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>/LICENSE/</loc>
-     <lastmod>2018-07-22</lastmod>
+     <lastmod>2018-09-17</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>

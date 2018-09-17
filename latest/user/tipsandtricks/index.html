@@ -129,13 +129,13 @@ end
 <h2 id="avoid-repeating-computations">Avoid repeating computations</h2>
 <p>Say you are optimizing a function</p>
 <pre><code class="julia">f(x) = x[1]^2+x[2]^2
-g!(storage, x) = copy!(storage, [2x[1], 2x[2]])
+g!(storage, x) = copyto!(storage, [2x[1], 2x[2]])
 </code></pre>
 
 <p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused. The trick here is essentially the same as above. We use a closure or an anonymous function. Basically, we define</p>
 <pre><code class="julia">function calculate_common!(x, last_x, buffer)
     if x != last_x
-        copy!(last_x, x)
+        copyto!(last_x, x)
         #do whatever common calculations and save to buffer
     end
 end

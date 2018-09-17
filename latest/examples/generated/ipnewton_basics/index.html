@@ -278,28 +278,36 @@ dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
 res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
-<pre><code>WARNING: Initial guess is not an interior point
+<pre><code>┌ Warning: Initial guess is not an interior point
+└ @ Optim ~/.julia/packages/Optim/TYBtX/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
 
 Stacktrace:
- [1] initial_state(::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}, ::Optim.Options{Float64,Void}, ::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
- [2] optimize(::NLSolversBase.TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::NLSolversBase.TwiceDifferentiableConstraints{ex-ipnewton_basics.#con_c!,ex-ipnewton_basics.#con_jacobian!,ex-ipnewton_basics.#con_h!,Float64}, ::Array{Float64,1}, ::Optim.IPNewton{Optim.#backtrack_constrained_grad,Symbol}) at /home/travis/.julia/v0.6/Optim/src/multivariate/solvers/constrained/ipnewton/interior.jl:196
- [3] cd(::Documenter.Expanders.##8#10{Module}, ::String) at ./file.jl:70
- [4] (::Documenter.Utilities.##19#20{Documenter.Expanders.##7#9{Documenter.Documents.Page,Module},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:593
- [5] withoutput(::Documenter.Expanders.##7#9{Documenter.Documents.Page,Module}) at /home/travis/.julia/v0.6/Documenter/src/Utilities/Utilities.jl:591
- [6] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Base.Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:478
- [7] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Base.Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
- [8] expand(::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Expanders.jl:31
- [9] runner(::Type{Documenter.Builder.ExpandTemplates}, ::Documenter.Documents.Document) at /home/travis/.julia/v0.6/Documenter/src/Builder.jl:178
- [10] dispatch(::Type{Documenter.Builder.DocumentPipeline}, ::Documenter.Documents.Document, ::Vararg{Documenter.Documents.Document,N} where N) at /home/travis/.julia/v0.6/Documenter/src/Selectors.jl:168
- [11] cd(::Documenter.##2#3{Documenter.Documents.Document}, ::String) at ./file.jl:70
- [12] #makedocs#1(::Bool, ::Array{Any,1}, ::Function) at /home/travis/.julia/v0.6/Documenter/src/Documenter.jl:203
- [13] (::Documenter.#kw##makedocs)(::Array{Any,1}, ::Documenter.#makedocs) at ./&lt;missing&gt;:0
- [14] include_from_node1(::String) at ./loading.jl:576
- [15] include(::String) at ./sysimg.jl:14
- [16] include_from_node1(::String) at ./loading.jl:576
- [17] include(::String) at ./sysimg.jl:14
- [18] process_options(::Base.JLOptions) at ./client.jl:305
- [19] _start() at ./client.jl:371
+ [1] macro expansion at ./logging.jl:307 [inlined]
+ [2] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/TYBtX/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+ [3] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/TYBtX/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
+ [4] top-level scope at none:0
+ [5] eval at ./boot.jl:319 [inlined]
+ [6] (::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Module,Expr})() at /home/travis/.julia/packages/Documenter/RJhiR/src/Expanders.jl:480
+ [7] cd(::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Module,Expr}, ::String) at ./file.jl:96
+ [8] (::getfield(Documenter.Utilities, Symbol(&quot;##18#19&quot;)){getfield(Documenter.Expanders, Symbol(&quot;##7#9&quot;)){Documenter.Documents.Page,Module,Expr},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/packages/Documenter/RJhiR/src/Expanders.jl:479
+ [9] with_logstate(::getfield(Documenter.Utilities, Symbol(&quot;##18#19&quot;)){getfield(Documenter.Expanders, Symbol(&quot;##7#9&quot;)){Documenter.Documents.Page,Module,Expr},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}}, ::Base.CoreLogging.LogState) at ./logging.jl:397
+ [10] with_logger(::Function, ::Logging.ConsoleLogger) at ./logging.jl:493
+ [11] withoutput at /home/travis/.julia/packages/Documenter/RJhiR/src/Utilities/Utilities.jl:589 [inlined]
+ [12] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/packages/Documenter/RJhiR/src/Expanders.jl:478
+ [13] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/packages/Documenter/RJhiR/src/Selectors.jl:168
+ [14] expand(::Documenter.Documents.Document) at /home/travis/.julia/packages/Documenter/RJhiR/src/Expanders.jl:31
+ [15] runner(::Type{Documenter.Builder.ExpandTemplates}, ::Documenter.Documents.Document) at /home/travis/.julia/packages/Documenter/RJhiR/src/Builder.jl:178
+ [16] dispatch(::Type{Documenter.Builder.DocumentPipeline}, ::Documenter.Documents.Document) at /home/travis/.julia/packages/Documenter/RJhiR/src/Selectors.jl:168
+ [17] #2 at /home/travis/.julia/packages/Documenter/RJhiR/src/Documenter.jl:204 [inlined]
+ [18] cd(::getfield(Documenter, Symbol(&quot;##2#3&quot;)){Documenter.Documents.Document}, ::String) at ./file.jl:96
+ [19] #makedocs#1 at /home/travis/.julia/packages/Documenter/RJhiR/src/Documenter.jl:203 [inlined]
+ [20] (::getfield(Documenter, Symbol(&quot;#kw##makedocs&quot;)))(::NamedTuple{(:doctest,),Tuple{Bool}}, ::typeof(makedocs)) at ./none:0
+ [21] top-level scope at none:0
+ [22] include at ./boot.jl:317 [inlined]
+ [23] include_relative(::Module, ::String) at ./loading.jl:1038
+ [24] include(::Module, ::String) at ./sysimg.jl:29
+ [25] exec_options(::Base.JLOptions) at ./client.jl:229
+ [26] _start() at ./client.jl:421
 Results of Optimization Algorithm
  * Algorithm: Interior Point Newton
  * Starting Point: [0.0,0.0]
@@ -386,6 +394,7 @@ res = optimize(df, dfc, x0, IPNewton())
 <h2 id="plain-program">Plain Program</h2>
 <p>Below follows a version of the program without any comments. The file is also available here: <a href="../ipnewton_basics.jl">ipnewton_basics.jl</a></p>
 <pre><code class="julia">using Optim, NLSolversBase #hide
+import NLSolversBase: clear! #hide
 
 fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 

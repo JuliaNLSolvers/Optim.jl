@@ -88,8 +88,9 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p>The following tutorial will introduce maximum likelihood estimation in Julia for the normal linear model.</p>
 <p>The normal linear model (sometimes referred to as the OLS model) is the workhorse of regression modeling and is utilized across a number of diverse fields.  In this tutorial, we will utilize simulated data to demonstrate how Julia can be used to recover the parameters of interest.</p>
 <p>The first order of business is to use the <code>Optim</code> package and also include the <code>NLSolversBase</code> routine:</p>
-<pre><code class="julia">using Optim, NLSolversBase
-srand(0);                            # Fix random seed generator for reproducibility
+<pre><code class="julia">using Optim, NLSolversBase, Random
+using LinearAlgebra: diag
+Random.seed!(0);                            # Fix random seed generator for reproducibility
 </code></pre>
 
 <div class="admonition tip">
@@ -156,9 +157,9 @@ end
 </code></pre>
 
 <pre><code>3-element Array{Float64,1}:
-  3.00279
-  2.96455
- -0.648693
+  3.002788633849947
+  2.964549617572727
+ -0.648692780562844
 </code></pre>
 
 <p>!!! Note     Fieldnames for all of the quantities can be obtained with the following command:     fieldnames(opt)</p>
@@ -194,8 +195,8 @@ end
 </code></pre>
 
 <pre><code>2-element Array{Float64,1}:
- 3.00279
- 2.96455
+ 3.002788633849947
+ 2.964549617572727
 </code></pre>
 
 <p>We now need to obtain those elements of the variance-covariance matrix needed to obtain our t-statistics, and we can do this with the following commands:</p>
@@ -204,8 +205,8 @@ temp1 = temp[1:nvar]
 </code></pre>
 
 <pre><code>2-element Array{Float64,1}:
- 0.00571544
- 0.00550643
+ 0.005715441191953887
+ 0.005506430533329349
 </code></pre>
 
 <p>The t-statistics are formed by dividing element-by-element the coefficients by their standard errors, or the square root of the diagonal elements of the variance-covariance matrix:</p>
@@ -213,16 +214,17 @@ temp1 = temp[1:nvar]
 </code></pre>
 
 <pre><code>2-element Array{Float64,1}:
- 39.7191
- 39.9506
+ 39.719144251161474
+ 39.95063081460274
 </code></pre>
 
 <p>From here, one may examine other statistics of interest using the output from the optimization routine.</p>
 <p><a id='maxlikenlm-plain-program-1'></a></p>
 <h2 id="plain-program">Plain Program</h2>
 <p>Below follows a version of the program without any comments. The file is also available here: <a href="../maxlikenlm.jl">maxlikenlm.jl</a></p>
-<pre><code class="julia">using Optim, NLSolversBase
-srand(0);                            # Fix random seed generator for reproducibility
+<pre><code class="julia">using Optim, NLSolversBase, Random
+using LinearAlgebra: diag
+Random.seed!(0);                            # Fix random seed generator for reproducibility
 
 n = 500                             # Number of observations
 nvar = 2                            # Number of variables

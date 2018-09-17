@@ -1,5 +1,6 @@
-using Optim, NLSolversBase
-srand(0);                            # Fix random seed generator for reproducibility
+using Optim, NLSolversBase, Random
+using LinearAlgebra: diag
+Random.seed!(0);                            # Fix random seed generator for reproducibility
 
 n = 500                             # Number of observations
 nvar = 2                            # Number of variables

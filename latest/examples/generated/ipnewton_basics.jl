@@ -1,4 +1,5 @@
 using Optim, NLSolversBase #hide
+import NLSolversBase: clear! #hide
 
 fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 
