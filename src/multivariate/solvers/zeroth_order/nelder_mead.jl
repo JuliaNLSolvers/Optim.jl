@@ -93,12 +93,10 @@ function centroid!(c::AbstractArray{T}, simplex, h=0) where T
     @inbounds for i in 1:n+1
         if i != h
             xi = simplex[i]
-            @simd for j in 1:n
-                c[j] += xi[j]
-            end
+            c .+= xi
         end
     end
-    rmul!(c, T(1/n))
+    rmul!(c, T(1)/n)
 end
 
 centroid(simplex, h) = centroid!(similar(simplex[1]), simplex, h)
@@ -162,7 +160,7 @@ function initial_state(method::NelderMead, options, d, initial_x)
     @inbounds for i in 1:length(simplex)
         f_simplex[i] = value(d, simplex[i])
     end
-    # Get the indeces that correspond to the ordering of the f values
+    # Get the indices that correspond to the ordering of the f values
     # at the vertices. i_order[1] is the index in the simplex of the vertex
     # with the lowest function value, and i_order[end] is the index in the
     # simplex of the vertex with the highest function value
@@ -294,7 +292,7 @@ function after_while!(f, state, method::NelderMead, options)
         f_min = f_centroid_min
     end
     f.F = f_min
-    state.x[:] = x_min
+    state.x .= x_min
 end
 # We don't have an f_x_previous in NelderMeadState, so we need to special case these
 pick_best_x(f_increased, state::NelderMeadState) = state.x
