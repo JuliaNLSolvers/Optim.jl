@@ -142,6 +142,11 @@ function run_optim_tests(method; convergence_exceptions = (),
                 show_itcalls && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
                 if !((name, i) in convergence_exceptions)
                     @test Optim.converged(results)
+                    # Print on error, easier to debug CI
+                    if !(Optim.converged(results))
+                        printstyled(name, " did not converge with i = ", i, "\n", color=:red)
+                        printstyled(results, "\n", color=:red)
+                    end
                 end
                 if !((name, i) in minimum_exceptions)
                     @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
@@ -166,7 +171,7 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                          show_trace = false,
                          show_res = false,
                          show_itcalls = false)
-    # TODO: Update with constraints?
+    # TODO: Update with constraint problems too?
     # Loop over unconstrained problems
     for (name, prob) in MVP.UnconstrainedProblems.examples
         if !isfinite(prob.minimum) || !any(isfinite, prob.solutions)
@@ -198,6 +203,11 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
             show_itcalls && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
             if !(name in convergence_exceptions)
                 @test Optim.converged(results)
+                # Print on error
+                if !(Optim.converged(results))
+                    printstyled(name, "did not converge\n", color=:red)
+                    printstyled(results, "\n", color=:red)
+                end
             end
             if !(name in minimum_exceptions)
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
