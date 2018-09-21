@@ -32,4 +32,16 @@
         @test Optim.converged(results)
         @test Optim.minimum(results) < 1e-8
     end
+
+    @testset "Undefined beta_k behaviour" begin
+        # Ref #669
+        # If y_k is zero, then betak is undefined.
+        # Check that we don't produce NaNs
+
+        f(x) = 100 - x[1] + exp(x[1] - 100)
+        g!(grad, x) = grad[1] = -1 + exp(x[1] - 100)
+        res = optimize(f, g!, [0.0], ConjugateGradient(alphaguess=LineSearches.InitialStatic(alpha=1.0), linesearch=LineSearches.BackTracking()))
+        @test Optim.converged(res)
+        @test Optim.minimum(res) ≈ 1.0
+    end
 end
