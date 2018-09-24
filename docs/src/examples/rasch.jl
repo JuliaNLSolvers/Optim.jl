@@ -22,7 +22,7 @@ using Optim, DelimitedFiles, ForwardDiff #hide
 # traits. This test was designed to measure a single latent ability scale. The
 # dataset consists of 1000 individuals responding to a set of 5 questions. 
 
-X = readdlm("lsat.txt");
+X = readdlm(joinpath(@__DIR__, "docs/src/examples/lsat.txt"));
 n, m = size(X)                     # number of individuals, number of items
 r = vec(mapslices(sum, X, dims=2)) # sum-scores, ie number correct for each person
 s = vec(mapslices(sum, X, dims=1)) # item-scores, ie number of individuals who answered each item correctly
