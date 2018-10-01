@@ -1,6 +1,9 @@
 # Optim master release notes
 * The convergence tolerance computations have changed slightly
 
+# Optim v0.17.0 release notes
+* Drop support for Julia versions less 1.0. Optim v.17.1 is also out.
+
 # Optim v0.11.0 release notes
 * Optional scaling for inverse Hessian in L-BFGS
 * Support for initial step length guesses via LineSearches
@@ -8,14 +11,14 @@
 # Optim v0.10.0 release notes
 * Support for optimization on Riemannian manifolds
 * Support for optimization of functions of complex variables
-* New experimental KrylovTrustRegion method useful when cheap Hessian-vector products are available
+* New experimental KrylovTrustRegion method useful when cheap Hessian-vector products are available.
 * Improved support for BigFloats
 * Add doc strings to methods
 * Drop support for Julia versions less than v0.6.0-pre
 
 # Optim v0.9.0 release notes
 * Fminbox: If an initial guess is on the boundary of the box, the guess is moved inside the box and a warning is produced, as opposed to crashing with an error.
-* Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters
+* Significant changes to the Non-, Once-, and TwiceDifferentiable setup; these now hold temporaries relevant to the evaluation of objectives, gradients, and Hessians. They also hold f-, g-, and h_calls counters.
 * Refactor tests
 * Drop v0.4 support
 * Add limits to f-, g-, and h_calls
