@@ -35,16 +35,15 @@ its inverse elements.
 Below, we see an example where a function is minimized without and with a preconditioner
 applied.
 ```jl
-using ForwardDiff
-import SparseArrays: spdiagm
+using ForwardDiff, Optim, SparseArrays
 initial_x = zeros(100)
-plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
+plap(U; n = length(U)) = (n-1)*sum((0.1 .+ diff(U).^2).^2 ) - sum(U) / (n-1)
 plap1(x) = ForwardDiff.gradient(plap,x)
-precond(n) = spdiagm(-1 => -ones(n-1), 0 => 2*ones(n), 1 => -ones(n-1)))*(n+1)
+precond(n) = spdiagm(-1 => -ones(n-1), 0 => 2ones(n), 1 => -ones(n-1)) * (n+1)
 f(x) = plap([0; x; 0])
 g!(G, x) = copyto!(G, (plap1([0; x; 0]))[2:end-1])
-result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))
-result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = precond(100)))
+result = Optim.optimize(f, g!, initial_x, method = ConjugateGradient(P = nothing))
+result = Optim.optimize(f, g!, initial_x, method = ConjugateGradient(P = precond(100)))
 ```
 The former optimize call converges at a slower rate than the latter. Looking at a
  plot of the 2D version of the function shows the problem.
