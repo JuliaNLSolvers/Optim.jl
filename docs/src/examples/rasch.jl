@@ -5,7 +5,7 @@
 #md #     This example is also available as a Jupyter notebook:
 #md #     [``rasch.ipynb``](@__NBVIEWER_ROOT_URL__examples/generated/rasch.ipynb)
 #-
-using Optim, DelimitedFiles, ForwardDiff #hide
+using Optim, DelimitedFiles, ForwardDiff, Random #hide
 #
 # The Rasch model is used in psychometrics as a model for
 # assessment data such as student responses to a standardized
@@ -18,15 +18,27 @@ using Optim, DelimitedFiles, ForwardDiff #hide
 # $$
 # where $\xi_p > 0$ the latent ability of person $p$ and $\epsilon_i > 0$ 
 # is the difficulty of item $i$. 
-# The LSAT is a classical example in educational testing for measuring ability 
-# traits. This test was designed to measure a single latent ability scale. The
-# dataset consists of 1000 individuals responding to a set of 5 questions. 
 
-X = readdlm(joinpath(@__DIR__, "docs/src/examples/lsat.txt"));
-n, m = size(X)                     # number of individuals, number of items
-r = vec(mapslices(sum, X, dims=2)) # sum-scores, ie number correct for each person
-s = vec(mapslices(sum, X, dims=1)) # item-scores, ie number of individuals who answered each item correctly
-f = [sum(r.==j) for j in 1:m]      # Distribution of sum-scores
+# We simulate data from this model:
+
+Random.seed!(123)
+n = 1000
+m = 5
+theta = randn(n)
+delta = randn(m)
+r = zeros(n)
+s = zeros(m)
+  
+for i in 1:n
+  p = exp.(theta[i] .- delta) ./ (1.0 .+ exp.(theta[i] .- delta))  
+  for j in 1:m
+    if rand() < p[j] ##correct
+      r[i] += 1
+      s[j] += 1
+    end
+  end
+end
+f = [sum(r.==j) for j in 1:m]
 
 # Since the number of parameters increases 
 # with sample size standard maximum likelihood will not provide us 
@@ -44,8 +56,8 @@ f = [sum(r.==j) for j in 1:m]      # Distribution of sum-scores
 # $$ 
 # where the sum is over all possible answer configurations that give a sum
 # score of $r$. Algorithms to efficiently compute $\gamma$ and its 
-# derivatives are available in the literature (see eg Baker 1996 for a review
-# and Biscarri 2018 for a more modern approach)
+# derivatives are available in the literature (see eg Baker (1996) for a review
+# and Biscarri (2018) for a more modern approach)
 
 function esf_sum!(S::AbstractArray{T,1}, x::AbstractArray{T,1}) where T <: Real
   n = length(x)
@@ -85,7 +97,7 @@ end
 # \end{aligned}
 # $$
 ϵ = ones(Float64, m)
-β = zeros(Float64, m)
+β0 = zeros(Float64, m)
 last_β = fill(NaN, m)
 S = zeros(Float64, m+1)
 H = zeros(Float64, m, m, m+1)
@@ -93,8 +105,7 @@ H = zeros(Float64, m, m, m+1)
 function calculate_common!(x, last_x)
   if x != last_x
     copyto!(last_x, x)
-    β .= x
-    ϵ .= exp.(-β)
+    ϵ .= exp.(-x)
     esf_ext!(S, H, ϵ)
   end
 end
@@ -170,8 +181,10 @@ function con_h!(h, x, λ)
 end
 lx = Float64[]; ux = Float64[]
 lc = [0.0]; uc = [0.0]
-df = TwiceDifferentiable(neglogLC, g!, h!, zeros(Float64, m))
-dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
-                                     lx, ux, lc, uc)
-res = optimize(df, dfc, zeros(Float64,m), IPNewton())
+df = TwiceDifferentiable(neglogLC, g!, h!, β0)
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
+res = optimize(df, dfc, β0, IPNewton())
+delta_hat = -res.minimum
 
+## now we can compute the residual sum of squares
+sum((delta .- delta_hat).^2)
