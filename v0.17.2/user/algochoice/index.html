@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Algorithm choice - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Algorithm choice", url: "#_top", children: [
+          ]},
+          {title: "Algorithms", url: "#algorithms", children: [
+          ]},
+          {title: "Linesearches", url: "#linesearches", children: [
+          ]},
+          {title: "Summary", url: "#summary", children: [
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../algo/precondition/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../algo/precondition/" class="btn btn-xs btn-link">
+        Preconditioners
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../algo/linesearch/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../algo/linesearch/" class="btn btn-xs btn-link">
+        Linesearch
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Algorithm-choice-1'></a></p>
+<h2 id="algorithm-choice">Algorithm choice</h2>
+<p>There are two main settings you must choose in Optim: the algorithm and the linesearch.</p>
+<p><a id='Algorithms-1'></a></p>
+<h2 id="algorithms">Algorithms</h2>
+<p>The first choice to be made is that of the order of the method. Zeroth-order methods do not have gradient information, and are very slow to converge, especially in high dimension. First-order methods do not have access to curvature information and can take a large number of iterations to converge for badly conditioned problems. Second-order methods can converge very quickly once in the vicinity of a minimizer. Of course, this enhanced performance comes at a cost: the objective function has to be differentiable, you have to supply gradients and Hessians, and, for second order methods, a linear system has to be solved at each step.</p>
+<p>If you can provide analytic gradients and Hessians, and the dimension of the problem is not too large, then second order methods are very efficient. The Newton method with trust region is the method of choice. </p>
+<p>When you do not have an explicit Hessian or when the dimension becomes large enough that the linear solve in the Newton method becomes the bottleneck, first order methods should be preferred. BFGS is a very efficient method, but also requires a linear system solve. LBFGS usually has a performance very close to that of BFGS, and avoids linear system solves (the parameter <code>m</code> can be tweaked: increasing it can improve the convergence, at the expense of memory and time spent in linear algebra operations). The conjugate gradient method usually converges less quickly than LBFGS, but requires less memory. Gradient descent should only be used for testing. Acceleration methods are experimental.</p>
+<p>When the objective function is non-differentiable or you do not want to use gradients, use zeroth-order methods. Nelder-Mead is currently the most robust.</p>
+<p><a id='Linesearches-1'></a></p>
+<h2 id="linesearches">Linesearches</h2>
+<p>Linesearches are used in every first- and second-order method except for the trust-region Newton method. Linesearch routines attempt to locate quickly an approximate minimizer of the univariate function $\alpha \to f(x+ \alpha d)$, where $d$ is the descent direction computed by the algorithm. They vary in how accurate this minimization is. Two good linesearches are BackTracking and HagerZhang, the former being less stringent than the latter. For well-conditioned objective functions and methods where the step is usually well-scaled (such as LBFGS or Newton), a rough linesearch such as BackTracking is usually the most performant. For badly behaved problems or when extreme accuracy is needed (gradients below the square root of the machine epsilon, about $10^{-8}$ with <code>Float64</code>), the HagerZhang method proves more robust. An exception is the conjugate gradient method which requires an accurate linesearch to be efficient, and should be used with the HagerZhang linesearch.</p>
+<p><a id='Summary-1'></a></p>
+<h2 id="summary">Summary</h2>
+<p>As a very crude heuristic:</p>
+<p>For a low-dimensional problem with analytic gradients and Hessians, use the Newton method with trust region. For larger problems or when there is no analytic Hessian, use LBFGS, and tweak the parameter <code>m</code> if needed. If the function is non-differentiable, use Nelder-Mead. Use the HagerZhang linesearch for robustness and BackTracking for speed.</p>
+
+  <br>
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../algo/precondition/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../algo/precondition/" class="btn btn-xs btn-link">
+        Preconditioners
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../algo/linesearch/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../algo/linesearch/" class="btn btn-xs btn-link">
+        Linesearch
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/user/algochoice.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
