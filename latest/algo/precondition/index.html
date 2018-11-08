@@ -102,16 +102,15 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <p>Below, we see an example where a function is minimized without and with a preconditioner applied.</p>
-<pre><code class="jl">using ForwardDiff
-import SparseArrays: spdiagm
+<pre><code class="jl">using ForwardDiff, Optim, SparseArrays
 initial_x = zeros(100)
-plap(U; n = length(U)) = (n-1)*sum((0.1 + diff(U).^2).^2 ) - sum(U) / (n-1)
+plap(U; n = length(U)) = (n-1)*sum((0.1 .+ diff(U).^2).^2 ) - sum(U) / (n-1)
 plap1(x) = ForwardDiff.gradient(plap,x)
-precond(n) = spdiagm(-1 =&gt; -ones(n-1), 0 =&gt; 2*ones(n), 1 =&gt; -ones(n-1)))*(n+1)
+precond(n) = spdiagm(-1 =&gt; -ones(n-1), 0 =&gt; 2ones(n), 1 =&gt; -ones(n-1)) * (n+1)
 f(x) = plap([0; x; 0])
 g!(G, x) = copyto!(G, (plap1([0; x; 0]))[2:end-1])
-result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = nothing))
-result = Optim.optimize(df, initial_x, method = ConjugateGradient(P = precond(100)))
+result = Optim.optimize(f, g!, initial_x, method = ConjugateGradient(P = nothing))
+result = Optim.optimize(f, g!, initial_x, method = ConjugateGradient(P = precond(100)))
 </code></pre>
 
 <p>The former optimize call converges at a slower rate than the latter. Looking at a  plot of the 2D version of the function shows the problem.</p>
