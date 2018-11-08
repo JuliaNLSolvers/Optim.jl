@@ -5,7 +5,7 @@
 #md #     This example is also available as a Jupyter notebook:
 #md #     [``rasch.ipynb``](@__NBVIEWER_ROOT_URL__examples/generated/rasch.ipynb)
 #-
-using Optim, DelimitedFiles, ForwardDiff, Random #hide
+using Optim, Random #hide
 #
 # The Rasch model is used in psychometrics as a model for
 # assessment data such as student responses to a standardized
