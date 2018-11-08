@@ -184,7 +184,7 @@ lc = [0.0]; uc = [0.0]
 df = TwiceDifferentiable(neglogLC, g!, h!, β0)
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, β0, IPNewton())
-delta_hat = -res.minimum
+delta_hat = res.minimizer
 
 ## now we can compute the residual sum of squares
 sum((delta .- delta_hat).^2)
