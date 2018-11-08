@@ -11,7 +11,7 @@ macro brenttrace()
             update!(tr,
                     iteration,
                     new_minimum,
-                    NaN,
+                    T(NaN),
                     dt,
                     store_trace,
                     show_trace,
@@ -63,7 +63,7 @@ function optimize(
     initial_lower = x_lower
     initial_upper = x_upper
 
-    golden_ratio::T = 0.5 * (3.0 - sqrt(5.0))
+    golden_ratio::T = T(1)/2 * (3 - sqrt(T(5.0)))
 
     new_minimizer = x_lower + golden_ratio*(x_upper-x_lower)
     new_minimum = f(new_minimizer)
