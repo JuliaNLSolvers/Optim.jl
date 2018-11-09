@@ -36,6 +36,7 @@ pages:
         - Tips and tricks: 'user/tipsandtricks.md'
         - Interior point Newton: 'examples/generated/ipnewton_basics.md'
         - Maximum likelihood estimation: 'examples/generated/maxlikenlm.md'
+        - Conditional maximum likelihood estimation: 'examples/generated/rasch.md'
     - Algorithms:
         - Gradient Free:
             - Nelder Mead: 'algo/nelder_mead.md'
