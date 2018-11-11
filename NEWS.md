@@ -1,5 +1,12 @@
 # Optim master release notes
-* The convergence tolerance computations have changed slightly
+* Fix Preconditioning example for v1.0 syntax
+* Improve handling of alternative number types in univariate optimization
+* Add conditional likelihood example to docs
+* Improve Fminbox trace printing.
+
+# Optim v0.17.2 release notes
+* Fix some typos
+* Fix doc building
 
 # Optim v0.17.0 release notes
 * Drop support for Julia versions less 1.0. Optim v.17.1 is also out.

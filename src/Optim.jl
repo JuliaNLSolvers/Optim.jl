@@ -33,7 +33,7 @@ using Printf                 # For printing, maybe look into other options
 #using Compat                 # for compatibility across multiple julia versions
 
 # for extensions of functions defined in Base.
-import Base: length, push!, show, getindex, setindex!, maximum
+import Base: length, push!, show, getindex, setindex!, maximum, minimum
 
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
