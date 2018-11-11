@@ -13,9 +13,9 @@ using Optim, Random #hide
 # to item $i$ where $X_{pi}=1$ if the item was answered correctly
 # and $X_{pi}=0$ otherwise for $p=1,\ldots,n$ and $i=1,\ldots,m$. 
 # The model for this accuracy is 
-# $$
-#   P(\mathbf{X}_{p}=\mathbf{x}_{p}|\xi_p, \bm\epsilon) = \prod_{i=1}^m \dfrac{(\xi_p \epsilon_j)^{x_{pi}}}{1 + \xi_p\epsilon_i}
-# $$
+# ```math
+#   P(\mathbf{X}_{p}=\mathbf{x}_{p}|\xi_p, \mathbf\epsilon) = \prod_{i=1}^m \dfrac{(\xi_p \epsilon_j)^{x_{pi}}}{1 + \xi_p\epsilon_i}
+# ```
 # where $\xi_p > 0$ the latent ability of person $p$ and $\epsilon_i > 0$ 
 # is the difficulty of item $i$. 
 
@@ -38,22 +38,22 @@ for i in 1:n
     end
   end
 end
-f = [sum(r.==j) for j in 1:m]
+f = [sum(r.==j) for j in 1:m];
 
 # Since the number of parameters increases 
 # with sample size standard maximum likelihood will not provide us 
 # consistent estimates. Instead we consider the conditional likelihood. 
 # It can be shown that the Rasch model is an exponential family model and
-# that the sum score $r_p = \sum_i x_{pi}$ is the sufficient statistic for
+# that the sum score $r_p = \sum_{i} x_{pi}$ is the sufficient statistic for
 # $\xi_p$. If we condition on the sum score we should be able to eliminate
 # $\xi_p$. Indeed, with a bit of algebra we can show
-# $$
-# P(\mathbf{X}_p = \mathbf{x}_p | r_p, \bm\epsilon) = \dfrac{\prod_{i=1}^m \epsilon_i^{x{ij}}}{\gamma_{r_i}(\bm\epsilon)}
-# $$ 
-# where $\gamma_r(\bm\epsilon)$ is the elementary symmetric function of order $r$
-# $$
-# \gamma_r(\bm\epsilon) = \sum_{\mathbf{y} : \mathbf{1}^\intercal \mathbf{y} = r} \prod_{j=1}^m \epsilon_j^{y_j}
-# $$ 
+# ```math
+# P(\mathbf{X}_p = \mathbf{x}_p | r_p, \mathbf\epsilon) = \dfrac{\prod_{i=1}^m \epsilon_i^{x{ij}}}{\gamma_{r_i}(\mathbf\epsilon)}
+# ```
+# where $\gamma_r(\mathbf\epsilon)$ is the elementary symmetric function of order $r$
+# ```math
+# \gamma_r(\mathbf\epsilon) = \sum_{\mathbf{y} : \mathbf{1}^\intercal \mathbf{y} = r} \prod_{j=1}^m \epsilon_j^{y_j}
+# ```
 # where the sum is over all possible answer configurations that give a sum
 # score of $r$. Algorithms to efficiently compute $\gamma$ and its 
 # derivatives are available in the literature (see eg Baker (1996) for a review
@@ -90,12 +90,12 @@ end
 
 # The objective function we want to minimize is the negative log conditional
 # likelihood
-# $$
+# ```math
 # \begin{aligned}
-# \log{L_C(\bm\epsilon|\mathbf{r})} &= \sum_{p=1}^n \sum_{i=1}^m x_{pi} \log{\epsilon_i} - \log{\gamma_{r_p}(\bm\epsilon)}\\
-#   &= \sum_{i=1}^m s_i \log{\epsilon_i} - \sum_{r=1}^m f_r \log{\gamma_r(\bm\epsilon)}
+# \log{L_C(\mathbf\epsilon|\mathbf{r})} &= \sum_{p=1}^n \sum_{i=1}^m x_{pi} \log{\epsilon_i} - \log{\gamma_{r_p}(\mathbf\epsilon)}\\
+#   &= \sum_{i=1}^m s_i \log{\epsilon_i} - \sum_{r=1}^m f_r \log{\gamma_r(\mathbf\epsilon)}
 # \end{aligned}
-# $$
+# ```
 ϵ = ones(Float64, m)
 β0 = zeros(Float64, m)
 last_β = fill(NaN, m)
@@ -117,10 +117,10 @@ end
 # Parameter estimation is usually performed with respect to the unconstrained parameter 
 # $\beta_i = -\log{\epsilon_i}$. Taking the derivative with respect to $\beta_i$ 
 # (and applying the chain rule) one obtains 
-# $$
-#   \dfrac{\partial\log L_C(\bm\epsilon|\mathbf{r})}{\partial \beta_i} = -s_i + \epsilon_i\sum_{r=1}^m \dfrac{f_r \gamma_{r-1}^{(j)}}{\gamma_r} 
-# $$
-# where $\gamma_{r-1}^{(i)} = \partial \gamma_{r}(\bm\epsilon)/\partial\epsilon_i$. 
+# ```math
+#   \dfrac{\partial\log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i} = -s_i + \epsilon_i\sum_{r=1}^m \dfrac{f_r \gamma_{r-1}^{(j)}}{\gamma_r} 
+# ```
+# where $\gamma_{r-1}^{(i)} = \partial \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i$. 
 
 function g!(storage, β)
   calculate_common!(β, last_β)
@@ -133,12 +133,12 @@ function g!(storage, β)
 end
 
 # Similarly the Hessian matrix can be computed
-# $$
-#   \dfrac{\partial^2 \log L_C(\bm\epsilon|\mathbf{r})}{\partial \beta_i\partial\beta_j} = \begin{dcases} -\epsilon_i \sum_{r=1}^m \dfrac{f_r\gamma_{r-1}^{(i)}}{\gamma_r}\left(1 - \dfrac{\gamma_{r-1}^{(i)}}{\gamma_r}\right) & \text{if $i=j$}\\
+# ```math
+#   \dfrac{\partial^2 \log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i\partial\beta_j} = \begin{dcases} -\epsilon_i \sum_{r=1}^m \dfrac{f_r\gamma_{r-1}^{(i)}}{\gamma_r}\left(1 - \dfrac{\gamma_{r-1}^{(i)}}{\gamma_r}\right) & \text{if $i=j$}\\
 #     -\epsilon_i\epsilon_j\sum_{r=1}^m \dfrac{f_r \gamma_{r-2}^{(i,j)}}{\gamma_r} - \dfrac{f_r\gamma_{r-1}^{(i)}\gamma_{r-1}^{(j)}}{\gamma_r^2} &\text{if $i\neq j$}
 #    \end{dcases}
-# $$
-# where $\gamma_{r-2}^{(i,j)} = \partial^2 \gamma_{r}(\bm\epsilon)/\partial\epsilon_i\partial\epsilon_j$.
+# ```
+# where $\gamma_{r-2}^{(i,j)} = \partial^2 \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i\partial\epsilon_j$.
 
 function h!(storage, β)
   calculate_common!(β, last_β)
@@ -184,7 +184,7 @@ lc = [0.0]; uc = [0.0]
 df = TwiceDifferentiable(neglogLC, g!, h!, β0)
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, β0, IPNewton())
-delta_hat = res.minimizer
 
-## now we can compute the residual sum of squares
-sum((delta .- delta_hat).^2)
+# Compare the estimate to the truth
+delta_hat = res.minimizer
+[delta delta_hat]

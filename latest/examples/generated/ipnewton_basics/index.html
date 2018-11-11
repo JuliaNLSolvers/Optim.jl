@@ -279,20 +279,20 @@ res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
 <pre><code>┌ Warning: Initial guess is not an interior point
-└ @ Optim ~/.julia/packages/Optim/fdyEy/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+└ @ Optim ~/.julia/packages/Optim/SVyyF/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
 
 Stacktrace:
- [1] macro expansion at ./logging.jl:307 [inlined]
- [2] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/fdyEy/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
- [3] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/fdyEy/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
+ [1] macro expansion at ./logging.jl:305 [inlined]
+ [2] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/SVyyF/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+ [3] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/SVyyF/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
  [4] top-level scope at none:0
  [5] eval at ./boot.jl:319 [inlined]
  [6] (::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Module,Expr})() at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:480
  [7] cd(::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Module,Expr}, ::String) at ./file.jl:96
  [8] #7 at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:479 [inlined]
  [9] (::getfield(Documenter.Utilities, Symbol(&quot;##18#19&quot;)){getfield(Documenter.Expanders, Symbol(&quot;##7#9&quot;)){Documenter.Documents.Page,Module,Expr},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}})() at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Utilities/Utilities.jl:591
- [10] with_logstate(::getfield(Documenter.Utilities, Symbol(&quot;##18#19&quot;)){getfield(Documenter.Expanders, Symbol(&quot;##7#9&quot;)){Documenter.Documents.Page,Module,Expr},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}}, ::Base.CoreLogging.LogState) at ./logging.jl:397
- [11] with_logger(::Function, ::Logging.ConsoleLogger) at ./logging.jl:493
+ [10] with_logstate(::getfield(Documenter.Utilities, Symbol(&quot;##18#19&quot;)){getfield(Documenter.Expanders, Symbol(&quot;##7#9&quot;)){Documenter.Documents.Page,Module,Expr},Base.PipeEndpoint,Base.PipeEndpoint,Pipe,Array{UInt8,1}}, ::Base.CoreLogging.LogState) at ./logging.jl:395
+ [11] with_logger(::Function, ::Logging.ConsoleLogger) at ./logging.jl:491
  [12] withoutput at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Utilities/Utilities.jl:589 [inlined]
  [13] runner(::Type{Documenter.Expanders.ExampleBlocks}, ::Markdown.Code, ::Documenter.Documents.Page, ::Documenter.Documents.Document) at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:478
  [14] dispatch(::Type{Documenter.Expanders.ExpanderPipeline}, ::Markdown.Code, ::Vararg{Any,N} where N) at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Selectors.jl:168
@@ -305,10 +305,10 @@ Stacktrace:
  [21] (::getfield(Documenter, Symbol(&quot;#kw##makedocs&quot;)))(::NamedTuple{(:doctest,),Tuple{Bool}}, ::typeof(makedocs)) at ./none:0
  [22] top-level scope at none:0
  [23] include at ./boot.jl:317 [inlined]
- [24] include_relative(::Module, ::String) at ./loading.jl:1041
+ [24] include_relative(::Module, ::String) at ./loading.jl:1044
  [25] include(::Module, ::String) at ./sysimg.jl:29
- [26] exec_options(::Base.JLOptions) at ./client.jl:229
- [27] _start() at ./client.jl:421
+ [26] exec_options(::Base.JLOptions) at ./client.jl:231
+ [27] _start() at ./client.jl:425
 Results of Optimization Algorithm
  * Algorithm: Interior Point Newton
  * Starting Point: [0.0,0.0]

@@ -17,7 +17,7 @@ for i in 1:n
     end
   end
 end
-f = [sum(r.==j) for j in 1:m]
+f = [sum(r.==j) for j in 1:m];
 
 function esf_sum!(S::AbstractArray{T,1}, x::AbstractArray{T,1}) where T <: Real
   n = length(x)
@@ -113,10 +113,9 @@ lc = [0.0]; uc = [0.0]
 df = TwiceDifferentiable(neglogLC, g!, h!, β0)
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, β0, IPNewton())
-delta_hat = res.minimizer
 
-# now we can compute the residual sum of squares
-sum((delta .- delta_hat).^2)
+delta_hat = res.minimizer
+[delta delta_hat]
 
 # This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl
 
