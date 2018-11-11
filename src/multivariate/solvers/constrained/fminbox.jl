@@ -222,8 +222,11 @@ function optimize(
     _optimizer = barrier_method(F.method, P, (P, x) -> F.precondprep(P, x, l, u, mu))
 
     if show_trace > 0
-        println("######## fminbox ########")
-        println("Initial mu = ", mu[])
+        println("Fminbox")
+        println("-------")
+        print("Initial mu = ")
+        show(IOContext(stdout, :compact=>true), "text/plain", mu[])
+        println("\n")
     end
 
     g = similar(x)
@@ -252,7 +255,12 @@ function optimize(
         # Optimize with current setting of mu
         fval0 = funcc(nothing, x)
         if show_trace > 0
-            println("#### Fminbox #$iteration: Calling optimizer with mu = ", mu[], " ####")
+            header_string = "Fminbox iteration $iteration"
+            println(header_string)
+            println("-"^length(header_string))
+            print("Calling inner optimizer with mu = ")
+            show(IOContext(stdout, :compact=>true), "text/plain", mu[])
+            println("\n")
         end
         resultsnew = optimize(dfbox, x, _optimizer, options)
         if first
@@ -263,7 +271,12 @@ function optimize(
         end
         copyto!(x, minimizer(results))
         if show_trace > 0
-            println("#### Fminbox #$iteration: x=", x)
+            println()
+            println("Exiting inner optimizer with x = ", x)
+            print("Current distance to box: ")
+            show(IOContext(stdout, :compact=>true), "text/plain", min(minimum(x-l), minimum(u-x)))
+            println()
+            println("Decreasing barrier term μ.\n")
         end
 
         # Decrease mu
