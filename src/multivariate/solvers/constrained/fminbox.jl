@@ -261,6 +261,7 @@ function optimize(
             print("Calling inner optimizer with mu = ")
             show(IOContext(stdout, :compact=>true), "text/plain", mu[])
             println("\n")
+            println("(numbers below include barrier contribution)")
         end
         resultsnew = optimize(dfbox, x, _optimizer, options)
         if first
