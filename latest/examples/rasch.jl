@@ -134,10 +134,9 @@ end
 
 # Similarly the Hessian matrix can be computed
 # ```math
-#   $$\dfrac{\partial^2 \log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i\partial\beta_j} =
-#    \begin{cases} \displaystyle  -\epsilon_i \sum_{r=1}^m \dfrac{f_r\gamma_{r-1}^{(i)}}{\gamma_r}\left(1 - \dfrac{\gamma_{r-1}^{(i)}}{\gamma_r}\right) & \text{if $i=j$}\\
+#   \dfrac{\partial^2 \log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i\partial\beta_j} = \begin{cases} \displaystyle  -\epsilon_i \sum_{r=1}^m \dfrac{f_r\gamma_{r-1}^{(i)}}{\gamma_r}\left(1 - \dfrac{\gamma_{r-1}^{(i)}}{\gamma_r}\right) & \text{if $i=j$}\\
 #     \displaystyle -\epsilon_i\epsilon_j\sum_{r=1}^m \dfrac{f_r \gamma_{r-2}^{(i,j)}}{\gamma_r} - \dfrac{f_r\gamma_{r-1}^{(i)}\gamma_{r-1}^{(j)}}{\gamma_r^2} &\text{if $i\neq j$}
-#    \end{cases}$$
+#    \end{cases}
 # ```
 # where $\gamma_{r-2}^{(i,j)} = \partial^2 \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i\partial\epsilon_j$.
 
