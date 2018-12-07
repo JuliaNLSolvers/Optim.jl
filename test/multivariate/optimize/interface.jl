@@ -37,3 +37,35 @@
         end
     end
 end
+
+@testset "only_fg!, only_fgh!" begin
+    f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+    function g!(G, x)
+      G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+      G[2] = 200.0 * (x[2] - x[1]^2)
+      G
+    end
+    function h!(H, x)
+      H[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+      H[1, 2] = -400.0 * x[1]
+      H[2, 1] = -400.0 * x[1]
+      H[2, 2] = 200.0
+      H
+    end
+    function fg!(F,G,x)
+      G == nothing || g!(G,x)
+      F == nothing || return f(x)
+      nothing
+    end
+    function fgh!(F,G,H,x)
+      G == nothing || g!(G,x)
+      H == nothing || h!(H,x)
+      F == nothing || return f(x)
+      nothing
+    end
+
+    Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS()) # works fine
+    @test result.minimizer ≈ [1,1]
+    result = optimize(Optim.only_fgh!(fgh!), [0., 0.], Newton())
+    @test result.minimizer ≈ [1,1]
+end
