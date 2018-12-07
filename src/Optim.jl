@@ -37,7 +37,7 @@ import Base: length, push!, show, getindex, setindex!, maximum, minimum
 
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
-                      nconstraints, nconstraints_x
+                      nconstraints, nconstraints_x, NotInplaceObjective, InplaceObjective
 
 # var for NelderMead
 import StatsBase: var

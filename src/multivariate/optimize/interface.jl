@@ -41,6 +41,8 @@ promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool
 promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))); inplace = inplace)
 promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, f, g, h) = OnceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
 # no-op
