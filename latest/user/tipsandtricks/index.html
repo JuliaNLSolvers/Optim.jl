@@ -132,33 +132,37 @@ end
 g!(storage, x) = copyto!(storage, [2x[1], 2x[2]])
 </code></pre>
 
-<p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused. The trick here is essentially the same as above. We use a closure or an anonymous function. Basically, we define</p>
-<pre><code class="julia">function calculate_common!(x, last_x, buffer)
-    if x != last_x
-        copyto!(last_x, x)
-        #do whatever common calculations and save to buffer
-    end
-end
-
-function f(x, buffer, last_x)
-    calculate_common!(x, last_x, buffer)
-    f_body # depends on buffer
-end
-
-function g!(x, stor, buffer, last_x)
-    calculate_common!(x, last_x, buffer)
-    g_body! # depends on buffer
+<p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused.</p>
+<p>To avoid repeating calculations, define functions <code>fg!</code> or <code>fgh!</code> that compute the objective function, the gradient and the Hessian (if needed) simultaneously. These functions internally can be written to avoid repeating common calculations.</p>
+<p>For example, here we define a function <code>fg!</code> to compute the objective function and the gradient, as required:</p>
+<pre><code class="julia">function fg!(F,G,x)
+  # do common computations here
+  # ...
+  if G != nothing
+    # code to compute gradient here
+    # writing the result to the vector G
+  end
+  if F != nothing
+    # value = ... code to compute objective function
+    return value
+  end
 end
 </code></pre>
 
-<p>and then the following</p>
-<pre><code class="julia">using Optim
-initial_x = ...
-buffer = Array{eltype(initial_x)}(...) # Preallocate an appropriate buffer
-last_x = similar(initial_x)
-df = TwiceDifferentiable(x -&gt; f(x, buffer, initial_x),
-                                (stor, x) -&gt; g!(x, stor, buffer, last_x))
-optimize(df, initial_x)
+<p><code>Optim</code> will only call this function with an argument <code>G</code> that is <code>nothing</code> (if the gradient is not required) or a <code>Vector</code> that should be filled (in-place) with the gradient. This flexibility is convenient for algorithms that only use the gradient in some iterations but not in others.</p>
+<p>Now we call <code>optimize</code> with the following syntax:</p>
+<pre><code class="julia">Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS())
+</code></pre>
+
+<p>Similarly, for a computation that requires the Hessian, we can write:</p>
+<pre><code class="julia">function fgh!(F,G,H,x)
+  G == nothing || # compute gradient and store in G
+  H == nothing || # compute Hessian and store in H
+  F == nothing || return f(x)
+  nothing
+end
+
+Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.Newton())
 </code></pre>
 
 <p><a id='Provide-gradients-1'></a></p>
