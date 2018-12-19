@@ -85,7 +85,15 @@ inner_optimizer = GradientDescent()
 results = optimize(f, g!, lower, upper, initial_x, Fminbox(inner_optimizer))
 ```
 
-This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `inner_optimizer` (`GradientDescent()` above) for convergence at each step.
+This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `inner_optimizer` (`GradientDescent()` above) for convergence at each step. To change algorithm specific options, such as the line search algorithm, specify it directly in the `inner_optimizer` constructor:
+```
+lower = [1.25, -2.1]
+upper = [Inf, Inf]
+initial_x = [2.0, 2.0]
+# requires using LineSearches
+inner_optimizer = GradientDescent(linesearch=LineSearches.BackTracking(order=3))
+results = optimize(f, g!, lower, upper, initial_x, Fminbox(inner_optimizer))
+```
 
 This algorithm uses diagonal preconditioning to improve the accuracy, and hence is a good example of how to use `ConjugateGradient` or `LBFGS` with preconditioning. Other methods will currently not use preconditioning. Only the box constraints are used. If you can analytically compute the diagonal of the Hessian of your objective function, you may want to consider writing your own preconditioner.
 
