@@ -8,6 +8,32 @@ abstract type UnivariateOptimizer  <: AbstractOptimizer end
 abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
+"""
+Configurable options with defaults (values 0 and NaN indicate unlimited):
+```
+x_tol::Real = 0.0,
+f_tol::Real = 0.0,
+g_tol::Real = 1e-8,
+outer_x_tol::Real = 0.0,
+outer_f_tol::Real = 0.0,
+outer_g_tol::Real = 1e-8,
+f_calls_limit::Int = 0,
+g_calls_limit::Int = 0,
+h_calls_limit::Int = 0,
+allow_f_increases::Bool = false,
+allow_outer_f_increases::Bool = false,
+successive_f_tol::Int = 0,
+iterations::Int = 1_000,
+outer_iterations::Int = 1000,
+store_trace::Bool = false,
+show_trace::Bool = false,
+extended_trace::Bool = false,
+show_every::Int = 1,
+callback = nothing,
+time_limit = NaN
+```
+See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
+"""
 struct Options{T, TCallback}
     x_tol::T
     f_tol::T
