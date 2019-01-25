@@ -364,6 +364,9 @@ if (is_top_frame) {
 
 var searchIndexReady = false;
 
+function addBaseUrl(href) {
+  return base_url === "." && !startsWith(href, "/") ? href : base_url + href;
+}
 
 /**
  * Initialize search functionality.
@@ -383,7 +386,7 @@ function initSearch() {
   $.getJSON(base_url + '/search/search_index.json')
   .done(function(data) {
     data.docs.forEach(function(doc) {
-      doc.location = base_url + doc.location;
+      doc.location = addBaseUrl(doc.location);
       searchIndex.addDoc(doc);
     });
     searchIndexReady = true;
@@ -457,7 +460,7 @@ function initSearch() {
   $('#wm-search-show,#wm-search-go').on('click', function(e) {
     if (isSmallScreen()) {
       e.preventDefault();
-      var el = $('#mkdocs-search-query').closest('.wm-top-tool')
+      var el = $('#mkdocs-search-query').closest('.wm-top-tool');
       el.toggleClass('wm-top-tool-expanded');
       if (el.hasClass('wm-top-tool-expanded')) {
         setTimeout(function() {
