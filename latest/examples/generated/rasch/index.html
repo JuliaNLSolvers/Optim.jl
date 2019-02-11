@@ -54,6 +54,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <a name="_top"></a>
     
 
+    
+    
+      
+      
+    
+
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
     
     <div class="wm-article-nav pull-right">
@@ -264,20 +270,20 @@ res = optimize(df, dfc, β0, IPNewton())
 <pre><code>Results of Optimization Algorithm
  * Algorithm: Interior Point Newton
  * Starting Point: [0.0,0.0,0.0,0.0,0.0]
- * Minimizer: [1.480151597851528,0.8802307359899603, ...]
+ * Minimizer: [1.4801515639961125,0.88023072153977, ...]
  * Minimum: 1.302751e+03
- * Iterations: 24
+ * Iterations: 26
  * Convergence: true
    * |x - x'| ≤ 0.0e+00: false
-     |x - x'| = 7.31e-08
-   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x')| = 8.73e-16 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true
-     |g(x)| = 3.82e-12
+     |x - x'| = 2.67e-10
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: true
+     |f(x) - f(x')| = 0.00e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 4.67e-06
    * Stopped by an increasing objective: false
    * Reached Maximum Number of Iterations: false
- * Objective Calls: 47
- * Gradient Calls: 47
+ * Objective Calls: 61
+ * Gradient Calls: 61
 </code></pre>
 
 <p>Compare the estimate to the truth</p>
@@ -296,6 +302,12 @@ res = optimize(df, dfc, β0, IPNewton())
 <p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p>
 
   <br>
+    
+
+    
+    
+      
+      
     
 
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
