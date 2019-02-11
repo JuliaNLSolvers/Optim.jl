@@ -99,10 +99,10 @@ end
 # Fminbox
 ## Constructor
 ```julia
-Fminbox(method::T,
-        mu0::Tf
-        mufactor::Tf
-        precondprep::P)
+Fminbox(method;
+        mu0=NaN,
+        mufactor=0.0001,
+        precondprep(P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
 ```
 """
 function Fminbox(method::AbstractOptimizer = LBFGS();
