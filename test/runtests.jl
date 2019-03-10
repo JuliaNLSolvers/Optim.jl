@@ -243,3 +243,8 @@ end
 
 println("Literate examples")
 @time include("examples.jl")
+
+@testset "show method for options" begin
+    o = Optim.Options()
+    @test o == @show o
+end
