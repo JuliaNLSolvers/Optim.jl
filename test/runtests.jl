@@ -246,5 +246,5 @@ println("Literate examples")
 
 @testset "show method for options" begin
     o = Optim.Options()
-    @test o == @show o
+    @test occursin(" = ", sprint(show, o))
 end
