@@ -87,6 +87,16 @@ function Options(;
         Int(show_every), callback, Float64(time_limit))
 end
 
+function Base.show(io::IO, o::Optim.Options)
+    for k in fieldnames(typeof(o))
+        if isnothing(getfield(o, k))
+            println(io, k, " = nothing")
+        else
+            println(k, " = ", getfield(o, k))
+        end
+    end
+end
+
 function print_header(options::Options)
     if options.show_trace
         @printf "Iter     Function value   Gradient norm \n"
