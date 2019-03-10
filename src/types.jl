@@ -90,9 +90,9 @@ end
 function Base.show(io::IO, o::Optim.Options)
     for k in fieldnames(typeof(o))
         if isnothing(getfield(o, k))
-            println(io, k, " = nothing")
+            @printf io "%24s = %s\n" k "nothing"
         else
-            println(k, " = ", getfield(o, k))
+            @printf io "%24s = %s\n" k getfield(o, k)
         end
     end
 end
