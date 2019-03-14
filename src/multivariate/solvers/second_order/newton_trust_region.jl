@@ -33,17 +33,16 @@ function check_hard_case_candidate(H_eigv, qg)
         end
     end
 
-    hard_case, lambda_index - 1
+    hard_case, lambda_index
 end
 
-# Function 4.39 in N&W
-function p_sq_norm(lambda::T, min_i, n, qg, H_eig) where T
-    p_sum = zero(T)
-    H_eigvals = H_eig.values
+# Equation 4.38 in N&W
+function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where T
+    fill!( p, zero(T) )
     for i = min_i:n
-        p_sum += qg[i]^2 / (lambda + H_eigvals[i])^2
+        p[:] -= qg[i] / (H_eig.values[i] + lambda) * H_eig.vectors[:, i]
     end
-    p_sum
+    return nothing
 end
 
 # Choose a point in the trust region for the next step using
@@ -86,10 +85,7 @@ function solve_tr_subproblem!(gr,
     H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.
-    qg = similar(gr)
-    for i=1:n
-        qg[i] = dot(H_eig.vectors[:, i], gr)
-    end
+    qg = H_eig.vectors' * gr
 
     # These values describe the outcome of the subproblem.  They will be
     # set below and returned at the end.
@@ -97,18 +93,22 @@ function solve_tr_subproblem!(gr,
     hard_case = false
     reached_solution = true
 
-    if min_H_ev >= 1e-8 && p_sq_norm(zero(T), 1, n, qg, H_eig) <= delta_sq
+    # Unconstrained solution
+    if min_H_ev >= 1e-8
+        calc_p!(zero(T), 1, n, qg, H_eig, s)
+    end
+
+    if min_H_ev >= 1e-8 && sum(abs2, s) <= delta_sq
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
         reached_solution = true
-        s[:] = -(H_eig.vectors ./ H_eig.values') * H_eig.vectors' * gr
         lambda = zero(T)
     else
         interior = false
 
         # The hard case is when the gradient is orthogonal to all
         # eigenvectors associated with the lowest eigenvalue.
-        hard_case_candidate, min_H_ev_multiplicity =
+        hard_case_candidate, min_i =
             check_hard_case_candidate(H_eig.values, qg)
 
         # Solutions smaller than this lower bound on lambda are not allowed:
@@ -123,12 +123,10 @@ function solve_tr_subproblem!(gr,
             # iterate on the boundary.
 
             # Formula 4.45 in N&W
-            p_lambda2 = p_sq_norm(lambda, min_H_ev_multiplicity + 1, n, qg, H_eig)
+            calc_p!(lambda, min_i, n, qg, H_eig, s)
+            p_lambda2 = sum(abs2, s)
             if p_lambda2 > delta_sq
                 # Then we can simply solve using root finding.
-                # Set a starting point greater than the minimum based on the
-                # range between the largest and smallest eigenvalues.
-                lambda = lambda_lb + 0.01 * (max_H_ev - min_H_ev)
             else
                 hard_case = true
                 reached_solution = true
@@ -137,13 +135,8 @@ function solve_tr_subproblem!(gr,
 
                 # I don't think it matters which eigenvector we pick so take
                 # the first.
-                for i=1:n
-                    s[i] = tau * H_eig.vectors[i, 1]
-                    for k=(min_H_ev_multiplicity + 1):n
-                        s[i] = s[i] +
-                               qg[k] * H_eig.vectors[i, k] / (H_eig.values[k] + lambda)
-                    end
-                end
+                calc_p!(lambda, min_i, n, qg, H_eig, s)
+                p[:] = -p + tau * H_eig.vectors[i, 1]
             end
         end
 
@@ -151,13 +144,13 @@ function solve_tr_subproblem!(gr,
             # Algorithim 4.3 of N&W, with s insted of p_l for consistency with
             # Optim.jl
 
-            for i=1:n
-                H_ridged[i, i] = H[i, i] + lambda
-            end
-
             reached_solution = false
             for iter in 1:max_iters
                 lambda_previous = lambda
+
+                for i=1:n
+                    H_ridged[i, i] = H[i, i] + lambda
+                end
 
                 R = cholesky(Hermitian(H_ridged)).U
                 s[:] = -R \ (R' \ gr)
@@ -168,12 +161,8 @@ function solve_tr_subproblem!(gr,
 
                 # Check that lambda is not less than lambda_lb, and if so, go
                 # half the way to lambda_lb.
-                if lambda < (lambda_lb + 1e-8)
+                if lambda < lambda_lb
                     lambda = 0.5 * (lambda_previous - lambda_lb) + lambda_lb
-                end
-
-                for i=1:n
-                    H_ridged[i, i] = H[i, i] + lambda
                 end
 
                 if abs(lambda - lambda_previous) < tolerance
@@ -273,7 +262,6 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     value_gradient!!(d, initial_x)
     hessian!!(d, initial_x)
 
-
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          similar(initial_x), # Maintain previous state in state.x_previous
                          similar(gradient(d)), # Store previous gradient in state.g_previous
@@ -307,7 +295,6 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     state.f_x_previous = value(d)
     value_gradient!(d, state.x)
 
-
     # Update the trust region size based on the discrepancy between
     # the predicted and actual function values.  (Algorithm 4.1 in N&W)
     f_x_diff = state.f_x_previous - value(d)
@@ -319,7 +306,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # This can happen if the trust region radius is too large and the
         # Hessian is not positive definite.  We should shrink the trust
         # region.
-        state.rho = method.rho_lower - 1.0
+        state.rho = -1.0
     else
         state.rho = f_x_diff / (0 - m)
     end
@@ -336,11 +323,11 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # The improvement is too small and we won't take it.
 
         # If you reject an interior solution, make sure that the next
-        # delta is smaller than the current step.  Otherwise you waste
+        # delta is smaller than the current step. Otherwise you waste
         # steps reducing delta by constant factors while each solution
         # will be the same.
         x_diff = state.x - state.x_previous
-        delta = 0.25 * sqrt(dot(x_diff, x_diff))
+        delta = 0.25 * norm(x_diff)
 
         d.F = state.f_x_previous
         copyto!(state.x, state.x_previous)
