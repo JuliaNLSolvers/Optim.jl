@@ -86,7 +86,7 @@ end
 
 # no method supplied with objective
 function optimize(d::T, initial_x::AbstractArray, options::Options) where T<:AbstractObjective
-    optimize(d, initial_x, fallback_method(T), options)
+    optimize(d, initial_x, fallback_method(d), options)
 end
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
 function optimize(f, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
