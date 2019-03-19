@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Conditional maximum likelihood estimation - Optim.jl</title>
+    <link href="../../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../css/highlight.css">
+    <link href="../../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Conditional Maximum Likelihood for the Rasch Model", url: "#_top", children: [
+          ]},
+        ];
+
+    </script>
+    <script src="../../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
+        Nelder Mead
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../maxlikenlm/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../maxlikenlm/" class="btn btn-xs btn-link">
+        Maximum likelihood estimation
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Conditional-Maximum-Likelihood-for-the-Rasch-Model-1'></a></p>
+<h1 id="conditional-maximum-likelihood-for-the-rasch-model">Conditional Maximum Likelihood for the Rasch Model</h1>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/v0.18.0/examples/generated/rasch.ipynb">$rasch.ipynb$</a></p>
+</div>
+<p>The Rasch model is used in psychometrics as a model for assessment data such as student responses to a standardized test. Let $X_{pi}$ be the response accuracy of student $p$ to item $i$ where $X_{pi}=1$ if the item was answered correctly and $X_{pi}=0$ otherwise for $p=1,\ldots,n$ and $i=1,\ldots,m$. The model for this accuracy is</p>
+<p>
+<script type="math/tex; mode=display">
+  P(\mathbf{X}_{p}=\mathbf{x}_{p}|\xi_p, \mathbf\epsilon) = \prod_{i=1}^m \dfrac{(\xi_p \epsilon_j)^{x_{pi}}}{1 + \xi_p\epsilon_i}
+</script>
+</p>
+<p>where $\xi_p &gt; 0$ the latent ability of person $p$ and $\epsilon_i &gt; 0$ is the difficulty of item $i$.</p>
+<p>We simulate data from this model:</p>
+<pre><code class="julia">Random.seed!(123)
+n = 1000
+m = 5
+theta = randn(n)
+delta = randn(m)
+r = zeros(n)
+s = zeros(m)
+
+for i in 1:n
+  p = exp.(theta[i] .- delta) ./ (1.0 .+ exp.(theta[i] .- delta))
+  for j in 1:m
+    if rand() &lt; p[j] ##correct
+      r[i] += 1
+      s[j] += 1
+    end
+  end
+end
+f = [sum(r.==j) for j in 1:m];
+</code></pre>
+
+<p>Since the number of parameters increases with sample size standard maximum likelihood will not provide us consistent estimates. Instead we consider the conditional likelihood. It can be shown that the Rasch model is an exponential family model and that the sum score $r_p = \sum_{i} x_{pi}$ is the sufficient statistic for $\xi_p$. If we condition on the sum score we should be able to eliminate $\xi_p$. Indeed, with a bit of algebra we can show</p>
+<p>
+<script type="math/tex; mode=display">
+P(\mathbf{X}_p = \mathbf{x}_p | r_p, \mathbf\epsilon) = \dfrac{\prod_{i=1}^m \epsilon_i^{x{ij}}}{\gamma_{r_i}(\mathbf\epsilon)}
+</script>
+</p>
+<p>where $\gamma_r(\mathbf\epsilon)$ is the elementary symmetric function of order $r$</p>
+<p>
+<script type="math/tex; mode=display">
+\gamma_r(\mathbf\epsilon) = \sum_{\mathbf{y} : \mathbf{1}^\intercal \mathbf{y} = r} \prod_{j=1}^m \epsilon_j^{y_j}
+</script>
+</p>
+<p>where the sum is over all possible answer configurations that give a sum score of $r$. Algorithms to efficiently compute $\gamma$ and its derivatives are available in the literature (see eg Baker (1996) for a review and Biscarri (2018) for a more modern approach)</p>
+<pre><code class="julia">function esf_sum!(S::AbstractArray{T,1}, x::AbstractArray{T,1}) where T &lt;: Real
+  n = length(x)
+  fill!(S,zero(T))
+  S[1] = one(T)
+  @inbounds for col in 1:n
+    for r in 1:col
+      row = col - r + 1
+      S[row+1] = S[row+1] + x[col] * S[row]
+    end
+  end
+end
+
+function esf_ext!(S::AbstractArray{T,1}, H::AbstractArray{T,3}, x::AbstractArray{T,1}) where T &lt;: Real
+  n = length(x)
+  esf_sum!(S, x)
+  H[:,:,1] .= zero(T)
+  H[:,:,2] .= one(T)
+
+  @inbounds for i in 3:n+1
+    for j in 1:n
+      H[j,j,i] = S[i-1] - x[j] * H[j,j,i-1]
+      for k in j+1:n
+        H[k,j,i] = S[i-1] - ((x[j]+x[k])*H[k,j,i-1] + x[j]*x[k]*H[k,j,i-2])
+        H[j,k,i] = H[k,j,i]
+      end
+    end
+  end
+end
+</code></pre>
+
+<pre><code>esf_ext! (generic function with 1 method)
+</code></pre>
+
+<p>The objective function we want to minimize is the negative log conditional likelihood</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{aligned}
+\log{L_C(\mathbf\epsilon|\mathbf{r})} &= \sum_{p=1}^n \sum_{i=1}^m x_{pi} \log{\epsilon_i} - \log{\gamma_{r_p}(\mathbf\epsilon)}\\
+  &= \sum_{i=1}^m s_i \log{\epsilon_i} - \sum_{r=1}^m f_r \log{\gamma_r(\mathbf\epsilon)}
+\end{aligned}
+</script>
+</p>
+<pre><code class="julia">ϵ = ones(Float64, m)
+β0 = zeros(Float64, m)
+last_β = fill(NaN, m)
+S = zeros(Float64, m+1)
+H = zeros(Float64, m, m, m+1)
+
+function calculate_common!(x, last_x)
+  if x != last_x
+    copyto!(last_x, x)
+    ϵ .= exp.(-x)
+    esf_ext!(S, H, ϵ)
+  end
+end
+function neglogLC(β)
+  calculate_common!(β, last_β)
+  return -s'log.(ϵ) + f'log.(S[2:end])
+end
+</code></pre>
+
+<pre><code>neglogLC (generic function with 1 method)
+</code></pre>
+
+<p>Parameter estimation is usually performed with respect to the unconstrained parameter $\beta_i = -\log{\epsilon_i}$. Taking the derivative with respect to $\beta_i$ (and applying the chain rule) one obtains</p>
+<p>
+<script type="math/tex; mode=display">
+  \dfrac{\partial\log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i} = -s_i + \epsilon_i\sum_{r=1}^m \dfrac{f_r \gamma_{r-1}^{(j)}}{\gamma_r}
+</script>
+</p>
+<p>where $\gamma_{r-1}^{(i)} = \partial \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i$.</p>
+<pre><code class="julia">function g!(storage, β)
+  calculate_common!(β, last_β)
+  for j in 1:m
+    storage[j] = s[j]
+    for l in 1:m
+      storage[j] -= ϵ[j] * f[l] * (H[j,j,l+1] / S[l+1])
+    end
+  end
+end
+</code></pre>
+
+<pre><code>g! (generic function with 1 method)
+</code></pre>
+
+<p>Similarly the Hessian matrix can be computed</p>
+<p>$$
+  \dfrac{\partial^2 \log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i\partial\beta_j} = <script type="math/tex; mode=display">\begin{cases} \displaystyle  -\epsilon_i \sum_{r=1}^m \dfrac{f_r\gamma_{r-1}^{(i)}}{\gamma_r}\left(1 - \dfrac{\gamma_{r-1}^{(i)}}{\gamma_r}\right) & \text{if $i=j$}\\
+    \displaystyle -\epsilon_i\epsilon_j\sum_{r=1}^m \dfrac{f_r \gamma_{r-2}^{(i,j)}}{\gamma_r} - \dfrac{f_r\gamma_{r-1}^{(i)}\gamma_{r-1}^{(j)}}{\gamma_r^2} &\text{if $i\neq j$}
+   \end{cases}</script>
+$$</p>
+<p>where $\gamma_{r-2}^{(i,j)} = \partial^2 \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i\partial\epsilon_j$.</p>
+<pre><code class="julia">function h!(storage, β)
+  calculate_common!(β, last_β)
+  for j in 1:m
+    for k in 1:m
+      storage[k,j] = 0.0
+      for l in 1:m
+        if j == k
+          storage[j,j] += f[l] * (ϵ[j]*H[j,j,l+1] / S[l+1]) *
+            (1 - ϵ[j]*H[j,j,l+1] / S[l+1])
+        elseif k &gt; j
+          storage[k,j] += ϵ[j] * ϵ[k] * f[l] *
+            ((H[k,j,l] / S[l+1]) - (H[j,j,l+1] * H[k,k,l+1]) / S[l+1] ^ 2)
+        else #k &lt; j
+          storage[k,j] += ϵ[j] * ϵ[k] * f[l] *
+            ((H[j,k,l] / S[l+1]) - (H[j,j,l+1] * H[k,k,l+1]) / S[l+1] ^ 2)
+        end
+      end
+    end
+  end
+end
+</code></pre>
+
+<pre><code>h! (generic function with 1 method)
+</code></pre>
+
+<p>The estimates of the item parameters are then obtained via standard optimization algorithms (either Newton-Raphson or L-BFGS). One last issue is that the model is not identifiable (multiplying the $\xi_p$ by a constant and dividing the $\epsilon_i$ by the same constant results in the same likelihood). Therefore some kind of constraint must be imposed when estimating the parameters. Typically either $\epsilon_1 = 0$ or $\prod_{i=1}^m \epsilon_i = 1$ (which is equivalent to $\sum_{i=1}^m \beta_i = 0$).</p>
+<pre><code class="julia">con_c!(c, x) = (c[1] = sum(x); c)
+function con_jacobian!(J, x)
+  J[1,:] .= ones(length(x))
+end
+function con_h!(h, x, λ)
+    for i in 1:size(h)[1]
+        for j in 1:size(h)[2]
+            h[i,j] += (i == j) ? λ[1] : 0.0
+        end
+    end
+end
+lx = Float64[]; ux = Float64[]
+lc = [0.0]; uc = [0.0]
+df = TwiceDifferentiable(neglogLC, g!, h!, β0)
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
+res = optimize(df, dfc, β0, IPNewton())
+</code></pre>
+
+<pre><code>Results of Optimization Algorithm
+ * Algorithm: Interior Point Newton
+ * Starting Point: [0.0,0.0,0.0,0.0,0.0]
+ * Minimizer: [1.480151597851528,0.8802307359899603, ...]
+ * Minimum: 1.302751e+03
+ * Iterations: 24
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 7.31e-08
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 8.73e-16 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 3.82e-12
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 47
+ * Gradient Calls: 47
+</code></pre>
+
+<p>Compare the estimate to the truth</p>
+<pre><code class="julia">delta_hat = res.minimizer
+[delta delta_hat]
+</code></pre>
+
+<pre><code>5×2 Array{Float64,2}:
+  1.14112    1.48015
+  0.597106   0.880231
+ -1.30405   -0.981096
+ -1.2566    -0.955468
+ -0.706518  -0.423819
+</code></pre>
+
+<p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../../algo/nelder_mead/" class="btn btn-xs btn-link">
+        Nelder Mead
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../maxlikenlm/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../maxlikenlm/" class="btn btn-xs btn-link">
+        Maximum likelihood estimation
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/examples/generated/rasch.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
