@@ -154,7 +154,7 @@ function optimize(f,
 end
 
 optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}, rest...) where T = optimize(f, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, rest...)
-optimize(f, g, l::Number, u::Number, initial_x::AbstractArray{T}) where T = optimize(f, g, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, rest...)
+optimize(f, g, l::Number, u::Number, initial_x::AbstractArray{T}, rest...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, rest...)
 
 function optimize(f,
                   l::AbstractArray{T},
