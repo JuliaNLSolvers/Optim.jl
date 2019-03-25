@@ -5,7 +5,7 @@ This page contains information about BFGS and its limited memory version L-BFGS.
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
-       precondprep = (P, x) -> nothing)
+       manifold = Flat()
 ```
 
 ```julia
