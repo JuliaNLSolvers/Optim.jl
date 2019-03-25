@@ -4,7 +4,7 @@ This page contains information about BFGS and its limited memory version L-BFGS.
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       nitial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
+       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
        precondprep = (P, x) -> nothing)
 ```
 
