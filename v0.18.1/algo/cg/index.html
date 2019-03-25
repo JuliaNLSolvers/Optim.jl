@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Conjugate Gradient - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Conjugate Gradient Descent", url: "#_top", children: [
+              {title: "Constructor", url: "#constructor" },
+              {title: "Description", url: "#description" },
+              {title: "Example", url: "#example" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../gradientdescent/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../gradientdescent/" class="btn btn-xs btn-link">
+        Gradient Descent
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../particle_swarm/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../particle_swarm/" class="btn btn-xs btn-link">
+        Particle Swarm
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Conjugate-Gradient-Descent-1'></a></p>
+<h1 id="conjugate-gradient-descent">Conjugate Gradient Descent</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<pre><code class="julia">ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
+                    linesearch = LineSearches.HagerZhang(),
+                    eta = 0.4,
+                    P = nothing,
+                    precondprep = (P, x) -&gt; nothing)
+</code></pre>
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The <code>ConjugateGradient</code> method implements Hager and Zhang (2006) and elements from Hager and Zhang (2013). Notice, that the default <code>linesearch</code> is <code>HagerZhang</code> from LineSearches.jl. This line search is exactly the one proposed in Hager and Zhang (2006). The constant $eta$ is used in determining the next step direction, and the default here deviates from the one used in the original paper ($0.01$). It needs to be a strictly positive number.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>Let's optimize the 2D Rosenbrock function. The function and gradient are given by</p>
+<pre><code>f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+function g!(storage, x)
+    storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+    storage[2] = 200.0 * (x[2] - x[1]^2)
+end
+</code></pre>
+
+<p>we can then try to optimize this function from <code>x=[0.0, 0.0]</code></p>
+<pre><code>julia&gt; optimize(f, g!, zeros(2), ConjugateGradient())
+Results of Optimization Algorithm
+ * Algorithm: Conjugate Gradient
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [1.000000002262018,1.0000000045408348]
+ * Minimum: 5.144946e-18
+ * Iterations: 21
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 2.09e-10
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 1.55e+00 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 3.36e-09
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 54
+ * Gradient Calls: 39
+</code></pre>
+
+<p>We can compare this to the default first order solver in Optim.jl</p>
+<pre><code> julia&gt; optimize(f, g!, zeros(2))
+
+ Results of Optimization Algorithm
+  * Algorithm: L-BFGS
+  * Starting Point: [0.0,0.0]
+  * Minimizer: [0.9999999999373614,0.999999999868622]
+  * Minimum: 7.645684e-21
+  * Iterations: 16
+  * Convergence: true
+    * |x - x'| ≤ 0.0e+00: false
+      |x - x'| = 3.48e-07
+    * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+      |f(x) - f(x')| = 9.03e+06 |f(x)|
+    * |g(x)| ≤ 1.0e-08: true
+      |g(x)| = 2.32e-09
+    * stopped by an increasing objective: false
+    * Reached Maximum Number of Iterations: false
+  * Objective Calls: 53
+  * Gradient Calls: 53
+</code></pre>
+
+<p>We see that for this objective and starting point, <code>ConjugateGradient()</code> requires fewer gradient evaluations to reach convergence.</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<ul>
+<li>W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.</li>
+<li>W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.</li>
+</ul>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../gradientdescent/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../gradientdescent/" class="btn btn-xs btn-link">
+        Gradient Descent
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../particle_swarm/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../particle_swarm/" class="btn btn-xs btn-link">
+        Particle Swarm
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/cg.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

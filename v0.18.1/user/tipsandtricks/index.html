@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Tips and tricks - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Dealing with constant parameters", url: "#_top", children: [
+          ]},
+          {title: "Avoid repeating computations", url: "#avoid-repeating-computations", children: [
+          ]},
+          {title: "Provide gradients", url: "#provide-gradients", children: [
+          ]},
+          {title: "Separating time spent in Optim's code and user provided functions", url: "#separating-time-spent-in-optims-code-and-user-provided-functions", children: [
+          ]},
+          {title: "Early stopping", url: "#early-stopping", children: [
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../examples/generated/ipnewton_basics/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../examples/generated/ipnewton_basics/" class="btn btn-xs btn-link">
+        Interior point Newton
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../algo/manifolds/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../algo/manifolds/" class="btn btn-xs btn-link">
+        Manifolds
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Dealing-with-constant-parameters-1'></a></p>
+<h2 id="dealing-with-constant-parameters">Dealing with constant parameters</h2>
+<p>In many applications, there may be factors that are relevant to the function evaluations, but are fixed throughout the optimization. An obvious example is using data in a likelihood function, but it could also be parameters we wish to hold constant.</p>
+<p>Consider a squared error loss function that depends on some data <code>x</code> and <code>y</code>, and parameters <code>betas</code>. As far as the solver is concerned, there should only be one input argument to the function we want to minimize, call it <code>sqerror</code>.</p>
+<p>The problem is that we want to optimize a function <code>sqerror</code> that really depends on three inputs, and two of them are constant throught the optimization procedure. To do this, we need to define the variables <code>x</code> and <code>y</code></p>
+<pre><code class="jl">x = [1.0, 2.0, 3.0]
+y = 1.0 + 2.0 * x + [-0.3, 0.3, -0.1]
+</code></pre>
+
+<p>We then simply define a function in three variables</p>
+<pre><code class="julia">function sqerror(betas, X, Y)
+    err = 0.0
+    for i in 1:length(X)
+        pred_i = betas[1] + betas[2] * X[i]
+        err += (Y[i] - pred_i)^2
+    end
+    return err
+end
+</code></pre>
+
+<p>and then optimize the following anonymous function</p>
+<pre><code class="jl">res = optimize(b -&gt; sqerror(b, x, y), [0.0, 0.0])
+</code></pre>
+
+<p>Alternatively, we can define a closure <code>sqerror(betas)</code> that is aware of the variables we just defined</p>
+<pre><code class="jl">function sqerror(betas)
+    err = 0.0
+    for i in 1:length(x)
+        pred_i = betas[1] + betas[2] * x[i]
+        err += (y[i] - pred_i)^2
+    end
+    return err
+end
+</code></pre>
+
+<p>We can then optimize the <code>sqerror</code> function just like any other function</p>
+<pre><code class="jl">res = optimize(sqerror, [0.0, 0.0])
+</code></pre>
+
+<p><a id='Avoid-repeating-computations-1'></a></p>
+<h2 id="avoid-repeating-computations">Avoid repeating computations</h2>
+<p>Say you are optimizing a function</p>
+<pre><code class="julia">f(x) = x[1]^2+x[2]^2
+g!(storage, x) = copyto!(storage, [2x[1], 2x[2]])
+</code></pre>
+
+<p>In this situation, no calculations from <code>f</code> could be reused in <code>g!</code>. However, sometimes there is a substantial similarity between the objective function, and gradient, and some calculations can be reused.</p>
+<p>To avoid repeating calculations, define functions <code>fg!</code> or <code>fgh!</code> that compute the objective function, the gradient and the Hessian (if needed) simultaneously. These functions internally can be written to avoid repeating common calculations.</p>
+<p>For example, here we define a function <code>fg!</code> to compute the objective function and the gradient, as required:</p>
+<pre><code class="julia">function fg!(F,G,x)
+  # do common computations here
+  # ...
+  if G != nothing
+    # code to compute gradient here
+    # writing the result to the vector G
+  end
+  if F != nothing
+    # value = ... code to compute objective function
+    return value
+  end
+end
+</code></pre>
+
+<p><code>Optim</code> will only call this function with an argument <code>G</code> that is <code>nothing</code> (if the gradient is not required) or a <code>Vector</code> that should be filled (in-place) with the gradient. This flexibility is convenient for algorithms that only use the gradient in some iterations but not in others.</p>
+<p>Now we call <code>optimize</code> with the following syntax:</p>
+<pre><code class="julia">Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS())
+</code></pre>
+
+<p>Similarly, for a computation that requires the Hessian, we can write:</p>
+<pre><code class="julia">function fgh!(F,G,H,x)
+  G == nothing || # compute gradient and store in G
+  H == nothing || # compute Hessian and store in H
+  F == nothing || return f(x)
+  nothing
+end
+
+Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.Newton())
+</code></pre>
+
+<p><a id='Provide-gradients-1'></a></p>
+<h2 id="provide-gradients">Provide gradients</h2>
+<p>As mentioned in the general introduction, passing analytical gradients can have an impact on performance. To show an example of this, consider the separable extension of the Rosenbrock function in dimension 5000, see <a href="ftp://ftp.numerical.rl.ac.uk/pub/cutest/sif/SROSENBR.SIF">SROSENBR</a> in CUTEst.</p>
+<p>Below, we use the gradients and objective functions from <a href="http://www.cuter.rl.ac.uk/Problems/mastsif.shtml">mastsif</a> through <a href="https://github.com/JuliaSmoothOptimizers/CUTEst.jl">CUTEst.jl</a>. We only show the first five iterations of an attempt to minimize the function using Gradient Descent.</p>
+<pre><code class="jlcon">julia&gt; @time optimize(f, initial_x, GradientDescent(),
+                      Optim.Options(show_trace=true, iterations = 5))
+Iter     Function value   Gradient norm
+     0     4.850000e+04     2.116000e+02
+     1     1.018734e+03     2.704951e+01
+     2     3.468449e+00     5.721261e-01
+     3     2.966899e+00     2.638790e-02
+     4     2.511859e+00     5.237768e-01
+     5     2.107853e+00     1.020287e-01
+ 21.731129 seconds (1.61 M allocations: 63.434 MB, 0.03% gc time)
+Results of Optimization Algorithm
+ * Algorithm: Gradient Descent
+ * Starting Point: [1.2,1.0, ...]
+ * Minimizer: [1.0287767703731154,1.058769439356144, ...]
+ * Minimum: 2.107853e+00
+ * Iterations: 5
+ * Convergence: false
+   * |x - x'| &lt; 0.0: false
+   * |f(x) - f(x')| / |f(x)| &lt; 0.0: false
+   * |g(x)| &lt; 1.0e-08: false
+   * Reached Maximum Number of Iterations: true
+ * Objective Function Calls: 23
+ * Gradient Calls: 23
+
+julia&gt; @time optimize(f, g!, initial_x, GradientDescent(),
+                      Optim.Options(show_trace=true, iterations = 5))
+Iter     Function value   Gradient norm
+     0     4.850000e+04     2.116000e+02
+     1     1.018769e+03     2.704998e+01
+     2     3.468488e+00     5.721481e-01
+     3     2.966900e+00     2.638792e-02
+     4     2.511828e+00     5.237919e-01
+     5     2.107802e+00     1.020415e-01
+  0.009889 seconds (915 allocations: 270.266 KB)
+Results of Optimization Algorithm
+ * Algorithm: Gradient Descent
+ * Starting Point: [1.2,1.0, ...]
+ * Minimizer: [1.0287763814102757,1.05876866832087, ...]
+ * Minimum: 2.107802e+00
+ * Iterations: 5
+ * Convergence: false
+   * |x - x'| &lt; 0.0: false
+   * |f(x) - f(x')| / |f(x)| &lt; 0.0: false
+   * |g(x)| &lt; 1.0e-08: false
+   * Reached Maximum Number of Iterations: true
+ * Objective Function Calls: 23
+ * Gradient Calls: 23
+</code></pre>
+
+<p>The objective has obtained a value that is very similar between the two runs, but the run with the analytical gradient is way faster.  It is possible that the finite differences code can be improved, but generally the optimization will be slowed down by all the function evaluations required to do the central finite differences calculations.</p>
+<p><a id='Separating-time-spent-in-Optim's-code-and-user-provided-functions-1'></a></p>
+<h2 id="separating-time-spent-in-optims-code-and-user-provided-functions">Separating time spent in Optim's code and user provided functions</h2>
+<p>Consider the Rosenbrock problem.</p>
+<pre><code class="julia">using Optim
+prob = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+</code></pre>
+
+<p>Say we optimize this function, and look at the total run time of <code>optimize</code> using the Newton Trust Region method, and we are surprised that it takes a long time to run. We then wonder if time is spent in Optim's own code (solving the sub-problem for example) or in evaluating the objective, gradient or hessian that we provided. Then it can be very useful to use the <a href="https://github.com/KristofferC/TimerOutputs.jl">TimerOutputs.jl</a> package. This package allows us to run an over-all timer for <code>optimize</code>, and add individual timers for <code>f</code>, <code>g!</code>, and <code>h!</code>. Consider the example below, that is due to the author of the package (Kristoffer Carlsson).</p>
+<pre><code class="julia">using TimerOutputs
+const to = TimerOutput()
+
+f(x    ) =  @timeit to &quot;f&quot;  prob.f(x)
+g!(x, g) =  @timeit to &quot;g!&quot; prob.g!(x, g)
+h!(x, h) =  @timeit to &quot;h!&quot; prob.h!(x, h)
+
+begin
+reset_timer!(to)
+@timeit to &quot;Trust Region&quot; begin
+    res = Optim.optimize(f, g!, h!, prob.initial_x, NewtonTrustRegion())
+end
+show(to; allocations = false)
+end
+</code></pre>
+
+<p>We see that the time is actually <em>not</em> spent in our provided functions, but most of the time is spent in the code for the trust region method.</p>
+<p><a id='Early-stopping-1'></a></p>
+<h2 id="early-stopping">Early stopping</h2>
+<p>Sometimes it might be of interest to stop the optimizer early. The simplest way to do this is to set the <code>iterations</code> keyword in <code>Optim.Options</code> to some number. This will prevent the iteration counter exceeding some limit, with the standard value being 1000. Alternatively, it is possible to put a soft limit on the run time of the optimization procedure by setting the <code>time_limit</code> keyword in the <code>Optim.Options</code> constructor.</p>
+<pre><code class="julia">using Optim
+problem = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
+
+f = problem.f
+initial_x = problem.initial_x
+
+function slow(x)
+    sleep(0.1)
+    f(x)
+end
+
+start_time = time()
+
+optimize(slow, zeros(2), NelderMead(), Optim.Options(time_limit = 3.0))
+</code></pre>
+
+<p>This will stop after about three seconds. If it is more important that we stop before the limit is reached, it is possible to use a callback with a simple model for predicting how much time will have passed when the next iteration is over. Consider the following code</p>
+<pre><code class="julia">using Optim
+problem = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
+
+f = problem.f
+initial_x = problem.initial_x
+
+function very_slow(x)
+    sleep(.5)
+    f(x)
+end
+
+start_time = time()
+time_to_setup = zeros(1)
+function advanced_time_control(x)
+    println(&quot; * Iteration:       &quot;, x.iteration)
+    so_far =  time()-start_time
+    println(&quot; * Time so far:     &quot;, so_far)
+    if x.iteration == 0
+        time_to_setup[:] = time()-start_time
+    else
+        expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
+        println(&quot; * Next iteration ≈ &quot;, expected_next_time)
+        println()
+        return expected_next_time &lt; 13 ? false : true
+    end
+    println()
+    false
+end
+optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_time_control))
+</code></pre>
+
+<p>It will try to predict the elapsed time after the next iteration is over, and stop now if it is expected to exceed the limit of 13 seconds. Running it, we get something like the following output</p>
+<pre><code class="jlcon">julia&gt; optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_time_control))
+ * Iteration:       0
+ * Time so far:     2.219298839569092
+
+ * Iteration:       1
+ * Time so far:     3.4006409645080566
+ * Next iteration ≈ 4.5429909229278564
+
+ * Iteration:       2
+ * Time so far:     4.403923988342285
+ * Next iteration ≈ 5.476739525794983
+
+ * Iteration:       3
+ * Time so far:     5.407265901565552
+ * Next iteration ≈ 6.4569235642751055
+
+ * Iteration:       4
+ * Time so far:     5.909044027328491
+ * Next iteration ≈ 6.821732044219971
+
+ * Iteration:       5
+ * Time so far:     6.912338972091675
+ * Next iteration ≈ 7.843148183822632
+
+ * Iteration:       6
+ * Time so far:     7.9156060218811035
+ * Next iteration ≈ 8.85849153995514
+
+ * Iteration:       7
+ * Time so far:     8.918903827667236
+ * Next iteration ≈ 9.870419979095459
+
+ * Iteration:       8
+ * Time so far:     9.922197818756104
+ * Next iteration ≈ 10.880185931921005
+
+ * Iteration:       9
+ * Time so far:     10.925468921661377
+ * Next iteration ≈ 11.888488478130764
+
+ * Iteration:       10
+ * Time so far:     11.92870283126831
+ * Next iteration ≈ 12.895747828483582
+
+ * Iteration:       11
+ * Time so far:     12.932114839553833
+ * Next iteration ≈ 13.902462200684981
+
+Results of Optimization Algorithm
+ * Algorithm: Nelder-Mead
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.23359374999999996,0.042187499999999996, ...]
+ * Minimum: 6.291677e-01
+ * Iterations: 11
+ * Convergence: false
+   *  √(Σ(yᵢ-ȳ)²)/n &lt; 1.0e-08: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Function Calls: 24
+</code></pre>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../examples/generated/ipnewton_basics/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../examples/generated/ipnewton_basics/" class="btn btn-xs btn-link">
+        Interior point Newton
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../algo/manifolds/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../algo/manifolds/" class="btn btn-xs btn-link">
+        Manifolds
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/user/tipsandtricks.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
