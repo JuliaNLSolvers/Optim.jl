@@ -7,8 +7,8 @@
 #
 # Returns:
 #  hard_case: Whether it is a candidate for the hard case
-#  lambda_1_multiplicity: The number of times the lowest eigenvalue is repeated,
-#                         which is only correct if hard_case is true.
+#  lambda_index: The index of the first lambda not equal to the smallest
+#                eigenvalue, which is only correct if hard_case is true.
 function check_hard_case_candidate(H_eigv, qg)
     @assert length(H_eigv) == length(qg)
     if H_eigv[1] >= 0
