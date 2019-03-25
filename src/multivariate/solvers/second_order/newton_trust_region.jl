@@ -36,7 +36,7 @@ function check_hard_case_candidate(H_eigv, qg)
     hard_case, lambda_index
 end
 
-# Equation 4.38 in N&W
+# Equation 4.38 in N&W (2006)
 function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where T
     fill!( p, zero(T) )
     for i = min_i:n
@@ -46,7 +46,7 @@ function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where T
 end
 
 # Choose a point in the trust region for the next step using
-# the interative (nearly exact) method of section 4.3 of Nocedal and Wright.
+# the interative (nearly exact) method of section 4.3 of N&W (2006).
 # This is appropriate for Hessians that you factorize quickly.
 #
 # Args:
@@ -61,7 +61,7 @@ end
 #  m - The numeric value of the quadratic minimization.
 #  interior - A boolean indicating whether the solution was interior
 #  lambda - The chosen regularizing quantity
-#  hard_case - Whether or not it was a "hard case" as described by N&W
+#  hard_case - Whether or not it was a "hard case" as described by N&W (2006)
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
 function solve_tr_subproblem!(gr,
@@ -122,7 +122,7 @@ function solve_tr_subproblem!(gr,
             # to find a multiple of an orthogonal eigenvector that lands the
             # iterate on the boundary.
 
-            # Formula 4.45 in N&W
+            # Formula 4.45 in N&W (2006)
             calc_p!(lambda, min_i, n, qg, H_eig, s)
             p_lambda2 = sum(abs2, s)
             if p_lambda2 > delta_sq
@@ -141,8 +141,8 @@ function solve_tr_subproblem!(gr,
         end
 
         if !hard_case
-            # Algorithim 4.3 of N&W, with s insted of p_l for consistency with
-            # Optim.jl
+            # Algorithim 4.3 of N&W (2006), with s insted of p_l for consistency
+            # with Optim.jl
 
             reached_solution = false
             for iter in 1:max_iters
@@ -211,11 +211,11 @@ second-order information in a function's Hessian, but with more stability that
 Newton's method when functions are not globally well-approximated by a quadratic.
 This is achieved by repeatedly minimizing quadratic approximations within a
 dynamically-sized trust region in which the function is assumed to be locally
-quadratic. See Wright and Nocedal and Wright (ch. 4, 1999) for a discussion of
+quadratic. See Wright and Nocedal and Wright (ch. 4, 2006) for a discussion of
 trust-region methods in practice.
 
 ## References
- - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
+ - Nocedal, J., & Wright, S. (2006). Numerical optimization. Springer Science & Business Media.
 """
 NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
@@ -296,7 +296,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     value_gradient!(d, state.x)
 
     # Update the trust region size based on the discrepancy between
-    # the predicted and actual function values.  (Algorithm 4.1 in N&W)
+    # the predicted and actual function values.  (Algorithm 4.1 in N&W (2006))
     f_x_diff = state.f_x_previous - value(d)
     if abs(m) <= eps(T)
         # This should only happen when the step is very small, in which case
