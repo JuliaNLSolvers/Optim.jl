@@ -110,7 +110,7 @@ end
         Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
     @test !hard_case
 
-    # Now check an actual had case problem
+    # Now check an actual hard case problem
     L = fill(0.1, n)
     L[1] = -1.
     H = U * Matrix(Diagonal(L)) * U'
