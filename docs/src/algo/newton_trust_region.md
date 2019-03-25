@@ -17,7 +17,7 @@ The constructor takes keywords that determine the initial and maximal size of th
 *  `rho_upper:` When ```rho``` is greater than ```rho_upper```, grow the trust region (though no greater than ```delta_hat```).
 
 ## Description
-Newton's method with a trust region is designed to take advantage of the second-order information in a function's Hessian, but with more stability that Newton's method when functions are not globally well-approximated by a quadratic.  This is achieved by repeatedly minimizing quadratic approximations within a dynamically-sized "trust region" in which the function is assumed to be locally quadratic [1].
+Newton's method with a trust region is designed to take advantage of the second-order information in a function's Hessian, but with more stability than Newton's method when functions are not globally well-approximated by a quadratic.  This is achieved by repeatedly minimizing quadratic approximations within a dynamically-sized "trust region" in which the function is assumed to be locally quadratic [1].
 
 Newton's method optimizes a quadratic approximation to a function.  When a function is well approximated by a quadratic (for example, near an optimum), Newton's method converges very quickly by exploiting the second-order information in the Hessian matrix.  However, when the function is not well-approximated by a quadratic, either because the starting point is far from the optimum or the function has a more irregular shape, Newton steps can be erratically large, leading to distant, irrelevant areas of the space.
 
