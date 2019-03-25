@@ -136,7 +136,7 @@ function solve_tr_subproblem!(gr,
                 # I don't think it matters which eigenvector we pick so take
                 # the first.
                 calc_p!(lambda, min_i, n, qg, H_eig, s)
-                s[:] = -s + tau * H_eig.vectors[i, 1]
+                s[:] = -s + tau * H_eig.vectors[:, 1]
             end
         end
 
