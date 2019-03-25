@@ -96,13 +96,13 @@ function optimize(f, initial_x::AbstractArray, options::Options; inplace = true,
 end
 function optimize(f, g, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
 
-    method = fallback_method(f, g!)
+    method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
     optimize(d, initial_x, method, options)
 end
 function optimize(f, g, h, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
 
-    method = fallback_method(f, g!, h!)
+    method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
     optimize(d, initial_x, method, options)
