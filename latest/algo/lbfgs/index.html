@@ -96,7 +96,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <pre><code class="julia">BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        initial_invH = x -&gt; Matrix{eltype(x)}(I, length(x), length(x)),
-       precondprep = (P, x) -&gt; nothing)
+       manifold = Flat()
 </code></pre>
 
 <pre><code class="julia">LBFGS(; m = 10,
