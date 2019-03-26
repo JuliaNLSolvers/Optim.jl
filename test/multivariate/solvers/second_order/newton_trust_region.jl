@@ -83,34 +83,34 @@ end
     # A "hard case" where the gradient is orthogonal to the lowest eigenvector
 
     # Test the checking
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([-1., 2., 3.], [0., 1., 1.])
     @test hard_case
-    @test lambda_1_multiplicity == 1
+    @test lambda_index == 2
 
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([-1., -1., 3.], [0., 0., 1.])
     @test hard_case
-    @test lambda_1_multiplicity == 2
+    @test lambda_index == 3
 
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 0.])
     @test hard_case
-    @test lambda_1_multiplicity == 3
+    @test lambda_index == 4
 
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([1., 2., 3.], [0., 1., 1.])
     @test !hard_case
 
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 1.])
     @test !hard_case
 
-    hard_case, lambda_1_multiplicity =
+    hard_case, lambda_index =
         Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
     @test !hard_case
 
-    # Now check an actual had case problem
+    # Now check an actual hard case problem
     L = fill(0.1, n)
     L[1] = -1.
     H = U * Matrix(Diagonal(L)) * U'
