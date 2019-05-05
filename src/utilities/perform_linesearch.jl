@@ -3,7 +3,17 @@
 reset_search_direction!(state, d, method) = false # no-op
 
 function reset_search_direction!(state, d, method::BFGS)
-    copyto!(state.invH, method.initial_invH(state.x))
+
+    if method.initial_invH == nothing
+        state.invH = Matrix{eltype(state.x)}(I, length(state.x), length(state.x))
+        if !(method.initial_stepnorm == nothing)
+            state.invH .= method.initial_stepnorm*inv(norm(gradient(d), Inf)).*state.invH
+        end
+    else
+        state.invH = method.initial_invH(initial_x)
+    end
+
+#    copyto!(state.invH, method.initial_invH(state.x))
     state.s .= .-gradient(d)
     return true
 end
