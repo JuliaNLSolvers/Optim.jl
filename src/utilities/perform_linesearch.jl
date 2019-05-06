@@ -5,16 +5,16 @@ reset_search_direction!(state, d, method) = false # no-op
 function reset_search_direction!(state, d, method::BFGS)
     n = length(state.x)
     T = eltype(state.x)
-    
+
     if method.initial_invH == nothing
         if method.initial_stepnorm == nothing
-            invH0 = Matrix{T}(I, n, n)
+            state.invH0 .= Matrix{T}(I, n, n)
         else
             initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
-            invH0 = Matrix{T}(initial_scale*I, n, n)
+            state.invH0.= Matrix{T}(initial_scale*I, n, n)
         end
     else
-        invH0 = method.initial_invH(initial_x)
+        state.invH0 .= method.initial_invH(initial_x)
     end
 #    copyto!(state.invH, method.initial_invH(state.x))
     state.s .= .-gradient(d)
