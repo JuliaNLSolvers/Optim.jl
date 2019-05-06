@@ -68,9 +68,11 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     project_tangent!(method.manifold, gradient(d), initial_x)
 
     if method.initial_invH == nothing
-        invH0 = Matrix{T}(I, length(initial_x), length(initial_x))
-        if !(method.initial_stepnorm == nothing)
-            invH0 .= method.initial_stepnorm*inv(norm(gradient(d), Inf)).*invH0
+        if method.initial_stepnorm == nothing
+            invH0 = Matrix{T}(I, n, n)
+        else
+            initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
+            invH0 = Matrix{T}(initial_scale*I, n, n)
         end
     else
         invH0 = method.initial_invH(initial_x)
