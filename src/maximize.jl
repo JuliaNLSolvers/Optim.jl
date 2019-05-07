@@ -69,19 +69,20 @@ function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResult
 end
 
 function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResults})
-    first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
+    take = Iterators.take
 
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" summary(r.res)
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else
-        @printf io " * Starting Point: [%s, ...]\n" join(first_two(initial_state(r)), ",")
+        @printf io " * Starting Point: [%s, ...]\n" join(take(initial_state(r),
+2), ",")
     end
     if length(join(maximizer(r), ",")) < 40
         @printf io " * Maximizer: [%s]\n" join(maximizer(r), ",")
     else
-        @printf io " * Maximizer: [%s, ...]\n" join(first_two(maximizer(r)), ",")
+        @printf io " * Maximizer: [%s, ...]\n" join(take(maximizer(r), 2), ",")
     end
     @printf io " * Maximum: %e\n" maximum(r)
     @printf io " * Iterations: %d\n" iterations(r)
