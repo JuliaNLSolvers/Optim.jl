@@ -4,9 +4,18 @@ This page contains information about BFGS and its limited memory version L-BFGS.
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
-       manifold = Flat()
+       initial_invH = nothing,
+       initial_stepnorm = nothing,
+       manifold = Flat())
 ```
+
+`initial_invH` has a default value of `nothing`. If the user has a specific initial
+matrix they want to supply, it should be supplied as a function of an array similar
+to the initial point `x0`.
+
+If `initial_stepnorm` is set to a number `z`, the initial matrix will be the
+identity matrix scaled by `z` times the sup-norm of the gradient at the initial
+point `x0`.
 
 ```julia
 LBFGS(; m = 10,

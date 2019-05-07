@@ -2,11 +2,12 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H<:Function} <: FirstOrderOptimizer
+struct BFGS{IL, L, H, T, TM} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
-    manifold::Manifold
+    initial_stepnorm::T
+    manifold::TM
 end
 
 Base.summary(::BFGS) = "BFGS"
@@ -38,9 +39,10 @@ approximations as well as the gradient. See also the limited memory variant
 """
 function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                 linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
+                initial_invH = nothing,
+                initial_stepnorm = nothing,
                 manifold::Manifold=Flat())
-    BFGS(alphaguess, linesearch, initial_invH, manifold)
+    BFGS(alphaguess, linesearch, initial_invH, initial_stepnorm, manifold)
 end
 
 mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
@@ -64,6 +66,17 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     value_gradient!!(d, initial_x)
 
     project_tangent!(method.manifold, gradient(d), initial_x)
+
+    if method.initial_invH == nothing
+        if method.initial_stepnorm == nothing
+            invH0 = Matrix{T}(I, n, n)
+        else
+            initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
+            invH0 = Matrix{T}(initial_scale*I, n, n)
+        end
+    else
+        invH0 = method.initial_invH(initial_x)
+    end
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(initial_x, # Maintain current state in state.x
@@ -73,7 +86,7 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
               similar(initial_x), # Store changes in position in state.dx
               similar(initial_x), # Store changes in gradient in state.dg
               similar(initial_x), # Buffer stored in state.u
-              method.initial_invH(initial_x), # Store current invH in state.invH
+              invH0, # Store current invH in state.invH
               similar(initial_x), # Store current search direction in state.s
               @initial_linesearch()...)
 end
