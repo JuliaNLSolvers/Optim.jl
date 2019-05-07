@@ -166,19 +166,20 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
-    first_two(fr) = [x for (i, x) in enumerate(fr)][1:2]
+    take = Iterators.take
 
     @printf io "Results of Optimization Algorithm\n"
     @printf io " * Algorithm: %s\n" summary(r)
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else
-        @printf io " * Starting Point: [%s, ...]\n" join(first_two(initial_state(r)), ",")
+        @printf io " * Starting Point: [%s, ...]\n" join(take(initial_state(r),
+2), ",")
     end
     if length(join(minimizer(r), ",")) < 40
         @printf io " * Minimizer: [%s]\n" join(minimizer(r), ",")
     else
-        @printf io " * Minimizer: [%s, ...]\n" join(first_two(minimizer(r)), ",")
+        @printf io " * Minimizer: [%s, ...]\n" join(take(minimizer(r), 2), ",")
     end
     @printf io " * Minimum: %e\n" minimum(r)
     @printf io " * Iterations: %d\n" iterations(r)
