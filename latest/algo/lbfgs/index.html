@@ -95,10 +95,13 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h2 id="constructors">Constructors</h2>
 <pre><code class="julia">BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -&gt; Matrix{eltype(x)}(I, length(x), length(x)),
-       manifold = Flat()
+       initial_invH = nothing,
+       initial_stepnorm = nothing,
+       manifold = Flat())
 </code></pre>
 
+<p><code>initial_invH</code> has a default value of <code>nothing</code>. If the user has a specific initial matrix they want to supply, it should be supplied as a function of an array similar to the initial point <code>x0</code>.</p>
+<p>If <code>initial_stepnorm</code> is set to a number <code>z</code>, the initial matrix will be the identity matrix scaled by <code>z</code> times the sup-norm of the gradient at the initial point <code>x0</code>.</p>
 <pre><code class="julia">LBFGS(; m = 10,
         alphaguess = LineSearches.InitialStatic(),
         linesearch = LineSearches.HagerZhang(),

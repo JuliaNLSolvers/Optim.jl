@@ -108,7 +108,8 @@ body {
   top: 0px;
   padding-top: 70px;
   height: 100%;
-  width: 250px;
+  min-width: 250px;
+  max-width: 350px;
   z-index: 1;
   background-color: #f2f2f2;
   border-right: 1px solid #e0e0e0;
@@ -233,10 +234,16 @@ body {
 .wm-toc-lev1 > .wm-toc-text { padding-left: 14px; }
 .wm-toc-lev2 > .wm-toc-text { padding-left: 28px; }
 .wm-toc-lev3 > .wm-toc-text { padding-left: 42px; }
+.wm-toc-lev4 > .wm-toc-text { padding-left: 56px; }
+.wm-toc-lev5 > .wm-toc-text { padding-left: 70px; }
+.wm-toc-lev6 > .wm-toc-text { padding-left: 84px; }
 
 .wm-toc-lev1 + .wm-page-toc { margin-left: 14px; }
 .wm-toc-lev2 + .wm-page-toc { margin-left: 28px; }
 .wm-toc-lev3 + .wm-page-toc { margin-left: 42px; }
+.wm-toc-lev4 + .wm-page-toc { margin-left: 56px; }
+.wm-toc-lev5 + .wm-page-toc { margin-left: 70px; }
+.wm-toc-lev6 + .wm-page-toc { margin-left: 84px; }
 
 .wm-toc-li-nested {
   padding: 0px;
