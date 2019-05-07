@@ -14,7 +14,7 @@ function reset_search_direction!(state, d, method::BFGS)
             state.invH.= Matrix{T}(initial_scale*I, n, n)
         end
     else
-        state.invH .= method.initial_invH(initial_x)
+        state.invH .= method.initial_invH(state.x)
     end
 #    copyto!(state.invH, method.initial_invH(state.x))
     state.s .= .-gradient(d)
