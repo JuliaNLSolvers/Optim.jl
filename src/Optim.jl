@@ -30,6 +30,8 @@ import Parameters: @with_kw, # for types where constructors are simply defined
 
 using Printf                 # For printing, maybe look into other options
 
+using FillArrays             # For handling scalar bounds in Fminbox
+
 #using Compat                 # for compatibility across multiple julia versions
 
 # for extensions of functions defined in Base.

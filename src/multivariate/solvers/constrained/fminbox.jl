@@ -153,6 +153,18 @@ function optimize(f,
     optimize(od, l, u, initial_x, F, options)
 end
 
+optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x; kwargs...)
+optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x; kwargs...)
+optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x; kwargs...)
+
+optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, mo, opt; kwargs...)
+optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x, mo, opt; kwargs...)
+optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x, mo, opt; kwargs...)
+
+optimize(f, g, l::Number, u::Number, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, opt; kwargs...)
+optimize(f, g, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, l, Fill(T(u), size(initial_x)...), initial_x, opt; kwargs...)
+optimize(f, g, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt; kwargs...)
+
 function optimize(f,
                   l::AbstractArray{T},
                   u::AbstractArray{T},

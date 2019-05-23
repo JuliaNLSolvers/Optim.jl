@@ -100,7 +100,7 @@ function optimize(f, g, initial_x::AbstractArray, options::Options; inplace = tr
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
+function optimize(f, g, h, initial_x::AbstractArray{T}, options::Options; inplace = true, autodiff = :finite) where {T}
 
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
