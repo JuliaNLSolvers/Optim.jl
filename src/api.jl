@@ -42,14 +42,14 @@ end
 function simplex_trace(r::MultivariateOptimizationResults)
     if !isa(r.method, NelderMead)
         throw(ArgumentError("There is no simplex involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
-    else
+    end
     !haskey(tr[1].metadata, "simplex") && error("Trace does not contain simplex. To get a trace of the simplex, run optimize() with trace_simplex = true")
     [ state.metadata["simplex"] for state in tr ]
 end
 function simplex_value_trace(r::MultivariateOptimizationResults)
     if !isa(r.method, NelderMead)
         throw(ArgumentError("There are no simplex values involved in optimization using $(r.method). Please use f_trace(...) to grab the objective values from the trace."))
-    else
+    end
     !haskey(tr[1].metadata, "simplex_values") && error("Trace does not contain objective values at the simplex. To get a trace of the simplex values, run optimize() with trace_simplex = true")
     [ state.metadata["simplex_values"] for state in tr ]
 end
