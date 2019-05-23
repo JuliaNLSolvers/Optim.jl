@@ -35,7 +35,7 @@ end
 function centroid_trace(r::MultivariateOptimizationResults)
     if !isa(r.method, NelderMead)
         throw(ArgumentError("There is no centroid involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
-    else
+    end
     !haskey(tr[1].metadata, "centroid") && error("Trace does not contain centroid. To get a trace of the centroid, run optimize() with extended_trace = true")
     [ state.metadata["centroid"] for state in tr ]
 end
