@@ -135,6 +135,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <li><code>store_trace</code>: Should a trace of the optimization algorithm's state be stored? Defaults to <code>false</code>.</li>
 <li><code>show_trace</code>: Should a trace of the optimization algorithm's state be shown on <code>stdout</code>? Defaults to <code>false</code>.</li>
 <li><code>extended_trace</code>: Save additional information. Solver dependent. Defaults to <code>false</code>.</li>
+<li><code>trace_simplex</code>: Include the full simplex in the trace for <code>NelderMead</code>. Defaults to <code>false</code>.</li>
 <li><code>show_every</code>: Trace output is printed every <code>show_every</code>th iteration.</li>
 <li><code>callback</code>: A function to be called during tracing. A return value of <code>true</code> stops the <code>optimize</code> call.</li>
 <li><code>time_limit</code>: A soft upper limit on the total run time. Defaults to <code>NaN</code> (unlimited).</li>
