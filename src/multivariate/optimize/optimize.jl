@@ -34,7 +34,7 @@ function optimize(d::D, initial_x::Tx, method::M,
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
 
-#    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+   t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
@@ -49,9 +49,7 @@ function optimize(d::D, initial_x::Tx, method::M,
     iteration = 0
 
     options.show_trace && print_header(method)
-    trace!(tr, d, state, iteration, method, options)
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-    trace!(tr, d, state, iteration, method, options, t0-t0)
+    trace!(tr, d, state, iteration, method, options, time()-t0)
 
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
