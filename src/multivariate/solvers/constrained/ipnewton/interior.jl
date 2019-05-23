@@ -208,7 +208,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
     iteration = 0
 
     options.show_trace && print_header(method)
-    trace!(tr, d, state, iteration, method, options)
+    trace!(tr, d, state, iteration, method, options, t0)
 
     while !converged && !stopped && iteration < options.iterations
         iteration += 1

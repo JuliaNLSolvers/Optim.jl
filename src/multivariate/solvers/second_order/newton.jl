@@ -87,8 +87,9 @@ function assess_convergence(state::NewtonState, d, options)
   default_convergence_assessment(state, d, options)
 end
 
-function trace!(tr, d, state, iteration, method::Newton, options)
+function trace!(tr, d, state, iteration, method::Newton, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))

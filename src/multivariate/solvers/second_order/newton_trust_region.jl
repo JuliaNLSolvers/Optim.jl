@@ -357,8 +357,9 @@ function assess_convergence(state::NewtonTrustRegionState, d, options)
     x_converged, f_converged, g_converged, converged, f_increased
 end
 
-function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options)
+function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))

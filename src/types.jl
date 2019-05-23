@@ -50,6 +50,7 @@ struct Options{T, TCallback}
     iterations::Int
     outer_iterations::Int
     store_trace::Bool
+    trace_simplex::Bool
     show_trace::Bool
     extended_trace::Bool
     show_every::Int
@@ -73,6 +74,7 @@ function Options(;
         iterations::Int = 1_000,
         outer_iterations::Int = 1000,
         store_trace::Bool = false,
+        trace_simplex::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
         show_every::Int = 1,
@@ -83,7 +85,7 @@ function Options(;
     #    show_trace = true
     #end
     Options(promote(x_tol, f_tol, g_tol, outer_x_tol, outer_f_tol, outer_g_tol)..., f_calls_limit, g_calls_limit, h_calls_limit,
-        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, show_trace, extended_trace,
+        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, trace_simplex, show_trace, extended_trace,
         Int(show_every), callback, Float64(time_limit))
 end
 

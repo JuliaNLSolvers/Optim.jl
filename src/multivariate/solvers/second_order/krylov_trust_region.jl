@@ -64,8 +64,9 @@ function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T
 end
 
 
-function trace!(tr, d, state, iteration, method::KrylovTrustRegion, options)
+function trace!(tr, d, state, iteration, method::KrylovTrustRegion, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["radius"] = copy(state.radius)
         dt["interior"] = state.interior

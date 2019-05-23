@@ -417,8 +417,9 @@ function update_g!(d, state, method::AbstractNGMRES)
     end
 end
 
-function trace!(tr, d, state, iteration, method::AbstractNGMRES, options)
+function trace!(tr, d, state, iteration, method::AbstractNGMRES, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))

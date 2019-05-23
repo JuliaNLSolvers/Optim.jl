@@ -23,11 +23,12 @@ function Base.show(io::IO, tr::OptimizationTrace{Tf, M}) where M <: IPOptimizer 
     return
 end
 
-function trace!(tr, d, state, iteration, method::IPOptimizer, options)
+function trace!(tr, d, state, iteration, method::IPOptimizer, options, curr_time=time())
     dt = Dict()
     dt["Lagrangian"] = state.L
     dt["μ"] = state.μ
     dt["ev"] = abs(state.ev)
+    dt["time"] = curr_time
     if options.extended_trace
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)

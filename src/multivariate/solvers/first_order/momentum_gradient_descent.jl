@@ -63,6 +63,6 @@ function assess_convergence(state::MomentumGradientDescentState, d, options)
   default_convergence_assessment(state, d, options)
 end
 
-function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options)
-  common_trace!(tr, d, state, iteration, method, options)
+function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options, curr_time=time())
+  common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

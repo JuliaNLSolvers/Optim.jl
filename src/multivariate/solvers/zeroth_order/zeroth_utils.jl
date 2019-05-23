@@ -1,5 +1,6 @@
-function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options)
+function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
     end
