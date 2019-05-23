@@ -228,6 +228,6 @@ function assess_convergence(state::LBFGSState, d, options)
 end
 
 
-function trace!(tr, d, state, iteration, method::LBFGS, options)
-  common_trace!(tr, d, state, iteration, method, options)
+function trace!(tr, d, state, iteration, method::LBFGS, options, curr_time=time())
+  common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

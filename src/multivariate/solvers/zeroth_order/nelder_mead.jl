@@ -307,11 +307,16 @@ function initial_convergence(d, state::NelderMeadState, method::NelderMead, init
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
 end
 
-function trace!(tr, d, state, iteration, method::NelderMead, options)
+function trace!(tr, d, state, iteration, method::NelderMead, options, curr_time=time())
     dt = Dict()
+    dt["time"] = curr_time
     if options.extended_trace
         dt["centroid"] = copy(state.x_centroid)
         dt["step_type"] = state.step_type
+    end
+    if options.trace_simplex
+        dt["simplex"] = state.simplex
+        dt["simplex_values"] = state.f_simplex
     end
     update!(tr,
     iteration,
@@ -321,5 +326,6 @@ function trace!(tr, d, state, iteration, method::NelderMead, options)
     options.store_trace,
     options.show_trace,
     options.show_every,
-    options.callback)
+    options.callback,
+    options.trace_simplex)
 end

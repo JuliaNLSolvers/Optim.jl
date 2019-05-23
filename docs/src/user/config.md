@@ -49,6 +49,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `stdout`? Defaults to `false`.
 * `extended_trace`: Save additional information. Solver dependent. Defaults to `false`.
+* `trace_simplex`: Include the full simplex in the trace for `NelderMead`. Defaults to `false`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
 * `callback`: A function to be called during tracing. A return value of `true` stops the `optimize` call.
 * `time_limit`: A soft upper limit on the total run time. Defaults to `NaN` (unlimited).

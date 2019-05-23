@@ -25,9 +25,35 @@ x_upper_trace(r::MultivariateOptimizationResults) = error("x_upper_trace is not 
 
 function x_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
+    if isa(r.method, NelderMead)
+        throw(ArgumentError("Nelder Mead does not operate with a single x. Please use either centroid_trace(...) or simplex_trace(...) to extract the relevant points from the trace."))
+    end
     !haskey(tr[1].metadata, "x") && error("Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true")
     [ state.metadata["x"] for state in tr ]
 end
+
+function centroid_trace(r::MultivariateOptimizationResults)
+    if !isa(r.method, NelderMead)
+        throw(ArgumentError("There is no centroid involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
+    end
+    !haskey(tr[1].metadata, "centroid") && error("Trace does not contain centroid. To get a trace of the centroid, run optimize() with extended_trace = true")
+    [ state.metadata["centroid"] for state in tr ]
+end
+function simplex_trace(r::MultivariateOptimizationResults)
+    if !isa(r.method, NelderMead)
+        throw(ArgumentError("There is no simplex involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
+    end
+    !haskey(tr[1].metadata, "simplex") && error("Trace does not contain simplex. To get a trace of the simplex, run optimize() with trace_simplex = true")
+    [ state.metadata["simplex"] for state in tr ]
+end
+function simplex_value_trace(r::MultivariateOptimizationResults)
+    if !isa(r.method, NelderMead)
+        throw(ArgumentError("There are no simplex values involved in optimization using $(r.method). Please use f_trace(...) to grab the objective values from the trace."))
+    end
+    !haskey(tr[1].metadata, "simplex_values") && error("Trace does not contain objective values at the simplex. To get a trace of the simplex values, run optimize() with trace_simplex = true")
+    [ state.metadata["simplex_values"] for state in tr ]
+end
+
 
 f_trace(r::OptimizationResults) = [ state.value for state in trace(r) ]
 g_norm_trace(r::OptimizationResults) = error("g_norm_trace is not implemented for $(summary(r)).")

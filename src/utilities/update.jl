@@ -6,7 +6,8 @@ function update!(tr::OptimizationTrace{Tf, T},
               store_trace::Bool,
               show_trace::Bool,
               show_every::Int = 1,
-              callback = nothing) where {Tf, T}
+              callback = nothing,
+              trace_simplex = false) where {Tf, T}
     os = OptimizationState{Tf, T}(iteration, f_x, grnorm, dt)
     if store_trace
         push!(tr, os)

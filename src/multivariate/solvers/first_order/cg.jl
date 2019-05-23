@@ -197,6 +197,6 @@ function assess_convergence(state::ConjugateGradientState, d, options)
   default_convergence_assessment(state, d, options)
 end
 
-function trace!(tr, d, state, iteration, method::ConjugateGradient, options)
-  common_trace!(tr, d, state, iteration, method, options)
+function trace!(tr, d, state, iteration, method::ConjugateGradient, options, curr_time=time())
+  common_trace!(tr, d, state, iteration, method, options, curr_time)
 end
