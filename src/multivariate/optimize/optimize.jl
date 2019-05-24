@@ -91,6 +91,12 @@ function optimize(d::D, initial_x::Tx, method::M,
     T = typeof(options.f_tol)
     f_incr_pick = f_increased && !options.allow_f_increases
 
+    if iteration < 2
+        # There is no previous state to compare with.
+        state.x_previous = NaN * initial_x
+        state.f_x_previous = NaN * value(d)
+    end
+
     return MultivariateOptimizationResults(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
