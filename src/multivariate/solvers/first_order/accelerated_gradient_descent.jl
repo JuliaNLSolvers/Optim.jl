@@ -41,7 +41,7 @@ function initial_state(method::AcceleratedGradientDescent, options, d, initial_x
     project_tangent!(method.manifold, gradient(d), initial_x)
 
     AcceleratedGradientDescentState(copy(initial_x), # Maintain current state in state.x
-                         similar(initial_x), # Maintain previous state in state.x_previous
+                         copy(initial_x), # Maintain previous state in state.x_previous
                          real(T)(NaN), # Store previous f in state.f_x_previous
                          0, # Iteration
                          copy(initial_x), # Maintain intermediary current state in state.y

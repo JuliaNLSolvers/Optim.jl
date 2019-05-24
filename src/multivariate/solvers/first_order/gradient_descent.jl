@@ -53,7 +53,7 @@ function initial_state(method::GradientDescent, options, d, initial_x::AbstractA
     project_tangent!(method.manifold, gradient(d), initial_x)
 
     GradientDescentState(initial_x, # Maintain current state in state.x
-                         similar(initial_x), # Maintain previous state in state.x_previous
+                         copy(initial_x), # Maintain previous state in state.x_previous
                          real(T(NaN)), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          @initial_linesearch()...)

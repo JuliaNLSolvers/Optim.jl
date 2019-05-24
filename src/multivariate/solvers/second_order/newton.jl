@@ -46,7 +46,7 @@ function initial_state(method::Newton, options, d, initial_x)
     hessian!!(d, initial_x)
 
     NewtonState(copy(initial_x), # Maintain current state in state.x
-                similar(initial_x), # Maintain previous state in state.x_previous
+                copy(initial_x), # Maintain previous state in state.x_previous
                 T(NaN), # Store previous f in state.f_x_previous
                 Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)),
                 similar(initial_x), # Maintain current search direction in state.s

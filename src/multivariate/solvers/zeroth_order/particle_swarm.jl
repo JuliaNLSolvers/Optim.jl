@@ -82,8 +82,8 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
         @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
         @assert all(upper .> lower) "upper must be greater than lower"
     else
-        lower = similar(initial_x)
-        upper = similar(initial_x)
+        lower = copy(initial_x)
+        upper = copy(initial_x)
         limit_search_space = false
     end
 
@@ -107,9 +107,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x)
     X_best = Array{T,2}(undef, n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
-    x = similar(initial_x)
+    x = copy(initial_x)
     best_score = zeros(T, n_particles)
-    x_learn = similar(initial_x)
+    x_learn = copy(initial_x)
 
     current_state = 0
 

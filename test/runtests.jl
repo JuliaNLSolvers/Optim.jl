@@ -17,6 +17,11 @@ import SparseArrays: normalize!, spdiagm
 
 debug_printing = false
 
+special_tests = [
+    "bigfloat/initial_convergence",
+]
+special_tests = map(s->"./special/"*s*".jl", special_tests)
+
 general_tests = [
     "api",
     "callables",
@@ -222,6 +227,12 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
 end
 
 
+@testset "special" begin
+    for my_test in special_tests
+        println(my_test)
+        @time include(my_test)
+    end
+end
 @testset "general" begin
     for my_test in general_tests
         println(my_test)
