@@ -111,5 +111,10 @@
             @test_throws ArgumentError optimize(x->x, (G,x)->x, rand(1),rand(1),rand(1), Fminbox(Newton()))
             @test_throws ArgumentError optimize(x->x, (G,x)->x, rand(1),rand(1),rand(1), Fminbox(NewtonTrustRegion()))
         end
+        @testset "allow for an Optim.Options to be passed #623" begin
+            optimize(exponential, lb, ub, initial_x, Fminbox(), Optim.Options())
+            optimize(exponential, exponential_gradient!, lb, ub, initial_x, Fminbox(), Optim.Options())
+            @test_broken optimize(exponential, exponential_gradient, lb, ub, initial_x, Optim.Options())
+        end
     end
 end
