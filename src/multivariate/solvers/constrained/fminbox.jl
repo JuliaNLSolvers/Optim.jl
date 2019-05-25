@@ -1,7 +1,7 @@
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = 0.001, mu0::T = convert(T, NaN)) where T
+function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = T(1)/1000, mu0::T = convert(T, NaN)) where T
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -207,11 +207,11 @@ function optimize(
         thisu = u[i]
 
         if thisx == thisl
-            thisx = 0.99*thisl+0.01*thisu
+            thisx = T(99)/100*thisl + T(1)/100*thisu
             x[i] = thisx
             push!(boundaryidx,i)
         elseif thisx == thisu
-            thisx = 0.01*thisl+0.99*thisu
+            thisx = T(1)/100*thisl + T(99)/100*thisu
             x[i] = thisx
             push!(boundaryidx,i)
         elseif thisx < thisl || thisx > thisu
@@ -293,7 +293,7 @@ function optimize(
         end
 
         # Decrease mu
-        mu[] *= F.mufactor
+        mu[] *= T(F.mufactor)
 
         # Test for convergence
         g .= gfunc .+ mu[].*gbarrier
@@ -306,7 +306,6 @@ function optimize(
             break
         end
     end
-
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_tol, norm(x - xold),
