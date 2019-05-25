@@ -28,8 +28,8 @@ end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
 function optimize(d::D, initial_x::Tx, method::M,
-                  options::Options = Options(;default_options(method)...),
-                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+                  options::Options{T, TCallback} = Options(;default_options(method)...),
+                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray, T, TCallback}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
@@ -88,23 +88,23 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    T = typeof(options.f_tol)
+    Tf = typeof(options.f_tol)
     f_incr_pick = f_increased && !options.allow_f_increases
 
-    return MultivariateOptimizationResults(method,
+    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
-                                        T(options.x_tol),
+                                        Tf(options.x_tol),
                                         x_abschange(state),
                                         f_converged,
-                                        T(options.f_tol),
+                                        Tf(options.f_tol),
                                         f_abschange(d, state),
                                         g_converged,
-                                        T(options.g_tol),
+                                        Tf(options.g_tol),
                                         g_residual(d),
                                         f_increased,
                                         tr,
