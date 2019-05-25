@@ -88,7 +88,7 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    Tf = typeof(options.f_tol)
+    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
     return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr)}(method,
