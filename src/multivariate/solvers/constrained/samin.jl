@@ -56,7 +56,7 @@ end
 #         covered by the trial values. 1: start decreasing temperature immediately
 Base.summary(::SAMIN) = "SAMIN"
 
-function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray, method::SAMIN, options::Options = Options())
+function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray{Tx}, method::SAMIN, options::Options = Options()) where Tx
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
@@ -104,9 +104,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     # Allows restrictions without complicated programming
                     if (lb[h] != ub[h])
                         xp = copy(x)
-                        xp[h] += (2.0 * rand() - 1.0) * bounds[h]
+                        xp[h] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[h]
                         if((xp[h] < lb[h]) || (xp[h] > ub[h]))
-                            xp[h] = lb[h] + (ub[h] - lb[h]) * rand()
+                            xp[h] = lb[h] + (ub[h] - lb[h]) * rand(Tx)
                             lnobds += 1
                         end
                         # Evaluate function at new point
@@ -129,7 +129,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                         # acceptance or rejection.
                         else
                             p = exp(-(fp - f_old) / t)
-                            if(rand() < p)
+                            if(rand(Tx) < p)
                                 x = copy(xp)
                                 f_old = copy(fp)
                                 nacc += 1
