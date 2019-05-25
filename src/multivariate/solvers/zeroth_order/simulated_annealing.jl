@@ -65,7 +65,7 @@ function initial_state(method::SimulatedAnnealing, options, d, initial_x::Abstra
 
     # Store the best state ever visited
     best_x = copy(initial_x)
-    SimulatedAnnealingState(copy(best_x), 1, best_x, similar(initial_x), value(d), value(d))
+    SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), value(d), value(d))
 end
 
 function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing) where T

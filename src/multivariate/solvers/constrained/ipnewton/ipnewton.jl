@@ -126,19 +126,19 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
 
     # More constraints
     constr_J = Array{T}(undef, mc, n)
-    gtilde = similar(g)
+    gtilde = copy(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
     bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
-    bgrad = similar(bstate)
-    bstep = similar(bstate)
+    bgrad = copy(bstate)
+    bstep = copy(bstate)
     # b_ls = BarrierLineSearch(similar(constr_c), similar(bstate))
-    b_ls = BarrierLineSearchGrad(similar(constr_c), similar(constr_J), similar(bstate), similar(bstate))
+    b_ls = BarrierLineSearchGrad(copy(constr_c), copy(constr_J), copy(bstate), copy(bstate))
 
     state = IPNewtonState(
         copy(initial_x), # Maintain current state in state.x
         f_x, # Store current f in state.f_x
-        copy(initial_x), # Maintain current state in state.x_previous
+        copy(initial_x), # Maintain previous state in state.x_previous
         g, # Store current gradient in state.g (TODO: includes Lagrangian calculation?)
         T(NaN), # Store previous f in state.f_x_previous
         H,

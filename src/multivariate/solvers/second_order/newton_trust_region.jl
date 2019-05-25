@@ -263,16 +263,16 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     hessian!!(d, initial_x)
 
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
-                         similar(initial_x), # Maintain previous state in state.x_previous
-                         similar(gradient(d)), # Store previous gradient in state.g_previous
+                         copy(initial_x), # Maintain previous state in state.x_previous
+                         copy(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
                          hard_case,
                          reached_subproblem_solution,
                          interior,
                          T(delta),
-                         lambda,
-                         method.eta, # eta
+                         T(lambda),
+                         T(method.eta), # eta
                          zero(T)) # rho
 end
 

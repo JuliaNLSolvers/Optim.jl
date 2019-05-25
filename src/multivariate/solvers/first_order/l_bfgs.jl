@@ -159,7 +159,7 @@ function initial_state(method::LBFGS, options, d, initial_x)
 
     project_tangent!(method.manifold, gradient(d), initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
-              similar(initial_x), # Maintain previous state in state.x_previous
+              copy(initial_x), # Maintain previous state in state.x_previous
               similar(gradient(d)), # Store previous gradient in state.g_previous
               Vector{T}(undef, method.m), # state.rho
               [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history

@@ -191,9 +191,9 @@ function optimize(
     x = copy(initial_x)
     fbarrier = (gbarrier, x) -> barrier_box(gbarrier, x, l, u)
     fb = (gbarrier, x, gfunc) -> function_barrier(gfunc, gbarrier, x, df.fdf, fbarrier)
-    gfunc = similar(x)
-    gbarrier = similar(x)
-    P = InverseDiagonal(similar(initial_x))
+    gfunc = copy(x)
+    gbarrier = copy(x)
+    P = InverseDiagonal(copy(initial_x))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
@@ -241,7 +241,7 @@ function optimize(
         println("\n")
     end
 
-    g = similar(x)
+    g = copy(x)
     fval_all = Vector{Vector{T}}()
 
     # Count the total number of outer iterations
@@ -253,7 +253,7 @@ function optimize(
                                (g, x) -> (funcc(g, x); g),
                                funcc, initial_x, zero(T))
 
-    xold = similar(x)
+    xold = copy(x)
     converged = false
     local results
     first = true

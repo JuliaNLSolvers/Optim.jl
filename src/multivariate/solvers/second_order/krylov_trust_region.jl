@@ -49,7 +49,7 @@ function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T
     value_gradient!!(d, initial_x)
 
     KrylovTrustRegionState(copy(initial_x),    # Maintain current state in state.x
-                           similar(initial_x), # x_previous
+                           copy(initial_x), # x_previous
                            zero(T),            # f_x_previous
                            similar(initial_x), # Maintain current search direction in state.s
                            true,               # interior
