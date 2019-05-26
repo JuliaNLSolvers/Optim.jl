@@ -1,11 +1,11 @@
-log_temperature(t::Real) = 1 / log(t)
+log_temperature(t) = 1 / log(t)
 
-constant_temperature(t::Real) = 1.0
+constant_temperature(t) = 1.0
 
-function default_neighbor!(x::AbstractArray, x_proposal::AbstractArray)
+function default_neighbor!(x::AbstractArray{T}, x_proposal::AbstractArray) where T
     @assert size(x) == size(x_proposal)
     for i in 1:length(x)
-        @inbounds x_proposal[i] = x[i] + randn()
+        @inbounds x_proposal[i] = x[i] + T(randn()) # workaround because all types might not have randn
     end
     return
 end
@@ -68,7 +68,7 @@ function initial_state(method::SimulatedAnnealing, options, d, initial_x::Abstra
     SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), value(d), value(d))
 end
 
-function update_state!(nd, state::SimulatedAnnealingState{T}, method::SimulatedAnnealing) where T
+function update_state!(nd, state::SimulatedAnnealingState{Tx, T}, method::SimulatedAnnealing) where {Tx, T}
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)

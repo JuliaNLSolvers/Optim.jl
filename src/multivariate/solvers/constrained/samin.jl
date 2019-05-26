@@ -38,7 +38,7 @@ algorithm
  - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
  - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
 """
-@with_kw struct SAMIN{T}<:AbstractOptimizer
+@with_kw struct SAMIN{T}<:ZerothOrderOptimizer
     nt::Int = 5 # reduce temperature every nt*ns*dim(x_init) evaluations
     ns::Int = 5 # adjust bounds every ns*dim(x_init) evaluations
     rt::T = 0.9 # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
@@ -57,9 +57,14 @@ end
 Base.summary(::SAMIN) = "SAMIN"
 
 function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray{Tx}, method::SAMIN, options::Options = Options()) where Tx
+
+    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
+
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
+    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
 
     @unpack nt, ns, rt, neps, f_tol, x_tol, coverage_ok, verbosity = method
     verbose = verbosity > 0
@@ -74,7 +79,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
     xopt = copy(x)
-    f_old = value(d, x)
+    f_old = value!(d, x)
     fopt = copy(f_old) # give it something to compare to
     details = [f_calls(d) t fopt xopt']
     bounds = ub - lb
@@ -84,6 +89,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             error("samin: initial parameter %d out of bounds\n", i)
         end
     end
+
+    options.show_trace && print_header(method)
+    iteration = 0
+    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, time()-t0)
+
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     while (converge==0)
         # statistics to report at each temp change, set back to zero
@@ -100,38 +110,41 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                 # generate new point by taking last and adding a random value
                 # to each of elements, in turn
                 for h = 1:n
+                    iteration += 1
                     # new Sept 2011, if bounds are same, skip the search for that vbl.
                     # Allows restrictions without complicated programming
                     if (lb[h] != ub[h])
                         xp = copy(x)
                         xp[h] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[h]
-                        if((xp[h] < lb[h]) || (xp[h] > ub[h]))
+                        if (xp[h] < lb[h]) || (xp[h] > ub[h])
                             xp[h] = lb[h] + (ub[h] - lb[h]) * rand(Tx)
                             lnobds += 1
                         end
                         # Evaluate function at new point
-                        fp = value(d, xp)
+                        f_proposal = value(d, xp)
                         #  Accept the new point if the function value decreases
-                        if (fp <= f_old)
+                        if (f_proposal <= f_old)
                             x = copy(xp)
-                            f_old = copy(fp)
+                            f_old = f_proposal
                             nacc += 1 # total number of acceptances
                             nacp[h] += 1 # acceptances for this parameter
                             nup += 1
                             #  If lower than any other point, record as new optimum
-                            if(fp < fopt)
+                            if f_proposal < fopt
                                 xopt = copy(xp)
-                                fopt = copy(fp)
+                                fopt = f_proposal
+                                d.F = f_proposal
                                 nnew +=1
-                                details = [details; [f_calls(d) t fp xp']]
+                                details = [details; [f_calls(d) t f_proposal xp']]
                             end
                         # If the point is higher, use the Metropolis criteria to decide on
                         # acceptance or rejection.
                         else
-                            p = exp(-(fp - f_old) / t)
-                            if(rand(Tx) < p)
+                            p = exp(-(f_proposal - f_old) / t)
+                            if rand(Tx) < p
                                 x = copy(xp)
-                                f_old = copy(fp)
+                                f_old = copy(f_proposal)
+                                d.F = f_proposal
                                 nacc += 1
                                 nacp[h] += 1
                                 ndown += 1
@@ -139,44 +152,50 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                 nrej += 1
                             end
                         end
-                        # If options.iterations exceeded, terminate the algorithm
+                    end
 
-                        if f_calls(d) >= options.iterations
-                            if verbose
-                                println(hline)
-                                println("SAMIN results")
-                                println("NO CONVERGENCE: MAXEVALS exceeded")
-                                @printf("\n     Obj. value:  %16.5f\n\n", fopt)
-                                println("       parameter      search width")
-                                for i=1:n
-                                    @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
-                                end
-                                println(hline)
+                    if tracing
+                        # update trace; callbacks can stop routine early by returning true
+                        stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-t0)
+                    end
+
+                    # If options.iterations exceeded, terminate the algorithm
+                    if f_calls(d) >= options.iterations
+
+                        if verbose
+                            println(hline)
+                            println("SAMIN results")
+                            println("NO CONVERGENCE: MAXEVALS exceeded")
+                            @printf("\n     Obj. value:  %16.5f\n\n", fopt)
+                            println("       parameter      search width")
+                            for i=1:n
+                                @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                             end
-                            converge = 0
-
-                            # this should controlled by a convergence condition somewhere
-                            return MultivariateOptimizationResults(method,
-                                                                    x0,# initial_x,
-                                                                    xopt, #pick_best_x(f_incr_pick, state),
-                                                                    fopt, # pick_best_f(f_incr_pick, state, d),
-                                                                    f_calls(d), #iteration,
-                                                                    false, #iteration == options.iterations,
-                                                                    false, # x_converged,
-                                                                    0.0,#T(options.x_tol),
-                                                                    NaN,# x_abschange(state),
-                                                                    false,# f_converged,
-                                                                    0.0,#T(options.f_tol),
-                                                                    NaN,#f_abschange(d, state),
-                                                                    false,#g_converged,
-                                                                    0.0,#T(options.g_tol),
-                                                                    NaN,#g_residual(d),
-                                                                    false, #f_increased,
-                                                                    tr,
-                                                                    f_calls(d),
-                                                                    g_calls(d),
-                                                                    h_calls(d))
+                            println(hline)
                         end
+                        converge = 0
+
+                        # this should controlled by a convergence condition somewhere
+                        return MultivariateOptimizationResults(method,
+                                                                x0,# initial_x,
+                                                                xopt, #pick_best_x(f_incr_pick, state),
+                                                                fopt, # pick_best_f(f_incr_pick, state, d),
+                                                                f_calls(d), #iteration,
+                                                                false, #iteration == options.iterations,
+                                                                false, # x_converged,
+                                                                0.0,#T(options.x_tol),
+                                                                NaN,# x_abschange(state),
+                                                                false,# f_converged,
+                                                                0.0,#T(options.f_tol),
+                                                                NaN,#f_abschange(d, state),
+                                                                false,#g_converged,
+                                                                0.0,#T(options.g_tol),
+                                                                NaN,#g_residual(d),
+                                                                false, #f_increased,
+                                                                tr,
+                                                                f_calls(d),
+                                                                g_calls(d),
+                                                                h_calls(d))
                     end
                 end
             end
