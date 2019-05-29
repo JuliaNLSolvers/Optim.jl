@@ -181,7 +181,7 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # TODO: Make sure state.bgrad has been evaluated at initial_x
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
-    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_tol
+    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol
 end
 
 function optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::AbstractArray, method::ConstrainedOptimizer,
@@ -256,7 +256,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    T = typeof(options.f_tol)
+    T = typeof(options.f_reltol)
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
     return MultivariateOptimizationResults(method,
@@ -266,13 +266,17 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
-                                        T(options.x_tol),
+                                        T(options.x_abstol),
+                                        T(options.x_reltol),
                                         x_abschange(state),
+                                        x_relchange(state),
                                         f_converged,
-                                        T(options.f_tol),
+                                        T(options.f_abstol),
+                                        T(options.f_reltol),
                                         f_abschange(d, state),
+                                        f_relchange(d, state),
                                         g_converged,
-                                        T(options.g_tol),
+                                        T(options.g_abstol),
                                         g_residual(d),
                                         f_increased,
                                         tr,

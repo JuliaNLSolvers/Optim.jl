@@ -223,11 +223,6 @@ function update_h!(d, state, method::LBFGS)
     @inbounds state.rho[idx] = rho_iteration
 end
 
-function assess_convergence(state::LBFGSState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
-
 function trace!(tr, d, state, iteration, method::LBFGS, options, curr_time=time())
   common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

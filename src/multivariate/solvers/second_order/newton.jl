@@ -83,10 +83,6 @@ function update_state!(d, state::NewtonState, method::Newton)
     lssuccess == false # break on linesearch error
 end
 
-function assess_convergence(state::NewtonState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
 function trace!(tr, d, state, iteration, method::Newton, options, curr_time=time())
     dt = Dict()
     dt["time"] = curr_time

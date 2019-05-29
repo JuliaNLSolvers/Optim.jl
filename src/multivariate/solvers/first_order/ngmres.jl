@@ -141,7 +141,7 @@ mutable struct NGMRESState{P,Tx,Te,T,eTx} <: AbstractOptimizerState where P <: A
     xA::Vector{eTx}          # Container for accelerated step
     k::Int                   # Used for indexing where to put values in the Storage containers
     restart::Bool            # Restart flag
-    g_tol::T                 # Exit tolerance to be checked after nonlinear preconditioner apply
+    g_abstol::T                 # Exit tolerance to be checked after nonlinear preconditioner apply
     subspacealpha::Vector{T} # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
@@ -253,7 +253,7 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
                 vec(similar(initial_x)),  # xA
                 0,                        # iteration counter
                 false,                    # Restart flag
-                options.g_tol,            # Exit tolerance check after nonlinear preconditioner apply
+                options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply
                 Array{T}(undef, wmax),           # subspacealpha
                 @initial_linesearch()...)
 end
@@ -297,7 +297,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     gP = gradient(d)
     state.grnorm_xP = g_residual(gP)
 
-    if g_residual(gP) ≤ state.g_tol
+    if g_residual(gP) ≤ state.g_abstol
         return false # Exit on gradient norm convergence
     end
 
@@ -451,10 +451,10 @@ function trace!(tr, d, state, iteration, method::AbstractNGMRES, options, curr_t
             options.show_every,
             options.callback)
 end
-
-function assess_convergence(state::NGMRESState, d, options)
-    default_convergence_assessment(state, d, options)
-end
+#
+# function assess_convergence(state::NGMRESState, d, options::Options)
+#     default_convergence_assessment(state, d, options)
+# end
 
 function default_options(method::AbstractNGMRES)
     Dict(:allow_f_increases => true)

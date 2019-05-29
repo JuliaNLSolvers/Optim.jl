@@ -300,7 +300,7 @@ function optimize(
 
         results.x_converged, results.f_converged,
         results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
-                                                                         options.outer_x_tol, options.outer_f_tol, options.outer_g_tol)
+                                                                         options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
             break
@@ -308,9 +308,9 @@ function optimize(
     end
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
-            results.x_converged, results.x_tol, norm(x - xold),
-            results.f_converged, results.f_tol, f_abschange(minimum(results), fval0),
-            results.g_converged, results.g_tol, norm(g, Inf),
+            results.x_converged, results.x_abstol, results.x_reltol, norm(x - xold), norm(x - xold)/norm(x),
+            results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), fval0), f_relchange(minimum(results), fval0),
+            results.g_converged, results.g_abstol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls)
 end
