@@ -141,10 +141,6 @@ function update_h!(d, state, method::BFGS)
     end
 end
 
-function assess_convergence(state::BFGSState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
 function trace!(tr, d, state, iteration, method::BFGS, options, curr_time=time())
     dt = Dict()
     dt["time"] = curr_time

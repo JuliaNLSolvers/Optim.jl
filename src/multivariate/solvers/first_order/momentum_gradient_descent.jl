@@ -59,10 +59,10 @@ function update_state!(d, state::MomentumGradientDescentState, method::MomentumG
     lssuccess == false # break on linesearch error
 end
 
-function assess_convergence(state::MomentumGradientDescentState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
 function trace!(tr, d, state, iteration, method::MomentumGradientDescent, options, curr_time=time())
   common_trace!(tr, d, state, iteration, method, options, curr_time)
+end
+
+function default_options(method::MomentumGradientDescent)
+    Dict(:allow_f_increases => true)
 end

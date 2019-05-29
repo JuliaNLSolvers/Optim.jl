@@ -79,10 +79,6 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     lssuccess == false # break on linesearch error
 end
 
-function assess_convergence(state::GradientDescentState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
 function trace!(tr, d, state, iteration, method::GradientDescent, options, curr_time=time())
   common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

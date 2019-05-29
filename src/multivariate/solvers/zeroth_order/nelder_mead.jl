@@ -298,13 +298,13 @@ end
 pick_best_x(f_increased, state::NelderMeadState) = state.x
 pick_best_f(f_increased, state::NelderMeadState, d) = value(d)
 
-function assess_convergence(state::NelderMeadState, d, options)
-    g_converged = state.nm_x <= options.g_tol # Hijact g_converged for NM stopping criterior
+function assess_convergence(state::NelderMeadState, d, options::Options)
+    g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, g_converged, false
 end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
-    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_tol
+    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_abstol
 end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options, curr_time=time())

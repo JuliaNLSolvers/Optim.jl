@@ -84,22 +84,25 @@ f_increased(r::MultivariateOptimizationResults) = r.f_increased
 g_converged(r::OptimizationResults) = error("g_converged is not implemented for $(summary(r)).")
 g_converged(r::MultivariateOptimizationResults) = r.g_converged
 
+x_abstol(r::OptimizationResults) = error("x_abstol is not implemented for $(summary(r)).")
+x_reltol(r::OptimizationResults) = error("x_reltol is not implemented for $(summary(r)).")
 x_tol(r::OptimizationResults) = error("x_tol is not implemented for $(summary(r)).")
-x_tol(r::MultivariateOptimizationResults) = r.x_tol
+x_abstol(r::MultivariateOptimizationResults) = r.x_abstol
+x_reltol(r::MultivariateOptimizationResults) = r.x_reltol
+x_tol(r::MultivariateOptimizationResults) = r.x_abstol
 x_abschange(r::MultivariateOptimizationResults) = r.x_abschange
+x_relchange(r::MultivariateOptimizationResults) = r.x_relchange
+f_abstol(r::OptimizationResults) = error("f_abstol is not implemented for $(summary(r)).")
+f_reltol(r::OptimizationResults) = error("f_reltol is not implemented for $(summary(r)).")
 f_tol(r::OptimizationResults) = error("f_tol is not implemented for $(summary(r)).")
-f_tol(r::MultivariateOptimizationResults) = r.f_tol
+f_tol(r::MultivariateOptimizationResults) = r.f_reltol
+f_abstol(r::MultivariateOptimizationResults) = r.f_abstol
+f_reltol(r::MultivariateOptimizationResults) = r.f_reltol
 f_abschange(r::MultivariateOptimizationResults) = r.f_abschange
-@inline function f_relchange(r::MultivariateOptimizationResults)
-    fabs = f_abschange(r)
-    if fabs == zero(fabs)
-        return zero(fabs)
-    else
-        return fabs / r.minimum # TODO: wrong value if f_increased is true
-    end
-end
+f_relchange(r::MultivariateOptimizationResults) = r.f_relchange
+
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
-g_tol(r::MultivariateOptimizationResults) = r.g_tol
+g_tol(r::MultivariateOptimizationResults) = r.g_abstol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
 
 

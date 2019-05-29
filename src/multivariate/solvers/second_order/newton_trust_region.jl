@@ -337,7 +337,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     false
 end
 
-function assess_convergence(state::NewtonTrustRegionState, d, options)
+function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
     x_converged, f_converged, g_converged, converged, f_increased = false, false, false, false, false
     if state.rho > state.eta
         # Accept the point and check convergence
@@ -350,9 +350,9 @@ function assess_convergence(state::NewtonTrustRegionState, d, options)
                                        value(d),
                                        state.f_x_previous,
                                        gradient(d),
-                                       options.x_tol,
-                                       options.f_tol,
-                                       options.g_tol)
+                                       options.x_abstol,
+                                       options.f_reltol,
+                                       options.g_abstol)
     end
     x_converged, f_converged, g_converged, converged, f_increased
 end

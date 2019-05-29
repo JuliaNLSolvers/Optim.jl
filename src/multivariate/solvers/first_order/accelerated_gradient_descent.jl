@@ -73,11 +73,10 @@ function update_state!(d, state::AcceleratedGradientDescentState, method::Accele
     lssuccess == false # break on linesearch error
 end
 
-function assess_convergence(state::AcceleratedGradientDescentState, d, options)
-  default_convergence_assessment(state, d, options)
-end
-
-
 function trace!(tr, d, state, iteration, method::AcceleratedGradientDescent, options, curr_time=time())
   common_trace!(tr, d, state, iteration, method, options, curr_time)
+end
+
+function default_options(method::AcceleratedGradientDescent)
+    Dict(:allow_f_increases => true)
 end

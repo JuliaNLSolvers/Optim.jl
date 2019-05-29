@@ -19,7 +19,6 @@ KrylovTrustRegion(; initial_radius::Real = 1.0,
 
 update_h!(d, state, method::KrylovTrustRegion) = nothing
 
-
 # TODO: support x::Array{T,N} et al.?
 mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     x::Vector{T}
@@ -174,26 +173,25 @@ function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrust
     end
 end
 
-
-function assess_convergence(state::KrylovTrustRegionState, d, options)
+function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     if !state.accept_step
-        return state.radius < options.x_tol, false, false, false, false
+        return state.radius < options.x_abstol, false, false, false, false
     end
 
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
 
-    if norm(state.s, Inf) < options.x_tol
+    if norm(state.s, Inf) < options.x_abstol
         x_converged = true
     end
 
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if abs(state.f_diff) < max(options.f_tol * (abs(value(d)) + options.f_tol), eps(abs(value(d))+abs(state.f_x_previous)))
+    if abs(state.f_diff) < max(options.f_reltol * (abs(value(d)) + options.f_reltol), eps(abs(value(d))+abs(state.f_x_previous)))
         f_converged = true
     end
 
-    if norm(gradient(d), Inf) < options.g_tol
+    if norm(gradient(d), Inf) < options.g_abstol
         g_converged = true
     end
 

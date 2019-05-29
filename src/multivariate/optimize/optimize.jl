@@ -23,7 +23,7 @@ after_while!(d, state, method, options) = nothing
 
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
-    norm(gradient(d), Inf) < options.g_tol
+    norm(gradient(d), Inf) < options.g_abstol
 end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
@@ -98,13 +98,17 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
-                                        Tf(options.x_tol),
+                                        Tf(options.x_abstol),
+                                        Tf(options.x_reltol),
                                         x_abschange(state),
+                                        x_relchange(state),
                                         f_converged,
-                                        Tf(options.f_tol),
+                                        Tf(options.f_reltol),
+                                        Tf(options.f_abstol),
                                         f_abschange(d, state),
+                                        f_relchange(d, state),
                                         g_converged,
-                                        Tf(options.g_tol),
+                                        Tf(options.g_abstol),
                                         g_residual(d),
                                         f_increased,
                                         tr,
