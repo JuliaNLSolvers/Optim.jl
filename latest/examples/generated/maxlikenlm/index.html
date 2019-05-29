@@ -136,24 +136,28 @@ end
 <pre><code class="julia">opt = optimize(func, ones(nvar+1))
 </code></pre>
 
-<pre><code>Results of Optimization Algorithm
- * Algorithm: Newton's Method
- * Starting Point: [1.0,1.0,1.0]
- * Minimizer: [3.002788633849947,2.964549617572727, ...]
- * Minimum: 3.851229e+02
- * Iterations: 7
- * Convergence: true
-   * |x - x'| ≤ 0.0e+00: false
-     |x - x'| = 2.62e-08
-   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x')| = 1.33e-15 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true
-     |g(x)| = 3.41e-13
-   * Stopped by an increasing objective: false
-   * Reached Maximum Number of Iterations: false
- * Objective Calls: 31
- * Gradient Calls: 31
- * Hessian Calls: 7
+<pre><code> * Status: success
+
+ * Candidate solution
+    Minimizer: [3.00e+00, 2.96e+00, -6.49e-01]
+    Minimum:   3.851229e+02
+
+ * Found with
+    Algorithm:     Newton's Method
+    Initial Point: [1.00e+00, 1.00e+00, 1.00e+00]
+
+ * Convergence measures
+    |x - x'|               = 2.62e-08 ≰ 0.0e+00
+    |x - x'|/|x'|          = 8.72e-09 ≰ 0.0e+00
+    |f(x) - f(x')|         = 5.12e-13 ≰ 0.0e+00
+    |f(x) - f(x')|/|f(x')| = 1.33e-15 ≰ 0.0e+00
+    |g(x)|                 = 3.41e-13 ≤ 1.0e-08
+
+ * Work counters
+    Iterations:    7
+    f(x) calls:    31
+    ∇f(x) calls:   31
+    ∇²f(x) calls:  7
 </code></pre>
 
 <p>The first input to the command is the function we wish to optimize and the second input are the starting values.</p>

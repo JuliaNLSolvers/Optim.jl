@@ -267,23 +267,27 @@ dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, 
 res = optimize(df, dfc, β0, IPNewton())
 </code></pre>
 
-<pre><code>Results of Optimization Algorithm
- * Algorithm: Interior Point Newton
- * Starting Point: [0.0,0.0,0.0,0.0,0.0]
- * Minimizer: [1.4801515639961125,0.88023072153977, ...]
- * Minimum: 1.302751e+03
- * Iterations: 26
- * Convergence: true
-   * |x - x'| ≤ 0.0e+00: false
-     |x - x'| = 2.67e-10
-   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: true
-     |f(x) - f(x')| = 0.00e+00 |f(x)|
-   * |g(x)| ≤ 1.0e-08: false
-     |g(x)| = 4.67e-06
-   * Stopped by an increasing objective: false
-   * Reached Maximum Number of Iterations: false
- * Objective Calls: 61
- * Gradient Calls: 61
+<pre><code> * Status: success
+
+ * Candidate solution
+    Minimizer: [1.48e+00, 8.80e-01, -9.81e-01,  ...]
+    Minimum:   1.302751e+03
+
+ * Found with
+    Algorithm:     Interior Point Newton
+    Initial Point: [0.00e+00, 0.00e+00, 0.00e+00,  ...]
+
+ * Convergence measures
+    |x - x'|               = 2.67e-10 ≰ 0.0e+00
+    |x - x'|/|x'|          = 1.80e-10 ≰ 0.0e+00
+    |f(x) - f(x')|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x')|/|f(x')| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 4.67e-06 ≰ 1.0e-08
+
+ * Work counters
+    Iterations:    26
+    f(x) calls:    61
+    ∇f(x) calls:   61
 </code></pre>
 
 <p>Compare the estimate to the truth</p>
