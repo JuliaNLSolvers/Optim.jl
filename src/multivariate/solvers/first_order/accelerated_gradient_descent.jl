@@ -76,3 +76,7 @@ end
 function trace!(tr, d, state, iteration, method::AcceleratedGradientDescent, options, curr_time=time())
   common_trace!(tr, d, state, iteration, method, options, curr_time)
 end
+
+function default_options(method::AcceleratedGradientDescent)
+    Dict(:allow_f_increases => true)
+end

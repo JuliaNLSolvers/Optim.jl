@@ -215,44 +215,52 @@ end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
     take = Iterators.take
+    failure_string = "failure"
+    if iteration_limit_reached(r)
+        failure_string *= " (reached maximum number of iterations)"
+    end
+    if f_increased(r) && !iteration_limit_reached(r)
+        failure_string *= " (objective increased between iterations)"
+    end
 
-    @printf io " * Solution\n"
-    if length(join(minimizer(r), ",")) < 40
-        @printf io "    Minimizer:     [%s]\n" join(minimizer(r), ",")
-    else
-        @printf io "    Minimizer:     [%s, ...]\n" join(take(minimizer(r), 2), ",")
+    @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string
+
+    @printf io " * Candidate solution\n"
+    nx = length(minimizer(r))
+    str_x_elements = [@sprintf "%.2e" _x for _x in take(minimizer(r), min(nx, 3))]
+    if nx >= 4
+        push!(str_x_elements, " ...")
     end
-    @printf io "    Minimum:       %e\n" minimum(r)
-    @printf io "    Converged:     %s\n" converged(r)
-    if !converged(r)
-        @printf io "    Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
-    end
+
+    @printf io "    Minimizer: [%s]\n" join(str_x_elements, ", ")
+
+    @printf io "    Minimum:   %e\n" minimum(r)
     @printf io "\n"
 
     @printf io " * Found with\n"
     @printf io "    Algorithm:     %s\n" summary(r)
-    if length(join(initial_state(r), ",")) < 40
-        @printf io "    Initial Point: [%s]\n" join(initial_state(r), ",")
-    else
-        @printf io "    Initial Point: [%s, ...]\n" join(take(initial_state(r),
-2), ",")
+    nx = length(initial_state(r))
+    str_x_elements = [@sprintf "%.2e" _x for _x in take(initial_state(r), min(nx, 3))]
+    if nx >= 4
+        push!(str_x_elements, " ...")
     end
+
+    @printf io "    Initial Point: [%s]\n" join(str_x_elements, ", ")
+
     @printf io "\n"
     @printf io " * Convergence measures\n"
     if isa(r.method, NelderMead)
-        @printf io "    √(Σ(yᵢ-ȳ)²)/n < %.1e: %s (g_tol)\n" g_tol(r) g_converged(r)
+        @printf io "    √(Σ(yᵢ-ȳ)²)/n %s %.1e\n" g_converged(r) ? "≤" : "≰" g_tol(r)
     else
-        @printf io "    |x - x'|      = %.2e ≤ %.1e (x_abstol)\n"  x_abschange(r) x_abstol(r)
-        @printf io "    |x - x'|/|x'| = %.2e ≤ %.1e (x_reltol)\n"  x_relchange(r) x_reltol(r)
-        @printf io "\n"
-        @printf io "    |f(x) - f(x')|         = %.2e ≤ %.1e (f_abstol)\n"  f_abschange(r) f_abstol(r)
-        @printf io "    |f(x) - f(x')|/|f(x')| = %.2e ≤ %.1e (f_reltol)\n"  f_relchange(r) f_reltol(r)
-        @printf io "\n"
-        @printf io "    |g(x)| = %.2e ≤ %.1e (g_tol)\n" g_residual(r) g_tol(r)
-        @printf io "\n"
-        @printf io " * Stopped by an increasing objective: %s\n" (f_increased(r) && !iteration_limit_reached(r))
+        @printf io "    |x - x'|               = %.2e %s %.1e\n"  x_abschange(r) x_abschange(r)<=x_abstol(r) ? "≤" : "≰" x_abstol(r)
+        @printf io "    |x - x'|/|x'|          = %.2e %s %.1e\n"  x_relchange(r) x_relchange(r)<=x_reltol(r) ? "≤" : "≰" x_reltol(r)
+        @printf io "    |f(x) - f(x')|         = %.2e %s %.1e\n"  f_abschange(r) f_abschange(r)<=f_abstol(r) ? "≤" : "≰" f_abstol(r)
+        @printf io "    |f(x) - f(x')|/|f(x')| = %.2e %s %.1e\n"  f_relchange(r) f_relchange(r)<=f_reltol(r) ? "≤" : "≰" f_reltol(r)
+        @printf io "    |g(x)|                 = %.2e %s %.1e\n" g_residual(r) g_residual(r)<=g_tol(r) ?  "≤" : "≰" g_tol(r)
     end
+
     @printf io "\n"
+
     @printf io " * Work counters\n"
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
@@ -264,6 +272,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     end
     return
 end
+
 
 function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimizationResults)
     a.iterations += iterations(b)
