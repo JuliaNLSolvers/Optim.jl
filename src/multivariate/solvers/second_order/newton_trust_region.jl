@@ -286,13 +286,12 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     # Maintain a record of previous position
     copyto!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
+    copyto!(state.g_previous, gradient(d))
 
     # Update current position
     state.x .+= state.s
 
     # Update the function value and gradient
-    copyto!(state.g_previous, gradient(d))
-    state.f_x_previous = value(d)
     value_gradient!(d, state.x)
 
     # Update the trust region size based on the discrepancy between
