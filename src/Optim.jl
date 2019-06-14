@@ -86,6 +86,7 @@ export optimize, maximize, # main function
        ### Acceleration methods
        AcceleratedGradientDescent,
        MomentumGradientDescent,
+       RMSprop,
 
        ### Nonlinear GMRES
        NGMRES,
@@ -144,6 +145,7 @@ include("multivariate/solvers/first_order/l_bfgs.jl")
 ## Acceleration methods
 include("multivariate/solvers/first_order/accelerated_gradient_descent.jl")
 include("multivariate/solvers/first_order/momentum_gradient_descent.jl")
+include("multivariate/solvers/first_order/rmsprop.jl")
 
 ## Conjugate gradient
 include("multivariate/solvers/first_order/cg.jl")
