@@ -5,11 +5,11 @@ Univariate and multivariate optimization in Julia.
 
 Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
 
-| **Documentation**  | **PackageEvaluator** | **Build Status** | **Social** | **Reference to cite** |
-|:-:|:-:|:-:|:-:|:-:|
-| [![][docs-stable-img]][docs-stable-url]  | [![][pkg-0.4-img]][pkg-0.4-url]| [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
-|  | [![][pkg-0.5-img]][pkg-0.5-url]|[![Build Status][winbuild-img]][winbuild-url] |  |  |
-| |[![][pkg-0.6-img]][pkg-0.6-url] | [![Codecov branch][cov-img]][cov-url]  || |
+| **Documentation**  | **Build Status** | **Social** | **Reference to cite** |
+|:-:|:-:|:-:|:-:|
+| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
+|  |[![Build Status][winbuild-img]][winbuild-url] |  |  |
+| |[![Codecov branch][cov-img]][cov-url]  || |
 
 # Optimization
 
