@@ -175,18 +175,21 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                         end
                         converge = 0
 
-                        # this should controlled by a convergence condition somewhere
                         return MultivariateOptimizationResults(method,
                                                                 x0,# initial_x,
                                                                 xopt, #pick_best_x(f_incr_pick, state),
                                                                 fopt, # pick_best_f(f_incr_pick, state, d),
                                                                 f_calls(d), #iteration,
-                                                                false, #iteration == options.iterations,
+                                                                f_calls(d) >= options.iterations, #iteration == options.iterations,
                                                                 false, # x_converged,
                                                                 0.0,#T(options.x_tol),
+                                                                0.0,#T(options.x_tol),
+                                                                NaN,# x_abschange(state),
                                                                 NaN,# x_abschange(state),
                                                                 false,# f_converged,
                                                                 0.0,#T(options.f_tol),
+                                                                0.0,#T(options.f_tol),
+                                                                NaN,#f_abschange(d, state),
                                                                 NaN,#f_abschange(d, state),
                                                                 false,#g_converged,
                                                                 0.0,#T(options.g_tol),
