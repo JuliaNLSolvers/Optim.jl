@@ -19,13 +19,11 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 julia = "1"
 
 [extras]
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
-Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 
 [targets]
-test = ["Test", "Printf", "LinearAlgebra", "SparseArrays", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
+test = ["Test", "SparseArrays", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
