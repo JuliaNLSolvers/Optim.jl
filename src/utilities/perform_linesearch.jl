@@ -57,7 +57,9 @@ function perform_linesearch!(state, method, d)
     catch ex
         if isa(ex, LineSearches.LineSearchException)
             state.alpha = ex.alpha
-            @warn("Linesearch failed, using alpha = $(state.alpha) and exiting optimization.\nThe linesearch exited with message:\n$(ex.message)")
+            # We shouldn't warn here, we should just carry it to the output
+            # @warn("Linesearch failed, using alpha = $(state.alpha) and
+            # exiting optimization.\nThe linesearch exited with message:\n$(ex.message)")
             return false # lssuccess = false
         else
             rethrow(ex)

@@ -4,6 +4,6 @@
     for optimizer in (ConjugateGradient, GradientDescent, LBFGS, BFGS, Newton, AcceleratedGradientDescent, MomentumGradientDescent)
         debug_printing && println("Testing $(string(optimizer))")
         prob = MultivariateProblems.UnconstrainedProblems.examples["Exponential"]
-        @test_logs (:warn, r"Linesearch failed") optimize(MVP.objective(prob), prob.initial_x, optimizer(alphaguess = LineSearches.InitialPrevious(), linesearch = hz))
+        @test optimize(MVP.objective(prob), prob.initial_x, optimizer(alphaguess = LineSearches.InitialPrevious(), linesearch = hz)).ls_success == false
     end
 end
