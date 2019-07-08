@@ -163,7 +163,7 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
@@ -188,6 +188,7 @@ mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M} <: Optimizat
     f_calls::Int
     g_calls::Int
     h_calls::Int
+    ls_success::Tls
 end
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
@@ -222,7 +223,9 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if f_increased(r) && !iteration_limit_reached(r)
         failure_string *= " (objective increased between iterations)"
     end
-
+    if !r.ls_success
+        failure_string *= " (line search failed)"
+    end
     @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string
 
     @printf io " * Candidate solution\n"

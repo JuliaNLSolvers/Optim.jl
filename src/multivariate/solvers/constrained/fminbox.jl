@@ -312,5 +312,5 @@ function optimize(
             results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), fval0), f_relchange(minimum(results), fval0),
             results.g_converged, results.g_abstol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
-            results.g_calls, results.h_calls)
+            results.g_calls, results.h_calls, nothing)
 end

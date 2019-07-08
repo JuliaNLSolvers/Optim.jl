@@ -198,7 +198,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 tr,
                                                                 f_calls(d),
                                                                 g_calls(d),
-                                                                h_calls(d))
+                                                                h_calls(d),
+                                                                true)
                     end
                 end
             end
@@ -334,7 +335,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             tr,
                                             f_calls(d),
                                             g_calls(d),
-                                            h_calls(d))
+                                            h_calls(d),
+                                            true)
 
 end
 
