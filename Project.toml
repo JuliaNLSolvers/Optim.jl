@@ -37,4 +37,4 @@ Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SparseArrays", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
+test = ["Test", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
