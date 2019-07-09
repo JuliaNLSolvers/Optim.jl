@@ -282,7 +282,8 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         tr,
                                         f_calls(d),
                                         g_calls(d),
-                                        h_calls(d))
+                                        h_calls(d),
+                                        nothing)
 end
 
 # Fallbacks (for methods that don't need these)

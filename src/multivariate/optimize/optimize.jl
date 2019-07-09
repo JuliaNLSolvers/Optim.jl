@@ -50,11 +50,14 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     options.show_trace && print_header(method)
     trace!(tr, d, state, iteration, method, options, time()-t0)
-
+    ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update_state!(d, state, method) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
+        ls_failed = update_state!(d, state, method)
+        if !ls_success
+            break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
+        end
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
 
         x_converged, f_converged,
@@ -91,7 +94,7 @@ function optimize(d::D, initial_x::Tx, method::M,
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
-    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr)}(method,
+    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),
@@ -114,5 +117,6 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         tr,
                                         f_calls(d),
                                         g_calls(d),
-                                        h_calls(d))
+                                        h_calls(d),
+                                        !ls_success)
 end
