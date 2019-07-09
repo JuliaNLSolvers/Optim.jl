@@ -223,7 +223,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if f_increased(r) && !iteration_limit_reached(r)
         failure_string *= " (objective increased between iterations)"
     end
-    if !r.ls_success
+    if isa(r.ls_success, Bool) && !r.ls_success
         failure_string *= " (line search failed)"
     end
     @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string

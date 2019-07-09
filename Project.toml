@@ -14,17 +14,27 @@ NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 PositiveFactorizations = "85a6dd25-e78a-55b7-8502-1745935b8125"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
+Calculus = "0.4"
+DiffEqDiffTools = "0.12, 0.13"
+FillArrays = "0.6.2"
+ForwardDiff = "0.10.3"
+LineSearches = "7.0.1"
+NLSolversBase = "7.3.1"
+NaNMath = "0.3.2"
+Parameters = "0.10"
+PositiveFactorizations = "0.2.2"
 julia = "1"
 
 [extras]
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 
 [targets]
-test = ["Test", "SparseArrays", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
+test = ["Test", "OptimTestProblems", "Suppressor", "RecursiveArrayTools"]
