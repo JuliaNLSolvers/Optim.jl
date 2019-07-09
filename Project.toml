@@ -17,7 +17,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Calculus = "0.4.1"
+Calculus = "0.4"
 DiffEqDiffTools = "0.12"
 FillArrays = "0.6.2"
 ForwardDiff = "0.10.3"
