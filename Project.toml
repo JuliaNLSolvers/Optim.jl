@@ -18,6 +18,15 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 julia = "1"
+Calculus = "0.3.1"
+DiffEqDiffTools = "0.12"
+FillArrays = "0.6.2"
+ForwardDiff = "0.10.3"
+LineSearces = "7.0.1"
+NLSolversBase = "7.3.1"
+NaNMath = "0.3.2"
+Parameters = "0.10"
+PositiveFactorizations = "0.2.2"
 
 [extras]
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
