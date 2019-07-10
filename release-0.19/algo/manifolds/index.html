@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Manifolds - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Manifold optimization", url: "#_top", children: [
+              {title: "Howto", url: "#howto" },
+              {title: "Supported solvers and manifolds", url: "#supported-solvers-and-manifolds" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../complex/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../complex/" class="btn btn-xs btn-link">
+        Complex optimization
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Manifold-optimization-1'></a></p>
+<h1 id="manifold-optimization">Manifold optimization</h1>
+<p>Optim.jl supports the minimization of functions defined on Riemannian manifolds, i.e. with simple constraints such as normalization and orthogonality. The basic idea of such algorithms is to project back ("retract") each iterate of an unconstrained minimization method onto the manifold. This is used by passing a <code>manifold</code> keyword argument to the optimizer.</p>
+<p><a id='Howto-1'></a></p>
+<h2 id="howto">Howto</h2>
+<p>Here is a simple test case where we minimize the Rayleigh quotient <code>&lt;x, A x&gt;</code> of a symmetric matrix <code>A</code> under the constraint <code>||x|| = 1</code>, finding an eigenvector associated with the lowest eigenvalue of <code>A</code>.</p>
+<pre><code class="julia">n = 10
+A = Diagonal(range(1, stop=2, length=n))
+f(x) = dot(x,A*x)/2
+g(x) = A*x
+g!(stor,x) = copyto!(stor,g(x))
+x0 = randn(n)
+
+manif = Optim.Sphere()
+Optim.optimize(f, g!, x0, Optim.ConjugateGradient(manifold=manif))
+</code></pre>
+
+<p><a id='Supported-solvers-and-manifolds-1'></a></p>
+<h2 id="supported-solvers-and-manifolds">Supported solvers and manifolds</h2>
+<p>All first-order optimization methods are supported.</p>
+<p>The following manifolds are currently supported:</p>
+<ul>
+<li>Flat: Euclidean space, default. Standard unconstrained optimization.</li>
+<li>Sphere: spherical constraint <code>||x|| = 1</code></li>
+<li>Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. <code>X'*X = I</code></li>
+</ul>
+<p>The following meta-manifolds construct manifolds out of pre-existing ones:</p>
+<ul>
+<li>PowerManifold: identical copies of a specified manifold</li>
+<li>ProductManifold: product of two (potentially different) manifolds</li>
+</ul>
+<p>See <code>test/multivariate/manifolds.jl</code> for usage examples.</p>
+<p>Implementing new manifolds is as simple as adding methods <code>project_tangent!(M::YourManifold,x)</code> and <code>retract!(M::YourManifold,g,x)</code>. If you implement another manifold or optimization method, please contribute a PR!</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. &amp; Appl., 20(2), 303–353</p>
+<p>Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008</p>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../user/tipsandtricks/" class="btn btn-xs btn-link">
+        Tips and tricks
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../complex/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../complex/" class="btn btn-xs btn-link">
+        Complex optimization
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/manifolds.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

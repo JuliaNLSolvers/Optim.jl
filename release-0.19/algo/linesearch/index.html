@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Linesearch - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Line search", url: "#_top", children: [
+              {title: "Description", url: "#description" },
+              {title: "Example", url: "#example" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../user/algochoice/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../user/algochoice/" class="btn btn-xs btn-link">
+        Algorithm choice
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../user/config/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../user/config/" class="btn btn-xs btn-link">
+        Configurable Options
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Line-search-1'></a></p>
+<h1 id="line-search">Line search</h1>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>The line search functionality has been moved to <a href="https://github.com/JuliaNLSolvers/LineSearches.jl">LineSearches.jl</a>.</p>
+<p>Line search is used to decide the step length along the direction computed by an optimization algorithm.</p>
+<p>The following <code>Optim</code> algorithms use line search:</p>
+<ul>
+<li>Accelerated Gradient Descent</li>
+<li>(L-)BFGS</li>
+<li>Conjugate Gradient</li>
+<li>Gradient Descent</li>
+<li>Momentum Gradient Descent</li>
+<li>Newton</li>
+</ul>
+<p>By default <code>Optim</code> calls the line search algorithm <code>HagerZhang()</code> provided by <code>LineSearches</code>. Different line search algorithms can be assigned with the <code>linesearch</code> keyword argument to the given algorithm.</p>
+<p><code>LineSearches</code> also allows the user to decide how the initial step length for the line search algorithm is chosen. This is set with the <code>alphaguess</code> keyword argument for the <code>Optim</code> algorithm. The default procedure varies.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>This example compares two different line search algorithms on the Rosenbrock problem.</p>
+<p>First, run <code>Newton</code> with the default line search algorithm:</p>
+<pre><code class="julia">using Optim, LineSearches
+prob = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
+
+algo_hz = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.HagerZhang())
+res_hz = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_hz)
+</code></pre>
+
+<p>This gives the result</p>
+<pre><code class="julia"> * Algorithm: Newton's Method
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999999999994,0.9999999999999989]
+ * Minimum: 3.081488e-31
+ * Iterations: 14
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.06e-09
+   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x')| = 2.94e+13 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.11e-15
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 44
+ * Gradient Calls: 44
+ * Hessian Calls: 14
+</code></pre>
+
+<p>Now we can try <code>Newton</code> with the More-Thuente line search:</p>
+<pre><code class="julia">algo_mt = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.MoreThuente())
+res_mt = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_mt)
+</code></pre>
+
+<p>This gives the following result, reducing the number of function and gradient calls:</p>
+<pre><code class="julia">Results of Optimization Algorithm
+ * Algorithm: Newton's Method
+ * Starting Point: [0.0,0.0]
+ * Minimizer: [0.9999999999999992,0.999999999999998]
+ * Minimum: 2.032549e-29
+ * Iterations: 14
+ * Convergence: true
+   * |x - x'| ≤ 0.0e+00: false
+     |x - x'| = 3.67e-08
+   * |f(x) - f(x')| ≤ 0.0e00 |f(x)|: false
+     |f(x) - f(x')| = 1.66e+13 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.76e-13
+   * stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 17
+ * Gradient Calls: 17
+ * Hessian Calls: 14
+</code></pre>
+
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../user/algochoice/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../user/algochoice/" class="btn btn-xs btn-link">
+        Algorithm choice
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../../user/config/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../../user/config/" class="btn btn-xs btn-link">
+        Configurable Options
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/linesearch.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

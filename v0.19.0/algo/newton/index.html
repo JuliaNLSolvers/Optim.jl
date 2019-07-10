@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Newton - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Newton's Method", url: "#_top", children: [
+              {title: "Constructor", url: "#constructor" },
+              {title: "Description", url: "#description" },
+              {title: "Example", url: "#example" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../newton_trust_region/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../ngmres/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../ngmres/" class="btn btn-xs btn-link">
+        Acceleration
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='Newton's-Method-1'></a></p>
+<h1 id="newtons-method">Newton's Method</h1>
+<p><a id='Constructor-1'></a></p>
+<h2 id="constructor">Constructor</h2>
+<pre><code class="julia">Newton(; alphaguess = LineSearches.InitialStatic(),
+         linesearch = LineSearches.HagerZhang())
+</code></pre>
+
+<p>The constructor takes two keywords:</p>
+<ul>
+<li><code>linesearch = a(d, x, p, x_new, g_new, phi0, dphi0, c)</code>, a function performing line search, see the line search section.</li>
+<li><code>alphaguess = a(state, dphi0, d)</code>, a function for setting the initial guess for the line search algorithm, see the line search section.</li>
+</ul>
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>Newton's method for optimization has a long history, and is in some sense the gold standard in unconstrained optimization of smooth functions, at least from a theoretical viewpoint. The main benefit is that it has a quadratic rate of convergence near a local optimum. The main disadvantage is that the user has to provide a Hessian. This can be difficult, complicated, or simply annoying. It can also be computationally expensive to calculate it.</p>
+<p>Newton's method for optimization consists of applying Newton's method for solving systems of equations, where the equations are the first order conditions, saying that the gradient should equal the zero vector.</p>
+<p>
+<script type="math/tex; mode=display">
+\nabla f(x) = 0
+</script>
+</p>
+<p>A second order Taylor expansion of the left-hand side leads to the iterative scheme</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - H(x_n)^{-1}\nabla f(x_n)
+</script>
+</p>
+<p>where the inverse is not calculated directly, but the step size is instead calculated by solving</p>
+<p>
+<script type="math/tex; mode=display">
+H(x) \textbf{s} = \nabla f(x_n).
+</script>
+</p>
+<p>This is equivalent to minimizing a quadratic model, $m_k$ around the current $x_n$</p>
+<p>
+<script type="math/tex; mode=display">
+m_k(s) = f(x_n) + \nabla f(x_n)^\top \textbf{s} + \frac{1}{2} \textbf{s}^\top H(x_n) \textbf{s}
+</script>
+</p>
+<p>For functions where $H(x_n)$ is difficult, or computationally expensive to obtain, we might replace the Hessian with another positive definite matrix that approximates it. Such methods are called Quasi-Newton methods; see (L-)BFGS and Gradient Descent.</p>
+<p>In a sufficiently small neighborhood around the minimizer, Newton's method has quadratic convergence, but globally it might have slower convergence, or it might even diverge. To ensure convergence, a line search is performed for each $\textbf{s}$. This amounts to replacing the step formula above with</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - \alpha \textbf{s}
+</script>
+</p>
+<p>and finding a scalar $\alpha$ such that we get sufficient descent; see the line search section for more information.</p>
+<p>Additionally, if the function is locally concave, the step taken in the formulas above will go in a direction of ascent,  as the Hessian will not be positive (semi)definite. To avoid this, we use a specialized method to calculate the step direction. If the Hessian is positive semidefinite then the method used is standard, but if it is not, a correction is made using the functionality in <a href="https://github.com/timholy/PositiveFactorizations.jl">PositiveFactorizations.jl</a>.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p>show the example from the issue</p>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+
+  <br>
+    
+
+    
+    
+      
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../newton_trust_region/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../newton_trust_region/" class="btn btn-xs btn-link">
+        Newton with Trust Region
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../ngmres/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../ngmres/" class="btn btn-xs btn-link">
+        Acceleration
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/newton.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
