@@ -20,7 +20,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
 Calculus = "0.4"
-DiffEqDiffTools = "0.12, 0.13"
+DiffEqDiffTools = "0.14"
 FillArrays = "0.6.2"
 ForwardDiff = "0.10.3"
 LineSearches = "7.0.1"
