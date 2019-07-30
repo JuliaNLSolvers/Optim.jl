@@ -19,7 +19,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [compat]
-Calculus = "0.4"
+Calculus = "≥ 0.4"
 DiffEqDiffTools = "≥ 0.12"
 FillArrays = "0.6.2"
 ForwardDiff = "0.10.3"
