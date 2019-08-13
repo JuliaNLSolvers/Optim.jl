@@ -448,7 +448,7 @@ end
 
 function limit_X!(X, lower, upper, n_particles, n)
     # limit X values to boundaries
-    for i in 1:n_particles
+    Threads.@threads for i in 1:n_particles
         for j in 1:n
             if X[j, i] < lower[j]
               	X[j, i] = lower[j]
@@ -465,7 +465,7 @@ function compute_cost!(f,
                        X::Matrix,
                        score::Vector)
 
-    for i in 1:n_particles
+    Threads.@threads for i in 1:n_particles
         score[i] = value(f, X[:, i])
     end
     nothing
