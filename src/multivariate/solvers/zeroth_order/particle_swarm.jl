@@ -2,6 +2,7 @@ struct ParticleSwarm{T} <: ZerothOrderOptimizer
     lower::Vector{T}
     upper::Vector{T}
     n_particles::Int
+    threaded::Bool
 end
 
 """
@@ -10,13 +11,15 @@ end
 ```julia
 ParticleSwarm(; lower = [],
                 upper = [],
-                n_particles = 0)
+                n_particles = 0,
+                threaded = false)
 ```
 
 The constructor takes 3 keywords:
 * `lower = []`, a vector of lower bounds, unbounded below if empty or `Inf`'s
 * `upper = []`, a vector of upper bounds, unbounded above if empty or `Inf`'s
 * `n_particles = 0`, the number of particles in the swarm, defaults to least three
+* `threaded = false`, multi-threading is disabled by default
 
 ## Description
 The Particle Swarm implementation in Optim.jl is the so-called Adaptive Particle
@@ -27,10 +30,13 @@ particle and move it away from its (potentially and probably) local optimum, to
 improve the ability to find a global optimum. Of course, this comes a the cost
 of slower convergence, but hopefully converges to the global optimum as a result.
 
+Multi-threaded objective function evalution can be enabled by setting `threaded=true`,
+provided Julia was started with multiple threads.
+
 ## References
 - [1] Zhan, Zhang, and Chung. Adaptive particle swarm optimization, IEEE Transactions on Systems, Man, and Cybernetics, Part B: CyberneticsVolume 39, Issue 6 (2009): 1362-1381
 """
-ParticleSwarm(; lower = [], upper = [], n_particles = 0) = ParticleSwarm(lower, upper, n_particles)
+ParticleSwarm(; lower = [], upper = [], n_particles = 0, threaded = false) = ParticleSwarm(lower, upper, n_particles, threaded)
 
 Base.summary(::ParticleSwarm) = "Particle Swarm"
 
@@ -171,7 +177,11 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     if state.limit_search_space
         limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
     end
-    compute_cost!(f, state.n_particles, state.X, state.score)
+    if method.threaded
+        compute_cost_threaded!(f, state.n_particles, state.X, state.score)
+    else
+        compute_cost!(f, state.n_particles, state.X, state.score)
+    end
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
@@ -448,7 +458,7 @@ end
 
 function limit_X!(X, lower, upper, n_particles, n)
     # limit X values to boundaries
-    Threads.@threads for i in 1:n_particles
+    for i in 1:n_particles
         for j in 1:n
             if X[j, i] < lower[j]
               	X[j, i] = lower[j]
@@ -464,6 +474,17 @@ function compute_cost!(f,
                        n_particles::Int,
                        X::Matrix,
                        score::Vector)
+
+    for i in 1:n_particles
+        score[i] = value(f, X[:, i])
+    end
+    nothing
+end
+
+function compute_cost_threaded!(f,
+                        n_particles::Int,
+                        X::Matrix,
+                        score::Vector)
 
     Threads.@threads for i in 1:n_particles
         score[i] = value(f, X[:, i])
