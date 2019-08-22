@@ -118,3 +118,9 @@ rel_tol(r::OptimizationResults) = error("rel_tol is not implemented for $(summar
 rel_tol(r::UnivariateOptimizationResults) = r.rel_tol
 abs_tol(r::OptimizationResults) = error("abs_tol is not implemented for $(summary(r)).")
 abs_tol(r::UnivariateOptimizationResults) = r.abs_tol
+
+time_limit(r::MultivariateOptimizationResults) = r.time_limit
+time_run(  r::MultivariateOptimizationResults) = r.time_run
+
+time_limit(r::OptimizationResults) = error("time_limit is not implemented for $(summary(r)).")
+time_run(  r::OptimizationResults) = error("time_run is not implemented for $(summary(r)).")
