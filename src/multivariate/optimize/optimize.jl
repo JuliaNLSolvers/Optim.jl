@@ -118,5 +118,8 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        !ls_success)
+                                        !ls_success,
+                                        options.time_limit,
+                                        time()-t0,
+                                        )
 end
