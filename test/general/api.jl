@@ -146,9 +146,29 @@
     @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
 
     local istate
-    for istate′ in Optim.optimizing(f, initial_x, BFGS())
+    for istate′ in Optim.optimizing(f, initial_x, BFGS(),
+                                    Optim.Options(extended_trace = true,
+                                                  store_trace = true))
         istate = istate′
+        break
     end
+    # (smoke) tests for accessor functions:
+    @test summary(istate) == "BFGS"
+    @test Optim.minimizer(istate) == initial_x
+    @test Optim.minimum(istate) == f(initial_x)
+    @test Optim.iterations(istate) == 0
+    @test Optim.iteration_limit_reached(istate) == false
+    @test Optim.trace(istate) isa Vector{<:Optim.OptimizationState}
+    @test Optim.x_trace(istate) == [initial_x]
+    @test Optim.f_trace(istate) == [f(initial_x)]
+    @test Optim.f_calls(istate) == 1
+    @test Optim.converged(istate) == false
+    @test Optim.g_norm_trace(istate) ≈ [215.6] rtol=1e-6
+    @test Optim.g_calls(istate) == 1
+    @test Optim.x_converged(istate) == false
+    @test Optim.f_converged(istate) == false
+    @test Optim.g_converged(istate) == false
+    @test Optim.initial_state(istate) == initial_x
     @test Optim.OptimizationResults(istate) isa Optim.MultivariateOptimizationResults
 end
 

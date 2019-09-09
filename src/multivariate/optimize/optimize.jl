@@ -200,3 +200,25 @@ function optimizing(d::D, initial_x::Tx, method::M,
     end
     return OptimIterator(d, initial_x, method, options, state)
 end
+
+# Derive `IteratorState` accessors from `MultivariateOptimizationResults` accessors.
+for f in [
+    :(Base.summary)
+    :minimizer
+    :minimum
+    :iterations
+    :iteration_limit_reached
+    :trace
+    :x_trace
+    :f_trace
+    :f_calls
+    :converged
+    :g_norm_trace
+    :g_calls
+    :x_converged
+    :f_converged
+    :g_converged
+    :initial_state
+]
+    @eval $f(istate::IteratorState) = $f(OptimizationResults(istate))
+end
