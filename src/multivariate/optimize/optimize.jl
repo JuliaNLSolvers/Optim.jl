@@ -83,6 +83,9 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         options.show_trace && print_header(method)
         trace!(tr, d, state, iteration, method, options, time()-t0)
         ls_success::Bool = true
+
+        # Note: `optimize` depends on that first iteration always yields something
+        # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
     else
         @unpack_IteratorState istate
 
@@ -196,14 +199,4 @@ function optimizing(d::D, initial_x::Tx, method::M,
         error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
     end
     return OptimIterator(d, initial_x, method, options, state)
-end
-
-function optimize(d::D, initial_x::Tx, method::M,
-                  options::Options = Options(;default_options(method)...),
-                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
-    local istate
-    for istate′ in optimizing(d, initial_x, method, options, state)
-        istate = istate′
-    end
-    return OptimizationResults(istate)
 end
