@@ -194,6 +194,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
     ==#
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+    _time = t0
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
@@ -241,7 +242,8 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
 
         # Check time_limit; if none is provided it is NaN and the comparison
         # will always return false.
-        stopped_by_time_limit = time()-t0 > options.time_limit ? true : false
+        _time = time()
+        stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
         h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
@@ -283,7 +285,10 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        nothing)
+                                        nothing,
+                                        options.time_limit,
+                                        _time-t0,
+                                        )
 end
 
 # Fallbacks (for methods that don't need these)
