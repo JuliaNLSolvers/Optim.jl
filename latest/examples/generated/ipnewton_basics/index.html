@@ -162,6 +162,7 @@ res = optimize(df, dfc, x0, IPNewton())
     |g(x)|                 = 1.00e+00 ≰ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    41
     f(x) calls:    63
     ∇f(x) calls:   63
@@ -193,6 +194,7 @@ res = optimize(df, dfc, x0, IPNewton())
     |g(x)|                 = 8.83e-09 ≤ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    35
     f(x) calls:    63
     ∇f(x) calls:   63
@@ -232,6 +234,7 @@ res = optimize(df, dfc, x0, IPNewton())
     |g(x)|                 = 7.92e-09 ≤ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    34
     f(x) calls:    63
     ∇f(x) calls:   63
@@ -287,6 +290,7 @@ res = optimize(df, dfc, x0, IPNewton())
     |g(x)|                 = 7.71e-01 ≰ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    28
     f(x) calls:    109
     ∇f(x) calls:   109
@@ -300,11 +304,11 @@ res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
 <pre><code>┌ Warning: Initial guess is not an interior point
-└ @ Optim ~/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+└ @ Optim ~/.julia/packages/Optim/h1oJ3/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
 
 Stacktrace:
- [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
- [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
+ [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/h1oJ3/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
+ [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/h1oJ3/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
  [3] top-level scope at none:0
  [4] eval at ./boot.jl:319 [inlined]
  [5] (::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Expr})() at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:480
@@ -347,6 +351,7 @@ Stacktrace:
     |g(x)|                 = 7.71e-01 ≰ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    34
     f(x) calls:    158
     ∇f(x) calls:   158
@@ -414,6 +419,7 @@ res = optimize(df, dfc, x0, IPNewton())
     |g(x)|                 = 2.00e+00 ≰ 1.0e-08
 
  * Work counters
+    Seconds run:   NaN  (vs limit Inf)
     Iterations:    29
     f(x) calls:    215
     ∇f(x) calls:   215
