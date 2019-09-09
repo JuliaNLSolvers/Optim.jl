@@ -144,6 +144,12 @@
     res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
     @test haskey(Optim.trace(res_extended_nm)[1].metadata,"centroid")
     @test haskey(Optim.trace(res_extended_nm)[1].metadata,"step_type")
+
+    local istate
+    for istate′ in Optim.optimizing(f, initial_x, BFGS())
+        istate = istate′
+    end
+    @test Optim.OptimizationResults(istate) isa Optim.MultivariateOptimizationResults
 end
 
 # Test univariate API

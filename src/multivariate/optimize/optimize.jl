@@ -27,36 +27,73 @@ function initial_convergence(d, state, method::AbstractOptimizer, initial_x, opt
 end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
-function optimize(d::D, initial_x::Tx, method::M,
-                  options::Options{T, TCallback} = Options(;default_options(method)...),
-                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray, T, TCallback}
-    if length(initial_x) == 1 && typeof(method) <: NelderMead
-        error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
-    end
+struct OptimIterator{D <: AbstractObjective, M <: AbstractOptimizer, Tx <: AbstractArray, O <: Options, S}
+    d::D
+    initial_x::Tx
+    method::M
+    options::O
+    state::S
+end
 
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
+Base.eltype(::Type{<:OptimIterator}) = IteratorState
 
-    tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
-    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
-    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
-    f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
-    x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+@with_kw struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
+    # Put `OptimIterator` in iterator state so that `OptimizationResults` can
+    # be constructed from `IteratorState`.
+    iter::IT
 
-    g_converged = initial_convergence(d, state, method, initial_x, options)
-    converged = g_converged
+    t0::Float64
+    tr::TR
+    tracing::Bool
+    stopped::Bool
+    stopped_by_callback::Bool
+    stopped_by_time_limit::Bool
+    f_limit_reached::Bool
+    g_limit_reached::Bool
+    h_limit_reached::Bool
+    x_converged::Bool
+    f_converged::Bool
+    f_increased::Bool
+    counter_f_tol::Int
+    g_converged::Bool
+    converged::Bool
+    iteration::Int
+    ls_success::Bool
+end
 
-    # prepare iteration counter (used to make "initial state" trace entry)
-    iteration = 0
+function Base.iterate(iter::OptimIterator, istate = nothing)
+    @unpack d, initial_x, method, options, state = iter
+    if istate === nothing
+        t0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
-    options.show_trace && print_header(method)
-    trace!(tr, d, state, iteration, method, options, time()-t0)
-    ls_success::Bool = true
-    while !converged && !stopped && iteration < options.iterations
+        tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
+        tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+        stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
+        f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
+        x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+
+        g_converged = initial_convergence(d, state, method, initial_x, options)
+        converged = g_converged
+
+        # prepare iteration counter (used to make "initial state" trace entry)
+        iteration = 0
+
+        options.show_trace && print_header(method)
+        trace!(tr, d, state, iteration, method, options, time()-t0)
+        ls_success::Bool = true
+    else
+        @unpack_IteratorState istate
+
+        !converged && !stopped && iteration < options.iterations || return nothing
+
         iteration += 1
 
         ls_failed = update_state!(d, state, method)
         if !ls_success
-            break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
+            # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
+            return nothing
         end
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
 
@@ -85,7 +122,35 @@ function optimize(d::D, initial_x::Tx, method::M,
             stopped_by_time_limit || f_limit_reached || g_limit_reached || h_limit_reached
             stopped = true
         end
-    end # while
+    end
+
+    new_istate = IteratorState(
+        iter,
+        t0,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+    )
+
+    return new_istate, new_istate
+end
+
+function OptimizationResults(istate::IteratorState)
+    @unpack_IteratorState istate
+    @unpack d, initial_x, method, options, state = iter
 
     after_while!(d, state, method, options)
 
@@ -93,6 +158,9 @@ function optimize(d::D, initial_x::Tx, method::M,
     # in variables besides the option settings
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
+
+    T = (_tmp(::Options{T}) where T = T)(options)
+    Tx = typeof(initial_x)
 
     return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool}(method,
                                         initial_x,
@@ -119,4 +187,23 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         g_calls(d),
                                         h_calls(d),
                                         !ls_success)
+end
+
+function optimizing(d::D, initial_x::Tx, method::M,
+                    options::Options = Options(;default_options(method)...),
+                    state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+    if length(initial_x) == 1 && typeof(method) <: NelderMead
+        error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
+    end
+    return OptimIterator(d, initial_x, method, options, state)
+end
+
+function optimize(d::D, initial_x::Tx, method::M,
+                  options::Options = Options(;default_options(method)...),
+                  state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+    local istate
+    for istate′ in optimizing(d, initial_x, method, options, state)
+        istate = istate′
+    end
+    return OptimizationResults(istate)
 end

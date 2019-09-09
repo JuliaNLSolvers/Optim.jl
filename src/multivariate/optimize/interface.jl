@@ -53,17 +53,20 @@ promote_objtype(method::ZerothOrderOptimizer, x, autodiff::Symbol, inplace::Bool
 promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, td::TwiceDifferentiable) = td
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, td::TwiceDifferentiable) = td
 
+for optimize in [:optimize, :optimizing]
+@eval begin
+
 # if no method or options are present
-function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function $optimize(f,         initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
     method = fallback_method(f)
     checked_kwargs, method = check_kwargs(kwargs, method)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function $optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
 
     method = fallback_method(f, g)
     checked_kwargs, method = check_kwargs(kwargs, method)
@@ -71,9 +74,9 @@ function optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :fi
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function $optimize(f, g, h, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
 
     method = fallback_method(f, g, h)
     checked_kwargs, method = check_kwargs(kwargs, method)
@@ -81,57 +84,60 @@ function optimize(f, g, h, initial_x::AbstractArray; inplace = true, autodiff = 
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
 
 # no method supplied with objective
-function optimize(d::T, initial_x::AbstractArray, options::Options) where T<:AbstractObjective
-    optimize(d, initial_x, fallback_method(d), options)
+function $optimize(d::T, initial_x::AbstractArray, options::Options) where T<:AbstractObjective
+    $optimize(d, initial_x, fallback_method(d), options)
 end
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
-function optimize(f, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
+function $optimize(f, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
+function $optimize(f, g, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
 
     method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray{T}, options::Options; inplace = true, autodiff = :finite) where {T}
+function $optimize(f, g, h, initial_x::AbstractArray{T}, options::Options; inplace = true, autodiff = :finite) where {T}
 
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
 
 # potentially everything is supplied (besides caches)
-function optimize(f, initial_x::AbstractArray, method::AbstractOptimizer,
+function $optimize(f, initial_x::AbstractArray, method::AbstractOptimizer,
                      options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
+function $optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
          options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray{T}, method::AbstractOptimizer,
+function $optimize(f, g, h, initial_x::AbstractArray{T}, method::AbstractOptimizer,
          options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite) where T
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
 
-function optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer,
+function $optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer,
                   options::Options = Options(;default_options(method)...); autodiff = :finite, inplace = true) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
-    optimize(d, initial_x, method, options)
+    $optimize(d, initial_x, method, options)
 end
+
+end  # eval
+end  # for
