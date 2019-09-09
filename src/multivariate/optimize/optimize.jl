@@ -162,7 +162,7 @@ function OptimizationResults(istate::IteratorState)
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
 
-    T = (_tmp(::Options{T}) where T = T)(options)
+    T = typeof(options.x_abstol)
     Tx = typeof(initial_x)
 
     return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool}(method,
