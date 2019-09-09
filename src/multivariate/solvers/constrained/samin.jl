@@ -95,10 +95,10 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     _time = time()
     trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
 
-
+    stopped_by_callback = false
 
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
-    while (converge==0) && !sropped
+    while converge==0
         # statistics to report at each temp change, set back to zero
         nup = 0
         nrej = 0
@@ -164,7 +164,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
 
                     # If options.iterations exceeded, terminate the algorithm
                     _time = time()
-                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit
+                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
 
                         if verbose
                             println(hline)
