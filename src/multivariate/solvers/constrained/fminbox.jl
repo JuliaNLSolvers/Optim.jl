@@ -184,6 +184,9 @@ function optimize(
         F::Fminbox = Fminbox(),
         options = Options()) where T<:AbstractFloat
 
+
+    t0 = time()
+
     outer_iterations = options.outer_iterations
     allow_outer_f_increases = options.allow_outer_f_increases
     show_trace, store_trace, extended_trace = options.show_trace, options.store_trace, options.extended_trace
@@ -259,7 +262,9 @@ function optimize(
     first = true
     fval0 = zero(T)
 
-    while !converged && iteration < outer_iterations
+    stopped = false
+    _time = time()
+    while !converged && !stopped && iteration < outer_iterations
         # Increment the number of steps we've had to perform
         iteration += 1
 
@@ -305,6 +310,9 @@ function optimize(
             @warn("f(x) increased: stopping optimization")
             break
         end
+        _time = time()
+        stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
+        stopped = stopped_by_time_limit
     end
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
@@ -312,5 +320,7 @@ function optimize(
             results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), fval0), f_relchange(minimum(results), fval0),
             results.g_converged, results.g_abstol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
-            results.g_calls, results.h_calls, nothing)
+            results.g_calls, results.h_calls, nothing,
+            options.time_limit,
+            _time-t0,)
 end
