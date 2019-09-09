@@ -9,43 +9,40 @@
     <meta name="description" content="Pure Julia implementations of optimization algorithms.">
     <meta name="author" content="JuliaNLSolvers">
     
-    <link rel="shortcut icon" href="./img/favicon.ico">
+    <link rel="shortcut icon" href="../img/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     <title>Optim.jl</title>
-    <link href="./css/bootstrap-3.3.7.min.css" rel="stylesheet">
-    <link href="./css/font-awesome-4.7.0.css" rel="stylesheet">
-    <link href="./css/base.css" rel="stylesheet">
-    <link rel="stylesheet" href="./css/highlight.css">
-    <link href="assets/Documenter.css" rel="stylesheet">
+    <link href="../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/highlight.css">
+    <link href="../assets/Documenter.css" rel="stylesheet">
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
         <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
         <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
 
-    <script src="./js/jquery-3.2.1.min.js"></script>
-    <script src="./js/bootstrap-3.3.7.min.js"></script>
-    <script src="./js/highlight.pack.js"></script>
+    <script src="../js/jquery-3.2.1.min.js"></script>
+    <script src="../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../js/highlight.pack.js"></script>
     
-      <script src="./js/elasticlunr.min.js"></script>
+      <script src="../js/elasticlunr.min.js"></script>
     
     <base target="_top">
     <script>
-      var base_url = '.';
+      var base_url = '..';
       var is_top_frame = (window === window.parent);
         
         var pageToc = [
-          {title: "Optim.jl", url: "#_top", children: [
-              {title: "What", url: "#what" },
-              {title: "Why", url: "#why" },
-              {title: "How", url: "#how" },
+          {title: "Solvers", url: "#_top", children: [
           ]},
         ];
 
     </script>
-    <script src="./js/base.js"></script>
+    <script src="../js/base.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
-      <script src="assets/mathjaxhelper.js"></script> 
+      <script src="../assets/mathjaxhelper.js"></script> 
 </head>
 
 <body>
@@ -57,7 +54,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
   <div class="container-fluid wm-top-container">
     
     <div class="wm-top-tool pull-right wm-vcenter">
-      <form class="dropdown wm-vcentered" id="wm-search-form" action="./search.html">
+      <form class="dropdown wm-vcentered" id="wm-search-form" action="../search.html">
         
         <button id="wm-search-show" class="btn btn-sm btn-default" type="submit"
           ><i class="fa fa-search" aria-hidden="true"></i></button>
@@ -207,100 +204,19 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
     
 
     
-    
-      
-    
 
-  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
-    
-    <div class="wm-article-nav pull-right">
-      <a href="user/minimization/" class="btn btn-xs btn-default pull-right">
-        Next
-        <i class="fa fa-chevron-right" aria-hidden="true"></i>
-      </a>
-      <a href="user/minimization/" class="btn btn-xs btn-link">
-        Minimizing a function
-      </a>
-    </div>
-    
-  </div>
-
-    
-
-    <p><a id='Optim.jl-1'></a></p>
-<h1 id="optimjl">Optim.jl</h1>
-<p>Univariate and multivariate optimization in Julia.</p>
-<p>Optim.jl is part of the <a href="https://github.com/JuliaNLSolvers">JuliaNLSolvers</a> family.</p>
-<table>
-<thead>
-<tr>
-<th align="center"><strong>Source</strong></th>
-<th align="center"><strong>PackageEvaluator</strong></th>
-<th align="center"><strong>Build Status</strong></th>
-<th align="center"><strong>Social</strong></th>
-<th align="center"><strong>References to cite</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://github.com/JuliaNLSolvers/Optim.jl"><img alt="Source" src="https://img.shields.io/badge/GitHub-source-green.svg" /></a></td>
-<td align="center"><a href="http://pkg.julialang.org/?pkg=Optim&amp;ver=0.6"><img alt="" src="http://pkg.julialang.org/badges/Optim_0.6.svg" /></a></td>
-<td align="center"><a href="https://travis-ci.org/JuliaNLSolvers/Optim.jl"><img alt="Build Status" src="https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master" /></a></td>
-<td align="center"><a href="https://gitter.im/JuliaNLSolvers/Optim.jl"><img alt="" src="https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg" /></a></td>
-<td align="center"><a href="https://doi.org/10.21105/joss.00615"><img alt="JOSS" src="http://joss.theoj.org/papers/10.21105/joss.00615/status.svg" /></a></td>
-</tr>
-<tr>
-<td align="center"><a href="https://codecov.io/gh/JuliaNLSolvers/Optim.jl"><img alt="Codecov branch" src="https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg" /></a></td>
-<td align="center"><a href="http://pkg.julialang.org/?pkg=Optim&amp;ver=0.5"><img alt="" src="http://pkg.julialang.org/badges/Optim_0.5.svg" /></a></td>
-<td align="center"><a href="https://ci.appveyor.com/project/blegat/optim-jl"><img alt="Build Status" src="https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true" /></a></td>
-<td align="center"></td>
-<td align="center"><a href="https://zenodo.org/badge/latestdoi/3933868"><img alt="DOI" src="https://zenodo.org/badge/3933868.svg" /></a></td>
-</tr>
-</tbody>
-</table>
-<p><a id='What-1'></a></p>
-<h2 id="what">What</h2>
-<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained and Riemannian optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>).</p>
-<p><a id='Why-1'></a></p>
-<h2 id="why">Why</h2>
-<p>There are many solvers available from both free and commercial sources, and many of them are accessible from Julia. Few of them are written in Julia. Performance-wise this is rarely a problem, as they are often written in either Fortran or C. However, solvers written directly in Julia does come with some advantages.</p>
-<p>When writing Julia software (packages) that require something to be optimized, the programmer can either choose to write their own optimization routine, or use one of the many available solvers. For example, this could be something from the <a href="https://github.com/JuliaOpt/NLopt.jl">NLOpt</a> suite. This means adding a dependency which is not written in Julia, and more assumptions have to be made as to the environment the user is in. Does the user have the proper compilers? Is it possible to use GPL'ed code in the project? Optim is released under the MIT license, and installation is a simple <code>Pkg.add</code>, so it really doesn't get much freer, easier, and lightweight than that.</p>
-<p>It is also true, that using a solver written in C or Fortran makes it impossible to leverage one of the main benefits of Julia: multiple dispatch. Since Optim is entirely written in Julia, we can currently use the dispatch system to ease the use of custom preconditioners. A planned feature along these lines is to allow for user controlled choice of solvers for various steps in the algorithm, entirely based on dispatch, and not predefined possibilities chosen by the developers of Optim.</p>
-<p>Being a Julia package also means that Optim has access to the automatic differentiation features through the packages in <a href="http://www.juliadiff.org/">JuliaDiff</a>.</p>
-<p><a id='How-1'></a></p>
-<h2 id="how">How</h2>
-<p>Optim is registered in <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a>. This means that all you need to do to install Optim, is to run</p>
-<pre><code class="julia">Pkg.add(&quot;Optim&quot;)
-</code></pre>
+    <p><a id='Solvers-1'></a></p>
+<h1 id="solvers">Solvers</h1>
 
   <br>
     
-
-    
-    
-      
-    
-
-  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
-    
-    <div class="wm-article-nav pull-right">
-      <a href="user/minimization/" class="btn btn-xs btn-default pull-right">
-        Next
-        <i class="fa fa-chevron-right" aria-hidden="true"></i>
-      </a>
-      <a href="user/minimization/" class="btn btn-xs btn-link">
-        Minimizing a function
-      </a>
-    </div>
-    
-  </div>
 
     <br>
 </div>
 
 <footer class="col-md-12 wm-page-content">
       <p>
-        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/index.md"><i class="fa fa-github"></i>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/index.md"><i class="fa fa-github"></i>
 Edit on GitHub</a>
       </p>
   <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>

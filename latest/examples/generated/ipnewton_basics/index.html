@@ -65,7 +65,6 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
     
     
       
-      
     
 
   <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
@@ -96,7 +95,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h1 id="nonlinear-constrained-optimization">Nonlinear constrained optimization</h1>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
-<p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/dev/examples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p>
+<p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/devexamples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p>
 </div>
 <p>The nonlinear constrained optimization interface in <code>Optim</code> assumes that the user can write the optimization problem in the following way.</p>
 <p>
@@ -301,11 +300,11 @@ res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
 <pre><code>┌ Warning: Initial guess is not an interior point
-└ @ Optim ~/.julia/packages/Optim/jEemo/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+└ @ Optim ~/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
 
 Stacktrace:
- [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/jEemo/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
- [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/jEemo/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
+ [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
+ [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/L58gl/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
  [3] top-level scope at none:0
  [4] eval at ./boot.jl:319 [inlined]
  [5] (::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Expr})() at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:480
@@ -530,7 +529,6 @@ res = optimize(df, dfc, x0, IPNewton())
 
     
     
-      
       
     
 
