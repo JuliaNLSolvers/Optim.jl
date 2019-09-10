@@ -157,18 +157,14 @@ function OptimizationResults(istate::IteratorState)
 
     after_while!(d, state, method, options)
 
-    # we can just check minimum, as we've earlier enforced same types/eltypes
-    # in variables besides the option settings
     Tf = typeof(value(d))
-    f_incr_pick = f_increased && !options.allow_f_increases
-
     T = typeof(options.x_abstol)
     Tx = typeof(initial_x)
 
     return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool}(method,
                                         initial_x,
-                                        pick_best_x(f_incr_pick, state),
-                                        pick_best_f(f_incr_pick, state, d),
+                                        minimizer(istate),
+                                        minimum(istate),
                                         iteration,
                                         iteration == options.iterations,
                                         x_converged,
@@ -201,24 +197,35 @@ function optimizing(d::D, initial_x::Tx, method::M,
     return OptimIterator(d, initial_x, method, options, state)
 end
 
-# Derive `IteratorState` accessors from `MultivariateOptimizationResults` accessors.
-for f in [
-    :(Base.summary)
-    :minimizer
-    :minimum
-    :iterations
-    :iteration_limit_reached
-    :trace
-    :x_trace
-    :f_trace
-    :f_calls
-    :converged
-    :g_norm_trace
-    :g_calls
-    :x_converged
-    :f_converged
-    :g_converged
-    :initial_state
-]
-    @eval $f(istate::IteratorState) = $f(OptimizationResults(istate))
+AbstractOptimizer(istate::IteratorState) = istate.iter.method
+
+# we can just check minimum, as we've earlier enforced same types/eltypes
+# in variables besides the option settings
+
+function minimizer(istate::IteratorState)
+    @unpack iter, f_increased = istate
+    @unpack options, state = iter
+    f_incr_pick = f_increased && !options.allow_f_increases
+    return pick_best_x(f_incr_pick, state)
 end
+
+function minimum(istate::IteratorState)
+    @unpack iter, f_increased = istate
+    @unpack d, options, state = iter
+    f_incr_pick = f_increased && !options.allow_f_increases
+    return pick_best_f(f_incr_pick, state, d)
+end
+
+iterations(istate::IteratorState) = istate.iteration
+iteration_limit_reached(istate::IteratorState) = istate.iteration == istate.iter.options.iterations
+trace(istate::IteratorState) = istate.tr
+
+converged(istate::IteratorState) = istate.converged
+x_converged(istate::IteratorState) = istate.x_converged
+f_converged(istate::IteratorState) = istate.f_converged
+g_converged(istate::IteratorState) = istate.g_converged
+initial_state(istate::IteratorState) = istate.iter.initial_x
+
+f_calls(istate::IteratorState) = f_calls(istate.iter.d)
+g_calls(istate::IteratorState) = g_calls(istate.iter.d)
+h_calls(istate::IteratorState) = h_calls(istate.iter.d)
