@@ -45,6 +45,7 @@ Base.eltype(::Type{<:OptimIterator}) = IteratorState
     iter::IT
 
     t0::Float64
+    _time::Float64
     tr::TR
     tracing::Bool
     stopped::Bool
@@ -67,7 +68,6 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
     @unpack d, initial_x, method, options, state = iter
     if istate === nothing
         t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-
         tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
         tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
         stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
@@ -81,7 +81,8 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         iteration = 0
 
         options.show_trace && print_header(method)
-        trace!(tr, d, state, iteration, method, options, time()-t0)
+        _time = time()
+        trace!(tr, d, state, iteration, method, options, _time-t0)
         ls_success::Bool = true
 
         # Note: `optimize` depends on that first iteration always yields something
@@ -116,7 +117,8 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
 
         # Check time_limit; if none is provided it is NaN and the comparison
         # will always return false.
-        stopped_by_time_limit = time()-t0 > options.time_limit
+        _time = time()
+        stopped_by_time_limit = _time-t0 > options.time_limit
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
         h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
@@ -130,6 +132,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
     new_istate = IteratorState(
         iter,
         t0,
+        _time,
         tr,
         tracing,
         stopped,
@@ -185,7 +188,10 @@ function OptimizationResults(istate::IteratorState)
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        !ls_success)
+                                        !ls_success,
+                                        options.time_limit,
+                                        _time-t0,
+                                        )
 end
 
 function optimizing(d::D, initial_x::Tx, method::M,

@@ -189,7 +189,12 @@ mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls} <: Opti
     g_calls::Int
     h_calls::Int
     ls_success::Tls
+    time_limit::Float64
+    time_run::Float64
 end
+
+
+
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
 pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
@@ -226,6 +231,10 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if isa(r.ls_success, Bool) && !r.ls_success
         failure_string *= " (line search failed)"
     end
+    if time_run(r) > time_limit(r)
+        failure_string *= " (exceeded time limit of $(time_limit(r)))"
+    end
+
     @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string
 
     @printf io " * Candidate solution\n"
@@ -265,6 +274,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io "\n"
 
     @printf io " * Work counters\n"
+    @printf io "    Seconds run:   %d  (vs limit %d)\n" time_run(r) isnan(time_limit(r)) ? Inf : time_limit(r)
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
     if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))

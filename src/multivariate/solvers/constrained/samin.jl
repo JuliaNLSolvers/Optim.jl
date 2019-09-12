@@ -92,10 +92,13 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
 
     options.show_trace && print_header(method)
     iteration = 0
-    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, time()-t0)
+    _time = time()
+    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
+
+    stopped_by_callback = false
 
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
-    while (converge==0)
+    while converge==0
         # statistics to report at each temp change, set back to zero
         nup = 0
         nrej = 0
@@ -160,7 +163,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     end
 
                     # If options.iterations exceeded, terminate the algorithm
-                    if f_calls(d) >= options.iterations
+                    _time = time()
+                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
 
                         if verbose
                             println(hline)
@@ -199,7 +203,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 f_calls(d),
                                                                 g_calls(d),
                                                                 h_calls(d),
-                                                                true)
+                                                                true,
+                                                                options.time_limit,
+                                                                _time-t0,)
                     end
                 end
             end
@@ -336,7 +342,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             f_calls(d),
                                             g_calls(d),
                                             h_calls(d),
-                                            true)
+                                            true,
+                                            options.time_limit,
+                                            _time-t0,)
 
 end
 
