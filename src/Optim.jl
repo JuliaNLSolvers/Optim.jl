@@ -44,9 +44,10 @@ import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable
 # var for NelderMead
 import StatsBase: var
 
+import LinearAlgebra
 import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
                       rmul!, mul!, ldiv!,
-                      dot, norm, normalize!,
+                      norm, normalize!,
                       eigen, BLAS,
                       cholesky, Cholesky, # factorizations
                       I,
@@ -117,6 +118,7 @@ export optimize, maximize, # main function
        ## Non-linear constraints
        IPNewton
 
+dot(x, y) = LinearAlgebra.dot(x, y)
 
 include("types.jl") # types used throughout
 include("Manifolds.jl") # code to handle manifold constraints
