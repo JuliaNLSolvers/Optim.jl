@@ -19,8 +19,10 @@
 #  [0] Defaults and aliases for easier reading of the code
 #      these can also be over-written if necessary.
 
+if VERSION < v"1.4.0-DEV.92"
 # an inner product w.r.t. a metric P (=preconditioner)
-dot(x, P, y) = dot(x, mul!(similar(x), P, y))
+    dot(x, P, y) = dot(x, mul!(similar(x), P, y))
+end
 
 # default preconditioner update
 precondprep!(P, x) = nothing
