@@ -45,7 +45,9 @@ dot(A, ::Nothing, B) = dot(A, B)
 #      ldiv!(a, P, b) or mul! for this type, so we do it by hand
 #      TODO: maybe implement this in Base
 ldiv!(out::Array, P::Diagonal, A::Array) = copyto!(out, A ./ P.diag)
-dot(A::Array, P::Diagonal, B::Array) = dot(A, P.diag .* B)
+if VERSION < v"1.4.0-DEV.92"
+    dot(A::Array, P::Diagonal, B::Array) = dot(A, P.diag .* B)
+end
 
 #####################################################
 #  [3] Inverse Diagonal preconditioner
