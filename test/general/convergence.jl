@@ -36,23 +36,23 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     f_tol = 1e-6 # rel tol
     g_tol = 1e-6
     g_abstol = 1e-6
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true, false)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, false)
     # f_increase
     f0, f1 = 1.0, 1.0 + 1e-7
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true, true)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true)
     # f_increase without convergence
     f_tol = 1e-12
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, false, true, true, true)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, false, true, true)
 
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, false, true, true, true)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, false, true, true)
 
     f_tol = 1e-6 # rel tol
     dOpt = DummyOptions(x_tol, f_tol, g_tol, g_abstol)
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true, true)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true)
 
     f0, f1 = 1.0, 1.0 - 1e-7
     dOpt = DummyOptions(x_tol, f_tol, g_tol, g_abstol)
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, true, false)
+    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) == (true, true, true, false)
 
     ## initial_convergence and gradient_convergence_assessment
 

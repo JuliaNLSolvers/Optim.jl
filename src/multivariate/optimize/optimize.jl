@@ -61,7 +61,8 @@ function optimize(d::D, initial_x::Tx, method::M,
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
 
         x_converged, f_converged,
-        g_converged, converged, f_increased = assess_convergence(state, d, options)
+        g_converged, f_increased = assess_convergence(state, d, options)
+        converged = x_converged || f_converged || g_converged
         # For some problems it may be useful to require `f_converged` to be hit multiple times
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0

@@ -220,7 +220,8 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
 
         # TODO: Do we need to rethink f_increased for `ConstrainedOptimizer`s?
         x_converged, f_converged,
-        g_converged, converged, f_increased = assess_convergence(state, d, options)
+        g_converged, f_increased = assess_convergence(state, d, options)
+        converged = x_converged || f_converged || g_converged
         # With equality constraints, optimization is not necessarily
         # monotonic in the value of the function. If the function
         # change is approximately canceled by a change in the equality
