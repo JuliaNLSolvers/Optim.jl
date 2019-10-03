@@ -304,8 +304,9 @@ function optimize(
         g .= gfunc .+ mu[].*gbarrier
 
         results.x_converged, results.f_converged,
-        results.g_converged, converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
+        results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
+        converged = results.x_converged || results.f_converged || results.g_converged
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
             break

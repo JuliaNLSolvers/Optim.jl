@@ -343,7 +343,6 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
         x_converged,
         f_converged,
         g_converged,
-        converged,
         f_increased = assess_convergence(state.x,
                                        state.x_previous,
                                        value(d),
@@ -353,7 +352,7 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
                                        options.f_reltol,
                                        options.g_abstol)
     end
-    x_converged, f_converged, g_converged, converged, f_increased
+    x_converged, f_converged, g_converged, f_increased
 end
 
 function trace!(tr, d, state, iteration, method::NewtonTrustRegion, options, curr_time=time())

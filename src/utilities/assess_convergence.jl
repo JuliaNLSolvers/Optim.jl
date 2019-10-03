@@ -45,9 +45,7 @@ function assess_convergence(state::AbstractOptimizerState, d, options::Options)
 
     g_converged = gradient_convergence_assessment(state,d,options)
 
-    converged = x_converged || f_converged || g_converged
-
-    return x_converged, f_converged, g_converged, converged, f_increased
+    return x_converged, f_converged, g_converged, f_increased
 end
 
 # Used by Fminbox and IPNewton
@@ -81,7 +79,5 @@ function assess_convergence(x,
         g_converged = true
     end
 
-    converged = x_converged || f_converged || g_converged
-
-    return x_converged, f_converged, g_converged, converged, f_increased
+    return x_converged, f_converged, g_converged, f_increased
 end

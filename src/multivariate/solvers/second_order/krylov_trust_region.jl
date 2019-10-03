@@ -195,7 +195,5 @@ function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
         g_converged = true
     end
 
-    converged = x_converged || f_converged || g_converged
-
-    return x_converged, f_converged, g_converged, converged, false
+    return x_converged, f_converged, g_converged, false
 end

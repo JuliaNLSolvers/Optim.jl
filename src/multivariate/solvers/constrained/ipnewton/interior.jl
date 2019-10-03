@@ -220,7 +220,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
 
         # TODO: Do we need to rethink f_increased for `ConstrainedOptimizer`s?
         x_converged, f_converged,
-        g_converged, converged, f_increased = assess_convergence(state, d, options)
+        g_converged, f_increased = assess_convergence(state, d, options)
         # With equality constraints, optimization is not necessarily
         # monotonic in the value of the function. If the function
         # change is approximately canceled by a change in the equality
@@ -229,7 +229,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
         # be satisfied a certain number of times in a row before
         # declaring convergence.
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
-        converged = converged | (counter_f_tol > options.successive_f_tol)
+        converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
 
         # We don't use the Hessian for anything if we have declared convergence,
         # so we might as well not make the (expensive) update if converged == true

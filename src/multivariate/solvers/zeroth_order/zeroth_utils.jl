@@ -16,7 +16,7 @@ function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options, 
 end
 
 function assess_convergence(state::ZerothOrderState, d, options::Options)
-    false, false, false, false, false
+    false, false, false, false
 end
 
 f_abschange(d::AbstractObjective, state::ZerothOrderState) = convert(typeof(value(d)), NaN)

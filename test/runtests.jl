@@ -90,6 +90,7 @@ multivariate_tests = [
     "complex",
     "fdtime",
     "arbitrary_precision",
+    "successive_f_tol",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
