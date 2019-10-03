@@ -11,7 +11,10 @@
     for allow in [true, false]
         for alpha in [0.1, 1.0]
             k += 1
-            method = GradientDescent(linesearch=LineSearches.Static(alpha=alpha))
+            method = GradientDescent(
+                alphaguess = LineSearches.InitialStatic(alpha=alpha),
+                linesearch = LineSearches.Static(),
+            )
             opts = Optim.Options(iterations=1,allow_f_increases=allow)
             res = optimize(f, g!, [0.5], method, opts)
 
