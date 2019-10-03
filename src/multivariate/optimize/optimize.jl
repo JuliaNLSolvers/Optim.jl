@@ -50,12 +50,12 @@ function optimize(d::D, initial_x::Tx, method::M,
     options.show_trace && print_header(method)
     _time = time()
     trace!(tr, d, state, iteration, method, options, _time-t0)
-    ls_success::Bool = true
+    ls_failed::Bool = false
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
         ls_failed = update_state!(d, state, method)
-        if !ls_success
+        if ls_failed
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         end
         update_g!(d, state, method) # TODO: Should this be `update_fg!`?
@@ -119,7 +119,7 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        !ls_success,
+                                        !ls_failed,
                                         options.time_limit,
                                         _time-t0,
                                         )
