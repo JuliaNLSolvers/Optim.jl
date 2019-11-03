@@ -274,7 +274,18 @@ function getTocLi(url) {
   return $(selector).closest('.wm-toc-li');
 }
 
+var _deferIframeLoad = false;
+
+// Sometimes iframe is loaded before main window's ready callback. In this case, we defer
+// onIframeLoad call until the main window has initialized.
+function ensureIframeLoaded() {
+  if (_deferIframeLoad) {
+    onIframeLoad();
+  }
+}
+
 function onIframeLoad() {
+  if (!iframeWindow) { _deferIframeLoad = true; return; }
   var url = iframeWindow.location.href;
   onIframeBeforeLoad(url);
 
@@ -345,6 +356,7 @@ if (is_top_frame) {
   $(document).ready(function() {
     iframeWindow = $('.wm-article')[0].contentWindow;
     initMainWindow();
+    ensureIframeLoaded();
   });
 
 } else {
