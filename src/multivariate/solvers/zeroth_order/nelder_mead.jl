@@ -299,10 +299,6 @@ pick_best_x(f_increased, state::NelderMeadState) = state.x
 pick_best_f(f_increased, state::NelderMeadState, d) = value(d)
 
 function assess_convergence(state::NelderMeadState, d, options::Options)
-    g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterior
-    return false, false, g_converged, false
-end
-function assess_convergence(state::NelderMeadState, d, options::Options)
   """
   Hijack options.g_abstol for a stopping criterion the standard deviation
   of the objective function evaluated at the vertices of the simplex
