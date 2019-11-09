@@ -27,10 +27,10 @@ we can perform one of four actions: reflect, expand, contract, or shrink. Basica
 the goal is to iteratively replace the worst point with a better point. More information
 can be found in Nelder and Mead (1965), Lagarias, et al (1998) or Gao and Han (2010).
 
-The stopping rule is the same as in the original paper, and is the standard
+The stopping rules encompass that of the original paper, and is the standard
 error of the function values at the vertices. To set the tolerance level for this
 convergence criterion, set the `g_tol` level as described in the Configurable Options
-section.
+section. The solver will also stop if one of the objective function evaluations is below the `f_tol` level, or the simplex locations are within `x_tol`. 
 
 When the solver finishes, we return a minimizer which is either the centroid or one of the vertices.
 The function value at the centroid adds a function evaluation, as we need to evaluate the objection

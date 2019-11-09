@@ -302,6 +302,17 @@ function assess_convergence(state::NelderMeadState, d, options::Options)
     g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, false
 end
+function assess_convergence(state::NelderMeadState, d, options::Options)
+  """
+  Hijack options.g_abstol for a stopping criterion the standard deviation
+  of the objective function evaluated at the vertices of the simplex
+  """
+    g_converged = state.nm_x <= options.g_abstol
+    f_converged = state.f_lowest <= options.f_tol
+    x_converged = all(all(isapprox.(state.simplex[1], i,
+      rtol=options.x_tol)) for i ∈ state.simplex[2:end])
+    return x_converged, f_converged, g_converged, false
+end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_abstol
