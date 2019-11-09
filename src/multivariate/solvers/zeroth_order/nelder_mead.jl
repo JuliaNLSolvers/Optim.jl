@@ -304,9 +304,9 @@ function assess_convergence(state::NelderMeadState, d, options::Options)
   of the objective function evaluated at the vertices of the simplex
   """
     g_converged = state.nm_x <= options.g_abstol
-    f_converged = state.f_lowest <= options.f_tol
+    f_converged = state.f_lowest <= options.f_abstol
     x_converged = all(all(isapprox.(state.simplex[1], i,
-      rtol=options.x_tol)) for i ∈ state.simplex[2:end])
+      rtol=options.x_reltol)) for i ∈ state.simplex[2:end])
     return x_converged, f_converged, g_converged, false
 end
 
