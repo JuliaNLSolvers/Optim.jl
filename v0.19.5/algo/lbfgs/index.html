@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="author" content="JuliaNLSolvers">
+    
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>(L-)BFGS - Optim.jl</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <link href="../../assets/Documenter.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "(L-)BFGS", url: "#_top", children: [
+              {title: "Constructors", url: "#constructors" },
+              {title: "Description", url: "#description" },
+              {title: "Example", url: "#example" },
+              {title: "References", url: "#references" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"></script>
+      <script src="../../assets/mathjaxhelper.js"></script> 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../ngmres/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../ngmres/" class="btn btn-xs btn-link">
+        Acceleration
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../gradientdescent/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../gradientdescent/" class="btn btn-xs btn-link">
+        Gradient Descent
+      </a>
+    </div>
+    
+  </div>
+
+    
+
+    <p><a id='(L-)BFGS-1'></a></p>
+<h1 id="l-bfgs">(L-)BFGS</h1>
+<p>This page contains information about BFGS and its limited memory version L-BFGS.</p>
+<p><a id='Constructors-1'></a></p>
+<h2 id="constructors">Constructors</h2>
+<pre><code class="julia">BFGS(; alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
+       initial_invH = nothing,
+       initial_stepnorm = nothing,
+       manifold = Flat())
+</code></pre>
+
+<p><code>initial_invH</code> has a default value of <code>nothing</code>. If the user has a specific initial matrix they want to supply, it should be supplied as a function of an array similar to the initial point <code>x0</code>.</p>
+<p>If <code>initial_stepnorm</code> is set to a number <code>z</code>, the initial matrix will be the identity matrix scaled by <code>z</code> times the sup-norm of the gradient at the initial point <code>x0</code>.</p>
+<pre><code class="julia">LBFGS(; m = 10,
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        P = nothing,
+        precondprep = (P, x) -&gt; nothing,
+        manifold = Flat(),
+        scaleinvH0::Bool = true &amp;&amp; (typeof(P) &lt;: Nothing))
+</code></pre>
+
+<p><a id='Description-1'></a></p>
+<h2 id="description">Description</h2>
+<p>This means that it takes steps according to</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - P^{-1}\nabla f(x_n)
+</script>
+</p>
+<p>where $P$ is a positive definite matrix. If $P$ is the Hessian, we get Newton's method. In (L-)BFGS, the matrix is an approximation to the Hessian built using differences in the gradient across iterations. As long as the initial matrix is positive definite  it is possible to show that all the follow matrices will be as well. The starting matrix could simply be the identity matrix, such that the first step is identical to the Gradient Descent algorithm, or even the actual Hessian.</p>
+<p>There are two versions of BFGS in the package: BFGS, and L-BFGS. The latter is different from the former because it doesn't use a complete history of the iterative procedure to construct $P$, but rather only the latest $m$ steps. It doesn't actually build the Hessian approximation matrix either, but computes the direction directly. This makes more suitable for large scale problems, as the memory requirement to store the relevant vectors will grow quickly in large problems.</p>
+<p>As with the other quasi-Newton solvers in this package, a scalar $\alpha$ is introduced as follows</p>
+<p>
+<script type="math/tex; mode=display">
+x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
+</script>
+</p>
+<p>and is chosen by a linesearch algorithm such that each step gives sufficient descent.</p>
+<p><a id='Example-1'></a></p>
+<h2 id="example">Example</h2>
+<p><a id='References-1'></a></p>
+<h2 id="references">References</h2>
+<p>Wright, Stephen, and Jorge Nocedal (2006) "Numerical optimization." Springer</p>
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../ngmres/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../ngmres/" class="btn btn-xs btn-link">
+        Acceleration
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../gradientdescent/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../gradientdescent/" class="btn btn-xs btn-link">
+        Gradient Descent
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="col-md-12 wm-page-content">
+      <p>
+        <a href="https://github.com/JuliaNLSolvers/Optim.jl/edit/master/docs/algo/lbfgs.md"><i class="fa fa-github"></i>
+Edit on GitHub</a>
+      </p>
+  <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
