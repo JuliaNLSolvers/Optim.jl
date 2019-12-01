@@ -21,7 +21,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [compat]
 Calculus = "0.4, 0.5"
 DiffEqDiffTools = "0.12, 0.13, 0.14, 1"
-FillArrays = "0.6.2, 0.7"
+FillArrays = "0.6.2, 0.7, 0.8"
 ForwardDiff = "0.10.3"
 LineSearches = "7.0.1"
 NLSolversBase = "7.3.1"
