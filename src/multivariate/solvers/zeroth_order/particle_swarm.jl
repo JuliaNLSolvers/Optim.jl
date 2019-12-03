@@ -27,6 +27,9 @@ particle and move it away from its (potentially and probably) local optimum, to
 improve the ability to find a global optimum. Of course, this comes a the cost
 of slower convergence, but hopefully converges to the global optimum as a result.
 
+Note, that convergence is never assessed for ParticleSwarm. It will run until it
+reaches the maximum number of iterations set in Optim.Options(iterations=x)`.
+
 ## References
 - [1] Zhan, Zhang, and Chung. Adaptive particle swarm optimization, IEEE Transactions on Systems, Man, and Cybernetics, Part B: CyberneticsVolume 39, Issue 6 (2009): 1362-1381
 """
