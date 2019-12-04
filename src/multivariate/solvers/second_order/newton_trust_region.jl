@@ -59,11 +59,11 @@ function initial_safeguards(H, gr, delta, lambda)
     λL = max(T(0), λS, gr_norm/delta - Hnorm)
     λU = gr_norm/delta + Hnorm
     # p. 558
-    λ = min(max(λ, λL), λU)
-    if λ ≤ λS
-        λ = max(T(1)/1000*λU, sqrt(λL*λU))
+    lambda = min(max(lambda, λL), λU)
+    if lambda ≤ λS
+        lambda = max(T(1)/1000*λU, sqrt(λL*λU))
     end
-    λ
+    lambda
 end
 
 # Choose a point in the trust region for the next step using
