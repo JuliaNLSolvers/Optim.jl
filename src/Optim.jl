@@ -50,7 +50,8 @@ import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
                       eigen, BLAS,
                       cholesky, Cholesky, # factorizations
                       I,
-                      svd
+                      svd,
+                      opnorm # for safeguards in newton trust regions
 import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types
