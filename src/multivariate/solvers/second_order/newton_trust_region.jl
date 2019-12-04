@@ -45,6 +45,27 @@ function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where T
     return nothing
 end
 
+#==
+Returns a tuple of initial safeguarding values for λ. Newton's method might not
+work well without these safeguards when the Hessian is not positive definite.
+==#
+function initial_safeguards(H, gr, delta, lambda)
+    # equations are on p. 560 of [MORESORENSEN]
+    T = eltype(gr)
+    λS = maximum(-diag(H))
+    # they state on the first page that ||⋅|| is the Euclidean norm
+    gr_norm = norm(gr)
+    Hnorm = opnorm(H, 1)
+    λL = max(T(0), λS, gr_norm/delta - Hnorm)
+    λU = gr_norm/delta + Hnorm
+    # p. 558
+    lambda = min(max(lambda, λL), λU)
+    if lambda ≤ λS
+        lambda = max(T(1)/1000*λU, sqrt(λL*λU))
+    end
+    lambda
+end
+
 # Choose a point in the trust region for the next step using
 # the interative (nearly exact) method of section 4.3 of N&W (2006).
 # This is appropriate for Hessians that you factorize quickly.
@@ -139,6 +160,9 @@ function solve_tr_subproblem!(gr,
                 s[:] = -s + tau * H_eig.vectors[:, 1]
             end
         end
+
+
+        lambda = initial_safeguards(H, gr, delta, lambda)
 
         if !hard_case
             # Algorithim 4.3 of N&W (2006), with s insted of p_l for consistency

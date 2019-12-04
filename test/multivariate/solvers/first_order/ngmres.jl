@@ -1,3 +1,4 @@
+using Optim, Test
 ## REMEMBER TO UPDATE TESTS FOR BOTH THE N-GMRES and the O-ACCEL TEST SETS
 
 @testset "N-GMRES" begin
@@ -6,7 +7,7 @@
 
     skip = ("Trigonometric", )
     run_optim_tests(solver; skip = skip,
-                    iteration_exceptions = (("Penalty Function I", 10000), ),
+                    iteration_exceptions = (("Penalty Function I", 10000), ("Paraboloid Random Matrix", 10000)),
                     show_name = debug_printing)
 
     # Specialized tests
