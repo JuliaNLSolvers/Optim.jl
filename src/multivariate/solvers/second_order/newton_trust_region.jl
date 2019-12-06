@@ -134,7 +134,7 @@ function solve_tr_subproblem!(gr,
 
         # Solutions smaller than this lower bound on lambda are not allowed:
         # they don't ridge H enough to make H_ridge PSD.
-        lambda_lb = -min_H_ev + max(1e-8, 1e-8 * (max_H_ev - min_H_ev))
+        lambda_lb = nextfloat(-min_H_ev)
         lambda = lambda_lb
 
         hard_case = false
@@ -161,7 +161,6 @@ function solve_tr_subproblem!(gr,
             end
         end
 
-
         lambda = initial_safeguards(H, gr, delta, lambda)
 
         if !hard_case
@@ -176,7 +175,15 @@ function solve_tr_subproblem!(gr,
                     H_ridged[i, i] = H[i, i] + lambda
                 end
 
-                R = cholesky(Hermitian(H_ridged)).U
+                F = cholesky(Hermitian(H_ridged), check=false)
+                # Sometimes, lambda is not sufficiently large for the Cholesky factorization
+                # to succeed. In that case, we set double lambda and continue to next iteration
+                if !issuccess(F)
+                    lambda *= 2
+                    continue
+                end
+
+                R = F.U
                 s[:] = -R \ (R' \ gr)
                 q_l = R' \ s
                 norm2_s = dot(s, s)
