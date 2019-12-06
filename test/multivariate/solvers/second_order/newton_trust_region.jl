@@ -27,7 +27,7 @@ end
         s = zeros(n)
         m, interior = Optim.solve_tr_subproblem!(gr, H, 1., s, max_iters=100)
 
-        model(s2) = (gr' * s2)[] + .5 * (s2' * H * s2)[]
+        model(s2) = (gr' * s2) + .5 * (s2' * H * s2)
         @test model(s) <= model(zeros(n)) + 1e-8  # origin
 
         for j in 1:10
