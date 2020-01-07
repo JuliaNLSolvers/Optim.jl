@@ -45,8 +45,13 @@ Being a Julia package also means that Optim has access to the automatic differen
 features through the packages in [JuliaDiff](http://www.juliadiff.org/).
 
 ## How
-Optim is registered in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl).
-This means that all you need to do to install Optim, is to run
+
+The package is a registered package, and can be installed with `Pkg.add`.
+
 ```julia
-Pkg.add("Optim")
+julia> using Pkg; Pkg.add("Optim")
+```
+or through the `pkg` REPL mode by typing
+```
+] add Optim
 ```
