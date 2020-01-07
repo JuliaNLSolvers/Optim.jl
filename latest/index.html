@@ -266,8 +266,12 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p>Being a Julia package also means that Optim has access to the automatic differentiation features through the packages in <a href="http://www.juliadiff.org/">JuliaDiff</a>.</p>
 <p><a id='How-1'></a></p>
 <h2 id="how">How</h2>
-<p>Optim is registered in <a href="https://github.com/JuliaLang/METADATA.jl">METADATA.jl</a>. This means that all you need to do to install Optim, is to run</p>
-<pre><code class="julia">Pkg.add(&quot;Optim&quot;)
+<p>The package is a registered package, and can be installed with <code>Pkg.add</code>.</p>
+<pre><code class="julia">julia&gt; using Pkg; Pkg.add(&quot;Optim&quot;)
+</code></pre>
+
+<p>or through the <code>pkg</code> REPL mode by typing</p>
+<pre><code>] add Optim
 </code></pre>
 
   <br>
@@ -307,5 +311,5 @@ Edit on GitHub</a>
 </html>
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2020-01-07 14:03:56
+Build Date UTC : 2020-01-07 14:17:42
 -->
