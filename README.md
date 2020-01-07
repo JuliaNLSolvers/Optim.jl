@@ -106,10 +106,14 @@ For more details and options, see the documentation
 
 # Installation
 
-The package is registered in `METADATA.jl` and can be installed with `Pkg.add`.
+The package is a registered package, and can be installed with `Pkg.add`.
 
 ```julia
-julia> Pkg.add("Optim")
+julia> using Pkg; Pkg.add("Optim")
+```
+or through the `pkg` REPL mode by typing
+```
+] add Optim
 ```
 
 # Citation
@@ -140,13 +144,6 @@ If you use `Optim.jl` in your work, please cite the following.
 
 [winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true
 [winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl
-
-[pkg-0.4-img]: http://pkg.julialang.org/badges/Optim_0.4.svg
-[pkg-0.4-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.4
-[pkg-0.5-img]: http://pkg.julialang.org/badges/Optim_0.5.svg
-[pkg-0.5-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.5
-[pkg-0.6-img]: http://pkg.julialang.org/badges/Optim_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=Optim&ver=0.6
 
 [cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000
 [cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl
