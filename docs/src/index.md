@@ -4,10 +4,10 @@ Univariate and multivariate optimization in Julia.
 
 Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
 
-| **Source**  | **PackageEvaluator** | **Build Status** | **Social** | **References to cite** |
-|:-:|:-:|:-:|:-:|:-:|
-| [![Source](https://img.shields.io/badge/GitHub-source-green.svg)](https://github.com/JuliaNLSolvers/Optim.jl) | [![](http://pkg.julialang.org/badges/Optim_0.6.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.6) | [![Build Status](https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master)](https://travis-ci.org/JuliaNLSolvers/Optim.jl) | [![](https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg)](https://gitter.im/JuliaNLSolvers/Optim.jl) | [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00615/status.svg)](https://doi.org/10.21105/joss.00615) |
-| [![Codecov branch](https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg)](https://codecov.io/gh/JuliaNLSolvers/Optim.jl)  | [![](http://pkg.julialang.org/badges/Optim_0.5.svg)](http://pkg.julialang.org/?pkg=Optim&ver=0.5)|[![Build Status](https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true)](https://ci.appveyor.com/project/blegat/optim-jl) |  | [![DOI](https://zenodo.org/badge/3933868.svg)](https://zenodo.org/badge/latestdoi/3933868) |
+| **Source**  | **Build Status** | **Social** | **References to cite** |
+|:-:|:-:|:-:|:-:|
+| [![Source](https://img.shields.io/badge/GitHub-source-green.svg)](https://github.com/JuliaNLSolvers/Optim.jl) |  [![Build Status](https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master)](https://travis-ci.org/JuliaNLSolvers/Optim.jl) | [![](https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg)](https://gitter.im/JuliaNLSolvers/Optim.jl) | [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00615/status.svg)](https://doi.org/10.21105/joss.00615) |
+| [![Codecov branch](https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg)](https://codecov.io/gh/JuliaNLSolvers/Optim.jl) |[![Build Status](https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true)](https://ci.appveyor.com/project/blegat/optim-jl) |  | [![DOI](https://zenodo.org/badge/3933868.svg)](https://zenodo.org/badge/latestdoi/3933868) |
 
 
 ## What
