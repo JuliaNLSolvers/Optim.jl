@@ -16,12 +16,12 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
 using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
+
 using PositiveFactorizations # for globalization strategy in Newton
 import PositiveFactorizations: cholesky!, cholesky
+
 using LineSearches           # for globalization strategy in Quasi-Newton algs
-using DiffEqDiffTools        # for finite difference derivatives
-# using ReverseDiff           # for reverse mode AD (not really suitable for scalar output)
-using ForwardDiff            # for forward mode AD
+
 import NaNMath               # for functions that ignore NaNs (no poisoning)
 
 import Parameters: @with_kw, # for types where constructors are simply defined
