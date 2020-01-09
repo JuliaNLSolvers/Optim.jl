@@ -3,7 +3,6 @@ uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "0.19.7"
 
 [deps]
-Calculus = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 DiffEqDiffTools = "01453d9d-ee7c-5054-8395-0335cb756afa"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -19,7 +18,6 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Calculus = "0.4, 0.5"
 DiffEqDiffTools = "0.12, 0.13, 0.14, 1"
 FillArrays = "0.6.2, 0.7, 0.8"
 ForwardDiff = "0.10.3"
