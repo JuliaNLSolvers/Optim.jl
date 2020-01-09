@@ -3,9 +3,7 @@ uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "0.19.7"
 
 [deps]
-DiffEqDiffTools = "01453d9d-ee7c-5054-8395-0335cb756afa"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NLSolversBase = "d41bc354-129a-5804-8e4c-c37616107c6c"
@@ -18,9 +16,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-DiffEqDiffTools = "0.12, 0.13, 0.14, 1"
 FillArrays = "0.6.2, 0.7, 0.8"
-ForwardDiff = "0.10.3"
 LineSearches = "7.0.1"
 NLSolversBase = "7.3.1"
 NaNMath = "0.3.2"
