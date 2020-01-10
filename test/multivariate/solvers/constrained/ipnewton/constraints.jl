@@ -43,19 +43,19 @@
         # Compare hand-computed gradient against that from automatic differentiation
         function check_autodiff(d, bounds, x, cfun::Function, bstate, μ)
             c = cfun(x)
-            J = ForwardDiff.jacobian(cfun, x)
+            J = Optim.NLSolversBase.ForwardDiff.jacobian(cfun, x)
             p = Optim.pack_vec(x, bstate)
             ftot! = (storage, p)->Optim.lagrangian_fgvec!(p, storage, gx, bgrad, d, bounds, x, c, J, bstate, μ)
             pgrad = similar(p)
             ftot!(pgrad, p)
             chunksize = min(8, length(p))
-            TD = ForwardDiff.Dual{ForwardDiff.Tag{Nothing,Float64},eltype(p),chunksize}
+            TD = Optim.NLSolversBase.ForwardDiff.Dual{Optim.ForwardDiff.Tag{Nothing,Float64},eltype(p),chunksize}
             xd = similar(x, TD)
             bstated = Optim.BarrierStateVars{TD}(bounds)
             pcmp = similar(p)
             ftot = p->Optim.lagrangian_vec(p, d, bounds, xd, cfun, bstated, μ)
-            #ForwardDiff.gradient!(pcmp, ftot, p, ForwardDiff.{chunksize}())
-            ForwardDiff.gradient!(pcmp, ftot, p)
+            #ForwardDiff.gradient!(pcmp, ftot, p, Optim.ForwardDiff.{chunksize}())
+            Optim.NLSolversBase.ForwardDiff.gradient!(pcmp, ftot, p)
             @test pcmp ≈ pgrad
         end
         # Basic setup (using two objectives, one equal to zero and the other a Gaussian)
@@ -220,7 +220,7 @@
             h[3,3] += 2*λ[2]*x[2]
         end
         c = cfun(x)
-        J = ForwardDiff.jacobian(cfun, x)
+        J = Optim.NLSolversBase.ForwardDiff.jacobian(cfun, x)
         Jtmp = similar(J); @test cJ!(Jtmp, x) ≈ J  # just to check we did it right
         cbar = rand(length(c))
         bounds = Optim.ConstraintBounds([], [], cbar, cbar)
@@ -374,7 +374,7 @@
             # TODO: How do we deal with the new Tags in ForwardDiff?
 
             # TD = ForwardDiff.Dual{chunksize, eltype(y)}
-            TD = ForwardDiff.Dual{ForwardDiff.Tag{Nothing,Float64}, eltype(p), chunksize}
+            TD = Optim.NLSolversBase.ForwardDiff.Dual{Optim.NLSolversBase.ForwardDiff.Tag{Nothing,Float64}, eltype(p), chunksize}
 
             # TODO: It doesn't seem like it is possible to to create a dual where the values are duals?
             # TD2 = ForwardDiff.Dual{chunksize, ForwardDiff.Dual{chunksize, eltype(p)}}
@@ -389,7 +389,7 @@
             #ϕd2 = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated2)
 
             #ForwardDiff.gradient(ϕd, zeros(4)), ForwardDiff.hessian(ϕd2, zeros(4))
-            ForwardDiff.gradient(ϕd, [0.0])#, ForwardDiff.hessian(ϕd2, [0.0])
+            Optim.NLSolversBase.ForwardDiff.gradient(ϕd, [0.0])#, ForwardDiff.hessian(ϕd2, [0.0])
         end
         F = 1000
         d = TwiceDifferentiable(x->F*x[1], (g, x) -> (g[1] = F), (h, x) -> (h[1,1] = 0), [0.0,])
