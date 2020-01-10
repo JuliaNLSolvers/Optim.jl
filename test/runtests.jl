@@ -9,7 +9,6 @@ import PositiveFactorizations: Positive, cholesky # for the IPNewton tests
 using Random
 
 import LineSearches
-import ForwardDiff
 import NLSolversBase
 import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
