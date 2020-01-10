@@ -166,8 +166,8 @@ by all the function evaluations required to do the central finite differences ca
 ## Separating time spent in Optim's code and user provided functions
 Consider the Rosenbrock problem.
 ```julia
-using Optim
-prob = Optim.UnconstrainedProblems.examples["Rosenbrock"];
+using Optim, OptimTestProblems
+prob = UnconstrainedProblems.examples["Rosenbrock"];
 ```
 Say we optimize this function, and look at the total run time of `optimize` using
 the Newton Trust Region method, and we are surprised that it takes a long time to run.
@@ -204,8 +204,8 @@ being 1000. Alternatively, it is possible to put a soft limit on the run time of
 the optimization procedure by setting the `time_limit` keyword in the `Optim.Options`
 constructor.
 ```julia
-using Optim
-problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples["Rosenbrock"]
 
 f = problem.f
 initial_x = problem.initial_x
@@ -223,8 +223,8 @@ This will stop after about three seconds. If it is more important that we stop b
 is reached, it is possible to use a callback with a simple model for predicting how much
 time will have passed when the next iteration is over. Consider the following code
 ```julia
-using Optim
-problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples["Rosenbrock"]
 
 f = problem.f
 initial_x = problem.initial_x

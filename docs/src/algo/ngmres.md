@@ -51,7 +51,7 @@ First, we try to optimize using `GradientDescent`.
 
 ```julia
 using Optim, OptimTestProblems
-UP = OptimTestProblems.UnconstrainedProblems
+UP = UnconstrainedProblems
 prob = UP.examples["Extended Rosenbrock"]
 optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, GradientDescent())
 ```
