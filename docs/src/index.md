@@ -16,7 +16,7 @@ various kinds. While there is some support for box constrained and Riemannian op
 of the solvers try to find an ``x`` that minimizes a function ``f(x)`` without any constraints.
 Thus, the main focus is on unconstrained optimization.
 The provided solvers, under certain conditions, will converge to a local minimum.
-In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. [BlackBoxOptim](https://github.com/robertfeldt/BlackBoxOptim.jl)).
+In the case where a global minimum is desired we supply some methods such as (bounded) simulated annealing and particle swarm. For a dedicated package for global optimization techniques, see e.g. [BlackBoxOptim](https://github.com/robertfeldt/BlackBoxOptim.jl).
 
 ## Why
 There are many solvers available from both free and commercial sources, and many
