@@ -227,8 +227,8 @@ Results of Optimization Algorithm
 <p><a id='Separating-time-spent-in-Optim's-code-and-user-provided-functions-1'></a></p>
 <h2 id="separating-time-spent-in-optims-code-and-user-provided-functions">Separating time spent in Optim's code and user provided functions</h2>
 <p>Consider the Rosenbrock problem.</p>
-<pre><code class="julia">using Optim
-prob = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+<pre><code class="julia">using Optim, OptimTestProblems
+prob = UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
 </code></pre>
 
 <p>Say we optimize this function, and look at the total run time of <code>optimize</code> using the Newton Trust Region method, and we are surprised that it takes a long time to run. We then wonder if time is spent in Optim's own code (solving the sub-problem for example) or in evaluating the objective, gradient or hessian that we provided. Then it can be very useful to use the <a href="https://github.com/KristofferC/TimerOutputs.jl">TimerOutputs.jl</a> package. This package allows us to run an over-all timer for <code>optimize</code>, and add individual timers for <code>f</code>, <code>g!</code>, and <code>h!</code>. Consider the example below, that is due to the author of the package (Kristoffer Carlsson).</p>
@@ -252,8 +252,8 @@ end
 <p><a id='Early-stopping-1'></a></p>
 <h2 id="early-stopping">Early stopping</h2>
 <p>Sometimes it might be of interest to stop the optimizer early. The simplest way to do this is to set the <code>iterations</code> keyword in <code>Optim.Options</code> to some number. This will prevent the iteration counter exceeding some limit, with the standard value being 1000. Alternatively, it is possible to put a soft limit on the run time of the optimization procedure by setting the <code>time_limit</code> keyword in the <code>Optim.Options</code> constructor.</p>
-<pre><code class="julia">using Optim
-problem = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
+<pre><code class="julia">using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
 
 f = problem.f
 initial_x = problem.initial_x
@@ -269,8 +269,8 @@ optimize(slow, zeros(2), NelderMead(), Optim.Options(time_limit = 3.0))
 </code></pre>
 
 <p>This will stop after about three seconds. If it is more important that we stop before the limit is reached, it is possible to use a callback with a simple model for predicting how much time will have passed when the next iteration is over. Consider the following code</p>
-<pre><code class="julia">using Optim
-problem = Optim.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
+<pre><code class="julia">using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples[&quot;Rosenbrock&quot;]
 
 f = problem.f
 initial_x = problem.initial_x

@@ -135,7 +135,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <p><a id='Example-1'></a></p>
 <h2 id="example">Example</h2>
 <pre><code class="julia">using Optim, OptimTestProblems
-prob = OptimTestProblems.UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
+prob = UnconstrainedProblems.examples[&quot;Rosenbrock&quot;];
 res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion())
 </code></pre>
 

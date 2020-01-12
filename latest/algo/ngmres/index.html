@@ -133,7 +133,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h2 id="example">Example</h2>
 <p>This example shows how to accelerate <code>GradientDescent</code> on the Extended Rosenbrock problem. First, we try to optimize using <code>GradientDescent</code>.</p>
 <pre><code class="julia">using Optim, OptimTestProblems
-UP = OptimTestProblems.UnconstrainedProblems
+UP = UnconstrainedProblems
 prob = UP.examples[&quot;Extended Rosenbrock&quot;]
 optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, GradientDescent())
 </code></pre>
