@@ -304,11 +304,11 @@ res = optimize(df, dfc, x0, IPNewton())
 </code></pre>
 
 <pre><code>┌ Warning: Initial guess is not an interior point
-└ @ Optim ~/.julia/packages/Optim/AdYtc/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
+└ @ Optim ~/.julia/packages/Optim/ZoTi4/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:111
 
 Stacktrace:
- [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/AdYtc/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
- [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/AdYtc/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
+ [1] initial_state(::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}, ::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}) at /home/travis/.julia/packages/Optim/ZoTi4/src/multivariate/solvers/constrained/ipnewton/ipnewton.jl:112
+ [2] optimize(::TwiceDifferentiable{Float64,Array{Float64,1},Array{Float64,2},Array{Float64,1}}, ::TwiceDifferentiableConstraints{typeof(Main.ex-ipnewton_basics.con_c!),typeof(Main.ex-ipnewton_basics.con_jacobian!),typeof(Main.ex-ipnewton_basics.con_h!),Float64}, ::Array{Float64,1}, ::IPNewton{typeof(Optim.backtrack_constrained_grad),Symbol}, ::Optim.Options{Float64,Nothing}) at /home/travis/.julia/packages/Optim/ZoTi4/src/multivariate/solvers/constrained/ipnewton/interior.jl:196 (repeats 2 times)
  [3] top-level scope at none:0
  [4] eval at ./boot.jl:319 [inlined]
  [5] (::getfield(Documenter.Expanders, Symbol(&quot;##8#10&quot;)){Module,Expr})() at /home/travis/.julia/packages/Documenter/Qo3Yk/src/Expanders.jl:480

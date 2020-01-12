@@ -257,7 +257,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 </table>
 <p><a id='What-1'></a></p>
 <h2 id="what">What</h2>
-<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained and Riemannian optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired, global optimization techniques should be employed instead (see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>).</p>
+<p>Optim is a Julia package for optimizing functions of various kinds. While there is some support for box constrained and Riemannian optimization, most of the solvers try to find an $x$ that minimizes a function $f(x)$ without any constraints. Thus, the main focus is on unconstrained optimization. The provided solvers, under certain conditions, will converge to a local minimum. In the case where a global minimum is desired we supply some methods such as (bounded) simulated annealing and particle swarm. For a dedicated package for global optimization techniques, see e.g. <a href="https://github.com/robertfeldt/BlackBoxOptim.jl">BlackBoxOptim</a>.</p>
 <p><a id='Why-1'></a></p>
 <h2 id="why">Why</h2>
 <p>There are many solvers available from both free and commercial sources, and many of them are accessible from Julia. Few of them are written in Julia. Performance-wise this is rarely a problem, as they are often written in either Fortran or C. However, solvers written directly in Julia does come with some advantages.</p>
@@ -311,5 +311,5 @@ Edit on GitHub</a>
 </html>
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2020-01-12 09:57:12
+Build Date UTC : 2020-01-12 19:54:30
 -->
