@@ -13,8 +13,13 @@ import NLSolversBase
 import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
+import BandedMatrices
+import BandedMatrices: BandedMatrix
 
 debug_printing = false
+
+        println("Vortex")
+        @time include("multivariate/vortex.jl)
 
 special_tests = [
     "bigfloat/initial_convergence",
@@ -91,6 +96,7 @@ multivariate_tests = [
     "arbitrary_precision",
     "successive_f_tol",
     "f_increase",
+    "vortex",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 
