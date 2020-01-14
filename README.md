@@ -29,24 +29,29 @@ The minimum is at (a,a^2).
 
 The above code gives the output
 ```jlcon
-Results of Optimization Algorithm
- * Algorithm: BFGS
- * Starting Point: [0.0,0.0]
- * Minimizer: [0.9999999926033423,0.9999999852005353]
- * Minimum: 5.471433e-17
- * Iterations: 16
 
- * Convergence: true
-   * |x - x'| ≤ 0.0e+00: false
-     |x - x'| = 3.47e-07
-   * |f(x) - f(x')| ≤ 0.0e+00 |f(x)|: false
-     |f(x) - f(x')| = 1.20e+03 |f(x)|
-   * |g(x)| ≤ 1.0e-08: true
-     |g(x)| = 2.33e-09
-   * Stopped by an increasing objective: false
-   * Reached Maximum Number of Iterations: false
- * Objective Calls: 53
- * Gradient Calls: 53
+* Status: success
+
+* Candidate solution
+  Minimizer: [1.00e+00, 1.00e+00]
+  Minimum:   5.471433e-17
+
+* Found with
+  Algorithm:     BFGS
+  Initial Point: [0.00e+00, 0.00e+00]
+
+* Convergence measures
+  |x - x'|               = 3.47e-07 ≰ 0.0e+00
+  |x - x'|/|x'|          = 3.47e-07 ≰ 0.0e+00
+  |f(x) - f(x')|         = 6.59e-14 ≰ 0.0e+00
+  |f(x) - f(x')|/|f(x')| = 1.20e+03 ≰ 0.0e+00
+  |g(x)|                 = 2.33e-09 ≤ 1.0e-08
+
+* Work counters
+  Seconds run:   0  (vs limit Inf)
+  Iterations:    16
+  f(x) calls:    53
+  ∇f(x) calls:   53
 ```
 To get information on the keywords used to construct method instances, use the Julia REPL help prompt (`?`)
 ```
