@@ -1,3 +1,10 @@
+@testset "normalized array" begin
+    grdt!(buf, _) = (buf .= 0; buf[1] = 1; buf)
+    result = optimize(x->x[1], grdt!, randn(2,2), ConjugateGradient(manifold=Sphere()))
+    @test result.minimizer ≈ [-1 0; 0 0]
+    @test result.minimum ≈ -1
+end
+
 @testset "input types" begin
     f(X) = (10 - X[1])^2 + (0 - X[2])^2 + (0 - X[3])^2 + (5 - X[4])^2
 

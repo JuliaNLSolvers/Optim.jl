@@ -66,7 +66,8 @@ project_tangent!(M::Flat, g, x) = g
 """Spherical manifold {|x| = 1}."""
 struct Sphere <: Manifold
 end
-retract!(S::Sphere, x) = normalize!(x)
+retract!(S::Sphere, x) = (x ./= norm(x))
+# dot accepts any iterables
 project_tangent!(S::Sphere,g,x) = (g .-= real(dot(x,g)).*x)
 
 """
