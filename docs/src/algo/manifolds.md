@@ -20,7 +20,7 @@ All first-order optimization methods are supported.
 
 The following manifolds are currently supported:
 * Flat: Euclidean space, default. Standard unconstrained optimization.
-* Sphere: spherical constraint `||x|| = 1`
+* Sphere: spherical constraint `||x|| = 1`, where `x` is a real or complex array of any dimension.
 * Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. `X'*X = I`
 
 The following meta-manifolds construct manifolds out of pre-existing ones:
