@@ -28,7 +28,7 @@ Random.seed!(0);                            # Fix random seed generator for repr
 #md #     `Pkg.add("Optim")`
 #
 # The first item that needs to be addressed is the data generating process or DGP.
-# The following code will produce data from a nomral linear model:
+# The following code will produce data from a normal linear model:
 
 
 n = 500                             # Number of observations
