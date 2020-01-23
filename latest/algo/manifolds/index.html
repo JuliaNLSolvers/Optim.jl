@@ -109,7 +109,7 @@ Optim.optimize(f, g!, x0, Optim.ConjugateGradient(manifold=manif))
 <p>The following manifolds are currently supported:</p>
 <ul>
 <li>Flat: Euclidean space, default. Standard unconstrained optimization.</li>
-<li>Sphere: spherical constraint <code>||x|| = 1</code></li>
+<li>Sphere: spherical constraint <code>||x|| = 1</code>, where <code>x</code> is a real or complex array of any dimension.</li>
 <li>Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. <code>X'*X = I</code></li>
 </ul>
 <p>The following meta-manifolds construct manifolds out of pre-existing ones:</p>

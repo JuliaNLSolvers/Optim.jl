@@ -95,7 +95,7 @@ if (is_top_frame) { $('body').addClass('wm-top-page'); }
 <h2 id="dealing-with-constant-parameters">Dealing with constant parameters</h2>
 <p>In many applications, there may be factors that are relevant to the function evaluations, but are fixed throughout the optimization. An obvious example is using data in a likelihood function, but it could also be parameters we wish to hold constant.</p>
 <p>Consider a squared error loss function that depends on some data <code>x</code> and <code>y</code>, and parameters <code>betas</code>. As far as the solver is concerned, there should only be one input argument to the function we want to minimize, call it <code>sqerror</code>.</p>
-<p>The problem is that we want to optimize a function <code>sqerror</code> that really depends on three inputs, and two of them are constant throught the optimization procedure. To do this, we need to define the variables <code>x</code> and <code>y</code></p>
+<p>The problem is that we want to optimize a function <code>sqerror</code> that really depends on three inputs, and two of them are constant throughout the optimization procedure. To do this, we need to define the variables <code>x</code> and <code>y</code></p>
 <pre><code class="jl">x = [1.0, 2.0, 3.0]
 y = 1.0 + 2.0 * x + [-0.3, 0.3, -0.1]
 </code></pre>
