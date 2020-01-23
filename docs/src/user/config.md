@@ -1,6 +1,6 @@
 ## Configurable options
 There are several options that simply take on some default values if the user
-doensn't supply anything else than a function (and gradient) and a starting point.
+doesn't supply anything else than a function (and gradient) and a starting point.
 ### Solver options
 There quite a few different solvers available in Optim, and they are all listed
 below. Notice that the constructors are written without input here, but they
