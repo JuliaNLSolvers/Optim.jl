@@ -8,7 +8,7 @@ and parameters `betas`. As far as the solver is concerned, there should only be 
 input argument to the function we want to minimize, call it `sqerror`.
 
 The problem is that we want to optimize a function `sqerror` that really depends
-on three inputs, and two of them are constant throught the optimization procedure.
+on three inputs, and two of them are constant throughout the optimization procedure.
 To do this, we need to define the variables `x` and `y`
 ```jl
 x = [1.0, 2.0, 3.0]
