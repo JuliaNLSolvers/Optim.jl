@@ -1,4 +1,6 @@
+using Random
 @testset "normalized array" begin
+    Random.seed!(1323)
     grdt!(buf, _) = (buf .= 0; buf[1] = 1; buf)
     result = optimize(x->x[1], grdt!, randn(2,2), ConjugateGradient(manifold=Sphere()))
     @test result.minimizer ≈ [-1 0; 0 0]
