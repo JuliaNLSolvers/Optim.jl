@@ -102,7 +102,12 @@ function solve_tr_subproblem!(gr,
     # Note that currently the eigenvalues are only sorted if H is perfectly
     # symmetric.  (Julia issue #17093)
     H_eig = eigen(Symmetric(H))
-    min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
+
+    if !isempty(H_eig.values)
+        min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
+    else
+        return T(Inf), false, zero(T), false, false
+    end
     H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.

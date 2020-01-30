@@ -196,4 +196,9 @@ end
     Optim.solve_tr_subproblem!([0, 1.], [-1000 0; 0. -999], 1e-2, ones(2))
 end
 
+@testset "Handle Inf without erroring" begin
+    o = optimize(t -> Inf, ones(10), NewtonTrustRegion())
+    @test !(o.f_converged || o.g_converged || o.x_converged)
+end
+
 end
