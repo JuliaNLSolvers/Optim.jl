@@ -1,6 +1,6 @@
 name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "0.20.0"
+version = "0.20.1"
 
 [deps]
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
