@@ -100,7 +100,7 @@ function Base.convert(::Type{IPNewtonState{T,Tx}}, state::IPNewtonState{S, Sx}) 
                   )
 end
 
-function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constraints::TwiceDifferentiableConstraints, initial_x::Array{T}) where T
+function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constraints::TwiceDifferentiableConstraints, initial_x::AbstractArray{T}) where T
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
     constr_c = Array{T}(undef, mc)
@@ -114,8 +114,8 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     end
     # Allocate fields for the objective function
     n = length(initial_x)
-    g = Vector{T}(undef, n)
-    s = Vector{T}(undef, n)
+    g = similar(initial_x)
+    s = similar(initial_x)
     f_x_previous = NaN
     f_x, g_x = value_gradient!(d, initial_x)
     g .= g_x # needs to be a separate copy of g_x
