@@ -15,6 +15,8 @@ Besides the help provided at the REPL, it is possible to find help and general
 documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
+using Compat                 # for dot(x, P, y) on older Julia versions
+
 using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
 
 using PositiveFactorizations # for globalization strategy in Newton

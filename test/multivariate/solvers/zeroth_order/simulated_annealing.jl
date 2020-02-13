@@ -15,8 +15,6 @@
     results = Optim.optimize(rosenbrock_s, [0.0, 0.0], SimulatedAnnealing(), options)
     @test norm(Optim.minimizer(results) - [1.0, 1.0]) < 0.1
 
-    @suppress_out begin
-        options = Optim.Options(iterations=10, show_trace=true, store_trace=true, extended_trace=true)
-        results = Optim.optimize(rosenbrock_s, [0.0, 0.0], SimulatedAnnealing(), options)
-    end
+    options = Optim.Options(iterations=10, show_trace=true, store_trace=true, extended_trace=true)
+    results = Optim.optimize(rosenbrock_s, [0.0, 0.0], SimulatedAnnealing(), options)
 end

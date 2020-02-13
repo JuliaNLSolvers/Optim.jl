@@ -6,9 +6,6 @@
 #        ldiv!(x, P, b) ->  x = P \ b
 #        dot(x, P, b)  ->  x' P b
 #
-#    If `dot` is not provided, then Optim.jl will try to define it via
-#        dot(x, P, b) = dot(x, mul!(similar(x), P, y))
-#
 #    finally the preconditioner can be updated after each x-update using
 #        precondprep!
 #    but this is passed as an argument at the moment!
@@ -18,11 +15,6 @@
 #####################################################
 #  [0] Defaults and aliases for easier reading of the code
 #      these can also be over-written if necessary.
-
-if VERSION < v"1.4.0-DEV.92"
-# an inner product w.r.t. a metric P (=preconditioner)
-    dot(x, P, y) = dot(x, mul!(similar(x), P, y))
-end
 
 # default preconditioner update
 precondprep!(P, x) = nothing
@@ -45,9 +37,6 @@ dot(A, ::Nothing, B) = dot(A, B)
 #      ldiv!(a, P, b) or mul! for this type, so we do it by hand
 #      TODO: maybe implement this in Base
 ldiv!(out::Array, P::Diagonal, A::Array) = copyto!(out, A ./ P.diag)
-if VERSION < v"1.4.0-DEV.92"
-    dot(A::Array, P::Diagonal, B::Array) = dot(A, P.diag .* B)
-end
 
 #####################################################
 #  [3] Inverse Diagonal preconditioner
