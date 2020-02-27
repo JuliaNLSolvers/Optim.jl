@@ -19,11 +19,6 @@
 #  [0] Defaults and aliases for easier reading of the code
 #      these can also be over-written if necessary.
 
-if VERSION < v"1.4.0-DEV.92"
-# an inner product w.r.t. a metric P (=preconditioner)
-    dot(x, P, y) = dot(x, mul!(similar(x), P, y))
-end
-
 # default preconditioner update
 precondprep!(P, x) = nothing
 
@@ -35,7 +30,7 @@ precondprep!(P, x) = nothing
 # out =  P^{-1} * A
 ldiv!(out, ::Nothing, A) = copyto!(out, A)
 # A' * P B
-dot(A, ::Nothing, B) = dot(A, B)
+@compat dot(A, ::Nothing, B) = dot(A, B)
 
 
 #####################################################

@@ -166,11 +166,9 @@ res = optimize(df, dfc, x0, IPNewton())
 lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
                                      lx, ux, lc, uc)
-@suppress begin                               #src
 res = optimize(df, dfc, x0, IPNewton())
 @test Optim.converged(res)                    #src
 @test Optim.minimum(res) ≈ 0.2966215688829255 #src
-end                                           #src
 
 
 # **Note that the algorithm warns that the Initial guess is not an

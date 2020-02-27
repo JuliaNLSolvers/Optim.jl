@@ -175,7 +175,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         # extra copy, which is probably minimal overhead.
         # -----------------
         method.precondprep!(method.P, state.x)
-        dPd = real(dot(state.s, method.P, state.s))
+        @compat dPd = real(dot(state.s, method.P, state.s))
         etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
         state.y .= gradient(d) .- state.g_previous
         ydots = real(dot(state.y, state.s))
