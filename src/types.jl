@@ -239,7 +239,8 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
 
     @printf io " * Candidate solution\n"
     nx = length(minimizer(r))
-    str_x_elements = [@sprintf "%.2e" _x for _x in take(minimizer(r), min(nx, 3))]
+    str_x_elements = [repr(_x, context=:compact => true)
+        for _x in take(minimizer(r), min(nx, 3))]
     if nx >= 4
         push!(str_x_elements, " ...")
     end
@@ -252,7 +253,8 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io " * Found with\n"
     @printf io "    Algorithm:     %s\n" summary(r)
     nx = length(initial_state(r))
-    str_x_elements = [@sprintf "%.2e" _x for _x in take(initial_state(r), min(nx, 3))]
+    str_x_elements = [repr(_x, context=:compact => true)
+        for _x in take(initial_state(r), min(nx, 3))]
     if nx >= 4
         push!(str_x_elements, " ...")
     end
