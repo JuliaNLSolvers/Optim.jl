@@ -3,6 +3,7 @@ uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "0.20.1"
 
 [deps]
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -15,6 +16,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0"
 FillArrays = "0.6.2, 0.7, 0.8"
 LineSearches = "7.0.1"
 NLSolversBase = "7.3.1"
@@ -28,8 +30,7 @@ julia = "1"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
-Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "OptimTestProblems", "Suppressor", "Random", "RecursiveArrayTools"]
+test = ["Test", "OptimTestProblems", "Random", "RecursiveArrayTools"]
