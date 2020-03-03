@@ -86,7 +86,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     # check for out-of-bounds starting values
     for i = 1:n
         if(( x[i] > ub[i]) || (x[i] < lb[i]))
-            error("samin: initial parameter %d out of bounds\n", i)
+            error("samin: initial parameter $(i) out of bounds")
         end
     end
 
