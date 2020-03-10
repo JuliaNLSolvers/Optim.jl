@@ -67,6 +67,7 @@ function trace!(tr, d, state, iteration, method::KrylovTrustRegion, options, cur
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
+        dt["x"] = copy(state.x)
         dt["radius"] = copy(state.radius)
         dt["interior"] = state.interior
         dt["accept_step"] = state.accept_step
