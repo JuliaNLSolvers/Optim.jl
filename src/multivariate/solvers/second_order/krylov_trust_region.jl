@@ -175,7 +175,7 @@ end
 
 function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     if !state.accept_step
-        return state.radius < options.x_abstol, false, false, false, false
+        return state.radius < options.x_abstol, false, false, false
     end
 
     x_converged, f_converged, f_increased, g_converged = false, false, false, false
