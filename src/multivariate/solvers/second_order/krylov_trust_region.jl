@@ -53,7 +53,7 @@ function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T
                            similar(initial_x), # Maintain current search direction in state.s
                            true,               # interior
                            true,               # accept step
-                           method.initial_radius,
+                           convert(T,method.initial_radius),
                            zero(T),            # model change
                            zero(T),            # observed f change
                            zero(T),            # state.rho
