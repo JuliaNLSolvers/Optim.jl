@@ -41,7 +41,7 @@
     for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS(), NGMRES(), OACCEL())
         debug_printing && printstyled("Solver: ", summary(_optimizer), "\n", color=:green)
         results = optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
-        if typeof(_optimizer) <: NGMRES && Sys.iswindows() && Sys.WORD_SIZE == 64
+        if _optimizer isa NGMRES && Sys.iswindows() && Sys.WORD_SIZE == 64
             @test_broken Optim.converged(results)
         else
             @test Optim.converged(results)
