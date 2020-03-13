@@ -14,7 +14,7 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
-debug_printing = true
+debug_printing = false
 
 special_tests = [
     "bigfloat/initial_convergence",
