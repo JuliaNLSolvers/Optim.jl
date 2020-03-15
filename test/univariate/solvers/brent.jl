@@ -15,4 +15,15 @@
     @test Optim.minimum(result) == 2.0
     @test_throws ErrorException optimize(identity, 2.0, 1.0, Brent())
     @test summary(result) == "Brent's Method"
+
+    ## corner cases - largely flat functions
+    result = optimize(x->sign(x), -2, 2)
+    @test Optim.converged(result)
+    @test Optim.minimum(result) == -1.0
+    result = optimize(x->sign(x), -1, 2)
+    @test Optim.converged(result)
+    @test Optim.minimum(result) == -1.0
+    result = optimize(x->sign(x), -2, 1)
+    @test Optim.converged(result)
+    @test Optim.minimum(result) == -1.0
 end

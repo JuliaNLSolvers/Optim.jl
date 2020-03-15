@@ -143,7 +143,7 @@ function optimize(
         new_f = f(new_x)
         f_calls += 1
 
-        if new_f <= new_minimum
+        if new_f < new_minimum
             if new_x < new_minimizer
                 x_upper = new_minimizer
                 best_bound = "upper"
