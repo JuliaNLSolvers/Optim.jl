@@ -54,7 +54,7 @@ function optimize(d::D, initial_x::Tx, method::M,
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        ls_failed = update_state!(d, state, method)
+        ls_success = !update_state!(d, state, method)
         if !ls_success
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         end
@@ -119,7 +119,7 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        !ls_success,
+                                        ls_success,
                                         options.time_limit,
                                         _time-t0,
                                         )
