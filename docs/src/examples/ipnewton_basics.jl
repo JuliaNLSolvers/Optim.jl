@@ -59,7 +59,7 @@ end;
 # `TwiceDifferentiableConstraints` from the package `NLSolversBase.jl`.
 
 
-# ## Box minimzation
+# ## Box minimization
 # We want to optimize the Rosenbrock function in the box
 # ``-0.5 \leq x \leq 0.5``, starting from the point ``x_0=(0,0)``.
 # Box constraints are defined using, for example,
