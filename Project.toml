@@ -23,7 +23,7 @@ NLSolversBase = "7.3.1"
 NaNMath = "0.3.2"
 Parameters = "0.10, 0.11, 0.12"
 PositiveFactorizations = "0.2.2"
-StatsBase = "0.29, 0.30, 0.31, 0.32"
+StatsBase = "0.29, 0.30, 0.31, 0.32, 0.33"
 julia = "1"
 
 [extras]
