@@ -241,7 +241,7 @@ function advanced_time_control(x)
     so_far =  time()-start_time
     println(" * Time so far:     ", so_far)
     if x.iteration == 0
-        time_to_setup[:] = time()-start_time
+        time_to_setup .= time()-start_time
     else
         expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
         println(" * Next iteration ≈ ", expected_next_time)
