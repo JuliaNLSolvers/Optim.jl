@@ -6,18 +6,27 @@
         (x[1] - 5.0)^4
     end
 
-    function fg!(storage::Vector, x::Vector)
-        storage[1] = 4.0 * (x[1] - 5.0)^3
+    function fg!(g, x)
+        g[1] = 4.0 * (x[1] - 5.0)^3
         f(x)
     end
 
-    function hv!(storage::Vector, x::Vector, v::Vector)
-        storage[1] = 12.0 * (x[1] - 5.0)^2 * v[1]
+    function fg2!(_f, g, x)
+        g  === nothing || (g[1] = 4.0 * (x[1] - 5.0)^3)
+        _f === nothing || return f(x)
+    end
+
+
+    function hv!(Hv, x, v)
+        Hv[1] = 12.0 * (x[1] - 5.0)^2 * v[1]
     end
 
     d = Optim.TwiceDifferentiableHV(f, fg!, hv!, [0.0])
+    d2 = Optim.TwiceDifferentiableHV(NLSolversBase.only_fg_and_hv!(fg2!, hv!), [0.0])
 
     result = Optim.optimize(d, [0.0], Optim.KrylovTrustRegion())
+    @test norm(Optim.minimizer(result) - [5.0]) < 0.01
+    result = Optim.optimize(d2, [0.0], Optim.KrylovTrustRegion())
     @test norm(Optim.minimizer(result) - [5.0]) < 0.01
 end
 
