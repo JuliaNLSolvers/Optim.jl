@@ -52,7 +52,7 @@ function separable_nes(f,x0::AbstractVector{T},σ::AbstractVector{T},params::sNE
             tmp_x .= x .+ σ .* ϵ[j]
             F[j] = f(tmp_x)
         end
-        sort!(idx,by = i->F[i])
+        sortperm!(idx,F)
         ∇f .= Z
         ∇fσ .= Z
         for i in 1:samples
