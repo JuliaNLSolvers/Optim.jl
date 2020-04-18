@@ -1,75 +1,83 @@
-struct sNES{T}
-    ημ::T
-    ησ::T
-    σtol::T
-    samples::Int
-    function sNES{T}(d::Integer;P...) where T
-        ημ=T(1)
-        ησ=T( (3+log(d))/(5*√d) )
-        samples=4 + ceil(Int, log(3*d))
-        σtol=T(1e-8)
-        haskey(P,:ημ) && (ημ=P[:ημ])
-        haskey(P,:ησ) && (ησ=P[:ησ])
-        haskey(P,:samples) && (samples=P[:samples])
-        haskey(P,:σtol) && (σtol=P[:σtol])
-        new{T}(ημ,ησ,σtol,samples)
-    end
+struct sNES <: ZerothOrderOptimizer
 end
 
-function separable_nes(f,x0::AbstractVector{T},σ::AbstractVector{T},params::sNES{T}) where T
-    samples=params.samples
-    samples>3 || error("atleast 3 samples are required for sNES to work.")
-    ημ = params.ημ
-    ησ = params.ησ
-    σtol = params.σtol
+mutable struct sNESstate{T,Tx,Tfs} <: ZerothOrderState
+    d::Int
+    ημ::T
+    ησ::T
+    samples::Int
+    x::Tx
+    σ::Tx
+    tmp_x::Tx
+    F::Tfs
+    ∇f::Tx
+    ∇fσ::Tx
+    ϵ::Vector{Tx}
+    u::Tx
+    idx::Vector{Int}
+    iteration::Int
+end
+
+function initial_state(method::sNES, options, f, x0::AbstractVector{T}) where T
+    d=length(x0)
+    ημ=T(1)
+    ησ=T( (3+log(d))/(5*√d) )
+    samples=4 + ceil(Int, log(3*d))
     N=length(x0)
-    length(σ) == N || error("the length of 'σ' must be equal to the length of 'x'.")
     x = copy(x0)
-    Z = zero(T)
-    O = one(T)
-    F = fill(f(x0),samples)
-    ∇f = fill(Z,N)
-    ∇fσ = fill(Z,N)
-    ϵ = map(i->zeros(T,N), 1:samples)
+    tmp_x = copy(x0)
+    ∇f = copy(x0)
+    ∇fσ = copy(x0)
+    ϵ = map(i->copy(x0), 1:samples)
+    F = fill(value(f,x0),samples)
     u = utility_function{T}(samples)
     idx = collect(1:samples)
-    tmp_x = copy(x0)
+    σ=fill!(copy(x0),1)
     for i in 1:samples
         randn!(ϵ[i])
         tmp_x .= x .+ σ .* ϵ[i]
-        F[i] = f(tmp_x)
+        F[i] = value(f,tmp_x)
     end
     sortperm!(idx,F)
-    while geo_mean(σ) > σtol
-        for i in 1:samples
-            j = idx[i]
-            if i >= (samples ÷ 2)
-                randn!(ϵ[j])
-            else
-                rescaling = sqrt(randchisq(T, N)) / norm(ϵ[j])
-                ϵ[j] .*= rescaling
-            end
-            tmp_x .= x .+ σ .* ϵ[j]
-            F[j] = f(tmp_x)
+    sNESstate{T,typeof(x),typeof(F)}(d,ημ,ησ,samples,x,σ,tmp_x,F,∇f,∇fσ,ϵ,u,idx,1)
+end
+
+function  update_state!(f, state::sNESstate{T}, method::sNES) where T
+    Z = zero(T)
+    O = one(T)
+
+    for i in 1:state.samples
+        j = state.idx[i]
+        if i >= (state.samples ÷ 2)
+            randn!(state.ϵ[j])
+        else
+            rescaling = sqrt(randchisq(T, state.d)) / norm(state.ϵ[j])
+            state.ϵ[j] .*= rescaling
         end
-        sortperm!(idx,F)
-        ∇f .= Z
-        ∇fσ .= Z
-        for i in 1:samples
-            j = idx[i]
-            ∇f .+= u[i] .* ϵ[j]
-            ∇fσ .+= u[i] .* (ϵ[j] .* ϵ[j] .- O)
-        end
-        x .+= ημ .* σ .* ∇f
-        σ .*= exp.(ησ ./ 2 .* ∇fσ)
+        state.tmp_x .= state.x .+ state.σ .* state.ϵ[j]
+        state.F[j] = value(f,state.tmp_x)
     end
-    (sol = x, cost = f(x))
+    sortperm!(state.idx,state.F)
+    state.∇f .= Z
+    state.∇fσ .= Z
+    for i in 1:state.samples
+        j = state.idx[i]
+        state.∇f .+= state.u[i] .* state.ϵ[j]
+        state.∇fσ .+= state.u[i] .* (state.ϵ[j] .* state.ϵ[j] .- O)
+    end
+    state.x .+= state.ημ .* state.σ .* state.∇f
+    state.σ .*= exp.(state.ησ ./ 2 .* state.∇fσ)
+    state.iteration+=1
+    false
 end
 
-function separable_nes(f,μ::AbstractVector{T},σ::T,params::sNES{T}) where T
-    separable_nes(f,μ,fill(σ,length(μ)),params)
-end
+pick_best_x(f_increased, state::sNESstate) = state.x
+pick_best_f(f_increased, state::sNESstate, d) = value(d,state.x)
 
-function separable_nes(f,μ::AbstractVector{T},σ; P...) where T
-    separable_nes(f,μ,σ,sNES{T}(length(μ);P...))
+function assess_convergence(state::sNESstate, d, options::Options)
+    g_converged = geo_mean(state.σ) <= options.g_abstol # Hijact g_converged for NM stopping criterior
+    return false, false, g_converged, false
+end
+function default_options(method::sNES)
+    Dict(:allow_f_increases => true, :g_abstol=>1e-8)
 end

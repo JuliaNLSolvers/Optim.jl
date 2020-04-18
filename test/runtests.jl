@@ -79,6 +79,7 @@ multivariate_tests = [
     "solvers/zeroth_order/nelder_mead",
     "solvers/zeroth_order/particle_swarm",
     "solvers/zeroth_order/simulated_annealing",
+    "solvers/zeroth_order/nes",
     ## other
     "array",
     "extrapolate",
