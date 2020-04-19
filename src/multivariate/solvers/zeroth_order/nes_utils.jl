@@ -8,17 +8,13 @@ function utility_function{T}(n::Integer) where T
     u
 end
 
-function randchisq(rn::AbstractRNG,::Type{T},ν::Integer) where T
+function randchisq(::Type{T},ν::Integer) where T
     ν < 0 && throw(ArgumentError("ν (DOF) must be atleast 0."))
     s=zero(T)
     for i in 1:ν
-        s+=abs2(randn(rn,T))
+        s+=abs2(randn(T))
     end
     s
-end
-
-function randchisq(::Type{T},ν::Integer) where T
-    randchisq(Random.default_rng(),T,ν)
 end
 
 function geo_mean(x::AbstractVector{T}) where T
