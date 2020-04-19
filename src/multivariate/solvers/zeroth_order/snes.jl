@@ -78,6 +78,7 @@ function assess_convergence(state::sNESstate, d, options::Options)
     g_converged = geo_mean(state.σ) <= options.g_abstol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, false
 end
+
 function default_options(method::sNES)
     Dict(:allow_f_increases => true, :g_abstol=>1e-8)
 end

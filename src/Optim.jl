@@ -53,7 +53,10 @@ import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
                       I,
                       svd,
                       opnorm, # for safeguards in newton trust regions
-                      issuccess
+                      issuccess,
+                      diagm,
+                      det,
+                      tr
 import SparseArrays: AbstractSparseMatrix
 using Random
 # exported functions and types
@@ -77,6 +80,7 @@ export optimize, maximize, # main function
        ParticleSwarm,
        SimulatedAnnealing,
        sNES,
+       xNES,
        ## First order
        ### Quasi-Newton
        GradientDescent,
@@ -140,6 +144,7 @@ include("multivariate/solvers/zeroth_order/simulated_annealing.jl")
 include("multivariate/solvers/zeroth_order/particle_swarm.jl")
 include("multivariate/solvers/zeroth_order/nes_utils.jl")
 include("multivariate/solvers/zeroth_order/snes.jl")
+include("multivariate/solvers/zeroth_order/xnes.jl")
 
 ## Quasi-Newton
 include("multivariate/solvers/first_order/gradient_descent.jl")

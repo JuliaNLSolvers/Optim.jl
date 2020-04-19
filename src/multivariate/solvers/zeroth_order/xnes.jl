@@ -1,103 +1,109 @@
-struct xNES{T}
+struct xNES <: ZerothOrderOptimizer
+end
+
+mutable struct xNESstate{T,Tx,Tm,Tfs} <: ZerothOrderState
+    d::Int
     ημ::T
     ησ::T
     ηB::T
-    σtol::T
+    σ::T
     samples::Int
-    function xNES{T}(d::Integer;P...) where T
-        ημ=T(1)
-        ηB=ησ=T( (9+3*log(d))/(5*d*√d) )
-        samples=4 + ceil(Int, log(3*d))
-        σtol=T(1e-8)
-        haskey(P,:ημ) && (ημ=P[:ημ])
-        haskey(P,:ησ) && (ησ=P[:ησ])
-        haskey(P,:ηB) && (ησ=P[:ηB])
-        haskey(P,:samples) && (samples=P[:samples])
-        haskey(P,:σtol) && (σtol=P[:σtol])
-        new{T}(ημ,ησ,ηB,σtol,samples)
-    end
+    x::Tx
+    tmp_x::Tx
+    u::Tx
+    Gδ::Tx
+    F::Tfs
+    Z::Tm
+    B::Tm
+    GM::Tm
+    idx::Vector{Int}
+    iteration::Int
+end
+
+function initial_state(method::xNES, options, f, x0::AbstractVector{T}) where T
+    d=length(x0)
+    ημ=T(1)
+    ηB=ησ=T( (9+3*log(d))/(5*d*√d) )
+    samples=4 + ceil(Int, log(3*d))
+    x=copy(x0)
+    d=length(x)
+    Z=Array{T}(undef,d,samples)
+    A=diagm(ones(T,d))
+    σ=abs(det(A))^(1/d)
+    F=fill(value(f,x),samples)
+    B=A./σ
+    idx=collect(1:samples)
+    u=utility_function{T}(samples)
+    Gδ=zeros(T,d)
+    GM=zeros(T,d,d)
+    tmp_x=copy(x)
+    iteration=0
+    xNESstate{T,typeof(x0),typeof(A),typeof(F)}(d,ημ,ησ,ηB,σ,samples,x,tmp_x,u,Gδ,F,Z,B,GM,idx,iteration)
 end
 
 function δ(T,i,j)
     ifelse(i==j,one(T),zero(T))
 end
-function exponential_nes(f,μ0::AbstractVector{T},A::AbstractMatrix{T},params::xNES{T}) where T
-    n=params.samples
-    ημ=params.ημ
-    ησ=params.ησ
-    ηB=params.ηB
-    σtol=params.σtol
-    μ=copy(μ0)
-    d=length(μ)
-    Z=Array{T}(undef,d,n)
-    σ=abs(det(A))^(1/d)
-    F=fill(f(μ),n)
-    B=A./σ
-    idx=collect(1:n)
-    u=utility_function{T}(n)
-    Gδ=zeros(T,d)
-    GM=zeros(T,d,d)
-    tmp_μ=copy(μ)
-    @inbounds while σ>σtol
-        randn!(Z)
-        for i in 1:n
-            #F[i] = f(μ .+ σ .* B * Z[:,i])
-            mul!(tmp_μ,B,view(Z,:,i))
-            tmp_μ .= μ .+ tmp_μ .* σ
-            F[i] = f(tmp_μ)
-        end
-        sortperm!(idx,F)
-        #Gδ=sum(u[i] .* Z[:,idx[i]] for i in 1:n)
-        #GM=sum(u[i] .* (Z[:,idx[i]] * (Z[:,idx[i]]') - I) for i in 1:n)
-        let i=1
-            j = idx[i]
-            for k2 in 1:d
-                Gδ[k2] = u[i] * Z[k2,j]
-                for k1 in 1:d
-                    GM[k1,k2] = u[i] * (Z[k1,j] * Z[k2,j] - δ(T,k1,k2))
-                end
-            end
-        end
-        for i in 2:n
-            j = idx[i]
-            for k2 in 1:d
-                Gδ[k2] += u[i] * Z[k2,j]
-                for k1 in 1:d
-                    GM[k1,k2] += u[i] * (Z[k1,j] * Z[k2,j] - δ(T,k1,k2))
-                end
-            end
-        end
-        #=
-        Gσ = tr(GM) / d
-        GB=GM - Gσ * I
-        μ=μ .+ ημ * σ *B *Gδ
-        σ=σ * exp(ησ/2 * Gσ)
-        B=B * exp(ηB/2 .* GB)
-        =#
-        Gσ = tr(GM) / d
-        for i in 1:d
-            GM[i,i]-=Gσ
-        end
-        GM .*= ηB/2
-        Gσ *= ησ/2
-        mul!(tmp_μ,B,Gδ)
-        μ .+= ημ .* σ .* tmp_μ
-        σ *= exp(Gσ)
-        mul!(GM,B,exp(GM))
-        B.=GM
+
+function update_state!(f, state::xNESstate{T}, method::xNES) where T
+    randn!(state.Z)
+    for i in 1:state.samples
+        #F[i] = f(x .+ σ .* B * Z[:,i])
+        mul!(state.tmp_x,state.B,view(state.Z,:,i))
+        state.tmp_x .= state.x .+ state.tmp_x .* state.σ
+        state.F[i] = value(f,state.tmp_x)
     end
-    return (sol=μ, cost=f(μ))
+    sortperm!(state.idx,state.F)
+    #Gδ=sum(u[i] .* Z[:,idx[i]] for i in 1:n)
+    #GM=sum(u[i] .* (Z[:,idx[i]] * (Z[:,idx[i]]') - I) for i in 1:n)
+    let i=1
+        j = state.idx[i]
+        for k2 in 1:state.d
+            state.Gδ[k2] = state.u[i] * state.Z[k2,j]
+            for k1 in 1:state.d
+                state.GM[k1,k2] = state.u[i] * (state.Z[k1,j] * state.Z[k2,j] - δ(T,k1,k2))
+            end
+        end
+    end
+    for i in 2:state.samples
+        j = state.idx[i]
+        for k2 in 1:state.d
+            state.Gδ[k2] += state.u[i] * state.Z[k2,j]
+            for k1 in 1:state.d
+                state.GM[k1,k2] += state.u[i] * (state.Z[k1,j] * state.Z[k2,j] - δ(T,k1,k2))
+            end
+        end
+    end
+    #=
+    Gσ = tr(GM) / d
+    GB=GM - Gσ * I
+    x=x .+ ημ * σ *B *Gδ
+    σ=σ * exp(ησ/2 * Gσ)
+    B=B * exp(ηB/2 .* GB)
+    =#
+    Gσ = tr(state.GM) / state.d
+    for i in 1:state.d
+        state.GM[i,i]-=Gσ
+    end
+    state.GM .*= state.ηB/2
+    Gσ *= state.ησ/2
+    mul!(state.tmp_x,state.B,state.Gδ)
+    state.x .+= state.ημ .* state.σ .* state.tmp_x
+    state.σ *= exp(Gσ)
+    mul!(state.GM,state.B,exp(state.GM))
+    state.B.=state.GM
+    state.iteration+=1
+    false
 end
 
-function exponential_nes(f,μ::AbstractVector{T},σ::AbstractVector{T},params::xNES{T}) where T
-    A=diagm(σ)
-    exponential_nes(f,μ,A,params)
+pick_best_x(f_increased, state::xNESstate) = state.x
+pick_best_f(f_increased, state::xNESstate, d) = value(d,state.x)
+
+function assess_convergence(state::xNESstate, d, options::Options)
+    g_converged = state.σ <= options.g_abstol # Hijact g_converged for NM stopping criterior
+    return false, false, g_converged, false
 end
 
-function exponential_nes(f,μ::AbstractVector{T},σ::T,params::xNES{T}) where T
-    exponential_nes(f,μ,fill(σ,length(μ)),params)
-end
-
-function exponential_nes(f,μ::AbstractVector{T},σ; P...) where T
-    exponential_nes(f,μ,σ,xNES{T}(length(μ);P...))
+function default_options(method::xNES)
+    Dict(:allow_f_increases => true, :g_abstol=>1e-8)
 end
