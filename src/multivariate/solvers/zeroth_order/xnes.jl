@@ -28,7 +28,10 @@ function initial_state(method::xNES, options, f, x0::AbstractVector{T}) where T
     x=copy(x0)
     d=length(x)
     Z=Array{T}(undef,d,samples)
-    A=diagm(ones(T,d))
+    A=zeros(T,d,d)
+    for i in 1:d
+        A[i,i]=1
+    end
     σ=abs(det(A))^(1/d)
     F=fill(value(f,x),samples)
     B=A./σ
