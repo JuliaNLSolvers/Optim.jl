@@ -6,18 +6,13 @@ function rosenbrock2d(x::AbstractVector{T}) where T
     return s
 end
 
-@testset "sNES" begin
-    f(x)=sum(abs2,x.-1.5)
-    R=optimize(f,[1.0,2.0],sNES())
-    @test f(R.minimizer)< 1e-5
-    R=optimize(rosenbrock2d,[0.0,0.0],sNES(),Optim.Options(iterations=30000))
-    @test rosenbrock2d(R.minimizer)< 1e-5
-end
+f(x)=sum(abs2,x.-1.5)
 
-@testset "xNES" begin
-    f(x)=sum(abs2,x.-1.5)
-    R=optimize(f,[1.0,2.0],xNES())
-    @test f(R.minimizer)< 1e-5
-    R=optimize(rosenbrock2d,[0.0,0.0],xNES(),Optim.Options(iterations=30000))
-    @test rosenbrock2d(R.minimizer)< 1e-5
+for NES in [xNES,sNES]
+    @testset "$NES" begin
+        R=optimize(f,[1.0,2.0],NES())
+        @test f(R.minimizer)< 1e-5
+        R=optimize(rosenbrock2d,[0.0,0.0],NES(),Optim.Options(iterations=30000))
+        @test rosenbrock2d(R.minimizer)< 1e-5
+    end
 end
