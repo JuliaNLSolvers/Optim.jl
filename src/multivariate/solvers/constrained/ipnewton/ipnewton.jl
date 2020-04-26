@@ -7,6 +7,10 @@ end
 
 Base.summary(::IPNewton) = "Interior Point Newton"
 
+promote_objtype(method::IPNewton, x, autodiff::Symbol, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(method::IPNewton, x, autodiff::Symbol, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
+promote_objtype(method::IPNewton, x, autodiff::Symbol, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
+
 # TODO: Add support for InitialGuess from LineSearches
 """
 # Interior-point Newton
