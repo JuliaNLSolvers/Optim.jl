@@ -1,11 +1,11 @@
 @testset "Fminbox" begin
     # Quadratic objective function
     # For (A*x-b)^2/2
-    function quadratic!(g, x, AtA, Atb, tmp)
-        mul!(tmp, AtA, x)
-        v = dot(x,tmp)/2 + dot(Atb,x)
+    function quadratic!(g, x, A, b)
+        AtAx = A'A*x
+        v = dot(x, AtAx)/2 - dot(b'*A, x)
         if g !== nothing
-            g .= tmp .+ Atb
+            g .= AtAx .- A'b
         end
         return v
     end
@@ -13,39 +13,44 @@
     Random.seed!(1)
     N = 8
     boxl = 2.0
-    outbox = false
     # Generate a problem where the bounds-free solution lies outside of the chosen box
-    local _objective
-    while !outbox
-        A = randn(N,N)
-        AtA = A'*A
-        b = randn(N)
-        initial_x = randn(N)
-        tmp = similar(initial_x)
-        funcg! = (g, x) -> quadratic!(g, x, AtA, A'*b, tmp)
-        _objective = OnceDifferentiable(x->funcg!(nothing, x), (g, x)->funcg!(g, x), funcg!, initial_x)
-        results = optimize(_objective, initial_x, ConjugateGradient())
-        results = optimize(_objective, Optim.minimizer(results), ConjugateGradient())  # restart to ensure high-precision convergence
-        @test Optim.converged(results)
-        opt_x = Optim.minimizer(results)
-        g = similar(opt_x)
-        @test funcg!(g, opt_x) + dot(b,b)/2 < 1e-8
-        @test norm(g) < 1e-4
-        outbox = any(t -> abs(t) > boxl, opt_x)
-    end
+    function find_outbox(N, limit)
+        outbox = false
+        while !outbox
+            # Random least squares problem
+            A = randn(N,N)
+            b = randn(N)
+            # Useful calculation that can be re-used
+            # Random starting point
+            initial_x = A\b
 
+            # The objective
+            funcg! = (g, x) -> quadratic!(g, x, A, b)
+            g = similar(initial_x)
+            funcg!(g, initial_x)
+            # Find the minimum
+            _objective = OnceDifferentiable(x->funcg!(nothing, x), (g, x)->funcg!(g, x), funcg!, initial_x)
+            results = optimize(_objective, initial_x, ConjugateGradient())
+            @test Optim.converged(results)
+            results = optimize(_objective, Optim.minimizer(results), ConjugateGradient())  # restart to ensure high-precision convergence
+            @test Optim.converged(results)
+            opt_x = Optim.minimizer(results)
+            @test norm(g) < 1e-4
+            if any(t -> abs(t) > boxl, opt_x)
+                return _objective
+            end
+        end
+        nothing
+    end
+    _objective = find_outbox(N, boxl)
     # fminbox
     l = fill(-boxl, N)
     u = fill(boxl, N)
     initial_x = (rand(N) .- 0.5) .* boxl
-    for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS(), NGMRES(), OACCEL())
+    for _optimizer in (ConjugateGradient(), GradientDescent(), LBFGS(), BFGS())
         debug_printing && printstyled("Solver: ", summary(_optimizer), "\n", color=:green)
         results = optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
-        if _optimizer isa NGMRES && Sys.iswindows() && Sys.WORD_SIZE == 64
-            @test_broken Optim.converged(results)
-        else
-            @test Optim.converged(results)
-        end
+        @test Optim.converged(results)
         @test summary(results) == "Fminbox with $(summary(_optimizer))"
         opt_x = Optim.minimizer(results)
         NLSolversBase.gradient!(_objective, opt_x)
