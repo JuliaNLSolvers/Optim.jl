@@ -124,19 +124,18 @@ function update_h!(d, state, method::BFGS)
 
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = real(dot(state.dx, state.dg))
-    if dx_dg == 0.0
-        return true # force stop
-    end
-    mul!(vec(state.u), state.invH, vec(state.dg))
+    if dx_dg > 0
+        mul!(vec(state.u), state.invH, vec(state.dg))
 
-    c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
-    c2 = 1 / dx_dg
+        c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
+        c2 = 1 / dx_dg
 
-    # TODO BLASify this
-    # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-    for i in 1:n
-        @simd for j in 1:n
-            @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
+        # TODO BLASify this
+        # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
+        for i in 1:n
+            @simd for j in 1:n
+                @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
+            end
         end
     end
 end
