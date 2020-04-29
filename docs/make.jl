@@ -14,7 +14,8 @@ cp(joinpath(@__DIR__, "..", "LICENSE.md"),
 
 #run('mv ../CONTRIBUTING.md ./dev/CONTRIBUTING.md') # TODO: Should we use the $odir/CONTRIBUTING.md file instead?
 makedocs(
-    doctest = false
+    doctest = false,
+    sitename = "Optim"
 )
 
 deploydocs(

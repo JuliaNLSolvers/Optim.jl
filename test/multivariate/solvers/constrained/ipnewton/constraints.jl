@@ -507,6 +507,11 @@
             debug_printing && printstyled("f-calls: $(Optim.f_calls(results))\n", color=:red)
             debug_printing && printstyled("g-calls: $(Optim.g_calls(results))\n", color=:red)
             debug_printing && printstyled("h-calls: $(Optim.h_calls(results))\n", color=:red)
+
+            results = optimize(MVP.objective(prob),constraints, prob.initial_x, method, options)
+            @test isa(summary(results), String)
+            @test Optim.converged(results)
+            @test Optim.minimum(results) < minval + sqrt(eps(minval))
         end
 
         # Test constraints on both x and c

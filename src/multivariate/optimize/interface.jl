@@ -115,6 +115,12 @@ function optimize(f, initial_x::AbstractArray, method::AbstractOptimizer,
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
 end
+function optimize(f, c::AbstractConstraints, initial_x::AbstractArray, method::AbstractOptimizer,
+                     options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
+
+    d = promote_objtype(method, initial_x, autodiff, inplace, f)
+    optimize(d, c, initial_x, method, options)
+end
 function optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
          options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
 
