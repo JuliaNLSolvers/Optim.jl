@@ -10,7 +10,7 @@
     plap1(U; n=length(U), dU = diff(U), dW = 4 .* (0.1 .+ dU.^2) .* dU) =
                             (n - 1) .* ([0.0; dW] .- [dW; 0.0]) .- ones(n) / (n-1)
     precond(x::Vector) = precond(length(x))
-    precond(n::Number) = spdiagm(-1 => -ones(n-1), 0 => 2*ones(n), 1 => -ones(n-1)) * (n+1)
+    precond(n::Number) = Optim.InverseDiagonal(diag(spdiagm(-1 => -ones(n-1), 0 => 2*ones(n), 1 => -ones(n-1)) * (n+1)))
     f(X) = plap([0;X;0])
     g!(G, X) = copyto!(G, (plap1([0;X;0]))[2:end-1])
 
@@ -26,7 +26,7 @@
             for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
                 results = Optim.optimize(f, g!, copy(initial_x),
                                          optimizer(P = P),
-                                         Optim.Options(g_tol = GRTOL, allow_f_increases = true))
+                                         Optim.Options(g_tol = GRTOL, allow_f_increases = true, iterations=250000))
                 debug_printing && println(optimizer, wwo,
                                           " preconditioning : g_calls = ", Optim.g_calls(results),
                                           ", f_calls = ", Optim.f_calls(results))
