@@ -75,7 +75,7 @@ function NGMRES(;manifold::Manifold = Flat(),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
-    NGMRES(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
+    NGMRES(_alphaguess(alphaguess), linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
 """
@@ -116,7 +116,7 @@ function OACCEL(;manifold::Manifold = Flat(),
                 ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
                 wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
-    OACCEL(alphaguess, linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
+    OACCEL(_alphaguess(alphaguess), linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
 

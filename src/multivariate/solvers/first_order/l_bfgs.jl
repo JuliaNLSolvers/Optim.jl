@@ -126,7 +126,7 @@ function LBFGS(; m::Integer = 10,
                  precondprep = (P, x) -> nothing,
                  manifold::Manifold=Flat(),
                  scaleinvH0::Bool = true && (typeof(P) <: Nothing) )
-    LBFGS(Int(m), alphaguess, linesearch, P, precondprep, manifold, scaleinvH0)
+    LBFGS(Int(m), _alphaguess(alphaguess), linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
 Base.summary(::LBFGS) = "L-BFGS"

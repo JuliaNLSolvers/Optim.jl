@@ -42,7 +42,7 @@ function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark def
                 initial_invH = nothing,
                 initial_stepnorm = nothing,
                 manifold::Manifold=Flat())
-    BFGS(alphaguess, linesearch, initial_invH, initial_stepnorm, manifold)
+    BFGS(_alphaguess(alphaguess), linesearch, initial_invH, initial_stepnorm, manifold)
 end
 
 mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState

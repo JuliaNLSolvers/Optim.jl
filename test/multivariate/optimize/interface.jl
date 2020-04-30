@@ -36,6 +36,19 @@
             @test norm(Optim.minimum(ref)-Optim.minimum(r)) < 1e-6
         end
     end
+    # simple tests for https://github.com/JuliaNLSolvers/Optim.jl/issues/805
+    @test AcceleratedGradientDescent(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    @test BFGS(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    @test ConjugateGradient(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    @test GradientDescent(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    @test MomentumGradientDescent(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    @test Newton(alphaguess=1.0).alphaguess! isa Optim.LineSearches.InitialStatic
+    optimize(od, problem.initial_x, AcceleratedGradientDescent(alphaguess=1.0))
+    optimize(od, problem.initial_x, BFGS(alphaguess=1.0))
+    optimize(od, problem.initial_x, ConjugateGradient(alphaguess=1.0))
+    optimize(od, problem.initial_x, GradientDescent(alphaguess=1.0))
+    optimize(od, problem.initial_x, MomentumGradientDescent(alphaguess=1.0))
+    optimize(td, problem.initial_x, Newton(alphaguess=1.0))
 end
 
 @testset "only_fg!, only_fgh!" begin

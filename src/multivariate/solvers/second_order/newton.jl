@@ -22,7 +22,7 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 """
 function Newton(; alphaguess = LineSearches.InitialStatic(), # Good default for Newton
                 linesearch = LineSearches.HagerZhang())    # Good default for Newton
-    Newton(alphaguess, linesearch)
+    Newton(_alphaguess(alphaguess), linesearch)
 end
 
 Base.summary(::Newton) = "Newton's Method"
