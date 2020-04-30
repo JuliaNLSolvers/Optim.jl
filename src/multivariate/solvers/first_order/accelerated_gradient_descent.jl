@@ -18,7 +18,7 @@ function AcceleratedGradientDescent(;
                                     alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
                                     linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
                                     manifold::Manifold=Flat())
-    AcceleratedGradientDescent(alphaguess, linesearch, manifold)
+    AcceleratedGradientDescent(_alphaguess(alphaguess), linesearch, manifold)
 end
 
 mutable struct AcceleratedGradientDescentState{T, Tx} <: AbstractOptimizerState

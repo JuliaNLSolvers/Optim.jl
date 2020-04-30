@@ -33,7 +33,7 @@ function GradientDescent(; alphaguess = LineSearches.InitialPrevious(), # TODO: 
                            P = nothing,
                            precondprep = (P, x) -> nothing,
                            manifold::Manifold=Flat())
-    GradientDescent(alphaguess, linesearch, P, precondprep, manifold)
+    GradientDescent(_alphaguess(alphaguess), linesearch, P, precondprep, manifold)
 end
 
 mutable struct GradientDescentState{Tx, T} <: AbstractOptimizerState

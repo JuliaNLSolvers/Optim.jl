@@ -2,6 +2,9 @@
 # return true if the direction was changed
 reset_search_direction!(state, d, method) = false # no-op
 
+_alphaguess(a) = a
+_alphaguess(a::Number) = LineSearches.InitialStatic(alpha=a)
+
 function reset_search_direction!(state, d, method::BFGS)
     n = length(state.x)
     T = eltype(state.x)

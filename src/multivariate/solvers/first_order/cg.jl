@@ -88,7 +88,7 @@ function ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
 
     ConjugateGradient(eta,
                       P, precondprep,
-                      alphaguess, linesearch,
+                      _alphaguess(alphaguess), linesearch,
                       manifold)
 end
 
