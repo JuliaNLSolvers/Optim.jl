@@ -33,6 +33,7 @@ function x_trace(r::MultivariateOptimizationResults)
 end
 
 function centroid_trace(r::MultivariateOptimizationResults)
+    tr = trace(r)
     if !isa(r.method, NelderMead)
         throw(ArgumentError("There is no centroid involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
     end
@@ -40,6 +41,7 @@ function centroid_trace(r::MultivariateOptimizationResults)
     [ state.metadata["centroid"] for state in tr ]
 end
 function simplex_trace(r::MultivariateOptimizationResults)
+    tr = trace(r)
     if !isa(r.method, NelderMead)
         throw(ArgumentError("There is no simplex involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace."))
     end
