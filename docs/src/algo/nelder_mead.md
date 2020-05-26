@@ -79,11 +79,11 @@ struct MatlabSimplexer{T} <: Optim.Simplexer
 end
 MatlabSimplexer(;a = 0.00025, b = 0.05) = MatlabSimplexer(a, b)
 
-function Optim.simplexer(A::MatlabSimplexer, initial_x::AbstractArray{T, N}) where {T, N}
+function Optim.simplexer(S::MatlabSimplexer, initial_x::AbstractArray{T, N}) where {T, N}
     n = length(initial_x)
     initial_simplex = Array{T, N}[initial_x for i = 1:n+1]
     for j = 1:n
-        initial_simplex[j+1][j] += initial_simplex[j+1][j] == zero(T) ? S.b * initial_simplex[j+1][j] : S.a
+        initial_simplex[j+1][j] += initial_simplex[j+1][j] != zero(T) ? S.b * initial_simplex[j+1][j] : S.a
     end
     initial_simplex
 end
