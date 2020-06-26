@@ -238,26 +238,12 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string
 
     @printf io " * Candidate solution\n"
-    nx = length(minimizer(r))
-    str_x_elements = [@sprintf "%.2e" _x for _x in take(minimizer(r), min(nx, 3))]
-    if nx >= 4
-        push!(str_x_elements, " ...")
-    end
-
-    @printf io "    Minimizer: [%s]\n" join(str_x_elements, ", ")
-
-    @printf io "    Minimum:   %e\n" minimum(r)
+    @printf io "    Final objective value:     %e\n" minimum(r)
     @printf io "\n"
 
     @printf io " * Found with\n"
     @printf io "    Algorithm:     %s\n" summary(r)
-    nx = length(initial_state(r))
-    str_x_elements = [@sprintf "%.2e" _x for _x in take(initial_state(r), min(nx, 3))]
-    if nx >= 4
-        push!(str_x_elements, " ...")
-    end
 
-    @printf io "    Initial Point: [%s]\n" join(str_x_elements, ", ")
 
     @printf io "\n"
     @printf io " * Convergence measures\n"
