@@ -19,3 +19,43 @@ function common_trace!(tr, d, state, iteration, method::FirstOrderOptimizer, opt
             options.show_every,
             options.callback)
 end
+
+
+function trace!(tr, d, state, iteration, method::GoldenSection, options, curr_time=time())
+    dt = Dict()
+    dt["time"] = curr_time
+    dt["minimizer"] = state.new_minimizer
+    dt["x_lower"] = state.x_lower
+    dt["x_upper"] = state.x_upper
+    T = eltype(state.new_minimum)
+
+    update!(tr,
+            iteration,
+            state.new_minimum,
+            T(NaN),
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end
+
+function trace!(tr, d, state, iteration, method::Brent, options, curr_time=time())
+    dt = Dict()
+    dt["time"] = curr_time
+    dt["minimizer"] = state.new_minimizer
+    dt["x_lower"] = state.x_lower
+    dt["x_upper"] = state.x_upper
+    dt["best bound"] = state.best_bound
+    T = eltype(state.new_minimum)
+
+    update!(tr,
+            iteration,
+            state.new_minimum,
+            T(NaN),
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end

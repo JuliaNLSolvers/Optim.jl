@@ -1,25 +1,3 @@
-macro goldensectiontrace()
-    esc(quote
-        if tracing
-            dt = Dict()
-            dt["minimizer"] = new_minimizer
-            dt["x_lower"] = x_lower
-            dt["x_upper"] = x_upper
-            if extended_trace
-            end
-            update!(tr,
-                    iteration,
-                    new_minimum,
-                    NaN,
-                    dt,
-                    store_trace,
-                    show_trace,
-                    show_every,
-                    callback)
-        end
-    end)
-end
-
 """
 # GoldenSection
 ## Constructor
@@ -54,7 +32,8 @@ function optimize(f::F, x_lower::T, x_upper::T,
     if x_lower > x_upper
         error("x_lower must be less than x_upper")
     end
-
+    t0 = time()
+    options = (store_trace=store_trace, show_trace=show_trace, show_every=show_every, callback=callback)
     # Save for later
     initial_lower = x_lower
     initial_upper = x_upper
@@ -72,9 +51,18 @@ function optimize(f::F, x_lower::T, x_upper::T,
     # Trace the history of states visited
     tr = OptimizationTrace{T, typeof(mo)}()
     tracing = store_trace || show_trace || extended_trace || callback != nothing
-    @goldensectiontrace
+    stopped_by_callback = false
+    if tracing
+        # update trace; callbacks can stop routine early by returning true
+        state = (new_minimizer=new_minimizer,
+                 x_lower=x_lower,
+                 x_upper=x_upper,
+                 best_bound=best_bound,
+                 new_minimum=new_minimum)
+        stopped_by_callback = trace!(tr, nothing, state, iteration, mo, options, time()-t0)
+    end
 
-    while iteration < iterations
+    while iteration < iterations && !stopped_by_callback
 
         x_tol = rel_tol * abs(new_minimizer) + abs_tol
 
@@ -115,7 +103,15 @@ function optimize(f::F, x_lower::T, x_upper::T,
             end
         end
 
-        @goldensectiontrace
+        if tracing
+            # update trace; callbacks can stop routine early by returning true
+            state = (new_minimizer=new_minimizer,
+                     x_lower=x_lower,
+                     x_upper=x_upper,
+                     best_bound=best_bound,
+                     new_minimum=new_minimum)
+            stopped_by_callback = trace!(tr, nothing, state, iteration, mo, options, time()-t0)
+        end
     end
 
     return UnivariateOptimizationResults(mo,
