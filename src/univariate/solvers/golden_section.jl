@@ -127,3 +127,23 @@ function optimize(f::F, x_lower::T, x_upper::T,
                                          tr,
                                          f_calls)
 end
+
+
+function trace!(tr, d, state, iteration, method::GoldenSection, options, curr_time=time())
+    dt = Dict()
+    dt["time"] = curr_time
+    dt["minimizer"] = state.new_minimizer
+    dt["x_lower"] = state.x_lower
+    dt["x_upper"] = state.x_upper
+    T = eltype(state.new_minimum)
+
+    update!(tr,
+            iteration,
+            state.new_minimum,
+            T(NaN),
+            dt,
+            options.store_trace,
+            options.show_trace,
+            options.show_every,
+            options.callback)
+end
