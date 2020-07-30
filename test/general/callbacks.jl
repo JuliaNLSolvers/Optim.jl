@@ -81,4 +81,6 @@
         optimize(d3, initial_x, method, options)
         @test os_run == true
     end
+    res = optimize(x->x^2, -5, 5, callback=_->true)
+    @test res.iterations == 0
 end
