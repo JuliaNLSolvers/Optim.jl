@@ -77,9 +77,14 @@ end
       nothing
     end
 
-    import Optim
-    Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.NelderMead())
-    Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.NelderMead())
-    Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.LBFGS())
+    optimize(Optim.only_fg!(fg!), [0., 0.], NelderMead())
+    optimize(Optim.only_fg!(fgh!), [0., 0.], NelderMead())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], ParticleSwarm())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], SimulatedAnnealing())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], GradientDescent())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], LBFGS())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], BFGS())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], NewtonTrustRegion())
+    optimize(Optim.only_fgh!(fgh!), [0., 0.], Newton())
 
 end
