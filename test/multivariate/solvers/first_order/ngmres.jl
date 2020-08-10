@@ -43,9 +43,9 @@ using Optim, Test
     @test Optim.converged(res)
     # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
-    @test 64 < Optim.iterations(res) < 84
-    @test 234 < Optim.f_calls(res) <  286
-    @test 234 < Optim.g_calls(res) < 286
+    @test 64 < Optim.iterations(res) < 100
+    @test 234 < Optim.f_calls(res) <  310
+    @test 234 < Optim.g_calls(res) < 310
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(manifold=Optim.Sphere(), nlprecon = GradientDescent())
@@ -118,9 +118,9 @@ end
     @test Optim.converged(res)
     # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
-    @test 72 < Optim.iterations(res) < 88
-    @test 245 < Optim.f_calls(res) <  292
-    @test 245 < Optim.g_calls(res) <  292
+    @test 72 < Optim.iterations(res) < 100
+    @test 245 < Optim.f_calls(res) <  310
+    @test 245 < Optim.g_calls(res) <  310
 
     @test Optim.minimum(res) < 1e-10
 
