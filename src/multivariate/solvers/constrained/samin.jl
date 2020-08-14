@@ -47,6 +47,7 @@ algorithm
     x_tol::T = 1e-6 # the required tolerance level for x
     coverage_ok::Bool = false # if false, increase temperature until initial parameter space is covered
     verbosity::Int = 1 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
+    workers::Array{Int,1} = [] # associated worker processes for parallel evaluation
 end
 # * verbosity: scalar: 0, 1, 2 or 3 (default = 1).
 #     * 0 = no screen output
@@ -56,17 +57,42 @@ end
 #         covered by the trial values. 1: start decreasing temperature immediately
 Base.summary(::SAMIN) = "SAMIN"
 
+
+
+function remote_eval(d,Tx,lb_ub_bounds_chan,xp_fold_i_chan,ret_chan,stop_sig)
+    while !fetch(stop_sig)
+        lnobds = 0
+        if timedwait(()->isready(xp_fold_i_chan),0.1) ==:ok
+            xp ,f_old, i = take!(xp_fold_i_chan)
+            lb, ub, bounds = fetch(lb_ub_bounds_chan)
+            xp[i] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[i]
+            if (xp[i] < lb[i]) || (xp[i] > ub[i])
+                xp[i] = lb[i] + (ub[i] - lb[i]) * rand(Tx)
+                lnobds =1
+            end
+            f_proposal = value(d, xp)
+            put!(ret_chan,(xp,f_old,f_proposal,lnobds,i))
+        
+        elseif fetch(stop_sig) # exit on stop
+            return nothing
+        end
+    end
+end
+
+
+
 function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray{Tx}, method::SAMIN, options::Options = Options()) where Tx
+   
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-
+    
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
 
-    @unpack nt, ns, rt, neps, f_tol, x_tol, coverage_ok, verbosity = method
+    @unpack nt, ns, rt, neps, f_tol, x_tol, coverage_ok, verbosity ,workers = method
     verbose = verbosity > 0
 
     x0 = copy(x)
@@ -96,7 +122,22 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
 
     stopped_by_callback = false
-
+    
+    if !isempty(workers) #prepare parallel evaluation
+        xp_fold_i_chan = RemoteChannel(()->Channel{Tuple}(1024)); #put and take jobs from here
+        ret_chan = RemoteChannel(()->Channel{Tuple}(1024)); #put and take results from here
+        lb_ub_bounds_chan = RemoteChannel(()->Channel{Tuple}(1)); #put and fetch current bounds here
+        stop_sig = RemoteChannel(()->Channel{Bool}(1)); # signal the workers to end the eval loop
+        put!(stop_sig,false)
+        for p in workers # start tasks on the workers to process evals in parallel
+            remote_do(remote_eval, p, d,Tx,lb_ub_bounds_chan, xp_fold_i_chan, ret_chan,stop_sig)
+        end
+        put!(lb_ub_bounds_chan,(lb,ub,bounds)) # Fill channel with initial bounds
+        #start the initial evaluations at same x 
+        for i in (length(workers) < (n*ns) ? (1:length(workers)) : (1:(n*ns)))
+            put!(xp_fold_i_chan,(x,f_old,(i % n) + 1))
+        end
+    end
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     while converge==0
         # statistics to report at each temp change, set back to zero
@@ -105,109 +146,117 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         nnew = 0
         ndown = 0
         lnobds = 0
+       
         # repeat nt times then adjust temperature
-        for m = 1:nt
+        @sync for m = 1:nt
+            h=0
             # repeat ns times, then adjust bounds
             nacp = zeros(n)
-            for j = 1:ns
-                # generate new point by taking last and adding a random value
-                # to each of elements, in turn
-                for h = 1:n
-                    iteration += 1
-                    # new Sept 2011, if bounds are same, skip the search for that vbl.
-                    # Allows restrictions without complicated programming
-                    if (lb[h] != ub[h])
+            while h <n*ns 
+                h += 1
+                iteration += 1
+                i = (h % n)+1
+                i_vbl = copy(i)
+                if (lb[i] != ub[i])
+
+                    if isempty(workers)
                         xp = copy(x)
-                        xp[h] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[h]
-                        if (xp[h] < lb[h]) || (xp[h] > ub[h])
-                            xp[h] = lb[h] + (ub[h] - lb[h]) * rand(Tx)
-                            lnobds += 1
+                        xp[i] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[i]
+                        if (xp[i] < lb[i]) || (xp[i] > ub[i])
+                            xp[i] = lb[i] + (ub[i] - lb[i]) * rand(Tx)
+                            lnobds =1
                         end
-                        # Evaluate function at new point
                         f_proposal = value(d, xp)
-                        #  Accept the new point if the function value decreases
-                        if (f_proposal <= f_old)
+                    
+                    else
+                        xp, f_old_r, f_proposal, lnobds, i = take!(ret_chan)
+                    end
+                    if (f_proposal <= f_old)
+                        x = copy(xp)
+                        f_old = f_proposal
+                        nacc += 1 # total number of acceptances
+                        nacp[i] += 1 # acceptances for this parameter
+                        nup += 1
+                        #  If lower than any other point, record as new optimum
+                        if f_proposal < fopt
+                            xopt = copy(xp)
+                            fopt = f_proposal
+                            d.F = f_proposal
+                            nnew +=1
+                            details = [details; [iteration t f_proposal xp']]
+                        end
+                    # If the point is higher, use the Metropolis criteria to decide on
+                    # acceptance or rejection.
+                    else
+                        p = exp(-(f_proposal - f_old) / t)
+                        if rand(Tx) < p
                             x = copy(xp)
-                            f_old = f_proposal
-                            nacc += 1 # total number of acceptances
-                            nacp[h] += 1 # acceptances for this parameter
-                            nup += 1
-                            #  If lower than any other point, record as new optimum
-                            if f_proposal < fopt
-                                xopt = copy(xp)
-                                fopt = f_proposal
-                                d.F = f_proposal
-                                nnew +=1
-                                details = [details; [f_calls(d) t f_proposal xp']]
-                            end
-                        # If the point is higher, use the Metropolis criteria to decide on
-                        # acceptance or rejection.
+                            f_old = copy(f_proposal)
+                            d.F = f_proposal
+                            nacc += 1
+                            nacp[i] += 1
+                            ndown += 1
                         else
-                            p = exp(-(f_proposal - f_old) / t)
-                            if rand(Tx) < p
-                                x = copy(xp)
-                                f_old = copy(f_proposal)
-                                d.F = f_proposal
-                                nacc += 1
-                                nacp[h] += 1
-                                ndown += 1
-                            else
-                                nrej += 1
-                            end
+                            nrej += 1
                         end
                     end
 
-                    if tracing
-                        # update trace; callbacks can stop routine early by returning true
-                        stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-t0)
-                    end
-
-                    # If options.iterations exceeded, terminate the algorithm
-                    _time = time()
-                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
-
-                        if verbose
-                            println(hline)
-                            println("SAMIN results")
-                            println("NO CONVERGENCE: MAXEVALS exceeded")
-                            @printf("\n     Obj. value:  %16.5f\n\n", fopt)
-                            println("       parameter      search width")
-                            for i=1:n
-                                @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
-                            end
-                            println(hline)
-                        end
-                        converge = 0
-
-                        return MultivariateOptimizationResults(method,
-                                                                x0,# initial_x,
-                                                                xopt, #pick_best_x(f_incr_pick, state),
-                                                                fopt, # pick_best_f(f_incr_pick, state, d),
-                                                                f_calls(d), #iteration,
-                                                                f_calls(d) >= options.iterations, #iteration == options.iterations,
-                                                                false, # x_converged,
-                                                                0.0,#T(options.x_tol),
-                                                                0.0,#T(options.x_tol),
-                                                                NaN,# x_abschange(state),
-                                                                NaN,# x_abschange(state),
-                                                                false,# f_converged,
-                                                                0.0,#T(options.f_tol),
-                                                                0.0,#T(options.f_tol),
-                                                                NaN,#f_abschange(d, state),
-                                                                NaN,#f_abschange(d, state),
-                                                                false,#g_converged,
-                                                                0.0,#T(options.g_tol),
-                                                                NaN,#g_residual(d),
-                                                                false, #f_increased,
-                                                                tr,
-                                                                f_calls(d),
-                                                                g_calls(d),
-                                                                h_calls(d),
-                                                                true,
-                                                                options.time_limit,
-                                                                _time-t0,)
-                    end
+                    !isempty(workers) && @async put!(xp_fold_i_chan,(x,f_old,i_vbl)) # next iteration, @async rusults in better scaling with workers
                 end
+            end
+
+            if tracing
+                # update trace; callbacks can stop routine early by returning true
+                stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-t0)
+            end
+            # If options.iterations exceeded, terminate the algorithm
+            _time = time()
+            if iteration >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
+                
+                # tell the workers to stop
+                !isempty(workers) && take!(stop_sig)
+                !isempty(workers) && put!(stop_sig,true)
+
+                if verbose
+                    println(hline)
+                    println("SAMIN results")
+                    println("NO CONVERGENCE: MAXEVALS exceeded")
+                    @printf("\n     Obj. value:  %16.5f\n\n", fopt)
+                    println("       parameter      search width")
+                    for i=1:n
+                        @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
+                    end
+                    println(hline)
+                end
+                converge = 0
+
+                return MultivariateOptimizationResults(method,
+                                                        x0,# initial_x,
+                                                        xopt, #pick_best_x(f_incr_pick, state),
+                                                        fopt, # pick_best_f(f_incr_pick, state, d),
+                                                        iteration, #iteration,
+                                                        iteration >= options.iterations, #iteration == options.iterations,
+                                                        false, # x_converged,
+                                                        0.0,#T(options.x_tol),
+                                                        0.0,#T(options.x_tol),
+                                                        NaN,# x_abschange(state),
+                                                        NaN,# x_abschange(state),
+                                                        false,# f_converged,
+                                                        0.0,#T(options.f_tol),
+                                                        0.0,#T(options.f_tol),
+                                                        NaN,#f_abschange(d, state),
+                                                        NaN,#f_abschange(d, state),
+                                                        false,#g_converged,
+                                                        0.0,#T(options.g_tol),
+                                                        NaN,#g_residual(d),
+                                                        false, #f_increased,
+                                                        tr,
+                                                        iteration,
+                                                        0,
+                                                        0,
+                                                        true,
+                                                        options.time_limit,
+                                                        _time-t0,)
             end
             #  Adjust bounds so that approximately half of all evaluations are accepted
             test = 0
@@ -225,6 +274,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     test += 1 # make sure coverage check passes for the fixed parameters
                 end
             end
+            !isempty(workers) && take!(lb_ub_bounds_chan) # clear bounds
+            !isempty(workers) && put!(lb_ub_bounds_chan,(lb,ub,bounds)) # populate new bounds
+   
             nacp = 0 # set back to zero
             # check if we cover parameter space, if we have yet to do so
             if !coverage_ok
@@ -318,12 +370,16 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
+    # tell the workers to stop
+    !isempty(workers) && take!(stop_sig)
+    !isempty(workers) && put!(stop_sig,true)
+
     return MultivariateOptimizationResults(method,
                                             x0,# initial_x,
                                             xopt, #pick_best_x(f_incr_pick, state),
                                             fopt, # pick_best_f(f_incr_pick, state, d),
-                                            f_calls(d), #iteration,
-                                            f_calls(d) >= options.iterations, #iteration == options.iterations,
+                                            iteration, #iteration,
+                                            iteration >= options.iterations, #iteration == options.iterations,
                                             false, # x_converged,
                                             0.0,#T(options.x_tol),
                                             0.0,#T(options.x_tol),
@@ -339,9 +395,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             NaN,#g_residual(d),
                                             false, #f_increased,
                                             tr,
-                                            f_calls(d),
-                                            g_calls(d),
-                                            h_calls(d),
+                                            iteration,
+                                            0,
+                                            0,
                                             true,
                                             options.time_limit,
                                             _time-t0,)

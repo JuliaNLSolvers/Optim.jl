@@ -3,7 +3,7 @@ using Optim
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 const MVP = MultivariateProblems
-
+using Distributed: @everywhere, addprocs, rmprocs
 import PositiveFactorizations: Positive, cholesky # for the IPNewton tests
 using Random
 

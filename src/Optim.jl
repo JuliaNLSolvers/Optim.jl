@@ -37,7 +37,7 @@ using FillArrays             # For handling scalar bounds in Fminbox
 
 # for extensions of functions defined in Base.
 import Base: length, push!, show, getindex, setindex!, maximum, minimum
-
+import Distributed:  RemoteChannel, remote_do, fetch, put!, take!, @async, @sync
 # objective and constraints types and functions relevant to them.
 import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
                       nconstraints, nconstraints_x, NotInplaceObjective, InplaceObjective
