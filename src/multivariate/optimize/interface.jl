@@ -30,6 +30,21 @@ fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
 fallback_method(f, g!, h!) = Newton()
 
+fallback_method(f::InplaceObjective{<:Nothing, <:Any, <:Nothing, <:Nothing, <:Nothing}) = LBFGS()
+fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Any, <:Nothing, <:Nothing}) = Newton()
+fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Nothing, <:Nothing, <:Nothing}) = KrylovTrustRegion()
+
+function fallback_method(f::NotInplaceObjective)
+    if !(f.fdf isa Nothing)
+        return LBFGS()
+    elseif !(f.fgh isa Nothing)
+        return LBFGS()
+    else
+        throw(ArgumentError("optimize does not support $(typeof(f)) as the first positional argument"))
+    end
+end
+fallback_method(f::NotInplaceObjective{<:Nothing, <:Nothing, <:Any}) = Newton()
+
 fallback_method(d::OnceDifferentiable) = LBFGS()
 fallback_method(d::TwiceDifferentiable) = Newton()
 
