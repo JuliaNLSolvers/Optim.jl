@@ -32,7 +32,8 @@ fallback_method(f, g!, h!) = Newton()
 
 fallback_method(f::InplaceObjective{<:Nothing, <:Any, <:Nothing, <:Nothing, <:Nothing}) = LBFGS()
 fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Any, <:Nothing, <:Nothing}) = Newton()
-fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Nothing, <:Nothing, <:Nothing}) = KrylovTrustRegion()
+fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Nothing, <:Any, <:Any}) = KrylovTrustRegion()
+fallback_method(f::NLSolversBase.InPlaceObjectiveFG_Hv) = KrylovTrustRegion()
 
 function fallback_method(f::NotInplaceObjective)
     if !(f.fdf isa Nothing)
@@ -58,6 +59,8 @@ promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFGHv) = TwiceDifferentiableHV(f, x)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFG_Hv) = TwiceDifferentiableHV(f, x)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
 # no-op
