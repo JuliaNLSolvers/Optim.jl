@@ -101,15 +101,17 @@ end
         isnothing(G) || g!(G, x)
         return f(x)
     end
-    function fg(_, G, x)
-        isnothing(G) || g(x)
-        return f(x)
+    function fg(x)
+        return f(x), g(x)
     end
 
     res = Optim.optimize(Optim.only_fg!(fg!), w)
     @test res.method isa LBFGS
 
     res = Optim.optimize(Optim.only_fg(fg), w)
+    @test res.method isa LBFGS
+
+    res = Optim.optimize(Optim.only_g_and_fg(g, fg), w)
     @test res.method isa LBFGS
 
     function fgh!(_, G, H, x)
