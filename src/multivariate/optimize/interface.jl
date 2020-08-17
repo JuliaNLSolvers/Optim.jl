@@ -30,10 +30,18 @@ fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
 fallback_method(f, g!, h!) = Newton()
 
-fallback_method(f::InplaceObjective{<:Nothing, <:Any, <:Nothing, <:Nothing, <:Nothing}) = LBFGS()
-fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Any, <:Nothing, <:Nothing}) = Newton()
-fallback_method(f::InplaceObjective{<:Nothing, <:Nothing, <:Nothing, <:Any, <:Any}) = KrylovTrustRegion()
-fallback_method(f::NLSolversBase.InPlaceObjectiveFG_Hv) = KrylovTrustRegion()
+function fallback_method(f::InplaceObjective)
+    if !(f.fdf isa Nothing)
+        if !(f.hv isa Nothing)
+            return KrylovTrustRegion()
+        end
+        return LBFGS()
+    elseif !(f.fgh isa Nothing)
+        return Newton()
+    elseif !(f.fghv isa Nothing)
+        return KrylovTrustRegion()
+    end
+end
 
 function fallback_method(f::NotInplaceObjective)
     if !(f.fdf isa Nothing)
