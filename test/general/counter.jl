@@ -47,7 +47,7 @@
         MVP.hessian(prob)(out, x)
     end
 
-    ls = LineSearches.Static()
+    ls = LineSearches.HagerZhang()
 
     for solver in (AcceleratedGradientDescent, BFGS, ConjugateGradient,
                    GradientDescent, LBFGS, MomentumGradientDescent,
