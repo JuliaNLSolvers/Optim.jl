@@ -5,6 +5,9 @@ reset_search_direction!(state, d, method) = false # no-op
 _alphaguess(a) = a
 _alphaguess(a::Number) = LineSearches.InitialStatic(alpha=a)
 
+# Note that for these resets we're using `gradient(d)` but we don't need to use
+# project_tangent! here, because we already did that inplace on gradient(d) after
+# the last evaluation (we basically just always do it)
 function reset_search_direction!(state, d, method::BFGS)
     n = length(state.x)
     T = eltype(state.x)
