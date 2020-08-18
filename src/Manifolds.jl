@@ -91,7 +91,7 @@ function retract!(S::Stiefel_SVD, X)
 end
 function retract!(S::Stiefel_CholQR, X)
     overlap = X'X
-    X .= X/cholesky(overlap).L
+    X .= X/cholesky(overlap).U
 end
 #For functions depending only on the subspace spanned by X, we always have G = A*X for some A, and so X'G = G'X, and Stiefel == Grassmann
 #Edelman et al. have G .-= X*G'X (2.53), corresponding to a different metric ("canonical metric"). We follow Absil et al. here and use the metric inherited from Nxn matrices.
