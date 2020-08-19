@@ -59,6 +59,6 @@ end
 
         od = OnceDifferentiable(f, g!, initial_x)
 
-        results = optimize(od, lower, upper, initial_x, Fminbox(GradientDescent()))
+        results = optimize(od, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(show_trace=true))
     end
 end
