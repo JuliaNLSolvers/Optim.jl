@@ -57,6 +57,25 @@ mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
     s::Tx
     @add_linesearch_fields()
 end
+function reset!(method, state::BFGSState, obj, x)
+    n = length(x)
+    T = eltype(x)
+    retract!(method.manifold, x)
+    value_gradient!(obj, x)
+    project_tangent!(method.manifold, gradient(obj), x)
+
+    if method.initial_invH == nothing
+        if method.initial_stepnorm == nothing
+            state.invH .= Diagonal(ones(T, n))
+            
+        else
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
+            state.invH .= Diagonal(fill(initial_scale, n))
+        end
+    else
+        state.invH .= method.initial_invH(x)
+    end
+end
 
 function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where T
     n = length(initial_x)
@@ -71,7 +90,7 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
         if method.initial_stepnorm == nothing
             invH0 = Matrix{T}(I, n, n)
         else
-            initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
             invH0 = Matrix{T}(initial_scale*I, n, n)
         end
     else

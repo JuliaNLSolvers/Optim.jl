@@ -93,12 +93,16 @@ gradient(obj::BarrierWrapper, mu::Real) = gradient(obj.obj) .+ obj.mu.*obj.DFb
 # Super unsafe in that it depends on x_df being correct!
 function initial_mu(obj::BarrierWrapper, F)
     T = typeof(obj.Fb) # this will not work if F is real, G is complex
-    obj.mu = initial_mu(gradient(obj.obj), gradient(obj.b, obj.DFb, obj.obj.x_df), T(F.mufactor), T(F.mu0))
+    gbarrier = map(x->(isfinite.(x[2]) ? one(T)/(x[1]-x[2]) : zero(T)) + (isfinite(x[3]) ? one(T)/(x[3]-x[1]) : zero(T)), zip(obj.obj.x_f, obj.b.lower, obj.b.upper))
+
+    # obj.mu = initial_mu(gradient(obj.obj), gradient(obj.b, obj.DFb, obj.obj.x_df), T(F.mufactor), T(F.mu0))
+    obj.mu = initial_mu(gradient(obj.obj), gbarrier, T(F.mufactor), T(F.mu0))
 end
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
 function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = T(1)/1000, mu0::T = convert(T, NaN)) where T
+    
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -132,8 +136,8 @@ end
 
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
-function precondprepbox!(P, x, l, u, mu)
-    @. P.diag = 1/(mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
+function precondprepbox!(P, x, l, u, dfbox)
+    @. P.diag = 1/(dfbox.mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
 end
 
 struct Fminbox{O<:AbstractOptimizer, T, P} <: AbstractConstrainedOptimizer
@@ -272,15 +276,13 @@ function optimize(
     dfbox = BarrierWrapper(df, zero(T), l, u)
     # Use the barrier-aware preconditioner to define
     # barrier-aware optimization method instance (precondition relevance)
-    _optimizer = barrier_method(F.method, P, (P, x) -> F.precondprep(P, x, l, u, dfbox.mu))
+    _optimizer = barrier_method(F.method, P, (P, x) -> F.precondprep(P, x, l, u, dfbox))
 
     state = initial_state(_optimizer, options, dfbox, x)
     # we wait until state has been initialized to set the initial mu because
     # we need the gradient of the objective and initial_state will value_gradient!!
     # the objective, so that forces an evaluation
     dfbox.mu = initial_mu(dfbox, F)
-    @show dfbox.Fb
-    @show dfbox.obj.F
     if show_trace > 00
         println("Fminbox")
         println("-------")
@@ -320,6 +322,16 @@ function optimize(
             println("\n")
             println("(numbers below include barrier contribution)")
         end
+
+        # we need to update the +mu*barrier_grad part. Since we're using the
+        # value_gradient! not !! as in initial_state, we won't make a superfluous
+        # evaluation
+        
+        value_gradient!(dfbox, x)
+
+        #if method.reset
+        reset!(_optimizer, state, dfbox, x)
+        #end
         resultsnew = optimize(dfbox, x, _optimizer, options, state)
         if first
             results = resultsnew
@@ -327,21 +339,29 @@ function optimize(
         else
             append!(results, resultsnew)
         end
+        dfbox.obj.f_calls[1] = 0
+        if hasfield(typeof(dfbox.obj), :df_calls)
+            dfbox.obj.df_calls[1] = 0
+        end
+        if hasfield(typeof(dfbox.obj), :h_calls)
+            dfbox.obj.h_calls[1] = 0
+        end
         copyto!(x, minimizer(results))
+        boxdist = min(minimum(x-l), minimum(u-x))
         if show_trace > 0
             println()
             println("Exiting inner optimizer with x = ", x)
             print("Current distance to box: ")
-            show(IOContext(stdout, :compact=>true), "text/plain", min(minimum(x-l), minimum(u-x)))
+            show(IOContext(stdout, :compact=>true), "text/plain", boxdist)
             println()
             println("Decreasing barrier term μ.\n")
         end
-
+        
         # Decrease mu
         dfbox.mu *= T(F.mufactor)
-
+        
         # Test for convergence
-        g = gradient(dfbox, dfbox.mu)
+        g = x.-min.(max.(x.-gradient(dfbox.obj), l), u)
         results.x_converged, results.f_converged,
         results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
@@ -354,6 +374,7 @@ function optimize(
         stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
         stopped = stopped_by_time_limit
     end
+
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_abstol, results.x_reltol, norm(x - xold), norm(x - xold)/norm(x),

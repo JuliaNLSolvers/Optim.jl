@@ -82,7 +82,7 @@ function Options(;
         g_reltol::Real = 1e-8,
         outer_x_tol = 0.0,
         outer_f_tol = 0.0,
-        outer_g_tol = 1e-8,
+        outer_g_tol = nothing,
         outer_x_abstol::Real = 0.0,
         outer_x_reltol::Real = 0.0,
         outer_f_abstol::Real = 0.0,
