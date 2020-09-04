@@ -12,7 +12,7 @@ on three inputs, and two of them are constant throughout the optimization proced
 To do this, we need to define the variables `x` and `y`
 ```jl
 x = [1.0, 2.0, 3.0]
-y = 1.0 .+ 2.0 * x + [-0.3, 0.3, -0.1]
+y = 1.0 .+ 2.0 .* x .+ [-0.3, 0.3, -0.1]
 ```
 We then simply define a function in three variables
 ```julia
