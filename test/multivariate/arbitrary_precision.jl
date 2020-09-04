@@ -30,13 +30,13 @@
 
         lower = big.([-Inf, -Inf])
         upper = big.([0.5, 1.5])
-        res = optimize(f, g!, lower, upper, x0)
+        res = optimize(f, g!, lower, upper, x0, Fminbox(), Optim.Options(outer_g_abstol=sqrt(eps(big(1.0))), g_abstol=sqrt(eps(big(1.0)))))
         debug_printing && @show res
         @test Optim.converged(res) == true
         @test Optim.minimum(res) ≈ 0.25 atol=1e-10 rtol=0
         @test Optim.minimizer(res) ≈ [0.5, 0.25] atol=1e-10 rtol=0
 
-        res = optimize(f, lower, upper, x0)
+        res = optimize(f, lower, upper, x0, Fminbox(), Optim.Options(outer_g_abstol=sqrt(eps(big(1.0))), g_abstol=sqrt(eps(big(1.0)))))
         debug_printing && @show res
         @test Optim.converged(res) == true
         @test Optim.minimum(res) ≈ 0.25 atol=1e-10 rtol=0

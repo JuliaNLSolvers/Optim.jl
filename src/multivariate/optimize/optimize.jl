@@ -43,7 +43,6 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     g_converged = initial_convergence(d, state, method, initial_x, options)
     converged = g_converged
-
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
@@ -67,8 +66,9 @@ function optimize(d::D, initial_x::Tx, method::M,
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
 
-        !converged && update_h!(d, state, method) # only relevant if not converged
-
+        if !(converged && method isa Newton)
+            update_h!(d, state, method) # only relevant if not converged
+        end
         if tracing
             # update trace; callbacks can stop routine early by returning true
             stopped_by_callback = trace!(tr, d, state, iteration, method, options, time()-t0)
