@@ -39,8 +39,6 @@ function twoloop!(s,
     end
 
     # Copy q into s for forward pass
-    # apply preconditioner if precon != nothing
-    # (Note: preconditioner update was done outside of this function)
     if scaleinvH0 == true && pseudo_iteration > 1
         # Use the initial scaling guess from
         # Nocedal & Wright (2nd ed), Equation (7.20)
@@ -57,6 +55,9 @@ function twoloop!(s,
         scaling = real(dot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
+        # apply preconditioner if scaleinvH0 is false as the true setting
+        # is essentially its own kind of preconditioning
+        # (Note: preconditioner update was done outside of this function)
         ldiv!(s, precon, q)
     end
     # Forward pass
