@@ -310,7 +310,7 @@ function optimize(
     converged = false
     local results
     first = true
-    f_increased, stopped_by_time_limit = false, false
+    f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
     stopped = false
     _time = time()
     while !converged && !stopped && iteration < outer_iterations
@@ -340,6 +340,7 @@ function optimize(
         reset!(_optimizer, state, dfbox, x)
         #end
         resultsnew = optimize(dfbox, x, _optimizer, options, state)
+        stopped_by_callback = resultsnew.stopped_by.callback
         if first
             results = resultsnew
             first = false
@@ -372,7 +373,7 @@ function optimize(
         results.x_converged, results.f_converged,
         results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
                                                                          options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
-        converged = results.x_converged || results.f_converged || results.g_converged
+        converged = results.x_converged || results.f_converged || results.g_converged || stopped_by_callback
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
             break
@@ -385,8 +386,8 @@ function optimize(
     stopped_by =(#f_limit_reached=f_limit_reached,
                  #g_limit_reached=g_limit_reached,
                  #h_limit_reached=h_limit_reached,
-                 stopped_by_time_limit=stopped_by_time_limit,
-                 #stopped_by_callback=stopped_by_callback,
+                 time_limit=stopped_by_time_limit,
+                 callback=stopped_by_callback,
                  f_increased=f_increased && !options.allow_f_increases)
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
