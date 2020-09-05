@@ -372,7 +372,7 @@ function optimize(
         g = x.-min.(max.(x.-gradient(dfbox.obj), l), u)
         results.x_converged, results.f_converged,
         results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
-                                                                         options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
+                                                              options.outer_x_abstol, options.outer_x_reltol, options.outer_f_abstol, options.outer_f_reltol, options.outer_g_abstol)
         converged = results.x_converged || results.f_converged || results.g_converged || stopped_by_callback
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
