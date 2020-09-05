@@ -21,7 +21,7 @@ struct Brent <: UnivariateOptimizer end
 Base.summary(::Brent) = "Brent's Method"
 
 function optimize(
-        f::F, x_lower::T, x_upper::T,
+        f, x_lower::T, x_upper::T,
         mo::Brent;
         rel_tol::T = sqrt(eps(T)),
         abs_tol::T = eps(T),
@@ -30,7 +30,7 @@ function optimize(
         show_trace::Bool = false,
         callback = nothing,
         show_every = 1,
-        extended_trace::Bool = false) where {F <: Function, T <: AbstractFloat}
+        extended_trace::Bool = false) where T <: AbstractFloat
     t0 = time()
     options = (store_trace=store_trace, show_trace=show_trace, show_every=show_every, callback=callback)
     if x_lower > x_upper
