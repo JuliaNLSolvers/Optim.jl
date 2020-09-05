@@ -307,7 +307,7 @@ function initial_convergence(d, state::NelderMeadState, method::NelderMead, init
     nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_abstol
 end
 
-function trace!(tr, d, state, iteration, method::NelderMead, options, curr_time=time())
+function trace!(tr, d, state, iteration, method::NelderMead, options::Options, curr_time=time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace

@@ -288,7 +288,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         nothing,
                                         options.time_limit,
                                         _time-t0,
-                                        )
+                                        NamedTuple())
 end
 
 # Fallbacks (for methods that don't need these)

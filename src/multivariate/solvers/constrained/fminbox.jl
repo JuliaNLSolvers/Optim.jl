@@ -225,25 +225,25 @@ optimize(f, g, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, opt::Op
 optimize(f, g, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt; kwargs...)
 
 function optimize(f,
-                  l::AbstractArray{T},
-                  u::AbstractArray{T},
-                  initial_x::AbstractArray{T},
+                  l::AbstractArray,
+                  u::AbstractArray,
+                  initial_x::AbstractArray,
                   F::Fminbox = Fminbox(),
-                  options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+                  options::Options = Options(); inplace = true, autodiff = :finite)
 
-    od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
+    od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); autodiff = autodiff)
     optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(
         df::OnceDifferentiable,
-        l::AbstractArray{T},
-        u::AbstractArray{T},
-        initial_x::AbstractArray{T},
+        l::AbstractArray,
+        u::AbstractArray,
+        initial_x::AbstractArray,
         F::Fminbox = Fminbox(),
-        options = Options()) where T<:AbstractFloat
+        options::Options = Options())
 
-
+    T = eltype(initial_x)
     t0 = time()
 
     outer_iterations = options.outer_iterations
@@ -310,7 +310,7 @@ function optimize(
     converged = false
     local results
     first = true
-
+    f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
     stopped = false
     _time = time()
     while !converged && !stopped && iteration < outer_iterations
@@ -340,6 +340,7 @@ function optimize(
         reset!(_optimizer, state, dfbox, x)
         #end
         resultsnew = optimize(dfbox, x, _optimizer, options, state)
+        stopped_by_callback = resultsnew.stopped_by.callback
         if first
             results = resultsnew
             first = false
@@ -371,8 +372,8 @@ function optimize(
         g = x.-min.(max.(x.-gradient(dfbox.obj), l), u)
         results.x_converged, results.f_converged,
         results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
-                                                                         options.outer_x_abstol, options.outer_f_reltol, options.outer_g_abstol)
-        converged = results.x_converged || results.f_converged || results.g_converged
+                                                              options.outer_x_abstol, options.outer_x_reltol, options.outer_f_abstol, options.outer_f_reltol, options.outer_g_abstol)
+        converged = results.x_converged || results.f_converged || results.g_converged || stopped_by_callback
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
             break
@@ -381,6 +382,13 @@ function optimize(
         stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
         stopped = stopped_by_time_limit
     end
+    
+    stopped_by =(#f_limit_reached=f_limit_reached,
+                 #g_limit_reached=g_limit_reached,
+                 #h_limit_reached=h_limit_reached,
+                 time_limit=stopped_by_time_limit,
+                 callback=stopped_by_callback,
+                 f_increased=f_increased && !options.allow_f_increases)
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
@@ -390,5 +398,5 @@ function optimize(
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls, nothing,
             options.time_limit,
-            _time-t0,)
+            _time-t0, stopped_by)
 end

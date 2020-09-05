@@ -94,8 +94,13 @@ function optimize(d::D, initial_x::Tx, method::M,
     # in variables besides the option settings
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
-
-    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool}(method,
+    stopped_by =(f_limit_reached=f_limit_reached,
+                 g_limit_reached=g_limit_reached,
+                 h_limit_reached=h_limit_reached,
+                 time_limit=stopped_by_time_limit,
+                 callback=stopped_by_callback,
+                 f_increased=f_incr_pick)
+    return MultivariateOptimizationResults{typeof(method),T,Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),
@@ -122,5 +127,6 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         ls_success,
                                         options.time_limit,
                                         _time-t0,
+                                        stopped_by,
                                         )
 end
