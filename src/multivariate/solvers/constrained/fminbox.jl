@@ -310,7 +310,7 @@ function optimize(
     converged = false
     local results
     first = true
-
+    f_increased, stopped_by_time_limit = false, false
     stopped = false
     _time = time()
     while !converged && !stopped && iteration < outer_iterations
@@ -381,6 +381,13 @@ function optimize(
         stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
         stopped = stopped_by_time_limit
     end
+    
+    stopped_by =(#f_limit_reached=f_limit_reached,
+                 #g_limit_reached=g_limit_reached,
+                 #h_limit_reached=h_limit_reached,
+                 stopped_by_time_limit=stopped_by_time_limit,
+                 #stopped_by_callback=stopped_by_callback,
+                 f_increased=f_increased && !options.allow_f_increases)
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
@@ -390,5 +397,5 @@ function optimize(
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls, nothing,
             options.time_limit,
-            _time-t0,)
+            _time-t0, stopped_by)
 end

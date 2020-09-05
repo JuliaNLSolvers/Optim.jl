@@ -205,7 +205,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 h_calls(d),
                                                                 true,
                                                                 options.time_limit,
-                                                                _time-t0,)
+                                                                _time-t0,NamedTuple())
                     end
                 end
             end
@@ -344,7 +344,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             h_calls(d),
                                             true,
                                             options.time_limit,
-                                            _time-t0,)
+                                            _time-t0,
+                                            NamedTuple())
 
 end
 
