@@ -38,7 +38,7 @@ algorithm
  - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
  - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
 """
-@with_kw struct SAMIN{T}<:ZerothOrderOptimizer
+@with_kw struct SAMIN{T}<:AbstractConstrainedOptimizer
     nt::Int = 5 # reduce temperature every nt*ns*dim(x_init) evaluations
     ns::Int = 5 # adjust bounds every ns*dim(x_init) evaluations
     rt::T = 0.9 # geometric temperature reduction factor: when temp changes, new temp is t=rt*t

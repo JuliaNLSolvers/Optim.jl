@@ -1,4 +1,4 @@
-function trace!(tr, d, state, iteration, method::ZerothOrderOptimizer, options, curr_time=time())
+function trace!(tr, d, state, iteration, method::Union{ZerothOrderOptimizer, SAMIN}, options::Options, curr_time=time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace

@@ -225,25 +225,25 @@ optimize(f, g, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, opt::Op
 optimize(f, g, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt; kwargs...)
 
 function optimize(f,
-                  l::AbstractArray{T},
-                  u::AbstractArray{T},
-                  initial_x::AbstractArray{T},
+                  l::AbstractArray,
+                  u::AbstractArray,
+                  initial_x::AbstractArray,
                   F::Fminbox = Fminbox(),
-                  options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+                  options::Options = Options(); inplace = true, autodiff = :finite)
 
-    od = OnceDifferentiable(f, initial_x, zero(T); autodiff = autodiff)
+    od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); autodiff = autodiff)
     optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(
         df::OnceDifferentiable,
-        l::AbstractArray{T},
-        u::AbstractArray{T},
-        initial_x::AbstractArray{T},
+        l::AbstractArray,
+        u::AbstractArray,
+        initial_x::AbstractArray,
         F::Fminbox = Fminbox(),
-        options = Options()) where T<:AbstractFloat
+        options::Options = Options())
 
-
+    T = eltype(initial_x)
     t0 = time()
 
     outer_iterations = options.outer_iterations

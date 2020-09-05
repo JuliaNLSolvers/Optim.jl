@@ -1,5 +1,5 @@
 abstract type AbstractOptimizer end
-abstract type AbstractConstrainedOptimizer end
+abstract type AbstractConstrainedOptimizer <: AbstractOptimizer end
 abstract type ZerothOrderOptimizer <: AbstractOptimizer end
 abstract type FirstOrderOptimizer  <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
