@@ -184,6 +184,23 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol
 end
 
+function optimize(d::AbstractObjective, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer,
+                  options::Options = Options(;default_options(method)...))
+    twicediffed = TwiceDifferentiable(d)
+    
+    bounds = ConstraintBounds(lower, upper, [], [])
+    constraints = TwiceDifferentiableConstraints(
+            (c,x)->nothing, (J,x)->nothing, (H,x,λ)->nothing, bounds)
+
+    state = initial_state(method, options, twicediffed, constraints, initial_x)
+
+    optimize(twicediffed,
+             constraints,
+             initial_x,
+             method,
+             options,
+             state)
+end
 function optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::AbstractArray, method::ConstrainedOptimizer,
                   options::Options = Options(;default_options(method)...),
                   state = initial_state(method, options, d, constraints, initial_x))
