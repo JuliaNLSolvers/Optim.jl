@@ -36,4 +36,7 @@ end
 	ub = fill(1.1, 2)
 	od = OnceDifferentiable(exponential, initial_x)
 	optimize(od, lb, ub, initial_x, IPNewton())
+	optimize(od, lb, ub, initial_x, IPNewton(), Optim.Options())
+	optimize(TwiceDifferentiable(od, initial_x), lb, ub, initial_x)
+	optimize(TwiceDifferentiable(od, initial_x), lb, ub, initial_x, Optim.Options())
 end
