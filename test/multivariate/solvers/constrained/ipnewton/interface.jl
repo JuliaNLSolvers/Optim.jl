@@ -1,4 +1,4 @@
-using Optim, ForwardDiff
+using Optim, Test
 @testset "#711" begin
 	# make sure it doesn't try to promote df
 	dof = 7
@@ -24,7 +24,7 @@ end
 		storage
 	end
 	function exponential_hessian!(storage, x)
-		ForwardDiff.hessian!(storage, exponential, x)
+		Optim.NLSolversBase.ForwardDiff.hessian!(storage, exponential, x)
 	end
 
 	function exponential_gradient(x)
