@@ -1,3 +1,4 @@
+using Optim, ForwardDiff
 @testset "#711" begin
 	# make sure it doesn't try to promote df
 	dof = 7
@@ -22,6 +23,9 @@ end
 		storage[2] = -2.0 * (3.0 - x[2]) * exp((3.0 - x[2])^2)
 		storage
 	end
+	function exponential_hessian!(storage, x)
+		ForwardDiff.hessian!(storage, exponential, x)
+	end
 
 	function exponential_gradient(x)
 		storage = similar(x)
@@ -37,6 +41,12 @@ end
 	od = OnceDifferentiable(exponential, initial_x)
 	optimize(od, lb, ub, initial_x, IPNewton())
 	optimize(od, lb, ub, initial_x, IPNewton(), Optim.Options())
+	optimize(exponential, lb, ub, initial_x, IPNewton())
+	optimize(exponential, lb, ub, initial_x, IPNewton(), Optim.Options())
+	optimize(exponential, exponential_gradient!, lb, ub, initial_x, IPNewton())
+	optimize(exponential, exponential_gradient!, lb, ub, initial_x, IPNewton(), Optim.Options())
+	optimize(exponential, exponential_gradient!, exponential_hessian!, lb, ub, initial_x, IPNewton())
+	optimize(exponential, exponential_gradient!, exponential_hessian!, lb, ub, initial_x, IPNewton(), Optim.Options())
 	optimize(TwiceDifferentiable(od, initial_x), lb, ub, initial_x)
 	optimize(TwiceDifferentiable(od, initial_x), lb, ub, initial_x, Optim.Options())
 end

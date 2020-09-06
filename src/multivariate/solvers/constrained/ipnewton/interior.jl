@@ -184,12 +184,22 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol
 end
 
+function optimize(f, g, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer=IPNewton(),
+    options::Options = Options(;default_options(method)...))
+    d = TwiceDifferentiable(f, g, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
+function optimize(f, g, h, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer=IPNewton(),
+    options::Options = Options(;default_options(method)...))
+    d = TwiceDifferentiable(f, g, h, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
 function optimize(d::TwiceDifferentiable, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray,
     options::Options = Options(;default_options(IPNewton())...))
     optimize(d, lower, upper, initial_x, IPNewton(), options)
 end
 
-function optimize(d::AbstractObjective, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer,
+function optimize(d, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer,
                   options::Options = Options(;default_options(method)...))
     twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, initial_x)
     
