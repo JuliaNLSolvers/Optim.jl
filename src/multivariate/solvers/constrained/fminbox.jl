@@ -22,6 +22,10 @@ struct BoxBarrier{L, U}
     lower::L
     upper::U
 end
+function in_box(bb::BoxBarrier, x)
+    all(x->x[1]>=x[2] && x[1]<=x[3], zip(x, bb.lower, bb.upper))
+end
+in_box(bw::BarrierWrapper, x) = in_box(bw.b, x)
 # evaluates the value and gradient components comming from the log barrier 
 function _barrier_term_value(x::T, l, u) where T
     dxl = x - l
@@ -54,40 +58,55 @@ function gradient(bb::BoxBarrier, g, x)
     g = copy(g)
     g .= _barrier_term_gradient.(x, bb.lower, bb.upper)
 end
-function value_gradient!!(bb::BarrierWrapper, x)
-    value_gradient!!(bb.obj, x)
+# Wrappers
+function value_gradient!!(bw::BarrierWrapper, x)
+    bw.Fb = value(bw.b, x)
+    bw.Ftotal = bw.mu*bw.Fb
+    bw.DFb .= _barrier_term_gradient.(x, bw.b.lower, bw.b.upper)
+    bw.DFtotal .=  bw.mu .* bw.DFb
+    if in_box(bw, x)
+        value_gradient!!(bw.obj, x)
+        bw.Ftotal += value(bw.obj)
+        bw.DFtotal .+= gradient(bw.obj)
+    end
 
-    bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
-    bb.DFtotal .= gradient(bb.obj) .+ bb.mu .* bb.DFb
-
-    bb.Fb = value(bb.b, x)
-    bb.Ftotal = value(bb.obj) + bb.mu*bb.Fb
 end
 function value_gradient!(bb::BarrierWrapper, x)
-    value_gradient!(bb.obj, x)
-
     bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
-    bb.DFtotal .= gradient(bb.obj) .+ bb.mu .* bb.DFb
-
     bb.Fb = value(bb.b, x)
-    bb.Ftotal = value(bb.obj) + bb.mu*bb.Fb
+    bb.DFtotal .= bb.mu .* bb.DFb
+    bb.Ftotal = bb.mu*bb.Fb
+
+    if in_box(bb, x)
+        value_gradient!(bb.obj, x)
+        bb.DFtotal .+= gradient(bb.obj)
+        bb.Ftotal += value(bb.obj)
+    end
 end
 value(bb::BoxBarrier, x) = mapreduce(x->_barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
 function value!(obj::BarrierWrapper, x)
-    value!(obj.obj, x)
     obj.Fb = value(obj.b, x)
-    obj.Ftotal = value(obj.obj) + obj.mu*obj.Fb
+    obj.Ftotal = obj.mu*obj.Fb
+    if in_box(obj, x)
+        value!(obj.obj, x)
+        obj.Ftotal += value(obj.obj)
+    end
+    obj.Ftotal
 end
 value(obj::BarrierWrapper) = obj.Ftotal
-value(obj::BarrierWrapper, x) = value(obj.obj, x) + obj.mu*value(obj.b, x)
+function value(obj::BarrierWrapper, x)
+    F = bj.mu*value(obj.b, x)
+    if is_inbox(obj, x)
+        F += value(obj.obj, x)
+    end
+    F
+end
 function gradient!(obj::BarrierWrapper, x)
     gradient!(obj.obj, x)
     obj.DFb .= gradient(obj.b, obj.DFb, x) # this should just be inplace?
     obj.DFtotal .= gradient(obj.obj) .+ obj.mu*obj.Fb
 end
 gradient(obj::BarrierWrapper) = obj.DFtotal
-gradient(obj::BarrierWrapper, mu::Real) = gradient(obj.obj) .+ obj.mu.*obj.DFb
-#gradient(obj::OnceDifferentiableBarrier, x) = gradient(obj.obj, x) + gradient(obj.b, x)
 
 # this mutates mu but not the gradients
 # Super unsafe in that it depends on x_df being correct!
