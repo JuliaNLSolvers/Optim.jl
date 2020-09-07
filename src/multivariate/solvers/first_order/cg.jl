@@ -42,7 +42,7 @@
 #   below.  The default value for alphamax is Inf. See alphamaxfunc
 #   for cgdescent and alphamax for linesearch_hz.
 
-struct ConjugateGradient{Tf, T, Tprep<:Union{Function, Nothing}, IL, L} <: FirstOrderOptimizer
+struct ConjugateGradient{Tf, T, Tprep, IL, L} <: FirstOrderOptimizer
     eta::Tf
     P::T
     precondprep!::Tprep
@@ -104,7 +104,16 @@ mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-
+function reset!(cg, cgs::ConjugateGradientState, obj, x)
+    cgs.x .= x
+    cg.precondprep!(cg.P, x)
+    ldiv!(cgs.pg, cg.P, gradient(obj))
+    if cg.P != nothing
+        project_tangent!(cg.manifold, cgs.pg, x)
+    end
+    cgs.s .= -cgs.pg 
+    cgs.f_x_previous = typeof(cgs.f_x_previous)(NaN)
+end
 function initial_state(method::ConjugateGradient, options, d, initial_x)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
@@ -135,11 +144,11 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     end
 
     ConjugateGradientState(initial_x, # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
-                         similar(gradient(d)), # Store previous gradient in state.g_previous
+                         0 .*(initial_x), # Maintain previous state in state.x_previous
+                         0 .*(gradient(d)), # Store previous gradient in state.g_previous
                          real(T)(NaN), # Store previous f in state.f_x_previous
-                         similar(initial_x), # Intermediate value in CG calculation
-                         similar(initial_x), # Preconditioned intermediate value in CG calculation
+                         0 .*(initial_x), # Intermediate value in CG calculation
+                         0 .*(initial_x), # Preconditioned intermediate value in CG calculation
                          pg, # Maintain the preconditioned gradient in pg
                          -pg, # Maintain current search direction in state.s
                          @initial_linesearch()...)

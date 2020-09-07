@@ -39,8 +39,6 @@ function twoloop!(s,
     end
 
     # Copy q into s for forward pass
-    # apply preconditioner if precon != nothing
-    # (Note: preconditioner update was done outside of this function)
     if scaleinvH0 == true && pseudo_iteration > 1
         # Use the initial scaling guess from
         # Nocedal & Wright (2nd ed), Equation (7.20)
@@ -57,6 +55,9 @@ function twoloop!(s,
         scaling = real(dot(dxi, dgi)) / sum(abs2, dgi)
         @. s = scaling*q
     else
+        # apply preconditioner if scaleinvH0 is false as the true setting
+        # is essentially its own kind of preconditioning
+        # (Note: preconditioner update was done outside of this function)
         ldiv!(s, precon, q)
     end
     # Forward pass
@@ -77,7 +78,7 @@ function twoloop!(s,
     return
 end
 
-struct LBFGS{T, IL, L, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
+struct LBFGS{T, IL, L, Tprep} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
     linesearch!::L
@@ -148,7 +149,13 @@ mutable struct LBFGSState{Tx, Tdx, Tdg, T, G} <: AbstractOptimizerState
     s::Tx
     @add_linesearch_fields()
 end
+function reset!(method, state::LBFGSState, obj, x)
+    retract!(method.manifold, x)
+    value_gradient!(obj, x)
+    project_tangent!(method.manifold, gradient(obj), x)
 
+    pseudo_iteration = 0
+end
 function initial_state(method::LBFGS, options, d, initial_x)
     T = real(eltype(initial_x))
     n = length(initial_x)

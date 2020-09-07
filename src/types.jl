@@ -1,5 +1,5 @@
 abstract type AbstractOptimizer end
-abstract type AbstractConstrainedOptimizer end
+abstract type AbstractConstrainedOptimizer <: AbstractOptimizer end
 abstract type ZerothOrderOptimizer <: AbstractOptimizer end
 abstract type FirstOrderOptimizer  <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
@@ -26,8 +26,8 @@ outer_g_reltol::Real = 1e-8,
 f_calls_limit::Int = 0,
 g_calls_limit::Int = 0,
 h_calls_limit::Int = 0,
-allow_f_increases::Bool = false,
-allow_outer_f_increases::Bool = false,
+allow_f_increases::Bool = true,
+allow_outer_f_increases::Bool = true,
 successive_f_tol::Int = 1,
 iterations::Int = 1_000,
 outer_iterations::Int = 1000,
@@ -82,7 +82,7 @@ function Options(;
         g_reltol::Real = 1e-8,
         outer_x_tol = 0.0,
         outer_f_tol = 0.0,
-        outer_g_tol = 1e-8,
+        outer_g_tol = nothing,
         outer_x_abstol::Real = 0.0,
         outer_x_reltol::Real = 0.0,
         outer_f_abstol::Real = 0.0,
@@ -92,8 +92,8 @@ function Options(;
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
-        allow_f_increases::Bool = false,
-        allow_outer_f_increases::Bool = false,
+        allow_f_increases::Bool = true,
+        allow_outer_f_increases::Bool = true,
         successive_f_tol::Int = 1,
         iterations::Int = 1_000,
         outer_iterations::Int = 1000,
@@ -163,7 +163,7 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
@@ -191,6 +191,7 @@ mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls} <: Opti
     ls_success::Tls
     time_limit::Float64
     time_run::Float64
+    stopped_by::Tsb
 end
 
 

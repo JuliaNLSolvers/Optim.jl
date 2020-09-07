@@ -82,3 +82,60 @@ end
     result_fgh! = Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.Newton())
     @test result_fgh!.minimizer ≈ [1,1]
 end
+
+
+@testset "#816" begin
+    w = rand(2)
+    f(x) = sum(x.^2)
+    g!(G, x) = @. G = 2x
+    g(x) = 2x
+    h!(H, x) = @. H = [2.0 0.0; 0.0 2.0]
+    hv!(Hv, x) = @. Hv = [2.0, 2.0] .* x
+    _hv!(Hv, x, v) = @. Hv = [2.0, 2.0] .* x
+    res = Optim.optimize(f, w)
+    @test res.method isa NelderMead
+
+    res = Optim.optimize(f, g!, w)
+    @test res.method isa LBFGS
+    function fg!(_, G, x)
+        isnothing(G) || g!(G, x)
+        return f(x)
+    end
+    function fg(x)
+        return f(x), g(x)
+    end
+
+    res = Optim.optimize(Optim.only_fg!(fg!), w)
+    @test res.method isa LBFGS
+
+    res = Optim.optimize(Optim.only_fg(fg), w)
+    @test res.method isa LBFGS
+
+    res = Optim.optimize(Optim.only_g_and_fg(g, fg), w)
+    @test res.method isa LBFGS
+
+    function fgh!(_, G, H, x)
+        isnothing(G) || g!(G, x)
+        isnothing(H) || h!(H, x)
+        return f(x)
+    end
+
+    res = Optim.optimize(Optim.only_fgh!(fgh!), w)
+    @test res.method isa Newton
+
+    res = Optim.optimize(Optim.only_fgh!(fgh!), w)
+    @test res.method isa Newton
+
+    function fghv!(_, G, Hv, x, v)
+        isnothing(G) || g!(G, x)
+        isnothing(Hv) || hv!(Hv, v)
+        return f(x)
+    end
+
+    res = Optim.optimize(Optim.only_fghv!(fghv!), w)
+    @test res.method isa Optim.KrylovTrustRegion
+
+    res = Optim.optimize(Optim.only_fg_and_hv!(fg!, _hv!), w)
+    @test res.method isa Optim.KrylovTrustRegion
+
+end

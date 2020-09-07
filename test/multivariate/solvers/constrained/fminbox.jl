@@ -127,3 +127,12 @@
         end
     end
 end
+
+@testset "#631" begin
+    # Fminbox evaluates outside the box #861
+    # https://github.com/JuliaNLSolvers/Optim.jl/issues/861
+    for m in (GradientDescent(), ConjugateGradient(), BFGS(), LBFGS())
+        optimize(x -> sqrt(x[1]), (g,x)->(g[1]=1/(2*sqrt(x[1]))), [0.0], [10.0], [1.0], Fminbox(m))
+        optimize(x -> sqrt(x[1]), [0.0], [10.0], [1.0], Fminbox(m); autodiff=:forwarddiff)
+    end
+end

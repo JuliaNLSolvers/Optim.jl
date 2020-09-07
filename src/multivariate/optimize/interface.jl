@@ -30,6 +30,30 @@ fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
 fallback_method(f, g!, h!) = Newton()
 
+function fallback_method(f::InplaceObjective)
+    if !(f.fdf isa Nothing)
+        if !(f.hv isa Nothing)
+            return KrylovTrustRegion()
+        end
+        return LBFGS()
+    elseif !(f.fgh isa Nothing)
+        return Newton()
+    elseif !(f.fghv isa Nothing)
+        return KrylovTrustRegion()
+    end
+end
+
+function fallback_method(f::NotInplaceObjective)
+    if !(f.fdf isa Nothing)
+        return LBFGS()
+    elseif !(f.fgh isa Nothing)
+        return LBFGS()
+    else
+        throw(ArgumentError("optimize does not support $(typeof(f)) as the first positional argument"))
+    end
+end
+fallback_method(f::NotInplaceObjective{<:Nothing, <:Nothing, <:Any}) = Newton()
+
 fallback_method(d::OnceDifferentiable) = LBFGS()
 fallback_method(d::TwiceDifferentiable) = Newton()
 
@@ -43,6 +67,8 @@ promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFGHv) = TwiceDifferentiableHV(f, x)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFG_Hv) = TwiceDifferentiableHV(f, x)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
 # no-op

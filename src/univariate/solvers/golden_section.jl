@@ -18,7 +18,7 @@ struct GoldenSection <: UnivariateOptimizer end
 
 Base.summary(::GoldenSection) = "Golden Section Search"
 
-function optimize(f::F, x_lower::T, x_upper::T,
+function optimize(f, x_lower::T, x_upper::T,
      mo::GoldenSection;
      rel_tol::T = sqrt(eps(T)),
      abs_tol::T = eps(T),
@@ -28,7 +28,7 @@ function optimize(f::F, x_lower::T, x_upper::T,
      callback = nothing,
      show_every = 1,
      extended_trace::Bool = false,
-     nargs...) where {F<:Function, T <: AbstractFloat}
+     nargs...) where T <: AbstractFloat
     if x_lower > x_upper
         error("x_lower must be less than x_upper")
     end

@@ -1,4 +1,4 @@
-struct GradientDescent{IL, L, T, Tprep<:Union{Function, Nothing}} <: FirstOrderOptimizer
+struct GradientDescent{IL, L, T, Tprep} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     P::T
@@ -43,7 +43,13 @@ mutable struct GradientDescentState{Tx, T} <: AbstractOptimizerState
     s::Tx
     @add_linesearch_fields()
 end
+function reset!(method, state::GradientDescentState, obj, x)
+    retract!(method.manifold, x)
 
+    value_gradient!!(obj, x)
+
+    project_tangent!(method.manifold, gradient(obj), x)
+end
 function initial_state(method::GradientDescent, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)

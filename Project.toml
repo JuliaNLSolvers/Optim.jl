@@ -1,6 +1,6 @@
 name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "0.22.0"
+version = "1.0.0"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
@@ -17,7 +17,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0"
-FillArrays = "0.6.2, 0.7, 0.8"
+FillArrays = "0.6.2, 0.7, 0.8, 0.9"
 LineSearches = "7.0.1"
 NLSolversBase = "7.3.1"
 NaNMath = "0.3.2"
