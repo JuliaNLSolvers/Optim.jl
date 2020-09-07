@@ -69,7 +69,7 @@ function reset!(method, state::BFGSState, obj, x)
             state.invH .= Diagonal(ones(T, n))
             
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(obj), Inf))
             state.invH .= Diagonal(fill(initial_scale, n))
         end
     else
