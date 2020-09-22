@@ -150,7 +150,7 @@ end
 function reset!(method::NelderMead, state::NelderMeadState, obj, x)
     state.simplex = simplexer(method.initial_simplex, x)
 
-    value!!(obj, first(state.simplex))
+    value!(obj, first(state.simplex))
     state.f_simplex[1] = value(obj)
     for i in 2:length(state.simplex)
         state.f_simplex[i] = value(obj, state.simplex[i])
