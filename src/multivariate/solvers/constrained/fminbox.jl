@@ -1,4 +1,4 @@
-import NLSolversBase: value, value!, gradient, gradient!, value_gradient!, value_gradient!!
+import NLSolversBase: value, value!, value!!, gradient, gradient!, value_gradient!, value_gradient!!
 ####### FIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX THE MIDDLE OF BOX CASE THAT WAS THERE
 mutable struct BarrierWrapper{TO, TB, Tm, TF, TDF} <: AbstractObjective
     obj::TO
@@ -12,6 +12,11 @@ end
 f_calls(obj::BarrierWrapper) = f_calls(obj.obj)
 g_calls(obj::BarrierWrapper) = g_calls(obj.obj)
 h_calls(obj::BarrierWrapper) = h_calls(obj.obj)
+function BarrierWrapper(obj::NonDifferentiable, mu, lower, upper)
+    barrier_term = BoxBarrier(lower, upper)
+
+    BarrierWrapper(obj, barrier_term, mu, copy(obj.F), copy(obj.F), nothing, nothing)
+end
 function BarrierWrapper(obj::OnceDifferentiable, mu, lower, upper)
     barrier_term = BoxBarrier(lower, upper)
 
@@ -59,6 +64,14 @@ function gradient(bb::BoxBarrier, g, x)
     g .= _barrier_term_gradient.(x, bb.lower, bb.upper)
 end
 # Wrappers
+function value!!(bw::BarrierWrapper, x)
+    bw.Fb = value(bw.b, x)
+    bw.Ftotal = bw.mu*bw.Fb
+    if in_box(bw, x)
+        value!!(bw.obj, x)
+        bw.Ftotal += value(bw.obj)
+    end
+end
 function value_gradient!!(bw::BarrierWrapper, x)
     bw.Fb = value(bw.b, x)
     bw.Ftotal = bw.mu*bw.Fb
@@ -95,8 +108,8 @@ function value!(obj::BarrierWrapper, x)
 end
 value(obj::BarrierWrapper) = obj.Ftotal
 function value(obj::BarrierWrapper, x)
-    F = bj.mu*value(obj.b, x)
-    if is_inbox(obj, x)
+    F = obj.mu*value(obj.b, x)
+    if in_box(obj, x)
         F += value(obj.obj, x)
     end
     F
@@ -249,7 +262,9 @@ function optimize(f,
                   initial_x::AbstractArray,
                   F::Fminbox = Fminbox(),
                   options::Options = Options(); inplace = true, autodiff = :finite)
-
+    if f isa NonDifferentiable
+        f = f.f
+    end
     od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); autodiff = autodiff)
     optimize(od, l, u, initial_x, F, options)
 end
@@ -308,7 +323,18 @@ function optimize(
     # we wait until state has been initialized to set the initial mu because
     # we need the gradient of the objective and initial_state will value_gradient!!
     # the objective, so that forces an evaluation
+    if F.method isa NelderMead
+        gradient!(dfbox, x)
+    end
     dfbox.mu = initial_mu(dfbox, F)
+    if F.method isa NelderMead
+        for i = 1:length(state.f_simplex)
+            x = state.simplex[i]
+            boxval = value(dfbox.b, x)
+            state.f_simplex[i] += boxval
+        end
+        state.i_order = sortperm(state.f_simplex)
+    end
     if show_trace > 00
         println("Fminbox")
         println("-------")
@@ -353,11 +379,14 @@ function optimize(
         # value_gradient! not !! as in initial_state, we won't make a superfluous
         # evaluation
         
-        value_gradient!(dfbox, x)
-
-        #if method.reset
-        reset!(_optimizer, state, dfbox, x)
-        #end
+        if !(F.method isa NelderMead)
+            value_gradient!(dfbox, x)
+        else
+            value!(dfbox, x)
+        end
+        if !(F.method isa NelderMead && iteration == 1)
+            reset!(_optimizer, state, dfbox, x)
+        end
         resultsnew = optimize(dfbox, x, _optimizer, options, state)
         stopped_by_callback = resultsnew.stopped_by.callback
         if first
@@ -386,7 +415,6 @@ function optimize(
         
         # Decrease mu
         dfbox.mu *= T(F.mufactor)
-        
         # Test for convergence
         g = x.-min.(max.(x.-gradient(dfbox.obj), l), u)
         results.x_converged, results.f_converged,

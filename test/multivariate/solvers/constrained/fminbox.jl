@@ -102,6 +102,8 @@
         ub = fill(1.1, 2)
         od = OnceDifferentiable(exponential, initial_x)
         optimize(od, lb, ub, initial_x, Fminbox())
+        nd = NonDifferentiable(exponential, initial_x)
+        optimize(nd, lb, ub, initial_x, Fminbox(NelderMead()))
         od_forward = OnceDifferentiable(exponential, initial_x; autodiff = :forward)
         optimize(od_forward, lb, ub, initial_x, Fminbox())
         optimize(exponential, lb, ub, initial_x, Fminbox())

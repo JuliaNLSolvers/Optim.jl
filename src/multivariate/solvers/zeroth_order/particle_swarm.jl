@@ -116,6 +116,7 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
     current_state = 0
 
     value!!(d, initial_x)
+    score[1] = value(d)
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
@@ -149,6 +150,11 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
         X[j, 1] = initial_x[j]
         X_best[j, 1] = initial_x[j]
     end
+
+    for i in 2:n_particles
+        score[i] = value(d, X[:, i])
+    end
+
     ParticleSwarmState(
         x,
         0,
@@ -171,10 +177,6 @@ end
 
 function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) where T
     n = length(state.x)
-    if state.limit_search_space
-        limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
-    end
-    compute_cost!(f, state.n_particles, state.X, state.score)
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
@@ -234,6 +236,12 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     state.current_state, _f = get_swarm_state(state.X, state.score, state.x, state.current_state)
     state.w, state.c1, state.c2 = update_swarm_params!(state.c1, state.c2, state.w, state.current_state, _f)
     update_swarm!(state.X, state.X_best, state.x, n, state.n_particles, state.V, state.w, state.c1, state.c2)
+
+    if state.limit_search_space
+        limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
+    end
+    compute_cost!(f, state.n_particles, state.X, state.score)
+
     state.iteration += 1
     false
 end

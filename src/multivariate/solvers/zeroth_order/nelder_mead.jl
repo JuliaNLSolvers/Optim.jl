@@ -147,7 +147,20 @@ mutable struct NelderMeadState{Tx, T, Tfs} <: ZerothOrderState
     δ::T
     step_type::String
 end
+function reset!(method::NelderMead, state::NelderMeadState, obj, x)
+    state.simplex = simplexer(method.initial_simplex, x)
 
+    value!!(obj, first(state.simplex))
+    state.f_simplex[1] = value(obj)
+    for i in 2:length(state.simplex)
+        state.f_simplex[i] = value(obj, state.simplex[i])
+    end
+    # Get the indices that correspond to the ordering of the f values
+    # at the vertices. i_order[1] is the index in the simplex of the vertex
+    # with the lowest function value, and i_order[end] is the index in the
+    # simplex of the vertex with the highest function value
+    state.i_order = sortperm(state.f_simplex)
+end
 function initial_state(method::NelderMead, options, d, initial_x)
     T = eltype(initial_x)
     n = length(initial_x)
@@ -156,8 +169,8 @@ function initial_state(method::NelderMead, options, d, initial_x)
     f_simplex = zeros(T, m)
 
     value!!(d, first(simplex))
-
-    @inbounds for i in 1:length(simplex)
+    f_simplex[1] = value(d)
+    for i in 2:length(simplex)
         f_simplex[i] = value(d, simplex[i])
     end
     # Get the indices that correspond to the ordering of the f values
@@ -276,7 +289,6 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         step_type = "shrink"
         sortperm!(state.i_order, state.f_simplex)
     end
-
     state.nm_x = nmobjective(state.f_simplex, n, m)
     false
 end
@@ -291,7 +303,11 @@ function after_while!(f, state, method::NelderMead, options)
         x_min = x_centroid_min
         f_min = f_centroid_min
     end
-    f.F = f_min
+    if f isa BarrierWrapper
+        f.Fb = f_min
+    else
+        f.F = f_min
+    end
     state.x .= x_min
 end
 # We don't have an f_x_previous in NelderMeadState, so we need to special case these
