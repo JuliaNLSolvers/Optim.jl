@@ -40,14 +40,16 @@ parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 struct NelderMead{Ts <: Simplexer, Tp <: NMParameters} <: ZerothOrderOptimizer
     initial_simplex::Ts
     parameters::Tp
+    manifold::Manifold
 end
 
 """
 # NelderMead
 ## Constructor
 ```julia
-NelderMead(; parameters = AdaptiveParameters(),
-             initial_simplex = AffineSimplexer())
+NelderMead(; manifold = Flat(),
+parameters = AdaptiveParameters(),
+initial_simplex = AffineSimplexer())
 ```
 
 The constructor takes 2 keywords:
@@ -72,21 +74,22 @@ point with a better point. More information can be found in [1], [2] or [3].
 - [2] Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on Optimization 9.1 (1998): 112-147
 - [3] Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications. doi:10.1007/s10589-010-9329-3
 """
-function NelderMead(; kwargs...)
+function NelderMead(; manifold::Manifold=Flat(), kwargs...)
     KW = Dict(kwargs)
     if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
         initial_simplex, parameters = AffineSimplexer(), AdaptiveParameters()
         haskey(KW, :initial_simplex) && (initial_simplex = KW[:initial_simplex])
         haskey(KW, :parameters) && (parameters = KW[:parameters])
-        return NelderMead(initial_simplex, parameters)
+        return NelderMead(initial_simplex, parameters, manifold)
     else
-        return NelderMead(AffineSimplexer(), AdaptiveParameters())
+        return NelderMead(AffineSimplexer(), AdaptiveParameters(), manifold)
     end
 end
 
 Base.summary(::NelderMead) = "Nelder-Mead"
 
 # centroid except h-th vertex
+# Do not retract to manifold here, because function does not take method as input
 function centroid!(c::AbstractArray{T}, simplex, h=0) where T
     n = length(c)
     fill!(c, zero(T))
@@ -149,10 +152,15 @@ mutable struct NelderMeadState{Tx, T, Tfs} <: ZerothOrderState
 end
 
 function initial_state(method::NelderMead, options, d, initial_x)
+    retract!(method.manifold, initial_x)
+
     T = eltype(initial_x)
     n = length(initial_x)
     m = n + 1
-    simplex = simplexer(method.initial_simplex, initial_x)
+    simplex = simplexer(method.initial_simplex, initial_x) 
+    @inbounds for i in 1:length(simplex)
+        retract!(method.manifold, simplex[i])
+    end    
     f_simplex = zeros(T, m)
 
     value!!(d, first(simplex))
@@ -168,10 +176,13 @@ function initial_state(method::NelderMead, options, d, initial_x)
 
     α, β, γ, δ = parameters(method.parameters, n)
 
+    init_centroid = centroid(simplex,  i_order[m])
+    retract!(method.manifold, init_centroid)
+
 NelderMeadState(copy(initial_x), # Variable to hold final minimizer value for MultivariateOptimizationResults
           m, # Number of vertices in the simplex
           simplex, # Maintain simplex in state.simplex
-          centroid(simplex,  i_order[m]), # Maintain centroid in state.centroid
+          init_centroid, # Maintain centroid in state.centroid
           copy(initial_x), # Store cache in state.x_lowest
           copy(initial_x), # Store cache in state.x_second_highest
           copy(initial_x), # Store cache in state.x_highest
@@ -194,6 +205,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     n, m = length(state.x), state.m
 
     centroid!(state.x_centroid, state.simplex, state.i_order[m])
+    retract!(method.manifold, state.x_centroid)
     copyto!(state.x_lowest, state.simplex[state.i_order[1]])
     copyto!(state.x_second_highest, state.simplex[state.i_order[n]])
     copyto!(state.x_highest, state.simplex[state.i_order[m]])
@@ -205,6 +217,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     @inbounds for j in 1:n
         state.x_reflect[j] = state.x_centroid[j] + state.α * (state.x_centroid[j]-state.x_highest[j])
     end
+    retract!(method.manifold, state.x_reflect)
 
     f_reflect = value(f, state.x_reflect)
     if f_reflect < state.f_lowest
@@ -212,6 +225,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         @inbounds for j in 1:n
             state.x_cache[j] = state.x_centroid[j] + state.β *(state.x_reflect[j] - state.x_centroid[j])
         end
+        retract!(method.manifold, state.x_cache)
         f_expand = value(f, state.x_cache)
 
         if f_expand < f_reflect
@@ -240,6 +254,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             @simd for j in 1:n
                 @inbounds state.x_cache[j] = state.x_centroid[j] + state.γ * (state.x_reflect[j]-state.x_centroid[j])
             end
+            retract!(method.manifold, state.x_cache)
             f_outside_contraction = value(f, state.x_cache)
             if f_outside_contraction < f_reflect
                 copyto!(state.simplex[state.i_order[m]], state.x_cache)
@@ -255,6 +270,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             @simd for j in 1:n
                 @inbounds state.x_cache[j] = state.x_centroid[j] - state.γ *(state.x_reflect[j] - state.x_centroid[j])
             end
+            retract!(method.manifold, state.x_cache)
             f_inside_contraction = value(f, state.x_cache)
             if f_inside_contraction < f_highest
                 copyto!(state.simplex[state.i_order[m]], state.x_cache)
@@ -271,6 +287,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         for i = 2:m
             ord = state.i_order[i]
             copyto!(state.simplex[ord], state.x_lowest + state.δ*(state.simplex[ord]-state.x_lowest))
+            retract!(method.manifold, state.simplex[ord])
             state.f_simplex[ord] = value(f, state.simplex[ord])
         end
         step_type = "shrink"
@@ -284,6 +301,7 @@ end
 function after_while!(f, state, method::NelderMead, options)
     sortperm!(state.i_order, state.f_simplex)
     x_centroid_min = centroid(state.simplex, state.i_order[state.m])
+    retract!(method.manifold, x_centroid_min)
     f_centroid_min = value(f, x_centroid_min)
     f_min, i_f_min = findmin(state.f_simplex)
     x_min = state.simplex[i_f_min]
