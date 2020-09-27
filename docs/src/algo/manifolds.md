@@ -29,7 +29,7 @@ The following meta-manifolds construct manifolds out of pre-existing ones:
 
 See `test/multivariate/manifolds.jl` for usage examples.
 
-Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,g,x)` and `retract!(M::YourManifold,x)`. If you implement another manifold or optimization method, please contribute a PR!
+Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,g,x)` and `retract!(M::YourManifold,x)`.  Nedler-Mead only requires `retract!`. If you implement another manifold or optimization method, please contribute a PR!
 
 ## References
 The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
