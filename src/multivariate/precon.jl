@@ -51,8 +51,8 @@ end
 mutable struct InverseDiagonal
    diag
 end
-ldiv!(out::Array, P::InverseDiagonal, A::Array) = copyto!(out, A .* P.diag)
-dot(A::Array, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
+ldiv!(out::AbstractArray, P::InverseDiagonal, A::AbstractArray) = copyto!(out, A .* P.diag)
+dot(A::AbstractArray, P::InverseDiagonal, B::AbstractVector) = dot(A, B ./ P.diag)
 
 #####################################################
 #  [4] Matrix Preconditioner
