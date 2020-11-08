@@ -16,5 +16,5 @@
     @test Optim.minimum(result) == 2.0
     @test_throws ErrorException optimize(identity, 2.0, 1.0, GoldenSection())
 
-    result = Optim.optimize(x->sin(x), 0, 2π, Optim.GolenSection(); abs_tol=1e-4, store_trace=false, show_trace=true, iterations=2)
+    result = Optim.optimize(x->sin(x), 0, 2π, Optim.GoldenSection(); abs_tol=1e-4, store_trace=false, show_trace=true, iterations=2)
 end
