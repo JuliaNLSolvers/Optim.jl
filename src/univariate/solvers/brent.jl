@@ -165,6 +165,7 @@ function optimize(
             state = (new_minimizer=new_minimizer,
                      x_lower=x_lower,
                      x_upper=x_upper,
+                     best_bound=best_bound,
                      new_minimum=new_minimum)
             stopped_by_callback = trace!(tr, nothing, state, iteration, mo, options, time()-t0)
         end
