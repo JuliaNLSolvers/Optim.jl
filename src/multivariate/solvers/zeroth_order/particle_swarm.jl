@@ -104,9 +104,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
     c2 = T(2)
     w = T(1)
 
-    X = Array{T,2}(undef, n, n_particles)
-    V = Array{T,2}(undef, n, n_particles)
-    X_best = Array{T,2}(undef, n, n_particles)
+    X = similar_axis(initial_x, n_particles)
+    V = similar_axis(initial_x, n_particles)
+    X_best = similar_axis(initial_x, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
     x = copy(initial_x)
@@ -465,11 +465,20 @@ end
 
 function compute_cost!(f,
                        n_particles::Int,
-                       X::Matrix,
+                       X::AbstractMatrix,
                        score::Vector)
 
     for i in 1:n_particles
         score[i] = value(f, X[:, i])
     end
     nothing
+end
+
+"""
+    similar_axis(x, n_particles)
+
+Equivalent to `Base.similar(x, length(x), n_particles)` for `x::Array`. Provide a method of this function to preserve a special axis for subtypes of `AbstractArray`.
+"""
+function similar_axis(x, n_particles)
+    similar(x, length(x), n_particles)
 end
