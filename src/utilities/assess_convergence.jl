@@ -6,11 +6,11 @@ f_relchange(f_x::T, f_x_previous) where T = abs(f_x - f_x_previous)/abs(f_x)
 x_abschange(state) = x_abschange(state.x, state.x_previous)
 x_abschange(x, x_previous) = maxdiff(x, x_previous)
 x_relchange(state) = x_relchange(state.x, state.x_previous)
-x_relchange(x, x_previous) = maxdiff(x, x_previous)/norm(x, Inf)
+x_relchange(x, x_previous) = maxdiff(x, x_previous)/maximum(abs, x)
 
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
 g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
-g_residual(g) = norm(g, Inf)
+g_residual(g) = maximum(abs, g)
 gradient_convergence_assessment(state::AbstractOptimizerState, d, options) = g_residual(gradient(d)) ≤ options.g_abstol
 gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
 
@@ -36,7 +36,7 @@ function assess_convergence(x, x_previous, f_x, f_x_previous, gx, x_abstol, x_re
     if x_abschange(x, x_previous) ≤ x_abstol
         x_converged = true
     end
-    if x_abschange(x, x_previous) ≤ x_reltol * norm(x, Inf)
+    if x_abschange(x, x_previous) ≤ x_reltol * maximum(abs, x)
         x_converged = true
     end
 

@@ -23,7 +23,7 @@ after_while!(d, state, method, options) = nothing
 
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
-    norm(gradient(d), Inf) < options.g_abstol
+    maximum(abs, gradient(d)) < options.g_abstol
 end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
