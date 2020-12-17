@@ -154,7 +154,7 @@ function reset!(method, state::LBFGSState, obj, x)
     value_gradient!(obj, x)
     project_tangent!(method.manifold, gradient(obj), x)
 
-    pseudo_iteration = 0
+    state.pseudo_iteration = 0
 end
 function initial_state(method::LBFGS, options, d, initial_x)
     T = real(eltype(initial_x))
