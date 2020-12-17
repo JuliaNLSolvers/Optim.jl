@@ -138,3 +138,7 @@ end
         optimize(x -> sqrt(x[1]), [0.0], [10.0], [1.0], Fminbox(m); autodiff=:forwarddiff)
     end
 end
+
+@testset "#865"
+    optimize(x -> sum(x), [0.,0.0], [2.0,2.0], [1.,1.0], Fminbox(NelderMead()))
+end
