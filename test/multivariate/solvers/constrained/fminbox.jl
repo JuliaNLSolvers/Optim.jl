@@ -139,6 +139,6 @@ end
     end
 end
 
-@testset "#865"
+@testset "#865" begin
     optimize(x -> sum(x), [0.,0.0], [2.0,2.0], [1.,1.0], Fminbox(NelderMead()))
 end
