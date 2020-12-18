@@ -55,6 +55,8 @@ mutable struct ParticleSwarmState{Tx,T} <: ZerothOrderState
     x_learn
     current_state
     iterations::Int
+    scout_limit::Int
+    scout_counts::Vector{Int}
 end
 
 function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArray{T}) where T
@@ -116,7 +118,6 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
     current_state = 0
 
     value!!(d, initial_x)
-    score[1] = value(d)
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
@@ -150,11 +151,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
         X[j, 1] = initial_x[j]
         X_best[j, 1] = initial_x[j]
     end
-
-    for i in 2:n_particles
-        score[i] = value(d, X[:, i])
-    end
-
+    scout_counts = zeros(Int,n_particles)
+    # According to eq. 9 in "A PSO based approach: Scout particle swarm algorithm for continuous global optimization problems."
+    scout_limit = Int(ceil(n*n_particles/12))
     ParticleSwarmState(
         x,
         0,
@@ -172,11 +171,17 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
         best_score,
         x_learn,
         0,
-        options.iterations)
+        options.iterations,
+        scout_limit,
+        scout_counts)
 end
 
 function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) where T
     n = length(state.x)
+    if state.limit_search_space
+        limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
+    end
+    compute_cost!(f, state.n_particles, state.X, state.score)
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
@@ -188,7 +193,8 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
                               state.X_best,
                               state.x,
                               value(f),
-                              state.n_particles)
+                              state.n_particles,
+                              state.scout_counts) # adding One to the scout count if the personal best did not change.
     # Elitist Learning:
     # find a new solution named 'x_learn' which is the current best
     # solution with one randomly picked variable being modified.
@@ -237,13 +243,23 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     state.w, state.c1, state.c2 = update_swarm_params!(state.c1, state.c2, state.w, state.current_state, _f)
     update_swarm!(state.X, state.X_best, state.x, n, state.n_particles, state.V, state.w, state.c1, state.c2)
 
-    if state.limit_search_space
-        limit_X!(state.X, state.lower, state.upper, state.n_particles, n)
-    end
-    compute_cost!(f, state.n_particles, state.X, state.score)
-
+    scout_phase!(state.X, state.X_best, state.scout_counts,state.scout_limit, n,state.n_particles, state.lower)
     state.iteration += 1
     false
+end
+
+function scout_phase!(X::AbstractArray{Tx}, X_best, scout_count, scout_limit, n,n_particles, x0) where Tx
+
+    for i in 1:n_particles
+        if scout_count[i] >= scout_limit
+            print("Particle $i Regenerated!\n")
+            for j in 1:n
+                X[j,i] = x0[j] + 2*(rand()-1/2)*x0[j]
+                X_best[j,i] = X[j,i]
+            end
+            scout_count[i] = 0
+        end
+    end
 end
 
 
@@ -438,10 +454,11 @@ function update_swarm_params!(c1, c2, w, current_state, f::T) where T
 end
 
 function housekeeping!(score, best_score, X, X_best, best_point,
-                       F, n_particles)
+                       F, n_particles,scout_counts)
     n = size(X, 1)
     for i in 1:n_particles
         if score[i] <= best_score[i]
+            scout_counts[i] = 0
             best_score[i] = score[i]
             for k in 1:n
                 X_best[k, i] = X[k, i]
@@ -452,6 +469,8 @@ function housekeeping!(score, best_score, X, X_best, best_point,
                 end
               	F = score[i]
             end
+        else
+            scout_counts[i] += 1
         end
     end
     return F
