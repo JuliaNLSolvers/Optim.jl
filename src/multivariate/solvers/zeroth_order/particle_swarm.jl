@@ -495,7 +495,7 @@ function compute_cost!(f,
                        X::Matrix,
                        score::Vector)
 
-    for i in 1:n_particles
+    Threads.@threads for i in 1:n_particles
         score[i] = value(f, X[:, i])
     end
     nothing
