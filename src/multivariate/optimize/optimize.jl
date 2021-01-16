@@ -27,6 +27,31 @@ function initial_convergence(d, state, method::AbstractOptimizer, initial_x, opt
 end
 initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
 
+# Split zeroth-order complex into real and imaginary parts
+function optimize(d::D, initial_x::Tx, method::M,
+                  options::Options{T, TCallback} = nothing,
+                  state = nothing) where {D<:NonDifferentiable, M<:AbstractOptimizer, Tx <: AbstractArray{S}, T, TCallback} where S <: Complex{R} where R
+    initial_ri = similar(initial_x, R, 2, size(initial_x)...)
+    selectdim(initial_ri, 1, 1) .= real(initial_x)
+    selectdim(initial_ri, 1, 2) .= imag(initial_x)
+    if isnothing(state)
+        state = initial_state(method, options, d, initial_ri)
+    end
+    if isnothing(options)
+        options = Options(;default_options(method)...)
+    end
+    result = optimize(d, initial_ri, method, options, state)
+    args = []
+    for s in fieldnames(typeof(result))
+        arg = @eval result.$s
+        if s ∈ [:minimizer, :initial_x]
+            arg = complex.(eachslice(arg, dims=1)...)
+        end
+        push!(args, arg)
+    end
+    MultivariateOptimizationResults(args...)
+end
+
 function optimize(d::D, initial_x::Tx, method::M,
                   options::Options{T, TCallback} = Options(;default_options(method)...),
                   state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray, T, TCallback}
