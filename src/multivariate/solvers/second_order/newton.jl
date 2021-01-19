@@ -62,7 +62,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     T = eltype(state.x)
 
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
-        state.s .= -NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d))
+        state.s .= .-(NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d)))
     else
         state.F = cholesky!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
