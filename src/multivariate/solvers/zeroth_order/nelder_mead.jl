@@ -108,7 +108,7 @@ function print_header(method::NelderMead)
     @printf "------   --------------    --------------\n"
 end
 
-function Base.show(io::IO, trace::OptimizationTrace{T, NelderMead}) where T
+function Base.show(io::IO, trace::OptimizationTrace{<:Real, NelderMead})
     @printf io "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
     @printf io "------   --------------    --------------\n"
     for state in trace.states
@@ -117,7 +117,7 @@ function Base.show(io::IO, trace::OptimizationTrace{T, NelderMead}) where T
     return
 end
 
-function Base.show(io::IO, t::OptimizationState{NelderMead})
+function Base.show(io::IO, t::OptimizationState{<:Real, NelderMead})
     @printf io "%6d   %14e    %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
