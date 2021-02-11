@@ -181,7 +181,8 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # TODO: Make sure state.bgrad has been evaluated at initial_x
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
-    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol
+    stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
+    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
 end
 
 function optimize(f, g, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer=IPNewton(),
@@ -234,7 +235,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged = initial_convergence(d, state, method, initial_x, options)
+    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
     converged = g_converged
 
     # prepare iteration counter (used to make "initial state" trace entry)
