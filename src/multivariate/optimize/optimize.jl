@@ -52,7 +52,6 @@ function optimize(d::D, initial_x::Tx, method::M,
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
-
         ls_success = !update_state!(d, state, method)
         if !ls_success
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
@@ -65,7 +64,6 @@ function optimize(d::D, initial_x::Tx, method::M,
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
-
         if !(converged && method isa Newton)
             update_h!(d, state, method) # only relevant if not converged
         end
