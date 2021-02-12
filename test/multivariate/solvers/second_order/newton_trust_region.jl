@@ -197,7 +197,7 @@ end
 end
 
 @testset "Handle Inf without erroring" begin
-    o = optimize(t -> Inf, ones(10), NewtonTrustRegion())
+    o = optimize(TwiceDifferentiable(t -> rand(), (g, t)->(g.=t.+10), (h,t)->NaN*t*t',ones(10)), ones(10), NewtonTrustRegion())
     @test !(o.f_converged || o.g_converged || o.x_converged)
 end
 

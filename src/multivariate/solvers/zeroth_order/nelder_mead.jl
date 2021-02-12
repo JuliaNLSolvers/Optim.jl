@@ -320,7 +320,9 @@ function assess_convergence(state::NelderMeadState, d, options::Options)
 end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
-    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_abstol
+    nmo = nmobjective(state.f_simplex, state.m, length(initial_x))
+
+    !isfinite(value(d)), nmo <= options.g_abstol, !isfinite(nmo)
 end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options::Options, curr_time=time())
