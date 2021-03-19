@@ -224,6 +224,7 @@ struct NewtonTrustRegion{T <: Real} <: SecondOrderOptimizer
     eta::T
     rho_lower::T
     rho_upper::T
+    use_fg::Bool
 end
 
 """
@@ -234,7 +235,8 @@ NewtonTrustRegion(; initial_delta = 1.0,
                     delta_hat = 100.0,
                     eta = 0.1,
                     rho_lower = 0.25,
-                    rho_upper = 0.75)
+                    rho_upper = 0.75,
+                    use_fg = true)
 ```
 
 The constructor has 5 keywords:
@@ -243,6 +245,7 @@ The constructor has 5 keywords:
 * `eta`, when `rho` is at least `eta`, accept the step
 * `rho_lower`, when `rho` is less than `rho_lower`, shrink the trust region
 * `rho_upper`, when `rho` is greater than `rho_upper`, grow the trust region
+* `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations.
 
 ## Description
 The `NewtonTrustRegion` method implements Newton's method with a trust region
@@ -261,8 +264,9 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
                     eta::Real = 0.1,
                     rho_lower::Real = 0.25,
-                    rho_upper::Real = 0.75) =
-                    NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper)
+                    rho_upper::Real = 0.75,
+                    use_fg=true) =
+                    NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper, use_fg)
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
@@ -299,8 +303,7 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     interior = true
     lambda = NaN
 
-    value_gradient!!(d, initial_x)
-    hessian!!(d, initial_x)
+    NLSolversBase.value_gradient_hessian!!(d, initial_x)
 
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
@@ -326,14 +329,16 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     # Maintain a record of previous position
     copyto!(state.x_previous, state.x)
     state.f_x_previous  = value(d)
-    copyto!(state.g_previous, gradient(d))
 
     # Update current position
     state.x .+= state.s
-
     # Update the function value and gradient
-    value_gradient!(d, state.x)
-
+    if method.use_fg
+        state.g_previous .= gradient(d)
+        value_gradient!(d, state.x)
+    else
+        value!(d, state.x)
+    end
     # Update the trust region size based on the discrepancy between
     # the predicted and actual function values.  (Algorithm 4.1 in N&W (2006))
     f_x_diff = state.f_x_previous - value(d)
@@ -357,10 +362,8 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     else
         # else leave delta unchanged.
     end
-
     if state.rho <= state.eta
         # The improvement is too small and we won't take it.
-
         # If you reject an interior solution, make sure that the next
         # delta is smaller than the current step. Otherwise you waste
         # steps reducing delta by constant factors while each solution
@@ -370,7 +373,16 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
 
         d.F = state.f_x_previous
         copyto!(state.x, state.x_previous)
-        copyto!(gradient(d), state.g_previous)
+        if method.use_fg
+            copyto!(d.DF, state.g_previous)
+            copyto!(d.x_df, state.x_previous)
+        end
+    else
+        if method.use_fg
+            hessian!(d, state.x)
+        else
+            NLSolversBase.gradient_hessian!!(d, state.x)
+        end
     end
 
     false

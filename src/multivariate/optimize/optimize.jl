@@ -58,15 +58,16 @@ function optimize(d::D, initial_x::Tx, method::M,
         if !ls_success
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         end
-        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
-
+        if !(method isa NewtonTrustRegion)
+            update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+        end
         x_converged, f_converged,
         g_converged, f_increased = assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
-        if !(converged && method isa Newton)
+        if !(converged && method isa Newton) && !(method isa NewtonTrustRegion)
             update_h!(d, state, method) # only relevant if not converged
         end
         if tracing
