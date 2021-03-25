@@ -3,6 +3,7 @@
 * Improve handling of alternative number types in univariate optimization
 * Add conditional likelihood example to docs
 * Improve Fminbox trace printing.
+* Support for manifolds in NelderMead.
 
 # Optim v0.17.2 release notes
 * Fix some typos

@@ -55,3 +55,11 @@
         @test minpow[:,2] == minprod[n+1:2n]
     end
 end
+
+@testset "Manifolds zeroth_order" begin
+    A = ones(2,2)    
+    fmanif(x) = dot(x,A*x)
+    res = Optim.optimize(fmanif, [1.0;0.0], NelderMead(manifold=Optim.Sphere()))
+    @test Optim.converged(res)
+    @test Optim.minimum(res) < 1e-3
+end

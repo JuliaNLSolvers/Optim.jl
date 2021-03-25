@@ -3,7 +3,8 @@ Nelder-Mead is currently the standard algorithm when no derivatives are provided
 ## Constructor
 ```julia
 NelderMead(; parameters = AdaptiveParameters(),
-             initial_simplex = AffineSimplexer())
+             initial_simplex = AffineSimplexer(),
+             manifold = Flat())
 ```
 The keywords in the constructor are used to control the following parts of the
 solver:
