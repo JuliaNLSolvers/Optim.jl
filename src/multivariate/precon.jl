@@ -14,6 +14,11 @@
 #    but this is passed as an argument at the moment!
 #
 
+# Fallback
+ldiv!(out, M, A) = LinearAlgebra.ldiv!(out, M, A)
+dot(a, M, b) = LinearAlgebra.dot(a, M, b)
+dot(a, b) = LinearAlgebra.dot(a, b)
+
 
 #####################################################
 #  [0] Defaults and aliases for easier reading of the code
@@ -29,30 +34,26 @@ precondprep!(P, x) = nothing
 
 # out =  P^{-1} * A
 ldiv!(out, ::Nothing, A) = copyto!(out, A)
+
 # A' * P B
-@compat dot(A, ::Nothing, B) = dot(A, B)
+dot(A, ::Nothing, B) = dot(A, B)
 
 
 #####################################################
 #  [2] Diagonal preconditioner
 #      P = Diag(d)
-#      unfortunately, Base does not implement
-#      ldiv!(a, P, b) or mul! for this type, so we do it by hand
-#      TODO: maybe implement this in Base
-ldiv!(out::Array, P::Diagonal, A::Array) = copyto!(out, A ./ P.diag)
-if VERSION < v"1.4.0-DEV.92"
-    dot(A::Array, P::Diagonal, B::Array) = dot(A, P.diag .* B)
-end
+#      Covered by base
 
 #####################################################
 #  [3] Inverse Diagonal preconditioner
 #      here, P is stored by the entries of its inverse
 #      TODO: maybe implement this in Base?
+
 mutable struct InverseDiagonal
    diag
 end
-ldiv!(out::Array, P::InverseDiagonal, A::Array) = copyto!(out, A .* P.diag)
-dot(A::Array, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
+ldiv!(out::AbstractArray, P::InverseDiagonal, A::AbstractArray) = copyto!(out, A .* P.diag)
+dot(A::AbstractArray, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
 
 #####################################################
 #  [4] Matrix Preconditioner

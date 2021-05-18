@@ -25,7 +25,6 @@ function twoloop!(s,
 
     # Copy gr into q for backward pass
     copyto!(q, gr)
-
     # Backward pass
     for index in upper:-1:lower
         if index < 1
@@ -167,18 +166,18 @@ function initial_state(method::LBFGS, options, d, initial_x)
     project_tangent!(method.manifold, gradient(d), initial_x)
     LBFGSState(initial_x, # Maintain current state in state.x
               copy(initial_x), # Maintain previous state in state.x_previous
-              similar(gradient(d)), # Store previous gradient in state.g_previous
-              Vector{T}(undef, method.m), # state.rho
+              copy(gradient(d)), # Store previous gradient in state.g_previous
+              fill(T(NaN), method.m), # state.rho
               [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
-              [similar(gradient(d)) for i = 1:method.m], # Store changes in position in state.dg_history
-              similar(initial_x), # Buffer for new entry in state.dx_history
-              similar(initial_x), # Buffer for new entry in state.dg_history
-              similar(initial_x), # Buffer stored in state.u
+              [eltype(gradient(d))(NaN).*gradient(d) for i = 1:method.m], # Store changes in position in state.dg_history
+              T(NaN)*initial_x, # Buffer for new entry in state.dx_history
+              T(NaN)*initial_x, # Buffer for new entry in state.dg_history
+              T(NaN)*initial_x, # Buffer stored in state.u
               real(T)(NaN), # Store previous f in state.f_x_previous
               similar(initial_x), #Buffer for use by twoloop
               Vector{T}(undef, method.m), #Buffer for use by twoloop
               0,
-              similar(initial_x), # Store current search direction in state.s
+              eltype(gradient(d))(NaN).*gradient(d), # Store current search direction in state.s
               @initial_linesearch()...)
 end
 
@@ -222,12 +221,14 @@ function update_h!(d, state, method::LBFGS)
     rho_iteration = one(eltype(state.dx)) / real(dot(state.dx, state.dg))
     if isinf(rho_iteration)
         # TODO: Introduce a formal error? There was a warning here previously
+        state.pseudo_iteration=0
         return true
     end
     idx = mod1(state.pseudo_iteration, method.m)
-    @inbounds state.dx_history[idx] .= state.dx
-    @inbounds state.dg_history[idx] .= state.dg
-    @inbounds state.rho[idx] = rho_iteration
+    state.dx_history[idx] .= state.dx
+    state.dg_history[idx] .= state.dg
+    state.rho[idx] = rho_iteration
+    false
 end
 
 function trace!(tr, d, state, iteration, method::LBFGS, options, curr_time=time())

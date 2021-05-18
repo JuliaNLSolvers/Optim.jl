@@ -45,15 +45,17 @@ import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable
 # var for NelderMead
 import StatsBase: var
 
+import LinearAlgebra
 import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
-                      rmul!, mul!, ldiv!,
-                      dot, norm, normalize!,
+                      rmul!, mul!,
+                      norm, normalize!,
                       eigen, BLAS,
                       cholesky, Cholesky, # factorizations
                       I,
                       svd,
                       opnorm, # for safeguards in newton trust regions
                       issuccess
+
 import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types

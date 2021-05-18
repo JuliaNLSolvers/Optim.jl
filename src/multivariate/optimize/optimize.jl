@@ -23,10 +23,12 @@ after_while!(d, state, method, options) = nothing
 
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
-    maximum(abs, gradient(d)) < options.g_abstol
+    stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
+    maximum(abs, gradient(d)) <= options.g_abstol, stopped
 end
-initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options) = false
-
+function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
+    false, false
+end
 function optimize(d::D, initial_x::Tx, method::M,
                   options::Options{T, TCallback} = Options(;default_options(method)...),
                   state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray, T, TCallback}
@@ -41,8 +43,8 @@ function optimize(d::D, initial_x::Tx, method::M,
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged = initial_convergence(d, state, method, initial_x, options)
-    converged = g_converged
+    f_converged, g_converged = initial_convergence(d, state, method, initial_x, options)
+    converged = f_converged || g_converged
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
@@ -52,21 +54,20 @@ function optimize(d::D, initial_x::Tx, method::M,
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
-
         ls_success = !update_state!(d, state, method)
         if !ls_success
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         end
-        update_g!(d, state, method) # TODO: Should this be `update_fg!`?
-
+        if !(method isa NewtonTrustRegion)
+            update_g!(d, state, method) # TODO: Should this be `update_fg!`?
+        end
         x_converged, f_converged,
         g_converged, f_increased = assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol+1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
-
-        if !(converged && method isa Newton)
+        if !(converged && method isa Newton) && !(method isa NewtonTrustRegion)
             update_h!(d, state, method) # only relevant if not converged
         end
         if tracing

@@ -94,5 +94,5 @@ using RecursiveArrayTools
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, LBFGS())
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, Newton())
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NewtonTrustRegion())
+#    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NewtonTrustRegion())
 end

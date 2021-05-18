@@ -1,3 +1,4 @@
+import LinearAlgebra: qr, ldiv!
 # this implements the 1D p-laplacian (p = 4)
 #      F(u) = ∑_{i=1}^{N} h (W(u_i') - ∑_{i=1}^{N-1} h u_i
 #  where u_i' = (u_i - u_{i-1})/h
@@ -37,5 +38,11 @@
                 end
             end
         end
+    end
+
+    @testset "no ☠️ #900" begin
+        x, y, A = randn(10), randn(10), qr(randn(10,10)+4I)
+        ldiv!(x, A, y)
+        @test_throws MethodError ldiv!(x, nothing, y)
     end
 end

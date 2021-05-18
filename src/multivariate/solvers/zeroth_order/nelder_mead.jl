@@ -9,7 +9,7 @@ AffineSimplexer(;a = 0.025, b = 0.5) = AffineSimplexer(a, b)
 function simplexer(S::AffineSimplexer, initial_x::Tx) where Tx
     n = length(initial_x)
     initial_simplex = Tx[copy(initial_x) for i = 1:n+1]
-    for j = 1:n
+    for j ∈ eachindex(initial_x)
         initial_simplex[j+1][j] = (1+S.b) * initial_simplex[j+1][j] + S.a
     end
     initial_simplex
@@ -90,7 +90,7 @@ Base.summary(::NelderMead) = "Nelder-Mead"
 function centroid!(c::AbstractArray{T}, simplex, h=0) where T
     n = length(c)
     fill!(c, zero(T))
-    @inbounds for i in 1:n+1
+    for i in eachindex(simplex)
         if i != h
             xi = simplex[i]
             c .+= xi
@@ -108,7 +108,7 @@ function print_header(method::NelderMead)
     @printf "------   --------------    --------------\n"
 end
 
-function Base.show(io::IO, trace::OptimizationTrace{T, NelderMead}) where T
+function Base.show(io::IO, trace::OptimizationTrace{<:Real, NelderMead})
     @printf io "Iter     Function value    √(Σ(yᵢ-ȳ)²)/n \n"
     @printf io "------   --------------    --------------\n"
     for state in trace.states
@@ -117,7 +117,7 @@ function Base.show(io::IO, trace::OptimizationTrace{T, NelderMead}) where T
     return
 end
 
-function Base.show(io::IO, t::OptimizationState{NelderMead})
+function Base.show(io::IO, t::OptimizationState{<:Real, NelderMead})
     @printf io "%6d   %14e    %14e\n" t.iteration t.value t.g_norm
     if !isempty(t.metadata)
         for (key, value) in t.metadata
@@ -215,16 +215,12 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     f_highest = state.f_simplex[state.i_order[m]]
 
     # Compute a reflection
-    @inbounds for j in 1:n
-        state.x_reflect[j] = state.x_centroid[j] + state.α * (state.x_centroid[j]-state.x_highest[j])
-    end
-
+    @. state.x_reflect = state.x_centroid + state.α * (state.x_centroid - state.x_highest)
+    
     f_reflect = value(f, state.x_reflect)
     if f_reflect < state.f_lowest
         # Compute an expansion
-        @inbounds for j in 1:n
-            state.x_cache[j] = state.x_centroid[j] + state.β *(state.x_reflect[j] - state.x_centroid[j])
-        end
+        @. state.x_cache = state.x_centroid + state.β *(state.x_reflect - state.x_centroid)
         f_expand = value(f, state.x_cache)
 
         if f_expand < f_reflect
@@ -250,9 +246,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     else
         if f_reflect < f_highest
             # Outside contraction
-            @simd for j in 1:n
-                @inbounds state.x_cache[j] = state.x_centroid[j] + state.γ * (state.x_reflect[j]-state.x_centroid[j])
-            end
+            @. state.x_cache = state.x_centroid + state.γ * (state.x_reflect - state.x_centroid)
             f_outside_contraction = value(f, state.x_cache)
             if f_outside_contraction < f_reflect
                 copyto!(state.simplex[state.i_order[m]], state.x_cache)
@@ -265,9 +259,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             end
         else # f_reflect > f_highest
             # Inside constraction
-            @simd for j in 1:n
-                @inbounds state.x_cache[j] = state.x_centroid[j] - state.γ *(state.x_reflect[j] - state.x_centroid[j])
-            end
+            @. state.x_cache = state.x_centroid - state.γ *(state.x_reflect - state.x_centroid)
             f_inside_contraction = value(f, state.x_cache)
             if f_inside_contraction < f_highest
                 copyto!(state.simplex[state.i_order[m]], state.x_cache)
@@ -320,7 +312,9 @@ function assess_convergence(state::NelderMeadState, d, options::Options)
 end
 
 function initial_convergence(d, state::NelderMeadState, method::NelderMead, initial_x, options)
-    nmobjective(state.f_simplex, state.m, length(initial_x)) < options.g_abstol
+    nmo = nmobjective(state.f_simplex, state.m, length(initial_x))
+
+    !isfinite(value(d)), nmo <= options.g_abstol, !isfinite(nmo)
 end
 
 function trace!(tr, d, state, iteration, method::NelderMead, options::Options, curr_time=time())

@@ -152,7 +152,7 @@ function print_header(method::AbstractOptimizer)
         @printf "Iter     Function value   Gradient norm \n"
 end
 
-struct OptimizationState{Tf, T <: AbstractOptimizer}
+struct OptimizationState{Tf<:Real, T <: AbstractOptimizer}
     iteration::Int
     value::Tf
     g_norm::Tf

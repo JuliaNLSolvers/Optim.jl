@@ -2,7 +2,7 @@ function print_header(method::IPOptimizer)
     @printf "Iter     Lagrangian value Function value   Gradient norm    |==constr.|      μ\n"
 end
 
-function Base.show(io::IO, t::OptimizationState{Tf, M}) where M<:IPOptimizer where Tf
+function Base.show(io::IO, t::OptimizationState{<:Real, <:IPOptimizer})
     md = t.metadata
     @printf io "%6d   %-14e   %-14e   %-14e   %-14e   %-6.2e\n" t.iteration md["Lagrangian"] t.value t.g_norm md["ev"] md["μ"]
     if !isempty(t.metadata)
@@ -14,7 +14,7 @@ function Base.show(io::IO, t::OptimizationState{Tf, M}) where M<:IPOptimizer whe
     return
 end
 
-function Base.show(io::IO, tr::OptimizationTrace{Tf, M}) where M <: IPOptimizer where Tf
+function Base.show(io::IO, tr::OptimizationTrace{<:Real, <:IPOptimizer})
     @printf io "Iter     Lagrangian value Function value   Gradient norm    |==constr.|      μ\n"
     @printf io "------   ---------------- --------------   --------------   --------------   --------\n"
     for state in tr
