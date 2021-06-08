@@ -91,6 +91,7 @@ multivariate_tests = [
     "arbitrary_precision",
     "successive_f_tol",
     "f_increase",
+    "measurements",
 ]
 multivariate_tests = map(s->"./multivariate/"*s*".jl", multivariate_tests)
 

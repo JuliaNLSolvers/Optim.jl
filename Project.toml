@@ -27,10 +27,11 @@ StatsBase = "0.29, 0.30, 0.31, 0.32, 0.33"
 julia = "1.2"
 
 [extras]
+Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "OptimTestProblems", "Random", "RecursiveArrayTools"]
+test = ["Test", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools"]

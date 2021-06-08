@@ -163,7 +163,7 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
@@ -171,17 +171,17 @@ mutable struct MultivariateOptimizationResults{O, T, Tx, Tc, Tf, M, Tls, Tsb} <:
     iterations::Int
     iteration_converged::Bool
     x_converged::Bool
-    x_abstol::T
-    x_reltol::T
+    x_abstol::Tf
+    x_reltol::Tf
     x_abschange::Tc
     x_relchange::Tc
     f_converged::Bool
-    f_abstol::T
-    f_reltol::T
+    f_abstol::Tf
+    f_reltol::Tf
     f_abschange::Tc
     f_relchange::Tc
     g_converged::Bool
-    g_abstol::T
+    g_abstol::Tf
     g_residual::Tc
     f_increased::Bool
     trace::M
