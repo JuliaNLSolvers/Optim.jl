@@ -27,7 +27,7 @@ does come with some advantages.
 
 When writing Julia software (packages) that require something to be optimized, the programmer
 can either choose to write their own optimization routine, or use one of the many
-available solvers. For example, this could be something from the [NLOpt](https://github.com/JuliaOpt/NLopt.jl) suite.
+available solvers. For example, this could be something from the [NLopt](https://github.com/JuliaOpt/NLopt.jl) suite.
 This means adding a dependency which is not written in Julia, and more assumptions
 have to be made as to the environment the user is in. Does the user have the proper
 compilers? Is it possible to use GPL'ed code in the project? Optim is released
