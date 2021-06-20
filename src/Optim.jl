@@ -215,4 +215,7 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
+# MathOptInterface wrapper
+include("MOI_wrapper.jl")
+
 end
