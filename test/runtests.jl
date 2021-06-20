@@ -261,3 +261,7 @@ println("Literate examples")
     o = Optim.Options()
     @test occursin(" = ", sprint(show, o))
 end
+
+@testset "MOI wrapper" begin
+    include("MOI_wrapper.jl")
+end
