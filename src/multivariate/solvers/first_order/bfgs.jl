@@ -66,7 +66,6 @@ function reset!(method, state::BFGSState, obj, x)
     project_tangent!(method.manifold, gradient(obj), x)
 
     if method.initial_invH == nothing
-        zx = zero(x)
         if method.initial_stepnorm == nothing
             # Identity matrix of size n x n
             state.invH = fill!(similar(x, (n ,n)), 0) + I
