@@ -57,6 +57,7 @@ mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
     s::Tx
     @add_linesearch_fields()
 end
+
 function reset!(method, state::BFGSState, obj, x)
     n = length(x)
     T = eltype(x)
@@ -65,12 +66,13 @@ function reset!(method, state::BFGSState, obj, x)
     project_tangent!(method.manifold, gradient(obj), x)
 
     if method.initial_invH == nothing
+        zx = zero(x)
         if method.initial_stepnorm == nothing
-            state.invH .= Diagonal(ones(T, n))
-            
+            # Identity matrix of size n x n
+            state.invH = zx * zx' + I
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(obj), Inf))
-            state.invH .= Diagonal(fill(initial_scale, n))
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
+            state.invH = zx * zx' + initial_scale * I
         end
     else
         state.invH .= method.initial_invH(x)
@@ -87,11 +89,13 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     project_tangent!(method.manifold, gradient(d), initial_x)
 
     if method.initial_invH == nothing
+        zx = zero(x)
         if method.initial_stepnorm == nothing
-            invH0 = Matrix{T}(I, n, n)
+            # Identity matrix of size n x n
+            invH0 = zx * zx' + I
         else
             initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
-            invH0 = Matrix{T}(initial_scale*I, n, n)
+            invH0 = zx * zx' + initial_scale * I
         end
     else
         invH0 = method.initial_invH(initial_x)
