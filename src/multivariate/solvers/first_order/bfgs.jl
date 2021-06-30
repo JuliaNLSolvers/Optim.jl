@@ -69,10 +69,10 @@ function reset!(method, state::BFGSState, obj, x)
         zx = zero(x)
         if method.initial_stepnorm == nothing
             # Identity matrix of size n x n
-            state.invH = zx * zx' + I
+            state.invH = fill!(similar(x, (n ,n)), 0) + I
         else
             initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
-            state.invH = zx * zx' + initial_scale * I
+            state.invH = fill!(similar(x, (n ,n)), 0) + initial_scale * I
         end
     else
         state.invH .= method.initial_invH(x)
@@ -89,13 +89,12 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     project_tangent!(method.manifold, gradient(d), initial_x)
 
     if method.initial_invH == nothing
-        zx = zero(x)
         if method.initial_stepnorm == nothing
             # Identity matrix of size n x n
-            invH0 = zx * zx' + I
+            invH0 = fill!(similar(initial_x, (n ,n)), 0) + I
         else
             initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
-            invH0 = zx * zx' + initial_scale * I
+            invH0 = fill!(similar(initial_x, (n ,n)), 0) + initial_scale * I
         end
     else
         invH0 = method.initial_invH(initial_x)
