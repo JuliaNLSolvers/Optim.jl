@@ -49,6 +49,7 @@ import LinearAlgebra
 import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
                       rmul!, mul!,
                       norm, normalize!,
+                      diagind,
                       eigen, BLAS,
                       cholesky, Cholesky, # factorizations
                       I,

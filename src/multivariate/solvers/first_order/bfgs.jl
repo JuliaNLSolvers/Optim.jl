@@ -58,6 +58,14 @@ mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
+function _init_identity_matrix(x::AbstractArray{T}, scale::T = T(1)) where {T}
+    x_ = reshape(x, :)
+    Id = x_ .* x_' .* false
+    idxs = diagind(Id)
+    @. @view(Id[idxs]) = scale * true
+    return Id
+end
+
 function reset!(method, state::BFGSState, obj, x)
     n = length(x)
     T = eltype(x)
@@ -68,10 +76,10 @@ function reset!(method, state::BFGSState, obj, x)
     if method.initial_invH == nothing
         if method.initial_stepnorm == nothing
             # Identity matrix of size n x n
-            state.invH = fill!(similar(x, (n ,n)), 0) + I
+            state.invH = _init_identity_matrix(x)
         else
             initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
-            state.invH = fill!(similar(x, (n ,n)), 0) + initial_scale * I
+            state.invH = _init_identity_matrix(x, initial_scale)
         end
     else
         state.invH .= method.initial_invH(x)
@@ -90,10 +98,10 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     if method.initial_invH == nothing
         if method.initial_stepnorm == nothing
             # Identity matrix of size n x n
-            invH0 = fill!(similar(initial_x, (n ,n)), 0) + I
+            invH0 = _init_identity_matrix(initial_x)
         else
             initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
-            invH0 = fill!(similar(initial_x, (n ,n)), 0) + initial_scale * I
+            invH0 = _init_identity_matrix(initial_x, initial_scale)
         end
     else
         invH0 = method.initial_invH(initial_x)
