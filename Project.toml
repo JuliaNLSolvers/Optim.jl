@@ -12,7 +12,6 @@ NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 PositiveFactorizations = "85a6dd25-e78a-55b7-8502-1745935b8125"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
