@@ -78,7 +78,7 @@ function reset!(method, state::BFGSState, obj, x)
             # Identity matrix of size n x n
             state.invH = _init_identity_matrix(x)
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(obj), Inf))
             state.invH = _init_identity_matrix(x, initial_scale)
         end
     else
