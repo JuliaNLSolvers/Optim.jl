@@ -1,5 +1,6 @@
 site_name:        Optim.jl
 repo_url:         https://github.com/JuliaNLSolvers/Optim.jl/
+edit_uri:         edit/master/docs/src/
 site_description: Pure Julia implementations of optimization algorithms.
 site_author:      JuliaNLSolvers
 
