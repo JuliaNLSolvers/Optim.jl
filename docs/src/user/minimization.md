@@ -214,6 +214,12 @@ Defined for multivariate optimization:
 * `g_converged(res)`
 * `initial_state(res)`
 
+Defined only for Nelder Mead multivariate optimizatoin:
+
+* `centroid_trace(res)`
+* `simplex_trace(res)`
+* `simplex_value_trace(res)`
+
 ## Input types
 Most users will input `Vector`'s as their `initial_x`'s, and get an `Optim.minimizer(res)` out that is also a vector. For zeroth and first order methods, it is also possible to pass in matrices, or even higher dimensional arrays. The only restriction imposed by leaving the `Vector` case is, that it is no longer possible to use finite difference approximations or automatic differentiation. Second order methods (variants of Newton's method) do not support this more general input type.
 
