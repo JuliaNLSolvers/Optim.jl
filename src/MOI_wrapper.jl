@@ -107,10 +107,10 @@ function MOI.set(model::Optimizer, ::MOI.TimeLimitSec, value::Real)
     MOI.set(model, MOI.RawOptimizerAttribute(TIME_LIMIT), Float64(value))
 end
 function MOI.set(model::Optimizer, attr::MOI.TimeLimitSec, ::Nothing)
-    delete!(model.options, TIME_LIMIT)
+    delete!(model.options, Symbol(TIME_LIMIT))
 end
 function MOI.get(model::Optimizer, ::MOI.TimeLimitSec)
-    return get(model.options, TIME_LIMIT, nothing)
+    return get(model.options, Symbol(TIME_LIMIT), nothing)
 end
 
 MOI.Utilities.map_indices(::Function, opt::AbstractOptimizer) = opt
@@ -183,8 +183,7 @@ function is_fixed(model::Optimizer, vi::MOI.VariableIndex)
     return model.variable_info[vi.value].is_fixed
 end
 
-function MOI.add_constraint(model::Optimizer{T}, v::MOI.VariableIndex, lt::LE{T}) where {T}
-    vi = v.variable
+function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, lt::LE{T}) where {T}
     MOI.throw_if_not_valid(model, vi)
     if isnan(lt.upper)
         error("Invalid upper bound value $(lt.upper).")
@@ -200,8 +199,7 @@ function MOI.add_constraint(model::Optimizer{T}, v::MOI.VariableIndex, lt::LE{T}
     return MOI.ConstraintIndex{MOI.VariableIndex,LE{T}}(vi.value)
 end
 
-function MOI.add_constraint(model::Optimizer{T}, v::MOI.VariableIndex, gt::MOI.GreaterThan{T}) where {T}
-    vi = v.variable
+function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, gt::MOI.GreaterThan{T}) where {T}
     MOI.throw_if_not_valid(model, vi)
     if isnan(gt.lower)
         error("Invalid lower bound value $(gt.lower).")
@@ -217,8 +215,7 @@ function MOI.add_constraint(model::Optimizer{T}, v::MOI.VariableIndex, gt::MOI.G
     return MOI.ConstraintIndex{MOI.VariableIndex,GE{T}}(vi.value)
 end
 
-function MOI.add_constraint(model::Optimizer{T}, v::MOI.VariableIndex, eq::EQ{T}) where {T}
-    vi = v.variable
+function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, eq::EQ{T}) where {T}
     MOI.throw_if_not_valid(model, vi)
     if isnan(eq.value)
         error("Invalid fixed value $(gt.lower).")
@@ -428,6 +425,7 @@ function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
         return MOI.UNKNOWN_RESULT_STATUS
     end
 end
+MOI.get(::Optimizer, ::MOI.DualStatus) = MOI.NO_SOLUTION
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
