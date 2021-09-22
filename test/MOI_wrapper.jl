@@ -16,7 +16,7 @@ const CACHED = MOI.Utilities.CachingOptimizer(
     OPTIMIZER,
 )
 
-const CONFIG = MOI.Test.TestConfig(
+const CONFIG = MOI.DeprecatedTest.Config(
     atol = 1e-6,
     rtol = 1e-6,
     duals = false,
@@ -30,12 +30,11 @@ function test_SolverName()
 end
 
 function test_supports_incremental_interface()
-    @test TestOptim.MOI.Utilities.supports_default_copy_to(OPTIMIZER, false)
-    @test !TestOptim.MOI.Utilities.supports_default_copy_to(OPTIMIZER, true)
+    @test MOI.supports_incremental_interface(OPTIMIZER)
 end
 
 function test_nlp()
-    MOI.Test.nlptest(CACHED, CONFIG, String[
+    MOI.DeprecatedTest.nlptest(CACHED, CONFIG, String[
         # FIXME The hessian callback for constraints is called with
         # `λ = [-Inf, 0.0]` and then we get `NaN`, ...
         "hs071",
