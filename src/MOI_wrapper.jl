@@ -198,7 +198,7 @@ function sym_sparse_to_dense!(A, I::Vector, nzval)
 end
 
 function MOI.optimize!(model::Optimizer{T}) where {T}
-    num_variables = length(model.variable_info)
+    num_variables = length(model.starting_values)
 
     # load parameters
     if model.nlp_data === nothing || !model.nlp_data.has_objective
@@ -250,14 +250,14 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
 
     initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
-    has_bounds = any(info -> info.is_fixed || info.has_upper_bound || info.has_lower_bound, model.variable_info)
+    has_bounds = any(i -> isfinite(model.variables.lower[i]) || isfinite(model.variables.upper[i]), eachindex(model.starting_values))
     if has_bounds
         lower = [info.lower_bound for info in model.variable_info]
         upper = [info.upper_bound for info in model.variable_info]
     end
     if !nl_constrained && has_bounds && !(method isa IPNewton)
         options = Options(; options...)
-        model.results = optimize(f, g!, lower, upper, initial_x, Fminbox(method), options; inplace = true)
+        model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace = true)
     else
         d = promote_objtype(method, initial_x, :finite, true, f, g!, h!)
         add_default_opts!(options, method)
@@ -287,17 +287,13 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
                     sym_sparse_to_dense!(H, hessian_structure, H_nzval)
                     return H
                 end
-                if !has_bounds
-                    lower = fill(typemin(T), num_variables)
-                    upper = fill(typemax(T), num_variables)
-                end
                 c = TwiceDifferentiableConstraints(
                     c!, jacobian!, con_hessian!,
-                    lower, upper, lc, uc,
+                    model.variables.lower, model.variables.upper, lc, uc,
                 )
             else
                 @assert has_bounds
-                c = TwiceDifferentiableConstraints(lower, upper)
+                c = TwiceDifferentiableConstraints(model.variables.lower, model.variables.upper)
             end
             model.results = optimize(d, c, initial_x, method, options)
         else
