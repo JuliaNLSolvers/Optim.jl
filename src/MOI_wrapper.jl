@@ -1,45 +1,10 @@
 import MathOptInterface
 const MOI = MathOptInterface
-const MOIU = MathOptInterface.Utilities
-
-mutable struct VariableInfo{T}
-    lower_bound::T  # May be -Inf even if has_lower_bound == true
-    has_lower_bound::Bool # Implies lower_bound == Inf
-    upper_bound::T  # May be Inf even if has_upper_bound == true
-    has_upper_bound::Bool # Implies upper_bound == Inf
-    is_fixed::Bool        # Implies lower_bound == upper_bound and !has_lower_bound and !has_upper_bound.
-    start::Union{Nothing,T}
-end
-
-VariableInfo{T}() where {T} = VariableInfo(typemin(T), false, typemax(T), false, false, nothing)
-
-function starting_value(v::VariableInfo{T}) where {T}
-    if v.start !== nothing
-        return v.start
-    else
-        if v.has_lower_bound && v.has_upper_bound
-            if zero(T) <= v.lower_bound
-                return v.lower_bound
-            elseif v.upper_bound <= zero(T)
-                return v.upper_bound
-            else
-                return zero(T)
-            end
-        elseif v.has_lower_bound
-            return max(zero(T), v.lower_bound)
-        else
-            return min(zero(T), v.upper_bound)
-        end
-    end
-end
-
-const LE{T} = MOI.LessThan{T}
-const GE{T} = MOI.GreaterThan{T}
-const EQ{T} = MOI.EqualTo{T}
 
 mutable struct Optimizer{T} <: MOI.AbstractOptimizer
     # Problem data.
-    variable_info::Vector{VariableInfo{T}}
+    variables::MOI.Utilities.VariablesContainer{T}
+    starting_values::Vector{Union{Nothing,T}}
     nlp_data::Union{MOI.NLPBlockData,Nothing}
     sense::MOI.OptimizationSense
 
@@ -54,7 +19,8 @@ end
 
 function Optimizer{T}() where {T}
     return Optimizer{T}(
-        VariableInfo{T}[],
+        MOI.Utilities.VariablesContainer{T}(),
+        Union{Nothing,T}[],
         nothing,
         MOI.FEASIBILITY_SENSE,
         nothing,
@@ -77,14 +43,20 @@ function MOI.supports(::Optimizer, ::MOI.VariablePrimalStart, ::Type{MOI.Variabl
     return true
 end
 
-MOI.supports_constraint(::Optimizer{T}, ::Type{MOI.VariableIndex}, ::Type{LE{T}}) where {T} = true
-MOI.supports_constraint(::Optimizer{T}, ::Type{MOI.VariableIndex}, ::Type{GE{T}}) where {T} = true
-MOI.supports_constraint(::Optimizer{T}, ::Type{MOI.VariableIndex}, ::Type{EQ{T}}) where {T} = true
+const BOUNDS{T} = Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T},MOI.Interval{T}}
+
+function MOI.supports_constraint(
+    ::Optimizer{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{<:BOUNDS{T}},
+) where {T}
+    return true
+end
 
 MOI.supports_incremental_interface(::Optimizer) = true
 
 function MOI.copy_to(model::Optimizer, src::MOI.ModelLike)
-    return MOIU.default_copy_to(model, src)
+    return MOI.Utilities.default_copy_to(model, src)
 end
 
 MOI.get(::Optimizer, ::MOI.SolverName) = "Optim"
@@ -138,7 +110,8 @@ end
 MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = time_run(model.results)
 
 function MOI.empty!(model::Optimizer)
-    empty!(model.variable_info)
+    MOI.empty!(model.variables)
+    empty!(model.starting_values)
     model.nlp_data = nothing
     model.sense = MOI.FEASIBILITY_SENSE
     model.results = nothing
@@ -146,93 +119,31 @@ function MOI.empty!(model::Optimizer)
 end
 
 function MOI.is_empty(model::Optimizer)
-    return isempty(model.variable_info) &&
+    return MOI.is_empty(model.variables) &&
+           isempty(model.starting_values) &&
            model.nlp_data === nothing &&
            model.sense == MOI.FEASIBILITY_SENSE
 end
 
 function MOI.add_variable(model::Optimizer{T}) where {T}
-    push!(model.variable_info, VariableInfo{T}())
-    return MOI.VariableIndex(length(model.variable_info))
+    push!(model.starting_values, NaN)
+    return MOI.add_variable(model.variables)
 end
-function MOI.is_valid(model::Optimizer, vi::MOI.VariableIndex)
-    return vi.value in eachindex(model.variable_info)
-end
-function MOI.is_valid(model::Optimizer{T}, ci::MOI.ConstraintIndex{MOI.VariableIndex,LE{T}}) where {T}
-    vi = MOI.VariableIndex(ci.value)
-    return MOI.is_valid(model, vi) && has_upper_bound(model, vi)
-end
-function MOI.is_valid(model::Optimizer{T}, ci::MOI.ConstraintIndex{MOI.VariableIndex,GE{T}}) where {T}
-    vi = MOI.VariableIndex(ci.value)
-    return MOI.is_valid(model, vi) && has_lower_bound(model, vi)
-end
-function MOI.is_valid(model::Optimizer{T}, ci::MOI.ConstraintIndex{MOI.VariableIndex,EQ{T}}) where {T}
-    vi = MOI.VariableIndex(ci.value)
-    return MOI.is_valid(model, vi) && is_fixed(model, vi)
+function MOI.is_valid(model::Optimizer, index::Union{MOI.VariableIndex,MOI.ConstraintIndex})
+    return MOI.is_valid(model.variables, index)
 end
 
-function has_upper_bound(model::Optimizer, vi::MOI.VariableIndex)
-    return model.variable_info[vi.value].has_upper_bound
+function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, set::BOUNDS{T}) where {T}
+    return MOI.add_constraint(model.variables, vi, set)
 end
 
-function has_lower_bound(model::Optimizer, vi::MOI.VariableIndex)
-    return model.variable_info[vi.value].has_lower_bound
-end
-
-function is_fixed(model::Optimizer, vi::MOI.VariableIndex)
-    return model.variable_info[vi.value].is_fixed
-end
-
-function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, lt::LE{T}) where {T}
-    MOI.throw_if_not_valid(model, vi)
-    if isnan(lt.upper)
-        error("Invalid upper bound value $(lt.upper).")
+function starting_value(optimizer::Optimizer{T}, i) where {T}
+    if optimizer.starting_values[i] !== nothing
+        return optimizer.starting_values[i]
+    else
+        v = optimizer.variables
+        return min(max(zero(T), v.lower[i]), v.upper[i])
     end
-    if has_upper_bound(model, vi)
-        throw(MOI.UpperBoundAlreadySet{typeof(lt),typeof(lt)}(vi))
-    end
-    if is_fixed(model, vi)
-        throw(MOI.UpperBoundAlreadySet{EQ{T},typeof(lt)}(vi))
-    end
-    model.variable_info[vi.value].upper_bound = lt.upper
-    model.variable_info[vi.value].has_upper_bound = true
-    return MOI.ConstraintIndex{MOI.VariableIndex,LE{T}}(vi.value)
-end
-
-function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, gt::MOI.GreaterThan{T}) where {T}
-    MOI.throw_if_not_valid(model, vi)
-    if isnan(gt.lower)
-        error("Invalid lower bound value $(gt.lower).")
-    end
-    if has_lower_bound(model, vi)
-        throw(MOI.LowerBoundAlreadySet{typeof(gt),typeof(gt)}(vi))
-    end
-    if is_fixed(model, vi)
-        throw(MOI.LowerBoundAlreadySet{EQ{T},typeof(gt)}(vi))
-    end
-    model.variable_info[vi.value].lower_bound = gt.lower
-    model.variable_info[vi.value].has_lower_bound = true
-    return MOI.ConstraintIndex{MOI.VariableIndex,GE{T}}(vi.value)
-end
-
-function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, eq::EQ{T}) where {T}
-    MOI.throw_if_not_valid(model, vi)
-    if isnan(eq.value)
-        error("Invalid fixed value $(gt.lower).")
-    end
-    if has_lower_bound(model, vi)
-        throw(MOI.LowerBoundAlreadySet{GE{T},typeof(eq)}(vi))
-    end
-    if has_upper_bound(model, vi)
-        throw(MOI.UpperBoundAlreadySet{LE{T},typeof(eq)}(vi))
-    end
-    if is_fixed(model, vi)
-        throw(MOI.LowerBoundAlreadySet{typeof(eq),typeof(eq)}(vi))
-    end
-    model.variable_info[vi.value].lower_bound = eq.value
-    model.variable_info[vi.value].upper_bound = eq.value
-    model.variable_info[vi.value].is_fixed = true
-    return MOI.ConstraintIndex{MOI.VariableIndex,EQ{T}}(vi.value)
 end
 
 function MOI.set(
@@ -242,7 +153,7 @@ function MOI.set(
     value::Union{Real,Nothing},
 )
     MOI.throw_if_not_valid(model, vi)
-    model.variable_info[vi.value].start = value
+    model.starting_values[vi.value] = value
     return
 end
 
@@ -337,7 +248,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
         H_nzval = zeros(T, length(hessian_structure))
     end
 
-    initial_x = starting_value.(model.variable_info)
+    initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
     has_bounds = any(info -> info.is_fixed || info.has_upper_bound || info.has_lower_bound, model.variable_info)
     if has_bounds
@@ -443,10 +354,10 @@ function MOI.get(model::Optimizer, attr::MOI.VariablePrimal, vi::MOI.VariableInd
 end
 
 function MOI.get(
-    model::Optimizer,
+    model::Optimizer{T},
     attr::MOI.ConstraintPrimal,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:Union{LE,MOI.GreaterThan{Float64},EQ}},
-)
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:BOUNDS{T}},
+) where {T}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     return minimizer(model.results)[ci.value]
