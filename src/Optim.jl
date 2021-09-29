@@ -35,6 +35,8 @@ using FillArrays             # For handling scalar bounds in Fminbox
 
 #using Compat                 # for compatibility across multiple julia versions
 
+using ArrayInterface         # for fast array indexing
+
 # for extensions of functions defined in Base.
 import Base: length, push!, show, getindex, setindex!, maximum, minimum
 
