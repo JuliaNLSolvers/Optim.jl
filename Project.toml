@@ -3,8 +3,6 @@ uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "1.4.1"
 
 [deps]
-ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
