@@ -75,7 +75,6 @@ If a specific simplex is wanted, it is possible to construct the ``(n+1)``-vecto
 and pass it to the solver using a new type definition and a new method for the function `simplexer`.
 
 For example, we can construct a simplex where the elements of the vertices are standard uniform draws
-
 ```julia
 Optim.simplexer(S::MySimplexer, initial_x) = [rand(length(initial_x)) for i = 1:length(initial_x)+1]
 optimize(f, [.0, .0], NelderMead(initial_simplex = MySimplexer()))
@@ -100,6 +99,8 @@ function Optim.simplexer(S::MatlabSimplexer, initial_x::AbstractArray{T, N}) whe
     end
     initial_simplex
 end
+
+optimize(f, [.0, .0], NelderMead(initial_simplex = MatlabSimplexer()))
 ```
 
 ### The parameters of Nelder-Mead
