@@ -66,7 +66,7 @@ f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 optimize(f, [.0, .0], NelderMead())
 ```
 
-One can use different values for the constant `a` and `b` in `AffineSimplexer`:
+One can use different values for the constant `a` and `b` in `AffineSimplexer`
 ```julia
 optimize(f, [.0, .0], NelderMead(initial_simplex = Optim.AffineSimplexer(a=0.1,b=0.01)))
 ```
@@ -74,7 +74,7 @@ optimize(f, [.0, .0], NelderMead(initial_simplex = Optim.AffineSimplexer(a=0.1,b
 If a specific simplex is wanted, it is possible to construct the ``(n+1)``-vector of ``n``-dimensional vectors,
 and pass it to the solver using a new type definition and a new method for the function `simplexer`.
 
-For example, we can a simplex with three vertices that have elements that are simply standard uniform draws.
+For example, we can construct a simplex where the elements of the vertices are standard uniform draws
 
 ```julia
 Optim.simplexer(S::MySimplexer, initial_x) = [rand(length(initial_x)) for i = 1:length(initial_x)+1]
