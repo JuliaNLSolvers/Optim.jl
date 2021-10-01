@@ -41,7 +41,7 @@ Typically, there should be no more than twice as many `f_calls` than `iterations
  Adding an evaluation at the centroid when tracing could considerably increase the total
 run-time of the algorithm.
 
-### Specifying the initial simplex
+### The initial simplex
 The default choice of `initial_simplex` is `AffineSimplexer()`. A simplex is represented
 by an ``(n+1)``-dimensional vector of ``n``-dimensional vectors. It is used together
  with the initial `x` to create the initial simplex. To
@@ -54,12 +54,26 @@ vertices is of the form
 ```
 
 If an ``x_0^i`` is zero, we need the ``a`` to make sure all vertices are unique. Generally,
-it is advised to start with a relatively large simplex.
+it is advised to start with a relatively large simplex. Optim defaults to `a=0.025` and `b=0.5`,
+shifting the level by 0.025 and 50%.
+
+#### Changing the initial simplex
+In the following examples, we will minimize the two-dimensional Rosenbrock function: 
+
+```julia
+using Optim
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+optimize(f, [.0, .0], NelderMead())
+```
+
+One can use different values for the constant `a` and `b` in `AffineSimplexer`:
+```julia
+optimize(f, [.0, .0], NelderMead(initial_simplex = Optim.AffineSimplexer(a=0.1,b=0.01)))
+```
 
 If a specific simplex is wanted, it is possible to construct the ``(n+1)``-vector of ``n``-dimensional vectors,
 and pass it to the solver using a new type definition and a new method for the function `simplexer`.
-For example, let us minimize the two-dimensional Rosenbrock function, and choose three vertices that have elements
-that are simply standard uniform draws.
+For example, let us 
 ```julia
 using Optim
 struct MySimplexer <: Optim.Simplexer end
