@@ -33,6 +33,8 @@ using Printf                 # For printing, maybe look into other options
 
 using FillArrays             # For handling scalar bounds in Fminbox
 
+using LoopVectorization      # for @turbo macro
+
 #using Compat                 # for compatibility across multiple julia versions
 
 # for extensions of functions defined in Base.

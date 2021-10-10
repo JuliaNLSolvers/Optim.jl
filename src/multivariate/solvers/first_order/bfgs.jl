@@ -164,10 +164,10 @@ function update_h!(d, state, method::BFGS)
 #       @show ArrayInterface.can_setindex(state.u)
         
         if(state.invH isa Array) # i.e. not a CuArray
-            for i in 1:n
-            @simd for j in 1:n
-                @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' -
-                        c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
+            @turbo for i in 1:n for j in 1:n
+                state.invH[i,j] += c1 * state.dx[i] * state.dx[j]
+                state.invH[i,j] -= c2 * state.u[i]  * state.dx[j]
+                state.invH[i,j] +=      state.u[j]  * state.dx[i]
                 end
             end
         else
