@@ -163,18 +163,18 @@ function update_h!(d, state, method::BFGS)
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
 #       @show ArrayInterface.can_setindex(state.u)
         
-        mul!(state.invH,state.dx,state.dx', c1,1)
-        mul!(state.invH,state.u ,state.dx',-c2,1)
-        mul!(state.invH,state.dx,state.u' ,-c2,1)
-#       state.invH .+= c1.*(state.dx * state.dx') .-
-#                      c2.*(state.u  * state.dx' .+ state.dx * state.u')
-
-#      for i in 1:n
-#          @simd for j in 1:n
-#              @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' -
-#               c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
-#          end
-#      end
+        if(state.invH isa Array) # i.e. not a CuArray
+            for i in 1:n
+            @simd for j in 1:n
+                @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' -
+                        c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
+                end
+            end
+        else
+            mul!(state.invH,vec(state.dx),vec(state.dx)', c1,1)
+            mul!(state.invH,vec(state.u ),vec(state.dx)',-c2,1)
+            mul!(state.invH,vec(state.dx),vec(state.u )',-c2,1)
+        end
     end
 end
 
