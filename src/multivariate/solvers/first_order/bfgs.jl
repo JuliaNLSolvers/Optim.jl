@@ -159,13 +159,9 @@ function update_h!(d, state, method::BFGS)
         c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
         c2 = 1 / dx_dg
 
-        # TODO BLASify this
-        # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-        for i in 1:n
-            @simd for j in 1:n
-                @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' - c2 * (state.u[i] * state.dx[j]' + state.u[j]' * state.dx[i])
-            end
-        end
+        mul!(state.invH,vec(state.dx),vec(state.dx)', c1,1)
+        mul!(state.invH,vec(state.u) ,vec(state.dx)',-c2,1)
+        mul!(state.invH,vec(state.dx),vec(state.u)' ,-c2,1)   
     end
 end
 
