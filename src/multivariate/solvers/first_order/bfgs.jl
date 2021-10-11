@@ -159,10 +159,7 @@ function update_h!(d, state, method::BFGS)
         c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
         c2 = 1 / dx_dg
 
-        # TODO BLASify this
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-#       @show ArrayInterface.can_setindex(state.u)
-        
         if(state.invH isa Array) # i.e. not a CuArray
             @turbo for i in 1:n for j in 1:n
                 state.invH[i,j] += c1 * state.dx[i] * state.dx[j]
