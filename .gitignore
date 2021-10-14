@@ -1,8 +1,10 @@
 benchmarks/graphs/*
 *~
+*.swp
 *.kate-swp
 docs/build/
 docs/site/
 docs/src/examples/generated
 docs/src/LICENSE.md
 /docs/Manifest.toml
+Manifest.toml
