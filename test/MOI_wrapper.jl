@@ -35,6 +35,7 @@ function test_MOI_Test()
         MOI.Test.Config(
             atol = 1e-6,
             rtol = 1e-6,
+            optimal_status = MOI.LOCALLY_SOLVED,
             exclude = Any[
                 MOI.ConstraintBasisStatus,
                 MOI.VariableBasisStatus,
