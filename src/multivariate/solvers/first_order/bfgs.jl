@@ -161,10 +161,12 @@ function update_h!(d, state, method::BFGS)
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         if(state.invH isa Array) # i.e. not a CuArray
-            @turbo for i ∈ 1:n, j ∈ 1:n
-                state.invH[i,j] += c1 * state.dx[i] * adjoint(state.dx[j]) -
-                                   c2 * state.u[i]  * adjoint(state.dx[j]) -
-                                   c2 * state.dx[i] * adjoint(state.u[j])
+            for i in 1:n
+                @simd for j in 1:n
+                    @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' -
+                                                  c2 * (state.u[i] * state.dx[j]' +
+                                                        state.u[j]' * state.dx[i])
+                end
             end
         else
             mul!(state.invH,vec(state.dx),vec(state.dx)', c1,1)
