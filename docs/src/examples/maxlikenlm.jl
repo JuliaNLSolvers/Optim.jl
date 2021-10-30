@@ -21,7 +21,7 @@
 
 using Optim, NLSolversBase
 using LinearAlgebra: diag
-using ForwardDiff: jacobian
+using ForwardDiff
 
 #md # !!! tip
 #md #     Add Optim with the following command at the Julia command prompt:
