@@ -21,6 +21,7 @@
 
 using Optim, NLSolversBase
 using LinearAlgebra: diag
+using ForwardDiff
 
 #md # !!! tip
 #md #     Add Optim with the following command at the Julia command prompt:
@@ -74,7 +75,7 @@ x = [ 1.0   0.156651				# X matrix of explanatory variables plus constant
  1.0   0.594971
  1.0   0.427909]
 
-ε = [0.5539830489065279             # Error variance
+ε = [0.5539830489065279             # Errors
  -0.7981494315544392
   0.12994853889935182
   0.23315434715658184
@@ -186,11 +187,6 @@ parameters = Optim.minimizer(opt)
 #     Fieldnames for all of the quantities can be obtained with the following command:
 #     fieldnames(opt)
 #
-# Since we paramaterized our likelihood to use the exponentiated
-# value, we need to exponentiate it to get back to our original log
-# scale:
-
-parameters[nvar+1] = exp(parameters[nvar+1])
 
 # In order to obtain the correct Hessian matrix, we have to "push" the
 # actual parameter values that maximizes the likelihood function since
@@ -199,30 +195,31 @@ parameters[nvar+1] = exp(parameters[nvar+1])
 
 numerical_hessian = hessian!(func,parameters)
 
-# We can now invert our Hessian matrix to obtain the variance-covariance matrix:
+# Let's find the estimated value of σ, rather than log σ, and it's standard error
+# To do this, we will use the Delta Method: https://en.wikipedia.org/wiki/Delta_method 
 
-var_cov_matrix = inv(numerical_hessian)
+# this function exponetiates log σ
+function transform(parameters)
+    parameters[end] = exp(parameters[end])
+    parameters
+end    
 
-# In this example, we are only interested in the statistical
-# significance of the coefficient estimates so we obtain those with
-# the following command:
+# get the Jacobian of the transformation
+J = ForwardDiff.jacobian(transform, parameters)'
+parameters = transform(parameters)
 
-β = parameters[1:nvar]
-@test β ≈ [2.83664, 3.05345] atol=1e-5 #src
+# We can now invert our Hessian matrix  and use the Delta Method,
+# to obtain the variance-covariance matrix:
+var_cov_matrix = J*inv(numerical_hessian)*J'
 
-# We now need to obtain those elements of the variance-covariance
-# matrix needed to obtain our t-statistics, and we can do this with
-# the following commands:
+# test the estimated parameters and t-stats for correctness
+@test parameters ≈ [2.83664, 3.05345, 0.37218] atol=1e-5 #src
+t_stats = parameters./sqrt.(diag(var_cov_matrix))
+@test t_stats ≈ [48.02655, 45.51568, 8.94427] atol=1e-4 #src
 
-temp = diag(var_cov_matrix)
-temp1 = temp[1:nvar]
-
-# The t-statistics are formed by dividing element-by-element the
-# coefficients by their standard errors, or the square root of the
-# diagonal elements of the variance-covariance matrix:
-
-t_stats = β./sqrt.(temp1)
-@test t_stats ≈ [12.31968, 11.67560] atol=1e-4 #src
+# see the results
+println("parameter estimates:", parameters)
+println("t-statsitics: ", t_stats)
 
 # From here, one may examine other statistics of interest using the
 # output from the optimization routine.
