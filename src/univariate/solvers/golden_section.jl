@@ -50,7 +50,7 @@ function optimize(f, x_lower::T, x_upper::T,
 
     # Trace the history of states visited
     tr = OptimizationTrace{T, typeof(mo)}()
-    tracing = store_trace || show_trace || extended_trace || callback != nothing
+    tracing = store_trace || show_trace || extended_trace || callback !== nothing
     stopped_by_callback = false
     if tracing
         # update trace; callbacks can stop routine early by returning true

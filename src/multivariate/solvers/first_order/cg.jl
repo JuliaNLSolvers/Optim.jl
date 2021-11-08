@@ -108,7 +108,7 @@ function reset!(cg, cgs::ConjugateGradientState, obj, x)
     cgs.x .= x
     cg.precondprep!(cg.P, x)
     ldiv!(cgs.pg, cg.P, gradient(obj))
-    if cg.P != nothing
+    if cg.P !== nothing
         project_tangent!(cg.manifold, cgs.pg, x)
     end
     cgs.s .= -cgs.pg 
@@ -139,7 +139,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     #    TODO: consider allowing a reference for pg instead of a copy
     method.precondprep!(method.P, initial_x)
     ldiv!(pg, method.P, gradient(d))
-    if method.P != nothing
+    if method.P !== nothing
         project_tangent!(method.manifold, pg, initial_x)
     end
 

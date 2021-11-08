@@ -64,7 +64,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     d = NonDifferentiable(obj_fn, x)
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
-    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback !== nothing
 
     @unpack nt, ns, rt, neps, f_tol, x_tol, coverage_ok, verbosity = method
     verbose = verbosity > 0

@@ -66,14 +66,14 @@ end
       H[2, 2] = 200.0
     end
     function fg!(F,G,x)
-      G == nothing || g!(G,x)
-      F == nothing || return f(x)
+      G === nothing || g!(G,x)
+      F === nothing || return f(x)
       nothing
     end
     function fgh!(F,G,H,x)
-      G == nothing || g!(G,x)
-      H == nothing || h!(H,x)
-      F == nothing || return f(x)
+      G === nothing || g!(G,x)
+      H === nothing || h!(H,x)
+      F === nothing || return f(x)
       nothing
     end
 
