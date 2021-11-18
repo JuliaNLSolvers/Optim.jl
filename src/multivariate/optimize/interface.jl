@@ -10,7 +10,7 @@ function check_kwargs(kwargs, fallback_method)
         end
     end
 
-    if method == nothing
+    if method === nothing
         method = fallback_method
     end
     kws, method

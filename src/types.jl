@@ -105,25 +105,25 @@ function Options(;
         callback = nothing,
         time_limit = NaN)
     show_every = show_every > 0 ? show_every : 1
-    #if extended_trace && callback == nothing
+    #if extended_trace && callback === nothing
     #    show_trace = true
     #end
-    if !(x_tol == nothing)
+    if !(x_tol === nothing)
         x_abstol = x_tol
     end
-    if !(g_tol == nothing)
+    if !(g_tol === nothing)
         g_abstol = g_tol
     end
-    if !(f_tol == nothing)
+    if !(f_tol === nothing)
         f_reltol = f_tol
     end
-    if !(outer_x_tol == nothing)
+    if !(outer_x_tol === nothing)
         outer_x_abstol = outer_x_tol
     end
-    if !(outer_g_tol == nothing)
+    if !(outer_g_tol === nothing)
         outer_g_abstol = outer_g_tol
     end
-    if !(outer_f_tol == nothing)
+    if !(outer_f_tol === nothing)
         outer_f_reltol = outer_f_tol
     end
     Options(promote(x_abstol, x_reltol, f_abstol, f_reltol, g_abstol, g_reltol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol, outer_g_reltol)..., f_calls_limit, g_calls_limit, h_calls_limit,

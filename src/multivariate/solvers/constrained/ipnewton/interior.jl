@@ -230,7 +230,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
     _time = t0
 
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
-    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback !== nothing
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
