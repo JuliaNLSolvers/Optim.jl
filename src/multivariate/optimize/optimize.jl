@@ -81,7 +81,7 @@ function optimize(d::D, initial_x::Tx, method::M,
         stopped_by_time_limit = _time-t0 > options.time_limit
         f_limit_reached = options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached = options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
-        h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
+         h_limit_reached = options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
 
         if (f_increased && !options.allow_f_increases) || stopped_by_callback ||
             stopped_by_time_limit || f_limit_reached || g_limit_reached || h_limit_reached

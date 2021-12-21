@@ -40,7 +40,7 @@ end
 function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where T
     fill!( p, zero(T) )
     for i = min_i:n
-        p[:] -= qg[i] / (H_eig.values[i] + lambda) * H_eig.vectors[:, i]
+         p .-= qg[i] ./ (H_eig.values[i] .+ lambda) .* view(H_eig.vectors, :, i)
     end
     return nothing
 end
@@ -87,6 +87,7 @@ end
 #      terminating early due to max_iters)
 function solve_tr_subproblem!(gr,
                               H,
+                              H_ridged,
                               delta,
                               s;
                               tolerance=1e-10,
@@ -105,14 +106,14 @@ function solve_tr_subproblem!(gr,
     if any(!isfinite, Hsym)
         return T(Inf), false, zero(T), false, false
     end
-    H_eig = eigen(Hsym)
+    H_eig = eigen(Hsym) # this allocates
 
     if !isempty(H_eig.values)
         min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
     else
         return T(Inf), false, zero(T), false, false
     end
-    H_ridged = copy(H)
+    H_ridged .= H
 
     # Cache the inner products between the eigenvectors and the gradient.
     qg = H_eig.vectors' * gr
@@ -270,12 +271,13 @@ NewtonTrustRegion(; initial_delta::Real = 1.0,
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
-mutable struct NewtonTrustRegionState{Tx, T, G} <: AbstractOptimizerState
+mutable struct NewtonTrustRegionState{Tx, T, G, H} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     g_previous::G
     f_x_previous::T
     s::Tx
+    H_ridged::H
     hard_case::Bool
     reached_subproblem_solution::Bool
     interior::Bool
@@ -304,12 +306,13 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     lambda = NaN
 
     NLSolversBase.value_gradient_hessian!!(d, initial_x)
-
+    H_ridged = copy(hessian(d))
     NewtonTrustRegionState(copy(initial_x), # Maintain current state in state.x
                          copy(initial_x), # Maintain previous state in state.x_previous
                          copy(gradient(d)), # Store previous gradient in state.g_previous
                          T(NaN), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
+                         H_ridged,
                          hard_case,
                          reached_subproblem_solution,
                          interior,
@@ -324,7 +327,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
     T = eltype(state.x)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
-        solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
+        solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.H_ridged, state.delta, state.s)
 
     # Maintain a record of previous position
     copyto!(state.x_previous, state.x)
