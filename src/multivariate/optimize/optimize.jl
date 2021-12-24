@@ -32,9 +32,6 @@ end
 function optimize(d::D, initial_x::Tx, method::M,
                   options::Options{T, TCallback} = Options(;default_options(method)...),
                   state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray, T, TCallback}
-    if length(initial_x) == 1 && typeof(method) <: NelderMead
-        error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
-    end
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()

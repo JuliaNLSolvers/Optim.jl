@@ -216,7 +216,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
 
     # Compute a reflection
     @. state.x_reflect = state.x_centroid + state.α * (state.x_centroid - state.x_highest)
-    
+
     f_reflect = value(f, state.x_reflect)
     if f_reflect < state.f_lowest
         # Compute an expansion
