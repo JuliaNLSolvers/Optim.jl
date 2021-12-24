@@ -1,8 +1,8 @@
-using Random
+using StableRNGs
 @testset "normalized array" begin
-    Random.seed!(1323)
+    rng = StableRNG(1323)
     grdt!(buf, _) = (buf .= 0; buf[1] = 1; buf)
-    result = optimize(x->x[1], grdt!, randn(2,2), ConjugateGradient(manifold=Sphere()))
+    result = optimize(x->x[1], grdt!, randn(rng,2,2), ConjugateGradient(manifold=Sphere()))
     @test result.minimizer ≈ [-1 0; 0 0]
     @test result.minimum ≈ -1
 end
@@ -55,7 +55,7 @@ end
 
 using RecursiveArrayTools
 @testset "arraypartition input" begin
-
+    rng = StableRNG(133)
     function polynomial(x)
             return (10.0 - x[1])^2 + (7.0 - x[2])^4 + (108.0 - x[3])^4
         end
@@ -78,7 +78,7 @@ using RecursiveArrayTools
             storage[3, 3] = 12.0 * (108.0 - x[3])^2
         end
 
-    ap = ArrayPartition(rand(1), rand(2))
+    ap = ArrayPartition(rand(rng, 1), rand(rng, 2))
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NelderMead())
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ParticleSwarm())
