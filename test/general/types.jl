@@ -46,4 +46,8 @@ import Compat.String
             @test lines[14] |> contains("|g(x)|")
         end
     end
+
+    io = IOBuffer()
+    res = show(io, MIME"text/plain"(), Optim.Options(x_abstol = 10.0))
+    @test String(take!(io)) |> contains("x_abstol = 10.0")
 end
