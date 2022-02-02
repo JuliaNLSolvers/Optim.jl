@@ -108,7 +108,7 @@ end
 function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constraints::TwiceDifferentiableConstraints, initial_x::AbstractArray{T}) where T
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
-    constr_c = Array{T}(undef, mc)
+    constr_c = zeros(T, mc)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
@@ -124,13 +124,13 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     f_x_previous = NaN
     f_x, g_x = value_gradient!(d, initial_x)
     g .= g_x # needs to be a separate copy of g_x
-    H = Matrix{T}(undef, n, n)
-    Hd = Vector{Int8}(undef, n)
+    H = zeros(T, n, n)
+    Hd = zeros(Int8, n)
     hessian!(d, initial_x)
     copyto!(H, hessian(d))
 
     # More constraints
-    constr_J = Array{T}(undef, mc, n)
+    constr_J = zeros(T, mc, n)
     gtilde = copy(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
