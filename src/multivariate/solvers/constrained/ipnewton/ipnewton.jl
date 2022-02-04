@@ -1,8 +1,9 @@
-struct IPNewton{F,Tμ<:Union{Symbol,Number}} <: IPOptimizer{F}
+struct IPNewton{F,Tμ<:Union{Symbol,Number}, M} <: IPOptimizer{F}
     linesearch!::F
     μ0::Tμ      # Initial value for the barrier penalty coefficient μ
     show_linesearch::Bool
     # TODO: μ0, and show_linesearch were originally in options
+    conJstorage::M
 end
 
 Base.summary(::IPNewton) = "Interior Point Newton"
@@ -46,17 +47,18 @@ The algorithm was [originally written by Tim Holy](https://github.com/JuliaNLSol
 """
 IPNewton(; linesearch::Function = backtrack_constrained_grad,
          μ0::Union{Symbol,Number} = :auto,
-         show_linesearch::Bool = false) =
-  IPNewton(linesearch, μ0, show_linesearch)
+         show_linesearch::Bool = false,
+         conJstorage::Union{Symbol,AbstractMatrix} = :auto) =
+  IPNewton(linesearch, μ0, show_linesearch, conJstorage)
 
-mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
+mutable struct IPNewtonState{T,Tx,TH, TJ, THtilde} <: AbstractBarrierState
     x::Tx
     f_x::T
     x_previous::Tx
     g::Tx
     f_x_previous::T
-    H::Matrix{T}          # Hessian of the Lagrangian?
-    HP # TODO: remove HP? It's not used
+    H::TH          # Hessian of the Lagrangian?
+    HP::Nothing # TODO: remove HP? It's not used
     Hd::Vector{Int8}  # TODO: remove Hd? It's not used
     s::Tx  # step for x
     # Barrier penalty fields
@@ -68,12 +70,12 @@ mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     bgrad::BarrierStateVars{T}    # gradient of slack and λ variables at current "position"
     bstep::BarrierStateVars{T}    # search direction for slack and λ
     constr_c::Vector{T}   # value of the user-supplied constraints at x
-    constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
+    constr_J::TJ   # value of the user-supplied Jacobian at x
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
     Optim.@add_linesearch_fields() # x_ls and alpha
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
-    Htilde               # Positive Cholesky factorization of H from PositiveFactorizations.jl
+    Htilde::THtilde               # Positive Cholesky factorization of H from PositiveFactorizations.jl
 end
 
 # TODO: Do we need this convert thing? (It seems to be used with `show(IPNewtonState)`)
@@ -123,14 +125,20 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     s = similar(initial_x)
     f_x_previous = NaN
     f_x, g_x = value_gradient!(d, initial_x)
-    g .= g_x # needs to be a separate copy of g_x
-    H = Matrix{T}(undef, n, n)
+    g .= g_x # needs to be a separate copy of g_x    
     Hd = Vector{Int8}(undef, n)
-    hessian!(d, initial_x)
+    hd = hessian!(d, initial_x)
+    H = similar(hd)
     copyto!(H, hessian(d))
+    Htilde = cholesky(Positive, H, Val{true})
+
 
     # More constraints
-    constr_J = Array{T}(undef, mc, n)
+    if (method.conJstorage == :auto)
+        constr_J = Array{T}(undef, mc, n)
+    else
+        constr_J = similar(method.conJstorage)
+    end
     gtilde = copy(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
@@ -147,7 +155,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
         g, # Store current gradient in state.g (TODO: includes Lagrangian calculation?)
         T(NaN), # Store previous f in state.f_x_previous
         H,
-        0,    # will be replaced
+        nothing,    # will be replaced
         Hd,
         similar(initial_x), # Maintain current x-search direction in state.s
         μ,
@@ -163,7 +171,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
         Optim.@initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
         gtilde,
-        0)
+        Htilde)
 
     Hinfo = (state.H, hessianI(initial_x, constraints, 1 ./ bstate.slack_c, 1))
     initialize_μ_λ!(state, constraints.bounds, Hinfo, method.μ0)

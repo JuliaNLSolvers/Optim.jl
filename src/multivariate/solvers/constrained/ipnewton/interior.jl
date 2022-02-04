@@ -149,13 +149,13 @@ Base.convert(::Type{BarrierLineSearch{T}}, bsl::BarrierLineSearch) where T =
 
 Parameters for interior-point line search methods that exploit the slope.
 """
-struct BarrierLineSearchGrad{T}
+struct BarrierLineSearchGrad{T, TJ<:AbstractMatrix}
     c::Vector{T}                  # value of constraints-functions at trial point
-    J::Matrix{T}                  # constraints-Jacobian at trial point
+    J::TJ                  # constraints-Jacobian at trial point
     bstate::BarrierStateVars{T}   # trial point for slack and λ variables
     bgrad::BarrierStateVars{T}    # trial point's gradient
 end
-Base.convert(::Type{BarrierLineSearchGrad{T}}, bsl::BarrierLineSearchGrad) where T =
+Base.convert(::Type{BarrierLineSearchGrad{T,TJ}}, bsl::BarrierLineSearchGrad) where T where TJ =
     BarrierLineSearchGrad(convert(Vector{T}, bsl.c),
                           convert(Matrix{T}, bsl.J),
                           convert(BarrierStateVars{T}, bsl.bstate),
