@@ -131,7 +131,19 @@ function Options(;
         Int(show_every), callback, Float64(time_limit))
 end
 
+_show_helper(output, k, v) = output * "$k = $v, "
+_show_helper(output, k, ::Nothing) = output
+
 function Base.show(io::IO, o::Optim.Options)
+    content = foldl(fieldnames(typeof(o)), init = "Optim.Options(") do output, k
+        v = getfield(o, k)
+        return _show_helper(output, k, v)
+    end
+    print(io, content)
+    println(io, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", o::Optim.Options)
     for k in fieldnames(typeof(o))
         v = getfield(o, k)
         if v isa Nothing

@@ -32,7 +32,7 @@ general_tests = [
     "Optim",
     "optimize",
     "type_stability",
-#    "types",
+    "types",
     "counter",
     "maximize",
 ]
