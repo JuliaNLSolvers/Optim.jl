@@ -101,7 +101,7 @@ There are two iterations parameters: an outer iterations parameter used to contr
 ```julia
 results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(outer_iterations = 2))
 ```
-In contrast, the following sets the maximum number of iterations for each `ConjugateGradient()` optimization to 2
+In contrast, the following sets the maximum number of iterations for each `GradientDescent()` optimization to 2
 ```julia
 results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(iterations = 2))
 ```
