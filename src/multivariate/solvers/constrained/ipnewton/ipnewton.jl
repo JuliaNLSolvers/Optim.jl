@@ -125,7 +125,7 @@ function initial_state(method::IPNewton, options, d::TwiceDifferentiable, constr
     f_x, g_x = value_gradient!(d, initial_x)
     g .= g_x # needs to be a separate copy of g_x
     hessian!(d, initial_x)
-    H = collect(hessian(d))
+    H = collect(T, hessian(d))
     Hd = zeros(Int8, n)
 
     # More constraints
