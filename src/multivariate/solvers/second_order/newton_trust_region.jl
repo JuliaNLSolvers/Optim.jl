@@ -369,7 +369,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # steps reducing delta by constant factors while each solution
         # will be the same.
         x_diff = state.x - state.x_previous
-        delta = 0.25 * norm(x_diff)
+        state.delta = 0.25 * norm(x_diff)
 
         d.F = state.f_x_previous
         copyto!(state.x, state.x_previous)
