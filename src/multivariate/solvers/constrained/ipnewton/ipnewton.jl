@@ -282,7 +282,7 @@ function update_state!(d, constraints::TwiceDifferentiableConstraints, state::IP
     # Evaluate the constraints at the new position
     constraints.c!(state.constr_c, state.x)
     constraints.jacobian!(state.constr_J, state.x)
-    state.ev == equality_violation(constraints, state)
+    state.ev = equality_violation(constraints, state)
 
     false
 end
