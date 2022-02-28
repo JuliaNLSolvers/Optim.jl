@@ -161,11 +161,13 @@ function update_h!(d, state, method::BFGS)
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         if(state.invH isa Array) # i.e. not a CuArray
-            for i in 1:n
-                @simd for j in 1:n
-                    @inbounds state.invH[i, j] += c1 * state.dx[i] * state.dx[j]' -
-                                                  c2 * (state.u[i] * state.dx[j]' +
-                                                        state.u[j]' * state.dx[i])
+            invH = state.invH; dx = state.dx; u = state.u;
+            @inbounds for j in 1:n
+                c1dxj = c1 * dx[j]'
+                c2dxj = c2 * dx[j]'
+                c2uj  = c2 *  u[j]'
+                for i in 1:n
+                    invH[i, j] = muladd(dx[i], c1dxj, muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])))
                 end
             end
         else
