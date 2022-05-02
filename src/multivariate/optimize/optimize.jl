@@ -84,6 +84,15 @@ function optimize(d::D, initial_x::Tx, method::M,
             stopped_by_time_limit || f_limit_reached || g_limit_reached || h_limit_reached
             stopped = true
         end
+
+        if method isa NewtonTrustRegion
+            # If the trust region radius keeps on reducing we need to stop
+            # because something is wrong. Wrong gradients or a non-differentiability
+            # at the solution could be explanations.
+            if state.delta ≤ method.delta_min
+                stopped = true
+            end
+        end
     end # while
 
     after_while!(d, state, method, options)

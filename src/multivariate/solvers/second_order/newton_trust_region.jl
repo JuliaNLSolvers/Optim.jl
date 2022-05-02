@@ -221,6 +221,7 @@ end
 struct NewtonTrustRegion{T <: Real} <: SecondOrderOptimizer
     initial_delta::T
     delta_hat::T
+    delta_min::T
     eta::T
     rho_lower::T
     rho_upper::T
@@ -233,6 +234,7 @@ end
 ```julia
 NewtonTrustRegion(; initial_delta = 1.0,
                     delta_hat = 100.0,
+                    delta_min = 0.0,
                     eta = 0.1,
                     rho_lower = 0.25,
                     rho_upper = 0.75,
@@ -262,11 +264,12 @@ trust-region methods in practice.
 """
 NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
+                    delta_min::Real = 0.0,
                     eta::Real = 0.1,
                     rho_lower::Real = 0.25,
                     rho_upper::Real = 0.75,
                     use_fg=true) =
-                    NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper, use_fg)
+                    NewtonTrustRegion(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, use_fg)
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
@@ -367,7 +370,8 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # If you reject an interior solution, make sure that the next
         # delta is smaller than the current step. Otherwise you waste
         # steps reducing delta by constant factors while each solution
-        # will be the same.
+        # will be the same. If this keeps on happening it could be a sign
+        # errors in the gradient or a non-differentiability at the optimum.
         x_diff = state.x - state.x_previous
         state.delta = 0.25 * norm(x_diff)
 
