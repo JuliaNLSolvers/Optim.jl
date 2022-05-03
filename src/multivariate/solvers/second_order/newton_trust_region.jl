@@ -221,6 +221,7 @@ end
 struct NewtonTrustRegion{T <: Real} <: SecondOrderOptimizer
     initial_delta::T
     delta_hat::T
+    delta_min::T
     eta::T
     rho_lower::T
     rho_upper::T
@@ -233,6 +234,7 @@ end
 ```julia
 NewtonTrustRegion(; initial_delta = 1.0,
                     delta_hat = 100.0,
+                    delta_min = 0.0,
                     eta = 0.1,
                     rho_lower = 0.25,
                     rho_upper = 0.75,
@@ -240,12 +242,13 @@ NewtonTrustRegion(; initial_delta = 1.0,
 ```
 
 The constructor has 5 keywords:
-* `initial_delta`, the starting trust region radius
-* `delta_hat`, the largest allowable trust region radius
-* `eta`, when `rho` is at least `eta`, accept the step
-* `rho_lower`, when `rho` is less than `rho_lower`, shrink the trust region
-* `rho_upper`, when `rho` is greater than `rho_upper`, grow the trust region
-* `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations.
+* `initial_delta`, the starting trust region radius. Defaults to `1.0`.
+* `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
+* `delta_min`, the smallest alowable trust region radius. Optimization halts if the updated radius is smaller than this value. Defaults to `sqrt(eps(Float64))`.
+* `eta`, when `rho` is at least `eta`, accept the step. Defaults to `0.1`.
+* `rho_lower`, when `rho` is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
+* `rho_upper`, when `rho` is greater than `rho_upper`, grow the trust region. Defaults to `0.75`.
+* `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
 
 ## Description
 The `NewtonTrustRegion` method implements Newton's method with a trust region
@@ -262,11 +265,12 @@ trust-region methods in practice.
 """
 NewtonTrustRegion(; initial_delta::Real = 1.0,
                     delta_hat::Real = 100.0,
+                    delta_min::Real = sqrt(eps(Float64)),
                     eta::Real = 0.1,
                     rho_lower::Real = 0.25,
                     rho_upper::Real = 0.75,
                     use_fg=true) =
-                    NewtonTrustRegion(initial_delta, delta_hat, eta, rho_lower, rho_upper, use_fg)
+                    NewtonTrustRegion(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, use_fg)
 
 Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
 
@@ -367,7 +371,8 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # If you reject an interior solution, make sure that the next
         # delta is smaller than the current step. Otherwise you waste
         # steps reducing delta by constant factors while each solution
-        # will be the same.
+        # will be the same. If this keeps on happening it could be a sign
+        # errors in the gradient or a non-differentiability at the optimum.
         x_diff = state.x - state.x_previous
         state.delta = 0.25 * norm(x_diff)
 

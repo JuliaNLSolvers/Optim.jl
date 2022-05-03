@@ -1,3 +1,4 @@
+using Optim, Test, Distributions, Random, LinearAlgebra
 @testset "Newton Trust Region" begin
 @testset "Subproblems I" begin
     # verify that solve_tr_subproblem! finds the minimum
@@ -201,4 +202,33 @@ end
     @test !(o.f_converged || o.g_converged || o.x_converged)
 end
 
+@testset "delta_min" begin
+c = (t, Δ, D, ke) -> t < Δ ? -(exp(-ke*t) - 1)*D/(ke*Δ) : -(exp(-ke*Δ) - 1)*D/(ke*Δ)*exp(-ke*(t-Δ))
+
+ke₀ = 0.5
+D₀ = 100.0
+t₁ = 2.0
+ll = Δ -> begin
+    sum(
+        map(
+            zip(
+                [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 8.0],
+                [19.90278833504542, 29.50697731718643, 42.106713695572836, 60.402701110755814, 72.78413106065605, 48.58414814304506, 36.134598474160484, 24.137636435583193, 3.2819695104173814]
+            )
+        ) do (t,y)
+            ct = c(t, Δ, D₀, ke₀)
+            return logpdf(Normal(ct, ct*0.1), y)
+        end
+    )
+end
+
+@test_throws DomainError Optim.optimize(t -> -ll(t[1]), [2.1],
+                                        NewtonTrustRegion(delta_min=-1.0),
+                                        Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5))
+
+Optim.optimize(t -> -ll(t[1]), [2.1],
+                NewtonTrustRegion(delta_min=0.0),
+                Optim.Options( show_trace = false, allow_f_increases = false, g_tol = 1e-5))
+
+end
 end
