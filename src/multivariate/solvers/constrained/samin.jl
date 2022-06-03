@@ -261,17 +261,17 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             # last value close enough to last neps values?
             fstar[1] = f_old
             f_absΔ = abs.(fopt - f_old) # tolerance wrt best so far
-            if  all((abs.(fopt .- fstar)) .< f_tol) # within tolerance for last neps bests? 
+            if all((abs.(fopt .- fstar)) .< f_tol) # within tolerance for last neps bests? 
                 f_converged = true
                 # check for bound narrow enough for parameter convergence
-                    if any(bounds .> x_tol)
-                        converge = 0 # no conv. if bounds too wide
-                        break
-                    else
-                        converge = 1
-                        x_converged = true
-                        x_absΔ = maximum(bounds)
-                    end
+                if any(bounds .> x_tol)
+                    x_converged = false
+                    converge = 0 # no conv. if bounds too wide
+                    break
+                else
+                    converge = 1
+                    x_converged = true
+                    x_absΔ = maximum(bounds)
                 end
             else
                 f_converged = false
