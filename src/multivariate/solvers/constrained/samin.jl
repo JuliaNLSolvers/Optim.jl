@@ -77,6 +77,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
     x_converged = false
     f_converged = false
+    x_absΔ = Inf
+    f_absΔ = Inf
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
@@ -188,14 +190,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 f_calls(d), #iteration,
                                                                 f_calls(d) >= options.iterations, #iteration == options.iterations,
                                                                 false, # x_converged,
+                                                                x_tol,#T(options.x_tol),
                                                                 0.0,#T(options.x_tol),
-                                                                0.0,#T(options.x_tol),
-                                                                NaN,# x_abschange(state),
+                                                                x_absΔ,# x_abschange(state),
                                                                 NaN,# x_abschange(state),
                                                                 false,# f_converged,
+                                                                f_tol,#T(options.f_tol),
                                                                 0.0,#T(options.f_tol),
-                                                                0.0,#T(options.f_tol),
-                                                                NaN,#f_abschange(d, state),
+                                                                f_\absΔ,#f_abschange(d, state),
                                                                 NaN,#f_abschange(d, state),
                                                                 false,#g_converged,
                                                                 0.0,#T(options.g_tol),
@@ -258,6 +260,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if coverage_ok
             # last value close enough to last neps values?
             fstar[1] = f_old
+            f_absΔ = abs.(fopt - f_old)
             test = 0
             for i=1:neps
                 test += (abs(f_old - fstar[i]) > f_tol)
@@ -274,6 +277,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     else
                         converge = 1
                         x_converged = true
+                        x_absΔ = maximum(bounds)
                     end
                 end
             else
@@ -331,14 +335,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             f_calls(d), #iteration,
                                             f_calls(d) >= options.iterations, #iteration == options.iterations,
                                             x_converged, # x_converged,
+                                            x_tol,#T(options.x_tol),
                                             0.0,#T(options.x_tol),
-                                            0.0,#T(options.x_tol),
-                                            x_tol,# x_abschange(state),
+                                            ??,# x_abschange(state),
                                             NaN,# x_relchange(state),
                                             f_converged, # f_converged,
+                                            f_tol,#T(options.f_tol),
                                             0.0,#T(options.f_tol),
-                                            0.0,#T(options.f_tol),
-                                            f_tol,#f_abschange(d, state),
+                                            ??,#f_abschange(d, state),
                                             NaN,#f_relchange(d, state),
                                             false,#g_converged,
                                             0.0,#T(options.g_tol),
