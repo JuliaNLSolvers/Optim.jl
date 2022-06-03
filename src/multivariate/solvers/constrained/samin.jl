@@ -260,19 +260,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if coverage_ok
             # last value close enough to last neps values?
             fstar[1] = f_old
-            f_absΔ = abs.(fopt - f_old)
-            test = 0
-            #for i=1:neps
-            #    test += (abs(f_old - fstar[i]) > f_tol)
-            #end
-            test = all((fopt .- fstar) .< f_tol)
-            #test = (test > 0) # if different from zero, function conv. has failed
-            # last value close enough to overall best?
-            if (((fopt - f_old) <= f_tol) && (test))
+            f_absΔ = abs.(fopt - f_old) # tolerance wrt best so far
+            if  all((abs.(fopt .- fstar)) .< f_tol) # within tolerance for last neps bests? 
                 f_converged = true
                 # check for bound narrow enough for parameter convergence
-                for i = 1:n
-                    if (bounds[i] > x_tol)
+                    if any(bounds .> x_tol)
                         converge = 0 # no conv. if bounds too wide
                         break
                     else
