@@ -265,7 +265,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             #for i=1:neps
             #    test += (abs(f_old - fstar[i]) > f_tol)
             #end
-            test = all(fopt .- fstar < f_tol)
+            test = all((fopt .- fstar) .< f_tol)
             #test = (test > 0) # if different from zero, function conv. has failed
             # last value close enough to overall best?
             if (((fopt - f_old) <= f_tol) && (test))
