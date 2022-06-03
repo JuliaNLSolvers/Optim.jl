@@ -93,14 +93,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             error("samin: initial parameter $(i) out of bounds")
         end
     end
-
     options.show_trace && print_header(method)
     iteration = 0
     _time = time()
     trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
-
     stopped_by_callback = false
-
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     while converge==0
         # statistics to report at each temp change, set back to zero
@@ -260,8 +257,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if coverage_ok
             # last value close enough to last neps values?
             fstar[1] = f_old
-            f_absΔ = abs.(fopt - f_old) # tolerance wrt best so far
-            if all((abs.(fopt .- fstar)) .< f_tol) # within tolerance for last neps bests? 
+            f_absΔ = abs.(fopt - f_old) # close enough to best so far?
+            if all((abs.(fopt .- fstar)) .< f_tol) # within to for last neps trials? 
                 f_converged = true
                 # check for bound narrow enough for parameter convergence
                 if any(bounds .> x_tol)
@@ -307,9 +304,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             # Reduce temperature, record current function value in the
             # list of last "neps" values, and loop again
             t *= rt
-            for i = neps:-1:2
-                fstar[i] = fstar[i-1]
-            end
+            pushfirst!(fstar, f_old)
+            fstar = fstar[1:end-1]
             f_old = copy(fopt)
             x = copy(xopt)
         else  # coverage not ok - increase temperature quickly to expand search area
