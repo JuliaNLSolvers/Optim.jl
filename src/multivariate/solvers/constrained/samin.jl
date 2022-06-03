@@ -194,7 +194,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 false,# f_converged,
                                                                 f_tol,#T(options.f_tol),
                                                                 0.0,#T(options.f_tol),
-                                                                f_\absΔ,#f_abschange(d, state),
+                                                                f_absΔ,#f_abschange(d, state),
                                                                 NaN,#f_abschange(d, state),
                                                                 false,#g_converged,
                                                                 0.0,#T(options.g_tol),
