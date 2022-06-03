@@ -75,6 +75,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     nacc = 0 # total accepted trials
     t = 2.0 # temperature - will initially rise or fall to cover parameter space. Then it will fall
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
+    x_converged = false
+    f_converged = false
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
@@ -263,6 +265,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             test = (test > 0) # if different from zero, function conv. has failed
             # last value close enough to overall best?
             if (((fopt - f_old) <= f_tol) && (!test))
+                f_converged = true
                 # check for bound narrow enough for parameter convergence
                 for i = 1:n
                     if (bounds[i] > x_tol)
@@ -270,8 +273,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                         break
                     else
                         converge = 1
+                        x_converged = true
                     end
                 end
+            else
+                f_converged = false
             end
             # check if optimal point is near boundary of parameter space, and change message if so
             if (converge == 1) && (lnobds > 0)
@@ -318,18 +324,23 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
+    if converge > 0.0
+        x_converged = true
+        f_converged = true
+    else
+        x_converged = false
     return MultivariateOptimizationResults(method,
                                             x0,# initial_x,
                                             xopt, #pick_best_x(f_incr_pick, state),
                                             fopt, # pick_best_f(f_incr_pick, state, d),
                                             f_calls(d), #iteration,
                                             f_calls(d) >= options.iterations, #iteration == options.iterations,
-                                            false, # x_converged,
+                                            x_converged, # x_converged,
                                             0.0,#T(options.x_tol),
                                             0.0,#T(options.x_tol),
                                             NaN,# x_abschange(state),
                                             NaN,# x_abschange(state),
-                                            false,# f_converged,
+                                            f_converged, # f_converged,
                                             0.0,#T(options.f_tol),
                                             0.0,#T(options.f_tol),
                                             NaN,#f_abschange(d, state),
