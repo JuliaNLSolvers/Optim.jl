@@ -262,12 +262,13 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             fstar[1] = f_old
             f_absΔ = abs.(fopt - f_old)
             test = 0
-            for i=1:neps
-                test += (abs(f_old - fstar[i]) > f_tol)
-            end
-            test = (test > 0) # if different from zero, function conv. has failed
+            #for i=1:neps
+            #    test += (abs(f_old - fstar[i]) > f_tol)
+            #end
+            test = all(f_old .- fstat < f_tol)
+            #test = (test > 0) # if different from zero, function conv. has failed
             # last value close enough to overall best?
-            if (((fopt - f_old) <= f_tol) && (!test))
+            if (((fopt - f_old) <= f_tol) && (test))
                 f_converged = true
                 # check for bound narrow enough for parameter convergence
                 for i = 1:n
