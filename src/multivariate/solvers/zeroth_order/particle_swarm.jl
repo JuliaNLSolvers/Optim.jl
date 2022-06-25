@@ -318,15 +318,12 @@ function get_swarm_state(X::AbstractArray{Tx}, score, best_point, previous_state
     n, n_particles = size(X)
     f_best, i_best = findmin(score)
     d = Vector{Tx}(undef, n_particles)
-    XXt = BLAS.syrk('U', 'T', 1, X)
-    #@assert size(XXt) == (n_particles, n_particles)
-    XX_diag_sum = sum(i -> XXt[i, i], eachindex(d))
+    XtX = X'X
+    #@assert size(XtX) == (n_particles, n_particles)
+    XtX_tr = LinearAlgebra.tr(XtX)
+    d = sum(XtX, dims=1)
     @inbounds for i in eachindex(d)
-        XXi = Tx(0.0)
-        for k in eachindex(d)
-            XXi += k < i ? XXt[k, i] : XXt[i, k]
-        end
-        d[i] = sqrt(max(n_particles * XXt[i, i] + XX_diag_sum - 2 * XXi, Tx(0.0)))
+        d[i] = sqrt(max(n_particles * XtX[i, i] + XtX_tr - 2 * d[i], Tx(0.0)))
     end
     dg = d[i_best]
     dmin, dmax = extrema(d)
