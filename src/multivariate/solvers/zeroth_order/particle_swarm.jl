@@ -317,7 +317,6 @@ function get_swarm_state(X::AbstractArray{Tx}, score, best_point, previous_state
     # but also from the previous state.
     n, n_particles = size(X)
     f_best, i_best = findmin(score)
-    d = Vector{Tx}(undef, n_particles)
     XtX = X'X
     #@assert size(XtX) == (n_particles, n_particles)
     XtX_tr = LinearAlgebra.tr(XtX)
