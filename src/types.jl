@@ -234,21 +234,26 @@ end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
     take = Iterators.take
-    failure_string = "failure"
+
+    if converged(r)
+        status_string = "success"
+    else
+        status_string = "failure"
+    end
     if iteration_limit_reached(r)
-        failure_string *= " (reached maximum number of iterations)"
+        status_string *= " (reached maximum number of iterations)"
     end
     if f_increased(r) && !iteration_limit_reached(r)
-        failure_string *= " (objective increased between iterations)"
+        status_string *= " (objective increased between iterations)"
     end
     if isa(r.ls_success, Bool) && !r.ls_success
-        failure_string *= " (line search failed)"
+        status_string *= " (line search failed)"
     end
     if time_run(r) > time_limit(r)
-        failure_string *= " (exceeded time limit of $(time_limit(r)))"
+        status_string *= " (exceeded time limit of $(time_limit(r)))"
     end
 
-    @printf io " * Status: %s\n\n" converged(r) ? "success" : failure_string
+    @printf io " * Status: %s\n\n" status_string
 
     @printf io " * Candidate solution\n"
     @printf io "    Final objective value:     %e\n" minimum(r)

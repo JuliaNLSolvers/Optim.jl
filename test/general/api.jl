@@ -180,3 +180,12 @@ end
     Optim.x_lower_trace(res)
     Optim.x_upper_trace(res)
 end
+
+@testset "#948" begin
+ res1 = optimize(OnceDifferentiable(t -> t[1]^2, (t, g) -> fill!(g, NaN), [0.0]), [0.0])
+ res2 = optimize(OnceDifferentiable(t -> t[1]^2, (t, g) -> fill!(g, Inf), [0.0]), [0.0])
+ res3 = optimize(OnceDifferentiable(t -> Inf, [0.0]), [0.0])
+ @test !Optim.converged(res1)
+ @test !Optim.converged(res2)
+ @test !Optim.converged(res3)
+end

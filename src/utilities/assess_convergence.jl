@@ -8,6 +8,8 @@ x_abschange(x, x_previous) = maxdiff(x, x_previous)
 x_relchange(state) = x_relchange(state.x, state.x_previous)
 x_relchange(x, x_previous) = maxdiff(x, x_previous)/maximum(abs, x)
 
+g_residual(d, state) = g_residual(d)
+g_residual(d, state::NelderMeadState) = state.nm_x
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
 g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
 g_residual(g) = maximum(abs, g)
