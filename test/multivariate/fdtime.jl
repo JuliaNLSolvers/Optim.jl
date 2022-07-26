@@ -3,9 +3,9 @@
     fd_input_tuple(method::Optim.SecondOrderOptimizer, prob) = ((MVP.objective(prob),), (MVP.objective(prob), MVP.gradient(prob)))
 
     function run_optim_fd_tests(method;
-                                problems = ("Extended Rosenbrock", "Large Polynomial", "Powell",
+                                problems = ("Extended Rosenbrock", "Powell",
                                             "Paraboloid Diagonal", "Penalty Function I",),
-                                show_name = false, show_trace = false,
+                                show_name = true, show_trace = false,
                                 show_time = false, show_res = false)
 
         # Loop over unconstrained problems
