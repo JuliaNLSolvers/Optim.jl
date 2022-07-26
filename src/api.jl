@@ -76,7 +76,13 @@ h_calls(d) = first(d.h_calls)
 h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
 converged(r::UnivariateOptimizationResults) = r.converged
-converged(r::MultivariateOptimizationResults) = r.x_converged || r.f_converged || r.g_converged
+function converged(r::MultivariateOptimizationResults)
+    conv_flags = r.x_converged || r.f_converged || r.g_converged
+    x_isfinite = !isfinite(x_abschange(r)) || !isfinite(x_relchange(r))
+    f_isfinite = !isfinite(f_abschange(r)) || !isfinite(f_relchange(r))
+    g_isfinite = !isfinite(g_residual(r))
+    return conv_flags && all(!,(x_isfinite, f_isfinite, g_isfinite))
+end
 x_converged(r::OptimizationResults) = error("x_converged is not implemented for $(summary(r)).")
 x_converged(r::MultivariateOptimizationResults) = r.x_converged
 f_converged(r::OptimizationResults) = error("f_converged is not implemented for $(summary(r)).")
