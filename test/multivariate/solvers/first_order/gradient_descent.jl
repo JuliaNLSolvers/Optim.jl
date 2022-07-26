@@ -10,7 +10,7 @@
                                             ("Extended Rosenbrock", 12000),
                                             ("Fletcher-Powell", 10000),
                                             ("Paraboloid Diagonal", 10000),
-                                            ("Paraboloid Random Matrix", 10000),
+                                            ("Paraboloid Random Matrix", 20000),
                                             ("Penalty Function I", 10000),),
                     show_name = debug_printing)
 
