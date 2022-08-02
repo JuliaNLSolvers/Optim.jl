@@ -14,3 +14,18 @@
     @test ( length(unique(Optim.g_norm_trace(res))) != 1 || length(unique(Optim.f_trace(res))) != 1 ) && issorted(Optim.f_trace(res)[end:1])
     @test !(res.trace[1].metadata["centroid"] === res.trace[end].metadata["centroid"])
 end
+
+@testset "Nelder Mead specific traces" begin
+  f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+  x0 = [0.0,0.0]
+  res = optimize(f, x0, NelderMead(),Optim.Options(store_trace=true,trace_simplex=true,extended_trace=true,iterations=2,show_trace=true))
+
+  @test Optim.centroid_trace(res)[1] == [0.0125, 0.0]
+  @test Optim.centroid_trace(res)[end] == [0.021875000000000002, -0.00625]
+
+  @test_broken Optim.simplex_trace(res)[1] == [[0.0, 0.0], [0.025, 0.0], [0.0, 0.025]]
+  @test Optim.simplex_trace(res)[end] ==[[0.065625, -0.018750000000000003], [0.025, 0.0], [0.018750000000000003, -0.0125]]
+
+  @test_broken Optim.simplex_value_trace(res)[1] == [1.0, 0.9506640624999999, 1.0625] 
+  @test Optim.simplex_value_trace(res)[end] == [0.9262175083160399, 0.9506640624999999, 0.9793678283691405]
+end
