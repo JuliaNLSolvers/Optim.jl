@@ -17,7 +17,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0"
+Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0, 4"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13"
 ForwardDiff = "0.10"
 LineSearches = "7.0.1"
@@ -30,8 +30,8 @@ StatsBase = "0.29, 0.30, 0.31, 0.32, 0.33"
 julia = "1.2"
 
 [extras]
-LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 NLSolversBase = "d41bc354-129a-5804-8e4c-c37616107c6c"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
