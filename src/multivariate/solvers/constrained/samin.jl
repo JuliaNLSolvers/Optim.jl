@@ -75,6 +75,10 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     nacc = 0 # total accepted trials
     t = 2.0 # temperature - will initially rise or fall to cover parameter space. Then it will fall
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
+    x_converged = false
+    f_converged = false
+    x_absΔ = Inf
+    f_absΔ = Inf
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
@@ -89,14 +93,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             error("samin: initial parameter $(i) out of bounds")
         end
     end
-
     options.show_trace && print_header(method)
     iteration = 0
     _time = time()
     trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
-
     stopped_by_callback = false
-
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     while converge==0
         # statistics to report at each temp change, set back to zero
@@ -186,14 +187,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 f_calls(d), #iteration,
                                                                 f_calls(d) >= options.iterations, #iteration == options.iterations,
                                                                 false, # x_converged,
+                                                                x_tol,#T(options.x_tol),
                                                                 0.0,#T(options.x_tol),
-                                                                0.0,#T(options.x_tol),
-                                                                NaN,# x_abschange(state),
+                                                                x_absΔ,# x_abschange(state),
                                                                 NaN,# x_abschange(state),
                                                                 false,# f_converged,
+                                                                f_tol,#T(options.f_tol),
                                                                 0.0,#T(options.f_tol),
-                                                                0.0,#T(options.f_tol),
-                                                                NaN,#f_abschange(d, state),
+                                                                f_absΔ,#f_abschange(d, state),
                                                                 NaN,#f_abschange(d, state),
                                                                 false,#g_converged,
                                                                 0.0,#T(options.g_tol),
@@ -256,22 +257,21 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if coverage_ok
             # last value close enough to last neps values?
             fstar[1] = f_old
-            test = 0
-            for i=1:neps
-                test += (abs(f_old - fstar[i]) > f_tol)
-            end
-            test = (test > 0) # if different from zero, function conv. has failed
-            # last value close enough to overall best?
-            if (((fopt - f_old) <= f_tol) && (!test))
+            f_absΔ = abs.(fopt - f_old) # close enough to best so far?
+            if all((abs.(fopt .- fstar)) .< f_tol) # within to for last neps trials? 
+                f_converged = true
                 # check for bound narrow enough for parameter convergence
-                for i = 1:n
-                    if (bounds[i] > x_tol)
-                        converge = 0 # no conv. if bounds too wide
-                        break
-                    else
-                        converge = 1
-                    end
+                if any(bounds .> x_tol)
+                    x_converged = false
+                    converge = 0 # no conv. if bounds too wide
+                    break
+                else
+                    converge = 1
+                    x_converged = true
+                    x_absΔ = maximum(bounds)
                 end
+            else
+                f_converged = false
             end
             # check if optimal point is near boundary of parameter space, and change message if so
             if (converge == 1) && (lnobds > 0)
@@ -304,9 +304,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             # Reduce temperature, record current function value in the
             # list of last "neps" values, and loop again
             t *= rt
-            for i = neps:-1:2
-                fstar[i] = fstar[i-1]
-            end
+            pushfirst!(fstar, f_old)
+            fstar = fstar[1:end-1]
             f_old = copy(fopt)
             x = copy(xopt)
         else  # coverage not ok - increase temperature quickly to expand search area
@@ -324,16 +323,16 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             fopt, # pick_best_f(f_incr_pick, state, d),
                                             f_calls(d), #iteration,
                                             f_calls(d) >= options.iterations, #iteration == options.iterations,
-                                            false, # x_converged,
+                                            x_converged, # x_converged,
+                                            x_tol,#T(options.x_tol),
                                             0.0,#T(options.x_tol),
-                                            0.0,#T(options.x_tol),
-                                            NaN,# x_abschange(state),
-                                            NaN,# x_abschange(state),
-                                            false,# f_converged,
+                                            x_absΔ ,# x_abschange(state),
+                                            NaN,# x_relchange(state),
+                                            f_converged, # f_converged,
+                                            f_tol,#T(options.f_tol),
                                             0.0,#T(options.f_tol),
-                                            0.0,#T(options.f_tol),
-                                            NaN,#f_abschange(d, state),
-                                            NaN,#f_abschange(d, state),
+                                            f_absΔ ,#f_abschange(d, state),
+                                            NaN,#f_relchange(d, state),
                                             false,#g_converged,
                                             0.0,#T(options.g_tol),
                                             NaN,#g_residual(d),
