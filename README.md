@@ -9,8 +9,9 @@ For direct contact to the maintainer, you can reach out directly to pkofod on [s
 
 | **Documentation**  | **Build Status** | **Social** | **Reference to cite** |
 |:-:|:-:|:-:|:-:|
-| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-img]][build-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
-|  |[![Build Status][winbuild-img]][winbuild-url] |  |  |
+| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-linux-img]][build-linux-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
+|  |[![Build Status][build-mac-img]][build-mac-url] |  |  |
+|  |[![Build Status][build-windows-img]][build-windows-url] |  |  |
 | |[![Codecov branch][cov-img]][cov-url]  || |
 
 # Optimization
@@ -146,11 +147,14 @@ If you use `Optim.jl` in your work, please cite the following.
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://julianlsolvers.github.io/Optim.jl/stable
 
-[build-img]: https://travis-ci.org/JuliaNLSolvers/Optim.jl.svg?branch=master
-[build-url]: https://travis-ci.org/JuliaNLSolvers/Optim.jl
+[build-linux-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml/badge.svg
+[build-linux-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml
 
-[winbuild-img]: https://ci.appveyor.com/api/projects/status/prp8ygfp4rr9tafe?svg=true
-[winbuild-url]: https://ci.appveyor.com/project/blegat/optim-jl
+[build-windows-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml/badge.svg
+[build-windows-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml
+
+[build-mac-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml/badge.svg
+[build-mac-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml
 
 [cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000
 [cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl
