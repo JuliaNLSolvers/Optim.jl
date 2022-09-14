@@ -2,7 +2,7 @@ log_temperature(t) = 1 / log(t)
 
 constant_temperature(t) = 1.0
 
-function default_neighbor!(x::AbstractArray{T}, x_proposal::AbstractArray) where T
+function default_neighbor!(x_proposal::AbstractArray, x::AbstractArray{T}) where T
     @assert size(x) == size(x_proposal)
     for i in 1:length(x)
         @inbounds x_proposal[i] = x[i] + T(randn()) # workaround because all types might not have randn
@@ -74,7 +74,7 @@ function update_state!(nd, state::SimulatedAnnealingState{Tx, T}, method::Simula
     t = method.temperature(state.iteration)
 
     # Randomly generate a neighbor of our current state
-    method.neighbor!(state.x_current, state.x_proposal)
+    method.neighbor!(state.x_proposal, state.x_current)
 
     # Evaluate the cost function at the proposed state
     state.f_proposal = value(nd, state.x_proposal)
