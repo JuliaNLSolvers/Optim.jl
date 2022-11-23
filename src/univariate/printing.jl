@@ -4,7 +4,7 @@ function print_header(method::Brent)
 end
 
 
-function Base.show(io::IO, trace::OptimizationTrace{<:Real, Brent}) where T
+function Base.show(io::IO, trace::OptimizationTrace{<:Real, Brent})
     @printf io "Iter     Function value      Lower bound       Upper bound       Best bound\n"
     @printf io "------   --------------      -----------       -----------       ----------\n"
     for state in trace.states
