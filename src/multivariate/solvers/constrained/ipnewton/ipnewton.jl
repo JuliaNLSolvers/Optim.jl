@@ -375,7 +375,7 @@ function is_smaller_eps(ref, step)
 end
 
 function default_options(method::ConstrainedOptimizer)
-    Dict(:allow_f_increases => true, :successive_f_tol => 2)
+    (; allow_f_increases = true, successive_f_tol = 2)
 end
 
 
