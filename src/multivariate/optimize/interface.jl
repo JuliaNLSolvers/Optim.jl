@@ -16,7 +16,7 @@ function check_kwargs(kwargs, fallback_method)
     kws, method
 end
 
-default_options(method::AbstractOptimizer) = Dict{Symbol, Any}()
+default_options(method::AbstractOptimizer) = NamedTuple()
 
 function add_default_opts!(opts::Dict{Symbol, Any}, method::AbstractOptimizer)
     for newopt in default_options(method)
@@ -83,6 +83,7 @@ promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool
 function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
     method = fallback_method(f)
     checked_kwargs, method = check_kwargs(kwargs, method)
+
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     add_default_opts!(checked_kwargs, method)
 

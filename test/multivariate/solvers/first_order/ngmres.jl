@@ -20,7 +20,7 @@ using Optim, Test
     @test solver.nlpreconopts.allow_f_increases == true
 
     defopts = Optim.default_options(solver)
-    @test defopts == Dict(:allow_f_increases => true)
+    @test defopts == (; allow_f_increases = true)
 
     state = Optim.initial_state(solver, Optim.Options(;defopts...), df,
                                 prob.initial_x)
@@ -96,7 +96,7 @@ end
     @test solver.nlpreconopts.allow_f_increases == true
 
     defopts = Optim.default_options(solver)
-    @test defopts == Dict(:allow_f_increases => true)
+    @test defopts == (;allow_f_increases = true)
 
     state = Optim.initial_state(solver, Optim.Options(;defopts...), df,
                                 prob.initial_x)

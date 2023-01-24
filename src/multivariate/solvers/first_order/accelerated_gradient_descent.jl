@@ -78,5 +78,5 @@ function trace!(tr, d, state, iteration, method::AcceleratedGradientDescent, opt
 end
 
 function default_options(method::AcceleratedGradientDescent)
-    Dict(:allow_f_increases => true)
+    (; allow_f_increases = true)
 end

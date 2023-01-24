@@ -457,5 +457,5 @@ end
 # end
 
 function default_options(method::AbstractNGMRES)
-    Dict(:allow_f_increases => true)
+    (;allow_f_increases = true)
 end
