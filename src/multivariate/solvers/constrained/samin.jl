@@ -77,14 +77,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
     x_converged = false
     f_converged = false
-    x_absΔ = Inf
-    f_absΔ = Inf
+    x_absΔ::Float64 = Inf
+    f_absΔ::Float64 = Inf
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
     xopt = copy(x)
-    f_old = value!(d, x)
-    fopt = copy(f_old) # give it something to compare to
+    f_old::Float64 = value!(d, x)
+    fopt::Float64 = copy(f_old) # give it something to compare to
     details = [f_calls(d) t fopt xopt']
     bounds = ub - lb
     # check for out-of-bounds starting values
