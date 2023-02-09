@@ -85,7 +85,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     xopt = copy(x)
     f_old::Float64 = value!(d, x)
     fopt::Float64 = copy(f_old) # give it something to compare to
-    details = vcat(Float64(f_calls(d)), t, fopt, xopt)'
+    details = [f_calls(d) t fopt xopt']
     bounds = ub - lb
     # check for out-of-bounds starting values
     for i = 1:n
@@ -139,7 +139,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                 fopt = f_proposal
                                 d.F = f_proposal
                                 nnew +=1
-                                details = [details; vcat(Float64(f_calls(d)), t, f_proposal, xp)']
+                                details = [details; [f_calls(d) t f_proposal xp']]
                             end
                         # If the point is higher, use the Metropolis criteria to decide on
                         # acceptance or rejection.
