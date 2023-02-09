@@ -109,7 +109,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         # repeat nt times then adjust temperature
         for m = 1:nt
             # repeat ns times, then adjust bounds
-            nacp = zeros(n)
+            nacp = fill(0,n)
             for j = 1:ns
                 # generate new point by taking last and adding a random value
                 # to each of elements, in turn
