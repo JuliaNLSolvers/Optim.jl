@@ -109,7 +109,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         # repeat nt times then adjust temperature
         for m = 1:nt
             # repeat ns times, then adjust bounds
-            nacp = fill(0,n)
+            nacp = zeros(n)
             for j = 1:ns
                 # generate new point by taking last and adding a random value
                 # to each of elements, in turn
@@ -131,7 +131,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                             x = copy(xp)
                             f_old = f_proposal
                             nacc += 1 # total number of acceptances
-                            nacp[h] += 1 # acceptances for this parameter
+                            nacp[h] += 1. # acceptances for this parameter
                             nup += 1
                             #  If lower than any other point, record as new optimum
                             if f_proposal < fopt
@@ -150,7 +150,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                 f_old = copy(f_proposal)
                                 d.F = f_proposal
                                 nacc += 1
-                                nacp[h] += 1
+                                nacp[h] += 1.
                                 ndown += 1
                             else
                                 nrej += 1
@@ -226,7 +226,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     test += 1 # make sure coverage check passes for the fixed parameters
                 end
             end
-            nacp = 0 # set back to zero
+            nacp = zeros(n) # set back to zero
             # check if we cover parameter space, if we have yet to do so
             if !coverage_ok
                 coverage_ok = (test == n)
