@@ -125,7 +125,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                             lnobds += 1
                         end
                         # Evaluate function at new point
-                        f_proposal = value(d, xp)
+                        f_proposal::Float64 = value(d, xp)
                         #  Accept the new point if the function value decreases
                         if (f_proposal <= f_old)
                             x = copy(xp)
