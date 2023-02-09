@@ -317,6 +317,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
+    @show f_converged
+    @show x_converged
     return MultivariateOptimizationResults(method,
                                             x0,# initial_x,
                                             xopt, #pick_best_x(f_incr_pick, state),
