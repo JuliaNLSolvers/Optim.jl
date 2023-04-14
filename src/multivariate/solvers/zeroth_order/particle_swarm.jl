@@ -1,6 +1,6 @@
-struct ParticleSwarm{T} <: ZerothOrderOptimizer
-    lower::Vector{T}
-    upper::Vector{T}
+struct ParticleSwarm{Tl, Tu} <: ZerothOrderOptimizer
+    lower::Tl
+    upper::Tu
     n_particles::Int
 end
 
@@ -14,7 +14,7 @@ ParticleSwarm(; lower = [],
 ```
 
 The constructor takes 3 keywords:
-* `lower = []`, a vector of lower bounds, unbounded below if empty or `Inf`'s
+* `lower = []`, a vector of lower bounds, unbounded below if empty or `-Inf`'s
 * `upper = []`, a vector of upper bounds, unbounded above if empty or `Inf`'s
 * `n_particles = 0`, the number of particles in the swarm, defaults to least three
 
@@ -22,7 +22,7 @@ The constructor takes 3 keywords:
 The Particle Swarm implementation in Optim.jl is the so-called Adaptive Particle
 Swarm algorithm in [1]. It attempts to improve global coverage and convergence by
 switching between four evolutionary states: exploration, exploitation, convergence,
-and jumping out. In the jumping out state it intentially tries to take the best
+and jumping out. In the jumping out state it intentionally tries to take the best
 particle and move it away from its (potentially and probably) local optimum, to
 improve the ability to find a global optimum. Of course, this comes a the cost
 of slower convergence, but hopefully converges to the global optimum as a result.
@@ -73,21 +73,27 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
     where one randomly chosen parameter is modified. This helps
     the swarm jumping out of local minima.
     =#
+
     n = length(initial_x)
-    # TODO do we even need a lower((n) upper    ) that is different from method.lower(upper)
-    # do some checks on input parameters
-    @assert length(method.lower) == length(method.upper) "lower and upper must be of same length."
-    if length(method.lower) > 0
-        lower = copyto!(similar(initial_x), copy(method.lower))
-        upper = copyto!(similar(initial_x), copy(method.upper))
-        limit_search_space = true
-        @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
-        @assert all(upper .> lower) "upper must be greater than lower"
-    else
-        lower = copy(initial_x)
-        upper = copy(initial_x)
+    if isempty(method.lower)
         limit_search_space = false
+        lower = copy(initial_x)
+        lower .= -Inf
+    else
+        lower = method.lower
+        limit_search_space = true
     end
+    if isempty(method.upper)
+        upper = copy(initial_x)
+        upper .= Inf
+        # limit_search_space is whatever it was for lower
+    else
+        upper = method.upper
+        limit_search_space = true
+    end
+
+    @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
+    @assert all(upper .> lower) "upper must be greater than lower"
 
     if method.n_particles > 0
         if method.n_particles < 3
