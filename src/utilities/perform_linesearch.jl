@@ -10,7 +10,8 @@ _alphaguess(a::Number) = LineSearches.InitialStatic(alpha=a)
 # the last evaluation (we basically just always do it)
 function reset_search_direction!(state, d, method::BFGS)
     if method.initial_invH === nothing
-        n, T = length(state.x), typeof(state.invH)
+        n = length(state.x)
+        T = typeof(state.invH)
         if method.initial_stepnorm === nothing
             state.invH .= T(I, n, n)
         else
