@@ -139,3 +139,8 @@ end
     @test res.method isa Optim.KrylovTrustRegion
 
 end
+
+@testset "issue 1041 and 1038" begin
+    g(x) = -exp(-(x-pi)^2)
+    @test_nowarn optimize(x->g(x[1]),[0.],method = AcceleratedGradientDescent())
+end
