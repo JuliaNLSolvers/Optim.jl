@@ -19,7 +19,7 @@ end
 default_options(method::AbstractOptimizer) = NamedTuple()
 
 function add_default_opts!(opts::Dict{Symbol, Any}, method::AbstractOptimizer)
-    for newopt in default_options(method)
+    for newopt in pairs(default_options(method))
         if !haskey(opts, newopt[1])
             opts[newopt[1]] = newopt[2]
         end
