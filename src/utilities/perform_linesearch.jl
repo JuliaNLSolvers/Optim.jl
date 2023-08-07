@@ -9,15 +9,14 @@ _alphaguess(a::Number) = LineSearches.InitialStatic(alpha=a)
 # project_tangent! here, because we already did that inplace on gradient(d) after
 # the last evaluation (we basically just always do it)
 function reset_search_direction!(state, d, method::BFGS)
-    n = length(state.x)
-    T = eltype(state.x)
-
     if method.initial_invH === nothing
+        n = length(state.x)
+        T = typeof(state.invH)
         if method.initial_stepnorm === nothing
-            state.invH .= Matrix{T}(I, n, n)
+            state.invH .= T(I, n, n)
         else
             initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
-            state.invH.= Matrix{T}(initial_scale*I, n, n)
+            state.invH.= T(initial_scale*I, n, n)
         end
     else
         state.invH .= method.initial_invH(state.x)
