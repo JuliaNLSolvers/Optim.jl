@@ -57,10 +57,6 @@ function optimize(d::D, initial_x::Tx, method::M,
         end
         if !(method isa NewtonTrustRegion)
             update_g!(d, state, method) # TODO: Should this be `update_fg!`?
-            if !all(isfinite, gradient(d))
-                @warn "Terminated early due to NaN in gradient."
-                break
-            end
         end
         x_converged, f_converged,
         g_converged, f_increased = assess_convergence(state, d, options)
@@ -70,10 +66,6 @@ function optimize(d::D, initial_x::Tx, method::M,
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
         if !(converged && method isa Newton) && !(method isa NewtonTrustRegion)
             update_h!(d, state, method) # only relevant if not converged
-            if !all(isfinite, hessian(d))
-                @warn "Terminated early due to NaN in Hessian."
-                break
-            end
         end
         if tracing
             # update trace; callbacks can stop routine early by returning true
@@ -100,6 +92,15 @@ function optimize(d::D, initial_x::Tx, method::M,
             if state.delta ≤ method.delta_min
                 stopped = true
             end
+        end
+
+        if g_calls(d) > 0 && !all(isfinite, gradient(d))
+            @warn "Terminated early due to NaN in gradient."
+            break
+        end
+        if h_calls(d) > 0 && !all(isfinite, hessian(d))
+            @warn "Terminated early due to NaN in Hessian."
+            break
         end
     end # while
 
