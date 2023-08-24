@@ -93,7 +93,7 @@ We can do this using closures. For example, suppose that the observed data is fo
 
 ```jl
 x = [1.0, 2.0, 3.0]
-y = 1.0 + 2.0 * x + [-0.3, 0.3, -0.1]
+y = 1.0 .+ 2.0 * x .+ [-0.3, 0.3, -0.1]
 ```
 
 With the `x` and `y` variables present in the current scope, we can define a closure that is aware of the observed data, but depends only on the model parameters:
