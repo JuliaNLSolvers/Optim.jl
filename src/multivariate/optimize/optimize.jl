@@ -95,11 +95,11 @@ function optimize(d::D, initial_x::Tx, method::M,
         end
 
         if g_calls(d) > 0 && !all(isfinite, gradient(d))
-            @warn "Terminated early due to NaN in gradient."
+            options.show_trace && @warn "Terminated early due to NaN in gradient."
             break
         end
         if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
-            @warn "Terminated early due to NaN in Hessian."
+            options.show_trace && @warn "Terminated early due to NaN in Hessian."
             break
         end
     end # while
