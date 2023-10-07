@@ -13,10 +13,10 @@ function reset_search_direction!(state, d, method::BFGS)
         n = length(state.x)
         T = typeof(state.invH)
         if method.initial_stepnorm === nothing
-            state.invH .= T(I, n, n)
+            state.invH .= _init_identity_matrix(state.x)
         else
             initial_scale = method.initial_stepnorm * inv(norm(gradient(d), Inf))
-            state.invH.= T(initial_scale*I, n, n)
+            state.invH .= _init_identity_matrix(state.x, initial_scale)
         end
     else
         state.invH .= method.initial_invH(state.x)
