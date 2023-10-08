@@ -1,5 +1,4 @@
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 mutable struct Optimizer{T} <: MOI.AbstractOptimizer
     # Problem data.
@@ -145,7 +144,7 @@ function MOI.is_empty(model::Optimizer)
 end
 
 function MOI.add_variable(model::Optimizer{T}) where {T}
-    push!(model.starting_values, NaN)
+    push!(model.starting_values, nothing)
     return MOI.add_variable(model.variables)
 end
 function MOI.is_valid(model::Optimizer, index::Union{MOI.VariableIndex,MOI.ConstraintIndex})
@@ -224,7 +223,6 @@ function sym_sparse_to_dense!(A, I::Vector, nzval)
 end
 
 function MOI.optimize!(model::Optimizer{T}) where {T}
-    num_variables = length(model.starting_values)
     backend = MOI.Nonlinear.SparseReverseMode()
     vars = MOI.get(model.variables, MOI.ListOfVariableIndices())
     evaluator = MOI.Nonlinear.Evaluator(model.nlp_model, backend, vars)
