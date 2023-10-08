@@ -143,6 +143,24 @@ If you use `Optim.jl` in your work, please cite the following.
 }
 ```
 
+# Use with JuMP
+
+We can use Optim.jl with [JuMP.jl](https://github.com/jump-dev/JuMP.jl).
+
+This can be done using the `Optim.Optimizer` object. Here is how to create a JuMP
+model that uses Optim as the solver to minimize the rosenbrock function.
+
+```julia
+using JuMP, Optim
+
+model = Model(Optim.Optimizer)
+set_optimizer_attribute(model, "method", BFGS())
+
+@variable(model, x[1:2])
+@NLobjective(model, (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2)
+optimize!(model)
+```
+
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://julianlsolvers.github.io/Optim.jl/latest
 
