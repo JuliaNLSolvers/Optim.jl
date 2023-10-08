@@ -226,7 +226,7 @@ end
 function MOI.optimize!(model::Optimizer{T}) where {T}
     num_variables = length(model.starting_values)
     backend = MOI.Nonlinear.SparseReverseMode()
-    vars = MOI.get(model, MOI.ListOfVariableIndices())
+    vars = MOI.get(model.variables, MOI.ListOfVariableIndices())
     evaluator = MOI.Nonlinear.Evaluator(model.nlp_model, backend, vars)
     nlp_data = MOI.NLPBlockData(evaluator)
 
@@ -280,7 +280,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
 
     initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
-    has_bounds = any(i -> isfinite(model.variables.lower[i]) || isfinite(model.variables.upper[i]), vars)
+    has_bounds = any(vi -> isfinite(model.variables.lower[vi.value]) || isfinite(model.variables.upper[vi.value]), vars)
     if has_bounds
         lower = [model.variables.lower[vi.value] for vi in vars]
         upper = [model.variables.upper[vi.value] for vi in vars]
