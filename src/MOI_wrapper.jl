@@ -279,10 +279,6 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
     has_bounds = any(vi -> isfinite(model.variables.lower[vi.value]) || isfinite(model.variables.upper[vi.value]), vars)
-    if has_bounds
-        lower = [model.variables.lower[vi.value] for vi in vars]
-        upper = [model.variables.upper[vi.value] for vi in vars]
-    end
     if !nl_constrained && has_bounds && !(method isa IPNewton)
         options = Options(; options...)
         model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace = true)
@@ -317,11 +313,12 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
                 end
                 c = TwiceDifferentiableConstraints(
                     c!, jacobian!, con_hessian!,
-                    lower, upper, lc, uc,
+                    model.variables.lower, model.variables.upper, lc, uc,
                 )
             else
                 @assert has_bounds
-                c = TwiceDifferentiableConstraints(lower, upper)
+                c = TwiceDifferentiableConstraints(
+                    model.variables.lower, model.variables.upper)
             end
             model.results = optimize(d, c, initial_x, method, options)
         else
