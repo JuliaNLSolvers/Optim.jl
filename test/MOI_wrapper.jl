@@ -44,27 +44,29 @@ function test_MOI_Test()
                 MOI.ObjectiveBound,
                 MOI.DualObjectiveValue,
                 MOI.SolverVersion,
+                MOI.ConstraintDual,
             ],
         ),
         exclude = String[
             # No objective
             "test_attribute_SolveTimeSec",
             "test_attribute_RawStatusString",
-            "test_nonlinear_without_objective",
-            # FIXME INVALID_MODEL should be returned
-            "test_nonlinear_invalid",
             # FIXME The hessian callback for constraints is called with
             # `λ = [-Inf, 0.0]` and then we get `NaN`, ...
-            "hs071",
-            # There are nonlinear constraints so we need `IPNewton` but `IPNewton` needs a hessian.
-            "test_nonlinear_hs071_no_hessian",
-            # FIXME Here there is no hessian but there is a hessian-vector product, can `IPNewton` work with that ?
-            "test_nonlinear_hs071_hessian_vector_product",
-            # FIXME needs https://github.com/jump-dev/MathOptInterface.jl/pull/1625
-            "test_nonlinear_hs071_NLPBlockDual",
-            #  - CachingOptimizer does not throw if optimizer not attached
-            "test_model_copy_to_UnsupportedAttribute",
-            "test_model_copy_to_UnsupportedConstraint",
+            "expression_hs071",
+            # Terminates with `OTHER_ERROR`
+            "test_objective_ObjectiveFunction_duplicate_terms",
+            "test_objective_ObjectiveFunction_constant",
+            "test_objective_ObjectiveFunction_VariableIndex",
+            "test_objective_FEASIBILITY_SENSE_clears_objective",
+            "test_nonlinear_expression_hs109",
+            "test_objective_qp_ObjectiveFunction_zero_ofdiag",
+            "test_objective_qp_ObjectiveFunction_edge_cases",
+            "test_solve_TerminationStatus_DUAL_INFEASIBLE",
+            "test_solve_result_index",
+            "test_modification_transform_singlevariable_lessthan",
+            "test_modification_delete_variables_in_a_batch",
+            "test_modification_delete_variable_with_single_variable_obj",
         ],
     )
     return

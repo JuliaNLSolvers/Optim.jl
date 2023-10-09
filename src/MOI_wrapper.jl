@@ -255,11 +255,15 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     method = model.method
     nl_constrained = !isempty(nlp_data.constraint_bounds)
     features = MOI.features_available(evaluator)
+    has_bounds = any(vi -> isfinite(model.variables.lower[vi.value]) || isfinite(model.variables.upper[vi.value]), vars)
     if method === nothing
         if nl_constrained
             method = IPNewton()
         elseif :Grad in features
-            if :Hess in features
+            # FIXME `fallback_method(f, g!, h!)` returns `Newton` but if there
+            # are variable bounds, `Newton` is not supported. On the other hand,
+            # `fallback_method(f, g!)` returns `LBFGS` which is supported if `has_bounds`.
+            if :Hess in features && !has_bounds
                 method = fallback_method(f, g!, h!)
             else
                 method = fallback_method(f, g!)
@@ -278,7 +282,6 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
 
     initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
-    has_bounds = any(vi -> isfinite(model.variables.lower[vi.value]) || isfinite(model.variables.upper[vi.value]), vars)
     if !nl_constrained && has_bounds && !(method isa IPNewton)
         options = Options(; options...)
         model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace = true)
