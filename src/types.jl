@@ -256,6 +256,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     @printf io " * Status: %s\n\n" status_string
 
     @printf io " * Candidate solution\n"
+    println(io, "    Minimizer:     ", minimizer(r))
     @printf io "    Final objective value:     %e\n" minimum(r)
     @printf io "\n"
 
