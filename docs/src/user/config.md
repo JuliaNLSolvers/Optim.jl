@@ -41,7 +41,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `x_tol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `f_tol`: Relative tolerance in changes of the objective value. Defaults to `0.0`.
 * `g_tol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
-* `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited). Does not count the objective calls in gradient and hessian estimation.
+* `f_calls_limit`: A soft upper limit on the number of direct objective calls. Defaults to `0` (unlimited). Does not count the objective calls in gradient and hessian estimation.
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
 * `allow_f_increases`: Allow steps that increase the objective value. Defaults to `false`. Note that, when setting this to `true`, the last iterate will be returned as the minimizer even if the objective increased.
