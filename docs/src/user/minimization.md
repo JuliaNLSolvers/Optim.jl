@@ -152,7 +152,7 @@ If we want to manually specify this method, we use the usual syntax as for multi
     optimize(f, lower, upper, GoldenSection(); kwargs...)
 ```
 
-Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace` and `extended_trace` options, the following options are also available:
+Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace`, `show_warnings`, and `extended_trace` options, the following options are also available:
 
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.

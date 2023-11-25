@@ -49,6 +49,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `stdout`? Defaults to `false`.
 * `extended_trace`: Save additional information. Solver dependent. Defaults to `false`.
+* `show_warnings`: Should warnings due to NaNs or Inf be shown? Defaults to `true`.
 * `trace_simplex`: Include the full simplex in the trace for `NelderMead`. Defaults to `false`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
 * `callback`: A function to be called during tracing. A return value of `true` stops the `optimize` call. The callback function is called every `show_every`th iteration. If `store_trace` is false, the argument to the callback is of the type  [`OptimizationState`](https://github.com/JuliaNLSolvers/Optim.jl/blob/a1035134ca1f3ebe855f1cde034e32683178225a/src/types.jl#L155), describing the state of the current iteration. If `store_trace` is true, the argument is a list of all the states from the first iteration to the current. 
@@ -73,7 +74,8 @@ res = optimize(f, g!,
                Optim.Options(g_tol = 1e-12,
                              iterations = 10,
                              store_trace = true,
-                             show_trace = false))
+                             show_trace = false,
+                             show_warnings = true))
 ```
 Another interface is also available, based directly on keywords:
 ```jl
@@ -83,7 +85,8 @@ res = optimize(f, g!,
                g_tol = 1e-12,
                iterations = 10,
                store_trace = true,
-               show_trace = false)
+               show_trace = false,
+               show_warnings = true)
 ```
 Notice the need to specify the method using a keyword if this syntax is used.
 This approach might be deprecated in the future, and as a result we recommend writing code

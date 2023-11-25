@@ -15,6 +15,7 @@ function optimize(
         store_trace::Bool = false,
         show_trace::Bool = false,
         extended_trace::Bool = false,
+        show_warnings::Bool = true,
         callback = nothing,
         show_every::Integer = 1,
         linesearch = LineSearches.HagerZhang{T}(),
@@ -25,7 +26,8 @@ function optimize(
         optimizer = ConjugateGradient,
         optimizer_o = Options(store_trace = store_trace,
                                           show_trace = show_trace,
-                                          extended_trace = extended_trace),
+                                          extended_trace = extended_trace,
+                                          show_warnings = show_warnings),
         nargs...) where T<:AbstractFloat
         if !has_deprecated_fminbox[]
             @warn("Fminbox with the optimizer keyword is deprecated, construct Fminbox{optimizer}() and pass it to optimize(...) instead.")
@@ -37,6 +39,7 @@ function optimize(
                  store_trace=store_trace,
                  show_trace=show_trace,
                  extended_trace=extended_trace,
+                 show_warnings=show_warnings,
                  show_every=show_every,
                  callback=callback,
                  linesearch=linesearch,
