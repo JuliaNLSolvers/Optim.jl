@@ -25,6 +25,7 @@ function optimize(f, x_lower::T, x_upper::T,
      iterations::Integer = 1_000,
      store_trace::Bool = false,
      show_trace::Bool = false,
+     show_warnings::Bool = true,
      callback = nothing,
      show_every = 1,
      extended_trace::Bool = false,
@@ -33,7 +34,7 @@ function optimize(f, x_lower::T, x_upper::T,
         error("x_lower must be less than x_upper")
     end
     t0 = time()
-    options = (store_trace=store_trace, show_trace=show_trace, show_every=show_every, callback=callback)
+    options = (store_trace=store_trace, show_trace=show_trace, show_warnings=show_warnings, show_every=show_every, callback=callback)
     # Save for later
     initial_lower = x_lower
     initial_upper = x_upper
