@@ -157,7 +157,7 @@ model = Model(Optim.Optimizer)
 set_optimizer_attribute(model, "method", BFGS())
 
 @variable(model, x[1:2])
-@NLobjective(model, (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2)
+@objective(model, (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2)
 optimize!(model)
 ```
 
