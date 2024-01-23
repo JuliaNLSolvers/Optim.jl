@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Nonlinear constrained optimization · Optim</title><meta name="title" content="Nonlinear constrained optimization · Optim"/><meta property="og:title" content="Nonlinear constrained optimization · Optim"/><meta property="twitter:title" content="Nonlinear constrained optimization · Optim"/><meta name="description" content="Documentation for Optim."/><meta property="og:description" content="Documentation for Optim."/><meta property="twitter:description" content="Documentation for Optim."/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Optim</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Optim.jl</a></li><li><a class="tocitem" href="../../../LICENSE/">-</a></li><li><a class="tocitem" href="../../../algo/">Solvers</a></li><li><a class="tocitem" href="../../../algo/brent/">Brent&#39;s Method</a></li><li><a class="tocitem" href="../../../algo/cg/">Conjugate Gradient Descent</a></li><li><a class="tocitem" href="../../../algo/complex/">Complex optimization</a></li><li><a class="tocitem" href="../../../algo/goldensection/">Golden Section</a></li><li><a class="tocitem" href="../../../algo/gradientdescent/">Gradient Descent</a></li><li><a class="tocitem" href="../../../algo/ipnewton/">Interior point Newton method</a></li><li><a class="tocitem" href="../../../algo/lbfgs/">(L-)BFGS</a></li><li><a class="tocitem" href="../../../algo/linesearch/">Line search</a></li><li><a class="tocitem" href="../../../algo/manifolds/">Manifold optimization</a></li><li><a class="tocitem" href="../../../algo/nelder_mead/">Nelder-Mead</a></li><li><a class="tocitem" href="../../../algo/newton/">Newton&#39;s Method</a></li><li><a class="tocitem" href="../../../algo/newton_trust_region/">Newton&#39;s Method With a Trust Region</a></li><li><a class="tocitem" href="../../../algo/ngmres/">Acceleration methods: N-GMRES and O-ACCEL</a></li><li><a class="tocitem" href="../../../algo/particle_swarm/">Particle Swarm</a></li><li><a class="tocitem" href="../../../algo/precondition/">Preconditioning</a></li><li><a class="tocitem" href="../../../algo/samin/">SAMIN</a></li><li><a class="tocitem" href="../../../algo/simulated_annealing/">Simulated Annealing</a></li><li><a class="tocitem" href="../../../dev/">-</a></li><li><a class="tocitem" href="../../../dev/contributing/">-</a></li><li class="is-active"><a class="tocitem" href>Nonlinear constrained optimization</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Constrained-optimization-with-IPNewton"><span>Constrained optimization with <code>IPNewton</code></span></a></li><li><a class="tocitem" href="#Optimization-interface"><span>Optimization interface</span></a></li><li><a class="tocitem" href="#Box-minimization"><span>Box minimization</span></a></li><li><a class="tocitem" href="#Defining-&quot;unconstrained&quot;-problems"><span>Defining &quot;unconstrained&quot; problems</span></a></li><li><a class="tocitem" href="#Generic-nonlinear-constraints"><span>Generic nonlinear constraints</span></a></li><li><a class="tocitem" href="#Multiple-constraints"><span>Multiple constraints</span></a></li><li><a class="tocitem" href="#ipnewton_basics-plain-program"><span>Plain Program</span></a></li></ul></li><li><a class="tocitem" href="../maxlikenlm/">Maximum Likelihood Estimation: The Normal Linear Model</a></li><li><a class="tocitem" href="../rasch/">Conditional Maximum Likelihood for the Rasch Model</a></li><li><a class="tocitem" href="../../../user/algochoice/">-</a></li><li><a class="tocitem" href="../../../user/config/">-</a></li><li><a class="tocitem" href="../../../user/gradientsandhessians/">-</a></li><li><a class="tocitem" href="../../../user/minimization/">-</a></li><li><a class="tocitem" href="../../../user/tipsandtricks/">-</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Nonlinear constrained optimization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Nonlinear constrained optimization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl/blob/master/docs/src/examples/ipnewton_basics.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Nonlinear-constrained-optimization"><a class="docs-heading-anchor" href="#Nonlinear-constrained-optimization">Nonlinear constrained optimization</a><a id="Nonlinear-constrained-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Nonlinear-constrained-optimization" title="Permalink"></a></h1><div class="admonition is-success"><header class="admonition-header">Tip</header><div class="admonition-body"><p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/devexamples/generated/ipnewton_basics.ipynb"><code>ipnewton_basics.ipynb</code></a></p></div></div><p>The nonlinear constrained optimization interface in <code>Optim</code> assumes that the user can write the optimization problem in the following way.</p><p class="math-container">\[\min_{x\in\mathbb{R}^n} f(x) \quad \text{such that}\\
+l_x \leq \phantom{c(}x\phantom{)} \leq u_x \\
+l_c \leq c(x) \leq u_c.\]</p><p>For equality constraints on <span>$x_j$</span> or <span>$c(x)_j$</span> you set those particular entries of bounds to be equal, <span>$l_j=u_j$</span>. Likewise, setting <span>$l_j=-\infty$</span> or <span>$u_j=\infty$</span> means that the constraint is unbounded from below or above respectively.</p><h1 id="Constrained-optimization-with-IPNewton"><a class="docs-heading-anchor" href="#Constrained-optimization-with-IPNewton">Constrained optimization with <code>IPNewton</code></a><a id="Constrained-optimization-with-IPNewton-1"></a><a class="docs-heading-anchor-permalink" href="#Constrained-optimization-with-IPNewton" title="Permalink"></a></h1><p>We will go through examples on how to use the constraints interface with the interior-point Newton optimization algorithm <a href="../../../algo/ipnewton/">IPNewton</a>.</p><p>Throughout these examples we work with the standard Rosenbrock function. The objective and its derivatives are given by</p><pre><code class="language-julia hljs">fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+
+function fun_grad!(g, x)
+g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+g[2] = 200.0 * (x[2] - x[1]^2)
+end
+
+function fun_hess!(h, x)
+h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+h[1, 2] = -400.0 * x[1]
+h[2, 1] = -400.0 * x[1]
+h[2, 2] = 200.0
+end;</code></pre><h2 id="Optimization-interface"><a class="docs-heading-anchor" href="#Optimization-interface">Optimization interface</a><a id="Optimization-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Optimization-interface" title="Permalink"></a></h2><p>To solve a constrained optimization problem we call the <code>optimize</code> method</p><pre><code class="language-julia hljs">optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::Tx, method::ConstrainedOptimizer, options::Options)</code></pre><p>We can create instances of <code>AbstractObjective</code> and <code>AbstractConstraints</code> using the types <code>TwiceDifferentiable</code> and <code>TwiceDifferentiableConstraints</code> from the package <code>NLSolversBase.jl</code>.</p><h2 id="Box-minimization"><a class="docs-heading-anchor" href="#Box-minimization">Box minimization</a><a id="Box-minimization-1"></a><a class="docs-heading-anchor-permalink" href="#Box-minimization" title="Permalink"></a></h2><p>We want to optimize the Rosenbrock function in the box <span>$-0.5 \leq x \leq 0.5$</span>, starting from the point <span>$x_0=(0,0)$</span>. Box constraints are defined using, for example, <code>TwiceDifferentiableConstraints(lx, ux)</code>.</p><pre><code class="language-julia hljs">x0 = [0.0, 0.0]
+df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
+
+lx = [-0.5, -0.5]; ux = [0.5, 0.5]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     2.500000e-01
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 4.39e-10 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 8.79e-10 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 1.00e+00 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    43
+    f(x) calls:    68
+    ∇f(x) calls:   68
+</code></pre><p>Like the rest of Optim, you can also use <code>autodiff=:forward</code> and just pass in <code>fun</code>.</p><p>If we only want to set lower bounds, use <code>ux = fill(Inf, 2)</code></p><pre><code class="language-julia hljs">ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success (objective increased between iterations)
+
+ * Candidate solution
+    Final objective value:     7.987239e-20
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 3.54e-10 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 3.54e-10 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 2.40e-19 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 3.00e+00 ≰ 0.0e+00
+    |g(x)|                 = 8.83e-09 ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    35
+    f(x) calls:    63
+    ∇f(x) calls:   63
+</code></pre><h2 id="Defining-&quot;unconstrained&quot;-problems"><a class="docs-heading-anchor" href="#Defining-&quot;unconstrained&quot;-problems">Defining &quot;unconstrained&quot; problems</a><a id="Defining-&quot;unconstrained&quot;-problems-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-&quot;unconstrained&quot;-problems" title="Permalink"></a></h2><p>An unconstrained problem can be defined either by passing <code>Inf</code> bounds or empty arrays. <strong>Note that we must pass the correct type information to the empty <code>lx</code> and <code>ux</code></strong></p><pre><code class="language-julia hljs">lx = fill(-Inf, 2); ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = Float64[]; ux = Float64[]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     5.998937e-19
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 1.50e-09 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 1.50e-09 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 1.80e-18 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 3.00e+00 ≰ 0.0e+00
+    |g(x)|                 = 7.92e-09 ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    34
+    f(x) calls:    63
+    ∇f(x) calls:   63
+</code></pre><h2 id="Generic-nonlinear-constraints"><a class="docs-heading-anchor" href="#Generic-nonlinear-constraints">Generic nonlinear constraints</a><a id="Generic-nonlinear-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Generic-nonlinear-constraints" title="Permalink"></a></h2><p>We now consider the Rosenbrock problem with a constraint on</p><p class="math-container">\[   c(x)_1 = x_1^2 + x_2^2.\]</p><p>We pass the information about the constraints to <code>optimize</code> by defining a vector function <code>c(x)</code> and its Jacobian <code>J(x)</code>.</p><p>The Hessian information is treated differently, by considering the Lagrangian of the corresponding slack-variable transformed optimization problem. This is similar to how the <a href="https://github.com/JuliaSmoothOptimizers/CUTEst.jl">CUTEst library</a> works. Let <span>$H_j(x)$</span> represent the Hessian of the <span>$j$</span>th component <span>$c(x)_j$</span> of the generic constraints. and <span>$\lambda_j$</span> the corresponding dual variable in the Lagrangian. Then we want the <code>constraint</code> object to add the values of <span>$H_j(x)$</span> to the Hessian of the objective, weighted by <span>$\lambda_j$</span>.</p><p>The Julian form for the supplied function <span>$c(x)$</span> and the derivative information is then added in the following way.</p><pre><code class="language-julia hljs">con_c!(c, x) = (c[1] = x[1]^2 + x[2]^2; c)
+function con_jacobian!(J, x)
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    J
+end
+function con_h!(h, x, λ)
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+end;</code></pre><p><strong>Note that <code>con_h!</code> adds the <code>λ</code>-weighted Hessian value of each element of <code>c(x)</code> to the Hessian of <code>fun</code>.</strong></p><p>We can then optimize the Rosenbrock function inside the ball of radius <span>$0.5$</span>.</p><pre><code class="language-julia hljs">lx = Float64[]; ux = Float64[]
+lc = [-Inf]; uc = [0.5^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     2.966216e-01
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 0.00e+00 ≤ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 7.71e-01 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    28
+    f(x) calls:    109
+    ∇f(x) calls:   109
+</code></pre><p>We can add a lower bound on the constraint, and thus optimize the objective on the annulus with inner and outer radii <span>$0.1$</span> and <span>$0.5$</span> respectively.</p><pre><code class="language-julia hljs">lc = [0.1^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     2.966216e-01
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 0.00e+00 ≤ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 7.71e-01 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    34
+    f(x) calls:    158
+    ∇f(x) calls:   158
+</code></pre><p><strong>Note that the algorithm warns that the Initial guess is not an interior point.</strong> <code>IPNewton</code> can often handle this, however, if the initial guess is such that <code>c(x) = u_c</code>, then the algorithm currently fails. We may fix this in the future.</p><h2 id="Multiple-constraints"><a class="docs-heading-anchor" href="#Multiple-constraints">Multiple constraints</a><a id="Multiple-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-constraints" title="Permalink"></a></h2><p>The following example illustrates how to add an additional constraint. In particular, we add a constraint function</p><p class="math-container">\[   c(x)_2 = x_2\sin(x_1)-x_1\]</p><pre><code class="language-julia hljs">function con2_c!(c, x)
+    c[1] = x[1]^2 + x[2]^2     ## First constraint
+    c[2] = x[2]*sin(x[1])-x[1] ## Second constraint
+    c
+end
+function con2_jacobian!(J, x)
+    # First constraint
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    # Second constraint
+    J[2,1] = x[2]*cos(x[1])-1.0
+    J[2,2] = sin(x[1])
+    J
+end
+function con2_h!(h, x, λ)
+    # First constraint
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+    # Second constraint
+    h[1,1] += λ[2]*x[2]*-sin(x[1])
+    h[1,2] += λ[2]*cos(x[1])
+    # Symmetrize h
+    h[2,1]  = h[1,2]
+    h
+end;</code></pre><p>We generate the constraint objects and call <code>IPNewton</code> with initial guess <span>$x_0 = (0.25,0.25)$</span>.</p><pre><code class="language-julia hljs">x0 = [0.25, 0.25]
+lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
+dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     1.000000e+00
+
+ * Found with
+    Algorithm:     Interior Point Newton
+
+ * Convergence measures
+    |x - x&#39;|               = 6.90e-10 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 3.55e+08 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 1.38e-09 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 1.38e-09 ≰ 0.0e+00
+    |g(x)|                 = 2.00e+00 ≰ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    29
+    f(x) calls:    215
+    ∇f(x) calls:   215
+</code></pre><h2 id="ipnewton_basics-plain-program"><a class="docs-heading-anchor" href="#ipnewton_basics-plain-program">Plain Program</a><a id="ipnewton_basics-plain-program-1"></a><a class="docs-heading-anchor-permalink" href="#ipnewton_basics-plain-program" title="Permalink"></a></h2><p>Below follows a version of the program without any comments. The file is also available here: <a href="../ipnewton_basics.jl">ipnewton_basics.jl</a></p><pre><code class="language-julia hljs">using Optim, NLSolversBase #hide
+import NLSolversBase: clear! #hide
+
+fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+
+function fun_grad!(g, x)
+g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+g[2] = 200.0 * (x[2] - x[1]^2)
+end
+
+function fun_hess!(h, x)
+h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+h[1, 2] = -400.0 * x[1]
+h[2, 1] = -400.0 * x[1]
+h[2, 2] = 200.0
+end;
+
+x0 = [0.0, 0.0]
+df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
+
+lx = [-0.5, -0.5]; ux = [0.5, 0.5]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+res = optimize(df, dfc, x0, IPNewton())
+
+ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = fill(-Inf, 2); ux = fill(Inf, 2)
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+lx = Float64[]; ux = Float64[]
+dfc = TwiceDifferentiableConstraints(lx, ux)
+
+clear!(df)
+res = optimize(df, dfc, x0, IPNewton())
+
+con_c!(c, x) = (c[1] = x[1]^2 + x[2]^2; c)
+function con_jacobian!(J, x)
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    J
+end
+function con_h!(h, x, λ)
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+end;
+
+lx = Float64[]; ux = Float64[]
+lc = [-Inf]; uc = [0.5^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+
+lc = [0.1^2]
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+
+function con2_c!(c, x)
+    c[1] = x[1]^2 + x[2]^2     ## First constraint
+    c[2] = x[2]*sin(x[1])-x[1] ## Second constraint
+    c
+end
+function con2_jacobian!(J, x)
+    # First constraint
+    J[1,1] = 2*x[1]
+    J[1,2] = 2*x[2]
+    # Second constraint
+    J[2,1] = x[2]*cos(x[1])-1.0
+    J[2,2] = sin(x[1])
+    J
+end
+function con2_h!(h, x, λ)
+    # First constraint
+    h[1,1] += λ[1]*2
+    h[2,2] += λ[1]*2
+    # Second constraint
+    h[1,1] += λ[2]*x[2]*-sin(x[1])
+    h[1,2] += λ[2]*cos(x[1])
+    # Symmetrize h
+    h[2,1]  = h[1,2]
+    h
+end;
+
+x0 = [0.25, 0.25]
+lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
+dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
+                                     lx, ux, lc, uc)
+res = optimize(df, dfc, x0, IPNewton())
+
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../dev/contributing/">« -</a><a class="docs-footer-nextpage" href="../maxlikenlm/">Maximum Likelihood Estimation: The Normal Linear Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Tuesday 23 January 2024 11:45">Tuesday 23 January 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
