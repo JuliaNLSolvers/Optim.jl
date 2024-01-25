@@ -1,3 +1,4 @@
+using DocumenterMarkdown
 if Base.HOME_PROJECT[] !== nothing
     # JuliaLang/julia/pull/28625
     Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
@@ -19,6 +20,6 @@ makedocs(
 )
 
 deploydocs(
-  #  deps = Deps.pip("pygments", "mkdocs", "python-markdown-math", "mkdocs-windmill"),
+    deps = Deps.pip("pygments", "mkdocs", "python-markdown-math", "mkdocs-windmill"),
     repo = "github.com/JuliaNLSolvers/Optim.jl.git",
 )
