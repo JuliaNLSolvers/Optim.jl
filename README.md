@@ -7,12 +7,12 @@ Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) fami
 
 For direct contact to the maintainer, you can reach out directly to pkofod on [slack](https://julialang.org/slack/).
 
-| **Documentation**  | **Build Status** | **Social** | **Reference to cite** |
-|:-:|:-:|:-:|:-:|
-| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-linux-img]][build-linux-url] | [![][gitter-img]][gitter-url]| [![JOSS][joss-img]][joss-url] |
-|  |[![Build Status][build-mac-img]][build-mac-url] |  |  |
-|  |[![Build Status][build-windows-img]][build-windows-url] |  |  |
-| |[![Codecov branch][cov-img]][cov-url]  || |
+| **Documentation**  | **Build Status** | **Reference to cite** |
+|:-:|:-:|:-:|
+| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-linux-img]][build-linux-url] | [![JOSS][joss-img]][joss-url] |
+|  |[![Build Status][build-mac-img]][build-mac-url] |  | 
+|  |[![Build Status][build-windows-img]][build-windows-url] |  | 
+| |[![Codecov branch][cov-img]][cov-url]  | |
 
 # Optimization
 
