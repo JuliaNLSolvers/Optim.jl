@@ -21,6 +21,9 @@ end
 AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999) =
     AdaMax(alpha, beta_mean, beta_var, Flat())
 Base.summary(::AdaMax) = "AdaMax"
+function default_options(method::AdaMax)
+    (; allow_f_increases = true, iterations=10_000)
+end
 
 
 mutable struct AdaMaxState{Tx, T, Tz, Tm, Tu, Ti} <: AbstractOptimizerState

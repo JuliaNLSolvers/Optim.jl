@@ -65,6 +65,7 @@ multivariate_tests = [
     "solvers/constrained/samin",
     ## first order
     "solvers/first_order/accelerated_gradient_descent",
+    "solvers/first_order/adam_adamax",
     "solvers/first_order/bfgs",
     "solvers/first_order/cg",
     "solvers/first_order/gradient_descent",
