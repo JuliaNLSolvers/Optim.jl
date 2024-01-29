@@ -19,7 +19,7 @@
              )
     run_optim_tests(Adam();
                     skip = skip,
-                    show_name = true)
+                    show_name = debug_printing)
 end
 @testset "AdaMax" begin
     f(x) = x[1]^4
@@ -42,6 +42,6 @@ end
              )
     run_optim_tests(AdaMax();
                     skip = skip,
-                    show_name=true,
+                    show_name=debug_printing,
                     iteration_exceptions = (("Trigonometric", 1_000_000,),))
 end

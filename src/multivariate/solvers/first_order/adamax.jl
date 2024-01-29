@@ -1,9 +1,8 @@
 """
-    AdaMax(; alpha=0.002, beta_mean=0.9, beta_var=0.999)
-# Adam
+# AdaMax
 ## Constructor
 ```julia
-    AdaMax(; alpha=0.002, beta_mean=0.9, beta_var=0.999)
+    AdaMax(; alpha=0.002, beta_mean=0.9, beta_var=0.999, epsilon=1e-8)
 ```
 ## Description
 AdaMax is a gradient based optimizer that choses its search direction by building up estimates of the first two moments of the gradient vector. This makes it suitable for problems with a stochastic objective and thus gradient. The method is introduced in [1] where the related Adam method is also introduced, see `?Adam` for more information on that method.
@@ -16,22 +15,22 @@ struct AdaMax{T,Tm} <: FirstOrderOptimizer
     α::T
     β₁::T
     β₂::T
+    ϵ::T
     manifold::Tm
 end
-AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999) =
-    AdaMax(alpha, beta_mean, beta_var, Flat())
+AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999, epsilon = sqrt(eps(Float64))) =
+    AdaMax(alpha, beta_mean, beta_var, epsilon, Flat())
 Base.summary(::AdaMax) = "AdaMax"
 function default_options(method::AdaMax)
     (; allow_f_increases = true, iterations=10_000)
 end
 
 
-mutable struct AdaMaxState{Tx, T, Tz, Tm, Tu, Ti} <: AbstractOptimizerState
+mutable struct AdaMaxState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
     s::Tx
-    z::Tz
     m::Tm
     u::Tu
     iter::Ti
@@ -45,9 +44,8 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
     value_gradient!!(d, initial_x)
     α, β₁, β₂ = method.α, method.β₁, method.β₂
    
-    z = copy(initial_x)
     m = copy(gradient(d))
-    u = fill(zero(m[1]^2), length(m))
+    u = zero(m)
     a = 1 - β₁
     iter = 0
 
@@ -55,7 +53,6 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
                          copy(initial_x), # Maintain previous state in state.x_previous
                          real(T(NaN)), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         z,
                          m,
                          u,
                          iter)
@@ -64,22 +61,14 @@ end
 function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where T
     state.iter = state.iter+1
     value_gradient!(d, state.x)
-    α, β₁, β₂ = method.α, method.β₁, method.β₂
+    α, β₁, β₂, ϵ = method.α, method.β₁, method.β₂, method.ϵ
     a = 1 - β₁
-    m, u, z = state.m, state.u, state.z
+    m, u = state.m, state.u
 
     m .= β₁ .* m .+ a .* gradient(d)
-    u .= max.(β₂ .* u, abs.(gradient(d)))
-    z .= z .- (α ./ (1 - β₁^state.iter)) .* m ./ u
-    for _i in eachindex(z)
-        # since m and u start at 0, this can happen if the initial gradient is exactly 0
-        # rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-        # optimize(rosenbrock, zeros(2), AdaMax(), Optim.Options(iterations=10000))
-        if isnan(z[_i])
-            z[_i] = state.x[_i]
-        end
-    end
-    state.x .= z
+    u .= max.(ϵ, max.(β₂ .* u, abs.(gradient(d)))) # I know it's not there in the paper but if m and u start at 0 for some element... NaN occurs next
+
+    @. state.x = state.x - (α / (1 - β₁^state.iter)) * m / u
     # Update current position # x = x + alpha * s
     false # break on linesearch error
 end
