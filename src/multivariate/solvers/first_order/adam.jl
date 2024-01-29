@@ -17,6 +17,7 @@ struct Adam{T, Tm} <: FirstOrderOptimizer
     ϵ::T
     manifold::Tm
 end
+# could use epsilon = T->sqrt(eps(T)) and input the promoted type
 Adam(; alpha = 0.0001, beta_mean = 0.9, beta_var = 0.999, epsilon = 1e-8) =
     Adam(alpha, beta_mean, beta_var, epsilon, Flat())
 Base.summary(::Adam) = "Adam"
@@ -24,12 +25,11 @@ function default_options(method::Adam)
     (; allow_f_increases = true, iterations=10_000)
 end
 
-mutable struct AdamState{Tx, T, Tz, Tm, Tu, Ti} <: AbstractOptimizerState
+mutable struct AdamState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
     s::Tx
-    z::Tz
     m::Tm
     u::Tu
     iter::Ti
@@ -43,7 +43,6 @@ function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) wh
     value_gradient!!(d, initial_x)
     α, β₁, β₂ = method.α, method.β₁, method.β₂
    
-    z = copy(initial_x)
     m = copy(gradient(d))
     u = zero(m)
     a = 1 - β₁
@@ -53,7 +52,6 @@ function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) wh
                          copy(initial_x), # Maintain previous state in state.x_previous
                          real(T(NaN)), # Store previous f in state.f_x_previous
                          similar(initial_x), # Maintain current search direction in state.s
-                         z,
                          m,
                          u,
                          iter)
@@ -66,7 +64,7 @@ function update_state!(d, state::AdamState{T}, method::Adam) where T
     a = 1 - β₁
     b = 1 - β₂
 
-    m, u, z = state.m, state.u, state.z
+    m, u = state.m, state.u
     v = u
     m .= β₁ .* m .+ a .* gradient(d)
     v .= β₂ .* v .+ b .* gradient(d) .^ 2
@@ -74,17 +72,7 @@ function update_state!(d, state::AdamState{T}, method::Adam) where T
     # v̂ = v./(1-β₂^state.iter)
     #@. z = z - α*m̂/(sqrt(v̂+ϵ))
     αₜ = α * sqrt(1 - β₂^state.iter) / (1 - β₁^state.iter)
-    @. z = z - αₜ * m / (sqrt(v) + ϵ)
-
-    for _i in eachindex(z)
-        # since m and u start at 0, this can happen if the initial gradient is exactly 0
-        # rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-        # optimize(rosenbrock, zeros(2), Adam(), Optim.Options(iterations=10000))
-        if isnan(z[_i])
-            z[_i] = state.x[_i]
-        end
-    end
-    state.x .= z
+    @. state.x = state.x - αₜ * m / (sqrt(v) + ϵ)
     # Update current position # x = x + alpha * s
     false # break on linesearch error
 end
