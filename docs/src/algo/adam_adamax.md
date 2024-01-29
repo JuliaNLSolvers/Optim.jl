@@ -1,5 +1,5 @@
 # Adam and AdaMax
-This page contains information about Adam and AdaMax.
+This page contains information about Adam and AdaMax. Notice, that these algorithms do not use line search algorithms, so some tuning of `alpha` may be necessary to obtain sufficiently fast convergence on your specific problem.
 ## Constructors
 ```julia
 Adam(;  alpha=0.0001,
