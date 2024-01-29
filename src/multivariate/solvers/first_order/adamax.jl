@@ -47,7 +47,7 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
    
     z = copy(initial_x)
     m = copy(gradient(d))
-    u = fill(zero(m[1]^2), length(m))
+    u = zeros(m)
     a = 1 - β₁
     iter = 0
 
