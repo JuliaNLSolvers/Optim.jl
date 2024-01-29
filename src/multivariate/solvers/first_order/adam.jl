@@ -73,12 +73,8 @@ function update_state!(d, state::AdamState{T}, method::Adam) where T
     #  m̂ = m./(1-β₁^state.iter)
     # v̂ = v./(1-β₂^state.iter)
     #@. z = z - α*m̂/(sqrt(v̂+ϵ))
-    @. z = z - α*m/(1-β₁^state.iter)/(sqrt(v./(1-β₂^state.iter)+ϵ))
-
-    # not quite the same because epsilon is in the sqrt
-    # not sure where I got this from
-    #    αₜ = α * sqrt(1 - β₂^state.iter) / (1 - β₁^state.iter)
-    #    z .= z .- αₜ .* m ./ (sqrt.(v .+ ϵ) )
+    αₜ = α * sqrt(1 - β₂^state.iter) / (1 - β₁^state.iter)
+    @. z = z - αₜ * m / (sqrt(v) + ϵ)
 
     for _i in eachindex(z)
         # since m and u start at 0, this can happen if the initial gradient is exactly 0
