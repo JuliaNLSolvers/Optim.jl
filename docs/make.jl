@@ -40,6 +40,7 @@ makedocs(
              "Particle Swarm" => "algo/particle_swarm.md",
              ],
         "Gradient Required" => [
+             "Adam and AdaMax" => "adam_adamax.md",
              "Conjugate Gradient" => "algo/cg.md",
              "Gradient Descent" => "algo/gradientdescent.md",
              "(L-)BFGS" => "algo/lbfgs.md",
