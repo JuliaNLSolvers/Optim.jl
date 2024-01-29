@@ -45,7 +45,7 @@ function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) wh
    
     z = copy(initial_x)
     m = copy(gradient(d))
-    u = zeros(m)
+    u = zero(m)
     a = 1 - β₁
     iter = 0
 
