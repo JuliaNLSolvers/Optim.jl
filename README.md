@@ -1,73 +1,87 @@
-Optim.jl
-========
+# Optim.jl
+
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://julianlsolvers.github.io/Optim.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://julianlsolvers.github.io/Optim.jl/dev)
+[![Build Status](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml/badge.svg)](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml)
+[![Build Status](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml/badge.svg)](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml)
+[![Build Status](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml/badge.svg)](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml)
+[![Codecov branch](https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg)](https://codecov.io/gh/JuliaNLSolvers/Optim.jl)
+[![JOSS](http://joss.theoj.org/papers/10.21105/joss.00615/status.svg)](https://doi.org/10.21105/joss.00615)
 
 Univariate and multivariate optimization in Julia.
 
-Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers) family.
+Optim.jl is part of the [JuliaNLSolvers](https://github.com/JuliaNLSolvers)
+family.
 
-For direct contact to the maintainer, you can reach out directly to pkofod on [slack](https://julialang.org/slack/).
+## Help and support
 
-| **Documentation**  | **Build Status** | **Reference to cite** |
-|:-:|:-:|:-:|
-| [![][docs-stable-img]][docs-stable-url]  | [![Build Status][build-linux-img]][build-linux-url] | [![JOSS][joss-img]][joss-url] |
-|  |[![Build Status][build-mac-img]][build-mac-url] |  | 
-|  |[![Build Status][build-windows-img]][build-windows-url] |  | 
-| |[![Codecov branch][cov-img]][cov-url]  | |
+For help and support, please post on the [Optimization (Mathematical)](https://discourse.julialang.org/c/domain/opt/13)
+section of the Julia discourse or the `#math-optimization` channel of the Julia [slack](https://julialang.org/slack/).
 
-# Optimization
+## Installation
 
-Optim.jl is a package for univariate and multivariate optimization of functions.
-A typical example of the usage of Optim.jl is
+Install `Optim.jl` using the Julia package manager:
 ```julia
-using Optim
-rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-result = optimize(rosenbrock, zeros(2), BFGS())
+import Pkg
+Pkg.add("Optim")
 ```
-This minimizes the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function)
 
-$$
-f(x, y) = (a - x)^2 + b(y - x^2)^2
-$$
+## Documentation
 
-with $a = 1$, $b = 100$ and the initial values $x=0$, $y=0$.
-The minimum is at $(a,a^2)$.
+The online documentation is available at [https://julianlsolvers.github.io/Optim.jl/stable](https://julianlsolvers.github.io/Optim.jl/stable).
 
-The above code gives the output
-```jlcon
+## Example
 
-* Status: success
+To minimize the [Rosenbrock function](https://en.wikipedia.org/wiki/Rosenbrock_function),
+do:
+```julia
+julia> using Optim
 
-* Candidate solution
-  Minimizer: [1.00e+00, 1.00e+00]
-  Minimum:   5.471433e-17
+julia> rosenbrock(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+rosenbrock (generic function with 1 method)
 
-* Found with
-  Algorithm:     BFGS
-  Initial Point: [0.00e+00, 0.00e+00]
+julia> result = optimize(rosenbrock, zeros(2), BFGS())
+ * Status: success
 
-* Convergence measures
-  |x - x'|               = 3.47e-07 ≰ 0.0e+00
-  |x - x'|/|x'|          = 3.47e-07 ≰ 0.0e+00
-  |f(x) - f(x')|         = 6.59e-14 ≰ 0.0e+00
-  |f(x) - f(x')|/|f(x')| = 1.20e+03 ≰ 0.0e+00
-  |g(x)|                 = 2.33e-09 ≤ 1.0e-08
+ * Candidate solution
+    Final objective value:     5.471433e-17
 
-* Work counters
-  Seconds run:   0  (vs limit Inf)
-  Iterations:    16
-  f(x) calls:    53
-  ∇f(x) calls:   53
+ * Found with
+    Algorithm:     BFGS
+
+ * Convergence measures
+    |x - x'|               = 3.47e-07 ≰ 0.0e+00
+    |x - x'|/|x'|          = 3.47e-07 ≰ 0.0e+00
+    |f(x) - f(x')|         = 6.59e-14 ≰ 0.0e+00
+    |f(x) - f(x')|/|f(x')| = 1.20e+03 ≰ 0.0e+00
+    |g(x)|                 = 2.33e-09 ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    16
+    f(x) calls:    53
+    ∇f(x) calls:   53
+
+julia> Optim.minimizer(result)
+2-element Vector{Float64}:
+ 0.9999999926033423
+ 0.9999999852005355
+
+julia> Optim.minimum(result)
+5.471432670590216e-17
 ```
-To get information on the keywords used to construct method instances, use the Julia REPL help prompt (`?`)
-```
+
+To get information on the keywords used to construct method instances, use the
+Julia REPL help prompt (`?`)
+```julia
 help?> LBFGS
 search: LBFGS
 
-     LBFGS
-    ≡≡≡≡≡≡≡
+  LBFGS
+  ≡≡≡≡≡
 
-     Constructor
-    =============
+  Constructor
+  ===========
 
   LBFGS(; m::Integer = 10,
   alphaguess = LineSearches.InitialStatic(),
@@ -77,58 +91,63 @@ search: LBFGS
   manifold = Flat(),
   scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 
-  LBFGS has two special keywords; the memory length m, and
-  the scaleinvH0 flag. The memory length determines how many
-  previous Hessian approximations to store. When scaleinvH0
-  == true, then the initial guess in the two-loop recursion
-  to approximate the inverse Hessian is the scaled identity,
-  as can be found in Nocedal and Wright (2nd edition) (sec.
-  7.2).
+  LBFGS has two special keywords; the memory length m, and the scaleinvH0 flag.
+  The memory length determines how many previous Hessian approximations to
+  store. When scaleinvH0 == true, then the initial guess in the two-loop
+  recursion to approximate the inverse Hessian is the scaled identity, as can be
+  found in Nocedal and Wright (2nd edition) (sec. 7.2).
 
-  In addition, LBFGS supports preconditioning via the P and
-  precondprep keywords.
+  In addition, LBFGS supports preconditioning via the P and precondprep keywords.
 
-     Description
-    =============
+  Description
+  ===========
 
-  The LBFGS method implements the limited-memory BFGS
-  algorithm as described in Nocedal and Wright (sec. 7.2,
-  2006) and original paper by Liu & Nocedal (1989). It is a
-  quasi-Newton method that updates an approximation to the
+  The LBFGS method implements the limited-memory BFGS algorithm as described in
+  Nocedal and Wright (sec. 7.2, 2006) and original paper by Liu & Nocedal
+  (1989). It is a quasi-Newton method that updates an approximation to the
   Hessian using past approximations as well as the gradient.
 
-     References
-    ============
+  References
+  ==========
 
-    •    Wright, S. J. and J. Nocedal (2006), Numerical
-        optimization, 2nd edition. Springer
+    •  Wright, S. J. and J. Nocedal (2006), Numerical optimization, 2nd edition.
+       Springer
 
-    •    Liu, D. C. and Nocedal, J. (1989). "On the
-        Limited Memory Method for Large Scale
-        Optimization". Mathematical Programming B. 45
-        (3): 503–528
+    •  Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for
+       Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
 ```
 
-# Documentation
-For more details and options, see the documentation
-- [STABLE][docs-stable-url] — most recently tagged version of the documentation.
-- [LATEST][docs-latest-url] — in-development version of the documentation.
+## Use with JuMP
 
-# Installation
-
-The package is a registered package, and can be installed with `Pkg.add`.
+You can use Optim.jl with [JuMP.jl](https://github.com/jump-dev/JuMP.jl) as
+follows:
 
 ```julia
-julia> using Pkg; Pkg.add("Optim")
-```
-or through the `pkg` REPL mode by typing
-```
-] add Optim
+julia> using JuMP, Optim
+
+julia> model = Model(Optim.Optimizer);
+
+julia> set_optimizer_attribute(model, "method", BFGS())
+
+julia> @variable(model, x[1:2]);
+
+julia> @objective(model, Min, (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2)
+(x[1]² - 2 x[1] + 1) + (100.0 * ((-x[1]² + x[2]) ^ 2.0))
+
+julia> optimize!(model)
+
+julia> objective_value(model)
+3.7218241804173566e-21
+
+julia> value.(x)
+2-element Vector{Float64}:
+ 0.9999999999373603
+ 0.99999999986862
 ```
 
-# Citation
+## Citation
 
-If you use `Optim.jl` in your work, please cite the following.
+If you use `Optim.jl` in your work, please cite the following:
 
 ```tex
 @article{mogensen2018optim,
@@ -142,48 +161,3 @@ If you use `Optim.jl` in your work, please cite the following.
   doi     = {10.21105/joss.00615}
 }
 ```
-
-# Use with JuMP
-
-We can use Optim.jl with [JuMP.jl](https://github.com/jump-dev/JuMP.jl).
-
-This can be done using the `Optim.Optimizer` object. Here is how to create a JuMP
-model that uses Optim as the solver to minimize the rosenbrock function.
-
-```julia
-using JuMP, Optim
-
-model = Model(Optim.Optimizer)
-set_optimizer_attribute(model, "method", BFGS())
-
-@variable(model, x[1:2])
-@objective(model, (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2)
-optimize!(model)
-```
-
-[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://julianlsolvers.github.io/Optim.jl/latest
-
-[docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://julianlsolvers.github.io/Optim.jl/stable
-
-[build-linux-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml/badge.svg
-[build-linux-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/linux.yml
-
-[build-windows-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml/badge.svg
-[build-windows-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/windows.yml
-
-[build-mac-img]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml/badge.svg
-[build-mac-url]: https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/mac.yml
-
-[cov-img]: https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg?maxAge=2592000
-[cov-url]: https://codecov.io/gh/JuliaNLSolvers/Optim.jl
-
-[gitter-url]: https://gitter.im/JuliaNLSolvers/Optim.jl
-[gitter-img]: https://badges.gitter.im/JuliaNLSolvers/Optim.jl.svg
-
-[zenodo-url]: https://zenodo.org/badge/latestdoi/3933868
-[zenodo-img]: https://zenodo.org/badge/3933868.svg
-
-[joss-url]: https://doi.org/10.21105/joss.00615
-[joss-img]: http://joss.theoj.org/papers/10.21105/joss.00615/status.svg
