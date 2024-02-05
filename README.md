@@ -16,7 +16,7 @@ family.
 ## Help and support
 
 For help and support, please post on the [Optimization (Mathematical)](https://discourse.julialang.org/c/domain/opt/13)
-section of the Julia discourse or the `#optimization` channel of the Julia [slack](https://julialang.org/slack/).
+section of the Julia discourse or the `#math-optimization` channel of the Julia [slack](https://julialang.org/slack/).
 
 ## Installation
 
