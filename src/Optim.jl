@@ -16,6 +16,7 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
 using Compat
+using Requires: @require     # for retrocompatibility on weak dependencies.
 using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
 
 using PositiveFactorizations # for globalization strategy in Newton
