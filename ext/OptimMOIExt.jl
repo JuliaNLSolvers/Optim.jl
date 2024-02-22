@@ -290,7 +290,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     options = copy(model.options)
     if !nl_constrained && has_bounds && !(method isa IPNewton)
         options = Options(; options...)
-        model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace=true)
+        model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace = true)
     else
         d = promote_objtype(method, initial_x, :finite, true, f, g!, h!)
         add_default_opts!(options, method)
@@ -391,6 +391,4 @@ function MOI.get(
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
     return minimizer(model.results)[ci.value]
-end
-
 end
