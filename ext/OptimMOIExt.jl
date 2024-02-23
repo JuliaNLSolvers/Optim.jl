@@ -11,12 +11,12 @@ mutable struct Optimizer{T} <: MOI.AbstractOptimizer
     sense::MOI.OptimizationSense
 
     # Parameters.
-    method::Union{AbstractOptimizer,Nothing}
+    method::Union{Optim.AbstractOptimizer,Nothing}
     silent::Bool
     options::Dict{Symbol,Any}
 
     # Solution attributes.
-    results::Union{Nothing,MultivariateOptimizationResults}
+    results::Union{Nothing,Optim.MultivariateOptimizationResults}
 end
 
 function Optimizer{T}() where {T}
@@ -109,7 +109,7 @@ function MOI.get(model::Optimizer, ::MOI.TimeLimitSec)
     return get(model.options, Symbol(TIME_LIMIT), nothing)
 end
 
-MOI.Utilities.map_indices(::Function, opt::AbstractOptimizer) = opt
+MOI.Utilities.map_indices(::Function, opt::Optim.AbstractOptimizer) = opt
 
 function MOI.set(model::Optimizer, p::MOI.RawOptimizerAttribute, value)
     if p.name == "method"
@@ -157,7 +157,11 @@ function MOI.is_valid(model::Optimizer, index::Union{MOI.VariableIndex,MOI.Const
     return MOI.is_valid(model.variables, index)
 end
 
-function MOI.add_constraint(model::Optimizer{T}, vi::MOI.VariableIndex, set::BOUNDS{T}) where {T}
+function MOI.add_constraint(
+    model::Optimizer{T},
+    vi::MOI.VariableIndex,
+    set::BOUNDS{T},
+) where {T}
     return MOI.add_constraint(model.variables, vi, set)
 end
 
@@ -193,17 +197,20 @@ function MOI.set(
     return
 end
 
-function requested_features(::ZerothOrderOptimizer, has_constraints)
+function requested_features(::Optim.ZerothOrderOptimizer, has_constraints)
     return Symbol[]
 end
-function requested_features(::FirstOrderOptimizer, has_constraints)
+function requested_features(::Optim.FirstOrderOptimizer, has_constraints)
     features = [:Grad]
     if has_constraints
         push!(features, :Jac)
     end
     return features
 end
-function requested_features(::Union{IPNewton,SecondOrderOptimizer}, has_constraints)
+function requested_features(
+    ::Union{Optim.IPNewton,Optim.SecondOrderOptimizer},
+    has_constraints,
+)
     features = [:Grad, :Hess]
     if has_constraints
         push!(features, :Jac)
@@ -261,7 +268,12 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     method = model.method
     nl_constrained = !isempty(nlp_data.constraint_bounds)
     features = MOI.features_available(evaluator)
-    has_bounds = any(vi -> isfinite(model.variables.lower[vi.value]) || isfinite(model.variables.upper[vi.value]), vars)
+    has_bounds = any(
+        vi ->
+            isfinite(model.variables.lower[vi.value]) ||
+                isfinite(model.variables.upper[vi.value]),
+        vars,
+    )
     if method === nothing
         if nl_constrained
             method = IPNewton()
@@ -290,7 +302,16 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     options = copy(model.options)
     if !nl_constrained && has_bounds && !(method isa IPNewton)
         options = Options(; options...)
-        model.results = optimize(f, g!, model.variables.lower, model.variables.upper, initial_x, Fminbox(method), options; inplace = true)
+        model.results = optimize(
+            f,
+            g!,
+            model.variables.lower,
+            model.variables.upper,
+            initial_x,
+            Fminbox(method),
+            options;
+            inplace = true,
+        )
     else
         d = promote_objtype(method, initial_x, :finite, true, f, g!, h!)
         add_default_opts!(options, method)
@@ -301,10 +322,14 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
                 uc = [b.upper for b in nlp_data.constraint_bounds]
                 c!(c, x) = MOI.eval_constraint(evaluator, c, x)
                 if !(:Jac in features)
-                    error("Nonlinear constraints should be differentiable to be used with Optim.")
+                    error(
+                        "Nonlinear constraints should be differentiable to be used with Optim.",
+                    )
                 end
                 if !(:Hess in features)
-                    error("Nonlinear constraints should be twice differentiable to be used with Optim.")
+                    error(
+                        "Nonlinear constraints should be twice differentiable to be used with Optim.",
+                    )
                 end
                 jacobian_structure = MOI.jacobian_structure(evaluator)
                 J_nzval = zeros(T, length(jacobian_structure))
@@ -321,13 +346,20 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
                     return H
                 end
                 c = TwiceDifferentiableConstraints(
-                    c!, jacobian!, con_hessian!,
-                    model.variables.lower, model.variables.upper, lc, uc,
+                    c!,
+                    jacobian!,
+                    con_hessian!,
+                    model.variables.lower,
+                    model.variables.upper,
+                    lc,
+                    uc,
                 )
             else
                 @assert has_bounds
                 c = TwiceDifferentiableConstraints(
-                    model.variables.lower, model.variables.upper)
+                    model.variables.lower,
+                    model.variables.upper,
+                )
             end
             model.results = optimize(d, c, initial_x, method, options)
         else
@@ -392,3 +424,4 @@ function MOI.get(
     MOI.throw_if_not_valid(model, ci)
     return minimizer(model.results)[ci.value]
 end
+end # module
