@@ -1,6 +1,7 @@
 module OptimMOIExt
 
 using Optim
+using LinearAlgebra
 import MathOptInterface as MOI
 
 mutable struct Optimizer{T} <: MOI.AbstractOptimizer
@@ -43,7 +44,7 @@ function MOI.supports(::Optimizer, ::Union{MOI.ObjectiveSense,MOI.ObjectiveFunct
 end
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 function MOI.supports(::Optimizer, p::MOI.RawOptimizerAttribute)
-    return p.name == "method" || hasfield(Options, Symbol(p.name))
+    return p.name == "method" || hasfield(Optim.Options, Symbol(p.name))
 end
 
 function MOI.supports(::Optimizer, ::MOI.VariablePrimalStart, ::Type{MOI.VariableIndex})
@@ -207,10 +208,7 @@ function requested_features(::Optim.FirstOrderOptimizer, has_constraints)
     end
     return features
 end
-function requested_features(
-    ::Union{Optim.IPNewton,Optim.SecondOrderOptimizer},
-    has_constraints,
-)
+function requested_features(::Union{IPNewton,Optim.SecondOrderOptimizer}, has_constraints)
     features = [:Grad, :Hess]
     if has_constraints
         push!(features, :Jac)
@@ -282,12 +280,12 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
             # are variable bounds, `Newton` is not supported. On the other hand,
             # `fallback_method(f, g!)` returns `LBFGS` which is supported if `has_bounds`.
             if :Hess in features && !has_bounds
-                method = fallback_method(f, g!, h!)
+                method = Optim.fallback_method(f, g!, h!)
             else
-                method = fallback_method(f, g!)
+                method = Optim.fallback_method(f, g!)
             end
         else
-            method = fallback_method(f)
+            method = Optim.fallback_method(f)
         end
     end
     used_features = requested_features(method, nl_constrained)
@@ -301,7 +299,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
     initial_x = starting_value.(model, eachindex(model.starting_values))
     options = copy(model.options)
     if !nl_constrained && has_bounds && !(method isa IPNewton)
-        options = Options(; options...)
+        options = Optim.Options(; options...)
         model.results = optimize(
             f,
             g!,
@@ -313,9 +311,9 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
             inplace = true,
         )
     else
-        d = promote_objtype(method, initial_x, :finite, true, f, g!, h!)
-        add_default_opts!(options, method)
-        options = Options(; options...)
+        d = Optim.promote_objtype(method, initial_x, :finite, true, f, g!, h!)
+        Optim.add_default_opts!(options, method)
+        options = Optim.Options(; options...)
         if nl_constrained || has_bounds
             if nl_constrained
                 lc = [b.lower for b in nlp_data.constraint_bounds]
@@ -372,7 +370,7 @@ end
 function MOI.get(model::Optimizer, ::MOI.TerminationStatus)
     if model.results === nothing
         return MOI.OPTIMIZE_NOT_CALLED
-    elseif converged(model.results)
+    elseif Optim.converged(model.results)
         return MOI.LOCALLY_SOLVED
     else
         return MOI.OTHER_ERROR
@@ -392,7 +390,7 @@ function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
     if !(1 <= attr.result_index <= MOI.get(model, MOI.ResultCount()))
         return MOI.NO_SOLUTION
     end
-    if converged(model.results)
+    if Optim.converged(model.results)
         return MOI.FEASIBLE_POINT
     else
         return MOI.UNKNOWN_RESULT_STATUS
@@ -412,7 +410,7 @@ end
 function MOI.get(model::Optimizer, attr::MOI.VariablePrimal, vi::MOI.VariableIndex)
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, vi)
-    return minimizer(model.results)[vi.value]
+    return Optim.minimizer(model.results)[vi.value]
 end
 
 function MOI.get(
@@ -422,6 +420,6 @@ function MOI.get(
 ) where {T}
     MOI.check_result_index_bounds(model, attr)
     MOI.throw_if_not_valid(model, ci)
-    return minimizer(model.results)[ci.value]
+    return Optim.minimizer(model.results)[ci.value]
 end
 end # module
