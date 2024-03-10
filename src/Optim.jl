@@ -225,11 +225,10 @@ include("maximize.jl")
 "Constructor for a MOI compatible optimizer"
 function moi_optimizer end
 
-if !isdefined(Base, :get_extension)
-    using Requires
-    function __init__()
-        @require MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee" include("../ext/OptimMOIExt.jl")
-    end
+using PackageExtensionCompat
+
+function __init__()
+    @require_extensions
 end
 
 end
