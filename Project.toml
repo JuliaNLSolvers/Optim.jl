@@ -46,6 +46,7 @@ julia = "1.6"
 [extras]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 NLSolversBase = "d41bc354-129a-5804-8e4c-c37616107c6c"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"

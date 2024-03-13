@@ -4,6 +4,17 @@ using Optim
 using LinearAlgebra
 import MathOptInterface as MOI
 
+function __init__()
+    @static if VERSION >= v"1.9"
+        setglobal!(Optim, :Optimizer, Optimizer)
+    else
+        @eval Optim begin
+            using .OptimMOIExt
+            const Optimizer = OptimMOIExt.Optimizer
+        end
+    end
+end
+
 mutable struct Optimizer{T} <: MOI.AbstractOptimizer
     # Problem data.
     variables::MOI.Utilities.VariablesContainer{T}
@@ -33,9 +44,6 @@ function Optimizer{T}() where {T}
     )
 end
 Optimizer() = Optimizer{Float64}()
-
-Optim.moi_optimizer() = Optimizer()
-Optim.moi_optimizer(::Type{T}) where {T} = Optimizer{T}()
 
 MOI.supports(::Optimizer, ::MOI.NLPBlock) = true
 
