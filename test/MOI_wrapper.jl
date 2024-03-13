@@ -17,17 +17,17 @@ function runtests()
 end
 
 function test_SolverName()
-    @test MOI.get(Optim.moi_optimizer(), MOI.SolverName()) == "Optim"
+    @test MOI.get(Optim.Optimizer(), MOI.SolverName()) == "Optim"
 end
 
 function test_supports_incremental_interface()
-    @test MOI.supports_incremental_interface(Optim.moi_optimizer())
+    @test MOI.supports_incremental_interface(Optim.Optimizer())
 end
 
 function test_MOI_Test()
     model = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
-        Optim.moi_optimizer(),
+        Optim.Optimizer(),
     )
     MOI.set(model, MOI.Silent(), true)
     MOI.Test.runtests(
