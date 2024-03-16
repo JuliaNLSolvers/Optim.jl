@@ -6,7 +6,11 @@ import MathOptInterface as MOI
 
 function __init__()
     @static if VERSION >= v"1.9"
-        setglobal!(Optim, :Optimizer, Optimizer)
+        @eval Optim begin
+            OptimMOIExt = Base.get_extension(@__MODULE__, :OptimMOIExt)
+            const Optimizer = OptimMOIExt.Optimizer
+        end
+        # setglobal!(Optim, :Optimizer, Optimizer)
     else
         @eval Optim begin
             using .OptimMOIExt

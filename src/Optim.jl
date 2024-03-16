@@ -221,11 +221,6 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
-# Pre assign Optimizer, to be overloaded in OptimMOIExt.
-if VERSION >= v"1.9"
-  global Optimizer
-end
-
 function __init__()
     @require_extensions
 end
