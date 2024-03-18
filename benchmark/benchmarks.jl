@@ -6,12 +6,8 @@ const SUITE = BenchmarkGroup()
 
 # Example function to optimize
 function gabor(x, phi)
-    # Example from Prince, 2023
-    return (
-        sin(phi[1] + 0.06 * phi[2] * x)
-        *
-        exp(-(phi[1] + 0.06 * phi[1] * x)^2 / 32.0)
-    )
+    # Optimization example from "Understanding Deep Learning"; Prince, 2023
+    return sin(phi[1] + 0.06 * phi[2] * x) * exp(-(phi[1] + 0.06 * phi[1] * x)^2 / 32.0)
 end
 
 tests = (;
@@ -19,8 +15,8 @@ tests = (;
         loss_generator=(X, Y) -> (phi -> sum(i -> (gabor(X[i], phi) - Y[i])^2, eachindex(X, Y))),
         init_phi=() -> [1.0, 6.0],
         true_phi=() -> [0.0, 16.6],
-        domain=() -> LinRange(-15.0, 15.0, 256),
-        options=() -> Optim.Options(iterations=10),
+        domain=() -> LinRange(-15.0, 15.0, 64),
+        options=() -> Optim.Options(iterations=100),
         optimizers=[
             :Adam,
             :AdaMax,
