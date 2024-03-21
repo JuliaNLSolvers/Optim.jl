@@ -34,6 +34,7 @@ using Printf                 # For printing, maybe look into other options
 using FillArrays             # For handling scalar bounds in Fminbox
 
 #using Compat                 # for compatibility across multiple julia versions
+using PackageExtensionCompat # For retrocompatibility on package extensions
 
 # for extensions of functions defined in Base.
 import Base: length, push!, show, getindex, setindex!, maximum, minimum
@@ -220,7 +221,8 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
-# MathOptInterface wrapper
-include("MOI_wrapper.jl")
+function __init__()
+    @require_extensions
+end
 
 end
