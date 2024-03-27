@@ -34,7 +34,6 @@ using Printf                 # For printing, maybe look into other options
 using FillArrays             # For handling scalar bounds in Fminbox
 
 #using Compat                 # for compatibility across multiple julia versions
-using PackageExtensionCompat # For retrocompatibility on package extensions
 
 # for extensions of functions defined in Base.
 import Base: length, push!, show, getindex, setindex!, maximum, minimum
@@ -221,8 +220,14 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
-function __init__()
-    @require_extensions
+@static if !isdefined(Base, :get_extension)
+    include("../ext/OptimMOIExt.jl")
+    using .OptimMOIExt
+    const Optimizer = OptimMOIExt.Optimizer
+else
+    # declare this upfront so that the MathOptInterface extension can assign it
+    # without creating a new global
+    global Optimizer
 end
 
 end
