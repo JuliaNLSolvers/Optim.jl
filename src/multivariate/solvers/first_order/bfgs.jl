@@ -58,11 +58,11 @@ mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-function _init_identity_matrix(x::AbstractArray{T}, scale::T = T(1)) where {T}
+function _init_identity_matrix(x::AbstractArray{T}, scale = T(1)) where {T}
     x_ = reshape(x, :)
     Id = x_ .* x_' .* false
     idxs = diagind(Id)
-    @. @view(Id[idxs]) = scale * true
+    @. @view(Id[idxs]) = T(scale) * true
     return Id
 end
 
