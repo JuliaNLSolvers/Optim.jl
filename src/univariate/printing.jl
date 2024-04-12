@@ -39,7 +39,16 @@ function Base.show(io::IO, t::OptimizationState{<:Real, GoldenSection})
 end
 
 function Base.show(io::IO, r::UnivariateOptimizationResults)
+
+    status_string = ""
+    if time_run(r) > time_limit(r)
+        status_string *= "failure (exceeded time limit of $(time_limit(r)))"
+    else 
+        status_string = "success"
+    end
+
     @printf io "Results of Optimization Algorithm\n"
+    @printf io " * Status: %s\n" status_string
     @printf io " * Algorithm: %s\n" summary(r)
     @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
     @printf io " * Minimizer: %e\n" minimizer(r)
