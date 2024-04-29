@@ -32,6 +32,18 @@
     Optim.optimize(d2, initial_x, LBFGS())
 
     Optim.optimize(f, initial_x, NelderMead())
+    ne_res = Optim.optimize(f, initial_x, NelderMead(), Optim.Options(store_trace=true,))
+    @test_throws ErrorException Optim.simplex_trace(ne_res)
+    @test_throws ErrorException Optim.simplex_value_trace(ne_res)
+    @test_throws ErrorException Optim.centroid_trace(ne_res)
+    ne_res2 = Optim.optimize(f, initial_x, NelderMead(), Optim.Options(store_trace=true,trace_simplex=true))
+    Optim.simplex_trace(ne_res2)
+    Optim.simplex_value_trace(ne_res2)
+    @test_throws ErrorException Optim.centroid_trace(ne_res2)
+    ne_res3 = Optim.optimize(f, initial_x, NelderMead(), Optim.Options(store_trace=true,extended_trace=true,trace_simplex=true))
+    Optim.simplex_trace(ne_res3)
+    Optim.simplex_value_trace(ne_res3)
+    Optim.centroid_trace(ne_res3)
 
     Optim.optimize(d3, initial_x, Newton())
 
