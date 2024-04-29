@@ -11,4 +11,6 @@ mutable struct UnivariateOptimizationResults{Tb,Tt,Tf, Tx,M,O<:UnivariateOptimiz
     abs_tol::Tt
     trace::OptimizationTrace{M}
     f_calls::Int
+    time_limit::Float64
+    time_run::Float64
 end

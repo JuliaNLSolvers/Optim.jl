@@ -27,5 +27,13 @@
     @test Optim.converged(result)
     @test Optim.minimum(result) == -1.0
 
+    ## time limit 
+    function slow_obj(x)
+        sleep(0.05)
+        return sin(x)
+    end
+    result = optimize(x -> slow_obj(x), 0, 2π, Brent(); time_limit=0.01)
+    @test result.f_calls == 1
+
     result = Optim.optimize(x->sin(x), 0, 2π, Optim.Brent(); abs_tol=1e-4, store_trace=false, show_trace=true, iterations=2)
 end

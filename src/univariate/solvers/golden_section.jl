@@ -23,6 +23,7 @@ function optimize(f, x_lower::T, x_upper::T,
      rel_tol::T = sqrt(eps(T)),
      abs_tol::T = eps(T),
      iterations::Integer = 1_000,
+     time_limit::Float64 = Inf,
      store_trace::Bool = false,
      show_trace::Bool = false,
      show_warnings::Bool = true,
@@ -34,7 +35,7 @@ function optimize(f, x_lower::T, x_upper::T,
         error("x_lower must be less than x_upper")
     end
     t0 = time()
-    options = (store_trace=store_trace, show_trace=show_trace, show_warnings=show_warnings, show_every=show_every, callback=callback)
+    options = (store_trace=store_trace, show_trace=show_trace, show_warnings=show_warnings, show_every=show_every, callback=callback, time_limit=time_limit)
     # Save for later
     initial_lower = x_lower
     initial_upper = x_upper
@@ -63,7 +64,9 @@ function optimize(f, x_lower::T, x_upper::T,
         stopped_by_callback = trace!(tr, nothing, state, iteration, mo, options, time()-t0)
     end
 
-    while iteration < iterations && !stopped_by_callback
+    _time = time() - t0
+
+    while iteration < iterations && !stopped_by_callback && _time < time_limit
 
         x_tol = rel_tol * abs(new_minimizer) + abs_tol
 
@@ -113,6 +116,7 @@ function optimize(f, x_lower::T, x_upper::T,
                      new_minimum=new_minimum)
             stopped_by_callback = trace!(tr, nothing, state, iteration, mo, options, time()-t0)
         end
+        _time = time() - t0
     end
 
     return UnivariateOptimizationResults(mo,
@@ -126,7 +130,9 @@ function optimize(f, x_lower::T, x_upper::T,
                                          rel_tol,
                                          abs_tol,
                                          tr,
-                                         f_calls)
+                                         f_calls, 
+                                         time_limit,
+                                         _time)
 end
 
 
