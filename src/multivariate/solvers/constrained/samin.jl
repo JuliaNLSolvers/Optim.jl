@@ -77,14 +77,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
     x_converged = false
     f_converged = false
-    x_absΔ = Inf
-    f_absΔ = Inf
+    x_absΔ::Float64 = Inf
+    f_absΔ::Float64 = Inf
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64)*ones(neps)
     # Initial obj_value
     xopt = copy(x)
-    f_old = value!(d, x)
-    fopt = copy(f_old) # give it something to compare to
+    f_old::Float64 = value!(d, x)
+    fopt::Float64 = copy(f_old) # give it something to compare to
     details = [f_calls(d) t fopt xopt']
     bounds = ub - lb
     # check for out-of-bounds starting values
@@ -125,13 +125,13 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                             lnobds += 1
                         end
                         # Evaluate function at new point
-                        f_proposal = value(d, xp)
+                        f_proposal::Float64 = value!(d, xp)
                         #  Accept the new point if the function value decreases
                         if (f_proposal <= f_old)
                             x = copy(xp)
                             f_old = f_proposal
                             nacc += 1 # total number of acceptances
-                            nacp[h] += 1 # acceptances for this parameter
+                            nacp[h] += 1. # acceptances for this parameter
                             nup += 1
                             #  If lower than any other point, record as new optimum
                             if f_proposal < fopt
@@ -150,7 +150,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                 f_old = copy(f_proposal)
                                 d.F = f_proposal
                                 nacc += 1
-                                nacp[h] += 1
+                                nacp[h] += 1.
                                 ndown += 1
                             else
                                 nrej += 1
@@ -226,7 +226,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                     test += 1 # make sure coverage check passes for the fixed parameters
                 end
             end
-            nacp = 0 # set back to zero
+            nacp = zeros(n) # set back to zero
             # check if we cover parameter space, if we have yet to do so
             if !coverage_ok
                 coverage_ok = (test == n)
@@ -317,6 +317,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
+    @show f_converged
+    @show x_converged
     return MultivariateOptimizationResults(method,
                                             x0,# initial_x,
                                             xopt, #pick_best_x(f_incr_pick, state),
