@@ -182,11 +182,32 @@ function MOI.add_constraint(
 end
 
 function starting_value(optimizer::Optimizer{T}, i) where {T}
-    if optimizer.starting_values[i] !== nothing
-        return optimizer.starting_values[i]
+    start = optimizer.starting_values[i]
+    v = optimizer.variables
+    if isfinite(v.lower[i])
+        if isfinite(v.upper[i])
+            if !isnothing(start) && v.lower[i] < start < v.upper[i]
+                return start
+            else
+                return (v.lower[i] + v.upper[i]) / 2
+            end
+        else
+            if !isnothing(start) && v.lower[i] < start
+                return start
+            else
+                return v.lower[i] + 1.0
+            end
+        end
     else
-        v = optimizer.variables
-        return min(max(zero(T), v.lower[i]), v.upper[i])
+        if isfinite(v.upper[i])
+            if !isnothing(start) && start < v.upper[i]
+                return start
+            else
+                return v.upper[i] - 1.0
+            end
+        else
+            return something(start, 0.0)
+        end
     end
 end
 
