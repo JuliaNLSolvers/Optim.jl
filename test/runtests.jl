@@ -155,15 +155,22 @@ function run_optim_tests(method; convergence_exceptions = (),
                         printstyled(name, " did not converge with i = ", i, "\n", color=:red)
                         printstyled(results, "\n", color=:red)
                     end
+                else
+                    @test_broken Optim.converged(results)
                 end
                 if !((name, i) in minimum_exceptions)
                     @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
+                else
+                    @test_broken Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
                 end
                 if !((name, i) in minimizer_exceptions)
                     @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
+                else
+                    @test_broken norm(Optim.minimizer(results) - prob.solutions) < 1e-2
                 end
             end
         else
+            @test_broken false    # marked skipped tests as broken
             debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
@@ -216,14 +223,21 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                     printstyled(name, "did not converge\n", color=:red)
                     printstyled(results, "\n", color=:red)
                 end
+            else
+                @test_broken Optim.converged(results)
             end
             if !(name in minimum_exceptions)
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
+            else
+                @test_broken Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
             end
             if !(name in minimizer_exceptions)
                 @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
+            else
+                @test_broken norm(Optim.minimizer(results) - prob.solutions) < 1e-2
             end
         else
+            @test_broken false
             debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
