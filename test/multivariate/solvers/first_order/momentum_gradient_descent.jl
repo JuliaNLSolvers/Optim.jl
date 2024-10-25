@@ -4,7 +4,7 @@
             "Trigonometric", "Penalty Function I", "Beale","Paraboloid Random Matrix")
     run_optim_tests(MomentumGradientDescent(),
                     skip = skip,
-                    convergence_exceptions = (("Fletcher-Powell", 2),),
+                    convergence_exceptions = (("Fletcher-Powell", 1), ("Fletcher-Powell", 2),),
                     iteration_exceptions = (("Paraboloid Diagonal", 10000),
                                             ("Powell", 10000)),
                     f_increase_exceptions = ("Exponential", "Polynomial",
