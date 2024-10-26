@@ -182,7 +182,10 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
+    g_abstol = options.g_abstol
+    conv = isa(g_abstol, Real) ? norm(gradient(d), Inf) + norm(state.bgrad, Inf) <= options.g_abstol :                # scalar tolerance
+                                 all((g, bg, tol) -> abs(g) + abs(bg) <= tol, zip(gradient(d), state.bgrad, g_abstol))     # per-component tolerance
+    return conv, stopped
 end
 
 function optimize(f, g, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer=IPNewton(),
@@ -203,7 +206,7 @@ end
 function optimize(d, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer,
                   options::Options = Options(;default_options(method)...))
     twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, initial_x)
-    
+
     bounds = ConstraintBounds(lower, upper, [], [])
     constraints = TwiceDifferentiableConstraints(
             (c,x)->nothing, (J,x)->nothing, (H,x,λ)->nothing, bounds)
@@ -311,8 +314,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         f_abschange(d, state),
                                         f_relchange(d, state),
                                         g_converged,
-                                        T(options.g_abstol),
-                                        g_residual(d),
+                                        g_converge_component(options.g_abstol, d, state)...,
                                         f_increased,
                                         tr,
                                         f_calls(d),

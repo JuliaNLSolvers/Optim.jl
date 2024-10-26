@@ -15,7 +15,7 @@ x_abstol::Real = 0.0,
 x_reltol::Real = 0.0,
 f_abstol::Real = 0.0,
 f_reltol::Real = 0.0,
-g_abstol::Real = 1e-8,
+g_abstol::Real = 1e-8,     # alternatively, supply per-component vector of tolerances
 g_reltol::Real = 1e-8,
 outer_x_abstol::Real = 0.0,
 outer_x_reltol::Real = 0.0,
@@ -39,14 +39,14 @@ show_every::Int = 1,
 callback = nothing,
 time_limit = NaN
 ```
-See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
+See http://julianlsolvers.github.io/Optim.jl/stable/user/config/
 """
 struct Options{T, TCallback}
     x_abstol::T
     x_reltol::T
     f_abstol::T
     f_reltol::T
-    g_abstol::T
+    g_abstol::Union{T,Vector{T}}
     g_reltol::T
     outer_x_abstol::T
     outer_x_reltol::T
@@ -80,7 +80,7 @@ function Options(;
         x_reltol::Real = 0.0,
         f_abstol::Real = 0.0,
         f_reltol::Real = 0.0,
-        g_abstol::Real = 1e-8,
+        g_abstol::Union{Real,AbstractVector{<:Real}} = 1e-8,
         g_reltol::Real = 1e-8,
         outer_x_tol = nothing,
         outer_f_tol = nothing,
@@ -129,7 +129,9 @@ function Options(;
     if !(outer_f_tol === nothing)
         outer_f_reltol = outer_f_tol
     end
-    Options(promote(x_abstol, x_reltol, f_abstol, f_reltol, g_abstol, g_reltol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol, outer_g_reltol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+    scalars = promote(f_abstol, f_reltol, outer_f_abstol, outer_f_reltol, x_reltol, g_reltol, outer_x_reltol, outer_g_reltol)
+    T = promote_type(eltype(scalars), eltype(x_abstol), eltype(g_abstol), eltype(outer_x_abstol), eltype(outer_g_abstol))
+    Options{T, typeof(callback)}(x_abstol, x_reltol, f_abstol, f_reltol, to_eltype(T, g_abstol), g_reltol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol, outer_g_reltol, f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, trace_simplex, show_trace, extended_trace, show_warnings,
         Int(show_every), callback, Float64(time_limit))
 end
@@ -196,7 +198,7 @@ mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: Op
     f_abschange::Tc
     f_relchange::Tc
     g_converged::Bool
-    g_abstol::Tf
+    g_abstol::Tf            # while this might be a vector, we store the component with largest violation
     g_residual::Tc
     f_increased::Bool
     trace::M
