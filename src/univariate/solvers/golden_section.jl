@@ -130,7 +130,7 @@ function optimize(f, x_lower::T, x_upper::T,
                                          rel_tol,
                                          abs_tol,
                                          tr,
-                                         f_calls, 
+                                         f_calls,
                                          time_limit,
                                          _time)
 end

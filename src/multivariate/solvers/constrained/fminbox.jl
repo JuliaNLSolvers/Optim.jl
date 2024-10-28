@@ -31,11 +31,11 @@ function in_box(bb::BoxBarrier, x)
     all(x->x[1]>=x[2] && x[1]<=x[3], zip(x, bb.lower, bb.upper))
 end
 in_box(bw::BarrierWrapper, x) = in_box(bw.b, x)
-# evaluates the value and gradient components comming from the log barrier 
+# evaluates the value and gradient components comming from the log barrier
 function _barrier_term_value(x::T, l, u) where T
     dxl = x - l
     dxu = u - x
-    
+
     if dxl <= 0 || dxu <= 0
         return T(Inf)
     end
@@ -53,7 +53,7 @@ function _barrier_term_gradient(x::T, l, u) where T
     if isfinite(u)
         g += one(T)/dxu
     end
-    return g 
+    return g
 end
 function value_gradient!(bb::BoxBarrier, g, x)
     g .= _barrier_term_gradient.(x, bb.lower, bb.upper)
@@ -134,7 +134,7 @@ end
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
 function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = T(1)/1000, mu0::T = convert(T, NaN)) where T
-    
+
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
@@ -378,7 +378,7 @@ function optimize(
         # we need to update the +mu*barrier_grad part. Since we're using the
         # value_gradient! not !! as in initial_state, we won't make a superfluous
         # evaluation
-        
+
         if !(F.method isa NelderMead)
             value_gradient!(dfbox, x)
         else
@@ -412,7 +412,7 @@ function optimize(
             println()
             println("Decreasing barrier term μ.\n")
         end
-        
+
         # Decrease mu
         dfbox.mu *= T(F.mufactor)
         # Test for convergence
@@ -429,7 +429,7 @@ function optimize(
         stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
         stopped = stopped_by_time_limit
     end
-    
+
     stopped_by =(#f_limit_reached=f_limit_reached,
                  #g_limit_reached=g_limit_reached,
                  #h_limit_reached=h_limit_reached,

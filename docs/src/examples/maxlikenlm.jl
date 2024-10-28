@@ -196,13 +196,13 @@ parameters = Optim.minimizer(opt)
 numerical_hessian = hessian!(func,parameters)
 
 # Let's find the estimated value of σ, rather than log σ, and it's standard error
-# To do this, we will use the Delta Method: https://en.wikipedia.org/wiki/Delta_method 
+# To do this, we will use the Delta Method: https://en.wikipedia.org/wiki/Delta_method
 
 # this function exponetiates log σ
 function transform(parameters)
     parameters[end] = exp(parameters[end])
     parameters
-end    
+end
 
 # get the Jacobian of the transformation
 J = ForwardDiff.jacobian(transform, parameters)'

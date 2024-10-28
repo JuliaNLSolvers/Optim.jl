@@ -203,7 +203,7 @@ end
 function optimize(d, lower::AbstractArray, upper::AbstractArray, initial_x::AbstractArray, method::ConstrainedOptimizer,
                   options::Options = Options(;default_options(method)...))
     twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, initial_x)
-    
+
     bounds = ConstraintBounds(lower, upper, [], [])
     constraints = TwiceDifferentiableConstraints(
             (c,x)->nothing, (J,x)->nothing, (H,x,λ)->nothing, bounds)

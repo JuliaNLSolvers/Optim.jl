@@ -16,7 +16,7 @@
     @test Optim.minimum(result) == 2.0
     @test_throws ErrorException optimize(identity, 2.0, 1.0, GoldenSection())
 
-    ## time limit 
+    ## time limit
     function slow_obj(x)
         sleep(0.05)
         return sin(x)
