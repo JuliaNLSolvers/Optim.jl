@@ -27,7 +27,7 @@
     @test Optim.converged(result)
     @test Optim.minimum(result) == -1.0
 
-    ## time limit 
+    ## time limit
     function slow_obj(x)
         sleep(0.05)
         return sin(x)

@@ -14,8 +14,8 @@
     # TODO: Check why skip problems fail
     skip = ("Large Polynomial", "Parabola", "Paraboloid Random Matrix",
             "Paraboloid Diagonal", "Penalty Function I", "Polynomial", "Powell",
-             "Extended Powell", "Trigonometric", "Himmelblau", "Rosenbrock", "Extended Rosenbrock", 
-             "Quadratic Diagonal", "Beale", "Fletcher-Powell", "Exponential", 
+             "Extended Powell", "Trigonometric", "Himmelblau", "Rosenbrock", "Extended Rosenbrock",
+             "Quadratic Diagonal", "Beale", "Fletcher-Powell", "Exponential",
              )
     run_optim_tests(Adam();
                     skip = skip,
@@ -38,7 +38,7 @@ end
     skip = ("Trigonometric", "Large Polynomial", "Parabola", "Paraboloid Random Matrix",
             "Paraboloid Diagonal", "Extended Rosenbrock", "Penalty Function I", "Beale",
             "Extended Powell", "Himmelblau", "Large Polynomial", "Polynomial", "Powell",
-            "Exponential", 
+            "Exponential",
              )
     run_optim_tests(AdaMax();
                     skip = skip,

@@ -43,7 +43,7 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
 
     value_gradient!!(d, initial_x)
     α, β₁, β₂ = method.α, method.β₁, method.β₂
-   
+
     m = copy(gradient(d))
     u = zero(m)
     a = 1 - β₁
