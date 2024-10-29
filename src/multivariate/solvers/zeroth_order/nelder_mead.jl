@@ -325,8 +325,8 @@ function trace!(tr, d, state, iteration, method::NelderMead, options::Options, c
         dt["step_type"] = state.step_type
     end
     if options.trace_simplex
-        dt["simplex"] = state.simplex
-        dt["simplex_values"] = state.f_simplex
+        dt["simplex"] = deepcopy(state.simplex) # vector of arrays
+        dt["simplex_values"] = copy(state.f_simplex)
     end
     update!(tr,
     iteration,
