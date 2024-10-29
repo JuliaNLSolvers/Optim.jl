@@ -13,12 +13,12 @@
             @test Optim.gradient(odad2) == [0.0]
             #    @test odad3.g == [0.0]
         end
-        
+
         for a in (1.0, 5.0)
             xa = rand(1)
             odad1 = OnceDifferentiable(x->a*x[1], xa; autodiff = :finite)
             odad2 = OnceDifferentiable(x->a*x[1], xa; autodiff = :forward)
-        #    odad3 = OnceDifferentiable(x->a*x[1], xa; autodiff = :reverse)        
+        #    odad3 = OnceDifferentiable(x->a*x[1], xa; autodiff = :reverse)
             Optim.gradient!(odad1, xa)
             Optim.gradient!(odad2, xa)
             @test Optim.gradient(odad1) ≈ [a]

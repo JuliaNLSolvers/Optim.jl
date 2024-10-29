@@ -35,7 +35,7 @@ function optimize(f,
     lower::Union{Integer, Real},
     upper::Union{Integer, Real};
     kwargs...)
-     
+
     T = promote_type(typeof(lower/1), typeof(upper/1))
     optimize(f,
              T(lower),
@@ -48,7 +48,7 @@ function optimize(f,
     upper::Union{Integer, Real},
     method::Union{Brent, GoldenSection};
     kwargs...)
-     
+
     T = promote_type(typeof(lower/1), typeof(upper/1))
     optimize(f,
              T(lower),
