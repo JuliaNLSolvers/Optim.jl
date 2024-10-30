@@ -52,7 +52,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `show_warnings`: Should warnings due to NaNs or Inf be shown? Defaults to `true`.
 * `trace_simplex`: Include the full simplex in the trace for `NelderMead`. Defaults to `false`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
-* `callback`: A function to be called during tracing. A return value of `true` stops the `optimize` call. The callback function is called every `show_every`th iteration. If `store_trace` is false, the argument to the callback is of the type  [`OptimizationState`](https://github.com/JuliaNLSolvers/Optim.jl/blob/a1035134ca1f3ebe855f1cde034e32683178225a/src/types.jl#L155), describing the state of the current iteration. If `store_trace` is true, the argument is a list of all the states from the first iteration to the current.
+* `callback`: A function to be called during tracing. The return value should be a boolean, where `true` will stop the `optimize` call early. The callback function is called every `show_every`th iteration. If `store_trace` is false, the argument to the callback is of the type  [`OptimizationState`](https://github.com/JuliaNLSolvers/Optim.jl/blob/a1035134ca1f3ebe855f1cde034e32683178225a/src/types.jl#L155), describing the state of the current iteration. If `store_trace` is true, the argument is a list of all the states from the first iteration to the current.
 * `time_limit`: A soft upper limit on the total run time. Defaults to `NaN` (unlimited).
 
 Box constrained optimization has additional keywords to alter the behavior of the outer solver:

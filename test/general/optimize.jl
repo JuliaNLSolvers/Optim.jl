@@ -55,3 +55,21 @@
     results = optimize(cos, 0.0, 2pi, method = Brent())
     @test norm(Optim.minimizer(results) - pi) < 0.01
 end
+
+
+@testset "nm trace" begin
+    # https://github.com/JuliaNLSolvers/Optim.jl/issues/1112
+    f(x) = (x[1]^2 + x[2] - 11)^2 + (x[1] + x[2]^2 - 7)^2
+
+    x0 = [0.0, 0.0]
+    opt = Optim.Options(store_trace = true,
+                        trace_simplex = true,
+                        extended_trace = true)
+    res = optimize(f, x0, NelderMead(), opt)
+    tr = Optim.simplex_trace(res)
+    trval = Optim.simplex_value_trace(res)
+    trcent = Optim.centroid_trace(res)
+    @test tr[end] != tr[end-1]
+    @test trval[end] != trval[end-1]
+    @test trcent[end] != trcent[end-1]
+end
