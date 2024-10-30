@@ -10,8 +10,8 @@ Adam is a gradient based optimizer that choses its search direction by building 
 ## References
 [1] https://arxiv.org/abs/1412.6980
 """
-struct Adam{T, Tm} <: FirstOrderOptimizer
-    α::T
+struct Adam{Tα, T, Tm} <: FirstOrderOptimizer
+    α::Tα  
     β₁::T
     β₂::T
     ϵ::T
@@ -32,16 +32,26 @@ mutable struct AdamState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
     s::Tx
     m::Tm
     u::Tu
+    alpha::T
     iter::Ti
 end
 function reset!(method, state::AdamState, obj, x)
     value_gradient!!(obj, x)
 end
+
+function _get_init_params(method::Adam{T}) where T <: Real
+  method.α, method.β₁, method.β₂
+end 
+
+function _get_init_params(method::Adam)
+  method.α(1), method.β₁, method.β₂
+end 
+
 function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
-    α, β₁, β₂ = method.α, method.β₁, method.β₂
+    α, β₁, β₂ = _get_init_params(method)
 
     m = copy(gradient(d))
     u = zero(m)
@@ -54,13 +64,29 @@ function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) wh
                          similar(initial_x), # Maintain current search direction in state.s
                          m,
                          u,
+                         α,
                          iter)
 end
 
+function _update_iter_alpha_in_state!(
+  state::AdamState, method::Adam{T}) where T <: Real
+
+  state.iter = state.iter+1
+end 
+
+function _update_iter_alpha_in_state!(
+  state::AdamState, method::Adam)
+
+  state.iter = state.iter+1
+  state.alpha = method.α(state.iter)
+end
+
 function update_state!(d, state::AdamState{T}, method::Adam) where T
-    state.iter = state.iter+1
+    
+    _update_iter_alpha_in_state!(state, method)
     value_gradient!(d, state.x)
-    α, β₁, β₂, ϵ = method.α, method.β₁, method.β₂, method.ϵ
+
+    α, β₁, β₂, ϵ = state.alpha, method.β₁, method.β₂, method.ϵ
     a = 1 - β₁
     b = 1 - β₂
 
