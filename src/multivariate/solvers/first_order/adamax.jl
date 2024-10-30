@@ -11,8 +11,8 @@ AdaMax is a gradient based optimizer that choses its search direction by buildin
 [1] https://arxiv.org/abs/1412.6980
 """
 
-struct AdaMax{T,Tm} <: FirstOrderOptimizer
-    α::T
+struct AdaMax{Tα, T, Tm} <: FirstOrderOptimizer
+    α::Tα  
     β₁::T
     β₂::T
     ϵ::T
@@ -33,20 +33,29 @@ mutable struct AdaMaxState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
     s::Tx
     m::Tm
     u::Tu
+    alpha::T
     iter::Ti
 end
 function reset!(method, state::AdaMaxState, obj, x)
     value_gradient!!(obj, x)
 end
+
+function _get_init_params(method::AdaMax{T}) where T <: Real
+  method.α, method.β₁, method.β₂
+end 
+
+function _get_init_params(method::AdaMax)
+  method.α(1), method.β₁, method.β₂
+end 
+
 function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) where T
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
-    α, β₁, β₂ = method.α, method.β₁, method.β₂
+    α, β₁, β₂ = _get_init_params(method)
 
     m = copy(gradient(d))
     u = zero(m)
-    a = 1 - β₁
     iter = 0
 
     AdaMaxState(initial_x, # Maintain current state in state.x
@@ -55,13 +64,27 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
                          similar(initial_x), # Maintain current search direction in state.s
                          m,
                          u,
+                         α,
                          iter)
 end
 
+function _update_iter_alpha_in_state!(
+  state::AdaMaxState, method::AdaMax{T}) where T <: Real
+
+  state.iter = state.iter+1
+end 
+
+function _update_iter_alpha_in_state!(
+  state::AdaMaxState, method::AdaMax)
+
+  state.iter = state.iter+1
+  state.alpha = method.α(state.iter)
+end
+
 function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where T
-    state.iter = state.iter+1
+    _update_iter_alpha_in_state!(state, method)
     value_gradient!(d, state.x)
-    α, β₁, β₂, ϵ = method.α, method.β₁, method.β₂, method.ϵ
+    α, β₁, β₂, ϵ = state.alpha, method.β₁, method.β₂, method.ϵ
     a = 1 - β₁
     m, u = state.m, state.u
 
