@@ -49,9 +49,11 @@ to disentangle the role of the different components of the algorithm. For exampl
 functional form of the acceptance function, the temperature and (indirectly) the neighbor
 function determine if the next draw of `x` is accepted or not.
 
-The current implementation of Simulated Annealing is very rough.  It lacks quite
-a few features which are normally part of a proper SA implementation.
-A better implementation is under way, see [this issue](https://github.com/JuliaNLSolvers/Optim.jl/issues/200).
+This implementation of Simulated Annealing is a quite simple version of Simulated Annealing
+without many bells and whistles. In Optim.jl, we also have the `SAMIN` algorithm implemented.
+Consider reading the docstring or documentation page for `SAMIN` to learn about an alternative
+Simulated Annealing implementation that additionally allows you to set bounds on the sampling
+domain.
 
 ## Example
 
