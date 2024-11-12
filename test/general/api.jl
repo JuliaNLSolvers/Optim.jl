@@ -102,6 +102,24 @@
                    initial_x,
                    Newton(),
                    options_g)
+
+    options_gvec = Optim.Options(g_abstol = [1e-4, 1e-8], g_reltol = 0)
+
+    for method in (BFGS(), LBFGS(), Newton())
+        res = optimize(f, g!, h!,
+                       initial_x,
+                       method,
+                       options_gvec)
+        @test Optim.g_converged(res)
+        @test all(abs.(Optim.gradient(d2, res.minimizer)) .≤ options_gvec.g_abstol)
+        str = sprint(show, res)
+        @test occursin(r"|g(x)|.*≤ 1.0e-04", str) || occursin(r"|g(x)|.*≤ 1.0e-08", str)
+        @test occursin(r"|x - x'| .*≰", str)
+        @test occursin(r"|x - x'|/|x'|.*≰", str)
+        @test occursin(r"|f(x) - f(x')| .*≰", str)
+        @test occursin(r"|f(x) - f(x')|/|f(x')|.*≰", str)
+    end
+
     options_sa = Optim.Options(iterations = 10, store_trace = true,
                                show_trace = false)
     res = optimize(f, g!, h!,

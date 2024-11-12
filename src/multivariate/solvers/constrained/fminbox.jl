@@ -437,11 +437,12 @@ function optimize(
                  callback=stopped_by_callback,
                  f_increased=f_increased && !options.allow_f_increases)
 
+    g_abstol, gabs = g_converge_component(options.g_abstol, df, state)
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_abstol, results.x_reltol, norm(x - xold), norm(x - xold)/norm(x),
             results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), value(dfbox)), f_relchange(minimum(results), value(dfbox)),
-            results.g_converged, results.g_abstol, norm(g, Inf),
+            results.g_converged, T(g_abstol), gabs,
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls, nothing,
             options.time_limit,

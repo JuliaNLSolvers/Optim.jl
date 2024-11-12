@@ -15,3 +15,6 @@ end
     (similar(initial_x), # Buffer of x for line search in state.x_ls
     real(one(T)))             # Keep track of step size in state.alpha
 end
+
+to_eltype(::Type{T}, x::Real) where T = T(x)
+to_eltype(::Type{T}, x::AbstractArray) where T = convert(AbstractVector{T}, x)
