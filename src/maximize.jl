@@ -38,7 +38,7 @@ end
 function maximize(f, g, h, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
     fmax = x->-f(x)
     gmax = (G,x)->(g(G,x); G.=-G)
-    hmax = (H,x)->(h(G,x); H.=-H)
+    hmax = (H,x)->(h(H,x); H.=-H)
     MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
 end
 
