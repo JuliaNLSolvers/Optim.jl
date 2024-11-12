@@ -70,8 +70,8 @@
         @test getproperty(resmax_fg.res, prop) == getproperty(resmin_fg, prop)
     end
 
-    resmax_fgh = maximize(fmax, gmax, prob.initial_x, Newton())
-    resmin_fgh = optimize(f, g!, prob.initial_x, Newton())
+    resmax_fgh = maximize(fmax, gmax, hmax, prob.initial_x, Newton())
+    resmin_fgh = optimize(f, g!, h!, prob.initial_x, Newton())
     for prop in (:iterations, :ls_success, :minimizer, :minimum)
         @test getproperty(resmax_fgh.res, prop) == getproperty(resmin_fgh, prop)
     end
