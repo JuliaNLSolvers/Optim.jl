@@ -177,7 +177,9 @@ function initial_state(method::ParticleSwarm, options, d, initial_x::AbstractArr
     end
 
     if method.parallel
-        value(d, @view(score[2:n_particles]), @view(X[:, 2:n_particles]))
+        # here we could make a view of X, but then the objective will
+        # be compiled for a view also. We avoid that.
+        value(d, @view(score[2:n_particles]), X[:, 2:n_particles])
     else
         for i in 2:n_particles
             score[i] = value(d, X[:, i])

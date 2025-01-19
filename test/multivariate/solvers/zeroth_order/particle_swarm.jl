@@ -2,13 +2,20 @@
     # TODO: Run on MultivariateProblems.UnconstrainedProblems?
     Random.seed!(100)
 
-    function f_s(x::Vector)
+    function f_s(x::AbstractVector)
         (x[1] - 5.0)^4
     end
 
-    function rosenbrock_s(x::Vector)
+    function rosenbrock_s(x::AbstractVector)
         (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
     end
+
+    function rosenbrock_s(val::AbstractVector, X::AbstractMatrix)
+        for i in axes(X, 2)
+            val[i] = rosenbrock_s(X[:, i])
+        end
+    end
+
 
     initial_x = [0.0]
     upper = [100.0]
@@ -31,5 +38,7 @@
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(lower, upper, n_particles), options)
     @test summary(res) == "Particle Swarm"
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles), options)
+    @test summary(res) == "Particle Swarm"
+    res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles, parallel=true), options)
     @test summary(res) == "Particle Swarm"
 end
