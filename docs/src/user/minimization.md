@@ -31,6 +31,12 @@ For better performance and greater precision, you can pass your own gradient fun
 optimize(f, x0, LBFGS(); autodiff = :forward)
 ```
 
+!!! note
+    For most real-world problems, you may want to carefully consider the appropriate convergence criteria.
+    By default, algorithms that support gradients converge if `|g| ≤ 1e-8`. Depending on how your variables are scaled,
+    this may or may not be appropriate. See [configuration](@ref config-general) for more information about your options.
+    Examining traces (`Options(show_trace=true)`) during optimization may provide insight about when convergence is achieved in practice.
+
 For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
 function g!(G, x)
@@ -65,7 +71,7 @@ Now we can use Newton's method for optimization by running:
 ```jl
 optimize(f, g!, h!, x0)
 ```
-Which defaults to `Newton()` since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:
+which defaults to `Newton()` since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:
 ```jl
 optimize(f, g!, h!, x0, LBFGS())
 ```
@@ -73,6 +79,12 @@ Note that Optim will not generate approximate Hessians using finite differencing
 because of the potentially low accuracy of approximations to the Hessians. Other
 than Newton's method, none of the algorithms provided by the Optim package employ
 exact Hessians.
+
+As a reminder, it's advised to set your convergence criteria manually based on
+your knowledge of the problem:
+```
+optimize(f, g!, h!, x0, Optim.Options(g_tol = 1e-12))
+```
 
 ## Box Constrained Optimization
 

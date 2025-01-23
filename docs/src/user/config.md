@@ -35,12 +35,15 @@ Special methods for bounded univariate optimization:
 * `Brent()`
 * `GoldenSection()`
 
-### General Options
+### [General Options](@id config-general)
+
 In addition to the solver, you can alter the behavior of the Optim package by using the following keywords:
 
-* `x_tol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
-* `f_tol`: Relative tolerance in changes of the objective value. Defaults to `0.0`.
-* `g_tol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
+* `x_tol` (alternatively, `x_abstol`): Absolute tolerance in changes of the input vector `x`, in infinity norm. Concretely, if `|x-x'| ≤ x_tol` on successive evaluation points `x` and `x'`, convergence is achieved. Defaults to `0.0`.
+* `x_reltol`: Relative tolerance in changes of the input vector `x`, in infinity norm. Concretely, if `|x-x'| ≤ x_reltol * |x|`, convergence is achieved. Defaults to `0.0`
+* `f_tol` (alternatively, `f_reltol`): Relative tolerance in changes of the objective value. Defaults to `0.0`.
+* `f_abstol`: Absolute tolerance in changes of the objective value. Defaults to `0.0`.
+* `g_tol` (alternatively, `g_abstol`): Absolute tolerance in the gradient. If `g_tol` is a scalar (the default), convergence is achieved when `norm(g, Inf) ≤ g_tol`; if `g_tol` is supplied as a vector, then each component must satisfy `abs(g[i]) ≤ g_tol[i]`. Defaults to `1e-8`. For gradient-free methods (e.g., Nelder-Meade), this gets re-purposed to control the main convergence tolerance in a solver-specific manner.
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
