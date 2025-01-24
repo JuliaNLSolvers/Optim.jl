@@ -44,7 +44,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
-* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `false`. Note that, when setting this to `true`, the last iterate will be returned as the minimizer even if the objective increased.
+* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `true`. Note that, when this setting is `true`, the last iterate will be returned as the minimizer even if the objective increased.
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `stdout`? Defaults to `false`.
@@ -60,7 +60,7 @@ Box constrained optimization has additional keywords to alter the behavior of th
 * `outer_x_tol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `outer_f_tol`: Relative tolerance in changes of the objective value. Defaults to `0.0`.
 * `outer_g_tol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
-* `allow_outer_f_increases`: Allow steps that increase the objective value. Defaults to `false`. Note that, when setting this to `true`, the last iterate will be returned as the minimizer even if the objective increased.
+* `allow_outer_f_increases`: Allow steps that increase the objective value. Defaults to `true`. Note that, when this setting is `true`, the last iterate will be returned as the minimizer even if the objective increased.
 * `outer_iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 
 If you specify `outer_iterations = 10` and `iterations = 100`, the outer algorithm will run for `10` iterations, and for each outer iteration the inner algorithm will run for `100` iterations.
