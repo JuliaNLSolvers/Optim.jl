@@ -39,6 +39,6 @@
     @test summary(res) == "Particle Swarm"
     res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles), options)
     @test summary(res) == "Particle Swarm"
-    res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles, parallel=true), options)
+    res = Optim.optimize(rosenbrock_s, initial_x, ParticleSwarm(n_particles = n_particles, batched=true), options)
     @test summary(res) == "Particle Swarm"
 end
