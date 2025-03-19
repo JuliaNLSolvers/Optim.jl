@@ -9,3 +9,6 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [compat]
 Documenter = "1"
 Literate = "2"
+
+[sources.Optim]
+path = ".."
