@@ -107,3 +107,8 @@ Results of Optimization Algorithm
 ## References
  - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
  - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
+
+```@bibliography
+goffe1994
+goffe1996
+```

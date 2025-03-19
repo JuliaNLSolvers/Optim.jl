@@ -22,4 +22,7 @@ improve the ability to find a global optimum. Of course, this comes a the cost
 of slower convergence, but hopefully converges to the global optimum as a result.
 
 ## References
-[1] Zhan, Zhang, and Chung. Adaptive particle swarm optimization, IEEE Transactions on Systems, Man, and Cybernetics, Part B: CyberneticsVolume 39, Issue 6, 2009, Pages 1362-1381 (2009)
+
+```@bibliography
+zhi-huizhan2009
+```

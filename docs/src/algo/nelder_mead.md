@@ -119,3 +119,9 @@ Nelder, John A. and R. Mead (1965). "A simplex method for function minimization"
 Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder--Mead simplex method in low dimensions." SIAM Journal on optimization 9.1 (1998): 112-147.
 
 Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]
+
+```@bibliography
+nelder1965
+lagarias1998
+gao2012
+```
