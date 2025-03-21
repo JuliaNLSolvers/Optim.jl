@@ -20,4 +20,7 @@ AdaMax(; alpha=0.002,
 where `alpha` is the step length or learning parameter. `beta_mean` and `beta_var` are exponential decay parameters for the first and second moments estimates. Setting these closer to 0 will cause past iterates to matter less for the current steps and setting them closer to 1 means emphasizing past iterates more.
 
 ## References
-Kingma, Diederik P., and Jimmy Ba. "Adam: A method for stochastic optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+```@bibliography
+kingma2017
+```

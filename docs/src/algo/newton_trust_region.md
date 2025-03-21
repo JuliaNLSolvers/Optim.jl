@@ -58,4 +58,6 @@ res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion
 
 ## References
 
-[1] Nocedal, Jorge, and Stephen Wright. Numerical optimization. Springer Science & Business Media, 2006.
+```@bibliography
+nocedal2006
+```

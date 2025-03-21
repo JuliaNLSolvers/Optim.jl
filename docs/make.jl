@@ -3,7 +3,11 @@ if Base.HOME_PROJECT[] !== nothing
     Base.HOME_PROJECT[] = abspath(Base.HOME_PROJECT[])
 end
 
-using Documenter, Optim
+using Optim
+using Documenter
+using DocumenterCitations
+
+bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style=:authoryear)
 
 # use include("Rosenbrock.jl") etc
 # Generate examples
@@ -54,7 +58,8 @@ makedocs(
      ],
      "Contributing" => "dev/contributing.md",
      "License" => "LICENSE.md",
-     ]
+     ],
+    plugins = [bib],
 )
 
 deploydocs(

@@ -132,5 +132,7 @@ Automatic differentiation support for complex inputs may come when
 
 ## References
 
- - Sorber, L., Barel, M. V., & Lathauwer, L. D. (2012). Unconstrained optimization of real functions in complex variables. SIAM Journal on Optimization, 22(3), 879-898.
- - Kreutz-Delgado, K. (2009). The complex gradient operator and the CR-calculus. arXiv preprint arXiv:0906.4835.
+```@bibliography
+sorber2012
+kreutz-delgado2009
+```

@@ -35,3 +35,8 @@ Implementing new manifolds is as simple as adding methods `project_tangent!(M::Y
 The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
 
 Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008
+
+```@bibliography
+edelman1998
+absil2008
+```
