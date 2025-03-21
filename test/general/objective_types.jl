@@ -8,7 +8,7 @@
             odad2 = T(x->5.0, rand(1); autodiff = :forward)
             Optim.gradient!(odad1, rand(1))
             Optim.gradient!(odad2, rand(1))
-               odad3 = T(x->5., rand(1); autodiff = ADTypes.AutoReverseDiff())
+               odad3 = T(x->5., rand(1); autodiff = AutoReverseDiff())
             @test Optim.gradient(odad1) == [0.0]
             @test Optim.gradient(odad2) == [0.0]
                @test odad3.g == [0.0]
@@ -18,7 +18,7 @@
             xa = rand(1)
             odad1 = OnceDifferentiable(x->a*x[1], xa; autodiff = :finite)
             odad2 = OnceDifferentiable(x->a*x[1], xa; autodiff = :forward)
-           odad3 = OnceDifferentiable(x->a*x[1], xa; autodiff = ADTypes.AutoReverseDiff())
+           odad3 = OnceDifferentiable(x->a*x[1], xa; autodiff = AutoReverseDiff())
             Optim.gradient!(odad1, xa)
             Optim.gradient!(odad2, xa)
             @test Optim.gradient(odad1) ≈ [a]
@@ -29,7 +29,7 @@
             xa = rand(1)
             odad1 = OnceDifferentiable(x->a*x[1]^2, xa; autodiff = :finite)
             odad2 = OnceDifferentiable(x->a*x[1]^2, xa; autodiff = :forward)
-           odad3 = OnceDifferentiable(x->a*x[1]^2, xa; autodiff = ADTypes.AutoReverseDiff())
+           odad3 = OnceDifferentiable(x->a*x[1]^2, xa; autodiff = AutoReverseDiff())
             Optim.gradient!(odad1, xa)
             Optim.gradient!(odad2, xa)
          @test Optim.gradient(odad1) ≈ 2.0*a*xa
