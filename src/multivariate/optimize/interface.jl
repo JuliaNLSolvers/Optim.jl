@@ -58,26 +58,26 @@ fallback_method(d::OnceDifferentiable) = LBFGS()
 fallback_method(d::TwiceDifferentiable) = Newton()
 
 # promote the objective (tuple of callables or an AbstractObjective) according to method requirement
-promote_objtype(method, initial_x, autodiff::Symbol, inplace::Bool, args...) = error("No default objective type for $method and $args.")
+promote_objtype(method, initial_x, autodiff, inplace::Bool, args...) = error("No default objective type for $method and $args.")
 # actual promotions, notice that (args...) captures FirstOrderOptimizer and NonDifferentiable, etc
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff::Symbol, inplace::Bool, args...) = NonDifferentiable(args..., x, real(zero(eltype(x))))
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, f) = OnceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))); inplace = inplace)
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, f, g, h) = OnceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFGHv) = TwiceDifferentiableHV(f, x)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFG_Hv) = TwiceDifferentiableHV(f, x)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, args...) = NonDifferentiable(args..., x, real(zero(eltype(x))))
+promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, f) = OnceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, f, g, h) = OnceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFGHv) = TwiceDifferentiableHV(f, x)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFG_Hv) = TwiceDifferentiableHV(f, x)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
 # no-op
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff::Symbol, inplace::Bool, nd::NonDifferentiable)  = nd
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff::Symbol, inplace::Bool, od::OnceDifferentiable) = od
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, od::OnceDifferentiable) = od
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff::Symbol, inplace::Bool, td::TwiceDifferentiable) = td
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff::Symbol, inplace::Bool, td::TwiceDifferentiable) = td
-promote_objtype(method::SecondOrderOptimizer, x, autodiff::Symbol, inplace::Bool, td::TwiceDifferentiable) = td
+promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, nd::NonDifferentiable)  = nd
+promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, od::OnceDifferentiable) = od
+promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, od::OnceDifferentiable) = od
+promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
+promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
 
 # if no method or options are present
 function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)

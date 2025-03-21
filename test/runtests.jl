@@ -13,6 +13,9 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
+import ReverseDiff
+using ADTypes: AutoReverseDiff
+
 debug_printing = false
 test_broken = false
 

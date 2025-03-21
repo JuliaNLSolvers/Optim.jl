@@ -30,7 +30,7 @@ ForwardDiff = "0.10"
 LineSearches = "7.0.1"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
-NLSolversBase = "7.8.0"
+NLSolversBase = "7.9.0"
 NaNMath = "0.3.2, 1"
 OptimTestProblems = "2.0.3"
 Parameters = "0.10, 0.11, 0.12"
@@ -40,9 +40,10 @@ Random = "<0.0.1, 1.6"
 SparseArrays = "<0.0.1, 1.6"
 StatsBase = "0.29, 0.30, 0.31, 0.32, 0.33, 0.34"
 Test = "<0.0.1, 1.6"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
+ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
@@ -52,8 +53,9 @@ OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
 PositiveFactorizations = "85a6dd25-e78a-55b7-8502-1745935b8125"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Distributions", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations"]
+test = ["Test", "Distributions", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations", "ReverseDiff", "ADTypes"]
