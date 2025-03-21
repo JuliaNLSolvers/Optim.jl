@@ -13,7 +13,27 @@ g_residual(d, state::NelderMeadState) = state.nm_x
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
 g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
 g_residual(g) = maximum(abs, g)
-gradient_convergence_assessment(state::AbstractOptimizerState, d, options) = g_residual(gradient(d)) ≤ options.g_abstol
+
+function g_converge_component(g_tol::AbstractVector, g)
+    absratio(num, denom) = (iszero(num) && iszero(denom)) ? zero(num/denom) : abs(num)/denom
+
+    imax, maxratio = firstindex(g) - 1, typemin(first(g) / first(g_tol))
+    for i in eachindex(g_tol, g)
+        ratio = absratio(g[i], g_tol[i])
+        if ratio > maxratio
+            imax, maxratio = i, ratio
+        end
+    end
+    return g_tol[imax], abs(g[imax])
+end
+g_converge_component(g_tol, g) = g_tol, g_residual(g)
+g_converge_component(g_tol::AbstractVector, d, state) = g_converge_component(g_tol, gradient(d))
+g_converge_component(g_tol, d, state) = g_tol, g_residual(d, state)
+
+function gradient_convergence_assessment(state::AbstractOptimizerState, d, options)
+    g_tol, gnorm = g_converge_component(options.g_abstol, d, state)
+    return gnorm ≤ g_tol
+end
 gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
 
 # Default function for convergence assessment used by
@@ -56,7 +76,8 @@ function assess_convergence(x, x_previous, f_x, f_x_previous, gx, x_abstol, x_re
         f_increased = true
     end
 
-    g_converged = g_residual(gx) ≤ g_abstol
+    g_converged = isa(g_abstol, Real) ? g_residual(gx) ≤ g_abstol :
+                                        all(t -> abs(t[1]) ≤ t[2], zip(gx, g_abstol))
 
     return x_converged, f_converged, g_converged, f_increased
 end
@@ -88,8 +109,10 @@ function assess_convergence(x,
         f_increased = true
     end
 
-    if g_residual(g) ≤ g_tol
-        g_converged = true
+    if isa(g_tol, Real)
+        g_converged = g_residual(g) ≤ g_tol
+    else
+        g_converged = all(t -> abs(t[1]) ≤ t[2], zip(g, g_tol))
     end
 
     return x_converged, f_converged, g_converged, f_increased

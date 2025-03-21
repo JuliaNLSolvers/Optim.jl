@@ -24,7 +24,10 @@ after_while!(d, state, method, options) = nothing
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    maximum(abs, gradient(d)) <= options.g_abstol, stopped
+    g_abstol = options.g_abstol
+    conv = isa(g_abstol, Real) ? maximum(abs, gradient(d)) <= options.g_abstol :                    # scalar tolerance
+                                 all(t -> ((g, tol) = t; abs(g) <= tol), zip(gradient(d), g_abstol))  # per-component tolerance
+    return conv, stopped
 end
 function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
     false, false
@@ -133,8 +136,7 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         f_abschange(d, state),
                                         f_relchange(d, state),
                                         g_converged,
-                                        Tf(options.g_abstol),
-                                        g_residual(d, state),
+                                        g_converge_component(options.g_abstol, d, state)...,
                                         f_increased,
                                         tr,
                                         f_calls(d),
