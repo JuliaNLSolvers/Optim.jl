@@ -2,8 +2,7 @@ module TestOptim
 
 using Test
 import Optim
-import MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -25,10 +24,7 @@ function test_supports_incremental_interface()
 end
 
 function test_MOI_Test()
-    model = MOI.Utilities.CachingOptimizer(
-        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
-        Optim.Optimizer(),
-    )
+    model = MOI.instantiate(Optim.Optimizer, with_cache_type = Float64)
     MOI.set(model, MOI.Silent(), true)
     MOI.Test.runtests(
         model,
@@ -47,26 +43,19 @@ function test_MOI_Test()
                 MOI.ConstraintDual,
             ],
         ),
-        exclude = String[
+        exclude = [
+            # FIXME Incorrect solution
+            r"test_nonlinear_expression_hs071$",
+            # FIXME Starting value is not feasible
+            # See https://github.com/JuliaNLSolvers/Optim.jl/issues/1071
+            r"test_nonlinear_expression_hs071_epigraph$",
+            # FIXME objective off by 1, seems fishy
+            r"test_objective_FEASIBILITY_SENSE_clears_objective$",
             # No objective
-            "test_attribute_SolveTimeSec",
-            "test_attribute_RawStatusString",
-            # FIXME The hessian callback for constraints is called with
-            # `λ = [-Inf, 0.0]` and then we get `NaN`, ...
-            "expression_hs071",
-            # Terminates with `OTHER_ERROR`
-            "test_objective_ObjectiveFunction_duplicate_terms",
-            "test_objective_ObjectiveFunction_constant",
-            "test_objective_ObjectiveFunction_VariableIndex",
-            "test_objective_FEASIBILITY_SENSE_clears_objective",
-            "test_nonlinear_expression_hs109",
-            "test_objective_qp_ObjectiveFunction_zero_ofdiag",
-            "test_objective_qp_ObjectiveFunction_edge_cases",
-            "test_solve_TerminationStatus_DUAL_INFEASIBLE",
-            "test_solve_result_index",
-            "test_modification_transform_singlevariable_lessthan",
-            "test_modification_delete_variables_in_a_batch",
-            "test_modification_delete_variable_with_single_variable_obj",
+            r"test_attribute_SolveTimeSec$",
+            r"test_attribute_RawStatusString$",
+            # Detecting infeasibility not supported
+            r"test_solve_TerminationStatus_DUAL_INFEASIBLE$",
         ],
     )
     return
