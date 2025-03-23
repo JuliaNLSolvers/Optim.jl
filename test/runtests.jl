@@ -247,40 +247,41 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
     end
 end
 
-
-@testset "special" begin
-    for my_test in special_tests
-        println(my_test)
-        @time include(my_test)
+@testset verbose=true "Optim.jl" begin
+    @testset "special" begin
+        @testset for my_test in special_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "general" begin
-    for my_test in general_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "general" begin
+        @testset for my_test in general_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "univariate" begin
-    for my_test in univariate_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "univariate" begin
+        @testset for my_test in univariate_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "multivariate" begin
-    for my_test in multivariate_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "multivariate" begin
+        @testset for my_test in multivariate_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
 
-println("Literate examples")
-@time include("examples.jl")
+    println("Literate examples")
+    @time include("examples.jl")
 
-@testset "show method for options" begin
-    o = Optim.Options()
-    @test occursin(" = ", sprint(show, o))
-end
+    @testset "show method for options" begin
+        o = Optim.Options()
+        @test occursin(" = ", sprint(show, o))
+    end
 
-@testset "MOI wrapper" begin
-    include("MOI_wrapper.jl")
+    @testset "MOI wrapper" begin
+        include("MOI_wrapper.jl")
+    end
 end
