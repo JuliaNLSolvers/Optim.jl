@@ -1,4 +1,5 @@
 using Optim, Test, Distributions, Random, LinearAlgebra
+Random.seed!(3288)
 @testset "Newton Trust Region" begin
 @testset "Subproblems I" begin
     # verify that solve_tr_subproblem! finds the minimum
