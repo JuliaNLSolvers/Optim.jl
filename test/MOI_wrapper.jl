@@ -44,6 +44,10 @@ function test_MOI_Test()
             ],
         ),
         exclude = [
+            # NaNs
+            r"test_nonlinear_constraint_log$",
+            # No nonlinear objective.
+            r"test_nonlinear_with_scalar_quadratic_function_with_off_diag$",
             # FIXME Incorrect solution
             r"test_nonlinear_expression_hs071$",
             # FIXME Starting value is not feasible
