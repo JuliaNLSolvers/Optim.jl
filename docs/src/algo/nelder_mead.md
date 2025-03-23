@@ -9,9 +9,9 @@ The keywords in the constructor are used to control the following parts of the
 solver:
 
 * `parameters` is a an instance of either `AdaptiveParameters` or `FixedParameters`, and is
-used to generate parameters for the Nelder-Mead Algorithm.
+  used to generate parameters for the Nelder-Mead Algorithm.
 * `initial_simplex` is an instance of `AffineSimplexer`. See more
-details below.
+  details below.
 
 
 ## Description
@@ -113,12 +113,8 @@ and add a method to the `parameters` function. It should take the new type as th
 first positional argument, and the dimensionality of `x` as the second positional argument, and
 return a 4-tuple of parameters. However, it will often be easier to simply supply
 the wanted parameters to `FixedParameters`.
+
 ## References
-Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308.
-
-Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder--Mead simplex method in low dimensions." SIAM Journal on optimization 9.1 (1998): 112-147.
-
-Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications [DOI 10.1007/s10589-010-9329-3]
 
 ```@bibliography
 nelder1965
