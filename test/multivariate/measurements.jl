@@ -9,5 +9,5 @@ import Measurements
     #given an initial value, they should give the exact same answer
     @test all(Optim.minimizer(resmes) .|> Measurements.value .== Optim.minimizer(resfloat))
     @test Optim.minimum(resmes) .|> Measurements.value .== Optim.minimum(resfloat)
-    
+
 end

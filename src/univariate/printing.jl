@@ -43,7 +43,7 @@ function Base.show(io::IO, r::UnivariateOptimizationResults)
     status_string = ""
     if time_run(r) > time_limit(r)
         status_string *= "failure (exceeded time limit of $(time_limit(r)))"
-    else 
+    else
         status_string = "success"
     end
 

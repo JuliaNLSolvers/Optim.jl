@@ -13,7 +13,11 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
+import ReverseDiff
+using ADTypes: AutoReverseDiff
+
 debug_printing = false
+test_broken = false
 
 special_tests = [
     "bigfloat/initial_convergence",
@@ -155,15 +159,22 @@ function run_optim_tests(method; convergence_exceptions = (),
                         printstyled(name, " did not converge with i = ", i, "\n", color=:red)
                         printstyled(results, "\n", color=:red)
                     end
+                elseif test_broken
+                    @test_broken Optim.converged(results)
                 end
                 if !((name, i) in minimum_exceptions)
                     @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
+                elseif test_broken
+                    @test_broken Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
                 end
                 if !((name, i) in minimizer_exceptions)
                     @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
+                elseif test_broken
+                    @test_broken norm(Optim.minimizer(results) - prob.solutions) < 1e-2
                 end
             end
         else
+            @test_broken false    # marked skipped tests as broken
             debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
@@ -216,53 +227,61 @@ function run_optim_tests_constrained(method; convergence_exceptions = (),
                     printstyled(name, "did not converge\n", color=:red)
                     printstyled(results, "\n", color=:red)
                 end
+            elseif test_broken
+                @test_broken Optim.converged(results)
             end
             if !(name in minimum_exceptions)
                 @test Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
+            elseif test_broken
+                @test_broken Optim.minimum(results) < prob.minimum + sqrt(eps(typeof(prob.minimum)))
             end
             if !(name in minimizer_exceptions)
                 @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
+            elseif test_broken
+                @test_broken norm(Optim.minimizer(results) - prob.solutions) < 1e-2
             end
         else
+            @test_broken false
             debug_printing && printstyled("Skipping $name\n", color=:blue)
         end
     end
 end
 
-
-@testset "special" begin
-    for my_test in special_tests
-        println(my_test)
-        @time include(my_test)
+@testset verbose=true "Optim.jl" begin
+    @testset "special" begin
+        @testset for my_test in special_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "general" begin
-    for my_test in general_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "general" begin
+        @testset for my_test in general_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "univariate" begin
-    for my_test in univariate_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "univariate" begin
+        @testset for my_test in univariate_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
-@testset "multivariate" begin
-    for my_test in multivariate_tests
-        println(my_test)
-        @time include(my_test)
+    @testset "multivariate" begin
+        @testset for my_test in multivariate_tests
+            println(my_test)
+            @time include(my_test)
+        end
     end
-end
 
-println("Literate examples")
-@time include("examples.jl")
+    println("Literate examples")
+    @time include("examples.jl")
 
-@testset "show method for options" begin
-    o = Optim.Options()
-    @test occursin(" = ", sprint(show, o))
-end
+    @testset "show method for options" begin
+        o = Optim.Options()
+        @test occursin(" = ", sprint(show, o))
+    end
 
-@testset "MOI wrapper" begin
-    include("MOI_wrapper.jl")
+    @testset "MOI wrapper" begin
+        include("MOI_wrapper.jl")
+    end
 end

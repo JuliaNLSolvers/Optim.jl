@@ -11,13 +11,13 @@ using Optim, Random #hide
 # assessment data such as student responses to a standardized
 # test. Let $X_{pi}$ be the response accuracy of student $p$
 # to item $i$ where $X_{pi}=1$ if the item was answered correctly
-# and $X_{pi}=0$ otherwise for $p=1,\ldots,n$ and $i=1,\ldots,m$. 
-# The model for this accuracy is 
+# and $X_{pi}=0$ otherwise for $p=1,\ldots,n$ and $i=1,\ldots,m$.
+# The model for this accuracy is
 # ```math
 #   P(\mathbf{X}_{p}=\mathbf{x}_{p}|\xi_p, \mathbf\epsilon) = \prod_{i=1}^m \dfrac{(\xi_p \epsilon_j)^{x_{pi}}}{1 + \xi_p\epsilon_i}
 # ```
-# where $\xi_p > 0$ the latent ability of person $p$ and $\epsilon_i > 0$ 
-# is the difficulty of item $i$. 
+# where $\xi_p > 0$ the latent ability of person $p$ and $\epsilon_i > 0$
+# is the difficulty of item $i$.
 
 # We simulate data from this model:
 
@@ -28,9 +28,9 @@ theta = randn(n)
 delta = randn(m)
 r = zeros(n)
 s = zeros(m)
-  
+
 for i in 1:n
-  p = exp.(theta[i] .- delta) ./ (1.0 .+ exp.(theta[i] .- delta))  
+  p = exp.(theta[i] .- delta) ./ (1.0 .+ exp.(theta[i] .- delta))
   for j in 1:m
     if rand() < p[j] ##correct
       r[i] += 1
@@ -40,9 +40,9 @@ for i in 1:n
 end
 f = [sum(r.==j) for j in 1:m];
 
-# Since the number of parameters increases 
-# with sample size standard maximum likelihood will not provide us 
-# consistent estimates. Instead we consider the conditional likelihood. 
+# Since the number of parameters increases
+# with sample size standard maximum likelihood will not provide us
+# consistent estimates. Instead we consider the conditional likelihood.
 # It can be shown that the Rasch model is an exponential family model and
 # that the sum score $r_p = \sum_{i} x_{pi}$ is the sufficient statistic for
 # $\xi_p$. If we condition on the sum score we should be able to eliminate
@@ -55,7 +55,7 @@ f = [sum(r.==j) for j in 1:m];
 # \gamma_r(\mathbf\epsilon) = \sum_{\mathbf{y} : \mathbf{1}^\intercal \mathbf{y} = r} \prod_{j=1}^m \epsilon_j^{y_j}
 # ```
 # where the sum is over all possible answer configurations that give a sum
-# score of $r$. Algorithms to efficiently compute $\gamma$ and its 
+# score of $r$. Algorithms to efficiently compute $\gamma$ and its
 # derivatives are available in the literature (see eg Baker (1996) for a review
 # and Biscarri (2018) for a more modern approach)
 
@@ -65,7 +65,7 @@ function esf_sum!(S::AbstractArray{T,1}, x::AbstractArray{T,1}) where T <: Real
   S[1] = one(T)
   @inbounds for col in 1:n
     for r in 1:col
-      row = col - r + 1 
+      row = col - r + 1
       S[row+1] = S[row+1] + x[col] * S[row]
     end
   end
@@ -114,20 +114,20 @@ function neglogLC(β)
   return -s'log.(ϵ) + f'log.(S[2:end])
 end
 
-# Parameter estimation is usually performed with respect to the unconstrained parameter 
-# $\beta_i = -\log{\epsilon_i}$. Taking the derivative with respect to $\beta_i$ 
-# (and applying the chain rule) one obtains 
+# Parameter estimation is usually performed with respect to the unconstrained parameter
+# $\beta_i = -\log{\epsilon_i}$. Taking the derivative with respect to $\beta_i$
+# (and applying the chain rule) one obtains
 # ```math
-#   \dfrac{\partial\log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i} = -s_i + \epsilon_i\sum_{r=1}^m \dfrac{f_r \gamma_{r-1}^{(j)}}{\gamma_r} 
+#   \dfrac{\partial\log L_C(\mathbf\epsilon|\mathbf{r})}{\partial \beta_i} = -s_i + \epsilon_i\sum_{r=1}^m \dfrac{f_r \gamma_{r-1}^{(j)}}{\gamma_r}
 # ```
-# where $\gamma_{r-1}^{(i)} = \partial \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i$. 
+# where $\gamma_{r-1}^{(i)} = \partial \gamma_{r}(\mathbf\epsilon)/\partial\epsilon_i$.
 
 function g!(storage, β)
   calculate_common!(β, last_β)
   for j in 1:m
     storage[j] = s[j]
     for l in 1:m
-      storage[j] -= ϵ[j] * f[l] * (H[j,j,l+1] / S[l+1]) 
+      storage[j] -= ϵ[j] * f[l] * (H[j,j,l+1] / S[l+1])
     end
   end
 end
@@ -147,13 +147,13 @@ function h!(storage, β)
       storage[k,j] = 0.0
       for l in 1:m
         if j == k
-          storage[j,j] += f[l] * (ϵ[j]*H[j,j,l+1] / S[l+1]) * 
+          storage[j,j] += f[l] * (ϵ[j]*H[j,j,l+1] / S[l+1]) *
             (1 - ϵ[j]*H[j,j,l+1] / S[l+1])
         elseif k > j
-          storage[k,j] += ϵ[j] * ϵ[k] * f[l] * 
+          storage[k,j] += ϵ[j] * ϵ[k] * f[l] *
             ((H[k,j,l] / S[l+1]) - (H[j,j,l+1] * H[k,k,l+1]) / S[l+1] ^ 2)
         else #k < j
-          storage[k,j] += ϵ[j] * ϵ[k] * f[l] * 
+          storage[k,j] += ϵ[j] * ϵ[k] * f[l] *
             ((H[j,k,l] / S[l+1]) - (H[j,j,l+1] * H[k,k,l+1]) / S[l+1] ^ 2)
         end
       end
@@ -161,11 +161,11 @@ function h!(storage, β)
   end
 end
 
-# The estimates of the item parameters are then obtained via standard optimization 
-# algorithms (either Newton-Raphson or L-BFGS). One last issue is that the model is 
-# not identifiable (multiplying the $\xi_p$ by a constant and dividing the $\epsilon_i$ 
-# by the same constant results in the same likelihood). Therefore some kind of constraint 
-# must be imposed when estimating the parameters. Typically either $\epsilon_1 = 0$ or 
+# The estimates of the item parameters are then obtained via standard optimization
+# algorithms (either Newton-Raphson or L-BFGS). One last issue is that the model is
+# not identifiable (multiplying the $\xi_p$ by a constant and dividing the $\epsilon_i$
+# by the same constant results in the same likelihood). Therefore some kind of constraint
+# must be imposed when estimating the parameters. Typically either $\epsilon_1 = 0$ or
 # $\prod_{i=1}^m \epsilon_i = 1$ (which is equivalent to $\sum_{i=1}^m \beta_i = 0$).
 
 con_c!(c, x) = (c[1] = sum(x); c)
