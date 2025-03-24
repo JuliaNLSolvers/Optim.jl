@@ -73,3 +73,23 @@ end
     @test trval[end] != trval[end-1]
     @test trcent[end] != trcent[end-1]
 end
+
+@testset "Test NaN Termination Tolerance" begin
+    rosenbrock(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+
+    # Need high-precision gradient to impose tight tolerances below
+    function g_rosenbrock!(g, x)
+        g[1] = 2 * (1.0 - x[1]) * (-1) + 2 * 100 * (x[2] - x[1]^2) * (-2 * x[1])
+        g[2] = 2 * 100 * (x[2] - x[1]^2)
+    end
+
+    # To set tight tolerance on gradient g, need to disable any check on f
+    options = Optim.Options(g_tol=1e-10, f_reltol=NaN, f_abstol=NaN)
+    result = Optim.optimize(rosenbrock, g_rosenbrock!, zeros(2), Optim.ConjugateGradient(), options)
+    @test Optim.g_residual(result) < 1e-10
+
+    # To set tight tolerance on x, need to also disable default gradient tolerance, g_tol=1e-8
+    options = Optim.Options(x_tol=1e-10, g_tol=NaN, f_reltol=NaN, f_abstol=NaN)
+    result = Optim.optimize(rosenbrock, g_rosenbrock!, zeros(2), Optim.ConjugateGradient(), options)
+    @test Optim.x_abschange(result) < 1e-10
+end
