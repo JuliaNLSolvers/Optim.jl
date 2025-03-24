@@ -16,7 +16,6 @@ x_reltol::Real = 0.0,
 f_abstol::Real = 0.0,
 f_reltol::Real = 0.0,
 g_abstol::Real = 1e-8,
-g_reltol::Real = 1e-8,
 outer_x_abstol::Real = 0.0,
 outer_x_reltol::Real = 0.0,
 outer_f_abstol::Real = 0.0,
@@ -47,13 +46,11 @@ struct Options{T, TCallback}
     f_abstol::T
     f_reltol::T
     g_abstol::T
-    g_reltol::T
     outer_x_abstol::T
     outer_x_reltol::T
     outer_f_abstol::T
     outer_f_reltol::T
     outer_g_abstol::T
-    outer_g_reltol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
@@ -81,7 +78,6 @@ function Options(;
         f_abstol::Real = 0.0,
         f_reltol::Real = 0.0,
         g_abstol::Real = 1e-8,
-        g_reltol::Real = 1e-8,
         outer_x_tol = nothing,
         outer_f_tol = nothing,
         outer_g_tol = nothing,
@@ -90,7 +86,6 @@ function Options(;
         outer_f_abstol::Real = 0.0,
         outer_f_reltol::Real = 0.0,
         outer_g_abstol::Real = 1e-8,
-        outer_g_reltol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
