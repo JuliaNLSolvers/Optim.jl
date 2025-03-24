@@ -16,13 +16,11 @@ x_reltol::Real = 0.0,
 f_abstol::Real = 0.0,
 f_reltol::Real = 0.0,
 g_abstol::Real = 1e-8,
-g_reltol::Real = 1e-8,
 outer_x_abstol::Real = 0.0,
 outer_x_reltol::Real = 0.0,
 outer_f_abstol::Real = 0.0,
 outer_f_reltol::Real = 0.0,
 outer_g_abstol::Real = 1e-8,
-outer_g_reltol::Real = 1e-8,
 f_calls_limit::Int = 0,
 g_calls_limit::Int = 0,
 h_calls_limit::Int = 0,
@@ -47,13 +45,11 @@ struct Options{T, TCallback}
     f_abstol::T
     f_reltol::T
     g_abstol::T
-    g_reltol::T
     outer_x_abstol::T
     outer_x_reltol::T
     outer_f_abstol::T
     outer_f_reltol::T
     outer_g_abstol::T
-    outer_g_reltol::T
     f_calls_limit::Int
     g_calls_limit::Int
     h_calls_limit::Int
@@ -81,7 +77,6 @@ function Options(;
         f_abstol::Real = 0.0,
         f_reltol::Real = 0.0,
         g_abstol::Real = 1e-8,
-        g_reltol::Real = 1e-8,
         outer_x_tol = nothing,
         outer_f_tol = nothing,
         outer_g_tol = nothing,
@@ -90,7 +85,6 @@ function Options(;
         outer_f_abstol::Real = 0.0,
         outer_f_reltol::Real = 0.0,
         outer_g_abstol::Real = 1e-8,
-        outer_g_reltol::Real = 1e-8,
         f_calls_limit::Int = 0,
         g_calls_limit::Int = 0,
         h_calls_limit::Int = 0,
@@ -129,7 +123,7 @@ function Options(;
     if !(outer_f_tol === nothing)
         outer_f_reltol = outer_f_tol
     end
-    Options(promote(x_abstol, x_reltol, f_abstol, f_reltol, g_abstol, g_reltol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol, outer_g_reltol)..., f_calls_limit, g_calls_limit, h_calls_limit,
+    Options(promote(x_abstol, x_reltol, f_abstol, f_reltol, g_abstol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol)..., f_calls_limit, g_calls_limit, h_calls_limit,
         allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, trace_simplex, show_trace, extended_trace, show_warnings,
         Int(show_every), callback, Float64(time_limit))
 end
