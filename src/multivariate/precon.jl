@@ -20,8 +20,9 @@ function _precondition!(out, method::AbstractOptimizer, x, ∇f)
     __precondition!(out, method.P, ∇f)
 end
 # no updating
-__precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
 __precondition!(out, P::Nothing, ∇f) = copyto!(out, ∇f)
+# fallback
+__precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
 
 function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
     _inverse_precondition(method.P, state.s)
@@ -33,28 +34,22 @@ function _inverse_precondition(P::Nothing, s)
     real(dot(s, s))
 end
 
-
 _apply_precondprep(method::AbstractOptimizer, x) =
     _apply_precondprep(method.P, method.precondprep!, x)
 _apply_precondprep(::Nothing, ::Returns{Nothing}, x) = x
 _apply_precondprep(P, precondprep!, x) = precondprep!(P, x)
 
-
 #####################################################
 #  [1] Empty preconditioner = Identity
 #
 # out =  P^{-1} * A
-
-
 #####################################################
 #  [2] Diagonal preconditioner
 #      P = Diag(d)
 #      Covered by base
-
 #####################################################
 #  [3] Inverse Diagonal preconditioner
 #      here, P is stored by the entries of its inverse
-#      TODO: maybe implement this in Base?
 
 mutable struct InverseDiagonal
     diag::Any
@@ -64,10 +59,11 @@ _apply_precondprep(A::InverseDiagonal, ::Returns{Nothing}, x) = A
 _apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
 __precondition!(out, P::InverseDiagonal, ∇f) = copyto!(out, P.diag .* ∇f)
 
-
 function _inverse_precondition(P::InverseDiagonal, s)
    real(dot(s, P.diag .\ s))
 end
+
 #####################################################
 #  [4] Matrix Preconditioner
-# Works by stdlib methods
+#   Works by stdlib methods
+#   It interprets 
