@@ -32,9 +32,6 @@ function _inverse_precondition(P::Nothing, s)
     real(dot(s, s))
 end
 
-function _inverse_precondition(s, P::InverseDiagonal)
-    real(dot(s, P.diag .\ s))
-end
 
 _apply_precondprep(method::AbstractOptimizer, x) =
     _apply_precondprep(method.P, method.precondprep!, x)
@@ -64,6 +61,10 @@ end
 # If not precondprep was added we just use a constant inverse
 _apply_precondprep(A::InverseDiagonal, ::Returns{Nothing}, x) = A
 _apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
+
+function _inverse_precondition(s, P::InverseDiagonal)
+   real(dot(s, P.diag .\ s))
+end
 #####################################################
 #  [4] Matrix Preconditioner
 # Works by stdlib methods
