@@ -27,8 +27,6 @@ SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
         r_expand::T = 10.0 # geometric temperature promotion factor for situation with low coverage: when temp changes, new temp is t=r_expand*t
         bounds_ratio::T = 0.6 # cut-off for bounds increment (1-bounds_ratio for decrease)
         neps::Int = 5   # number of previous best values the final result is compared to
-        f_tol::T = 1e-12 # the required tolerance level for function value comparisons
-        x_tol::T = 1e-6 # the required tolerance level for x
         coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
         verbosity::Int = 1) # scalar: 0, 1, 2 or 3 (default = 1).
 ```
@@ -49,10 +47,8 @@ algorithm
     r_expand::T = 10.0 # geometric temperature promotion factor for situation with low coverage: when temp changes, new temp is t=r_expand*t
     bounds_ratio::T = 0.6 # cut-off for bounds increment (1-bounds_ratio for decrease)
     neps::Int = 5 # number of previous best values the final result is compared to
-    f_tol::T = 1e-12 # the required tolerance level for function value comparisons
-    x_tol::T = 1e-6 # the required tolerance level for x
     coverage_ok::Bool = false # if false, increase temperature until initial parameter space is covered
-    verbosity::Int = 1 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
+    verbosity::Int = 0 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
 end
 # * verbosity: scalar: 0, 1, 2 or 3 (default = 1).
 #     * 0 = no screen output
@@ -64,7 +60,7 @@ Base.summary(::SAMIN) = "SAMIN"
 
 function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray{Tx}, method::SAMIN, options::Options = Options()) where Tx
 
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+    time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
@@ -72,8 +68,10 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback !== nothing
 
-    @unpack nt, ns, t0, rt, r_expand, bounds_ratio, neps, f_tol, x_tol, coverage_ok, verbosity = method
+    @unpack nt, ns, t0, rt, r_expand, bounds_ratio, neps, coverage_ok, verbosity = method
     verbose = verbosity > 0
+
+    x_tol, f_tol = options.f_abstol, options.x_abstol
 
     x0 = copy(x)
     n = size(x,1) # dimension of parameter
@@ -102,7 +100,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     options.show_trace && print_header(method)
     iteration = 0
     _time = time()
-    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
+    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-time0)
     stopped_by_callback = false
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     while converge==0
@@ -166,12 +164,12 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
 
                     if tracing
                         # update trace; callbacks can stop routine early by returning true
-                        stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-t0)
+                        stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-time0)
                     end
 
                     # If options.iterations exceeded, terminate the algorithm
                     _time = time()
-                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
+                    if f_calls(d) >= options.iterations || _time-time0 > options.time_limit || stopped_by_callback
 
                         if verbose
                             println(hline)
@@ -212,7 +210,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 h_calls(d),
                                                                 true,
                                                                 options.time_limit,
-                                                                _time-t0,NamedTuple())
+                                                                _time-time0,NamedTuple())
                     end
                 end
             end
@@ -349,7 +347,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             h_calls(d),
                                             true,
                                             options.time_limit,
-                                            _time-t0,
+                                            _time-time0,
                                             NamedTuple())
 
 end
