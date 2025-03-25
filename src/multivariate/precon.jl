@@ -57,8 +57,4 @@ dot(A::AbstractArray, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
 
 #####################################################
 #  [4] Matrix Preconditioner
-#  the assumption here is that P is given by its inverse, which is typical
-#     > ldiv! is about to be moved to Base, so we need a temporary hack
-#     > mul! is already in Base, which defines `dot`
-#  nothing to do!
-ldiv!(x, P::AbstractMatrix, b) = copyto!(x, P \ b)
+# Works by stdlib methods
