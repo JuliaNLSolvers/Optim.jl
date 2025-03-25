@@ -21,6 +21,7 @@ function _precondition!(out, method::AbstractOptimizer, x, ∇f)
 end
 # no updating
 __precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
+__precondition!(out, P::Nothing, ∇f) = copyto!(out, ∇f)
 
 function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
     _inverse_precondition(method.P, state.s)
@@ -61,8 +62,10 @@ end
 # If not precondprep was added we just use a constant inverse
 _apply_precondprep(A::InverseDiagonal, ::Returns{Nothing}, x) = A
 _apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
+__precondition!(out, P::InverseDiagonal, ∇f) = copyto!(out, P.diag .* ∇f)
 
-function _inverse_precondition(s, P::InverseDiagonal)
+
+function _inverse_precondition(P::InverseDiagonal, s)
    real(dot(s, P.diag .\ s))
 end
 #####################################################

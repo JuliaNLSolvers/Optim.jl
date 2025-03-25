@@ -79,7 +79,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     value_gradient!(d, state.x)
     # Search direction is always the negative preconditioned gradient
     project_tangent!(method.manifold, gradient(d), state.x)
-    _precondition!(s, method, state.x, gradient(d))
+    _precondition!(state.s, method, state.x, gradient(d))
     rmul!(state.s, eltype(state.s)(-1))
     if method.P !== nothing
         project_tangent!(method.manifold, state.s, state.x)

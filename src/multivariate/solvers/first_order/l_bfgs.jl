@@ -57,7 +57,7 @@ function twoloop!(s,
         # apply preconditioner if scaleinvH0 is false as the true setting
         # is essentially its own kind of preconditioning
         # (Note: preconditioner update was done outside of this function)
-        ldiv!(s, precon, q)
+        __precondition!(s, precon, q)
     end
     # Forward pass
     for index in lower:1:upper
