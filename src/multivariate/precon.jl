@@ -14,16 +14,38 @@
 #    but this is passed as an argument at the moment!
 #
 
-# Fallback
-ldiv!(out, M, A) = LinearAlgebra.ldiv!(out, M, A)
-dot(a, M, b) = LinearAlgebra.dot(a, M, b)
-dot(a, b) = LinearAlgebra.dot(a, b)
+# x for updating P
+function _precondition!(out, method::AbstractOptimizer, x, ∇f)
+    _apply_precondprep(method, x)
+    __precondition!(out, method.P, ∇f)
+end
+# no updating
+__precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
+
+function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
+    _inverse_precondition(method.P, state.s)
+end
+function _inverse_precondition(P, s)
+    real(dot(s, P, s))
+end
+function _inverse_precondition(P::Nothing, s)
+    real(dot(s, s))
+end
+
+function _inverse_precondition(s, P::InverseDiagonal)
+    real(dot(s, P.diag .\ s))
+end
+
+_apply_precondprep(method::AbstractOptimizer, x) =
+    _apply_precondprep(method.P, method.precondprep!, x)
+_apply_precondprep(::Nothing, ::Returns{Nothing}, x) = x
+_apply_precondprep(P, precondprep!, x) = precondprep!(P, x)
+
 
 #####################################################
 #  [1] Empty preconditioner = Identity
 #
 # out =  P^{-1} * A
-ldiv!(out, ::Nothing, A) = copyto!(out, A)
 
 
 #####################################################
@@ -39,19 +61,9 @@ ldiv!(out, ::Nothing, A) = copyto!(out, A)
 mutable struct InverseDiagonal
     diag::Any
 end
-ldiv!(out::AbstractArray, P::InverseDiagonal, A::AbstractArray) = copyto!(out, A .* P.diag)
-dot(A::AbstractArray, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
-
+# If not precondprep was added we just use a constant inverse
+_apply_precondprep(A::InverseDiagonal, ::Returns{Nothing}, x) = A
+_apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
 #####################################################
 #  [4] Matrix Preconditioner
 # Works by stdlib methods
-
-_apply_precondprep(method::AbstractOptimizer, x) =
-    _apply_precondprep(method.P, method.precondprep!, x)
-_apply_precondprep(::Nothing, precondprep!, x) = x
-_apply_precondprep(P, precondprep!, x) = precondprep!(P, x)
-
-_precond_dot(method::AbstractOptimizer, state::AbstractOptimizerState) =
-    _precond_dot(state.s, method.P, state.s)
-_precond_dot(s, P, p) = real(dot(s, P, s))
-_precond_dot(s, P::Nothing, p) = real(dot(s, s))

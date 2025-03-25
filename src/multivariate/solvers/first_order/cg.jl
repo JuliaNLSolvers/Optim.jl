@@ -105,8 +105,8 @@ end
 
 function reset!(cg, cgs::ConjugateGradientState, obj, x)
     cgs.x .= x
-    _apply_precondprep(cg, x)
-    ldiv!(cgs.pg, cg.P, gradient(obj))
+    _precondition!(cgs.pg, cg.P, gradient(obj))
+
     if cg.P !== nothing
         project_tangent!(cg.manifold, cgs.pg, x)
     end
@@ -136,8 +136,7 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
-    _apply_precondprep(method, initial_x)
-    ldiv!(pg, method.P, gradient(d))
+    _precondition!(pg, method, initial_x, gradient(d))
     if method.P !== nothing
         project_tangent!(method.manifold, pg, initial_x)
     end
@@ -184,13 +183,15 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     # but I am worried about round-off here, so instead we make an
     # extra copy, which is probably minimal overhead.
     # -----------------
-    _apply_precondprep(method, state.x)
-    @compat dPd = _precond_dot(method, state)
+    # also updates P for the preconditioning step below
+    dPd = _inverse_precondition(method, state)
     etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
     state.y .= gradient(d) .- state.g_previous
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
-    ldiv!(state.pg, method.P, gradient(d))
+    # P already updated in _inverse_precondition above
+    __precondition!(state.pg, method.P, gradient(d))
+
     state.py .= state.pg .- state.py
     # ydots may be zero if f is not strongly convex or the line search does not satisfy Wolfe
     betak =
