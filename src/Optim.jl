@@ -56,7 +56,8 @@ import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
                       svd,
                       opnorm, # for safeguards in newton trust regions
                       issuccess,
-                      ldiv!, dot,
+                      ldiv!,
+                      dot
 
 import SparseArrays: AbstractSparseMatrix
 
