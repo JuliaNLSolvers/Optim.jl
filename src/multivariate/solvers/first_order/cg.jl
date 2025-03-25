@@ -103,9 +103,9 @@ mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-function reset!(cg, cgs::ConjugateGradientState, obj, x)
+function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
     cgs.x .= x
-    _precondition!(cgs.pg, cgs, x, gradient(obj))
+    _precondition!(cgs.pg, cg, x, gradient(obj))
 
     if cg.P !== nothing
         project_tangent!(cg.manifold, cgs.pg, x)
