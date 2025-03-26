@@ -13,6 +13,7 @@ import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
+import ForwardDiff
 import ReverseDiff
 using ADTypes: AutoReverseDiff
 

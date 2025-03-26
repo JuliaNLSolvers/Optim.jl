@@ -57,7 +57,7 @@ function twoloop!(s,
         # apply preconditioner if scaleinvH0 is false as the true setting
         # is essentially its own kind of preconditioning
         # (Note: preconditioner update was done outside of this function)
-        ldiv!(s, precon, q)
+        __precondition!(s, precon, q)
     end
     # Forward pass
     for index in lower:1:upper
@@ -94,7 +94,7 @@ LBFGS(; m::Integer = 10,
 alphaguess = LineSearches.InitialStatic(),
 linesearch = LineSearches.HagerZhang(),
 P=nothing,
-precondprep = (P, x) -> nothing,
+precondprep = Returns(nothing),
 manifold = Flat(),
 scaleinvH0::Bool = true && (typeof(P) <: Nothing))
 ```
@@ -123,7 +123,7 @@ function LBFGS(; m::Integer = 10,
                  alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
                  linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
                  P=nothing,
-                 precondprep = (P, x) -> nothing,
+                 precondprep = Returns(nothing),
                  manifold::Manifold=Flat(),
                  scaleinvH0::Bool = true && (typeof(P) <: Nothing) )
     LBFGS(Int(m), _alphaguess(alphaguess), linesearch, P, precondprep, manifold, scaleinvH0)
@@ -189,7 +189,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     project_tangent!(method.manifold, gradient(d), state.x)
 
     # update the preconditioner
-    method.precondprep!(method.P, state.x)
+    _apply_precondprep(method, state.x)
 
     # Determine the L-BFGS search direction # FIXME just pass state and method?
     twoloop!(state.s, gradient(d), state.rho, state.dx_history, state.dg_history,

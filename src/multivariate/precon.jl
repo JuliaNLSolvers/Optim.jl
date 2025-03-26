@@ -14,51 +14,57 @@
 #    but this is passed as an argument at the moment!
 #
 
-# Fallback
-ldiv!(out, M, A) = LinearAlgebra.ldiv!(out, M, A)
-dot(a, M, b) = LinearAlgebra.dot(a, M, b)
-dot(a, b) = LinearAlgebra.dot(a, b)
+# x for updating P
+function _precondition!(out, method::AbstractOptimizer, x, ∇f)
+    _apply_precondprep(method, x)
+    __precondition!(out, method.P, ∇f)
+end
+# no updating
+__precondition!(out, P::Nothing, ∇f) = copyto!(out, ∇f)
+# fallback
+__precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
+__precondition!(out, P::AbstractMatrix, ∇f) = copyto!(out, P\∇f)
 
+function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
+    _inverse_precondition(method.P, state.s)
+end
+function _inverse_precondition(P, s)
+    real(dot(s, P, s))
+end
+function _inverse_precondition(P::Nothing, s)
+    real(dot(s, s))
+end
 
-#####################################################
-#  [0] Defaults and aliases for easier reading of the code
-#      these can also be over-written if necessary.
-
-# default preconditioner update
-precondprep!(P, x) = nothing
-
+_apply_precondprep(method::AbstractOptimizer, x) =
+    _apply_precondprep(method.P, method.precondprep!, x)
+_apply_precondprep(::Nothing, ::Returns{Nothing}, x) = x
+_apply_precondprep(P, precondprep!, x) = precondprep!(P, x)
 
 #####################################################
 #  [1] Empty preconditioner = Identity
 #
-
 # out =  P^{-1} * A
-ldiv!(out, ::Nothing, A) = copyto!(out, A)
-
-# A' * P B
-dot(A, ::Nothing, B) = dot(A, B)
-
-
 #####################################################
 #  [2] Diagonal preconditioner
 #      P = Diag(d)
 #      Covered by base
-
 #####################################################
 #  [3] Inverse Diagonal preconditioner
 #      here, P is stored by the entries of its inverse
-#      TODO: maybe implement this in Base?
 
 mutable struct InverseDiagonal
-   diag
+    diag::Any
 end
-ldiv!(out::AbstractArray, P::InverseDiagonal, A::AbstractArray) = copyto!(out, A .* P.diag)
-dot(A::AbstractArray, P::InverseDiagonal, B::Vector) = dot(A, B ./ P.diag)
+# If not precondprep was added we just use a constant inverse
+_apply_precondprep(P::InverseDiagonal, ::Returns{Nothing}, x) = P
+_apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
+__precondition!(out, P::InverseDiagonal, ∇f) = copyto!(out, P.diag .* ∇f)
+
+function _inverse_precondition(P::InverseDiagonal, s)
+   real(dot(s, P.diag .\ s))
+end
 
 #####################################################
 #  [4] Matrix Preconditioner
-#  the assumption here is that P is given by its inverse, which is typical
-#     > ldiv! is about to be moved to Base, so we need a temporary hack
-#     > mul! is already in Base, which defines `dot`
-#  nothing to do!
-ldiv!(x, P::AbstractMatrix, b) = copyto!(x, P \ b)
+#   Works by stdlib methods
+#   It interprets 
