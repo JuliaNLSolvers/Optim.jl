@@ -23,6 +23,7 @@ end
 __precondition!(out, P::Nothing, ∇f) = copyto!(out, ∇f)
 # fallback
 __precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
+__precondition!(out, P::AbstractMatrix, ∇f) = copyto!(out, P\∇f)
 
 function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
     _inverse_precondition(method.P, state.s)
@@ -55,7 +56,7 @@ mutable struct InverseDiagonal
     diag::Any
 end
 # If not precondprep was added we just use a constant inverse
-_apply_precondprep(A::InverseDiagonal, ::Returns{Nothing}, x) = A
+_apply_precondprep(P::InverseDiagonal, ::Returns{Nothing}, x) = P
 _apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
 __precondition!(out, P::InverseDiagonal, ∇f) = copyto!(out, P.diag .* ∇f)
 

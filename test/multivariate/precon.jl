@@ -1,4 +1,5 @@
 import LinearAlgebra: qr, ldiv!
+using Random
 # this implements the 1D p-laplacian (p = 4)
 #      F(u) = ∑_{i=1}^{N} h (W(u_i') - ∑_{i=1}^{N-1} h u_i
 #  where u_i' = (u_i - u_{i-1})/h
@@ -11,9 +12,8 @@ import LinearAlgebra: qr, ldiv!
     plap1(U; n = length(U), dU = diff(U), dW = 4 .* (0.1 .+ dU .^ 2) .* dU) =
         (n - 1) .* ([0.0; dW] .- [dW; 0.0]) .- ones(n) / (n - 1)
     precond(x::Vector) = precond(length(x))
-    precond(n::Number) = Optim.InverseDiagonal(
-        diag(spdiagm(-1 => -ones(n - 1), 0 => 2 * ones(n), 1 => -ones(n - 1)) * (n + 1)),
-    )
+    precond(n::Number) =
+        spdiagm(-1 => -ones(n - 1), 0 => 2 * ones(n), 1 => -ones(n - 1)) * (n + 1)
     f(X) = plap([0; X; 0])
     g!(G, X) = copyto!(G, (plap1([0; X; 0]))[2:end-1])
 
@@ -24,14 +24,24 @@ import LinearAlgebra: qr, ldiv!
         debug_printing && println("N = ", N)
         initial_x = zeros(N)
         Plap = precond(initial_x)
+        Hess = ForwardDiff.hessian(f, initial_x)
         ID = nothing
         for optimizer in (GradientDescent, ConjugateGradient, LBFGS)
-            for (P, wwo) in zip((ID, Plap), (" WITHOUT", " WITH"))
+            for (P, Prep, wwo) in zip(
+                (ID, Plap, Hess, Hess),
+                (
+                    Returns(nothing),
+                    Returns(nothing),
+                    Returns(nothing),
+                    (P, x) -> ForwardDiff.hessian!(P, f, x),
+                ),
+                (" WITHOUT", " WITH", " WITH Hessian", " WITH Hessian Prep"),
+            )
                 results = Optim.optimize(
                     f,
                     g!,
                     copy(initial_x),
-                    optimizer(P = P),
+                    optimizer(P = P, precondprep = Prep),
                     Optim.Options(
                         g_tol = GRTOL,
                         allow_f_increases = true,
@@ -45,6 +55,8 @@ import LinearAlgebra: qr, ldiv!
                     Optim.g_calls(results),
                     ", f_calls = ",
                     Optim.f_calls(results),
+                    ", iterations = ",
+                    Optim.iterations(results),
                 )
                 if (optimizer == GradientDescent) && (N > 15) && (P == ID)
                     debug_printing &&
