@@ -26,7 +26,7 @@ OptimMOIExt = "MathOptInterface"
 [compat]
 Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0, 4"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
-ForwardDiff = "0.10"
+ForwardDiff = "0.10, 1"
 LineSearches = "7.0.1"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
