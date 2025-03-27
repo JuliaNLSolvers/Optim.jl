@@ -4,6 +4,7 @@ version = "1.11.0"
 
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
+EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
@@ -25,6 +26,7 @@ OptimMOIExt = "MathOptInterface"
 
 [compat]
 Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0, 4"
+EnumX = "1.0.4"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 ForwardDiff = "0.10"
 LineSearches = "7.0.1"
