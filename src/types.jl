@@ -173,6 +173,8 @@ const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 using EnumX
 "Termination codes for Optim.jl."
 @enumx TerminationCode begin
+    "Nelder-Mead simplex converged."
+    NelderMeadCriterion
     "First (partial) derivative had a magnitude below the prescribed tolerance."
     FirstOrder
     "The change in optimization variables was zero (the tolerance was not set by the user)."

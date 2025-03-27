@@ -118,7 +118,7 @@ function optimize(d::D, initial_x::Tx, method::M,
                  f_increased=f_incr_pick,
                  ls_failed = !ls_success,
                  iteration_limit = iteration == options.iterations,)
-    termination_code  = _termincation_code(d, gradient(d), state, stopped_by, options)
+    termination_code  = _termincation_code(d, g_residual(d, state), state, stopped_by, options)
     return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by), typeof(termination_code)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
@@ -150,9 +150,11 @@ function optimize(d::D, initial_x::Tx, method::M,
                                         termination_code,)
 end
 
-function _termincation_code(d, g, state, stopped_by, options)
+function _termincation_code(d, gres, state, stopped_by, options)
     # TODO add NM stopping here
-    if (state isa NelderMeadState && g_residual(d, state) <= options.g_abstol) || g_residual(g) <= options.g_abstol
+    if state isa NelderMeadState && gres <= options.g_abstol
+        TerminationCode.NelderMeadCriterion
+    elseif !(state isa NelderMeadState) && gres <= options.g_abstol
         TerminationCode.FirstOrder
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) || (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol) 
         TerminationCode.NoXChange

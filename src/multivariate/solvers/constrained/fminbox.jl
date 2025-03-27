@@ -440,7 +440,7 @@ function optimize(
     ls_failed = false,
     iteration_limit = false,)
     box_state = (;x, x_previous=xold, f_x_previous=fval0)
-    termination_code  =  _termincation_code(df, g, box_state, stopped_by, options)
+    termination_code  =  _termincation_code(df, g_residual(g), box_state, stopped_by, options)
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
