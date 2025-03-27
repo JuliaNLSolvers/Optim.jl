@@ -353,11 +353,12 @@ function optimize(
 
     xold = copy(x)
     converged = false
-    local results
+    local results, fval0
     first = true
     f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
     stopped = false
     _time = time()
+    
     while !converged && !stopped && iteration < outer_iterations
         fval0 = dfbox.obj.F
         # Increment the number of steps we've had to perform
@@ -430,20 +431,24 @@ function optimize(
         stopped = stopped_by_time_limit
     end
 
-    stopped_by =(#f_limit_reached=f_limit_reached,
-                 #g_limit_reached=g_limit_reached,
-                 #h_limit_reached=h_limit_reached,
-                 time_limit=stopped_by_time_limit,
-                 callback=stopped_by_callback,
-                 f_increased=f_increased && !options.allow_f_increases)
+    stopped_by =(f_limit_reached=false,
+    g_limit_reached=false,
+    h_limit_reached=false,
+    time_limit=stopped_by_time_limit,
+    callback=stopped_by_callback,
+    f_increased=f_increased && !options.allow_f_increases,
+    ls_failed = false,
+    iteration_limit = false,)
+    box_state = (;x, x_previous=xold, f_x_previous=fval0)
+    termination_code  =  _termincation_code(df, g, box_state, stopped_by, options)
 
     return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
             iteration, results.iteration_converged,
             results.x_converged, results.x_abstol, results.x_reltol, norm(x - xold), norm(x - xold)/norm(x),
-            results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), value(dfbox)), f_relchange(minimum(results), value(dfbox)),
+            results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), fval0), f_relchange(minimum(results), fval0),
             results.g_converged, results.g_abstol, norm(g, Inf),
             results.f_increased, results.trace, results.f_calls,
             results.g_calls, results.h_calls, nothing,
             options.time_limit,
-            _time-t0, stopped_by)
+            _time-t0, stopped_by,termination_code)
 end

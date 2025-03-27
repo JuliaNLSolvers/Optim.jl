@@ -294,6 +294,7 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
     T = typeof(options.f_reltol)
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
+    termination_code = TerminationCode.NotImplemented
     return MultivariateOptimizationResults(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
@@ -321,7 +322,8 @@ function optimize(d::AbstractObjective, constraints::AbstractConstraints, initia
                                         nothing,
                                         options.time_limit,
                                         _time-t0,
-                                        NamedTuple())
+                                        NamedTuple(),
+                                        termination_code,)
 end
 
 # Fallbacks (for methods that don't need these)

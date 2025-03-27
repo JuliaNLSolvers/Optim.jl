@@ -183,6 +183,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                             println(hline)
                         end
                         converge = 0
+                        termination_code = TerminationCode.NotImplemented
 
                         return MultivariateOptimizationResults(method,
                                                                 x0,# initial_x,
@@ -210,7 +211,9 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                                                 h_calls(d),
                                                                 true,
                                                                 options.time_limit,
-                                                                _time-time0,NamedTuple())
+                                                                _time-time0,NamedTuple(),
+                                                                # not hit ever since stopped_by were not here?
+                                                                termination_code)
                     end
                 end
             end
@@ -321,6 +324,7 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
+    termination_code = TerminationCode.NotImplemented
     return MultivariateOptimizationResults(method,
                                             x0,# initial_x,
                                             xopt, #pick_best_x(f_incr_pick, state),
@@ -348,7 +352,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                             true,
                                             options.time_limit,
                                             _time-time0,
-                                            NamedTuple())
+                                            NamedTuple(),
+                                            termination_code)
 
 end
 

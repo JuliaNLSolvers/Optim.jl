@@ -115,34 +115,74 @@ function optimize(d::D, initial_x::Tx, method::M,
                  h_limit_reached=h_limit_reached,
                  time_limit=stopped_by_time_limit,
                  callback=stopped_by_callback,
-                 f_increased=f_incr_pick)
-    return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by)}(method,
+                 f_increased=f_incr_pick,
+                 ls_failed = !ls_success,
+                 iteration_limit = iteration == options.iterations,)
+    termination_code  = _termincation_code(d, gradient(d), state, stopped_by, options)
+    return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by), typeof(termination_code)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),
                                         iteration,
                                         iteration == options.iterations,
-                                        x_converged,
+                                        x_converged, # refactor in v2
                                         Tf(options.x_abstol),
                                         Tf(options.x_reltol),
                                         x_abschange(state),
                                         x_relchange(state),
-                                        f_converged,
+                                        f_converged, # refactor in v2
                                         Tf(options.f_abstol),
                                         Tf(options.f_reltol),
                                         f_abschange(d, state),
                                         f_relchange(d, state),
-                                        g_converged,
+                                        g_converged, # refactor in v2
                                         Tf(options.g_abstol),
                                         g_residual(d, state),
-                                        f_increased,
+                                        f_increased, # refactor in v2
                                         tr,
                                         f_calls(d),
                                         g_calls(d),
                                         h_calls(d),
-                                        ls_success,
+                                        ls_success, # refactor in v2
                                         options.time_limit,
                                         _time-t0,
-                                        stopped_by,
-                                        )
+                                        stopped_by, # refactor in v2
+                                        termination_code,)
+end
+
+function _termincation_code(d, g, state, stopped_by, options)
+    # TODO add NM stopping here
+    if (state isa NelderMeadState && g_residual(d, state) <= options.g_abstol) || g_residual(g) <= options.g_abstol
+        TerminationCode.FirstOrder
+    elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) || (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol) 
+        TerminationCode.NoXChange
+    elseif (iszero(options.f_abstol) && f_abschange(d, state) <= options.f_abstol) || (iszero(options.f_reltol) && f_relchange(d, state) <= options.f_reltol) 
+        TerminationCode.NoFChange
+    elseif x_abschange(state) <= options.x_abstol || x_relchange(state) <= options.x_reltol
+        TerminationCode.SmallXChange
+    elseif f_abschange(d, state) <= options.f_abstol || f_relchange(d, state) <= options.x_reltol
+        TerminationCode.SmallFChange
+    elseif stopped_by.ls_failed
+        TerminationCode.FailedLinesearch
+    elseif stopped_by.callback
+        TerminationCode.Callback
+    elseif stopped_by.iteration_limit
+        TerminationCode.Iterations
+    elseif stopped_by.time_limit
+        TerminationCode.Time
+    elseif stopped_by.f_limit_reached
+        TerminationCode.FCall
+    elseif stopped_by.g_limit_reached
+        TerminationCode.Gcall 
+    elseif stopped_by.h_limit_reached
+        TerminationCode.HCall
+    elseif stopped_by.f_increased
+        TerminationCode.FIncreased
+    elseif g_calls(d) > 0 && !all(isfinite, gradient(d))
+        TerminationCode.GradientNotFinite
+    elseif h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+        TerminationCode.HessianNotFinite
+    else
+        NotImplemented
+    end
 end

@@ -127,8 +127,8 @@ export optimize, maximize, # main function
        ## Non-linear constraints
        IPNewton
 
-
 include("types.jl") # types used throughout
+include("termination_code.jl")
 include("Manifolds.jl") # code to handle manifold constraints
 include("multivariate/precon.jl") # preconditioning functionality
 
@@ -222,14 +222,8 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
-@static if !isdefined(Base, :get_extension)
-    include("../ext/OptimMOIExt.jl")
-    using .OptimMOIExt
-    const Optimizer = OptimMOIExt.Optimizer
-else
-    # declare this upfront so that the MathOptInterface extension can assign it
-    # without creating a new global
-    global Optimizer
-end
+# declare this upfront so that the MathOptInterface extension can assign it
+# without creating a new global
+global Optimizer
 
 end
