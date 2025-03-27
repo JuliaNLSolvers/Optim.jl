@@ -183,10 +183,10 @@ using Test                    #src
 parameters = Optim.minimizer(opt)
 @test parameters ≈ [2.83664, 3.05345, -0.98837] atol=1e-5 #src
 
-# !!! Note
-#     Fieldnames for all of the quantities can be obtained with the following command:
-#     fieldnames(opt)
-#
+#md # !!! note
+#md #     Fieldnames for all of the quantities can be obtained with the following command:
+#md #     fieldnames(opt)
+#md #
 
 # In order to obtain the correct Hessian matrix, we have to "push" the
 # actual parameter values that maximizes the likelihood function since
@@ -196,7 +196,7 @@ parameters = Optim.minimizer(opt)
 numerical_hessian = hessian!(func,parameters)
 
 # Let's find the estimated value of σ, rather than log σ, and it's standard error
-# To do this, we will use the Delta Method: https://en.wikipedia.org/wiki/Delta_method
+# To do this, we will use the Delta Method: <https://en.wikipedia.org/wiki/Delta_method>
 
 # this function exponetiates log σ
 function transform(parameters)
