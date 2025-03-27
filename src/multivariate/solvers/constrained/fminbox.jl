@@ -41,6 +41,7 @@ function _barrier_term_value(x::T, l, u) where T
     end
     vl = ifelse(isfinite(dxl), -log(dxl), T(0))
     vu = ifelse(isfinite(dxu), -log(dxu), T(0))
+
     return vl + vu
 end
 function _barrier_term_gradient(x::T, l, u) where T
@@ -98,17 +99,21 @@ function value_gradient!(bb::BarrierWrapper, x)
 end
 value(bb::BoxBarrier, x) = mapreduce(x->_barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
 function value!(obj::BarrierWrapper, x)
+
     obj.Fb = value(obj.b, x)
     obj.Ftotal = obj.mu*obj.Fb
     if in_box(obj, x)
         value!(obj.obj, x)
         obj.Ftotal += value(obj.obj)
     end
+
     obj.Ftotal
 end
 value(obj::BarrierWrapper) = obj.Ftotal
 function value(obj::BarrierWrapper, x)
+
     F = obj.mu*value(obj.b, x)
+
     if in_box(obj, x)
         F += value(obj.obj, x)
     end
@@ -279,7 +284,6 @@ function optimize(
 
     T = eltype(initial_x)
     t0 = time()
-
     outer_iterations = options.outer_iterations
     allow_outer_f_increases = options.allow_outer_f_increases
     show_trace, store_trace, extended_trace = options.show_trace, options.store_trace, options.extended_trace
@@ -314,12 +318,15 @@ function optimize(
         @warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
     end
 
-    dfbox = BarrierWrapper(df, zero(T), l, u)
+    # We start out with a small but nonzero value of mu so that the objective doesn't evaluate to NaN for points outside the box
+    dfbox = BarrierWrapper(df, one(T) * 1e-05, l, u)
     # Use the barrier-aware preconditioner to define
     # barrier-aware optimization method instance (precondition relevance)
     _optimizer = barrier_method(F.method, P, (P, x) -> F.precondprep(P, x, l, u, dfbox))
 
+
     state = initial_state(_optimizer, options, dfbox, x)
+    
     # we wait until state has been initialized to set the initial mu because
     # we need the gradient of the objective and initial_state will value_gradient!!
     # the objective, so that forces an evaluation
@@ -328,6 +335,7 @@ function optimize(
     end
     dfbox.mu = initial_mu(dfbox, F)
     if F.method isa NelderMead
+
         for i = 1:length(state.f_simplex)
             x = state.simplex[i]
             boxval = value(dfbox.b, x)
@@ -359,6 +367,7 @@ function optimize(
     stopped = false
     _time = time()
     while !converged && !stopped && iteration < outer_iterations
+    
         fval0 = dfbox.obj.F
         # Increment the number of steps we've had to perform
         iteration += 1
@@ -404,6 +413,10 @@ function optimize(
         end
         copyto!(x, minimizer(results))
         boxdist = min(minimum(x-l), minimum(u-x))
+
+        # Sanity check
+        (boxdist < 0) && error("Optimizer produced a nonfeasible point")
+
         if show_trace > 0
             println()
             println("Exiting inner optimizer with x = ", x)
