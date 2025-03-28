@@ -121,7 +121,7 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     termination_code  = _termincation_code(d, g_residual(d, state), state, stopped_by, options)
 
-    return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by), typeof(termination_code)}(method,
+    return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
                                         pick_best_f(f_incr_pick, state, d),

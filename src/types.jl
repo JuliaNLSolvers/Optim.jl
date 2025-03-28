@@ -211,7 +211,7 @@ end
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb,TE<:Enum} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
@@ -240,7 +240,7 @@ mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb,TE<:En
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
-    termination_code::TE
+    termination_code::TerminationCode.T
 end
 
 termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
