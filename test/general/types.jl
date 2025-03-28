@@ -4,24 +4,19 @@ import Compat.String
 @testset "Types" begin
     solver = NelderMead()
     T = typeof(solver)
-    trace = OptimizationTrace{Float64, T}()
-    push!(trace,OptimizationState{Float64, T}(1,1.0,1.0,Dict()))
-    push!(trace,OptimizationState{Float64, T}(2,1.0,1.0,Dict()))
+    trace = OptimizationTrace{Float64,T}()
+    push!(trace, OptimizationState{Float64,T}(1, 1.0, 1.0, Dict()))
+    push!(trace, OptimizationState{Float64,T}(2, 1.0, 1.0, Dict()))
     @test length(trace) == 2
     @test trace[end].iteration == 2
 
     prob = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
     f_prob = MVP.objective(prob)
     for res in (
-            Optim.optimize(f_prob, prob.initial_x, NelderMead()),
-            Optim.optimize(f_prob, prob.initial_x, SimulatedAnnealing()),
-            Optim.optimize(
-                MVP.objective(prob),
-                MVP.gradient(prob),
-                prob.initial_x,
-                LBFGS()
-            )
-        )
+        Optim.optimize(f_prob, prob.initial_x, NelderMead()),
+        Optim.optimize(f_prob, prob.initial_x, SimulatedAnnealing()),
+        Optim.optimize(MVP.objective(prob), MVP.gradient(prob), prob.initial_x, LBFGS()),
+    )
         @test typeof(f_prob(prob.initial_x)) == typeof(Optim.minimum(res))
         @test eltype(prob.initial_x) == eltype(Optim.minimizer(res))
 
@@ -34,8 +29,8 @@ import Compat.String
         @test lines[4] |> contains("Final objective value")
         @test lines[7] |> contains("Algorithm")
         @test lines[9] |> contains("Convergence measures")
-        @test lines[13 + line_shift] |> contains("Iterations")
-        @test lines[14 + line_shift] |> contains("f(x) calls")
+        @test lines[13+line_shift] |> contains("Iterations")
+        @test lines[14+line_shift] |> contains("f(x) calls")
         if res.method isa NelderMead
             @test lines[10] |> contains("√(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08")
         elseif res.method isa Union{SimulatedAnnealing,LBFGS}

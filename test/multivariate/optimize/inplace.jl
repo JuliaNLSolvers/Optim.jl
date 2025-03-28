@@ -17,10 +17,17 @@
     initial_x = rosenbrock.initial_x
 
     inp_res = optimize(f, g, h, initial_x; inplace = false)
-    op_res  = optimize(f, g!, h!, initial_x; inplace = true)
+    op_res = optimize(f, g!, h!, initial_x; inplace = true)
 
-    for op in (Optim.minimizer, Optim.minimum, Optim.f_calls,
-                Optim.g_calls, Optim.h_calls, Optim.iterations, Optim.converged)
+    for op in (
+        Optim.minimizer,
+        Optim.minimum,
+        Optim.f_calls,
+        Optim.g_calls,
+        Optim.h_calls,
+        Optim.iterations,
+        Optim.converged,
+    )
         @test all(op(inp_res) .=== op(op_res))
     end
 end

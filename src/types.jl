@@ -1,9 +1,9 @@
 abstract type AbstractOptimizer end
 abstract type AbstractConstrainedOptimizer <: AbstractOptimizer end
 abstract type ZerothOrderOptimizer <: AbstractOptimizer end
-abstract type FirstOrderOptimizer  <: AbstractOptimizer end
+abstract type FirstOrderOptimizer <: AbstractOptimizer end
 abstract type SecondOrderOptimizer <: AbstractOptimizer end
-abstract type UnivariateOptimizer  <: AbstractOptimizer end
+abstract type UnivariateOptimizer <: AbstractOptimizer end
 
 abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
@@ -39,7 +39,7 @@ time_limit = NaN
 ```
 See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
 """
-struct Options{T, TCallback}
+struct Options{T,TCallback}
     x_abstol::T
     x_reltol::T
     f_abstol::T
@@ -69,38 +69,39 @@ struct Options{T, TCallback}
 end
 
 function Options(;
-        x_tol = nothing,
-        f_tol = nothing,
-        g_tol = nothing,
-        x_abstol::Real = 0.0,
-        x_reltol::Real = 0.0,
-        f_abstol::Real = 0.0,
-        f_reltol::Real = 0.0,
-        g_abstol::Real = 1e-8,
-        outer_x_tol = nothing,
-        outer_f_tol = nothing,
-        outer_g_tol = nothing,
-        outer_x_abstol::Real = 0.0,
-        outer_x_reltol::Real = 0.0,
-        outer_f_abstol::Real = 0.0,
-        outer_f_reltol::Real = 0.0,
-        outer_g_abstol::Real = 1e-8,
-        f_calls_limit::Int = 0,
-        g_calls_limit::Int = 0,
-        h_calls_limit::Int = 0,
-        allow_f_increases::Bool = true,
-        allow_outer_f_increases::Bool = true,
-        successive_f_tol::Int = 1,
-        iterations::Int = 1_000,
-        outer_iterations::Int = 1000,
-        store_trace::Bool = false,
-        trace_simplex::Bool = false,
-        show_trace::Bool = false,
-        extended_trace::Bool = false,
-        show_warnings::Bool = true,
-        show_every::Int = 1,
-        callback = nothing,
-        time_limit = NaN)
+    x_tol = nothing,
+    f_tol = nothing,
+    g_tol = nothing,
+    x_abstol::Real = 0.0,
+    x_reltol::Real = 0.0,
+    f_abstol::Real = 0.0,
+    f_reltol::Real = 0.0,
+    g_abstol::Real = 1e-8,
+    outer_x_tol = nothing,
+    outer_f_tol = nothing,
+    outer_g_tol = nothing,
+    outer_x_abstol::Real = 0.0,
+    outer_x_reltol::Real = 0.0,
+    outer_f_abstol::Real = 0.0,
+    outer_f_reltol::Real = 0.0,
+    outer_g_abstol::Real = 1e-8,
+    f_calls_limit::Int = 0,
+    g_calls_limit::Int = 0,
+    h_calls_limit::Int = 0,
+    allow_f_increases::Bool = true,
+    allow_outer_f_increases::Bool = true,
+    successive_f_tol::Int = 1,
+    iterations::Int = 1_000,
+    outer_iterations::Int = 1000,
+    store_trace::Bool = false,
+    trace_simplex::Bool = false,
+    show_trace::Bool = false,
+    extended_trace::Bool = false,
+    show_warnings::Bool = true,
+    show_every::Int = 1,
+    callback = nothing,
+    time_limit = NaN,
+)
     show_every = show_every > 0 ? show_every : 1
     #if extended_trace && callback === nothing
     #    show_trace = true
@@ -123,9 +124,36 @@ function Options(;
     if !(outer_f_tol === nothing)
         outer_f_reltol = outer_f_tol
     end
-    Options(promote(x_abstol, x_reltol, f_abstol, f_reltol, g_abstol, outer_x_abstol, outer_x_reltol, outer_f_abstol, outer_f_reltol, outer_g_abstol)..., f_calls_limit, g_calls_limit, h_calls_limit,
-        allow_f_increases, allow_outer_f_increases, successive_f_tol, Int(iterations), Int(outer_iterations), store_trace, trace_simplex, show_trace, extended_trace, show_warnings,
-        Int(show_every), callback, Float64(time_limit))
+    Options(
+        promote(
+            x_abstol,
+            x_reltol,
+            f_abstol,
+            f_reltol,
+            g_abstol,
+            outer_x_abstol,
+            outer_x_reltol,
+            outer_f_abstol,
+            outer_f_reltol,
+            outer_g_abstol,
+        )...,
+        f_calls_limit,
+        g_calls_limit,
+        h_calls_limit,
+        allow_f_increases,
+        allow_outer_f_increases,
+        successive_f_tol,
+        Int(iterations),
+        Int(outer_iterations),
+        store_trace,
+        trace_simplex,
+        show_trace,
+        extended_trace,
+        show_warnings,
+        Int(show_every),
+        callback,
+        Float64(time_limit),
+    )
 end
 
 _show_helper(output, k, v) = output * "$k = $v, "
@@ -158,17 +186,17 @@ function print_header(options::Options)
 end
 
 function print_header(method::AbstractOptimizer)
-        @printf "Iter     Function value   Gradient norm \n"
+    @printf "Iter     Function value   Gradient norm \n"
 end
 
-struct OptimizationState{Tf<:Real, T <: AbstractOptimizer}
+struct OptimizationState{Tf<:Real,T<:AbstractOptimizer}
     iteration::Int
     value::Tf
     g_norm::Tf
     metadata::Dict
 end
 
-const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
+const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
 
 using EnumX
 "Termination codes for Optim.jl."
@@ -211,7 +239,7 @@ end
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tls,Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
@@ -305,17 +333,36 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if isa(r.method, NelderMead)
         @printf io "    √(Σ(yᵢ-ȳ)²)/n %s %.1e\n" g_converged(r) ? "≤" : "≰" g_tol(r)
     else
-        @printf io "    |x - x'|               = %.2e %s %.1e\n"  x_abschange(r) x_abschange(r)<=x_abstol(r) ? "≤" : "≰" x_abstol(r)
-        @printf io "    |x - x'|/|x'|          = %.2e %s %.1e\n"  x_relchange(r) x_relchange(r)<=x_reltol(r) ? "≤" : "≰" x_reltol(r)
-        @printf io "    |f(x) - f(x')|         = %.2e %s %.1e\n"  f_abschange(r) f_abschange(r)<=f_abstol(r) ? "≤" : "≰" f_abstol(r)
-        @printf io "    |f(x) - f(x')|/|f(x')| = %.2e %s %.1e\n"  f_relchange(r) f_relchange(r)<=f_reltol(r) ? "≤" : "≰" f_reltol(r)
-        @printf io "    |g(x)|                 = %.2e %s %.1e\n" g_residual(r) g_residual(r)<=g_tol(r) ?  "≤" : "≰" g_tol(r)
+        @printf io "    |x - x'|               = %.2e %s %.1e\n" x_abschange(r) x_abschange(
+            r,
+        ) <= x_abstol(
+            r,
+        ) ? "≤" : "≰" x_abstol(r)
+        @printf io "    |x - x'|/|x'|          = %.2e %s %.1e\n" x_relchange(r) x_relchange(
+            r,
+        ) <= x_reltol(
+            r,
+        ) ? "≤" : "≰" x_reltol(r)
+        @printf io "    |f(x) - f(x')|         = %.2e %s %.1e\n" f_abschange(r) f_abschange(
+            r,
+        ) <= f_abstol(
+            r,
+        ) ? "≤" : "≰" f_abstol(r)
+        @printf io "    |f(x) - f(x')|/|f(x')| = %.2e %s %.1e\n" f_relchange(r) f_relchange(
+            r,
+        ) <= f_reltol(
+            r,
+        ) ? "≤" : "≰" f_reltol(r)
+        @printf io "    |g(x)|                 = %.2e %s %.1e\n" g_residual(r) g_residual(
+            r,
+        ) <= g_tol(r) ? "≤" : "≰" g_tol(r)
     end
 
     @printf io "\n"
 
     @printf io " * Work counters\n"
-    @printf io "    Seconds run:   %d  (vs limit %d)\n" time_run(r) isnan(time_limit(r)) ? Inf : time_limit(r)
+    @printf io "    Seconds run:   %d  (vs limit %d)\n" time_run(r) isnan(time_limit(r)) ?
+                                                                    Inf : time_limit(r)
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
     if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))
@@ -328,7 +375,10 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
 end
 
 
-function Base.append!(a::MultivariateOptimizationResults, b::MultivariateOptimizationResults)
+function Base.append!(
+    a::MultivariateOptimizationResults,
+    b::MultivariateOptimizationResults,
+)
     a.iterations += iterations(b)
     a.minimizer = minimizer(b)
     a.minimum = minimum(b)

@@ -2,7 +2,7 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL, L, H, T, TM} <: FirstOrderOptimizer
+struct BFGS{IL,L,H,T,TM} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
@@ -37,15 +37,17 @@ approximations as well as the gradient. See also the limited memory variant
  - Goldfarb, D. (1970), A Family of Variable Metric Updates Derived by Variational Means, Mathematics of Computation, 24 (109): 23–26,
  - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
 """
-function BFGS(; alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
-                linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
-                initial_invH = nothing,
-                initial_stepnorm = nothing,
-                manifold::Manifold=Flat())
+function BFGS(;
+    alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
+    linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
+    initial_invH = nothing,
+    initial_stepnorm = nothing,
+    manifold::Manifold = Flat(),
+)
     BFGS(_alphaguess(alphaguess), linesearch, initial_invH, initial_stepnorm, manifold)
 end
 
-mutable struct BFGSState{Tx, Tm, T,G} <: AbstractOptimizerState
+mutable struct BFGSState{Tx,Tm,T,G} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     g_previous::G
@@ -86,7 +88,7 @@ function reset!(method, state::BFGSState, obj, x)
     end
 end
 
-function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where T
+function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where {T}
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
@@ -108,16 +110,18 @@ function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) wh
     end
     # Maintain a cache for line search results
     # Trace the history of states visited
-    BFGSState(initial_x, # Maintain current state in state.x
-              copy(initial_x), # Maintain previous state in state.x_previous
-              copy(gradient(d)), # Store previous gradient in state.g_previous
-              real(T)(NaN), # Store previous f in state.f_x_previous
-              similar(initial_x), # Store changes in position in state.dx
-              similar(initial_x), # Store changes in gradient in state.dg
-              similar(initial_x), # Buffer stored in state.u
-              invH0, # Store current invH in state.invH
-              similar(initial_x), # Store current search direction in state.s
-              @initial_linesearch()...)
+    BFGSState(
+        initial_x, # Maintain current state in state.x
+        copy(initial_x), # Maintain previous state in state.x_previous
+        copy(gradient(d)), # Store previous gradient in state.g_previous
+        real(T)(NaN), # Store previous f in state.f_x_previous
+        similar(initial_x), # Store changes in position in state.dx
+        similar(initial_x), # Store changes in gradient in state.dg
+        similar(initial_x), # Buffer stored in state.u
+        invH0, # Store current invH in state.invH
+        similar(initial_x), # Store current search direction in state.s
+        @initial_linesearch()...,
+    )
 end
 
 
@@ -139,7 +143,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Update current position
-    state.dx .= state.alpha.*state.s
+    state.dx .= state.alpha .* state.s
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
 
@@ -160,25 +164,31 @@ function update_h!(d, state, method::BFGS)
         c2 = 1 / dx_dg
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-        if(state.invH isa Array) # i.e. not a CuArray
-            invH = state.invH; dx = state.dx; u = state.u;
-            @inbounds for j in 1:n
+        if (state.invH isa Array) # i.e. not a CuArray
+            invH = state.invH
+            dx = state.dx
+            u = state.u
+            @inbounds for j = 1:n
                 c1dxj = c1 * dx[j]'
                 c2dxj = c2 * dx[j]'
-                c2uj  = c2 *  u[j]'
-                for i in 1:n
-                    invH[i, j] = muladd(dx[i], c1dxj, muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])))
+                c2uj = c2 * u[j]'
+                for i = 1:n
+                    invH[i, j] = muladd(
+                        dx[i],
+                        c1dxj,
+                        muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])),
+                    )
                 end
             end
         else
-            mul!(state.invH,vec(state.dx),vec(state.dx)', c1,1)
-            mul!(state.invH,vec(state.u ),vec(state.dx)',-c2,1)
-            mul!(state.invH,vec(state.dx),vec(state.u )',-c2,1)
+            mul!(state.invH, vec(state.dx), vec(state.dx)', c1, 1)
+            mul!(state.invH, vec(state.u), vec(state.dx)', -c2, 1)
+            mul!(state.invH, vec(state.dx), vec(state.u)', -c2, 1)
         end
     end
 end
 
-function trace!(tr, d, state, iteration, method::BFGS, options, curr_time=time())
+function trace!(tr, d, state, iteration, method::BFGS, options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
@@ -188,13 +198,15 @@ function trace!(tr, d, state, iteration, method::BFGS, options, curr_time=time()
         dt["Current step size"] = state.alpha
     end
     g_norm = norm(gradient(d), Inf)
-    update!(tr,
-    iteration,
-    value(d),
-    g_norm,
-    dt,
-    options.store_trace,
-    options.show_trace,
-    options.show_every,
-    options.callback)
+    update!(
+        tr,
+        iteration,
+        value(d),
+        g_norm,
+        dt,
+        options.store_trace,
+        options.show_trace,
+        options.show_every,
+        options.callback,
+    )
 end
