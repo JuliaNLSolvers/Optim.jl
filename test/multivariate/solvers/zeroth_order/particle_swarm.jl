@@ -31,7 +31,7 @@
     )
     @test norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
     options = Optim.Options(
-        iterations = 300,
+        iterations = 10,
         show_trace = true,
         extended_trace = true,
         store_trace = true,

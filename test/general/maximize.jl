@@ -40,40 +40,31 @@
     gmax = (G, x) -> (g!(G, x); G .= -G)
     hmax = (H, x) -> (h!(H, x); H .= -H)
 
+    function test_same_content(f1, f2)
+        for prop in (:minimizer, :minimum)
+            @test getproperty(f1.res, prop) == getproperty(f2, prop)
+        end
+        for prop in (:iterations, :ls_failed)
+            @test getproperty(f1.res.stopped_by, prop) == getproperty(f2.stopped_by, prop)
+        end
+    end
+
     resmax_f = maximize(fmax, prob.initial_x)
     resmin_f = optimize(f, prob.initial_x)
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_f.res, prop) == getproperty(resmin_f, prop)
+
+    for alg in (NelderMead(), BFGS(), Newton())
+        resmax_f = maximize(fmax, prob.initial_x, alg)
+        resmin_f = optimize(f, prob.initial_x, alg)
+        test_same_content(resmax_f, resmin_f)
     end
 
-    resmax_f_nm = maximize(fmax, prob.initial_x, NelderMead())
-    resmin_f_nm = optimize(f, prob.initial_x, NelderMead())
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_f_nm.res, prop) == getproperty(resmin_f_nm, prop)
-    end
-
-    resmax_f_bfgs = maximize(fmax, prob.initial_x, BFGS())
-    resmin_f_bfgs = optimize(f, prob.initial_x, BFGS())
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_f_bfgs.res, prop) == getproperty(resmin_f_bfgs, prop)
-    end
-
-    resmax_f_newton = maximize(fmax, prob.initial_x, Newton())
-    resmin_f_newton = optimize(f, prob.initial_x, Newton())
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_f_newton.res, prop) == getproperty(resmin_f_newton, prop)
-    end
-
-    resmax_fg = maximize(fmax, gmax, prob.initial_x, BFGS())
-    resmin_fg = optimize(f, g!, prob.initial_x, BFGS())
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_fg.res, prop) == getproperty(resmin_fg, prop)
+    for alg in (NelderMead(), BFGS(), Newton())
+        resmax_fg = maximize(fmax, gmax, prob.initial_x, BFGS())
+        resmin_fg = optimize(f, g!, prob.initial_x, BFGS())
+        test_same_content(resmax_fg, resmin_fg)
     end
 
     resmax_fgh = maximize(fmax, gmax, hmax, prob.initial_x, Newton())
     resmin_fgh = optimize(f, g!, h!, prob.initial_x, Newton())
-    for prop in (:iterations, :ls_success, :minimizer, :minimum)
-        @test getproperty(resmax_fgh.res, prop) == getproperty(resmin_fgh, prop)
-    end
-
+    test_same_content(resmax_fgh, resmin_fgh)
 end

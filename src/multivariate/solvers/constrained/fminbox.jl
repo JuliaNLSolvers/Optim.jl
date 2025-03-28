@@ -482,7 +482,7 @@ function optimize(
 
     xold = copy(x)
     converged = false
-    local results, fval0
+    local results, fval0, _x_converged, _f_converged, _g_converged
     first = true
     f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
     stopped = false
@@ -547,7 +547,7 @@ function optimize(
         dfbox.mu *= T(F.mufactor)
         # Test for convergence
         g = x .- min.(max.(x .- gradient(dfbox.obj), l), u)
-        results.x_converged, results.f_converged, results.g_converged, f_increased =
+        _x_converged, _f_converged, _g_converged, f_increased =
             assess_convergence(
                 x,
                 xold,
@@ -561,9 +561,9 @@ function optimize(
                 options.outer_g_abstol,
             )
         converged =
-            results.x_converged ||
-            results.f_converged ||
-            results.g_converged ||
+            _x_converged ||
+            _f_converged ||
+            _g_converged ||
             stopped_by_callback
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
@@ -582,10 +582,13 @@ function optimize(
         callback = stopped_by_callback,
         f_increased = f_increased && !options.allow_f_increases,
         ls_failed = false,
-        iteration_limit = false,
+        iterations = results.stopped_by.iterations,
+        x_converged = _x_converged,
+        f_converged = _f_converged,
+        g_converged = _g_converged,
     )
     box_state = (; x, x_previous = xold, f_x_previous = fval0)
-    termination_code = _termincation_code(df, g_residual(g), box_state, stopped_by, options)
+    termination_code = _termination_code(df, g_residual(g), box_state, stopped_by, options)
 
     return MultivariateOptimizationResults(
         F,
@@ -593,26 +596,20 @@ function optimize(
         minimizer(results),
         df.f(minimizer(results)),
         iteration,
-        results.iteration_converged,
-        results.x_converged,
         results.x_abstol,
         results.x_reltol,
-        norm(x - xold),
-        norm(x - xold) / norm(x),
-        results.f_converged,
+        norm(x - xold, Inf),
+        norm(x - xold, Inf) / norm(x, Inf),
         results.f_abstol,
         results.f_reltol,
         f_abschange(minimum(results), fval0),
         f_relchange(minimum(results), fval0),
-        results.g_converged,
         results.g_abstol,
-        norm(g, Inf),
-        results.f_increased,
+        g_residual(g, Inf),
         results.trace,
         results.f_calls,
         results.g_calls,
         results.h_calls,
-        nothing,
         options.time_limit,
         _time - t0,
         stopped_by,

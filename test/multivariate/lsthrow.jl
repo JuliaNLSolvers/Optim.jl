@@ -23,6 +23,6 @@
             MVP.objective(prob),
             prob.initial_x,
             optimizer(alphaguess = LineSearches.InitialPrevious(), linesearch = hz),
-        ).ls_success == false
+        ).stopped_by.ls_failed == true
     end
 end

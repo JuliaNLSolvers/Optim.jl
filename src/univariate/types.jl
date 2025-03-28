@@ -1,4 +1,4 @@
-mutable struct UnivariateOptimizationResults{Tb,Tt,Tf,Tx,M,O<:UnivariateOptimizer} <:
+mutable struct UnivariateOptimizationResults{Tb,Tt,Tf,Tx,M,O<:UnivariateOptimizer,Tsb<:NamedTuple} <:
                OptimizationResults
     method::O
     initial_lower::Tb
@@ -6,12 +6,11 @@ mutable struct UnivariateOptimizationResults{Tb,Tt,Tf,Tx,M,O<:UnivariateOptimize
     minimizer::Tx
     minimum::Tf
     iterations::Int
-    iteration_converged::Bool
-    converged::Bool
     rel_tol::Tt
     abs_tol::Tt
     trace::OptimizationTrace{M}
     f_calls::Int
     time_limit::Float64
     time_run::Float64
+    stopped_by::Tsb
 end

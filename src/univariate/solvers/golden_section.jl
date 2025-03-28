@@ -143,14 +143,13 @@ function optimize(
         new_minimizer,
         new_minimum,
         iteration,
-        iteration == iterations,
-        converged,
         rel_tol,
         abs_tol,
         tr,
         f_calls,
         time_limit,
         _time,
+        (; iterations = iteration == iterations, converged,)
     )
 end
 

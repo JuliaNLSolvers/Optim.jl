@@ -239,37 +239,32 @@ end
 
 abstract type OptimizationResults end
 
-mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tls,Tsb} <: OptimizationResults
+mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
     minimizer::Tx
     minimum::Tf
     iterations::Int
-    iteration_converged::Bool
-    x_converged::Bool
     x_abstol::Tf
     x_reltol::Tf
     x_abschange::Tc
     x_relchange::Tc
-    f_converged::Bool
     f_abstol::Tf
     f_reltol::Tf
     f_abschange::Tc
     f_relchange::Tc
-    g_converged::Bool
     g_abstol::Tf
     g_residual::Tc
-    f_increased::Bool
     trace::M
     f_calls::Int
     g_calls::Int
     h_calls::Int
-    ls_success::Tls
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
     termination_code::TerminationCode.T
 end
+
 
 termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
 
@@ -311,7 +306,7 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     if f_increased(r) && !iteration_limit_reached(r)
         status_string *= " (objective increased between iterations)"
     end
-    if isa(r.ls_success, Bool) && !r.ls_success
+    if isa(r.stopped_by.ls_failed, Bool) && r.stopped_by.ls_failed
         status_string *= " (line search failed)"
     end
     if time_run(r) > time_limit(r)
@@ -382,10 +377,7 @@ function Base.append!(
     a.iterations += iterations(b)
     a.minimizer = minimizer(b)
     a.minimum = minimum(b)
-    a.iteration_converged = iteration_limit_reached(b)
-    a.x_converged = x_converged(b)
-    a.f_converged = f_converged(b)
-    a.g_converged = g_converged(b)
+    a.stopped_by = b.stopped_by
     append!(a.trace, b.trace)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)

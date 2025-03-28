@@ -49,7 +49,7 @@
         d2 = Optim.TwiceDifferentiableHV(f2, fg2!, hv2!, Float64[127, 921])
 
         result = Optim.optimize(d2, Float64[127, 921], Optim.KrylovTrustRegion())
-        @test result.g_converged
+        @test Optim.g_converged(result)
         @test norm(Optim.minimizer(result) - [0.0, 0.0]) < 0.01
     end
 
