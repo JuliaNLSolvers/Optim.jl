@@ -30,8 +30,8 @@ is introduced in [1] where the related AdaMax method is also introduced, see
 ## References
 [1] https://arxiv.org/abs/1412.6980
 """
-struct Adam{Tα, T, Tm} <: FirstOrderOptimizer
-    α::Tα  
+struct Adam{Tα,T,Tm} <: FirstOrderOptimizer
+    α::Tα
     β₁::T
     β₂::T
     ϵ::T
@@ -42,10 +42,10 @@ Adam(; alpha = 0.0001, beta_mean = 0.9, beta_var = 0.999, epsilon = 1e-8) =
     Adam(alpha, beta_mean, beta_var, epsilon, Flat())
 Base.summary(::Adam) = "Adam"
 function default_options(method::Adam)
-    (; allow_f_increases = true, iterations=10_000)
+    (; allow_f_increases = true, iterations = 10_000)
 end
 
-mutable struct AdamState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
+mutable struct AdamState{Tx,T,Tm,Tu,Ti} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
@@ -59,15 +59,15 @@ function reset!(method, state::AdamState, obj, x)
     value_gradient!!(obj, x)
 end
 
-function _get_init_params(method::Adam{T}) where T <: Real
-  method.α, method.β₁, method.β₂
-end 
+function _get_init_params(method::Adam{T}) where {T<:Real}
+    method.α, method.β₁, method.β₂
+end
 
 function _get_init_params(method::Adam)
-  method.α(1), method.β₁, method.β₂
-end 
+    method.α(1), method.β₁, method.β₂
+end
 
-function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) where T
+function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) where {T}
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
@@ -77,31 +77,31 @@ function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) wh
     u = zero(m)
     iter = 0
 
-    AdamState(initial_x, # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
-                         real(T(NaN)), # Store previous f in state.f_x_previous
-                         similar(initial_x), # Maintain current search direction in state.s
-                         m,
-                         u,
-                         α,
-                         iter)
+    AdamState(
+        initial_x, # Maintain current state in state.x
+        copy(initial_x), # Maintain previous state in state.x_previous
+        real(T(NaN)), # Store previous f in state.f_x_previous
+        similar(initial_x), # Maintain current search direction in state.s
+        m,
+        u,
+        α,
+        iter,
+    )
 end
 
-function _update_iter_alpha_in_state!(
-  state::AdamState, method::Adam{T}) where T <: Real
+function _update_iter_alpha_in_state!(state::AdamState, method::Adam{T}) where {T<:Real}
 
-  state.iter = state.iter+1
-end 
-
-function _update_iter_alpha_in_state!(
-  state::AdamState, method::Adam)
-
-  state.iter = state.iter+1
-  state.alpha = method.α(state.iter)
+    state.iter = state.iter + 1
 end
 
-function update_state!(d, state::AdamState{T}, method::Adam) where T
-    
+function _update_iter_alpha_in_state!(state::AdamState, method::Adam)
+
+    state.iter = state.iter + 1
+    state.alpha = method.α(state.iter)
+end
+
+function update_state!(d, state::AdamState{T}, method::Adam) where {T}
+
     _update_iter_alpha_in_state!(state, method)
     value_gradient!(d, state.x)
 
@@ -122,6 +122,6 @@ function update_state!(d, state::AdamState{T}, method::Adam) where T
     false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::Adam, options, curr_time=time())
-  common_trace!(tr, d, state, iteration, method, options, curr_time)
+function trace!(tr, d, state, iteration, method::Adam, options, curr_time = time())
+    common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

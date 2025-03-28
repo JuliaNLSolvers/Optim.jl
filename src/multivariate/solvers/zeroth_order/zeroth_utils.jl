@@ -1,18 +1,28 @@
-function trace!(tr, d, state, iteration, method::Union{ZerothOrderOptimizer, SAMIN}, options::Options, curr_time=time())
+function trace!(
+    tr,
+    d,
+    state,
+    iteration,
+    method::Union{ZerothOrderOptimizer,SAMIN},
+    options::Options,
+    curr_time = time(),
+)
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
     end
-    update!(tr,
-            state.iteration,
-            d.F,
-            NaN,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
+    update!(
+        tr,
+        state.iteration,
+        d.F,
+        NaN,
+        dt,
+        options.store_trace,
+        options.show_trace,
+        options.show_every,
+        options.callback,
+    )
 end
 
 function assess_convergence(state::ZerothOrderState, d, options::Options)

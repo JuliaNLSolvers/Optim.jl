@@ -1,6 +1,6 @@
 # Multivariate optimization
 function check_kwargs(kwargs, fallback_method)
-    kws = Dict{Symbol, Any}()
+    kws = Dict{Symbol,Any}()
     method = nothing
     for kwarg in kwargs
         if kwarg[1] != :method
@@ -18,7 +18,7 @@ end
 
 default_options(method::AbstractOptimizer) = NamedTuple()
 
-function add_default_opts!(opts::Dict{Symbol, Any}, method::AbstractOptimizer)
+function add_default_opts!(opts::Dict{Symbol,Any}, method::AbstractOptimizer)
     for newopt in pairs(default_options(method))
         if !haskey(opts, newopt[1])
             opts[newopt[1]] = newopt[2]
@@ -49,38 +49,123 @@ function fallback_method(f::NotInplaceObjective)
     elseif !(f.fgh isa Nothing)
         return LBFGS()
     else
-        throw(ArgumentError("optimize does not support $(typeof(f)) as the first positional argument"))
+        throw(
+            ArgumentError(
+                "optimize does not support $(typeof(f)) as the first positional argument",
+            ),
+        )
     end
 end
-fallback_method(f::NotInplaceObjective{<:Nothing, <:Nothing, <:Any}) = Newton()
+fallback_method(f::NotInplaceObjective{<:Nothing,<:Nothing,<:Any}) = Newton()
 
 fallback_method(d::OnceDifferentiable) = LBFGS()
 fallback_method(d::TwiceDifferentiable) = Newton()
 
 # promote the objective (tuple of callables or an AbstractObjective) according to method requirement
-promote_objtype(method, initial_x, autodiff, inplace::Bool, args...) = error("No default objective type for $method and $args.")
+promote_objtype(method, initial_x, autodiff, inplace::Bool, args...) =
+    error("No default objective type for $method and $args.")
 # actual promotions, notice that (args...) captures FirstOrderOptimizer and NonDifferentiable, etc
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, args...) = NonDifferentiable(args..., x, real(zero(eltype(x))))
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, f) = OnceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, args...) = OnceDifferentiable(args..., x, real(zero(eltype(x))); inplace = inplace)
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, f, g, h) = OnceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f) = TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NotInplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::InplaceObjective) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFGHv) = TwiceDifferentiableHV(f, x)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f::NLSolversBase.InPlaceObjectiveFG_Hv) = TwiceDifferentiableHV(f, x)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g) = TwiceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace, autodiff = autodiff)
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g, h) = TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, args...) =
+    NonDifferentiable(args..., x, real(zero(eltype(x))))
+promote_objtype(method::FirstOrderOptimizer, x, autodiff, inplace::Bool, f) =
+    OnceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(method::FirstOrderOptimizer, x, autodiff, inplace::Bool, args...) =
+    OnceDifferentiable(args..., x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::FirstOrderOptimizer, x, autodiff, inplace::Bool, f, g, h) =
+    OnceDifferentiable(f, g, x, real(zero(eltype(x))); inplace = inplace)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f) =
+    TwiceDifferentiable(f, x, real(zero(eltype(x))); autodiff = autodiff)
+promote_objtype(
+    method::SecondOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    f::NotInplaceObjective,
+) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(
+    method::SecondOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    f::InplaceObjective,
+) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
+promote_objtype(
+    method::SecondOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    f::NLSolversBase.InPlaceObjectiveFGHv,
+) = TwiceDifferentiableHV(f, x)
+promote_objtype(
+    method::SecondOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    f::NLSolversBase.InPlaceObjectiveFG_Hv,
+) = TwiceDifferentiableHV(f, x)
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g) =
+    TwiceDifferentiable(
+        f,
+        g,
+        x,
+        real(zero(eltype(x)));
+        inplace = inplace,
+        autodiff = autodiff,
+    )
+promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, f, g, h) =
+    TwiceDifferentiable(f, g, h, x, real(zero(eltype(x))); inplace = inplace)
 # no-op
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, nd::NonDifferentiable)  = nd
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, od::OnceDifferentiable) = od
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, od::OnceDifferentiable) = od
-promote_objtype(method::ZerothOrderOptimizer, x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
-promote_objtype(method::FirstOrderOptimizer,  x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
-promote_objtype(method::SecondOrderOptimizer, x, autodiff, inplace::Bool, td::TwiceDifferentiable) = td
+promote_objtype(
+    method::ZerothOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    nd::NonDifferentiable,
+) = nd
+promote_objtype(
+    method::ZerothOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    od::OnceDifferentiable,
+) = od
+promote_objtype(
+    method::FirstOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    od::OnceDifferentiable,
+) = od
+promote_objtype(
+    method::ZerothOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    td::TwiceDifferentiable,
+) = td
+promote_objtype(
+    method::FirstOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    td::TwiceDifferentiable,
+) = td
+promote_objtype(
+    method::SecondOrderOptimizer,
+    x,
+    autodiff,
+    inplace::Bool,
+    td::TwiceDifferentiable,
+) = td
 
 # if no method or options are present
-function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function optimize(
+    f,
+    initial_x::AbstractArray;
+    inplace = true,
+    autodiff = :finite,
+    kwargs...,
+)
     method = fallback_method(f)
     checked_kwargs, method = check_kwargs(kwargs, method)
 
@@ -90,7 +175,14 @@ function optimize(f,         initial_x::AbstractArray; inplace = true, autodiff 
     options = Options(; checked_kwargs...)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function optimize(
+    f,
+    g,
+    initial_x::AbstractArray;
+    inplace = true,
+    autodiff = :finite,
+    kwargs...,
+)
 
     method = fallback_method(f, g)
     checked_kwargs, method = check_kwargs(kwargs, method)
@@ -100,7 +192,15 @@ function optimize(f, g, initial_x::AbstractArray; inplace = true, autodiff = :fi
     options = Options(; checked_kwargs...)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray; inplace = true, autodiff = :finite, kwargs...)
+function optimize(
+    f,
+    g,
+    h,
+    initial_x::AbstractArray;
+    inplace = true,
+    autodiff = :finite,
+    kwargs...,
+)
 
     method = fallback_method(f, g, h)
     checked_kwargs, method = check_kwargs(kwargs, method)
@@ -112,22 +212,47 @@ function optimize(f, g, h, initial_x::AbstractArray; inplace = true, autodiff = 
 end
 
 # no method supplied with objective
-function optimize(d::T, initial_x::AbstractArray, options::Options) where T<:AbstractObjective
+function optimize(
+    d::T,
+    initial_x::AbstractArray,
+    options::Options,
+) where {T<:AbstractObjective}
     optimize(d, initial_x, fallback_method(d), options)
 end
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
-function optimize(f, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    initial_x::AbstractArray,
+    options::Options;
+    inplace = true,
+    autodiff = :finite,
+)
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray, options::Options; inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    g,
+    initial_x::AbstractArray,
+    options::Options;
+    inplace = true,
+    autodiff = :finite,
+)
 
     method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray{T}, options::Options; inplace = true, autodiff = :finite) where {T}
+function optimize(
+    f,
+    g,
+    h,
+    initial_x::AbstractArray{T},
+    options::Options;
+    inplace = true,
+    autodiff = :finite,
+) where {T}
 
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
@@ -136,35 +261,69 @@ function optimize(f, g, h, initial_x::AbstractArray{T}, options::Options; inplac
 end
 
 # potentially everything is supplied (besides caches)
-function optimize(f, initial_x::AbstractArray, method::AbstractOptimizer,
-                     options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    initial_x::AbstractArray,
+    method::AbstractOptimizer,
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
+)
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
 end
-function optimize(f, c::AbstractConstraints, initial_x::AbstractArray, method::AbstractOptimizer,
-                     options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    c::AbstractConstraints,
+    initial_x::AbstractArray,
+    method::AbstractOptimizer,
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
+)
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, c, initial_x, method, options)
 end
-function optimize(f, g, initial_x::AbstractArray, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    g,
+    initial_x::AbstractArray,
+    method::AbstractOptimizer,
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
+)
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
     optimize(d, initial_x, method, options)
 end
-function optimize(f, g, h, initial_x::AbstractArray{T}, method::AbstractOptimizer,
-         options::Options = Options(;default_options(method)...); inplace = true, autodiff = :finite) where T
+function optimize(
+    f,
+    g,
+    h,
+    initial_x::AbstractArray{T},
+    method::AbstractOptimizer,
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
+) where {T}
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
     optimize(d, initial_x, method, options)
 end
 
-function optimize(d::D, initial_x::AbstractArray, method::SecondOrderOptimizer,
-                  options::Options = Options(;default_options(method)...); autodiff = :finite, inplace = true) where {D <: Union{NonDifferentiable, OnceDifferentiable}}
+function optimize(
+    d::D,
+    initial_x::AbstractArray,
+    method::SecondOrderOptimizer,
+    options::Options = Options(; default_options(method)...);
+    autodiff = :finite,
+    inplace = true,
+) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
     optimize(d, initial_x, method, options)
 end

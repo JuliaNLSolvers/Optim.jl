@@ -23,7 +23,7 @@ end
 __precondition!(out, P::Nothing, ∇f) = copyto!(out, ∇f)
 # fallback
 __precondition!(out, P, ∇f) = ldiv!(out, P, ∇f)
-__precondition!(out, P::AbstractMatrix, ∇f) = copyto!(out, P\∇f)
+__precondition!(out, P::AbstractMatrix, ∇f) = copyto!(out, P \ ∇f)
 
 function _inverse_precondition(method::AbstractOptimizer, state::AbstractOptimizerState)
     _inverse_precondition(method.P, state.s)
@@ -61,7 +61,7 @@ _apply_precondprep(P::InverseDiagonal, precondprep!, x) = precondprep!(P, x)
 __precondition!(out, P::InverseDiagonal, ∇f) = copyto!(out, P.diag .* ∇f)
 
 function _inverse_precondition(P::InverseDiagonal, s)
-   real(dot(s, P.diag .\ s))
+    real(dot(s, P.diag .\ s))
 end
 
 #####################################################
