@@ -126,7 +126,7 @@ function optimize(
     # in variables besides the option settings
     Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
-    stopped_by = (
+    stopped_by = (x_converged, f_converged, g_converged,
         f_limit_reached = f_limit_reached,
         g_limit_reached = g_limit_reached,
         h_limit_reached = h_limit_reached,
@@ -134,11 +134,11 @@ function optimize(
         callback = stopped_by_callback,
         f_increased = f_incr_pick,
         ls_failed = !ls_success,
-        iteration_limit = iteration == options.iterations,
+        iterations = iteration == options.iterations,
     )
 
     termination_code =
-        _termincation_code(d, g_residual(d, state), state, stopped_by, options)
+        _termination_code(d, g_residual(d, state), state, stopped_by, options)
 
     return MultivariateOptimizationResults{
         typeof(method),
@@ -146,7 +146,6 @@ function optimize(
         typeof(x_abschange(state)),
         Tf,
         typeof(tr),
-        Bool,
         typeof(stopped_by),
     }(
         method,
@@ -154,34 +153,28 @@ function optimize(
         pick_best_x(f_incr_pick, state),
         pick_best_f(f_incr_pick, state, d),
         iteration,
-        iteration == options.iterations,
-        x_converged, # refactor in v2
         Tf(options.x_abstol),
         Tf(options.x_reltol),
         x_abschange(state),
         x_relchange(state),
-        f_converged, # refactor in v2
         Tf(options.f_abstol),
         Tf(options.f_reltol),
         f_abschange(d, state),
         f_relchange(d, state),
-        g_converged, # refactor in v2
         Tf(options.g_abstol),
         g_residual(d, state),
-        f_increased, # refactor in v2
         tr,
         f_calls(d),
         g_calls(d),
         h_calls(d),
-        ls_success, # refactor in v2
         options.time_limit,
         _time - t0,
-        stopped_by, # refactor in v2
+        stopped_by,
         termination_code,
     )
 end
 
-function _termincation_code(d, gres, state, stopped_by, options)
+function _termination_code(d, gres, state, stopped_by, options)
 
     if state isa NelderMeadState && gres <= options.g_abstol
         TerminationCode.NelderMeadCriterion
@@ -202,7 +195,7 @@ function _termincation_code(d, gres, state, stopped_by, options)
         TerminationCode.FailedLinesearch
     elseif stopped_by.callback
         TerminationCode.Callback
-    elseif stopped_by.iteration_limit
+    elseif stopped_by.iterations
         TerminationCode.Iterations
     elseif stopped_by.time_limit
         TerminationCode.Time

@@ -2,7 +2,7 @@ Base.summary(r::OptimizationResults) = summary(r.method) # might want to do more
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
 iterations(r::OptimizationResults) = r.iterations
-iteration_limit_reached(r::OptimizationResults) = r.iteration_converged
+iteration_limit_reached(r::OptimizationResults) = r.stopped_by.iterations
 trace(r::OptimizationResults) =
     length(r.trace) > 0 ? r.trace :
     error(
@@ -113,11 +113,11 @@ h_calls(d::Union{NonDifferentiable,OnceDifferentiable}) = 0
 h_calls(d) = first(d.h_calls)
 h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
-converged(r::UnivariateOptimizationResults) = r.converged
+converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 function converged(r::MultivariateOptimizationResults)
-    conv_flags = r.x_converged || r.f_converged || r.g_converged
+    conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
-    f_isfinite = if r.iterations > 0
+    f_isfinite = if r.stopped_by.iterations > 0
         isfinite(f_abschange(r)) || isnan(f_relchange(r))
     else
         true
@@ -127,16 +127,16 @@ function converged(r::MultivariateOptimizationResults)
 end
 x_converged(r::OptimizationResults) =
     error("x_converged is not implemented for $(summary(r)).")
-x_converged(r::MultivariateOptimizationResults) = r.x_converged
+x_converged(r::MultivariateOptimizationResults) = r.stopped_by.x_converged
 f_converged(r::OptimizationResults) =
     error("f_converged is not implemented for $(summary(r)).")
-f_converged(r::MultivariateOptimizationResults) = r.f_converged
+f_converged(r::MultivariateOptimizationResults) = r.stopped_by.f_converged
 f_increased(r::OptimizationResults) =
     error("f_increased is not implemented for $(summary(r)).")
-f_increased(r::MultivariateOptimizationResults) = r.f_increased
+f_increased(r::MultivariateOptimizationResults) = r.stopped_by.f_increased
 g_converged(r::OptimizationResults) =
     error("g_converged is not implemented for $(summary(r)).")
-g_converged(r::MultivariateOptimizationResults) = r.g_converged
+g_converged(r::MultivariateOptimizationResults) = r.stopped_by.g_converged
 
 x_abstol(r::OptimizationResults) = error("x_abstol is not implemented for $(summary(r)).")
 x_reltol(r::OptimizationResults) = error("x_reltol is not implemented for $(summary(r)).")

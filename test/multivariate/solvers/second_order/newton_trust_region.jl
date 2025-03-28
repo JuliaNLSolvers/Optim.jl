@@ -156,7 +156,7 @@ Random.seed!(3288)
         results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
         @test_throws ErrorException Optim.x_trace(results)
         @test length(results.trace) == 0
-        @test results.g_converged
+        @test Optim.g_converged(results)
         @test norm(Optim.minimizer(results) - [5.0]) < 0.01
         @test summary(results) == "Newton's Method (Trust Region)"
 
@@ -181,7 +181,7 @@ Random.seed!(3288)
         d = TwiceDifferentiable(f_2, g!_2, h!_2, Float64[127, 921])
 
         results = Optim.optimize(d, Float64[127, 921], NewtonTrustRegion())
-        @test results.g_converged
+        @test Optim.g_converged(results)
         @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
         # Test Optim.newton for all twice differentiable functions in
@@ -212,7 +212,7 @@ Random.seed!(3288)
             ones(10),
             NewtonTrustRegion(),
         )
-        @test !(o.f_converged || o.g_converged || o.x_converged)
+        @test !(Optim.f_converged(o) || Optim.g_converged(o) || Optim.x_converged(o))
     end
 
     @testset "delta_min" begin
