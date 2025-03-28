@@ -30,8 +30,8 @@ introduced, see `?Adam` for more information on that method.
 ## References
 [1] https://arxiv.org/abs/1412.6980
 """
-struct AdaMax{Tα, T, Tm} <: FirstOrderOptimizer
-    α::Tα  
+struct AdaMax{Tα,T,Tm} <: FirstOrderOptimizer
+    α::Tα
     β₁::T
     β₂::T
     ϵ::T
@@ -41,11 +41,11 @@ AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999, epsilon = sqrt(eps(Fl
     AdaMax(alpha, beta_mean, beta_var, epsilon, Flat())
 Base.summary(::AdaMax) = "AdaMax"
 function default_options(method::AdaMax)
-    (; allow_f_increases = true, iterations=10_000)
+    (; allow_f_increases = true, iterations = 10_000)
 end
 
 
-mutable struct AdaMaxState{Tx, T, Tm, Tu, Ti} <: AbstractOptimizerState
+mutable struct AdaMaxState{Tx,T,Tm,Tu,Ti} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
@@ -59,15 +59,15 @@ function reset!(method, state::AdaMaxState, obj, x)
     value_gradient!!(obj, x)
 end
 
-function _get_init_params(method::AdaMax{T}) where T <: Real
-  method.α, method.β₁, method.β₂
-end 
+function _get_init_params(method::AdaMax{T}) where {T<:Real}
+    method.α, method.β₁, method.β₂
+end
 
 function _get_init_params(method::AdaMax)
-  method.α(1), method.β₁, method.β₂
-end 
+    method.α(1), method.β₁, method.β₂
+end
 
-function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) where T
+function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) where {T}
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
@@ -77,30 +77,30 @@ function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) 
     u = zero(m)
     iter = 0
 
-    AdaMaxState(initial_x, # Maintain current state in state.x
-                         copy(initial_x), # Maintain previous state in state.x_previous
-                         real(T(NaN)), # Store previous f in state.f_x_previous
-                         similar(initial_x), # Maintain current search direction in state.s
-                         m,
-                         u,
-                         α,
-                         iter)
+    AdaMaxState(
+        initial_x, # Maintain current state in state.x
+        copy(initial_x), # Maintain previous state in state.x_previous
+        real(T(NaN)), # Store previous f in state.f_x_previous
+        similar(initial_x), # Maintain current search direction in state.s
+        m,
+        u,
+        α,
+        iter,
+    )
 end
 
-function _update_iter_alpha_in_state!(
-  state::AdaMaxState, method::AdaMax{T}) where T <: Real
+function _update_iter_alpha_in_state!(state::AdaMaxState, method::AdaMax{T}) where {T<:Real}
 
-  state.iter = state.iter+1
-end 
-
-function _update_iter_alpha_in_state!(
-  state::AdaMaxState, method::AdaMax)
-
-  state.iter = state.iter+1
-  state.alpha = method.α(state.iter)
+    state.iter = state.iter + 1
 end
 
-function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where T
+function _update_iter_alpha_in_state!(state::AdaMaxState, method::AdaMax)
+
+    state.iter = state.iter + 1
+    state.alpha = method.α(state.iter)
+end
+
+function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where {T}
     _update_iter_alpha_in_state!(state, method)
     value_gradient!(d, state.x)
     α, β₁, β₂, ϵ = state.alpha, method.β₁, method.β₂, method.ϵ
@@ -115,6 +115,6 @@ function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where T
     false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::AdaMax, options, curr_time=time())
-  common_trace!(tr, d, state, iteration, method, options, curr_time)
+function trace!(tr, d, state, iteration, method::AdaMax, options, curr_time = time())
+    common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

@@ -15,7 +15,7 @@
             ot_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         optimize(f, initial_x, method, options)
         @test ot_run == true
 
@@ -25,7 +25,7 @@
             os_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every = 3)
         optimize(f, initial_x, method, options)
         @test os_run == true
 
@@ -34,17 +34,15 @@
         optimize(f, zeros(2), NelderMead(), options)
     end
 
-    for method in (BFGS(),
-                   ConjugateGradient(),
-                   GradientDescent(),
-                   MomentumGradientDescent())
+    for method in
+        (BFGS(), ConjugateGradient(), GradientDescent(), MomentumGradientDescent())
         ot_run = false
         cb = tr -> begin
             @test tr[end].iteration % 3 == 0
             ot_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
 
         optimize(d2, initial_x, method, options)
         @test ot_run == true
@@ -55,7 +53,7 @@
             os_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every = 3)
         optimize(d2, initial_x, method, options)
         @test os_run == true
     end
@@ -67,7 +65,7 @@
             ot_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3, store_trace=true)
+        options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         optimize(d3, initial_x, method, options)
         @test ot_run == true
 
@@ -77,10 +75,10 @@
             os_run = true
             false
         end
-        options = Optim.Options(callback = cb, show_every=3)
+        options = Optim.Options(callback = cb, show_every = 3)
         optimize(d3, initial_x, method, options)
         @test os_run == true
     end
-    res = optimize(x->x^2, -5, 5, callback=_->true)
+    res = optimize(x -> x^2, -5, 5, callback = _ -> true)
     @test res.iterations == 0
 end

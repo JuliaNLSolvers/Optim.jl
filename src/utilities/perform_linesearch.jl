@@ -3,7 +3,7 @@
 reset_search_direction!(state, d, method) = false # no-op
 
 _alphaguess(a) = a
-_alphaguess(a::Number) = LineSearches.InitialStatic(alpha=a)
+_alphaguess(a::Number) = LineSearches.InitialStatic(alpha = a)
 
 # Note that for these resets we're using `gradient(d)` but we don't need to use
 # project_tangent! here, because we already did that inplace on gradient(d) after
@@ -21,7 +21,7 @@ function reset_search_direction!(state, d, method::BFGS)
     else
         state.invH .= method.initial_invH(state.x)
     end
-#    copyto!(state.invH, method.initial_invH(state.x))
+    #    copyto!(state.invH, method.initial_invH(state.x))
     state.s .= .-gradient(d)
     return true
 end
@@ -44,7 +44,7 @@ function perform_linesearch!(state, method, d)
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, d, method)
         dphi_0 = real(dot(gradient(d), state.s)) # update after direction reset
     end
-    phi_0  = value(d)
+    phi_0 = value(d)
 
     # Guess an alpha
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
@@ -56,8 +56,7 @@ function perform_linesearch!(state, method, d)
     # Perform line search; catch LineSearchException to allow graceful exit
     try
         state.alpha, ϕalpha =
-            method.linesearch!(d, state.x, state.s, state.alpha,
-                               state.x_ls, phi_0, dphi_0)
+            method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
         return true # lssuccess = true
     catch ex
         if isa(ex, LineSearches.LineSearchException)
