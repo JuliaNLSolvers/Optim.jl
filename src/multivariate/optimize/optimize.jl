@@ -118,7 +118,9 @@ function optimize(d::D, initial_x::Tx, method::M,
                  f_increased=f_incr_pick,
                  ls_failed = !ls_success,
                  iteration_limit = iteration == options.iterations,)
+
     termination_code  = _termincation_code(d, g_residual(d, state), state, stopped_by, options)
+
     return MultivariateOptimizationResults{typeof(method),Tx,typeof(x_abschange(state)),Tf,typeof(tr), Bool, typeof(stopped_by), typeof(termination_code)}(method,
                                         initial_x,
                                         pick_best_x(f_incr_pick, state),
@@ -151,7 +153,7 @@ function optimize(d::D, initial_x::Tx, method::M,
 end
 
 function _termincation_code(d, gres, state, stopped_by, options)
-    # TODO add NM stopping here
+
     if state isa NelderMeadState && gres <= options.g_abstol
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
@@ -162,7 +164,7 @@ function _termincation_code(d, gres, state, stopped_by, options)
         TerminationCode.NoFChange
     elseif x_abschange(state) <= options.x_abstol || x_relchange(state) <= options.x_reltol
         TerminationCode.SmallXChange
-    elseif f_abschange(d, state) <= options.f_abstol || f_relchange(d, state) <= options.x_reltol
+    elseif f_abschange(d, state) <= options.f_abstol || f_relchange(d, state) <= options.f_reltol
         TerminationCode.SmallFChange
     elseif stopped_by.ls_failed
         TerminationCode.FailedLinesearch
@@ -185,6 +187,6 @@ function _termincation_code(d, gres, state, stopped_by, options)
     elseif h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
         TerminationCode.HessianNotFinite
     else
-        NotImplemented
+        TerminationCode.NotImplemented
     end
 end
