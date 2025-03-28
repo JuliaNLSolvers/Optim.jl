@@ -170,6 +170,45 @@ end
 
 const OptimizationTrace{Tf, T} = Vector{OptimizationState{Tf, T}}
 
+using EnumX
+"Termination codes for Optim.jl."
+@enumx TerminationCode begin
+    "Nelder-Mead simplex converged."
+    NelderMeadCriterion
+    "First (partial) derivative had a magnitude below the prescribed tolerance."
+    FirstOrder
+    "The change in optimization variables was zero (the tolerance was not set by the user)."
+    NoXChange
+    "The change in the objective was zero (the tolerance was not set by the user)."
+    NoFChange
+    "The change in the optimization variables was below the prescribed tolerance."
+    SmallXChange
+    "The change in the objective was below the prescribed tolerance."
+    SmallFChange
+    "The line search failed to find a point that decreased the objective."
+    FailedLinesearch
+    "User callback returned `true`."
+    Callback
+    "The number of iterations exceeded the maximum number allowed."
+    Iterations
+    "Time budget was exceeded."
+    Time
+    "Objective function evaluations exceeded the maximum number allowed."
+    FCall
+    "Gradient evaluations exceeded the maximum number allowed."
+    Gcall
+    "Hessian evaluations exceeded the maximum number allowed."
+    HCall
+    "Objective function value increased."
+    FIncreased
+    "Gradient was not finite"
+    GradientNotFinite
+    "Hessian was not finite"
+    HessianNotFinite
+    "For algorithms where the TerminationCode is not yet implemented."
+    NotImplemented
+end
+
 abstract type OptimizationResults end
 
 mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: OptimizationResults
@@ -201,9 +240,10 @@ mutable struct MultivariateOptimizationResults{O, Tx, Tc, Tf, M, Tls, Tsb} <: Op
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
+    termination_code::TerminationCode.T
 end
 
-
+termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
 
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
