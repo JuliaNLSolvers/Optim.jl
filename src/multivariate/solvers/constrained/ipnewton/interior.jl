@@ -212,7 +212,7 @@ function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, 
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    norm(gradient(d), Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
+    g_residual(d, state) + norm(state.bgrad, Inf) < options.g_abstol, stopped
 end
 
 function optimize(

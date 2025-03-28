@@ -59,4 +59,8 @@
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+
+    reresults = optimize(d, Optim.minimizer(results), GradientDescent())
+    @test Optim.g_converged(reresults)
+    @test iszero(Optim.iterations(reresults)) # we expect immediate return given the initial guess
 end
