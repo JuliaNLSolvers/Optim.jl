@@ -43,6 +43,7 @@
     @test summary(results) == "Gradient Descent"
 
     function f_gd_2(x)
+        eta = 0.9
         (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
     end
 
