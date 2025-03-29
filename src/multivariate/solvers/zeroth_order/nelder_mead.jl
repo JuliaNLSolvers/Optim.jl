@@ -328,7 +328,7 @@ function initial_convergence(
 )
     nmo = nmobjective(state.f_simplex, state.m, length(initial_x))
 
-    !isfinite(value(d)), nmo <= options.g_abstol, !isfinite(nmo)
+    nmo <= options.g_abstol, !isfinite(value(d)) || !isfinite(nmo)
 end
 
 function trace!(

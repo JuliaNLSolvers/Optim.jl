@@ -42,13 +42,13 @@
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
     @test summary(results) == "Gradient Descent"
 
-    eta = 0.9
-
     function f_gd_2(x)
+        eta = 0.9
         (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
     end
 
     function g_gd_2(storage, x)
+        eta = 0.9
         storage[1] = x[1]
         storage[2] = eta * x[2]
     end
@@ -59,4 +59,8 @@
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+
+    reresults = optimize(d, Optim.minimizer(results), GradientDescent())
+    @test Optim.g_converged(reresults)
+    @test iszero(Optim.iterations(reresults)) # we expect immediate return given the initial guess
 end

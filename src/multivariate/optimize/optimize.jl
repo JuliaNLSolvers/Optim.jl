@@ -24,7 +24,7 @@ after_while!(d, state, method, options) = nothing
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    maximum(abs, gradient(d)) <= options.g_abstol, stopped
+    g_residual(d, state) <= options.g_abstol, stopped
 end
 function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
     false, false
@@ -48,8 +48,8 @@ function optimize(
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    f_converged, g_converged = initial_convergence(d, state, method, initial_x, options)
-    converged = f_converged || g_converged
+    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+    converged = g_converged || stopped
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
