@@ -42,13 +42,12 @@
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
     @test summary(results) == "Gradient Descent"
 
-    eta = 0.9
-
     function f_gd_2(x)
         (1.0 / 2.0) * (x[1]^2 + eta * x[2]^2)
     end
 
     function g_gd_2(storage, x)
+        eta = 0.9
         storage[1] = x[1]
         storage[2] = eta * x[2]
     end
