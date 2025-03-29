@@ -3,7 +3,7 @@
 #-
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:
-#md #     [`ipnewton_basics.ipynb`](@__NBVIEWER_ROOT_URL__examples/generated/ipnewton_basics.ipynb)
+#md #     [`ipnewton_basics.ipynb`](@__NBVIEWER_ROOT_URL__/examples/generated/ipnewton_basics.ipynb)
 #-
 #
 # The nonlinear constrained optimization interface in
