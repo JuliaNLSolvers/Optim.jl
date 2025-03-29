@@ -25,11 +25,6 @@ using LineSearches           # for globalization strategy in Quasi-Newton algs
 
 import NaNMath               # for functions that ignore NaNs (no poisoning)
 
-import Parameters:
-    @with_kw, # for types where constructors are simply defined
-    @unpack   # by their default values, and simple unpacking
-# of fields
-
 using Printf                 # For printing, maybe look into other options
 
 using FillArrays             # For handling scalar bounds in Fminbox
