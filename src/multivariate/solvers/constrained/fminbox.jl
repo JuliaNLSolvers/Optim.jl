@@ -1,6 +1,7 @@
-import NLSolversBase: value, value!, value!!, gradient, gradient!, value_gradient!, value_gradient!!
+import NLSolversBase:
+    value, value!, value!!, gradient, gradient!, value_gradient!, value_gradient!!
 ####### FIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX THE MIDDLE OF BOX CASE THAT WAS THERE
-mutable struct BarrierWrapper{TO, TB, Tm, TF, TDF} <: AbstractObjective
+mutable struct BarrierWrapper{TO,TB,Tm,TF,TDF} <: AbstractObjective
     obj::TO
     b::TB # barrier
     mu::Tm # multipler
@@ -20,19 +21,27 @@ end
 function BarrierWrapper(obj::OnceDifferentiable, mu, lower, upper)
     barrier_term = BoxBarrier(lower, upper)
 
-    BarrierWrapper(obj, barrier_term, mu, copy(obj.F), copy(obj.F), copy(obj.DF), copy(obj.DF))
+    BarrierWrapper(
+        obj,
+        barrier_term,
+        mu,
+        copy(obj.F),
+        copy(obj.F),
+        copy(obj.DF),
+        copy(obj.DF),
+    )
 end
 
-struct BoxBarrier{L, U}
+struct BoxBarrier{L,U}
     lower::L
     upper::U
 end
 function in_box(bb::BoxBarrier, x)
-    all(x->x[1]>=x[2] && x[1]<=x[3], zip(x, bb.lower, bb.upper))
+    all(x -> x[1] >= x[2] && x[1] <= x[3], zip(x, bb.lower, bb.upper))
 end
 in_box(bw::BarrierWrapper, x) = in_box(bw.b, x)
 # evaluates the value and gradient components comming from the log barrier
-function _barrier_term_value(x::T, l, u) where T
+function _barrier_term_value(x::T, l, u) where {T}
     dxl = x - l
     dxu = u - x
 
@@ -43,15 +52,15 @@ function _barrier_term_value(x::T, l, u) where T
     vu = ifelse(isfinite(dxu), -log(dxu), T(0))
     return vl + vu
 end
-function _barrier_term_gradient(x::T, l, u) where T
+function _barrier_term_gradient(x::T, l, u) where {T}
     dxl = x - l
     dxu = u - x
     g = zero(T)
     if isfinite(l)
-        g += -one(T)/dxl
+        g += -one(T) / dxl
     end
     if isfinite(u)
-        g += one(T)/dxu
+        g += one(T) / dxu
     end
     return g
 end
@@ -66,7 +75,7 @@ end
 # Wrappers
 function value!!(bw::BarrierWrapper, x)
     bw.Fb = value(bw.b, x)
-    bw.Ftotal = bw.mu*bw.Fb
+    bw.Ftotal = bw.mu * bw.Fb
     if in_box(bw, x)
         value!!(bw.obj, x)
         bw.Ftotal += value(bw.obj)
@@ -74,9 +83,9 @@ function value!!(bw::BarrierWrapper, x)
 end
 function value_gradient!!(bw::BarrierWrapper, x)
     bw.Fb = value(bw.b, x)
-    bw.Ftotal = bw.mu*bw.Fb
+    bw.Ftotal = bw.mu * bw.Fb
     bw.DFb .= _barrier_term_gradient.(x, bw.b.lower, bw.b.upper)
-    bw.DFtotal .=  bw.mu .* bw.DFb
+    bw.DFtotal .= bw.mu .* bw.DFb
     if in_box(bw, x)
         value_gradient!!(bw.obj, x)
         bw.Ftotal += value(bw.obj)
@@ -88,7 +97,7 @@ function value_gradient!(bb::BarrierWrapper, x)
     bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
     bb.Fb = value(bb.b, x)
     bb.DFtotal .= bb.mu .* bb.DFb
-    bb.Ftotal = bb.mu*bb.Fb
+    bb.Ftotal = bb.mu * bb.Fb
 
     if in_box(bb, x)
         value_gradient!(bb.obj, x)
@@ -96,10 +105,11 @@ function value_gradient!(bb::BarrierWrapper, x)
         bb.Ftotal += value(bb.obj)
     end
 end
-value(bb::BoxBarrier, x) = mapreduce(x->_barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
+value(bb::BoxBarrier, x) =
+    mapreduce(x -> _barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
 function value!(obj::BarrierWrapper, x)
     obj.Fb = value(obj.b, x)
-    obj.Ftotal = obj.mu*obj.Fb
+    obj.Ftotal = obj.mu * obj.Fb
     if in_box(obj, x)
         value!(obj.obj, x)
         obj.Ftotal += value(obj.obj)
@@ -108,7 +118,7 @@ function value!(obj::BarrierWrapper, x)
 end
 value(obj::BarrierWrapper) = obj.Ftotal
 function value(obj::BarrierWrapper, x)
-    F = obj.mu*value(obj.b, x)
+    F = obj.mu * value(obj.b, x)
     if in_box(obj, x)
         F += value(obj.obj, x)
     end
@@ -117,7 +127,7 @@ end
 function gradient!(obj::BarrierWrapper, x)
     gradient!(obj.obj, x)
     obj.DFb .= gradient(obj.b, obj.DFb, x) # this should just be inplace?
-    obj.DFtotal .= gradient(obj.obj) .+ obj.mu*obj.Fb
+    obj.DFtotal .= gradient(obj.obj) .+ obj.mu * obj.Fb
 end
 gradient(obj::BarrierWrapper) = obj.DFtotal
 
@@ -125,7 +135,12 @@ gradient(obj::BarrierWrapper) = obj.DFtotal
 # Super unsafe in that it depends on x_df being correct!
 function initial_mu(obj::BarrierWrapper, F)
     T = typeof(obj.Fb) # this will not work if F is real, G is complex
-    gbarrier = map(x->(isfinite.(x[2]) ? one(T)/(x[1]-x[2]) : zero(T)) + (isfinite(x[3]) ? one(T)/(x[3]-x[1]) : zero(T)), zip(obj.obj.x_f, obj.b.lower, obj.b.upper))
+    gbarrier = map(
+        x ->
+            (isfinite.(x[2]) ? one(T) / (x[1] - x[2]) : zero(T)) +
+            (isfinite(x[3]) ? one(T) / (x[3] - x[1]) : zero(T)),
+        zip(obj.obj.x_f, obj.b.lower, obj.b.upper),
+    )
 
     # obj.mu = initial_mu(gradient(obj.obj), gradient(obj.b, obj.DFb, obj.obj.x_df), T(F.mufactor), T(F.mu0))
     obj.mu = initial_mu(gradient(obj.obj), gbarrier, T(F.mufactor), T(F.mu0))
@@ -133,12 +148,17 @@ end
 # Attempt to compute a reasonable default mu: at the starting
 # position, the gradient of the input function should dominate the
 # gradient of the barrier.
-function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0factor::T = T(1)/1000, mu0::T = convert(T, NaN)) where T
+function initial_mu(
+    gfunc::AbstractArray{T},
+    gbarrier::AbstractArray{T},
+    mu0factor::T = T(1) / 1000,
+    mu0::T = convert(T, NaN),
+) where {T}
 
     if isnan(mu0)
         gbarriernorm = sum(abs, gbarrier)
         if gbarriernorm > 0
-            mu = mu0factor*sum(abs, gfunc)/gbarriernorm
+            mu = mu0factor * sum(abs, gfunc) / gbarriernorm
         else
             # Presumably, there is no barrier function
             mu = zero(T)
@@ -149,14 +169,18 @@ function initial_mu(gfunc::AbstractArray{T}, gbarrier::AbstractArray{T}, mu0fact
     return mu
 end
 
-function limits_box(x::AbstractArray{T}, d::AbstractArray{T},
-                    l::AbstractArray{T}, u::AbstractArray{T}) where T
+function limits_box(
+    x::AbstractArray{T},
+    d::AbstractArray{T},
+    l::AbstractArray{T},
+    u::AbstractArray{T},
+) where {T}
     alphamax = convert(T, Inf)
     @inbounds for i in eachindex(x)
         if d[i] < 0
-            alphamax = min(alphamax, ((l[i]-x[i])+eps(l[i]))/d[i])
+            alphamax = min(alphamax, ((l[i] - x[i]) + eps(l[i])) / d[i])
         elseif d[i] > 0
-            alphamax = min(alphamax, ((u[i]-x[i])-eps(u[i]))/d[i])
+            alphamax = min(alphamax, ((u[i] - x[i]) - eps(u[i])) / d[i])
         end
     end
     epsilon = eps(max(alphamax, one(T)))
@@ -169,10 +193,10 @@ end
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, dfbox)
-    @. P.diag = 1/(dfbox.mu*(1/(x-l)^2 + 1/(u-x)^2) + 1)
+    @. P.diag = 1 / (dfbox.mu * (1 / (x - l)^2 + 1 / (u - x)^2) + 1)
 end
 
-struct Fminbox{O<:AbstractOptimizer, T, P} <: AbstractConstrainedOptimizer
+struct Fminbox{O<:AbstractOptimizer,T,P} <: AbstractConstrainedOptimizer
     method::O
     mu0::T
     mufactor::T
@@ -196,9 +220,12 @@ the one implemented here can be found in section 19.6 of Nocedal and Wright
 ## References
  - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function Fminbox(method::AbstractOptimizer = LBFGS();
-                 mu0::Real = NaN, mufactor::Real = 0.001,
-                 precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
+function Fminbox(
+    method::AbstractOptimizer = LBFGS();
+    mu0::Real = NaN,
+    mufactor::Real = 0.001,
+    precondprep = (P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu),
+)
     if method isa Newton || method isa NewtonTrustRegion
         throw(ArgumentError("Newton is not supported as the Fminbox optimizer."))
     end
@@ -211,32 +238,49 @@ Base.summary(F::Fminbox) = "Fminbox with $(summary(F.method))"
 # Essentially it only updates the P and precondprep fields of `m`.
 
 # fallback
-barrier_method(m::AbstractOptimizer, P, precondprep) =
-    error("You need to specify a valid inner optimizer for Fminbox, $m is not supported. Please consult the documentation.")
+barrier_method(m::AbstractOptimizer, P, precondprep) = error(
+    "You need to specify a valid inner optimizer for Fminbox, $m is not supported. Please consult the documentation.",
+)
 
-barrier_method(m::ConjugateGradient, P, precondprep) =
-    ConjugateGradient(eta = m.eta, alphaguess = m.alphaguess!,
-                      linesearch = m.linesearch!, P = P,
-                      precondprep = precondprep)
+barrier_method(m::ConjugateGradient, P, precondprep) = ConjugateGradient(
+    eta = m.eta,
+    alphaguess = m.alphaguess!,
+    linesearch = m.linesearch!,
+    P = P,
+    precondprep = precondprep,
+)
 
-barrier_method(m::LBFGS, P, precondprep) =
-    LBFGS(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
-          precondprep = precondprep)
+barrier_method(m::LBFGS, P, precondprep) = LBFGS(
+    alphaguess = m.alphaguess!,
+    linesearch = m.linesearch!,
+    P = P,
+    precondprep = precondprep,
+)
 
-barrier_method(m::GradientDescent, P, precondprep) =
-    GradientDescent(alphaguess = m.alphaguess!, linesearch = m.linesearch!, P = P,
-                    precondprep = precondprep)
+barrier_method(m::GradientDescent, P, precondprep) = GradientDescent(
+    alphaguess = m.alphaguess!,
+    linesearch = m.linesearch!,
+    P = P,
+    precondprep = precondprep,
+)
 
-barrier_method(m::Union{NelderMead, SimulatedAnnealing, ParticleSwarm, BFGS, AbstractNGMRES},
-               P, precondprep) = m # use `m` as is
+barrier_method(
+    m::Union{NelderMead,SimulatedAnnealing,ParticleSwarm,BFGS,AbstractNGMRES},
+    P,
+    precondprep,
+) = m # use `m` as is
 
-function optimize(f,
-                  g,
-                  l::AbstractArray{T},
-                  u::AbstractArray{T},
-                  initial_x::AbstractArray{T},
-                  F::Fminbox = Fminbox(),
-                  options = Options(); inplace = true, autodiff = :finite) where T<:AbstractFloat
+function optimize(
+    f,
+    g,
+    l::AbstractArray{T},
+    u::AbstractArray{T},
+    initial_x::AbstractArray{T},
+    F::Fminbox = Fminbox(),
+    options = Options();
+    inplace = true,
+    autodiff = :finite,
+) where {T<:AbstractFloat}
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(T))
@@ -244,24 +288,101 @@ function optimize(f,
     optimize(od, l, u, initial_x, F, options)
 end
 
-optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x; kwargs...)
-optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x; kwargs...)
-optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}; kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x; kwargs...)
+optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}; kwargs...) where {T} =
+    optimize(
+        f,
+        Fill(T(l), size(initial_x)...),
+        Fill(T(u), size(initial_x)...),
+        initial_x;
+        kwargs...,
+    )
+optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}; kwargs...) where {T} =
+    optimize(f, l, Fill(T(u), size(initial_x)...), initial_x; kwargs...)
+optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}; kwargs...) where {T} =
+    optimize(f, Fill(T(l), size(initial_x)...), u, initial_x; kwargs...)
 
-optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, mo, opt; kwargs...)
-optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x, mo, opt; kwargs...)
-optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, mo::AbstractConstrainedOptimizer, opt::Options=Options(); kwargs...) where T = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x, mo, opt; kwargs...)
+optimize(
+    f,
+    l::Number,
+    u::Number,
+    initial_x::AbstractArray{T},
+    mo::AbstractConstrainedOptimizer,
+    opt::Options = Options();
+    kwargs...,
+) where {T} = optimize(
+    f,
+    Fill(T(l), size(initial_x)...),
+    Fill(T(u), size(initial_x)...),
+    initial_x,
+    mo,
+    opt;
+    kwargs...,
+)
+optimize(
+    f,
+    l::AbstractArray,
+    u::Number,
+    initial_x::AbstractArray{T},
+    mo::AbstractConstrainedOptimizer,
+    opt::Options = Options();
+    kwargs...,
+) where {T} = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x, mo, opt; kwargs...)
+optimize(
+    f,
+    l::Number,
+    u::AbstractArray,
+    initial_x::AbstractArray{T},
+    mo::AbstractConstrainedOptimizer,
+    opt::Options = Options();
+    kwargs...,
+) where {T} = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x, mo, opt; kwargs...)
 
-optimize(f, g, l::Number, u::Number, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), Fill(T(u), size(initial_x)...), initial_x, opt; kwargs...)
-optimize(f, g, l::AbstractArray, u::Number, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, l, Fill(T(u), size(initial_x)...), initial_x, opt; kwargs...)
-optimize(f, g, l::Number, u::AbstractArray, initial_x::AbstractArray{T}, opt::Options; kwargs...) where T = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt; kwargs...)
+optimize(
+    f,
+    g,
+    l::Number,
+    u::Number,
+    initial_x::AbstractArray{T},
+    opt::Options;
+    kwargs...,
+) where {T} = optimize(
+    f,
+    g,
+    Fill(T(l), size(initial_x)...),
+    Fill(T(u), size(initial_x)...),
+    initial_x,
+    opt;
+    kwargs...,
+)
+optimize(
+    f,
+    g,
+    l::AbstractArray,
+    u::Number,
+    initial_x::AbstractArray{T},
+    opt::Options;
+    kwargs...,
+) where {T} = optimize(f, g, l, Fill(T(u), size(initial_x)...), initial_x, opt; kwargs...)
+optimize(
+    f,
+    g,
+    l::Number,
+    u::AbstractArray,
+    initial_x::AbstractArray{T},
+    opt::Options;
+    kwargs...,
+) where {T} = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt; kwargs...)
 
-function optimize(f,
-                  l::AbstractArray,
-                  u::AbstractArray,
-                  initial_x::AbstractArray,
-                  F::Fminbox = Fminbox(),
-                  options::Options = Options(); inplace = true, autodiff = :finite)
+function optimize(
+    f,
+    l::AbstractArray,
+    u::AbstractArray,
+    initial_x::AbstractArray,
+    F::Fminbox = Fminbox(),
+    options::Options = Options();
+    inplace = true,
+    autodiff = :finite,
+)
     if f isa NonDifferentiable
         f = f.f
     end
@@ -270,19 +391,21 @@ function optimize(f,
 end
 
 function optimize(
-        df::OnceDifferentiable,
-        l::AbstractArray,
-        u::AbstractArray,
-        initial_x::AbstractArray,
-        F::Fminbox = Fminbox(),
-        options::Options = Options())
+    df::OnceDifferentiable,
+    l::AbstractArray,
+    u::AbstractArray,
+    initial_x::AbstractArray,
+    F::Fminbox = Fminbox(),
+    options::Options = Options(),
+)
 
     T = eltype(initial_x)
     t0 = time()
 
     outer_iterations = options.outer_iterations
     allow_outer_f_increases = options.allow_outer_f_increases
-    show_trace, store_trace, extended_trace = options.show_trace, options.store_trace, options.extended_trace
+    show_trace, store_trace, extended_trace =
+        options.show_trace, options.store_trace, options.extended_trace
 
     x = copy(initial_x)
     P = InverseDiagonal(copy(initial_x))
@@ -299,19 +422,25 @@ function optimize(
         thisu = u[i]
 
         if thisx == thisl
-            thisx = T(99)/100*thisl + T(1)/100*thisu
+            thisx = T(99) / 100 * thisl + T(1) / 100 * thisu
             x[i] = thisx
-            push!(boundaryidx,i)
+            push!(boundaryidx, i)
         elseif thisx == thisu
-            thisx = T(1)/100*thisl + T(99)/100*thisu
+            thisx = T(1) / 100 * thisl + T(99) / 100 * thisu
             x[i] = thisx
-            push!(boundaryidx,i)
+            push!(boundaryidx, i)
         elseif thisx < thisl || thisx > thisu
-            throw(ArgumentError("Initial x[$(Tuple(CartesianIndices(x)[i]))]=$thisx is outside of [$thisl, $thisu]"))
+            throw(
+                ArgumentError(
+                    "Initial x[$(Tuple(CartesianIndices(x)[i]))]=$thisx is outside of [$thisl, $thisu]",
+                ),
+            )
         end
     end
     if length(boundaryidx) > 0
-        @warn("Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx")
+        @warn(
+            "Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx"
+        )
     end
 
     dfbox = BarrierWrapper(df, zero(T), l, u)
@@ -339,7 +468,7 @@ function optimize(
         println("Fminbox")
         println("-------")
         print("Initial mu = ")
-        show(IOContext(stdout, :compact=>true), "text/plain", dfbox.mu)
+        show(IOContext(stdout, :compact => true), "text/plain", dfbox.mu)
         println("\n")
     end
 
@@ -353,11 +482,12 @@ function optimize(
 
     xold = copy(x)
     converged = false
-    local results
+    local results, fval0, _x_converged, _f_converged, _g_converged
     first = true
     f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
     stopped = false
     _time = time()
+
     while !converged && !stopped && iteration < outer_iterations
         fval0 = dfbox.obj.F
         # Increment the number of steps we've had to perform
@@ -370,7 +500,7 @@ function optimize(
             println(header_string)
             println("-"^length(header_string))
             print("Calling inner optimizer with mu = ")
-            show(IOContext(stdout, :compact=>true), "text/plain", dfbox.mu)
+            show(IOContext(stdout, :compact => true), "text/plain", dfbox.mu)
             println("\n")
             println("(numbers below include barrier contribution)")
         end
@@ -403,12 +533,12 @@ function optimize(
             dfbox.obj.h_calls[1] = 0
         end
         copyto!(x, minimizer(results))
-        boxdist = min(minimum(x-l), minimum(u-x))
+        boxdist = min(minimum(x - l), minimum(u - x))
         if show_trace > 0
             println()
             println("Exiting inner optimizer with x = ", x)
             print("Current distance to box: ")
-            show(IOContext(stdout, :compact=>true), "text/plain", boxdist)
+            show(IOContext(stdout, :compact => true), "text/plain", boxdist)
             println()
             println("Decreasing barrier term μ.\n")
         end
@@ -416,34 +546,73 @@ function optimize(
         # Decrease mu
         dfbox.mu *= T(F.mufactor)
         # Test for convergence
-        g = x.-min.(max.(x.-gradient(dfbox.obj), l), u)
-        results.x_converged, results.f_converged,
-        results.g_converged, f_increased = assess_convergence(x, xold, minimum(results), fval0, g,
-                                                              options.outer_x_abstol, options.outer_x_reltol, options.outer_f_abstol, options.outer_f_reltol, options.outer_g_abstol)
-        converged = results.x_converged || results.f_converged || results.g_converged || stopped_by_callback
+        g = x .- min.(max.(x .- gradient(dfbox.obj), l), u)
+        _x_converged, _f_converged, _g_converged, f_increased =
+            assess_convergence(
+                x,
+                xold,
+                minimum(results),
+                fval0,
+                g,
+                options.outer_x_abstol,
+                options.outer_x_reltol,
+                options.outer_f_abstol,
+                options.outer_f_reltol,
+                options.outer_g_abstol,
+            )
+        converged =
+            _x_converged ||
+            _f_converged ||
+            _g_converged ||
+            stopped_by_callback
         if f_increased && !allow_outer_f_increases
             @warn("f(x) increased: stopping optimization")
             break
         end
         _time = time()
-        stopped_by_time_limit = _time-t0 > options.time_limit ? true : false
+        stopped_by_time_limit = _time - t0 > options.time_limit ? true : false
         stopped = stopped_by_time_limit
     end
 
-    stopped_by =(#f_limit_reached=f_limit_reached,
-                 #g_limit_reached=g_limit_reached,
-                 #h_limit_reached=h_limit_reached,
-                 time_limit=stopped_by_time_limit,
-                 callback=stopped_by_callback,
-                 f_increased=f_increased && !options.allow_f_increases)
+    stopped_by = (
+        f_limit_reached = false,
+        g_limit_reached = false,
+        h_limit_reached = false,
+        time_limit = stopped_by_time_limit,
+        callback = stopped_by_callback,
+        f_increased = f_increased && !options.allow_f_increases,
+        ls_failed = false,
+        iterations = results.stopped_by.iterations,
+        x_converged = _x_converged,
+        f_converged = _f_converged,
+        g_converged = _g_converged,
+    )
+    box_state = (; x, x_previous = xold, f_x_previous = fval0)
+    termination_code = _termination_code(df, g_residual(g), box_state, stopped_by, options)
 
-    return MultivariateOptimizationResults(F, initial_x, minimizer(results), df.f(minimizer(results)),
-            iteration, results.iteration_converged,
-            results.x_converged, results.x_abstol, results.x_reltol, norm(x - xold), norm(x - xold)/norm(x),
-            results.f_converged, results.f_abstol, results.f_reltol, f_abschange(minimum(results), value(dfbox)), f_relchange(minimum(results), value(dfbox)),
-            results.g_converged, results.g_abstol, norm(g, Inf),
-            results.f_increased, results.trace, results.f_calls,
-            results.g_calls, results.h_calls, nothing,
-            options.time_limit,
-            _time-t0, stopped_by)
+    return MultivariateOptimizationResults(
+        F,
+        initial_x,
+        minimizer(results),
+        df.f(minimizer(results)),
+        iteration,
+        results.x_abstol,
+        results.x_reltol,
+        norm(x - xold, Inf),
+        norm(x - xold, Inf) / norm(x, Inf),
+        results.f_abstol,
+        results.f_reltol,
+        f_abschange(minimum(results), fval0),
+        f_relchange(minimum(results), fval0),
+        results.g_abstol,
+        g_residual(g, Inf),
+        results.trace,
+        results.f_calls,
+        results.g_calls,
+        results.h_calls,
+        options.time_limit,
+        _time - t0,
+        stopped_by,
+        termination_code,
+    )
 end

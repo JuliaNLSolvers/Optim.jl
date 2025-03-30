@@ -34,87 +34,91 @@ using ForwardDiff
 n = 40                              # Number of observations
 nvar = 2                            # Number of variables
 β = ones(nvar) * 3.0                # True coefficients
-x = [ 1.0   0.156651				# X matrix of explanatory variables plus constant
- 1.0  -1.34218
- 1.0   0.238262
- 1.0  -0.496572
- 1.0   1.19352
- 1.0   0.300229
- 1.0   0.409127
- 1.0  -0.88967
- 1.0  -0.326052
- 1.0  -1.74367
- 1.0  -0.528113
- 1.0   1.42612
- 1.0  -1.08846
- 1.0  -0.00972169
- 1.0  -0.85543
- 1.0   1.0301
- 1.0   1.67595
- 1.0  -0.152156
- 1.0   0.26666
- 1.0  -0.668618
- 1.0  -0.36883
- 1.0  -0.301392
- 1.0   0.0667779
- 1.0  -0.508801
- 1.0  -0.352346
- 1.0   0.288688
- 1.0  -0.240577
- 1.0  -0.997697
- 1.0  -0.362264
- 1.0   0.999308
- 1.0  -1.28574
- 1.0  -1.91253
- 1.0   0.825156
- 1.0  -0.136191
- 1.0   1.79925
- 1.0  -1.10438
- 1.0   0.108481
- 1.0   0.847916
- 1.0   0.594971
- 1.0   0.427909]
+x = [
+    1.0 0.156651# X matrix of explanatory variables plus constant
+    1.0 -1.34218
+    1.0 0.238262
+    1.0 -0.496572
+    1.0 1.19352
+    1.0 0.300229
+    1.0 0.409127
+    1.0 -0.88967
+    1.0 -0.326052
+    1.0 -1.74367
+    1.0 -0.528113
+    1.0 1.42612
+    1.0 -1.08846
+    1.0 -0.00972169
+    1.0 -0.85543
+    1.0 1.0301
+    1.0 1.67595
+    1.0 -0.152156
+    1.0 0.26666
+    1.0 -0.668618
+    1.0 -0.36883
+    1.0 -0.301392
+    1.0 0.0667779
+    1.0 -0.508801
+    1.0 -0.352346
+    1.0 0.288688
+    1.0 -0.240577
+    1.0 -0.997697
+    1.0 -0.362264
+    1.0 0.999308
+    1.0 -1.28574
+    1.0 -1.91253
+    1.0 0.825156
+    1.0 -0.136191
+    1.0 1.79925
+    1.0 -1.10438
+    1.0 0.108481
+    1.0 0.847916
+    1.0 0.594971
+    1.0 0.427909
+]
 
-ε = [0.5539830489065279             # Errors
- -0.7981494315544392
-  0.12994853889935182
-  0.23315434715658184
- -0.1959788033050691
- -0.644463980478783
- -0.04055657880388486
- -0.33313251280917094
- -0.315407370840677
-  0.32273952815870866
-  0.56790436131181
-  0.4189982390480762
- -0.0399623088796998
- -0.2900421677961449
- -0.21938513655749814
- -0.2521429229103657
-  0.0006247891825243118
- -0.694977951759846
- -0.24108791530910414
-  0.1919989647431539
-  0.15632862280544485
- -0.16928298502504732
-  0.08912288359190582
-  0.0037707641031662006
- -0.016111044809837466
-  0.01852191562589722
- -0.762541135294584
- -0.7204431774719634
- -0.04394527523005201
- -0.11956323865320413
- -0.6713329013627437
- -0.2339928433338628
- -0.6200532213195297
- -0.6192380993792371
-  0.08834918731846135
- -0.5099307915921438
-  0.41527207925609494
- -0.7130133329859893
- -0.531213372742777
- -0.09029672309221337]
+ε = [
+    0.5539830489065279             # Errors
+    -0.7981494315544392
+    0.12994853889935182
+    0.23315434715658184
+    -0.1959788033050691
+    -0.644463980478783
+    -0.04055657880388486
+    -0.33313251280917094
+    -0.315407370840677
+    0.32273952815870866
+    0.56790436131181
+    0.4189982390480762
+    -0.0399623088796998
+    -0.2900421677961449
+    -0.21938513655749814
+    -0.2521429229103657
+    0.0006247891825243118
+    -0.694977951759846
+    -0.24108791530910414
+    0.1919989647431539
+    0.15632862280544485
+    -0.16928298502504732
+    0.08912288359190582
+    0.0037707641031662006
+    -0.016111044809837466
+    0.01852191562589722
+    -0.762541135294584
+    -0.7204431774719634
+    -0.04394527523005201
+    -0.11956323865320413
+    -0.6713329013627437
+    -0.2339928433338628
+    -0.6200532213195297
+    -0.6192380993792371
+    0.08834918731846135
+    -0.5099307915921438
+    0.41527207925609494
+    -0.7130133329859893
+    -0.531213372742777
+    -0.09029672309221337
+]
 
 y = x * β + ε;                      # Generate Data
 
@@ -130,7 +134,7 @@ y = x * β + ε;                      # Generate Data
 
 function Log_Likelihood(X, Y, β, log_σ)
     σ = exp(log_σ)
-    llike = -n/2*log(2π) - n/2* log(σ^2) - (sum((Y - X * β).^2) / (2σ^2))
+    llike = -n / 2 * log(2π) - n / 2 * log(σ^2) - (sum((Y - X * β) .^ 2) / (2σ^2))
     llike = -llike
 end
 
@@ -145,8 +149,11 @@ end
 # use the `TwiceDifferentiable` command in order to obtain the Hessian
 # matrix later on, which will be used to help form t-statistics:
 
-func = TwiceDifferentiable(vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar + 1]),
-                           ones(nvar+1); autodiff=:forward);
+func = TwiceDifferentiable(
+    vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar+1]),
+    ones(nvar + 1);
+    autodiff = :forward,
+);
 
 # The above statment accepts 4 inputs: the x matrix, the dependent
 # variable y, and a vector of β's and the error variance.  The
@@ -162,7 +169,7 @@ func = TwiceDifferentiable(vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar 
 # The actual optimization of the likelihood function is accomplished
 # with the following command:
 
-opt = optimize(func, ones(nvar+1))
+opt = optimize(func, ones(nvar + 1))
 
 ## Test the results                #src
 using Test                    #src
@@ -181,22 +188,22 @@ using Test                    #src
 # the maximim likelihood estimates with the following command:
 
 parameters = Optim.minimizer(opt)
-@test parameters ≈ [2.83664, 3.05345, -0.98837] atol=1e-5 #src
+@test parameters ≈ [2.83664, 3.05345, -0.98837] atol = 1e-5 #src
 
-# !!! Note
-#     Fieldnames for all of the quantities can be obtained with the following command:
-#     fieldnames(opt)
-#
+#md # !!! note
+#md #     Fieldnames for all of the quantities can be obtained with the following command:
+#md #     fieldnames(opt)
+#md #
 
 # In order to obtain the correct Hessian matrix, we have to "push" the
 # actual parameter values that maximizes the likelihood function since
 # the `TwiceDifferentiable` command uses the next to last values to
 # calculate the Hessian:
 
-numerical_hessian = hessian!(func,parameters)
+numerical_hessian = hessian!(func, parameters)
 
 # Let's find the estimated value of σ, rather than log σ, and it's standard error
-# To do this, we will use the Delta Method: https://en.wikipedia.org/wiki/Delta_method
+# To do this, we will use the Delta Method: <https://en.wikipedia.org/wiki/Delta_method>
 
 # this function exponetiates log σ
 function transform(parameters)
@@ -210,12 +217,12 @@ parameters = transform(parameters)
 
 # We can now invert our Hessian matrix  and use the Delta Method,
 # to obtain the variance-covariance matrix:
-var_cov_matrix = J*inv(numerical_hessian)*J'
+var_cov_matrix = J * inv(numerical_hessian) * J'
 
 # test the estimated parameters and t-stats for correctness
-@test parameters ≈ [2.83664, 3.05345, 0.37218] atol=1e-5 #src
-t_stats = parameters./sqrt.(diag(var_cov_matrix))
-@test t_stats ≈ [48.02655, 45.51568, 8.94427] atol=1e-4 #src
+@test parameters ≈ [2.83664, 3.05345, 0.37218] atol = 1e-5 #src
+t_stats = parameters ./ sqrt.(diag(var_cov_matrix))
+@test t_stats ≈ [48.02655, 45.51568, 8.94427] atol = 1e-4 #src
 
 # see the results
 println("parameter estimates:", parameters)

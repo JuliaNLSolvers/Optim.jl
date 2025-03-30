@@ -25,10 +25,6 @@ using LineSearches           # for globalization strategy in Quasi-Newton algs
 
 import NaNMath               # for functions that ignore NaNs (no poisoning)
 
-import Parameters: @with_kw, # for types where constructors are simply defined
-                   @unpack   # by their default values, and simple unpacking
-                             # of fields
-
 using Printf                 # For printing, maybe look into other options
 
 using FillArrays             # For handling scalar bounds in Fminbox
@@ -39,92 +35,108 @@ using FillArrays             # For handling scalar bounds in Fminbox
 import Base: length, push!, show, getindex, setindex!, maximum, minimum
 
 # objective and constraints types and functions relevant to them.
-import NLSolversBase: NonDifferentiable, OnceDifferentiable, TwiceDifferentiable,
-                      nconstraints, nconstraints_x, NotInplaceObjective, InplaceObjective
+import NLSolversBase:
+    NonDifferentiable,
+    OnceDifferentiable,
+    TwiceDifferentiable,
+    nconstraints,
+    nconstraints_x,
+    NotInplaceObjective,
+    InplaceObjective
 
 # var for NelderMead
 import StatsBase: var
 
 import LinearAlgebra
-import LinearAlgebra: Diagonal, diag, Hermitian, Symmetric,
-                      rmul!, mul!,
-                      norm, normalize!,
-                      diagind,
-                      eigen, BLAS,
-                      cholesky, Cholesky, # factorizations
-                      I,
-                      svd,
-                      opnorm, # for safeguards in newton trust regions
-                      issuccess
+import LinearAlgebra:
+    Diagonal,
+    diag,
+    Hermitian,
+    Symmetric,
+    rmul!,
+    mul!,
+    norm,
+    normalize!,
+    diagind,
+    eigen,
+    BLAS,
+    cholesky,
+    Cholesky, # factorizations
+    I,
+    svd,
+    opnorm, # for safeguards in newton trust regions
+    issuccess,
+    ldiv!,
+    dot
 
 import SparseArrays: AbstractSparseMatrix
 
 # exported functions and types
-export optimize, maximize, # main function
+export optimize,
+    maximize, # main function
 
-       # Re-export objective types from NLSolversBase
-       NonDifferentiable,
-       OnceDifferentiable,
-       TwiceDifferentiable,
+    # Re-export objective types from NLSolversBase
+    NonDifferentiable,
+    OnceDifferentiable,
+    TwiceDifferentiable,
 
-       # Re-export constraint types from NLSolversBase
-       TwiceDifferentiableConstraints,
+    # Re-export constraint types from NLSolversBase
+    TwiceDifferentiableConstraints,
 
-       # I don't think these should be here [pkofod]
-       OptimizationState,
-       OptimizationTrace,
+    # I don't think these should be here [pkofod]
+    OptimizationState,
+    OptimizationTrace,
 
-       # Optimization algorithms
-       ## Zeroth order methods (heuristics)
-       NelderMead,
-       ParticleSwarm,
-       SimulatedAnnealing,
+    # Optimization algorithms
+    ## Zeroth order methods (heuristics)
+    NelderMead,
+    ParticleSwarm,
+    SimulatedAnnealing,
 
-       ## First order
-       ### Quasi-Newton
-       GradientDescent,
-       BFGS,
-       LBFGS,
+    ## First order
+    ### Quasi-Newton
+    GradientDescent,
+    BFGS,
+    LBFGS,
 
-       ### Conjugate gradient
-       ConjugateGradient,
+    ### Conjugate gradient
+    ConjugateGradient,
 
-       ### Acceleration methods
-       AcceleratedGradientDescent,
-       MomentumGradientDescent,
-       Adam,
-       AdaMax,
+    ### Acceleration methods
+    AcceleratedGradientDescent,
+    MomentumGradientDescent,
+    Adam,
+    AdaMax,
 
-       ### Nonlinear GMRES
-       NGMRES,
-       OACCEL,
+    ### Nonlinear GMRES
+    NGMRES,
+    OACCEL,
 
-       ## Second order
-       ### (Quasi-)Newton
-       Newton,
+    ## Second order
+    ### (Quasi-)Newton
+    Newton,
 
-       ### Trust region
-       NewtonTrustRegion,
+    ### Trust region
+    NewtonTrustRegion,
 
-       # Constrained
-       ## Box constraints, x_i in [lb_i, ub_i]
-       ### Specifically Univariate, R -> R
-       GoldenSection,
-       Brent,
+    # Constrained
+    ## Box constraints, x_i in [lb_i, ub_i]
+    ### Specifically Univariate, R -> R
+    GoldenSection,
+    Brent,
 
-       ### Multivariate, R^N -> R
-       Fminbox,
-       SAMIN,
+    ### Multivariate, R^N -> R
+    Fminbox,
+    SAMIN,
 
-       ## Manifold constraints
-       Manifold,
-       Flat,
-       Sphere,
-       Stiefel,
+    ## Manifold constraints
+    Manifold,
+    Flat,
+    Sphere,
+    Stiefel,
 
-       ## Non-linear constraints
-       IPNewton
-
+    ## Non-linear constraints
+    IPNewton
 
 include("types.jl") # types used throughout
 include("Manifolds.jl") # code to handle manifold constraints
@@ -220,14 +232,8 @@ include("multivariate/solvers/constrained/ipnewton/utilities/trace.jl")
 # Maximization convenience wrapper
 include("maximize.jl")
 
-@static if !isdefined(Base, :get_extension)
-    include("../ext/OptimMOIExt.jl")
-    using .OptimMOIExt
-    const Optimizer = OptimMOIExt.Optimizer
-else
-    # declare this upfront so that the MathOptInterface extension can assign it
-    # without creating a new global
-    global Optimizer
-end
+# declare this upfront so that the MathOptInterface extension can assign it
+# without creating a new global
+global Optimizer
 
 end

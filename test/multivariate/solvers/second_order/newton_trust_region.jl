@@ -1,235 +1,267 @@
 using Optim, Test, Distributions, Random, LinearAlgebra
 Random.seed!(3288)
 @testset "Newton Trust Region" begin
-@testset "Subproblems I" begin
-    # verify that solve_tr_subproblem! finds the minimum
-    n = 2
-    gr = [-0.74637,0.52388]
-    H = [0.945787 -3.07884; -3.07884 -1.27762]
-
-    s = zeros(n)
-    m, interior = Optim.solve_tr_subproblem!(gr, H, 1., s, max_iters=100)
-
-    for j in 1:10
-        bad_s = rand(n)
-        bad_s ./= norm(bad_s)  # boundary
-        model(s2) = (gr' * s2)[] + .5 * (s2' * H * s2)[]
-        @test model(s) <= model(bad_s) + 1e-8
-    end
-end
-
-@testset "Subproblems II" begin
-    # random Hessians--verify that solve_tr_subproblem! finds the minimum
-    for i in 1:10000
-        n = rand(1:10)
-        gr = randn(n)
-        H = randn(n, n)
-        H += H'
+    @testset "Subproblems I" begin
+        # verify that solve_tr_subproblem! finds the minimum
+        n = 2
+        gr = [-0.74637, 0.52388]
+        H = [0.945787 -3.07884; -3.07884 -1.27762]
 
         s = zeros(n)
-        m, interior = Optim.solve_tr_subproblem!(gr, H, 1., s, max_iters=100)
+        m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s, max_iters = 100)
 
-        model(s2) = (gr' * s2) + .5 * (s2' * H * s2)
-        @test model(s) <= model(zeros(n)) + 1e-8  # origin
-
-        for j in 1:10
+        for j = 1:10
             bad_s = rand(n)
             bad_s ./= norm(bad_s)  # boundary
-            @test model(s) <= model(bad_s) + 1e-8
-            bad_s .*= rand()  # interior
+            model(s2) = (gr'*s2)[] + 0.5 * (s2'*H*s2)[]
             @test model(s) <= model(bad_s) + 1e-8
         end
     end
-end
 
-@testset "Test problems" begin
-    #######################################
-    # First test the subproblem.
-    Random.seed!(42)
-    n = 5
-    H = rand(n, n)
-    H = H' * H + 4 * I
-    H_eig = eigen(H)
-    U = H_eig.vectors
+    @testset "Subproblems II" begin
+        # random Hessians--verify that solve_tr_subproblem! finds the minimum
+        for i = 1:10000
+            n = rand(1:10)
+            gr = randn(n)
+            H = randn(n, n)
+            H += H'
 
-    gr = zeros(n)
-    gr[1] = 1.
-    s = zeros(Float64, n)
+            s = zeros(n)
+            m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s, max_iters = 100)
 
-    true_s = -H \ gr
-    s_norm2 = dot(true_s, true_s)
-    true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
+            model(s2) = (gr' * s2) + 0.5 * (s2' * H * s2)
+            @test model(s) <= model(zeros(n)) + 1e-8  # origin
 
-    # An interior solution
-    delta = sqrt(s_norm2) + 1.0
-    m, interior, lambda, hard_case, reached_solution =
-        Optim.solve_tr_subproblem!(gr, H, delta, s)
-    @test interior
-    @test !hard_case
-    @test reached_solution
-    @test abs(m - true_m) < 1e-12
-    @test norm(s - true_s) < 1e-12
-    @test abs(lambda) < 1e-12
-
-    # A boundary solution
-    delta = 0.5 * sqrt(s_norm2)
-    m, interior, lambda, hard_case, reached_solution =
-        Optim.solve_tr_subproblem!(gr, H, delta, s)
-    @test !interior
-    @test !hard_case
-    @test reached_solution
-    @test m > true_m
-    @test abs(norm(s) - delta) < 1e-12
-    @test lambda > 0
-
-    # A "hard case" where the gradient is orthogonal to the lowest eigenvector
-
-    # Test the checking
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([-1., 2., 3.], [0., 1., 1.])
-    @test hard_case
-    @test lambda_index == 2
-
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([-1., -1., 3.], [0., 0., 1.])
-    @test hard_case
-    @test lambda_index == 3
-
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 0.])
-    @test hard_case
-    @test lambda_index == 4
-
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([1., 2., 3.], [0., 1., 1.])
-    @test !hard_case
-
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([-1., -1., -1.], [0., 0., 1.])
-    @test !hard_case
-
-    hard_case, lambda_index =
-        Optim.check_hard_case_candidate([-1., 2., 3.], [1., 1., 1.])
-    @test !hard_case
-
-    # Now check an actual hard case problem
-    L = fill(0.1, n)
-    L[1] = -1.
-    H = U * Matrix(Diagonal(L)) * U'
-    H = 0.5 * (H' + H)
-    @test issymmetric(H)
-    gr = U[:,2][:]
-    @test abs(dot(gr, U[:,1][:])) < 1e-12
-    true_s = -H \ gr
-    s_norm2 = dot(true_s, true_s)
-    true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
-
-    delta = 0.5 * sqrt(s_norm2)
-    m, interior, lambda, hard_case, reached_solution =
-        Optim.solve_tr_subproblem!(gr, H, delta, s)
-    @test !interior
-    @test hard_case
-    @test reached_solution
-    @test abs(lambda + L[1]) < 1e-4
-    @test abs(norm(s) - delta) < 1e-12
-
-
-    #######################################
-    # Next, test on actual optimization problems.
-
-    function f(x::Vector)
-        (x[1] - 5.0)^4
+            for j = 1:10
+                bad_s = rand(n)
+                bad_s ./= norm(bad_s)  # boundary
+                @test model(s) <= model(bad_s) + 1e-8
+                bad_s .*= rand()  # interior
+                @test model(s) <= model(bad_s) + 1e-8
+            end
+        end
     end
 
-    function g!(storage::Vector, x::Vector)
-        storage[1] = 4.0 * (x[1] - 5.0)^3
-    end
+    @testset "Test problems" begin
+        #######################################
+        # First test the subproblem.
+        Random.seed!(42)
+        n = 5
+        H = rand(n, n)
+        H = H' * H + 4 * I
+        H_eig = eigen(H)
+        U = H_eig.vectors
 
-    function h!(storage::Matrix, x::Vector)
-        storage[1, 1] = 12.0 * (x[1] - 5.0)^2
-    end
+        gr = zeros(n)
+        gr[1] = 1.0
+        s = zeros(Float64, n)
 
-    d = TwiceDifferentiable(f, g!, h!, [0.0,])
+        true_s = -H \ gr
+        s_norm2 = dot(true_s, true_s)
+        true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
 
-    options = Optim.Options(store_trace = false, show_trace = false,
-                            extended_trace = true)
-    results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
-    @test_throws ErrorException Optim.x_trace(results)
-    @test length(results.trace) == 0
-    @test results.g_converged
-    @test norm(Optim.minimizer(results) - [5.0]) < 0.01
-    @test summary(results) == "Newton's Method (Trust Region)"
+        # An interior solution
+        delta = sqrt(s_norm2) + 1.0
+        m, interior, lambda, hard_case, reached_solution =
+            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        @test interior
+        @test !hard_case
+        @test reached_solution
+        @test abs(m - true_m) < 1e-12
+        @test norm(s - true_s) < 1e-12
+        @test abs(lambda) < 1e-12
 
-    eta = 0.9
+        # A boundary solution
+        delta = 0.5 * sqrt(s_norm2)
+        m, interior, lambda, hard_case, reached_solution =
+            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        @test !interior
+        @test !hard_case
+        @test reached_solution
+        @test m > true_m
+        @test abs(norm(s) - delta) < 1e-12
+        @test lambda > 0
 
-    function f_2(x::Vector)
-        0.5 * (x[1]^2 + eta * x[2]^2)
-    end
+        # A "hard case" where the gradient is orthogonal to the lowest eigenvector
 
-    function g!_2(storage::Vector, x::Vector)
-        storage[1] = x[1]
-        storage[2] = eta * x[2]
-    end
+        # Test the checking
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [0.0, 1.0, 1.0])
+        @test hard_case
+        @test lambda_index == 2
 
-    function h!_2(storage::Matrix, x::Vector)
-        storage[1, 1] = 1.0
-        storage[1, 2] = 0.0
-        storage[2, 1] = 0.0
-        storage[2, 2] = eta
-    end
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([-1.0, -1.0, 3.0], [0.0, 0.0, 1.0])
+        @test hard_case
+        @test lambda_index == 3
 
-    d = TwiceDifferentiable(f_2, g!_2, h!_2, Float64[127, 921])
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 0.0])
+        @test hard_case
+        @test lambda_index == 4
 
-    results = Optim.optimize(d, Float64[127, 921], NewtonTrustRegion())
-    @test results.g_converged
-    @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([1.0, 2.0, 3.0], [0.0, 1.0, 1.0])
+        @test !hard_case
 
-    # Test Optim.newton for all twice differentiable functions in
-    # MultivariateProblems.UnconstrainedProblems.examples
-    @testset "Optim problems" begin
-        run_optim_tests(NewtonTrustRegion(); skip = ("Trigonometric", ),
-                        show_name = debug_printing)
-    end
-end
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 1.0])
+        @test !hard_case
+
+        hard_case, lambda_index =
+            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [1.0, 1.0, 1.0])
+        @test !hard_case
+
+        # Now check an actual hard case problem
+        L = fill(0.1, n)
+        L[1] = -1.0
+        H = U * Matrix(Diagonal(L)) * U'
+        H = 0.5 * (H' + H)
+        @test issymmetric(H)
+        gr = U[:, 2][:]
+        @test abs(dot(gr, U[:, 1][:])) < 1e-12
+        true_s = -H \ gr
+        s_norm2 = dot(true_s, true_s)
+        true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
+
+        delta = 0.5 * sqrt(s_norm2)
+        m, interior, lambda, hard_case, reached_solution =
+            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        @test !interior
+        @test hard_case
+        @test reached_solution
+        @test abs(lambda + L[1]) < 1e-4
+        @test abs(norm(s) - delta) < 1e-12
 
 
-@testset "PR #341" begin
-    # verify that no PosDef exception is thrown
-    Optim.solve_tr_subproblem!([0, 1.], [-1000 0; 0. -999], 1e-2, ones(2))
-end
+        #######################################
+        # Next, test on actual optimization problems.
 
-@testset "Handle Inf without erroring" begin
-    o = optimize(TwiceDifferentiable(t -> rand(), (g, t)->(g.=t.+10), (h,t)->NaN*t*t',ones(10)), ones(10), NewtonTrustRegion())
-    @test !(o.f_converged || o.g_converged || o.x_converged)
-end
+        function f(x::Vector)
+            (x[1] - 5.0)^4
+        end
 
-@testset "delta_min" begin
-c = (t, Δ, D, ke) -> t < Δ ? -(exp(-ke*t) - 1)*D/(ke*Δ) : -(exp(-ke*Δ) - 1)*D/(ke*Δ)*exp(-ke*(t-Δ))
+        function g!(storage::Vector, x::Vector)
+            storage[1] = 4.0 * (x[1] - 5.0)^3
+        end
 
-ke₀ = 0.5
-D₀ = 100.0
-t₁ = 2.0
-ll = Δ -> begin
-    sum(
-        map(
-            zip(
-                [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 8.0],
-                [19.90278833504542, 29.50697731718643, 42.106713695572836, 60.402701110755814, 72.78413106065605, 48.58414814304506, 36.134598474160484, 24.137636435583193, 3.2819695104173814]
+        function h!(storage::Matrix, x::Vector)
+            storage[1, 1] = 12.0 * (x[1] - 5.0)^2
+        end
+
+        d = TwiceDifferentiable(f, g!, h!, [0.0])
+
+        options =
+            Optim.Options(store_trace = false, show_trace = false, extended_trace = true)
+        results = Optim.optimize(d, [0.0], NewtonTrustRegion(), options)
+        @test_throws ErrorException Optim.x_trace(results)
+        @test length(results.trace) == 0
+        @test Optim.g_converged(results)
+        @test norm(Optim.minimizer(results) - [5.0]) < 0.01
+        @test summary(results) == "Newton's Method (Trust Region)"
+
+        eta = 0.9
+
+        function f_2(x::Vector)
+            0.5 * (x[1]^2 + eta * x[2]^2)
+        end
+
+        function g!_2(storage::Vector, x::Vector)
+            storage[1] = x[1]
+            storage[2] = eta * x[2]
+        end
+
+        function h!_2(storage::Matrix, x::Vector)
+            storage[1, 1] = 1.0
+            storage[1, 2] = 0.0
+            storage[2, 1] = 0.0
+            storage[2, 2] = eta
+        end
+
+        d = TwiceDifferentiable(f_2, g!_2, h!_2, Float64[127, 921])
+
+        results = Optim.optimize(d, Float64[127, 921], NewtonTrustRegion())
+        @test Optim.g_converged(results)
+        @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
+
+        # Test Optim.newton for all twice differentiable functions in
+        # MultivariateProblems.UnconstrainedProblems.examples
+        @testset "Optim problems" begin
+            run_optim_tests(
+                NewtonTrustRegion();
+                skip = ("Trigonometric",),
+                show_name = debug_printing,
             )
-        ) do (t,y)
-            ct = c(t, Δ, D₀, ke₀)
-            return logpdf(Normal(ct, ct*0.1), y)
         end
-    )
-end
+    end
 
-@test_throws DomainError Optim.optimize(t -> -ll(t[1]), [2.1],
-                                        NewtonTrustRegion(delta_min=-1.0),
-                                        Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5))
 
-Optim.optimize(t -> -ll(t[1]), [2.1],
-                NewtonTrustRegion(delta_min=0.0),
-                Optim.Options( show_trace = false, allow_f_increases = false, g_tol = 1e-5))
+    @testset "PR #341" begin
+        # verify that no PosDef exception is thrown
+        Optim.solve_tr_subproblem!([0, 1.0], [-1000 0; 0.0 -999], 1e-2, ones(2))
+    end
 
-end
+    @testset "Handle Inf without erroring" begin
+        o = optimize(
+            TwiceDifferentiable(
+                t -> rand(),
+                (g, t) -> (g .= t .+ 10),
+                (h, t) -> NaN * t * t',
+                ones(10),
+            ),
+            ones(10),
+            NewtonTrustRegion(),
+        )
+        @test !(Optim.f_converged(o) || Optim.g_converged(o) || Optim.x_converged(o))
+    end
+
+    @testset "delta_min" begin
+        c =
+            (t, Δ, D, ke) ->
+                t < Δ ? -(exp(-ke * t) - 1) * D / (ke * Δ) :
+                -(exp(-ke * Δ) - 1) * D / (ke * Δ) * exp(-ke * (t - Δ))
+
+        ke₀ = 0.5
+        D₀ = 100.0
+        t₁ = 2.0
+        ll =
+            Δ -> begin
+                sum(
+                    map(
+                        zip(
+                            [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 8.0],
+                            [
+                                19.90278833504542,
+                                29.50697731718643,
+                                42.106713695572836,
+                                60.402701110755814,
+                                72.78413106065605,
+                                48.58414814304506,
+                                36.134598474160484,
+                                24.137636435583193,
+                                3.2819695104173814,
+                            ],
+                        ),
+                    ) do (t, y)
+                        ct = c(t, Δ, D₀, ke₀)
+                        return logpdf(Normal(ct, ct * 0.1), y)
+                    end,
+                )
+            end
+
+        @test_throws DomainError Optim.optimize(
+            t -> -ll(t[1]),
+            [2.1],
+            NewtonTrustRegion(delta_min = -1.0),
+            Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
+        )
+
+        Optim.optimize(
+            t -> -ll(t[1]),
+            [2.1],
+            NewtonTrustRegion(delta_min = 0.0),
+            Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
+        )
+
+    end
 end

@@ -13,7 +13,11 @@ for example in filter!(x -> endswith(x, ".jl"), readdir(EXAMPLEDIR))
     script = Literate.script(input, GENERATEDDIR)
     code = strip(read(script, String))
     mdpost(str) = replace(str, "@__CODE__" => code)
-    Literate.markdown(input, GENERATEDDIR, postprocess = mdpost,
-                      documenter = !(example in ONLYSTATIC))
+    Literate.markdown(
+        input,
+        GENERATEDDIR,
+        postprocess = mdpost,
+        documenter = !(example in ONLYSTATIC),
+    )
     Literate.notebook(input, GENERATEDDIR, execute = !(example in ONLYSTATIC))
 end

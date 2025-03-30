@@ -9,12 +9,12 @@ res(r::MaximizationWrapper) = r.res
 # Univariate warppers
 # ==============================================================================
 function maximize(f, lb::Real, ub::Real, method::AbstractOptimizer; kwargs...)
-    fmax = x->-f(x)
+    fmax = x -> -f(x)
     MaximizationWrapper(optimize(fmax, lb, ub, method; kwargs...))
 end
 
 function maximize(f, lb::Real, ub::Real; kwargs...)
-    fmax = x->-f(x)
+    fmax = x -> -f(x)
     MaximizationWrapper(optimize(fmax, lb, ub; kwargs...))
 end
 
@@ -22,38 +22,80 @@ end
 # Multivariate warppers
 # ==============================================================================
 function maximize(f, x0::AbstractArray; kwargs...)
-    fmax = x->-f(x)
+    fmax = x -> -f(x)
     MaximizationWrapper(optimize(fmax, x0; kwargs...))
 end
-function maximize(f, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
-    fmax = x->-f(x)
+function maximize(
+    f,
+    x0::AbstractArray,
+    method::AbstractOptimizer,
+    options = Optim.Options();
+    kwargs...,
+)
+    fmax = x -> -f(x)
     MaximizationWrapper(optimize(fmax, x0, method, options; kwargs...))
 end
-function maximize(f, g, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
-    fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x); G.=-G)
+function maximize(
+    f,
+    g,
+    x0::AbstractArray,
+    method::AbstractOptimizer,
+    options = Optim.Options();
+    kwargs...,
+)
+    fmax = x -> -f(x)
+    gmax = (G, x) -> (g(G, x); G .= -G)
     MaximizationWrapper(optimize(fmax, gmax, x0, method, options; kwargs...))
 end
 
-function maximize(f, g, h, x0::AbstractArray, method::AbstractOptimizer, options = Optim.Options(); kwargs...)
-    fmax = x->-f(x)
-    gmax = (G,x)->(g(G,x); G.=-G)
-    hmax = (H,x)->(h(H,x); H.=-H)
+function maximize(
+    f,
+    g,
+    h,
+    x0::AbstractArray,
+    method::AbstractOptimizer,
+    options = Optim.Options();
+    kwargs...,
+)
+    fmax = x -> -f(x)
+    gmax = (G, x) -> (g(G, x); G .= -G)
+    hmax = (H, x) -> (h(H, x); H .= -H)
     MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
 end
 
 minimum(r::MaximizationWrapper) = throw(MethodError())
-maximizer(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
+maximizer(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) =
+    throw(MethodError())
 maximizer(r::MaximizationWrapper) = minimizer(res(r))
-maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) = throw(MethodError())
+maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) =
+    throw(MethodError())
 maximum(r::MaximizationWrapper) = -minimum(res(r))
 Base.summary(r::MaximizationWrapper) = summary(res(r))
 
-for api_method in (:lower_bound, :upper_bound, :rel_tol, :abs_tol, :iterations, :initial_state, :converged, :x_tol, :x_converged,
-               :x_abschange, :g_tol, :g_converged, :g_residual, :f_tol, :f_converged,
-               :f_increased, :f_relchange, :iteration_limit_reached, :f_calls,
-               :g_calls, :h_calls)
-   @eval $api_method(r::MaximizationWrapper) = $api_method(res(r))
+for api_method in (
+    :lower_bound,
+    :upper_bound,
+    :rel_tol,
+    :abs_tol,
+    :iterations,
+    :initial_state,
+    :converged,
+    :x_tol,
+    :x_converged,
+    :x_abschange,
+    :g_tol,
+    :g_converged,
+    :g_residual,
+    :f_tol,
+    :f_converged,
+    :f_increased,
+    :f_relchange,
+    :iteration_limit_reached,
+    :f_calls,
+    :g_calls,
+    :h_calls,
+)
+    @eval $api_method(r::MaximizationWrapper) = $api_method(res(r))
 end
 
 function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResults})
@@ -63,7 +105,9 @@ function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResult
     @printf io " * Maximizer: %e\n" maximizer(r)
     @printf io " * Maximum: %e\n" maximum(r)
     @printf io " * Iterations: %d\n" iterations(r)
-    @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(r) abs_tol(r) converged(r)
+    @printf io " * Convergence: max(|x - x_upper|, |x - x_lower|) <= 2*(%.1e*|x|+%.1e): %s\n" rel_tol(
+        r,
+    ) abs_tol(r) converged(r)
     @printf io " * Objective Function Calls: %d" f_calls(r)
     return
 end
@@ -76,8 +120,7 @@ function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResu
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else
-        @printf io " * Starting Point: [%s, ...]\n" join(take(initial_state(r),
-2), ",")
+        @printf io " * Starting Point: [%s, ...]\n" join(take(initial_state(r), 2), ",")
     end
     if length(join(maximizer(r), ",")) < 40
         @printf io " * Maximizer: [%s]\n" join(maximizer(r), ",")
@@ -91,12 +134,14 @@ function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResu
         @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_tol(r) g_converged(r)
     else
         @printf io "   * |x - x'| ≤ %.1e: %s \n" x_tol(r) x_converged(r)
-        @printf io "     |x - x'| = %.2e \n"  x_abschange(r)
+        @printf io "     |x - x'| = %.2e \n" x_abschange(r)
         @printf io "   * |f(x) - f(x')| ≤ %.1e |f(x)|: %s\n" f_tol(r) f_converged(r)
         @printf io "     |f(x) - f(x')| = %.2e |f(x)|\n" f_relchange(r)
         @printf io "   * |g(x)| ≤ %.1e: %s \n" g_tol(r) g_converged(r)
-        @printf io "     |g(x)| = %.2e \n"  g_residual(r)
-        @printf io "   * Stopped by an decreasing objective: %s\n" (f_increased(r) && !iteration_limit_reached(r))
+        @printf io "     |g(x)| = %.2e \n" g_residual(r)
+        @printf io "   * Stopped by an decreasing objective: %s\n" (
+            f_increased(r) && !iteration_limit_reached(r)
+        )
     end
     @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
     @printf io " * Objective Calls: %d" f_calls(r)

@@ -1,4 +1,4 @@
-struct Newton{IL, L} <: SecondOrderOptimizer
+struct Newton{IL,L} <: SecondOrderOptimizer
     alphaguess!::IL
     linesearch!::L
 end
@@ -20,14 +20,16 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 ## References
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
 """
-function Newton(; alphaguess = LineSearches.InitialStatic(), # Good default for Newton
-                linesearch = LineSearches.HagerZhang())    # Good default for Newton
+function Newton(;
+    alphaguess = LineSearches.InitialStatic(), # Good default for Newton
+    linesearch = LineSearches.HagerZhang(),
+)    # Good default for Newton
     Newton(_alphaguess(alphaguess), linesearch)
 end
 
 Base.summary(::Newton) = "Newton's Method"
 
-mutable struct NewtonState{Tx, T, F<:Cholesky} <: AbstractOptimizerState
+mutable struct NewtonState{Tx,T,F<:Cholesky} <: AbstractOptimizerState
     x::Tx
     x_previous::Tx
     f_x_previous::T
@@ -45,12 +47,14 @@ function initial_state(method::Newton, options, d, initial_x)
     value_gradient!!(d, initial_x)
     hessian!!(d, initial_x)
 
-    NewtonState(copy(initial_x), # Maintain current state in state.x
-                copy(initial_x), # Maintain previous state in state.x_previous
-                T(NaN), # Store previous f in state.f_x_previous
-                Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)),
-                similar(initial_x), # Maintain current search direction in state.s
-                @initial_linesearch()...)
+    NewtonState(
+        copy(initial_x), # Maintain current state in state.x
+        copy(initial_x), # Maintain previous state in state.x_previous
+        T(NaN), # Store previous f in state.f_x_previous
+        Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)),
+        similar(initial_x), # Maintain current search direction in state.s
+        @initial_linesearch()...,
+    )
 end
 
 function update_state!(d, state::NewtonState, method::Newton)
@@ -62,7 +66,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     T = eltype(state.x)
 
     if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
-        state.s .= .-(NLSolversBase.hessian(d)\convert(Vector{T}, gradient(d)))
+        state.s .= .-(NLSolversBase.hessian(d) \ convert(Vector{T}, gradient(d)))
     else
         state.F = cholesky!(Positive, NLSolversBase.hessian(d))
         if typeof(gradient(d)) <: Array
@@ -72,7 +76,7 @@ function update_state!(d, state::NewtonState, method::Newton)
             # not Array, we can't do inplace ldiv
             gv = Vector{T}(undef, length(gradient(d)))
             copyto!(gv, -gradient(d))
-            copyto!(state.s, state.F\gv)
+            copyto!(state.s, state.F \ gv)
         end
     end
     # Determine the distance of movement along the search line
@@ -83,7 +87,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     lssuccess == false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::Newton, options, curr_time=time())
+function trace!(tr, d, state, iteration, method::Newton, options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
@@ -93,13 +97,15 @@ function trace!(tr, d, state, iteration, method::Newton, options, curr_time=time
         dt["Current step size"] = state.alpha
     end
     g_norm = norm(gradient(d), Inf)
-    update!(tr,
-            iteration,
-            value(d),
-            g_norm,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
+    update!(
+        tr,
+        iteration,
+        value(d),
+        g_norm,
+        dt,
+        options.store_trace,
+        options.show_trace,
+        options.show_every,
+        options.callback,
+    )
 end

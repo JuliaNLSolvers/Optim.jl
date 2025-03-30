@@ -58,4 +58,7 @@ and is chosen by a linesearch algorithm such that each step gives sufficient des
 
 ## Example
 ## References
-Wright, Stephen, and Jorge Nocedal (2006) "Numerical optimization." Springer
+
+```@bibliography
+nocedal2006
+```

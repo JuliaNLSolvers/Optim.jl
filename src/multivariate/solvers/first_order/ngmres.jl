@@ -8,7 +8,7 @@
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
-struct NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct NGMRES{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
     manifold::Manifold
@@ -18,7 +18,7 @@ struct NGMRES{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
     wmax::Int             # Maximum window size
 end
 
-struct OACCEL{IL, Tp,TPrec <: AbstractOptimizer,L} <: AbstractNGMRES
+struct OACCEL{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
     manifold::Manifold
@@ -64,16 +64,19 @@ Application of the algorithm to optimization is covered, for example, in [2].
 [1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
 [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
 """
-function NGMRES(;manifold::Manifold = Flat(),
-                alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.HagerZhang(),
-                nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true), # Step length arbitrary,
-                    linesearch = LineSearches.Static(),
-                    manifold = manifold),
-                nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
+function NGMRES(;
+    manifold::Manifold = Flat(),
+    alphaguess = LineSearches.InitialStatic(),
+    linesearch = LineSearches.HagerZhang(),
+    nlprecon = GradientDescent(
+        alphaguess = LineSearches.InitialStatic(alpha = 1e-4, scaled = true), # Step length arbitrary,
+        linesearch = LineSearches.Static(),
+        manifold = manifold,
+    ),
+    nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+    ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice#
+    wmax::Int = 10,
+) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     NGMRES(_alphaguess(alphaguess), linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
@@ -105,22 +108,26 @@ O-ACCEL is a slight tweak of N-GMRES, first presented in [1].
 ## References
 [1] Riseth. Objective acceleration for unconstrained optimization. 2018.
 """
-function OACCEL(;manifold::Manifold = Flat(),
-                alphaguess = LineSearches.InitialStatic(),
-                linesearch = LineSearches.HagerZhang(),
-                nlprecon = GradientDescent(
-                    alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true), # Step length arbitrary
-                    linesearch = LineSearches.Static(),
-                    manifold = manifold),
-                nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-                ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
-                wmax::Int = 10) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
+function OACCEL(;
+    manifold::Manifold = Flat(),
+    alphaguess = LineSearches.InitialStatic(),
+    linesearch = LineSearches.HagerZhang(),
+    nlprecon = GradientDescent(
+        alphaguess = LineSearches.InitialStatic(alpha = 1e-4, scaled = true), # Step length arbitrary
+        linesearch = LineSearches.Static(),
+        manifold = manifold,
+    ),
+    nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+    ϵ0 = 1e-12, # ϵ0 = 1e-12  -- number was an arbitrary choice
+    wmax::Int = 10,
+) # wmax = 10  -- number was an arbitrary choice to match L-BFGS field `m`
     @assert manifold == nlprecon.manifold
     OACCEL(_alphaguess(alphaguess), linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
 
-mutable struct NGMRESState{P,Tx,Te,T,eTx} <: AbstractOptimizerState where P <: AbstractOptimizerState
+mutable struct NGMRESState{P,Tx,Te,T,eTx} <:
+               AbstractOptimizerState where {P<:AbstractOptimizerState}
     # eTx is the eltype of Tx
     x::Tx                    # Reference to nlpreconstate.x
     x_previous::Tx           # Reference to nlpreconstate.x_previous
@@ -148,20 +155,20 @@ end
 
 "Update storage Q[i,j] and Q[j,i] for `NGMRES`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::NGMRES)
-    Q[j,i] = real(dot(R[:, j], R[:,i]))
+    Q[j, i] = real(dot(R[:, j], R[:, i]))
     if i != j
-        Q[i,j] = Q[j, i]          # TODO: Use Symmetric?
+        Q[i, j] = Q[j, i]          # TODO: Use Symmetric?
     end
 end
 
 "Update storage A[i,j] for `NGMRES`"
 @inline function _updateA!(A, i::Int, j::Int, Q, ξ, η, ::NGMRES)
-    A[i,j] = Q[i,j]-ξ[i]-ξ[j]+η
+    A[i, j] = Q[i, j] - ξ[i] - ξ[j] + η
 end
 
 "Update storage ξ[i,:] for `NGMRES`"
 @inline function _updateξ!(ξ, i::Int, X, x, R, r, ::NGMRES)
-    ξ[i] = real(dot(vec(r), R[:,i]))
+    ξ[i] = real(dot(vec(r), R[:, i]))
 end
 
 "Update storage b[i] for `NGMRES`"
@@ -176,26 +183,26 @@ end
 
 "Update storage Q[i,j] and Q[j,i] for `OACCEL`"
 @inline function _updateQ!(Q, i::Int, j::Int, X, R, ::OACCEL)
-    Q[i,j] = real(dot(X[:,i], R[:,j]))
+    Q[i, j] = real(dot(X[:, i], R[:, j]))
     if i != j
-        Q[j,i] = real(dot(X[:,j], R[:,i]))
+        Q[j, i] = real(dot(X[:, j], R[:, i]))
     end
 end
 
 "Update storage A[i,j] for `OACCEL`"
 @inline function _updateA!(A, i::Int, j::Int, Q, ξ, η, ::OACCEL)
-    A[i,j] = Q[i,j]-ξ[i,1]-ξ[j,2]+η
+    A[i, j] = Q[i, j] - ξ[i, 1] - ξ[j, 2] + η
 end
 
 "Update storage ξ[i,:] for `OACCEL`"
 @inline function _updateξ!(ξ, i::Int, X, x, R, r, ::OACCEL)
-    ξ[i,1] = real(dot(X[:,i], r))
-    ξ[i,2] = real(dot(x, R[:,i]))
+    ξ[i, 1] = real(dot(X[:, i], r))
+    ξ[i, 2] = real(dot(x, R[:, i]))
 end
 
 "Update storage b[i] for `OACCEL`"
 @inline function _updateb!(b, i::Int, ξ, η, ::OACCEL)
-    b[i] = η - ξ[i,1]
+    b[i] = η - ξ[i, 1]
 end
 
 "Update value η for `OACCEL`"
@@ -204,7 +211,12 @@ end
 end
 
 const ngmres_oaccel_warned = Ref{Bool}(false)
-function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractArray{eTx}) where eTx
+function initial_state(
+    method::AbstractNGMRES,
+    options,
+    d,
+    initial_x::AbstractArray{eTx},
+) where {eTx}
     if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
         if !ngmres_oaccel_warned[]
             @warn "Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning."
@@ -229,47 +241,56 @@ function initial_state(method::AbstractNGMRES, options, d, initial_x::AbstractAr
         Array{T}(undef, wmax)
     end
 
-    copyto!(view(X,:,1), nlpreconstate.x)
-    copyto!(view(R,:,1), gradient(d))
+    copyto!(view(X, :, 1), nlpreconstate.x)
+    copyto!(view(R, :, 1), gradient(d))
 
     _updateQ!(Q, 1, 1, X, R, method)
 
-    NGMRESState(nlpreconstate.x,          # Maintain current state in state.x. Use same vector as preconditioner.
-                nlpreconstate.x_previous, # Maintain  in state.x_previous. Use same vector as preconditioner.
-                copy(nlpreconstate.x), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
-                T(NaN),                   # Store previous f in state.f_x_previous
-                T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
-                T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
-                T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
-                similar(initial_x),       # Maintain current search direction in state.s
-                nlpreconstate,            # State storage for preconditioner
-                X,
-                R,
-                Q,
-                ξ,
-                1,                        # curw
-                Array{T}(undef, wmax, wmax),     # A
-                Array{T}(undef, wmax),           # b
-                vec(similar(initial_x)),  # xA
-                0,                        # iteration counter
-                false,                    # Restart flag
-                options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply
-                Array{T}(undef, wmax),           # subspacealpha
-                @initial_linesearch()...)
+    NGMRESState(
+        nlpreconstate.x,          # Maintain current state in state.x. Use same vector as preconditioner.
+        nlpreconstate.x_previous, # Maintain  in state.x_previous. Use same vector as preconditioner.
+        copy(nlpreconstate.x), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+        T(NaN),                   # Store previous f in state.f_x_previous
+        T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
+        T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
+        T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
+        similar(initial_x),       # Maintain current search direction in state.s
+        nlpreconstate,            # State storage for preconditioner
+        X,
+        R,
+        Q,
+        ξ,
+        1,                        # curw
+        Array{T}(undef, wmax, wmax),     # A
+        Array{T}(undef, wmax),           # b
+        vec(similar(initial_x)),  # xA
+        0,                        # iteration counter
+        false,                    # Restart flag
+        options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply
+        Array{T}(undef, wmax),           # subspacealpha
+        @initial_linesearch()...,
+    )
 end
 
 nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
 nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
 
-function nlprecon_post_accelerate!(d, state::NGMRESState{X,T},
-                                   method::LBFGS)  where X where T
+function nlprecon_post_accelerate!(
+    d,
+    state::NGMRESState{X,T},
+    method::LBFGS,
+) where {X} where {T}
     state.nlpreconstate.pseudo_iteration += 1
     update_h!(d, state.nlpreconstate, method)
 end
 
 
-function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where X where T
+function update_state!(
+    d,
+    state::NGMRESState{X,T},
+    method::AbstractNGMRES,
+) where {X} where {T}
     # Maintain a record of previous position, for convergence assessment
     copyto!(state.x_previous_0, state.x)
     state.f_x_previous_0 = value(d)
@@ -324,9 +345,9 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
     Aview = view(state.A, 1:curw, 1:curw)
     bview = view(state.b, 1:curw)
     # The outer max is to avoid δ=0, which may occur if A=0, e.g. at numerical convergence
-    δ = method.ϵ0*max(maximum(diag(Aview)), method.ϵ0)
+    δ = method.ϵ0 * max(maximum(diag(Aview)), method.ϵ0)
     try
-        α .= (Aview + δ*I) \ bview
+        α .= (Aview + δ * I) \ bview
     catch e
         @warn("Calculating α failed in $(summary(method)).")
         @warn("Exception info:\n $e")
@@ -338,10 +359,10 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         state.restart = true
     else
         # xA = xP + \sum_{j=1}^{curw} α[j] * (X[j] - xP)
-        state.xA .= (1.0-sum(α)).*vec(state.x) .+
-            sum(state.X[:,k]*α[k] for k = 1:curw)
+        state.xA .=
+            (1.0 - sum(α)) .* vec(state.x) .+ sum(state.X[:, k] * α[k] for k = 1:curw)
 
-        state.s .=  reshape(state.xA, size(state.x)) .- state.x
+        state.s .= reshape(state.xA, size(state.x)) .- state.x
     end
 
     # 3: Perform condition checks
@@ -361,13 +382,14 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
             nlprec = method.nlprecon
             if isdefined(nlprec, :alphaguess!) &&
-                typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
+               typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
                 method.alphaguess!.dϕ_0_previous[] = nlprec.alphaguess!.dϕ_0_previous[]
             end
         end
         # state.x_previous and state.x are dealt with by reference
 
-        lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
+        lssuccess =
+            perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
         @. state.x = state.x + state.alpha * state.s
         # Manifold start
         retract!(method.manifold, state.x)
@@ -378,7 +400,7 @@ function update_state!(d, state::NGMRESState{X,T}, method::AbstractNGMRES) where
         if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
             nlprec = method.nlprecon
             if isdefined(nlprec, :alphaguess!) &&
-                typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
+               typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
                 nlprec.alphaguess!.dϕ_0_previous[] = method.alphaguess!.dϕ_0_previous[]
             end
         end
@@ -409,15 +431,23 @@ function update_g!(d, state, method::AbstractNGMRES)
     end
     j = mod(state.k, method.wmax) + 1
 
-    copyto!(view(state.X,:,j), vec(state.x))
-    copyto!(view(state.R,:,j), vec(gradient(d)))
+    copyto!(view(state.X, :, j), vec(state.x))
+    copyto!(view(state.R, :, j), vec(gradient(d)))
 
     for i = 1:state.curw
         _updateQ!(state.Q, i, j, state.X, state.R, method)
     end
 end
 
-function trace!(tr, d, state, iteration, method::AbstractNGMRES, options, curr_time=time())
+function trace!(
+    tr,
+    d,
+    state,
+    iteration,
+    method::AbstractNGMRES,
+    options,
+    curr_time = time(),
+)
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
@@ -441,15 +471,17 @@ function trace!(tr, d, state, iteration, method::AbstractNGMRES, options, curr_t
     end
 
     g_norm = g_residual(d)
-    update!(tr,
-            iteration,
-            value(d),
-            g_norm,
-            dt,
-            options.store_trace,
-            options.show_trace,
-            options.show_every,
-            options.callback)
+    update!(
+        tr,
+        iteration,
+        value(d),
+        g_norm,
+        dt,
+        options.store_trace,
+        options.show_trace,
+        options.show_every,
+        options.callback,
+    )
 end
 #
 # function assess_convergence(state::NGMRESState, d, options::Options)
@@ -457,5 +489,5 @@ end
 # end
 
 function default_options(method::AbstractNGMRES)
-    (;allow_f_increases = true)
+    (; allow_f_increases = true)
 end
