@@ -1,18 +1,21 @@
 update_g!(d, state, method) = nothing
-function update_g!(d, state, method::M) where {M<:Union{FirstOrderOptimizer,Newton}}
+function update_g!(d, state, method::FirstOrderOptimizer)
     # Update the function value and gradient
     value_gradient!(d, state.x)
-    if M <: FirstOrderOptimizer #only for methods that support manifold optimization
-        project_tangent!(method.manifold, gradient(d), state.x)
-    end
+    project_tangent!(method.manifold, gradient(d), state.x)
+end
+function update_g!(d, state, method::Newton)
+    # Update the function value and gradient
+    value_gradient!(d, state.x)
 end
 update_fg!(d, state, method) = nothing
 update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
-function update_fg!(d, state, method::M) where {M<:Union{FirstOrderOptimizer,Newton}}
+function update_fg!(d, state, method::FirstOrderOptimizer)
     value_gradient!(d, state.x)
-    if M <: FirstOrderOptimizer #only for methods that support manifold optimization
-        project_tangent!(method.manifold, gradient(d), state.x)
-    end
+    project_tangent!(method.manifold, gradient(d), state.x)
+end
+function update_fg!(d, state, method::Newton)
+    value_gradient!(d, state.x)
 end
 
 # Update the Hessian
