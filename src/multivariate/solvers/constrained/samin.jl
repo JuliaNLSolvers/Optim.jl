@@ -82,7 +82,7 @@ function optimize(
     (;nt, ns, t0, rt, r_expand, bounds_ratio, neps, coverage_ok, verbosity) = method
     verbose = verbosity > 0
 
-    x_tol, f_tol = options.f_abstol, options.x_abstol
+    x_tol, f_tol = options.x_abstol, options.f_abstol
 
     x0 = copy(x)
     n = size(x, 1) # dimension of parameter
@@ -213,7 +213,6 @@ function optimize(
                         end
                         converge = 0
                         termination_code = TerminationCode.NotImplemented
-
                         return MultivariateOptimizationResults(
                             method,
                             x0,# initial_x,
@@ -236,7 +235,7 @@ function optimize(
                             h_calls(d),
                             options.time_limit,
                             _time - time0,
-                            NamedTuple(),
+                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
                             # not hit ever since stopped_by were not here?
                             termination_code,
                         )
@@ -361,39 +360,6 @@ function optimize(
             x = xopt
         end
     end
-    termination_code = TerminationCode.NotImplemented
-    return MultivariateOptimizationResults(
-        method,
-        x0,# initial_x,
-        xopt, #pick_best_x(f_incr_pick, state),
-        fopt, # pick_best_f(f_incr_pick, state, d),
-        f_calls(d), #iteration,
-        f_calls(d) >= options.iterations, #iteration == options.iterations,
-        x_converged, # x_converged,
-        x_tol,#T(options.x_tol),
-        0.0,#T(options.x_tol),
-        x_absΔ,# x_abschange(state),
-        NaN,# x_relchange(state),
-        f_converged, # f_converged,
-        f_tol,#T(options.f_tol),
-        0.0,#T(options.f_tol),
-        f_absΔ,#f_abschange(d, state),
-        NaN,#f_relchange(d, state),
-        false,#g_converged,
-        0.0,#T(options.g_tol),
-        NaN,#g_residual(d),
-        false, #f_increased,
-        tr,
-        f_calls(d),
-        g_calls(d),
-        h_calls(d),
-        true,
-        options.time_limit,
-        _time - time0,
-        NamedTuple(),
-        termination_code,
-    )
-
 end
 
 # TODO
