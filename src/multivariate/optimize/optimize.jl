@@ -179,18 +179,18 @@ function _termination_code(d, gres, state, stopped_by, options)
     if state isa NelderMeadState && gres <= options.g_abstol
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
-        TerminationCode.FirstOrder
+        TerminationCode.GradientNorm
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) ||
            (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol)
         TerminationCode.NoXChange
     elseif (iszero(options.f_abstol) && f_abschange(d, state) <= options.f_abstol) ||
            (iszero(options.f_reltol) && f_relchange(d, state) <= options.f_reltol)
-        TerminationCode.NoFChange
+        TerminationCode.NoObjectiveChange
     elseif x_abschange(state) <= options.x_abstol || x_relchange(state) <= options.x_reltol
         TerminationCode.SmallXChange
     elseif f_abschange(d, state) <= options.f_abstol ||
            f_relchange(d, state) <= options.f_reltol
-        TerminationCode.SmallFChange
+        TerminationCode.SmallObjectiveChange
     elseif stopped_by.ls_failed
         TerminationCode.FailedLinesearch
     elseif stopped_by.callback
@@ -200,13 +200,15 @@ function _termination_code(d, gres, state, stopped_by, options)
     elseif stopped_by.time_limit
         TerminationCode.Time
     elseif stopped_by.f_limit_reached
-        TerminationCode.FCall
+        TerminationCode.ObjectiveCalls
     elseif stopped_by.g_limit_reached
-        TerminationCode.Gcall
+        TerminationCode.GradientCalls
     elseif stopped_by.h_limit_reached
-        TerminationCode.HCall
+        TerminationCode.HessianCalls
     elseif stopped_by.f_increased
-        TerminationCode.FIncreased
+        TerminationCode.ObjectiveIncreased
+    elseif f_calls(d) > 0 && !isfinite(value(d))
+        TerminationCode.GradientNotFinite
     elseif g_calls(d) > 0 && !all(isfinite, gradient(d))
         TerminationCode.GradientNotFinite
     elseif h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))

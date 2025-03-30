@@ -208,11 +208,11 @@ using EnumX
     "The change in optimization variables was zero (the tolerance was not set by the user)."
     NoXChange
     "The change in the objective was zero (the tolerance was not set by the user)."
-    NoFChange
+    NoObjectiveChange
     "The change in the optimization variables was below the prescribed tolerance."
     SmallXChange
     "The change in the objective was below the prescribed tolerance."
-    SmallFChange
+    SmallObjectiveChange
     "The line search failed to find a point that decreased the objective."
     FailedLinesearch
     "User callback returned `true`."
@@ -222,13 +222,15 @@ using EnumX
     "Time budget was exceeded."
     Time
     "Objective function evaluations exceeded the maximum number allowed."
-    FCall
+    ObjectiveCalls
     "Gradient evaluations exceeded the maximum number allowed."
-    Gcall
+    GradientCalls
     "Hessian evaluations exceeded the maximum number allowed."
-    HCall
+    HessianCalls
     "Objective function value increased."
-    FIncreased
+    ObjectiveIncreased
+    "Objective function was not finite"
+    ObjectiveNotFinite
     "Gradient was not finite"
     GradientNotFinite
     "Hessian was not finite"

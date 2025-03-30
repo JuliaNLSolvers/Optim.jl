@@ -161,7 +161,7 @@
 
 
     resgterm = optimize(f, g!, initial_x, BFGS(), Optim.Options(g_tol = 1e12))
-    Optim.termination_code(resgterm) == Optim.TerminationCode.FirstOrder
+    Optim.termination_code(resgterm) == Optim.TerminationCode.GradientNorm
 
     resx0term = optimize(
         f,
