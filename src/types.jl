@@ -39,7 +39,7 @@ time_limit = NaN
 ```
 See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
 """
-struct Options{T,TCallback}
+struct Options{T, TCallback}
     x_abstol::T
     x_reltol::T
     f_abstol::T
@@ -107,22 +107,40 @@ function Options(;
     #    show_trace = true
     #end
     if !(x_tol === nothing)
+        @warn(
+            lazy"x_tol is deprecated. Use x_abstol or x_reltol instead. The provided value ($(x_tol)) will be used as x_abstol.",
+        )
         x_abstol = x_tol
     end
     if !(g_tol === nothing)
+        @warn(
+            lazy"g_tol is deprecated. Use g_abstol instead. The provided value ($(g_tol)) will be used as g_abstol.",
+        )
         g_abstol = g_tol
     end
     if !(f_tol === nothing)
+        @warn(
+            lazy"f_tol is deprecated. Use f_abstol or f_reltol instead. The provided value ($(f_tol)) will be used as f_reltol.",
+        )
         f_reltol = f_tol
     end
     if !(outer_x_tol === nothing)
+        @warn(
+            lazy"outer_x_tol is deprecated. Use outer_x_abstol or outer_x_reltol instead. The provided value ($(outer_x_tol)) will be used as x_abstol.",
+        )
         outer_x_abstol = outer_x_tol
     end
     if !(outer_g_tol === nothing)
-        outer_g_abstol = outer_g_tol
+       @warn(
+            lazy"outer_g_tol is deprecated. Use outer_g_abstol instead. The provided value ($(outer_g_abstol)) will be used as x_abstol.",
+        )
+         outer_g_abstol = outer_g_tol
     end
     if !(outer_f_tol === nothing)
-        outer_f_reltol = outer_f_tol
+        @warn(
+            lazy"outer_f_tol is deprecated. Use outer_f_abstol or outer_f_reltol instead. The provided value ($(outer_f_tol)) will be used as outer_f_reltol.",
+        )
+         outer_f_reltol = outer_f_tol
     end
     Options(
         promote(
@@ -204,15 +222,15 @@ using EnumX
     "Nelder-Mead simplex converged."
     NelderMeadCriterion
     "First (partial) derivative had a magnitude below the prescribed tolerance."
-    FirstOrder
+    GradientNorm
     "The change in optimization variables was zero (the tolerance was not set by the user)."
     NoXChange
     "The change in the objective was zero (the tolerance was not set by the user)."
-    NoFChange
+    NoObjectiveChange
     "The change in the optimization variables was below the prescribed tolerance."
     SmallXChange
     "The change in the objective was below the prescribed tolerance."
-    SmallFChange
+    SmallObjectiveChange
     "The line search failed to find a point that decreased the objective."
     FailedLinesearch
     "User callback returned `true`."
@@ -222,13 +240,15 @@ using EnumX
     "Time budget was exceeded."
     Time
     "Objective function evaluations exceeded the maximum number allowed."
-    FCall
+    ObjectiveCalls
     "Gradient evaluations exceeded the maximum number allowed."
-    Gcall
+    GradientCalls
     "Hessian evaluations exceeded the maximum number allowed."
-    HCall
+    HessianCalls
     "Objective function value increased."
-    FIncreased
+    ObjectiveIncreased
+    "Objective function was not finite"
+    ObjectiveNotFinite
     "Gradient was not finite"
     GradientNotFinite
     "Hessian was not finite"
