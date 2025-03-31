@@ -82,7 +82,7 @@
     optimize(f, g!, h!, initial_x, SimulatedAnnealing())
 
     options = Optim.Options(
-        g_tol = 1e-12,
+        g_abstol = 1e-12,
         iterations = 10,
         store_trace = true,
         show_trace = false,
@@ -90,13 +90,13 @@
     res = optimize(f, g!, h!, initial_x, BFGS(), options)
 
     options_g = Optim.Options(
-        g_tol = 1e-12,
+        g_abstol = 1e-12,
         iterations = 10,
         store_trace = true,
         show_trace = false,
     )
     options_f = Optim.Options(
-        g_tol = 1e-12,
+        g_abstol = 1e-12,
         iterations = 10,
         store_trace = true,
         show_trace = false,
@@ -114,7 +114,7 @@
 
     res = optimize(f, g!, h!, initial_x, BFGS(), options_g)
     options_ext = Optim.Options(
-        g_tol = 1e-12,
+        g_abstol = 1e-12,
         iterations = 10,
         store_trace = true,
         show_trace = false,
@@ -132,7 +132,7 @@
     @test Optim.x_converged(res) == false
     @test Optim.f_converged(res) == false
     @test Optim.g_converged(res) == false
-    @test Optim.g_tol(res) == 1e-12
+    @test Optim.g_abstol(res) == 1e-12
     @test Optim.iteration_limit_reached(res) == true
     @test Optim.initial_state(res) == [-1.2, 1.0]
     @test haskey(Optim.trace(res_ext)[1].metadata, "x")
@@ -160,7 +160,7 @@
 
 
 
-    resgterm = optimize(f, g!, initial_x, BFGS(), Optim.Options(g_tol = 1e12))
+    resgterm = optimize(f, g!, initial_x, BFGS(), Optim.Options(g_abstol = 1e12))
     Optim.termination_code(resgterm) == Optim.TerminationCode.GradientNorm
 
     resx0term = optimize(
@@ -170,7 +170,7 @@
         BFGS(),
         Optim.Options(
             x_reltol = -1,
-            g_tol = -1,
+            g_abstol = -1,
             f_abstol = -1,
             f_reltol = -1,
             iterations = 10^10,
@@ -187,7 +187,7 @@
         BFGS(),
         Optim.Options(
             x_abstol = -1,
-            g_tol = -1,
+            g_abstol = -1,
             f_abstol = -1,
             f_reltol = -1,
             iterations = 10^10,
@@ -205,7 +205,7 @@
         Optim.Options(
             x_abstol = 1e-3,
             x_reltol = -1,
-            g_tol = -1,
+            g_abstol = -1,
             f_abstol = -1,
             f_reltol = -1,
             iterations = 10^10,
@@ -221,7 +221,7 @@
         Optim.Options(
             x_abstol = -1,
             x_reltol = 1e-3,
-            g_tol = -1,
+            g_abstol = -1,
             f_abstol = -1,
             f_reltol = -1,
             iterations = 10^10,
@@ -258,7 +258,7 @@ end
     @test_throws ErrorException Optim.g_converged(res)
     @test_throws ErrorException Optim.x_tol(res)
     @test_throws ErrorException Optim.f_tol(res)
-    @test_throws ErrorException Optim.g_tol(res)
+    @test_throws ErrorException Optim.g_abstol(res)
     res = optimize(f, -2.0, 1.0, GoldenSection(), store_trace = true, extended_trace = true)
 
     # Right now, these just "test" if they run

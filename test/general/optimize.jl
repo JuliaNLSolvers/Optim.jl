@@ -88,7 +88,7 @@ end
     end
 
     # To set tight tolerance on gradient g, need to disable any check on f
-    options = Optim.Options(g_tol = 1e-10, f_reltol = NaN, f_abstol = NaN)
+    options = Optim.Options(g_abstol = 1e-10, f_reltol = NaN, f_abstol = NaN)
     result = Optim.optimize(
         rosenbrock,
         g_rosenbrock!,
