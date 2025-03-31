@@ -113,9 +113,7 @@ function Options(;
         x_abstol = x_tol
     end
     if !(g_tol === nothing)
-        @warn(
-            lazy"g_tol is deprecated. Use g_abstol instead. The provided value ($(g_tol)) will be used as g_abstol.",
-        )
+        # lets deprecate this when reltol is introduced
         g_abstol = g_tol
     end
     if !(f_tol === nothing)

@@ -28,7 +28,7 @@
         fgh_res = []
         push!(fgh_res, optimize(tup..., problem.initial_x))
         for m in (NelderMead(), LBFGS(), Newton())
-            push!(fgh_res, optimize(tup..., problem.initial_x; f_tol = 1e-8))
+            push!(fgh_res, optimize(tup..., problem.initial_x; f_abstol = 1e-8))
             push!(fgh_res, optimize(tup..., problem.initial_x, m))
             push!(fgh_res, optimize(tup..., problem.initial_x, m, Optim.Options()))
         end

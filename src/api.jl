@@ -157,6 +157,8 @@ f_relchange(r::MultivariateOptimizationResults) = r.f_relchange
 
 g_tol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
 g_tol(r::MultivariateOptimizationResults) = r.g_abstol
+g_abstol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
+g_abstol(r::MultivariateOptimizationResults) = r.g_abstol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
 
 
