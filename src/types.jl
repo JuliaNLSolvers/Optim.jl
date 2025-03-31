@@ -167,7 +167,6 @@ function Options(;
         trace_simplex,
         show_trace,
         extended_trace,
-        trace_variables,
         show_warnings,
         Int(show_every),
         callback,
