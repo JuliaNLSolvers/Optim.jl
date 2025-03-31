@@ -32,7 +32,6 @@ outer_iterations::Int = 1000,
 store_trace::Bool = false,
 show_trace::Bool = false,
 extended_trace::Bool = false,
-trace_variables::Tuple{Symbol} = (,),
 show_warnings::Bool = true,
 show_every::Int = 1,
 callback = nothing,
@@ -40,7 +39,7 @@ time_limit = NaN
 ```
 See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
 """
-struct Options{T,TV<:Tuple{String}, TCallback}
+struct Options{T, TCallback}
     x_abstol::T
     x_reltol::T
     f_abstol::T
@@ -63,7 +62,6 @@ struct Options{T,TV<:Tuple{String}, TCallback}
     trace_simplex::Bool
     show_trace::Bool
     extended_trace::Bool
-    trace_variables::TV
     show_warnings::Bool
     show_every::Int
     callback::TCallback
@@ -99,7 +97,6 @@ function Options(;
     trace_simplex::Bool = false,
     show_trace::Bool = false,
     extended_trace::Bool = false,
-    trace_variables::Tuple{String} = Tuple(),
     show_warnings::Bool = true,
     show_every::Int = 1,
     callback = nothing,
