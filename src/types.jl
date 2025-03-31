@@ -32,6 +32,7 @@ outer_iterations::Int = 1000,
 store_trace::Bool = false,
 show_trace::Bool = false,
 extended_trace::Bool = false,
+trace_variables::Tuple{Symbol} = (,),
 show_warnings::Bool = true,
 show_every::Int = 1,
 callback = nothing,
@@ -39,7 +40,7 @@ time_limit = NaN
 ```
 See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
 """
-struct Options{T,TCallback}
+struct Options{T,TV<:Tuple{String}, TCallback}
     x_abstol::T
     x_reltol::T
     f_abstol::T
@@ -62,6 +63,7 @@ struct Options{T,TCallback}
     trace_simplex::Bool
     show_trace::Bool
     extended_trace::Bool
+    trace_variables::TV
     show_warnings::Bool
     show_every::Int
     callback::TCallback
@@ -97,6 +99,7 @@ function Options(;
     trace_simplex::Bool = false,
     show_trace::Bool = false,
     extended_trace::Bool = false,
+    trace_variables::Tuple{String} = Tuple(),
     show_warnings::Bool = true,
     show_every::Int = 1,
     callback = nothing,
@@ -107,22 +110,40 @@ function Options(;
     #    show_trace = true
     #end
     if !(x_tol === nothing)
+        @warn(
+            lazy"x_tol is deprecated. Use x_abstol or x_reltol instead. The provided value ($(x_tol)) will be used as x_abstol.",
+        )
         x_abstol = x_tol
     end
     if !(g_tol === nothing)
+        @warn(
+            lazy"g_tol is deprecated. Use g_abstol instead. The provided value ($(g_tol)) will be used as g_abstol.",
+        )
         g_abstol = g_tol
     end
     if !(f_tol === nothing)
+        @warn(
+            lazy"f_tol is deprecated. Use f_abstol or f_reltol instead. The provided value ($(f_tol)) will be used as f_reltol.",
+        )
         f_reltol = f_tol
     end
     if !(outer_x_tol === nothing)
+        @warn(
+            lazy"outer_x_tol is deprecated. Use outer_x_abstol or outer_x_reltol instead. The provided value ($(outer_x_tol)) will be used as x_abstol.",
+        )
         outer_x_abstol = outer_x_tol
     end
     if !(outer_g_tol === nothing)
-        outer_g_abstol = outer_g_tol
+       @warn(
+            lazy"outer_g_tol is deprecated. Use outer_g_abstol instead. The provided value ($(outer_g_abstol)) will be used as x_abstol.",
+        )
+         outer_g_abstol = outer_g_tol
     end
     if !(outer_f_tol === nothing)
-        outer_f_reltol = outer_f_tol
+        @warn(
+            lazy"outer_f_tol is deprecated. Use outer_f_abstol or outer_f_reltol instead. The provided value ($(outer_f_tol)) will be used as outer_f_reltol.",
+        )
+         outer_f_reltol = outer_f_tol
     end
     Options(
         promote(
@@ -149,6 +170,7 @@ function Options(;
         trace_simplex,
         show_trace,
         extended_trace,
+        trace_variables,
         show_warnings,
         Int(show_every),
         callback,
