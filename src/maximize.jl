@@ -81,12 +81,16 @@ for api_method in (
     :initial_state,
     :converged,
     :x_tol,
+    :x_abstol,
+    :x_reltol,
     :x_converged,
     :x_abschange,
     :g_tol,
     :g_converged,
     :g_residual,
     :f_tol,
+    :f_reltol,
+    :f_abstol,
     :f_converged,
     :f_increased,
     :f_relchange,
@@ -131,13 +135,13 @@ function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResu
     @printf io " * Iterations: %d\n" iterations(r)
     @printf io " * Convergence: %s\n" converged(r)
     if isa(r.res.method, NelderMead)
-        @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_tol(r) g_converged(r)
+        @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_abstol(r) g_converged(r)
     else
-        @printf io "   * |x - x'| ≤ %.1e: %s \n" x_tol(r) x_converged(r)
+        @printf io "   * |x - x'| ≤ %.1e: %s \n" x_reltol(r) x_converged(r)
         @printf io "     |x - x'| = %.2e \n" x_abschange(r)
-        @printf io "   * |f(x) - f(x')| ≤ %.1e |f(x)|: %s\n" f_tol(r) f_converged(r)
+        @printf io "   * |f(x) - f(x')| ≤ %.1e |f(x)|: %s\n" f_reltol(r) f_converged(r)
         @printf io "     |f(x) - f(x')| = %.2e |f(x)|\n" f_relchange(r)
-        @printf io "   * |g(x)| ≤ %.1e: %s \n" g_tol(r) g_converged(r)
+        @printf io "   * |g(x)| ≤ %.1e: %s \n" g_abstol(r) g_converged(r)
         @printf io "     |g(x)| = %.2e \n" g_residual(r)
         @printf io "   * Stopped by an decreasing objective: %s\n" (
             f_increased(r) && !iteration_limit_reached(r)
