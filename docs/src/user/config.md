@@ -43,7 +43,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `x_reltol`: Relative tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `f_abstol`: Absolute tolerance in changes of the objective value. Defaults to `0.0`.
 * `f_reltol`: Relative tolerance in changes of the objective value. Defaults to `0.0`.
-* `g_tol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
+* `g_abstol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
@@ -61,6 +61,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `stdout`? Defaults to `false`.
 * `extended_trace`: Save additional information. Solver dependent. Defaults to `false`.
+* `trace_variables`: A tuple of variable names given as `Symbol`s to store in the trace. Defaults to `(,)`, which means all variables are included.
 * `show_warnings`: Should warnings due to NaNs or Inf be shown? Defaults to `true`.
 * `show_every`: Trace output is printed every `show_every`th iteration.
 * `trace_simplex`: Include the full simplex in the trace for `NelderMead`. Defaults to `false`.
