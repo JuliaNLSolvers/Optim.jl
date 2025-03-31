@@ -35,7 +35,7 @@ using StableRNGs
                     gmanif!,
                     x0,
                     method(manifold = manif, linesearch = ls()),
-                    Optim.Options(allow_f_increases = true, g_tol = 1e-6),
+                    Optim.Options(allow_f_increases = true, g_abstol = 1e-6),
                 )
                 debug_printing && printstyled("Iter\tf-calls\tg-calls\n", color = :green)
                 debug_printing && printstyled(
