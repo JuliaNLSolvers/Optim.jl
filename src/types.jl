@@ -204,7 +204,7 @@ using EnumX
     "Nelder-Mead simplex converged."
     NelderMeadCriterion
     "First (partial) derivative had a magnitude below the prescribed tolerance."
-    FirstOrder
+    GradientNorm
     "The change in optimization variables was zero (the tolerance was not set by the user)."
     NoXChange
     "The change in the objective was zero (the tolerance was not set by the user)."
