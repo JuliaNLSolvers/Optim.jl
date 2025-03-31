@@ -82,7 +82,7 @@ for api_method in (
     :converged,
     :x_tol,
     :x_abstol,
-    :x_reltol
+    :x_reltol,
     :x_converged,
     :x_abschange,
     :g_tol,
@@ -90,7 +90,7 @@ for api_method in (
     :g_residual,
     :f_tol,
     :f_reltol,
-    :f_abstol
+    :f_abstol,
     :f_converged,
     :f_increased,
     :f_relchange,
