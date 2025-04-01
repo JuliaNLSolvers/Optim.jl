@@ -70,7 +70,7 @@ jobs:
                 body-includes: Benchmark Results
 
             - name: Comment on PR
-              uses: peter-evans/create-or-update-comment@v3
+              uses: peter-evans/create-or-update-comment@v4
               with:
                 comment-id: ${{ steps.fcbenchmark.outputs.comment-id }}
                 issue-number: ${{ github.event.pull_request.number }}
