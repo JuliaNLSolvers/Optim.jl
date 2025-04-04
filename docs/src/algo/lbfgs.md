@@ -75,5 +75,8 @@ the preconditioner matrix accordingly.
 ## References
 
 ```@bibliography
+Pages = []
+Canonical = false
+
 nocedal2006
 ```
