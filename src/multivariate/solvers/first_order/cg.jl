@@ -203,7 +203,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
     state.s .= beta .* state.s .- state.pg
     project_tangent!(method.manifold, state.s, state.x)
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 update_g!(d, state, method::ConjugateGradient) = nothing

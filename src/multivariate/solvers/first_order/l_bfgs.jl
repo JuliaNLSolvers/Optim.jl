@@ -40,7 +40,7 @@ function twoloop!(
     end
 
     # Copy q into s for forward pass
-    if scaleinvH0 == true && pseudo_iteration > 1
+    if scaleinvH0 && pseudo_iteration > 1
         # Use the initial scaling guess from
         # Nocedal & Wright (2nd ed), Equation (7.20)
 
@@ -98,7 +98,7 @@ linesearch = LineSearches.HagerZhang(),
 P=nothing,
 precondprep = Returns(nothing),
 manifold = Flat(),
-scaleinvH0::Bool = true && (typeof(P) <: Nothing))
+scaleinvH0::Bool = P === nothing)
 ```
 `LBFGS` has two special keywords; the memory length `m`,
 and the `scaleinvH0` flag.
@@ -128,7 +128,7 @@ function LBFGS(;
     P = nothing,
     precondprep = Returns(nothing),
     manifold::Manifold = Flat(),
-    scaleinvH0::Bool = true && (typeof(P) <: Nothing),
+    scaleinvH0::Bool = P === nothing,
 )
     LBFGS(Int(m), _alphaguess(alphaguess), linesearch, P, precondprep, manifold, scaleinvH0)
 end
@@ -224,7 +224,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
 
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 

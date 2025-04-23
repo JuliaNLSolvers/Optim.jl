@@ -64,7 +64,7 @@ function update_state!(
 
     state.x .+= state.alpha .* state.s .+ method.mu .* state.x_momentum
     retract!(method.manifold, state.x)
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 function trace!(

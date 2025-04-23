@@ -91,7 +91,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
     retract!(method.manifold, state.x)
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 function trace!(

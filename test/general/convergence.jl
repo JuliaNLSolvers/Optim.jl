@@ -70,9 +70,9 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     d = Optim.OnceDifferentiable(x -> sum(abs2.(x)), zeros(2))
 
     Optim.gradient!(d, ones(2))
-    @test Optim.gradient_convergence_assessment(ds, d, dOpt) == false
+    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
     Optim.gradient!(d, zeros(2))
-    @test Optim.gradient_convergence_assessment(ds, d, dOpt) == true
+    @test Optim.gradient_convergence_assessment(ds, d, dOpt)
 
     @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
     @test Optim.initial_convergence(d, ds, dm, zeros(2), dOpt) == (true, false)
@@ -81,7 +81,7 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     ds = DummyStateZeroth(x1, x0, f1, f0, g)
     dm = DummyMethodZeroth()
 
-    @test Optim.gradient_convergence_assessment(ds, d, dOpt) == false
+    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
     @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
 
     # should check all other methods as well
