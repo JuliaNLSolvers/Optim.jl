@@ -147,7 +147,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     state.x .= state.x .+ state.dx
     retract!(method.manifold, state.x)
 
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 function update_h!(d, state, method::BFGS)

@@ -87,7 +87,7 @@ search: LBFGS
   P=nothing,
   precondprep = (P, x) -> nothing,
   manifold = Flat(),
-  scaleinvH0::Bool = true && (typeof(P) <: Nothing))
+  scaleinvH0::Bool = P === nothing)
 
   LBFGS has two special keywords; the memory length m, and the scaleinvH0 flag.
   The memory length determines how many previous Hessian approximations to
