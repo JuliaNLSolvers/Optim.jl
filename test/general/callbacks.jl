@@ -17,7 +17,7 @@
         end
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         optimize(f, initial_x, method, options)
-        @test ot_run == true
+        @test ot_run
 
         os_run = false
         cb = os -> begin
@@ -27,7 +27,7 @@
         end
         options = Optim.Options(callback = cb, show_every = 3)
         optimize(f, initial_x, method, options)
-        @test os_run == true
+        @test os_run
 
         # Test early stopping by callbacks
         options = Optim.Options(callback = x -> x.iteration == 5 ? true : false)
@@ -45,7 +45,7 @@
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
 
         optimize(d2, initial_x, method, options)
-        @test ot_run == true
+        @test ot_run
 
         os_run = false
         cb = os -> begin
@@ -55,7 +55,7 @@
         end
         options = Optim.Options(callback = cb, show_every = 3)
         optimize(d2, initial_x, method, options)
-        @test os_run == true
+        @test os_run
     end
 
     for method in (Newton(),)
@@ -67,7 +67,7 @@
         end
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         optimize(d3, initial_x, method, options)
-        @test ot_run == true
+        @test ot_run
 
         os_run = false
         cb = os -> begin
@@ -77,7 +77,7 @@
         end
         options = Optim.Options(callback = cb, show_every = 3)
         optimize(d3, initial_x, method, options)
-        @test os_run == true
+        @test os_run
     end
     res = optimize(x -> x^2, -5, 5, callback = _ -> true)
     @test res.iterations == 0

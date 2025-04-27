@@ -84,7 +84,7 @@ function update_state!(d, state::NewtonState, method::Newton)
 
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
-    lssuccess == false # break on linesearch error
+    return !lssuccess # break on linesearch error
 end
 
 function trace!(tr, d, state, iteration, method::Newton, options, curr_time = time())

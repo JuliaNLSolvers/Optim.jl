@@ -21,7 +21,7 @@ using Optim, Test
     df = OnceDifferentiable(MVP.objective(prob), MVP.gradient(prob), prob.initial_x)
 
     @test solver.nlpreconopts.iterations == 1
-    @test solver.nlpreconopts.allow_f_increases == true
+    @test solver.nlpreconopts.allow_f_increases
 
     defopts = Optim.default_options(solver)
     @test defopts == (; allow_f_increases = true)
@@ -105,7 +105,7 @@ end
     prob = MVP.UnconstrainedProblems.examples["Rosenbrock"]
     df = OnceDifferentiable(MVP.objective(prob), MVP.gradient(prob), prob.initial_x)
     @test solver.nlpreconopts.iterations == 1
-    @test solver.nlpreconopts.allow_f_increases == true
+    @test solver.nlpreconopts.allow_f_increases
 
     defopts = Optim.default_options(solver)
     @test defopts == (; allow_f_increases = true)

@@ -414,7 +414,7 @@ function update_state!(
     copyto!(state.x_previous, state.x_previous_0)
     state.f_x_previous = state.f_x_previous_0
 
-    lssuccess == false # Break on linesearch error
+    return !lssuccess # Break on linesearch error
 end
 
 function update_g!(d, state, method::AbstractNGMRES)
@@ -423,11 +423,11 @@ function update_g!(d, state, method::AbstractNGMRES)
     value_gradient!(d, state.x)
     project_tangent!(method.manifold, gradient(d), state.x)
 
-    if state.restart == false
-        state.curw = min(state.curw + 1, method.wmax)
-    else
+    if state.restart
         state.k = 0
         state.curw = 1
+    else
+        state.curw = min(state.curw + 1, method.wmax)
     end
     j = mod(state.k, method.wmax) + 1
 
@@ -454,7 +454,7 @@ function trace!(
         dt["x"] = copy(state.x)
         dt["g(x)"] = copy(gradient(d))
         dt["subspace-α"] = state.subspacealpha[1:state.curw-1]
-        if state.restart == true
+        if state.restart
             dt["Current step size"] = NaN
         else
             dt["Current step size"] = state.alpha
@@ -465,7 +465,7 @@ function trace!(
         end
     end
     dt["Restart"] = state.restart
-    if state.restart == false
+    if !state.restart
         dt["f(x^P)"] = state.f_xP
         dt["|g(x^P)|"] = state.grnorm_xP
     end

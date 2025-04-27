@@ -128,12 +128,12 @@
     @test Optim.iterations(res) == 10
     @test Optim.f_calls(res) == 38
     @test Optim.g_calls(res) == 38
-    @test Optim.converged(res) == false
-    @test Optim.x_converged(res) == false
-    @test Optim.f_converged(res) == false
-    @test Optim.g_converged(res) == false
+    @test !Optim.converged(res)
+    @test !Optim.x_converged(res)
+    @test !Optim.f_converged(res)
+    @test !Optim.g_converged(res)
     @test Optim.g_abstol(res) == 1e-12
-    @test Optim.iteration_limit_reached(res) == true
+    @test Optim.iteration_limit_reached(res)
     @test Optim.initial_state(res) == [-1.2, 1.0]
     @test haskey(Optim.trace(res_ext)[1].metadata, "x")
     @test Optim.termination_code(res_ext) == Optim.TerminationCode.Iterations
@@ -240,7 +240,7 @@ end
     @test Optim.minimum(res) ≈ -0.125
     @test Optim.minimizer(res) ≈ -0.749999994377939
     @test Optim.iterations(res) == 38
-    @test Optim.iteration_limit_reached(res) == false
+    @test !Optim.iteration_limit_reached(res)
     @test_throws ErrorException Optim.trace(res)
     @test_throws ErrorException Optim.x_trace(res)
     @test_throws ErrorException Optim.x_lower_trace(res)
