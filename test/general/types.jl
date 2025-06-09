@@ -45,4 +45,14 @@ import Compat.String
     io = IOBuffer()
     res = show(io, MIME"text/plain"(), Optim.Options(x_abstol = 10.0))
     @test String(take!(io)) |> contains("x_abstol = 10.0")
+
+    # inheriting update from previously defined `Options`
+    opts1 = Optim.Options(; x_abstol = 1e-3, f_abstol = 1e-6, iterations = 1000)
+    opts2 = Optim.Options(opts1; x_abstol = 1e-4, f_calls_limit = 100)
+    @test opts2.x_abstol == 1e-4 && opts2.x_abstol != opts1.x_abstol
+    @test opts2.f_calls_limit == 100 && opts2.f_calls_limit != opts1.f_calls_limit
+    @test opts2.f_abstol == opts1.f_abstol == 1e-6
+    @test opts2.iterations == opts1.iterations == 1000
+    @test_throws "not a valid keyword argument" Optim.Options(opts1; invalid_keyword=1)
+    @test Optim.Options(opts1) == opts1
 end

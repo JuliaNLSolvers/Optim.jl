@@ -9,7 +9,11 @@ abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
 """
-Configurable options with defaults (values 0 and NaN indicate unlimited):
+    Options(; opts...)
+
+Specify configurable optimizer options `opts...`. Unspecified options are set to the default
+values below (values 0 and NaN indicate unlimited):
+
 ```
 x_abstol::Real = 0.0,
 x_reltol::Real = 0.0,
@@ -37,7 +41,19 @@ show_every::Int = 1,
 callback = nothing,
 time_limit = NaN
 ```
-See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
+
+It is also possible to pass a previously defined `Options` argument as the first argument,
+i.e., as:
+
+```jl
+    Options(inherit_options; opts...)
+```
+
+Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
+can be used to modify a subset of options in a previously defined `Options` variable.
+
+For more information on individual options, see the documentaton at
+http://julianlsolvers.github.io/Optim.jl/stable/#user/config/.
 """
 struct Options{T, TCallback}
     x_abstol::T
@@ -172,6 +188,46 @@ function Options(;
     )
 end
 
+function Options(o::Options; kws...)
+    foreach(keys(kws)) do kw
+        if kw ∉ (:x_abstol, :x_reltol, :f_abstol, :f_reltol, :g_abstol, :outer_x_abstol, 
+                 :outer_x_reltol, :outer_f_abstol, :outer_f_reltol, :outer_g_abstol,
+                 :f_calls_limit, :g_calls_limit, :h_calls_limit, :allow_f_increases,
+                 :allow_outer_f_increases, :successive_f_tol, :iterations,
+                 :outer_iterations, :store_trace, :trace_simplex, :show_trace,
+                 :extended_trace, :show_warnings, :show_every, :callback, :time_limit)
+            error(lazy"`$kw` is not a valid keyword argument of `Options(opts; kws...)`")
+        end
+    end
+    Options(
+        get(kws, :x_abstol,                o.x_abstol),
+        get(kws, :x_reltol,                o.x_reltol),
+        get(kws, :f_abstol,                o.f_abstol),
+        get(kws, :f_reltol,                o.f_reltol),
+        get(kws, :g_abstol,                o.g_abstol),
+        get(kws, :outer_x_abstol,          o.outer_x_abstol),
+        get(kws, :outer_x_reltol,          o.outer_x_reltol),
+        get(kws, :outer_f_abstol,          o.outer_f_abstol),
+        get(kws, :outer_f_reltol,          o.outer_f_reltol),
+        get(kws, :outer_g_abstol,          o.outer_g_abstol),
+        get(kws, :f_calls_limit,           o.f_calls_limit),
+        get(kws, :g_calls_limit,           o.g_calls_limit),
+        get(kws, :h_calls_limit,           o.h_calls_limit),
+        get(kws, :allow_f_increases,       o.allow_f_increases),
+        get(kws, :allow_outer_f_increases, o.allow_outer_f_increases),
+        get(kws, :successive_f_tol,        o.successive_f_tol),
+        get(kws, :iterations,              o.iterations),
+        get(kws, :outer_iterations,        o.outer_iterations),
+        get(kws, :store_trace,             o.store_trace),
+        get(kws, :trace_simplex,           o.trace_simplex),
+        get(kws, :show_trace,              o.show_trace),
+        get(kws, :extended_trace,          o.extended_trace),
+        get(kws, :show_warnings,           o.show_warnings),
+        get(kws, :show_every,              o.show_every),
+        get(kws, :callback,                o.callback),
+        get(kws, :time_limit,              o.time_limit),
+    )
+end
 _show_helper(output, k, v) = output * "$k = $v, "
 _show_helper(output, k, ::Nothing) = output
 
