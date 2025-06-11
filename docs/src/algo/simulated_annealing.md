@@ -38,7 +38,7 @@ candidate `x`'s that lowers the function value. To obtain a new `f_proposal`, we
 a neighbor function. A simple neighbor function adds a standard normal draw to each
 dimension of `x`
 ```julia
-function neighbor!(x_proposal::Array, x::Array)
+function neighbor!(x::Array, x_proposal::Array)
     for i in eachindex(x)
         x_proposal[i] = x[i]+randn()
     end
