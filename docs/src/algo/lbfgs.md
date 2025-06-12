@@ -33,8 +33,8 @@ LBFGS(; m = 10,
 
 ## Description
 
-In both algorithms the aim is do compute a descent direction ``d_ n``
-by approximately solving the newton equation
+In both algorithms the aim is to compute a descent direction ``d_ n``
+by approximately solving the Newton equation
 
 ```math
 H_n d_n = - ∇f(x_n),
@@ -42,7 +42,8 @@ H_n d_n = - ∇f(x_n),
 
 where ``H_n`` is an approximation to the Hessian of ``f``. Instead of approximating
 the Hessian, both BFGS as well as L-BFGS approximate the inverse ``B_n = H_n^{-1}`` of the Hessian,
-since that yields a matrix multiplication instead of solving a the linear system of equations above.
+since that yields a matrix multiplication instead of requiring that we solve the linear system of
+equations above.
 
 Then
 
@@ -64,12 +65,12 @@ instead of a full matrix. This is more memory-efficient especially for large-sca
 
 For L-BFGS, the inverse of the Hessian can be preconditioned in two ways.
 
-You can either set `scaleinvH0` to true, then the `m` steps of approximating
+You can either set `scaleinvH0` to `true`, then the `m` steps of approximating
 the inverse of the Hessian start from a scaled version of the identity.
-It if is set to false, the approximation starts from the identity matrix.
+If it is set to `false`, the approximation starts from the identity matrix.
 
-On the other hand you can provide a preconditioning matrix `P` that should be positive definite the approximation then starts from ``P^{-1}``.
-The preconditioner can be changed during the iterations by providing the `precondprep` keyword which based on `P` and the current iterate `x` updates
+Alternatively, you can provide a positive definite preconditioning matrix `P`; the approximation then starts from ``P^{-1}``.
+The preconditioner can be changed during the iterations by providing the `precondprep` keyword which, based on `P` and the current iterate `x`, updates
 the preconditioner matrix accordingly.
 
 ## References
