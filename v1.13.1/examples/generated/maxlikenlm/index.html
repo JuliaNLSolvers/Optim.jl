@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Maximum likelihood estimation · Optim</title><meta name="title" content="Maximum likelihood estimation · Optim"/><meta property="og:title" content="Maximum likelihood estimation · Optim"/><meta property="twitter:title" content="Maximum likelihood estimation · Optim"/><meta name="description" content="Documentation for Optim."/><meta property="og:description" content="Documentation for Optim."/><meta property="twitter:description" content="Documentation for Optim."/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">Optim</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../../user/minimization/">Minimizing a function</a></li><li><a class="tocitem" href="../../../user/gradientsandhessians/">Gradients and Hessians</a></li><li><a class="tocitem" href="../../../user/config/">Configurable Options</a></li><li><a class="tocitem" href="../../../algo/linesearch/">Linesearch</a></li><li><a class="tocitem" href="../../../user/algochoice/">Algorithm choice</a></li><li><a class="tocitem" href="../../../algo/precondition/">Preconditioners</a></li><li><a class="tocitem" href="../../../algo/complex/">Complex optimization</a></li><li><a class="tocitem" href="../../../algo/manifolds/">Manifolds</a></li><li><a class="tocitem" href="../../../user/tipsandtricks/">Tips and tricks</a></li><li><a class="tocitem" href="../ipnewton_basics/">Interior point Newton</a></li><li class="is-active"><a class="tocitem" href>Maximum likelihood estimation</a><ul class="internal"><li><a class="tocitem" href="#maxlikenlm-plain-program"><span>Plain Program</span></a></li></ul></li><li><a class="tocitem" href="../rasch/">Conditional maximum likelihood estimation</a></li></ul></li><li><span class="tocitem">Algorithms</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Gradient Free</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../algo/nelder_mead/">Nelder Mead</a></li><li><a class="tocitem" href="../../../algo/simulated_annealing/">Simulated Annealing</a></li><li><a class="tocitem" href="../../../algo/samin/">Simulated Annealing w/ bounds</a></li><li><a class="tocitem" href="../../../algo/particle_swarm/">Particle Swarm</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Gradient Required</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../algo/adam_adamax/">Adam and AdaMax</a></li><li><a class="tocitem" href="../../../algo/cg/">Conjugate Gradient</a></li><li><a class="tocitem" href="../../../algo/gradientdescent/">Gradient Descent</a></li><li><a class="tocitem" href="../../../algo/lbfgs/">(L-)BFGS</a></li><li><a class="tocitem" href="../../../algo/ngmres/">Acceleration</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Hessian Required</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../../algo/newton/">Newton</a></li><li><a class="tocitem" href="../../../algo/newton_trust_region/">Newton with Trust Region</a></li><li><a class="tocitem" href="../../../algo/ipnewton/">Interior point Newton</a></li></ul></li></ul></li><li><a class="tocitem" href="../../../dev/contributing/">Contributing</a></li><li><a class="tocitem" href="../../../LICENSE/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Maximum likelihood estimation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Maximum likelihood estimation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl/blob/master/docs/src/examples/maxlikenlm.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Maximum-Likelihood-Estimation:-The-Normal-Linear-Model"><a class="docs-heading-anchor" href="#Maximum-Likelihood-Estimation:-The-Normal-Linear-Model">Maximum Likelihood Estimation: The Normal Linear Model</a><a id="Maximum-Likelihood-Estimation:-The-Normal-Linear-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Maximum-Likelihood-Estimation:-The-Normal-Linear-Model" title="Permalink"></a></h1><div class="admonition is-success" id="Tip-146ca383edb69c4b"><header class="admonition-header">Tip<a class="admonition-anchor" href="#Tip-146ca383edb69c4b" title="Permalink"></a></header><div class="admonition-body"><p>This example is also available as a Jupyter notebook: <a href="https://nbviewer.jupyter.org/github/JuliaNLSolvers/Optim.jl/blob/gh-pages/v1.13.1examples/generated/maxlikenlm.ipynb"><code>maxlikenlm.ipynb</code></a></p></div></div><p>The following tutorial will introduce maximum likelihood estimation in Julia for the normal linear model.</p><p>The normal linear model (sometimes referred to as the OLS model) is the workhorse of regression modeling and is utilized across a number of diverse fields.  In this tutorial, we will utilize simulated data to demonstrate how Julia can be used to recover the parameters of interest.</p><p>The first order of business is to use the <code>Optim</code> package and also include the <code>NLSolversBase</code> routine:</p><pre><code class="language-julia hljs">using Optim, NLSolversBase
+using LinearAlgebra: diag
+using ForwardDiff</code></pre><div class="admonition is-success" id="Tip-8a6ed57239d73ab"><header class="admonition-header">Tip<a class="admonition-anchor" href="#Tip-8a6ed57239d73ab" title="Permalink"></a></header><div class="admonition-body"><p>Add Optim with the following command at the Julia command prompt: <code>Pkg.add(&quot;Optim&quot;)</code></p></div></div><p>The first item that needs to be addressed is the data generating process or DGP. The following code will produce data from a normal linear model:</p><pre><code class="language-julia hljs">n = 40                              # Number of observations
+nvar = 2                            # Number of variables
+β = ones(nvar) * 3.0                # True coefficients
+x = [
+    1.0 0.156651# X matrix of explanatory variables plus constant
+    1.0 -1.34218
+    1.0 0.238262
+    1.0 -0.496572
+    1.0 1.19352
+    1.0 0.300229
+    1.0 0.409127
+    1.0 -0.88967
+    1.0 -0.326052
+    1.0 -1.74367
+    1.0 -0.528113
+    1.0 1.42612
+    1.0 -1.08846
+    1.0 -0.00972169
+    1.0 -0.85543
+    1.0 1.0301
+    1.0 1.67595
+    1.0 -0.152156
+    1.0 0.26666
+    1.0 -0.668618
+    1.0 -0.36883
+    1.0 -0.301392
+    1.0 0.0667779
+    1.0 -0.508801
+    1.0 -0.352346
+    1.0 0.288688
+    1.0 -0.240577
+    1.0 -0.997697
+    1.0 -0.362264
+    1.0 0.999308
+    1.0 -1.28574
+    1.0 -1.91253
+    1.0 0.825156
+    1.0 -0.136191
+    1.0 1.79925
+    1.0 -1.10438
+    1.0 0.108481
+    1.0 0.847916
+    1.0 0.594971
+    1.0 0.427909
+]
+
+ε = [
+    0.5539830489065279             # Errors
+    -0.7981494315544392
+    0.12994853889935182
+    0.23315434715658184
+    -0.1959788033050691
+    -0.644463980478783
+    -0.04055657880388486
+    -0.33313251280917094
+    -0.315407370840677
+    0.32273952815870866
+    0.56790436131181
+    0.4189982390480762
+    -0.0399623088796998
+    -0.2900421677961449
+    -0.21938513655749814
+    -0.2521429229103657
+    0.0006247891825243118
+    -0.694977951759846
+    -0.24108791530910414
+    0.1919989647431539
+    0.15632862280544485
+    -0.16928298502504732
+    0.08912288359190582
+    0.0037707641031662006
+    -0.016111044809837466
+    0.01852191562589722
+    -0.762541135294584
+    -0.7204431774719634
+    -0.04394527523005201
+    -0.11956323865320413
+    -0.6713329013627437
+    -0.2339928433338628
+    -0.6200532213195297
+    -0.6192380993792371
+    0.08834918731846135
+    -0.5099307915921438
+    0.41527207925609494
+    -0.7130133329859893
+    -0.531213372742777
+    -0.09029672309221337
+]
+
+y = x * β + ε;                      # Generate Data</code></pre><p>In the above example, we have 500 observations, 2 explanatory variables plus an intercept, an error variance equal to 0.5, coefficients equal to 3.0, and all of these are subject to change by the user. Since we know the true value of these parameters, we should obtain these values when we maximize the likelihood function.</p><p>The next step in our tutorial is to define a Julia function for the likelihood function. The following function defines the likelihood function for the normal linear model:</p><pre><code class="language-julia hljs">function Log_Likelihood(X, Y, β, log_σ)
+    σ = exp(log_σ)
+    llike = -n / 2 * log(2π) - n / 2 * log(σ^2) - (sum((Y - X * β) .^ 2) / (2σ^2))
+    llike = -llike
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Log_Likelihood (generic function with 1 method)</code></pre><p>The log likelihood function accepts 4 inputs: the matrix of explanatory variables (X), the dependent variable (Y), the β&#39;s, and the error varicance. Note that we exponentiate the error variance in the second line of the code because the error variance cannot be negative and we want to avoid this situation when maximizing the likelihood.</p><p>The next step in our tutorial is to optimize our function. We first use the <code>TwiceDifferentiable</code> command in order to obtain the Hessian matrix later on, which will be used to help form t-statistics:</p><pre><code class="language-julia hljs">func = TwiceDifferentiable(
+    vars -&gt; Log_Likelihood(x, y, vars[1:nvar], vars[nvar+1]),
+    ones(nvar + 1);
+    autodiff = :forward,
+);</code></pre><p>The above statment accepts 4 inputs: the x matrix, the dependent variable y, and a vector of β&#39;s and the error variance.  The <code>vars[1:nvar]</code> is how we pass the vector of β&#39;s and the <code>vars[nvar + 1]</code> is how we pass the error variance. You can think of this as a vector of parameters with the first 2 being β&#39;s and the last one is the error variance.</p><p>The <code>ones(nvar+1)</code> are the starting values for the parameters and the <code>autodiff=:forward</code> command performs forward mode automatic differentiation.</p><p>The actual optimization of the likelihood function is accomplished with the following command:</p><pre><code class="language-julia hljs">opt = optimize(func, ones(nvar + 1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
+
+ * Candidate solution
+    Final objective value:     1.722256e+01
+
+ * Found with
+    Algorithm:     Newton&#39;s Method
+
+ * Convergence measures
+    |x - x&#39;|               = 2.79e-10 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 9.12e-11 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
+    |g(x)|                 = 5.93e-14 ≤ 1.0e-08
+
+ * Work counters
+    Seconds run:   0  (vs limit Inf)
+    Iterations:    9
+    f(x) calls:    39
+    ∇f(x) calls:   39
+    ∇²f(x) calls:  9
+</code></pre><p>The first input to the command is the function we wish to optimize and the second input are the starting values.</p><p>After a brief period of time, you should see output of the optimization routine, with the parameter  estimates being very close to our simulated values.</p><p>The optimization routine stores several quantities and we can obtain the maximim likelihood estimates with the following command:</p><pre><code class="language-julia hljs">parameters = Optim.minimizer(opt)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+  2.836642512088644
+  3.053452125511052
+ -0.9883745114256862</code></pre><div class="admonition is-info" id="Note-7ae86888fef5549"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-7ae86888fef5549" title="Permalink"></a></header><div class="admonition-body"><p>Fieldnames for all of the quantities can be obtained with the following command: fieldnames(opt)</p></div></div><p>In order to obtain the correct Hessian matrix, we have to &quot;push&quot; the actual parameter values that maximizes the likelihood function since the <code>TwiceDifferentiable</code> command uses the next to last values to calculate the Hessian:</p><pre><code class="language-julia hljs">numerical_hessian = hessian!(func, parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
+ 288.769        -21.7755        1.18621e-13
+ -21.7755       223.84         -1.17018e-13
+   1.18621e-13   -1.17018e-13  80.0</code></pre><p>Let&#39;s find the estimated value of σ, rather than log σ, and it&#39;s standard error To do this, we will use the Delta Method: <a href="https://en.wikipedia.org/wiki/Delta_method">https://en.wikipedia.org/wiki/Delta_method</a></p><p>this function exponetiates log σ</p><pre><code class="language-julia hljs">function transform(parameters)
+    parameters[end] = exp(parameters[end])
+    parameters
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">transform (generic function with 1 method)</code></pre><p>get the Jacobian of the transformation</p><pre><code class="language-julia hljs">J = ForwardDiff.jacobian(transform, parameters)&#39;
+parameters = transform(parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+ 2.836642512088644
+ 3.053452125511052
+ 0.37218117584627275</code></pre><p>We can now invert our Hessian matrix  and use the Delta Method, to obtain the variance-covariance matrix:</p><pre><code class="language-julia hljs">var_cov_matrix = J * inv(numerical_hessian) * J&#39;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
+  0.00348856   0.000339373  -1.74044e-18
+  0.000339373  0.00450049    2.26279e-18
+ -1.74044e-18  2.26279e-18   0.00173149</code></pre><p>test the estimated parameters and t-stats for correctness</p><pre><code class="language-julia hljs">t_stats = parameters ./ sqrt.(diag(var_cov_matrix))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+ 48.02654897758058
+ 45.515682746940136
+  8.94427190999916</code></pre><p>see the results</p><pre><code class="language-julia hljs">println(&quot;parameter estimates:&quot;, parameters)
+println(&quot;t-statsitics: &quot;, t_stats)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">parameter estimates:[2.836642512088644, 3.053452125511052, 0.37218117584627275]
+t-statsitics: [48.02654897758058, 45.515682746940136, 8.94427190999916]</code></pre><p>From here, one may examine other statistics of interest using the output from the optimization routine.</p><h2 id="maxlikenlm-plain-program"><a class="docs-heading-anchor" href="#maxlikenlm-plain-program">Plain Program</a><a id="maxlikenlm-plain-program-1"></a><a class="docs-heading-anchor-permalink" href="#maxlikenlm-plain-program" title="Permalink"></a></h2><p>Below follows a version of the program without any comments. The file is also available here: <a href="../maxlikenlm.jl">maxlikenlm.jl</a></p><pre><code class="language-julia hljs">using Optim, NLSolversBase
+using LinearAlgebra: diag
+using ForwardDiff
+
+n = 40                              # Number of observations
+nvar = 2                            # Number of variables
+β = ones(nvar) * 3.0                # True coefficients
+x = [
+    1.0 0.156651# X matrix of explanatory variables plus constant
+    1.0 -1.34218
+    1.0 0.238262
+    1.0 -0.496572
+    1.0 1.19352
+    1.0 0.300229
+    1.0 0.409127
+    1.0 -0.88967
+    1.0 -0.326052
+    1.0 -1.74367
+    1.0 -0.528113
+    1.0 1.42612
+    1.0 -1.08846
+    1.0 -0.00972169
+    1.0 -0.85543
+    1.0 1.0301
+    1.0 1.67595
+    1.0 -0.152156
+    1.0 0.26666
+    1.0 -0.668618
+    1.0 -0.36883
+    1.0 -0.301392
+    1.0 0.0667779
+    1.0 -0.508801
+    1.0 -0.352346
+    1.0 0.288688
+    1.0 -0.240577
+    1.0 -0.997697
+    1.0 -0.362264
+    1.0 0.999308
+    1.0 -1.28574
+    1.0 -1.91253
+    1.0 0.825156
+    1.0 -0.136191
+    1.0 1.79925
+    1.0 -1.10438
+    1.0 0.108481
+    1.0 0.847916
+    1.0 0.594971
+    1.0 0.427909
+]
+
+ε = [
+    0.5539830489065279             # Errors
+    -0.7981494315544392
+    0.12994853889935182
+    0.23315434715658184
+    -0.1959788033050691
+    -0.644463980478783
+    -0.04055657880388486
+    -0.33313251280917094
+    -0.315407370840677
+    0.32273952815870866
+    0.56790436131181
+    0.4189982390480762
+    -0.0399623088796998
+    -0.2900421677961449
+    -0.21938513655749814
+    -0.2521429229103657
+    0.0006247891825243118
+    -0.694977951759846
+    -0.24108791530910414
+    0.1919989647431539
+    0.15632862280544485
+    -0.16928298502504732
+    0.08912288359190582
+    0.0037707641031662006
+    -0.016111044809837466
+    0.01852191562589722
+    -0.762541135294584
+    -0.7204431774719634
+    -0.04394527523005201
+    -0.11956323865320413
+    -0.6713329013627437
+    -0.2339928433338628
+    -0.6200532213195297
+    -0.6192380993792371
+    0.08834918731846135
+    -0.5099307915921438
+    0.41527207925609494
+    -0.7130133329859893
+    -0.531213372742777
+    -0.09029672309221337
+]
+
+y = x * β + ε;                      # Generate Data
+
+function Log_Likelihood(X, Y, β, log_σ)
+    σ = exp(log_σ)
+    llike = -n / 2 * log(2π) - n / 2 * log(σ^2) - (sum((Y - X * β) .^ 2) / (2σ^2))
+    llike = -llike
+end
+
+func = TwiceDifferentiable(
+    vars -&gt; Log_Likelihood(x, y, vars[1:nvar], vars[nvar+1]),
+    ones(nvar + 1);
+    autodiff = :forward,
+);
+
+opt = optimize(func, ones(nvar + 1))
+
+parameters = Optim.minimizer(opt)
+
+numerical_hessian = hessian!(func, parameters)
+
+function transform(parameters)
+    parameters[end] = exp(parameters[end])
+    parameters
+end
+
+J = ForwardDiff.jacobian(transform, parameters)&#39;
+parameters = transform(parameters)
+
+var_cov_matrix = J * inv(numerical_hessian) * J&#39;
+
+t_stats = parameters ./ sqrt.(diag(var_cov_matrix))
+
+println(&quot;parameter estimates:&quot;, parameters)
+println(&quot;t-statsitics: &quot;, t_stats)
+
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ipnewton_basics/">« Interior point Newton</a><a class="docs-footer-nextpage" href="../rasch/">Conditional maximum likelihood estimation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Thursday 12 June 2025 09:50">Thursday 12 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
