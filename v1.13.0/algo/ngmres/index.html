@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Acceleration · Optim</title><meta name="title" content="Acceleration · Optim"/><meta property="og:title" content="Acceleration · Optim"/><meta property="twitter:title" content="Acceleration · Optim"/><meta name="description" content="Documentation for Optim."/><meta property="og:description" content="Documentation for Optim."/><meta property="twitter:description" content="Documentation for Optim."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Optim</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../user/minimization/">Minimizing a function</a></li><li><a class="tocitem" href="../../user/gradientsandhessians/">Gradients and Hessians</a></li><li><a class="tocitem" href="../../user/config/">Configurable Options</a></li><li><a class="tocitem" href="../linesearch/">Linesearch</a></li><li><a class="tocitem" href="../../user/algochoice/">Algorithm choice</a></li><li><a class="tocitem" href="../precondition/">Preconditioners</a></li><li><a class="tocitem" href="../complex/">Complex optimization</a></li><li><a class="tocitem" href="../manifolds/">Manifolds</a></li><li><a class="tocitem" href="../../user/tipsandtricks/">Tips and tricks</a></li><li><a class="tocitem" href="../../examples/generated/ipnewton_basics/">Interior point Newton</a></li><li><a class="tocitem" href="../../examples/generated/maxlikenlm/">Maximum likelihood estimation</a></li><li><a class="tocitem" href="../../examples/generated/rasch/">Conditional maximum likelihood estimation</a></li></ul></li><li><span class="tocitem">Algorithms</span><ul><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Gradient Free</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../nelder_mead/">Nelder Mead</a></li><li><a class="tocitem" href="../simulated_annealing/">Simulated Annealing</a></li><li><a class="tocitem" href="../samin/">Simulated Annealing w/ bounds</a></li><li><a class="tocitem" href="../particle_swarm/">Particle Swarm</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox" checked/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Gradient Required</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../adam_adamax/">Adam and AdaMax</a></li><li><a class="tocitem" href="../cg/">Conjugate Gradient</a></li><li><a class="tocitem" href="../gradientdescent/">Gradient Descent</a></li><li><a class="tocitem" href="../lbfgs/">(L-)BFGS</a></li><li class="is-active"><a class="tocitem" href>Acceleration</a><ul class="internal"><li><a class="tocitem" href="#Constructors"><span>Constructors</span></a></li><li><a class="tocitem" href="#Description"><span>Description</span></a></li><li><a class="tocitem" href="#Example"><span>Example</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Hessian Required</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../newton/">Newton</a></li><li><a class="tocitem" href="../newton_trust_region/">Newton with Trust Region</a></li><li><a class="tocitem" href="../ipnewton/">Interior point Newton</a></li></ul></li></ul></li><li><a class="tocitem" href="../../dev/contributing/">Contributing</a></li><li><a class="tocitem" href="../../LICENSE/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Algorithms</a></li><li><a class="is-disabled">Gradient Required</a></li><li class="is-active"><a href>Acceleration</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Acceleration</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaNLSolvers/Optim.jl/blob/master/docs/src/algo/ngmres.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Acceleration-methods:-N-GMRES-and-O-ACCEL"><a class="docs-heading-anchor" href="#Acceleration-methods:-N-GMRES-and-O-ACCEL">Acceleration methods: N-GMRES and O-ACCEL</a><a id="Acceleration-methods:-N-GMRES-and-O-ACCEL-1"></a><a class="docs-heading-anchor-permalink" href="#Acceleration-methods:-N-GMRES-and-O-ACCEL" title="Permalink"></a></h1><h2 id="Constructors"><a class="docs-heading-anchor" href="#Constructors">Constructors</a><a id="Constructors-1"></a><a class="docs-heading-anchor-permalink" href="#Constructors" title="Permalink"></a></h2><pre><code class="language-julia hljs">NGMRES(;
+        alphaguess = LineSearches.InitialStatic(),
+        linesearch = LineSearches.HagerZhang(),
+        manifold = Flat(),
+        wmax::Int = 10,
+        ϵ0 = 1e-12,
+        nlprecon = GradientDescent(
+            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+            linesearch = LineSearches.Static(),
+            manifold = manifold),
+        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+      )</code></pre><pre><code class="language-julia hljs">OACCEL(;manifold::Manifold = Flat(),
+       alphaguess = LineSearches.InitialStatic(),
+       linesearch = LineSearches.HagerZhang(),
+       nlprecon = GradientDescent(
+           alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+           linesearch = LineSearches.Static(),
+           manifold = manifold),
+       nlpreconopts = Options(iterations = 1, allow_f_increases = true),
+       ϵ0 = 1e-12,
+       wmax::Int = 10)</code></pre><h2 id="Description"><a class="docs-heading-anchor" href="#Description">Description</a><a id="Description-1"></a><a class="docs-heading-anchor-permalink" href="#Description" title="Permalink"></a></h2><p>These algorithms take a step given by the nonlinear preconditioner <code>nlprecon</code> and proposes an accelerated step on a subspace spanned by the previous <code>wmax</code> iterates.</p><ul><li>N-GMRES accelerates based on a minimization of an approximation to the <span>$\ell_2$</span> norm of the</li></ul><p>gradient.</p><ul><li>O-ACCEL accelerates based on a minimization of a n approximation to the objective.</li></ul><p>N-GMRES was originally developed for solving nonlinear systems [1], and reduces to GMRES for linear problems. Application of the algorithm to optimization is covered, for example, in [2]. A description of O-ACCEL and its connection to N-GMRES can be found in [3].</p><p><em>We recommend trying <a href="../lbfgs/">LBFGS</a> on your problem before N-GMRES or O-ACCEL. All three algorithms have similar computational cost and memory requirements, however, L-BFGS is more efficient for many problems.</em></p><h2 id="Example"><a class="docs-heading-anchor" href="#Example">Example</a><a id="Example-1"></a><a class="docs-heading-anchor-permalink" href="#Example" title="Permalink"></a></h2><p>This example shows how to accelerate <code>GradientDescent</code> on the Extended Rosenbrock problem. First, we try to optimize using <code>GradientDescent</code>.</p><pre><code class="language-julia hljs">using Optim, OptimTestProblems
+UP = UnconstrainedProblems
+prob = UP.examples[&quot;Extended Rosenbrock&quot;]
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, GradientDescent())</code></pre><p>The algorithm does not converge within 1000 iterations.</p><pre><code class="nohighlight hljs">Results of Optimization Algorithm
+ * Algorithm: Gradient Descent
+ * Starting Point: [-1.2,1.0, ...]
+ * Minimizer: [0.8923389282461412,0.7961268644300445, ...]
+ * Minimum: 2.898230e-01
+ * Iterations: 1000
+ * Convergence: false
+   * |x - x&#39;| ≤ 0.0e+00: false
+     |x - x&#39;| = 4.02e-04
+   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x&#39;)| = 2.38e-03 |f(x)|
+   * |g(x)| ≤ 1.0e-08: false
+     |g(x)| = 8.23e-02
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: true
+ * Objective Calls: 2525
+ * Gradient Calls: 2525</code></pre><p>Now, we use <code>OACCEL</code> to accelerate <code>GradientDescent</code>.</p><pre><code class="language-julia hljs"># Default nonlinear procenditioner for `OACCEL`
+nlprecon = GradientDescent(alphaguess=LineSearches.InitialStatic(alpha=1e-4,scaled=true),
+                           linesearch=LineSearches.Static())
+# Default size of subspace that OACCEL accelerates over is `wmax = 10`
+oacc10 = OACCEL(nlprecon=nlprecon, wmax=10)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, oacc10)</code></pre><p>This drastically improves the <code>GradientDescent</code> algorithm, converging in 87 iterations.</p><pre><code class="nohighlight hljs">Results of Optimization Algorithm
+ * Algorithm: O-ACCEL preconditioned with Gradient Descent
+ * Starting Point: [-1.2,1.0, ...]
+ * Minimizer: [1.0000000011361219,1.0000000022828495, ...]
+ * Minimum: 3.255053e-17
+ * Iterations: 87
+ * Convergence: true
+   * |x - x&#39;| ≤ 0.0e+00: false
+     |x - x&#39;| = 6.51e-08
+   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x&#39;)| = 7.56e+02 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 1.06e-09
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 285
+ * Gradient Calls: 285</code></pre><p>We can improve the acceleration further by changing the acceleration subspace size <code>wmax</code>.</p><pre><code class="language-julia hljs">oacc5 = OACCEL(nlprecon=nlprecon, wmax=5)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, oacc5)</code></pre><p>Now, the O-ACCEL algorithm has accelerated <code>GradientDescent</code> to converge in 50 iterations.</p><pre><code class="nohighlight hljs">Results of Optimization Algorithm
+ * Algorithm: O-ACCEL preconditioned with Gradient Descent
+ * Starting Point: [-1.2,1.0, ...]
+ * Minimizer: [0.9999999999392858,0.9999999998784691, ...]
+ * Minimum: 9.218164e-20
+ * Iterations: 50
+ * Convergence: true
+   * |x - x&#39;| ≤ 0.0e+00: false
+     |x - x&#39;| = 2.76e-07
+   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x&#39;)| = 5.18e+06 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 4.02e-11
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 181
+ * Gradient Calls: 181</code></pre><p>As a final comparison, we can do the same with N-GMRES.</p><pre><code class="language-julia hljs">ngmres5 = NGMRES(nlprecon=nlprecon, wmax=5)
+optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, ngmres5)</code></pre><p>Again, this significantly improves the <code>GradientDescent</code> algorithm, and converges in 63 iterations.</p><pre><code class="nohighlight hljs">Results of Optimization Algorithm
+ * Algorithm: Nonlinear GMRES preconditioned with Gradient Descent
+ * Starting Point: [-1.2,1.0, ...]
+ * Minimizer: [0.9999999998534468,0.9999999997063993, ...]
+ * Minimum: 5.375569e-19
+ * Iterations: 63
+ * Convergence: true
+   * |x - x&#39;| ≤ 0.0e+00: false
+     |x - x&#39;| = 9.94e-09
+   * |f(x) - f(x&#39;)| ≤ 0.0e+00 |f(x)|: false
+     |f(x) - f(x&#39;)| = 1.29e+03 |f(x)|
+   * |g(x)| ≤ 1.0e-08: true
+     |g(x)| = 4.94e-11
+   * Stopped by an increasing objective: false
+   * Reached Maximum Number of Iterations: false
+ * Objective Calls: 222
+ * Gradient Calls: 222</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>[1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013. [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997. [3] Riseth. Objective acceleration for unconstrained optimization. 2018.</p><div class="citation canonical"><ul><li><div id="riseth2019">Riseth, A. N. (2019). <em>Objective Acceleration for Unconstrained Optimization</em>. <a href="https://doi.org/10.1002/nla.2216">Numerical Linear Algebra with Applications <strong>26</strong>, e2216</a>.</div></li><li><div id="sterck2013">Sterck, H. D. (2013). <em>Steepest Descent Preconditioning for Nonlinear GMRES Optimization</em>. <a href="https://doi.org/10.1002/nla.1837">Numerical Linear Algebra with Applications <strong>20</strong>, 453–471</a>.</div></li><li><div id="washio1997">Washio, T. and Oosterlee, C. W. (1997). <em>Krylov Subspace Acceleration for Nonlinear Multigrid Schemes</em>. Electronic Transactions on Numerical Analysis <strong>6</strong>, 271–290.</div></li></ul></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../lbfgs/">« (L-)BFGS</a><a class="docs-footer-nextpage" href="../newton/">Newton »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Thursday 12 June 2025 09:18">Thursday 12 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
