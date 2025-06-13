@@ -51,7 +51,7 @@ First, we try to optimize using `GradientDescent`.
 
 ```julia
 using Optim, OptimTestProblems
-UP = OptimTestProblems.UnconstrainedProblems
+UP = UnconstrainedProblems
 prob = UP.examples["Extended Rosenbrock"]
 optimize(UP.objective(prob), UP.gradient(prob), prob.initial_x, GradientDescent())
 ```
@@ -163,3 +163,8 @@ Results of Optimization Algorithm
 [1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
 [2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
 [3] Riseth. Objective acceleration for unconstrained optimization. 2018.
+```@bibliography
+sterck2013
+washio1997
+riseth2019
+```

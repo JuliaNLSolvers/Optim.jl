@@ -8,11 +8,11 @@ and parameters `betas`. As far as the solver is concerned, there should only be 
 input argument to the function we want to minimize, call it `sqerror`.
 
 The problem is that we want to optimize a function `sqerror` that really depends
-on three inputs, and two of them are constant throught the optimization procedure.
+on three inputs, and two of them are constant throughout the optimization procedure.
 To do this, we need to define the variables `x` and `y`
 ```jl
 x = [1.0, 2.0, 3.0]
-y = 1.0 + 2.0 * x + [-0.3, 0.3, -0.1]
+y = 1.0 .+ 2.0 .* x .+ [-0.3, 0.3, -0.1]
 ```
 We then simply define a function in three variables
 ```julia
@@ -64,14 +64,15 @@ For example, here we define a function `fg!` to compute the objective function a
 the gradient, as required:
 
 ```julia
-function fg!(F,G,x)
+function fg!(F, G, x)
   # do common computations here
   # ...
-  if G != nothing
+  if G !== nothing
     # code to compute gradient here
     # writing the result to the vector G
+    # G .= ...
   end
-  if F != nothing
+  if F !== nothing
     # value = ... code to compute objective function
     return value
   end
@@ -91,10 +92,10 @@ Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS())
 Similarly, for a computation that requires the Hessian, we can write:
 
 ```julia
-function fgh!(F,G,H,x)
-  G == nothing || # compute gradient and store in G
-  H == nothing || # compute Hessian and store in H
-  F == nothing || return f(x)
+function fgh!(F, G, H, x)
+  G === nothing || # compute gradient and store in G
+  H === nothing || # compute Hessian and store in H
+  F === nothing || return f(x)
   nothing
 end
 
@@ -166,8 +167,8 @@ by all the function evaluations required to do the central finite differences ca
 ## Separating time spent in Optim's code and user provided functions
 Consider the Rosenbrock problem.
 ```julia
-using Optim
-prob = Optim.UnconstrainedProblems.examples["Rosenbrock"];
+using Optim, OptimTestProblems
+prob = UnconstrainedProblems.examples["Rosenbrock"];
 ```
 Say we optimize this function, and look at the total run time of `optimize` using
 the Newton Trust Region method, and we are surprised that it takes a long time to run.
@@ -204,8 +205,8 @@ being 1000. Alternatively, it is possible to put a soft limit on the run time of
 the optimization procedure by setting the `time_limit` keyword in the `Optim.Options`
 constructor.
 ```julia
-using Optim
-problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples["Rosenbrock"]
 
 f = problem.f
 initial_x = problem.initial_x
@@ -223,8 +224,8 @@ This will stop after about three seconds. If it is more important that we stop b
 is reached, it is possible to use a callback with a simple model for predicting how much
 time will have passed when the next iteration is over. Consider the following code
 ```julia
-using Optim
-problem = Optim.UnconstrainedProblems.examples["Rosenbrock"]
+using Optim, OptimTestProblems
+problem = UnconstrainedProblems.examples["Rosenbrock"]
 
 f = problem.f
 initial_x = problem.initial_x
@@ -241,7 +242,7 @@ function advanced_time_control(x)
     so_far =  time()-start_time
     println(" * Time so far:     ", so_far)
     if x.iteration == 0
-        time_to_setup[:] = time()-start_time
+        time_to_setup .= time()-start_time
     else
         expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
         println(" * Next iteration ≈ ", expected_next_time)

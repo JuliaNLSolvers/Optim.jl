@@ -34,8 +34,8 @@ optimize(f, x0, LBFGS(); autodiff = :forward)
 For the Rosenbrock example, the analytical gradient can be shown to be:
 ```jl
 function g!(G, x)
-G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
-G[2] = 200.0 * (x[2] - x[1]^2)
+    G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+    G[2] = 200.0 * (x[2] - x[1]^2)
 end
 ```
 Note, that the functions we're using to calculate the gradient (and later the Hessian `h!`) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called `G` (or `H` for the Hessian) in these examples. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the `g!` or `h!` functions. If you prefer to have your gradients simply accept an `x`, you can still use `optimize` by setting the `inplace` keyword to `false`:
@@ -101,10 +101,20 @@ There are two iterations parameters: an outer iterations parameter used to contr
 ```julia
 results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(outer_iterations = 2))
 ```
-In contrast, the following sets the maximum number of iterations for each `ConjugateGradient()` optimization to 2
+In contrast, the following sets the maximum number of iterations for each `GradientDescent()` optimization to 2
 ```julia
 results = optimize(f, g!, lower, upper, initial_x, Fminbox(GradientDescent()), Optim.Options(iterations = 2))
 ```
+### Using second order information
+
+When the Hessian of the objective function is available it is possible to use the primal-dual algorithm implemented in `IPNewton`. The interface
+is similar
+```julia
+results = optimize(f, lower, upper, initial_x, IPNewton())
+results = optimize(f, g!, lower, upper, initial_x, IPNewton())
+results = optimize(f, g!, h!, lower, upper, initial_x, IPNewton())
+```
+
 ## Minimizing a univariate function on a bounded interval
 
 Minimization of univariate functions without derivatives is available through
@@ -142,7 +152,7 @@ If we want to manually specify this method, we use the usual syntax as for multi
     optimize(f, lower, upper, GoldenSection(); kwargs...)
 ```
 
-Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace` and `extended_trace` options, the following options are also available:
+Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace`, `show_warnings`, and `extended_trace` options, the following options are also available:
 
 * `rel_tol`: The relative tolerance used for determining convergence. Defaults to `sqrt(eps(T))`.
 * `abs_tol`: The absolute tolerance used for determining convergence. Defaults to `eps(T)`.
@@ -203,6 +213,12 @@ Defined for multivariate optimization:
 * `f_converged(res)`
 * `g_converged(res)`
 * `initial_state(res)`
+
+Defined for `NelderMead` with the option `trace_simplex=true`:
+
+* `centroid_trace(res)` (with `extended_trace=true`)
+* `simplex_trace(res)`
+* `simplex_values_trace(res)`
 
 ## Input types
 Most users will input `Vector`'s as their `initial_x`'s, and get an `Optim.minimizer(res)` out that is also a vector. For zeroth and first order methods, it is also possible to pass in matrices, or even higher dimensional arrays. The only restriction imposed by leaving the `Vector` case is, that it is no longer possible to use finite difference approximations or automatic differentiation. Second order methods (variants of Newton's method) do not support this more general input type.

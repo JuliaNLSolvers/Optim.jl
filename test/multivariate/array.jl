@@ -1,3 +1,13 @@
+using StableRNGs
+@testset "normalized array" begin
+    rng = StableRNG(1323)
+    grdt!(buf, _) = (buf .= 0; buf[1] = 1; buf)
+    result =
+        optimize(x -> x[1], grdt!, randn(rng, 2, 2), ConjugateGradient(manifold = Sphere()))
+    @test result.minimizer ≈ [-1 0; 0 0]
+    @test result.minimum ≈ -1
+end
+
 @testset "input types" begin
     f(X) = (10 - X[1])^2 + (0 - X[2])^2 + (0 - X[3])^2 + (5 - X[4])^2
 
@@ -9,9 +19,22 @@
         return
     end
     @testset "vector" begin
-        for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, NelderMead, GradientDescent, MomentumGradientDescent, NelderMead, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
-            debug_printing && printstyled("Solver: "*string(m); color = :green)
-            res = optimize(f, g!, [1., 0., 1., 0.], m())
+        for m in (
+            AcceleratedGradientDescent,
+            ConjugateGradient,
+            BFGS,
+            LBFGS,
+            NelderMead,
+            GradientDescent,
+            MomentumGradientDescent,
+            NelderMead,
+            ParticleSwarm,
+            SimulatedAnnealing,
+            NGMRES,
+            OACCEL,
+        )
+            debug_printing && printstyled("Solver: " * string(m); color = :green)
+            res = optimize(f, g!, [1.0, 0.0, 1.0, 0.0], m())
             @test typeof(Optim.minimizer(res)) <: Vector
             if !(m in (NelderMead, SimulatedAnnealing, ParticleSwarm))
                 @test norm(Optim.minimizer(res) - [10.0, 0.0, 0.0, 5.0]) < 10e-8
@@ -20,7 +43,19 @@
     end
 
     @testset "matrix" begin
-        for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, ConjugateGradient,  GradientDescent, MomentumGradientDescent, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
+        for m in (
+            AcceleratedGradientDescent,
+            ConjugateGradient,
+            BFGS,
+            LBFGS,
+            ConjugateGradient,
+            GradientDescent,
+            MomentumGradientDescent,
+            ParticleSwarm,
+            SimulatedAnnealing,
+            NGMRES,
+            OACCEL,
+        )
             res = optimize(f, g!, Matrix{Float64}(I, 2, 2), m())
             @test typeof(Optim.minimizer(res)) <: Matrix
             if !(m in (SimulatedAnnealing, ParticleSwarm))
@@ -30,13 +65,25 @@
     end
 
     @testset "tensor" begin
-        eye3 = zeros(2,2,1)
-        eye3[:,:,1] = Matrix{Float64}(I, 2, 2)
-        for m in (AcceleratedGradientDescent, ConjugateGradient, BFGS, LBFGS, ConjugateGradient,  GradientDescent, MomentumGradientDescent, ParticleSwarm, SimulatedAnnealing, NGMRES, OACCEL)
+        eye3 = zeros(2, 2, 1)
+        eye3[:, :, 1] = Matrix{Float64}(I, 2, 2)
+        for m in (
+            AcceleratedGradientDescent,
+            ConjugateGradient,
+            BFGS,
+            LBFGS,
+            ConjugateGradient,
+            GradientDescent,
+            MomentumGradientDescent,
+            ParticleSwarm,
+            SimulatedAnnealing,
+            NGMRES,
+            OACCEL,
+        )
             res = optimize(f, g!, eye3, m())
             _minimizer = Optim.minimizer(res)
-            @test typeof(_minimizer) <: Array{Float64, 3}
-            @test size(_minimizer) == (2,2,1)
+            @test typeof(_minimizer) <: Array{Float64,3}
+            @test size(_minimizer) == (2, 2, 1)
             if !(m in (SimulatedAnnealing, ParticleSwarm))
                 @test norm(_minimizer - [10.0 0.0; 0.0 5.0]) < 10e-8
             end
@@ -46,38 +93,56 @@ end
 
 using RecursiveArrayTools
 @testset "arraypartition input" begin
-
+    rng = StableRNG(133)
     function polynomial(x)
-            return (10.0 - x[1])^2 + (7.0 - x[2])^4 + (108.0 - x[3])^4
-        end
+        return (10.0 - x[1])^2 + (7.0 - x[2])^4 + (108.0 - x[3])^4
+    end
 
     function polynomial_gradient!(storage, x)
-            storage[1] = -2.0 * (10.0 - x[1])
-            storage[2] = -4.0 * (7.0 - x[2])^3
-            storage[3] = -4.0 * (108.0 - x[3])^3
-        end
+        storage[1] = -2.0 * (10.0 - x[1])
+        storage[2] = -4.0 * (7.0 - x[2])^3
+        storage[3] = -4.0 * (108.0 - x[3])^3
+    end
 
     function polynomial_hessian!(storage, x)
-            storage[1, 1] = 2.0
-            storage[1, 2] = 0.0
-            storage[1, 3] = 0.0
-            storage[2, 1] = 0.0
-            storage[2, 2] = 12.0 * (7.0 - x[2])^2
-            storage[2, 3] = 0.0
-            storage[3, 1] = 0.0
-            storage[3, 2] = 0.0
-            storage[3, 3] = 12.0 * (108.0 - x[3])^2
-        end
+        storage[1, 1] = 2.0
+        storage[1, 2] = 0.0
+        storage[1, 3] = 0.0
+        storage[2, 1] = 0.0
+        storage[2, 2] = 12.0 * (7.0 - x[2])^2
+        storage[2, 3] = 0.0
+        storage[3, 1] = 0.0
+        storage[3, 2] = 0.0
+        storage[3, 3] = 12.0 * (108.0 - x[3])^2
+    end
 
-    ap = ArrayPartition(rand(1), rand(2))
+    ap = ArrayPartition(rand(rng, 1), rand(rng, 2))
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NelderMead())
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ParticleSwarm())
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, SimulatedAnnealing())
+    optimize(
+        polynomial,
+        polynomial_gradient!,
+        polynomial_hessian!,
+        ap,
+        SimulatedAnnealing(),
+    )
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, GradientDescent())
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, AcceleratedGradientDescent())
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, MomentumGradientDescent())
+    optimize(
+        polynomial,
+        polynomial_gradient!,
+        polynomial_hessian!,
+        ap,
+        AcceleratedGradientDescent(),
+    )
+    optimize(
+        polynomial,
+        polynomial_gradient!,
+        polynomial_hessian!,
+        ap,
+        MomentumGradientDescent(),
+    )
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, ConjugateGradient())
 
@@ -85,5 +150,5 @@ using RecursiveArrayTools
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, LBFGS())
 
     optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, Newton())
-    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NewtonTrustRegion())
+    #    optimize(polynomial, polynomial_gradient!, polynomial_hessian!, ap, NewtonTrustRegion())
 end

@@ -31,7 +31,7 @@ This example shows a successful minimization:
 ```julia
 julia> using Optim, OptimTestProblems
 
-julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
+julia> prob = UnconstrainedProblems.examples["Rosenbrock"];
 
 julia> res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(), Optim.Options(iterations=10^6))
 ================================================================================
@@ -70,7 +70,7 @@ rt=0.5, is too rapid:
 ```julia
 julia> using Optim, OptimTestProblems
 
-julia> prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
+julia> prob = UnconstrainedProblems.examples["Rosenbrock"];
 julia> res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(rt=0.5), Optim.Options(iterations=10^6))
 ================================================================================
 SAMIN results
@@ -105,5 +105,8 @@ Results of Optimization Algorithm
 ```
 
 ## References
- - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
- - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
+
+```@bibliography
+goffe1994
+goffe1996
+```

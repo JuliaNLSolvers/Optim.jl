@@ -3,7 +3,7 @@
 #-
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:
-#md #     [`ipnewton_basics.ipynb`](@__NBVIEWER_ROOT_URL__examples/generated/ipnewton_basics.ipynb)
+#md #     [`ipnewton_basics.ipynb`](@__NBVIEWER_ROOT_URL__/examples/generated/ipnewton_basics.ipynb)
 #-
 #
 # The nonlinear constrained optimization interface in
@@ -33,18 +33,18 @@ import NLSolversBase: clear! #hide
 # The objective and its derivatives are given by
 
 
-fun(x) =  (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+fun(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 
 function fun_grad!(g, x)
-g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
-g[2] = 200.0 * (x[2] - x[1]^2)
+    g[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+    g[2] = 200.0 * (x[2] - x[1]^2)
 end
 
 function fun_hess!(h, x)
-h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
-h[1, 2] = -400.0 * x[1]
-h[2, 1] = -400.0 * x[1]
-h[2, 2] = 200.0
+    h[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
+    h[1, 2] = -400.0 * x[1]
+    h[2, 1] = -400.0 * x[1]
+    h[2, 2] = 200.0
 end;
 
 # ## Optimization interface
@@ -59,7 +59,7 @@ end;
 # `TwiceDifferentiableConstraints` from the package `NLSolversBase.jl`.
 
 
-# ## Box minimzation
+# ## Box minimization
 # We want to optimize the Rosenbrock function in the box
 # ``-0.5 \leq x \leq 0.5``, starting from the point ``x_0=(0,0)``.
 # Box constraints are defined using, for example,
@@ -68,7 +68,8 @@ end;
 x0 = [0.0, 0.0]
 df = TwiceDifferentiable(fun, fun_grad!, fun_hess!, x0)
 
-lx = [-0.5, -0.5]; ux = [0.5, 0.5]
+lx = [-0.5, -0.5];
+ux = [0.5, 0.5];
 dfc = TwiceDifferentiableConstraints(lx, ux)
 
 res = optimize(df, dfc, x0, IPNewton())
@@ -76,6 +77,9 @@ res = optimize(df, dfc, x0, IPNewton())
 using Test                 #src
 @test Optim.converged(res)      #src
 @test Optim.minimum(res) ≈ 0.25 #src
+
+# Like the rest of Optim, you can also use `autodiff=:forward` and just pass in
+# `fun`.
 
 # If we only want to set lower bounds, use `ux = fill(Inf, 2)`
 
@@ -93,7 +97,8 @@ res = optimize(df, dfc, x0, IPNewton())
 # `Inf` bounds or empty arrays.
 # **Note that we must pass the correct type information to the empty `lx` and `ux`**
 
-lx = fill(-Inf, 2); ux = fill(Inf, 2)
+lx = fill(-Inf, 2);
+ux = fill(Inf, 2);
 dfc = TwiceDifferentiableConstraints(lx, ux)
 
 clear!(df)
@@ -101,7 +106,8 @@ res = optimize(df, dfc, x0, IPNewton())
 @test Optim.converged(res)                   #src
 @test Optim.minimum(res) < 0.0 + sqrt(eps()) #src
 
-lx = Float64[]; ux = Float64[]
+lx = Float64[];
+ux = Float64[];
 dfc = TwiceDifferentiableConstraints(lx, ux)
 
 clear!(df)
@@ -135,13 +141,13 @@ res = optimize(df, dfc, x0, IPNewton())
 
 con_c!(c, x) = (c[1] = x[1]^2 + x[2]^2; c)
 function con_jacobian!(J, x)
-    J[1,1] = 2*x[1]
-    J[1,2] = 2*x[2]
+    J[1, 1] = 2 * x[1]
+    J[1, 2] = 2 * x[2]
     J
 end
 function con_h!(h, x, λ)
-    h[1,1] += λ[1]*2
-    h[2,2] += λ[1]*2
+    h[1, 1] += λ[1] * 2
+    h[2, 2] += λ[1] * 2
 end;
 
 # **Note that `con_h!` adds the `λ`-weighted Hessian value of each
@@ -151,10 +157,11 @@ end;
 # We can then optimize the Rosenbrock function inside the ball of radius
 # ``0.5``.
 
-lx = Float64[]; ux = Float64[]
-lc = [-Inf]; uc = [0.5^2]
-dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
-                                     lx, ux, lc, uc)
+lx = Float64[];
+ux = Float64[];
+lc = [-Inf];
+uc = [0.5^2];
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
 @test Optim.converged(res)                    #src
 @test Optim.minimum(res) ≈ 0.2966215688829263 #src
@@ -164,13 +171,10 @@ res = optimize(df, dfc, x0, IPNewton())
 # inner and outer radii ``0.1`` and ``0.5`` respectively.
 
 lc = [0.1^2]
-dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!,
-                                     lx, ux, lc, uc)
-@suppress begin                               #src
+dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
 @test Optim.converged(res)                    #src
 @test Optim.minimum(res) ≈ 0.2966215688829255 #src
-end                                           #src
 
 
 # **Note that the algorithm warns that the Initial guess is not an
@@ -188,27 +192,27 @@ end                                           #src
 
 function con2_c!(c, x)
     c[1] = x[1]^2 + x[2]^2     ## First constraint
-    c[2] = x[2]*sin(x[1])-x[1] ## Second constraint
+    c[2] = x[2] * sin(x[1]) - x[1] ## Second constraint
     c
 end
 function con2_jacobian!(J, x)
     ## First constraint
-    J[1,1] = 2*x[1]
-    J[1,2] = 2*x[2]
+    J[1, 1] = 2 * x[1]
+    J[1, 2] = 2 * x[2]
     ## Second constraint
-    J[2,1] = x[2]*cos(x[1])-1.0
-    J[2,2] = sin(x[1])
+    J[2, 1] = x[2] * cos(x[1]) - 1.0
+    J[2, 2] = sin(x[1])
     J
 end
 function con2_h!(h, x, λ)
     ## First constraint
-    h[1,1] += λ[1]*2
-    h[2,2] += λ[1]*2
+    h[1, 1] += λ[1] * 2
+    h[2, 2] += λ[1] * 2
     ## Second constraint
-    h[1,1] += λ[2]*x[2]*-sin(x[1])
-    h[1,2] += λ[2]*cos(x[1])
+    h[1, 1] += λ[2] * x[2] * -sin(x[1])
+    h[1, 2] += λ[2] * cos(x[1])
     ## Symmetrize h
-    h[2,1]  = h[1,2]
+    h[2, 1] = h[1, 2]
     h
 end;
 
@@ -216,13 +220,13 @@ end;
 # initial guess ``x_0 = (0.25,0.25)``.
 
 x0 = [0.25, 0.25]
-lc = [-Inf, 0.0]; uc = [0.5^2, 0.0]
-dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!,
-                                     lx, ux, lc, uc)
+lc = [-Inf, 0.0];
+uc = [0.5^2, 0.0];
+dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
 @test Optim.converged(res)                                       #src
 @test Optim.minimum(res) ≈ 1.0                                   #src
-@test isapprox(Optim.minimizer(res), zeros(2), atol=sqrt(eps())) #src
+@test isapprox(Optim.minimizer(res), zeros(2), atol = sqrt(eps())) #src
 
 #md # ## [Plain Program](@id ipnewton_basics-plain-program)
 #md #

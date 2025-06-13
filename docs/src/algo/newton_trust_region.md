@@ -52,10 +52,12 @@ Finally, we only accept a point if its decrease is appreciable compared to the q
 
 ```julia
 using Optim, OptimTestProblems
-prob = OptimTestProblems.UnconstrainedProblems.examples["Rosenbrock"];
+prob = UnconstrainedProblems.examples["Rosenbrock"];
 res = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion())
 ```
 
 ## References
 
-[1] Nocedal, Jorge, and Stephen Wright. Numerical optimization. Springer Science & Business Media, 2006.
+```@bibliography
+nocedal2006
+```

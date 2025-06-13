@@ -20,7 +20,7 @@ All first-order optimization methods are supported.
 
 The following manifolds are currently supported:
 * Flat: Euclidean space, default. Standard unconstrained optimization.
-* Sphere: spherical constraint `||x|| = 1`
+* Sphere: spherical constraint `||x|| = 1`, where `x` is a real or complex array of any dimension.
 * Stiefel: Stiefel manifold of N by n matrices with orthogonal columns, i.e. `X'*X = I`
 
 The following meta-manifolds construct manifolds out of pre-existing ones:
@@ -29,9 +29,14 @@ The following meta-manifolds construct manifolds out of pre-existing ones:
 
 See `test/multivariate/manifolds.jl` for usage examples.
 
-Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,x)` and `retract!(M::YourManifold,g,x)`. If you implement another manifold or optimization method, please contribute a PR!
+Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,g,x)` and `retract!(M::YourManifold,x)`. If you implement another manifold or optimization method, please contribute a PR!
 
 ## References
 The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
 
 Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008
+
+```@bibliography
+edelman1998
+absil2008
+```

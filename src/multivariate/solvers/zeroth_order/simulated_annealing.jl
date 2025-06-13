@@ -2,15 +2,15 @@ log_temperature(t) = 1 / log(t)
 
 constant_temperature(t) = 1.0
 
-function default_neighbor!(x::AbstractArray{T}, x_proposal::AbstractArray) where T
+function default_neighbor!(x::AbstractArray{T}, x_proposal::AbstractArray) where {T}
     @assert size(x) == size(x_proposal)
-    for i in 1:length(x)
+    for i = 1:length(x)
         @inbounds x_proposal[i] = x[i] + T(randn()) # workaround because all types might not have randn
     end
     return
 end
 
-struct SimulatedAnnealing{Tn, Ttemp} <: ZerothOrderOptimizer
+struct SimulatedAnnealing{Tn,Ttemp} <: ZerothOrderOptimizer
     neighbor!::Tn
     temperature::Ttemp
     keep_best::Bool # not used!?
@@ -21,16 +21,13 @@ end
 ## Constructor
 ```julia
 SimulatedAnnealing(; neighbor = default_neighbor!,
-                     temperature = log_temperature,
-                     keep_best::Bool = true)
+                     temperature = log_temperature)
 ```
 
-The constructor takes 3 keywords:
-* `neighbor = a!(x_proposed, x_current)`, a mutating function of the current `x`,
+The constructor takes two keywords:
+* `neighbor = a!(x_current, x_proposed)`, a mutating function of the current `x`,
 and the proposed `x`
-* `T = b(iteration)`, a function of the current iteration that returns a temperature
-* `p = c(f_proposal, f_current, T)`, a function of the current temperature, current
-function value and proposed function value that returns an acceptance probability
+* `temperature = b(iteration)`, a function of the current iteration that returns a temperature
 
 ## Description
 Simulated Annealing is a derivative free method for optimization. It is based on the
@@ -40,10 +37,11 @@ Bayesian inference. As such, it is a probabilistic method for finding the minimu
 function, often over a quite large domains. For the historical reasons given above, the
 algorithm uses terms such as cooling, temperature, and acceptance probabilities.
 """
-SimulatedAnnealing(;neighbor = default_neighbor!,
-                    temperature = log_temperature,
-                    keep_best::Bool = true) =
-  SimulatedAnnealing(neighbor, temperature, keep_best)
+SimulatedAnnealing(;
+    neighbor = default_neighbor!,
+    temperature = log_temperature,
+    keep_best::Bool = true,
+) = SimulatedAnnealing(neighbor, temperature, keep_best)
 
 Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
 
@@ -59,7 +57,12 @@ end
 pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
 pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
 
-function initial_state(method::SimulatedAnnealing, options, d, initial_x::AbstractArray{T}) where T
+function initial_state(
+    method::SimulatedAnnealing,
+    options,
+    d,
+    initial_x::AbstractArray{T},
+) where {T}
 
     value!!(d, initial_x)
 
@@ -68,7 +71,11 @@ function initial_state(method::SimulatedAnnealing, options, d, initial_x::Abstra
     SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), value(d), value(d))
 end
 
-function update_state!(nd, state::SimulatedAnnealingState{Tx, T}, method::SimulatedAnnealing) where {Tx, T}
+function update_state!(
+    nd,
+    state::SimulatedAnnealingState{Tx,T},
+    method::SimulatedAnnealing,
+) where {Tx,T}
 
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)

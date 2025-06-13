@@ -22,10 +22,11 @@
 ```julia
 SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
         ns::Int = 5     # adjust bounds every ns*dim(x_init) evaluations
+        t0::T = 2.0     # Initial temperature
         rt::T = 0.9     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+        r_expand::T = 10.0 # geometric temperature promotion factor for situation with low coverage: when temp changes, new temp is t=r_expand*t
+        bounds_ratio::T = 0.6 # cut-off for bounds increment (1-bounds_ratio for decrease)
         neps::Int = 5   # number of previous best values the final result is compared to
-        f_tol::T = 1e-12 # the required tolerance level for function value comparisons
-        x_tol::T = 1e-6 # the required tolerance level for x
         coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
         verbosity::Int = 1) # scalar: 0, 1, 2 or 3 (default = 1).
 ```
@@ -38,15 +39,16 @@ algorithm
  - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
  - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
 """
-@with_kw struct SAMIN{T}<:ZerothOrderOptimizer
+@kwdef struct SAMIN{T} <: AbstractConstrainedOptimizer
     nt::Int = 5 # reduce temperature every nt*ns*dim(x_init) evaluations
     ns::Int = 5 # adjust bounds every ns*dim(x_init) evaluations
+    t0::T = 2.0 # Initial temperature
     rt::T = 0.9 # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
+    r_expand::T = 10.0 # geometric temperature promotion factor for situation with low coverage: when temp changes, new temp is t=r_expand*t
+    bounds_ratio::T = 0.6 # cut-off for bounds increment (1-bounds_ratio for decrease)
     neps::Int = 5 # number of previous best values the final result is compared to
-    f_tol::T = 1e-12 # the required tolerance level for function value comparisons
-    x_tol::T = 1e-6 # the required tolerance level for x
     coverage_ok::Bool = false # if false, increase temperature until initial parameter space is covered
-    verbosity::Int = 1 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
+    verbosity::Int = 0 # scalar: 0, 1, 2 or 3 (default = 1: see final results).
 end
 # * verbosity: scalar: 0, 1, 2 or 3 (default = 1).
 #     * 0 = no screen output
@@ -56,27 +58,44 @@ end
 #         covered by the trial values. 1: start decreasing temperature immediately
 Base.summary(::SAMIN) = "SAMIN"
 
-function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray{Tx}, method::SAMIN, options::Options = Options()) where Tx
+function optimize(
+    obj_fn,
+    lb::AbstractArray,
+    ub::AbstractArray,
+    x::AbstractArray{Tx},
+    method::SAMIN,
+    options::Options = Options(),
+) where {Tx}
 
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+    time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
     d = NonDifferentiable(obj_fn, x)
 
-    tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
-    tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+    tracing =
+        options.store_trace ||
+        options.show_trace ||
+        options.extended_trace ||
+        options.callback !== nothing
 
-    @unpack nt, ns, rt, neps, f_tol, x_tol, coverage_ok, verbosity = method
+    (;nt, ns, t0, rt, r_expand, bounds_ratio, neps, coverage_ok, verbosity) = method
     verbose = verbosity > 0
 
+    x_tol, f_tol = options.x_abstol, options.f_abstol
+
     x0 = copy(x)
-    n = size(x,1) # dimension of parameter
+    n = size(x, 1) # dimension of parameter
     #  Set initial values
     nacc = 0 # total accepted trials
-    t = 2.0 # temperature - will initially rise or fall to cover parameter space. Then it will fall
+    t = t0 # temperature - will initially rise or fall to cover parameter space. Then it will fall
     converge = 0 # convergence indicator 0 (failure), 1 (normal success), or 2 (convergence but near bounds)
+    x_converged = false
+    f_converged = false
+    x_absΔ = Inf
+    f_absΔ = Inf
     # most recent values, to compare to when checking convergend
-    fstar = typemax(Float64)*ones(neps)
+    fstar = typemax(Float64) * ones(neps)
     # Initial obj_value
     xopt = copy(x)
     f_old = value!(d, x)
@@ -85,20 +104,25 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
     bounds = ub - lb
     # check for out-of-bounds starting values
     for i = 1:n
-        if(( x[i] > ub[i]) || (x[i] < lb[i]))
-            error("samin: initial parameter %d out of bounds\n", i)
+        if ((x[i] > ub[i]) || (x[i] < lb[i]))
+            error("samin: initial parameter $(i) out of bounds")
         end
     end
-
     options.show_trace && print_header(method)
     iteration = 0
     _time = time()
-    trace!(tr, d, (x=xopt, iteration=iteration), iteration, method, options, _time-t0)
-
+    trace!(
+        tr,
+        d,
+        (x = xopt, iteration = iteration),
+        iteration,
+        method,
+        options,
+        _time - time0,
+    )
     stopped_by_callback = false
-
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
-    while converge==0
+    while converge == 0
         # statistics to report at each temp change, set back to zero
         nup = 0
         nrej = 0
@@ -137,11 +161,11 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                                 xopt = copy(xp)
                                 fopt = f_proposal
                                 d.F = f_proposal
-                                nnew +=1
+                                nnew += 1
                                 details = [details; [f_calls(d) t f_proposal xp']]
                             end
-                        # If the point is higher, use the Metropolis criteria to decide on
-                        # acceptance or rejection.
+                            # If the point is higher, use the Metropolis criteria to decide on
+                            # acceptance or rejection.
                         else
                             p = exp(-(f_proposal - f_old) / t)
                             if rand(Tx) < p
@@ -159,12 +183,22 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
 
                     if tracing
                         # update trace; callbacks can stop routine early by returning true
-                        stopped_by_callback =  trace!(tr, d, (x=xopt,iteration=iteration), iteration, method, options, time()-t0)
+                        stopped_by_callback = trace!(
+                            tr,
+                            d,
+                            (x = xopt, iteration = iteration),
+                            iteration,
+                            method,
+                            options,
+                            time() - time0,
+                        )
                     end
 
                     # If options.iterations exceeded, terminate the algorithm
                     _time = time()
-                    if f_calls(d) >= options.iterations || _time-t0 > options.time_limit || stopped_by_callback
+                    if f_calls(d) >= options.iterations ||
+                       _time - time0 > options.time_limit ||
+                       stopped_by_callback
 
                         if verbose
                             println(hline)
@@ -172,40 +206,39 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                             println("NO CONVERGENCE: MAXEVALS exceeded")
                             @printf("\n     Obj. value:  %16.5f\n\n", fopt)
                             println("       parameter      search width")
-                            for i=1:n
+                            for i = 1:n
                                 @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                             end
                             println(hline)
                         end
                         converge = 0
-
-                        return MultivariateOptimizationResults(method,
-                                                                x0,# initial_x,
-                                                                xopt, #pick_best_x(f_incr_pick, state),
-                                                                fopt, # pick_best_f(f_incr_pick, state, d),
-                                                                f_calls(d), #iteration,
-                                                                f_calls(d) >= options.iterations, #iteration == options.iterations,
-                                                                false, # x_converged,
-                                                                0.0,#T(options.x_tol),
-                                                                0.0,#T(options.x_tol),
-                                                                NaN,# x_abschange(state),
-                                                                NaN,# x_abschange(state),
-                                                                false,# f_converged,
-                                                                0.0,#T(options.f_tol),
-                                                                0.0,#T(options.f_tol),
-                                                                NaN,#f_abschange(d, state),
-                                                                NaN,#f_abschange(d, state),
-                                                                false,#g_converged,
-                                                                0.0,#T(options.g_tol),
-                                                                NaN,#g_residual(d),
-                                                                false, #f_increased,
-                                                                tr,
-                                                                f_calls(d),
-                                                                g_calls(d),
-                                                                h_calls(d),
-                                                                true,
-                                                                options.time_limit,
-                                                                _time-t0,)
+                        termination_code = TerminationCode.NotImplemented
+                        return MultivariateOptimizationResults(
+                            method,
+                            x0,# initial_x,
+                            xopt, #pick_best_x(f_incr_pick, state),
+                            fopt, # pick_best_f(f_incr_pick, state, d),
+                            f_calls(d), #iteration,
+                            x_tol,#T(options.x_tol),
+                            0.0,#T(options.x_tol),
+                            x_absΔ,# x_abschange(state),
+                            NaN,# x_abschange(state),
+                            f_tol,#T(options.f_tol),
+                            0.0,#T(options.f_tol),
+                            f_absΔ,#f_abschange(d, state),
+                            NaN,#f_abschange(d, state),
+                            0.0,#T(options.g_tol),
+                            NaN,#g_residual(d),
+                            tr,
+                            f_calls(d),
+                            g_calls(d),
+                            h_calls(d),
+                            options.time_limit,
+                            _time - time0,
+                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
+                            # not hit ever since stopped_by were not here?
+                            termination_code,
+                        )
                     end
                 end
             end
@@ -214,10 +247,14 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             for i = 1:n
                 if (lb[i] != ub[i])
                     ratio = nacp[i] / ns
-                    if(ratio > 0.6) bounds[i] = bounds[i] * (1.0 + 2.0 * (ratio - 0.6) / 0.4) end
-                    if(ratio < .4) bounds[i] = bounds[i] / (1.0 + 2.0 * ((0.4 - ratio) / 0.4)) end
+                    if (ratio > bounds_ratio)
+                        bounds[i] = bounds[i] * (1.0 + 2.0 * (ratio - 0.6) / 0.4)
+                    end
+                    if (ratio < 1 - bounds_ratio)
+                        bounds[i] = bounds[i] / (1.0 + 2.0 * ((0.4 - ratio) / 0.4))
+                    end
                     # keep within initial bounds
-                    if(bounds[i] > (ub[i] - lb[i]))
+                    if (bounds[i] > (ub[i] - lb[i]))
                         bounds[i] = ub[i] - lb[i]
                         test += 1
                     end
@@ -236,8 +273,8 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
         if verbosity > 1
             println(hline)
             println("samin: intermediate results before next temperature change")
-            println("temperature: ", round(t, digits=5))
-            println("current best function value: ", round(fopt, digits=5))
+            println("temperature: ", round(t, digits = 5))
+            println("current best function value: ", round(fopt, digits = 5))
             println("total evaluations so far: ", f_calls(d))
             println("total moves since last temperature reduction: ", nup + ndown + nrej)
             println("downhill: ", nup)
@@ -247,31 +284,30 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             println("new minima this temperature: ", nnew)
             println()
             println("       parameter      search width")
-            for i=1:n
+            for i = 1:n
                 @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
             end
-            println(hline*"\n")
+            println(hline * "\n")
         end
         # Check for convergence, if we have covered the parameter space
         if coverage_ok
             # last value close enough to last neps values?
             fstar[1] = f_old
-            test = 0
-            for i=1:neps
-                test += (abs(f_old - fstar[i]) > f_tol)
-            end
-            test = (test > 0) # if different from zero, function conv. has failed
-            # last value close enough to overall best?
-            if (((fopt - f_old) <= f_tol) && (!test))
+            f_absΔ = abs.(fopt - f_old) # close enough to best so far?
+            if all((abs.(fopt .- fstar)) .< f_tol) # within to for last neps trials?
+                f_converged = true
                 # check for bound narrow enough for parameter convergence
-                for i = 1:n
-                    if (bounds[i] > x_tol)
-                        converge = 0 # no conv. if bounds too wide
-                        break
-                    else
-                        converge = 1
-                    end
+                if any(bounds .> x_tol)
+                    x_converged = false
+                    converge = 0 # no conv. if bounds too wide
+                    break
+                else
+                    converge = 1
+                    x_converged = true
+                    x_absΔ = maximum(bounds)
                 end
+            else
+                f_converged = false
             end
             # check if optimal point is near boundary of parameter space, and change message if so
             if (converge == 1) && (lnobds > 0)
@@ -286,31 +322,37 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
                         println("==> Normal convergence <==")
                     end
                     if (converge == 2)
-                        printstyled("==> WARNING <==\n", color=:red)
+                        printstyled("==> WARNING <==\n", color = :red)
                         println("Last point satisfies convergence criteria, but is near")
                         println("boundary of parameter space.")
-                        println(lnobds, " out of  ", (nup+ndown+nrej), " evaluations were out of bounds in the last round.")
-                        println("Expand bounds and re-run, unless this is a constrained minimization.")
+                        println(
+                            lnobds,
+                            " out of  ",
+                            (nup + ndown + nrej),
+                            " evaluations were out of bounds in the last round.",
+                        )
+                        println(
+                            "Expand bounds and re-run, unless this is a constrained minimization.",
+                        )
                     end
                     println("total number of objective function evaluations: ", f_calls(d))
                     @printf("\n     Obj. value:  %16.10f\n\n", fopt)
                     println("       parameter      search width")
-                    for i=1:n
+                    for i = 1:n
                         @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
                     end
-                    println(hline*"\n")
+                    println(hline * "\n")
                 end
             end
             # Reduce temperature, record current function value in the
             # list of last "neps" values, and loop again
             t *= rt
-            for i = neps:-1:2
-                fstar[i] = fstar[i-1]
-            end
+            pushfirst!(fstar, f_old)
+            fstar = fstar[1:end-1]
             f_old = copy(fopt)
             x = copy(xopt)
         else  # coverage not ok - increase temperature quickly to expand search area
-            t *= 10.0
+            t *= r_expand
             for i = neps:-1:2
                 fstar[i] = fstar[i-1]
             end
@@ -318,34 +360,6 @@ function optimize(obj_fn, lb::AbstractArray, ub::AbstractArray, x::AbstractArray
             x = xopt
         end
     end
-    return MultivariateOptimizationResults(method,
-                                            x0,# initial_x,
-                                            xopt, #pick_best_x(f_incr_pick, state),
-                                            fopt, # pick_best_f(f_incr_pick, state, d),
-                                            f_calls(d), #iteration,
-                                            f_calls(d) >= options.iterations, #iteration == options.iterations,
-                                            false, # x_converged,
-                                            0.0,#T(options.x_tol),
-                                            0.0,#T(options.x_tol),
-                                            NaN,# x_abschange(state),
-                                            NaN,# x_abschange(state),
-                                            false,# f_converged,
-                                            0.0,#T(options.f_tol),
-                                            0.0,#T(options.f_tol),
-                                            NaN,#f_abschange(d, state),
-                                            NaN,#f_abschange(d, state),
-                                            false,#g_converged,
-                                            0.0,#T(options.g_tol),
-                                            NaN,#g_residual(d),
-                                            false, #f_increased,
-                                            tr,
-                                            f_calls(d),
-                                            g_calls(d),
-                                            h_calls(d),
-                                            true,
-                                            options.time_limit,
-                                            _time-t0,)
-
 end
 
 # TODO
