@@ -269,7 +269,7 @@ function optimizing(
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimizing(
+function optimize(
     f,
     c::AbstractConstraints,
     initial_x::AbstractArray,
