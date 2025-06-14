@@ -159,7 +159,7 @@ promote_objtype(
 ) = td
 
 # if no method or options are present
-function optimize(
+function optimizing(
     f,
     initial_x::AbstractArray;
     inplace = true,
@@ -173,9 +173,9 @@ function optimize(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     initial_x::AbstractArray;
@@ -190,9 +190,9 @@ function optimize(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -208,23 +208,15 @@ function optimize(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
 
 # no method supplied with objective
-function optimizing(d::T, initial_x::AbstractArray, options::Options) where T<:AbstractObjective
+function optimizing(d::AbstractObjective, initial_x::AbstractArray, options::Options)
     optimizing(d, initial_x, fallback_method(d), options)
 end
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
-function optimize(
-    d::T,
-    initial_x::AbstractArray,
-    options::Options,
-) where {T<:AbstractObjective}
-    optimize(d, initial_x, fallback_method(d), options)
-end
-# no method supplied with inplace and autodiff keywords becauase objective is not supplied
-function optimize(
+function optimizing(
     f,
     initial_x::AbstractArray,
     options::Options;
@@ -233,9 +225,9 @@ function optimize(
 )
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     initial_x::AbstractArray,
@@ -246,9 +238,9 @@ function optimize(
 
     method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -261,11 +253,11 @@ function optimize(
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
 
 # potentially everything is supplied (besides caches)
-function optimize(
+function optimizing(
     f,
     initial_x::AbstractArray,
     method::AbstractOptimizer,
@@ -274,11 +266,10 @@ function optimize(
     autodiff = :finite,
 )
 
-
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     c::AbstractConstraints,
     initial_x::AbstractArray,
@@ -291,7 +282,7 @@ function optimize(
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, c, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     initial_x::AbstractArray,
@@ -303,9 +294,9 @@ function optimize(
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -318,10 +309,10 @@ function optimize(
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
 
-function optimize(
+function optimizing(
     d::D,
     initial_x::AbstractArray,
     method::SecondOrderOptimizer,
@@ -331,7 +322,7 @@ function optimize(
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
 
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
-    optimizing(d, initial_x, method, options)
+    opt_iter = optimizing(d, initial_x, method, options)
 end
 
 function optimize(args...; kwargs...)

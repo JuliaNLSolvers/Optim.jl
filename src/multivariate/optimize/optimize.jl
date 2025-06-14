@@ -49,7 +49,6 @@ struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
     # Put `OptimIterator` in iterator state so that `OptimizationResults` can
     # be constructed from `IteratorState`.
     iter::IT
-
     t0::Float64
     _time::Float64
     tr::TR
@@ -80,7 +79,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
         x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-        g_converged = initial_convergence(d, state, method, initial_x, options)
+        g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
         converged = g_converged
 
         # prepare iteration counter (used to make "initial state" trace entry)
@@ -94,7 +93,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         # Note: `optimize` depends on that first iteration always yields something
         # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
     else
-        iter,
+        (;iter,
          t0,
          _time,
          tr,
@@ -112,7 +111,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
          g_converged,
          converged,
          iteration,
-         ls_success = istate
+         ls_success) = istate
 
         !converged && !stopped && iteration < options.iterations || return nothing
 
@@ -182,12 +181,11 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         iteration,
         ls_success,
     )
-
     return new_istate, new_istate
 end
 
 function OptimizationResults(istate::IteratorState)
-    iter,
+    (;iter,
           t0,
           _time,
           tr,
@@ -205,7 +203,7 @@ function OptimizationResults(istate::IteratorState)
           g_converged,
           converged,
           iteration,
-          ls_success = istate
+          ls_success) = istate
     (;d, initial_x, method, options, state) = iter
 
         if method isa NewtonTrustRegion
@@ -216,21 +214,17 @@ function OptimizationResults(istate::IteratorState)
                 stopped = true
             end
         end
-
         if g_calls(d) > 0 && !all(isfinite, gradient(d))
             options.show_warnings && @warn "Terminated early due to NaN in gradient."
-            break
         end
         if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
             options.show_warnings && @warn "Terminated early due to NaN in Hessian."
-            break
         end
-    end # while
 
     after_while!(d, state, method, options)
 
     Tf = typeof(value(d))
-
+    Tx = typeof(state.x)
     f_incr_pick = f_increased && !options.allow_f_increases
     stopped_by = (x_converged, f_converged, g_converged,
         f_limit_reached = f_limit_reached,
@@ -333,7 +327,7 @@ function optimizing(d::D, initial_x::Tx, method::M,
     return OptimIterator(d, initial_x, method, options, state)
 end
 
-AbstractOptimizer(istate::IteratorState) = istate.iter.method
+_method(istate::IteratorState) = istate.iter.method
 
 # we can just check minimum, as we've earlier enforced same types/eltypes
 # in variables besides the option settings
