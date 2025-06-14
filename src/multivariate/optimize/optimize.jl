@@ -45,7 +45,7 @@ Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
 Base.eltype(::Type{<:OptimIterator}) = IteratorState
 
-@with_kw struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
+struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
     # Put `OptimIterator` in iterator state so that `OptimizationResults` can
     # be constructed from `IteratorState`.
     iter::IT
@@ -94,7 +94,25 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         # Note: `optimize` depends on that first iteration always yields something
         # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
     else
-        @unpack_IteratorState istate
+        iter,
+         t0,
+         _time,
+         tr,
+         tracing,
+         stopped,
+         stopped_by_callback,
+         stopped_by_time_limit,
+         f_limit_reached,
+         g_limit_reached,
+         h_limit_reached,
+         x_converged,
+         f_converged,
+         f_increased,
+         counter_f_tol,
+         g_converged,
+         converged,
+         iteration,
+         ls_success = istate
 
         !converged && !stopped && iteration < options.iterations || return nothing
 
