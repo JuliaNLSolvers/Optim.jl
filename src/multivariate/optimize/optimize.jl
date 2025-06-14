@@ -71,7 +71,7 @@ struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
 end
 
 function Base.iterate(iter::OptimIterator, istate = nothing)
-    @unpack d, initial_x, method, options, state = iter
+    (;d, initial_x, method, options, state) = iter
     if istate === nothing
         t0 = time() # Initial time stamp used to control early stopping by options.time_limit
         tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
@@ -187,8 +187,26 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
 end
 
 function OptimizationResults(istate::IteratorState)
-    @unpack_IteratorState istate
-    @unpack d, initial_x, method, options, state = iter
+    iter,
+          t0,
+          _time,
+          tr,
+          tracing,
+          stopped,
+          stopped_by_callback,
+          stopped_by_time_limit,
+          f_limit_reached,
+          g_limit_reached,
+          h_limit_reached,
+          x_converged,
+          f_converged,
+          f_increased,
+          counter_f_tol,
+          g_converged,
+          converged,
+          iteration,
+          ls_success = istate
+    (;d, initial_x, method, options, state) = iter
 
         if method isa NewtonTrustRegion
             # If the trust region radius keeps on reducing we need to stop
@@ -321,15 +339,15 @@ AbstractOptimizer(istate::IteratorState) = istate.iter.method
 # in variables besides the option settings
 
 function minimizer(istate::IteratorState)
-    @unpack iter, f_increased = istate
-    @unpack options, state = iter
+    (;iter, f_increased) = istate
+    (;options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_x(f_incr_pick, state)
 end
 
 function minimum(istate::IteratorState)
-    @unpack iter, f_increased = istate
-    @unpack d, options, state = iter
+    (;iter, f_increased) = istate
+    (;d, options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_f(f_incr_pick, state, d)
 end
