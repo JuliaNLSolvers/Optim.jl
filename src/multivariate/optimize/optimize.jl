@@ -117,10 +117,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
 
         iteration += 1
         ls_success = !update_state!(d, state, method)
-        if !ls_success
-            # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
-            return nothing
-        end
+
         if !(method isa NewtonTrustRegion)
             update_g!(d, state, method) # TODO: Should this be `update_fg!`?
         end
@@ -206,20 +203,20 @@ function OptimizationResults(istate::IteratorState)
           ls_success) = istate
     (;d, initial_x, method, options, state) = iter
 
-        if method isa NewtonTrustRegion
-            # If the trust region radius keeps on reducing we need to stop
-            # because something is wrong. Wrong gradients or a non-differentiability
-            # at the solution could be explanations.
-            if state.delta ≤ method.delta_min
-                stopped = true
-            end
+    if method isa NewtonTrustRegion
+        # If the trust region radius keeps on reducing we need to stop
+        # because something is wrong. Wrong gradients or a non-differentiability
+        # at the solution could be explanations.
+        if state.delta ≤ method.delta_min
+            stopped = true
         end
-        if g_calls(d) > 0 && !all(isfinite, gradient(d))
-            options.show_warnings && @warn "Terminated early due to NaN in gradient."
-        end
-        if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
-            options.show_warnings && @warn "Terminated early due to NaN in Hessian."
-        end
+    end
+    if g_calls(d) > 0 && !all(isfinite, gradient(d))
+        options.show_warnings && @warn "Terminated early due to NaN in gradient."
+    end
+    if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+        options.show_warnings && @warn "Terminated early due to NaN in Hessian."
+    end
 
     after_while!(d, state, method, options)
 
@@ -275,11 +272,12 @@ function OptimizationResults(istate::IteratorState)
 end
 
 function _termination_code(d, gres, state, stopped_by, options)
-
     if state isa NelderMeadState && gres <= options.g_abstol
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
         TerminationCode.GradientNorm
+    elseif stopped_by.ls_failed
+        TerminationCode.FailedLinesearch
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) ||
            (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol)
         TerminationCode.NoXChange
@@ -291,8 +289,6 @@ function _termination_code(d, gres, state, stopped_by, options)
     elseif f_abschange(d, state) <= options.f_abstol ||
            f_relchange(d, state) <= options.f_reltol
         TerminationCode.SmallObjectiveChange
-    elseif stopped_by.ls_failed
-        TerminationCode.FailedLinesearch
     elseif stopped_by.callback
         TerminationCode.Callback
     elseif stopped_by.iterations
