@@ -1,4 +1,7 @@
-Base.summary(r::OptimizationResults) = summary(r.method) # might want to do more here than just return summary of the method used
+_method(r::OptimizationResults) = r.method
+
+Base.summary(r::Union{OptimizationResults, IteratorState, OptimIterator}) =
+    summary(_method(r)) # might want to do more here than just return summary of the method used
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
 iterations(r::OptimizationResults) = r.iterations
@@ -35,9 +38,9 @@ end
 x_upper_trace(r::MultivariateOptimizationResults) =
     error("x_upper_trace is not implemented for $(summary(r)).")
 
-function x_trace(r::MultivariateOptimizationResults)
+function x_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     tr = trace(r)
-    if isa(r.method, NelderMead)
+    if isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "Nelder Mead does not operate with a single x. Please use either centroid_trace(...) or simplex_trace(...) to extract the relevant points from the trace.",
@@ -45,14 +48,14 @@ function x_trace(r::MultivariateOptimizationResults)
         )
     end
     !haskey(tr[1].metadata, "x") && error(
-        "Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true",
+        "Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true and make sure x is stored in the trace for the method of choice.",
     )
     [state.metadata["x"] for state in tr]
 end
 
-function centroid_trace(r::MultivariateOptimizationResults)
+function centroid_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There is no centroid involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace.",
@@ -64,9 +67,9 @@ function centroid_trace(r::MultivariateOptimizationResults)
     )
     [state.metadata["centroid"] for state in tr]
 end
-function simplex_trace(r::MultivariateOptimizationResults)
+function simplex_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There is no simplex involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace.",
@@ -78,9 +81,9 @@ function simplex_trace(r::MultivariateOptimizationResults)
     )
     [state.metadata["simplex"] for state in tr]
 end
-function simplex_value_trace(r::MultivariateOptimizationResults)
+function simplex_value_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There are no simplex values involved in optimization using $(r.method). Please use f_trace(...) to grab the objective values from the trace.",
@@ -94,10 +97,10 @@ function simplex_value_trace(r::MultivariateOptimizationResults)
 end
 
 
-f_trace(r::OptimizationResults) = [state.value for state in trace(r)]
+f_trace(r::Union{OptimizationResults, IteratorState}) = [state.value for state in trace(r)]
 g_norm_trace(r::OptimizationResults) =
     error("g_norm_trace is not implemented for $(summary(r)).")
-g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
+g_norm_trace(r::Union{MultivariateOptimizationResults, IteratorState}) = [state.g_norm for state in trace(r)]
 
 f_calls(r::OptimizationResults) = r.f_calls
 f_calls(d) = first(d.f_calls)
@@ -114,7 +117,7 @@ h_calls(d) = first(d.h_calls)
 h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
-function converged(r::MultivariateOptimizationResults)
+function converged(r::Union{MultivariateOptimizationResults, OptimIterator})
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
     f_isfinite = if r.stopped_by.iterations > 0
