@@ -33,7 +33,13 @@ end
 function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
     false, false
 end
-struct OptimIterator{D <: AbstractObjective, M <: AbstractOptimizer, Tx <: AbstractArray, O <: Options, S}
+struct OptimIterator{
+    D<:AbstractObjective,
+    M<:AbstractOptimizer,
+    Tx<:AbstractArray,
+    O<:Options,
+    S,
+}
     d::D
     initial_x::Tx
     method::M
@@ -45,7 +51,7 @@ Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
 Base.eltype(::Type{<:OptimIterator}) = IteratorState
 
-struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
+struct IteratorState{IT<:OptimIterator,TR<:OptimizationTrace}
     # Put `OptimIterator` in iterator state so that `OptimizationResults` can
     # be constructed from `IteratorState`.
     iter::IT
@@ -70,11 +76,15 @@ struct IteratorState{IT <: OptimIterator, TR <: OptimizationTrace}
 end
 
 function Base.iterate(iter::OptimIterator, istate = nothing)
-    (;d, initial_x, method, options, state) = iter
+    (; d, initial_x, method, options, state) = iter
     if istate === nothing
         t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-        tr = OptimizationTrace{typeof(value(d)), typeof(method)}()
-        tracing = options.store_trace || options.show_trace || options.extended_trace || options.callback != nothing
+        tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+        tracing =
+            options.store_trace ||
+            options.show_trace ||
+            options.extended_trace ||
+            options.callback != nothing
         stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
         f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
         x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
@@ -87,31 +97,33 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
 
         options.show_trace && print_header(method)
         _time = time()
-        trace!(tr, d, state, iteration, method, options, _time-t0)
+        trace!(tr, d, state, iteration, method, options, _time - t0)
         ls_success::Bool = true
 
         # Note: `optimize` depends on that first iteration always yields something
         # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
     else
-        (;iter,
-         t0,
-         _time,
-         tr,
-         tracing,
-         stopped,
-         stopped_by_callback,
-         stopped_by_time_limit,
-         f_limit_reached,
-         g_limit_reached,
-         h_limit_reached,
-         x_converged,
-         f_converged,
-         f_increased,
-         counter_f_tol,
-         g_converged,
-         converged,
-         iteration,
-         ls_success) = istate
+        (;
+            iter,
+            t0,
+            _time,
+            tr,
+            tracing,
+            stopped,
+            stopped_by_callback,
+            stopped_by_time_limit,
+            f_limit_reached,
+            g_limit_reached,
+            h_limit_reached,
+            x_converged,
+            f_converged,
+            f_increased,
+            counter_f_tol,
+            g_converged,
+            converged,
+            iteration,
+            ls_success,
+        ) = istate
 
         !converged && !stopped && iteration < options.iterations || return nothing
 
@@ -147,6 +159,14 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         h_limit_reached =
             options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
 
+        if method isa NewtonTrustRegion
+            # If the trust region radius keeps on reducing we need to stop
+            # because something is wrong. Wrong gradients or a non-differentiability
+            # at the solution could be explanations.
+            if state.delta ≤ method.delta_min
+                stopped = true
+            end
+        end
         if (f_increased && !options.allow_f_increases) ||
            stopped_by_callback ||
            stopped_by_time_limit ||
@@ -182,35 +202,29 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
 end
 
 function OptimizationResults(istate::IteratorState)
-    (;iter,
-          t0,
-          _time,
-          tr,
-          tracing,
-          stopped,
-          stopped_by_callback,
-          stopped_by_time_limit,
-          f_limit_reached,
-          g_limit_reached,
-          h_limit_reached,
-          x_converged,
-          f_converged,
-          f_increased,
-          counter_f_tol,
-          g_converged,
-          converged,
-          iteration,
-          ls_success) = istate
-    (;d, initial_x, method, options, state) = iter
+    (;
+        iter,
+        t0,
+        _time,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+    ) = istate
+    (; d, initial_x, method, options, state) = iter
 
-    if method isa NewtonTrustRegion
-        # If the trust region radius keeps on reducing we need to stop
-        # because something is wrong. Wrong gradients or a non-differentiability
-        # at the solution could be explanations.
-        if state.delta ≤ method.delta_min
-            stopped = true
-        end
-    end
     if g_calls(d) > 0 && !all(isfinite, gradient(d))
         options.show_warnings && @warn "Terminated early due to NaN in gradient."
     end
@@ -223,7 +237,10 @@ function OptimizationResults(istate::IteratorState)
     Tf = typeof(value(d))
     Tx = typeof(state.x)
     f_incr_pick = f_increased && !options.allow_f_increases
-    stopped_by = (x_converged, f_converged, g_converged,
+    stopped_by = (
+        x_converged,
+        f_converged,
+        g_converged,
         f_limit_reached = f_limit_reached,
         g_limit_reached = g_limit_reached,
         h_limit_reached = h_limit_reached,
@@ -314,11 +331,17 @@ function _termination_code(d, gres, state, stopped_by, options)
     end
 end
 
-function optimizing(d::D, initial_x::Tx, method::M,
-                    options::Options = Options(;default_options(method)...),
-                    state = initial_state(method, options, d, initial_x)) where {D<:AbstractObjective, M<:AbstractOptimizer, Tx <: AbstractArray}
+function optimizing(
+    d::D,
+    initial_x::Tx,
+    method::M,
+    options::Options = Options(; default_options(method)...),
+    state = initial_state(method, options, d, initial_x),
+) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray}
     if length(initial_x) == 1 && typeof(method) <: NelderMead
-        error("You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.")
+        error(
+            "You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.",
+        )
     end
     return OptimIterator(d, initial_x, method, options, state)
 end
@@ -329,21 +352,22 @@ _method(istate::IteratorState) = istate.iter.method
 # in variables besides the option settings
 
 function minimizer(istate::IteratorState)
-    (;iter, f_increased) = istate
-    (;options, state) = iter
+    (; iter, f_increased) = istate
+    (; options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_x(f_incr_pick, state)
 end
 
 function minimum(istate::IteratorState)
-    (;iter, f_increased) = istate
-    (;d, options, state) = iter
+    (; iter, f_increased) = istate
+    (; d, options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_f(f_incr_pick, state, d)
 end
 
 iterations(istate::IteratorState) = istate.iteration
-iteration_limit_reached(istate::IteratorState) = istate.iteration == istate.iter.options.iterations
+iteration_limit_reached(istate::IteratorState) =
+    istate.iteration == istate.iter.options.iterations
 trace(istate::IteratorState) = istate.tr
 
 converged(istate::IteratorState) = istate.converged

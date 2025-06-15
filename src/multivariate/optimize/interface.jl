@@ -173,7 +173,7 @@ function optimizing(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimizing(
     f,
@@ -190,7 +190,7 @@ function optimizing(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimizing(
     f,
@@ -208,7 +208,7 @@ function optimizing(
     add_default_opts!(checked_kwargs, method)
 
     options = Options(; checked_kwargs...)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 
 # no method supplied with objective
@@ -225,7 +225,7 @@ function optimizing(
 )
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimizing(
     f,
@@ -238,7 +238,7 @@ function optimizing(
 
     method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimizing(
     f,
@@ -253,7 +253,7 @@ function optimizing(
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 
 # potentially everything is supplied (besides caches)
@@ -267,7 +267,7 @@ function optimizing(
 )
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimize(
     f,
@@ -294,7 +294,7 @@ function optimizing(
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 function optimizing(
     f,
@@ -309,7 +309,7 @@ function optimizing(
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 
 function optimizing(
@@ -322,7 +322,7 @@ function optimizing(
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
 
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
-    opt_iter = optimizing(d, initial_x, method, options)
+    optimizing(d, initial_x, method, options)
 end
 
 function optimize(args...; kwargs...)
