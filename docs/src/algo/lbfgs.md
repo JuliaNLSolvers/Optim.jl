@@ -1,6 +1,10 @@
 # (L-)BFGS
-This page contains information about BFGS and its limited memory version L-BFGS.
+
+This page contains information about
+Broyden–Fletcher–Goldfarb–Shanno ([BFGS](https://en.wikipedia.org/wiki/Broyden–Fletcher–Goldfarb–Shanno_algorithm)) algorithm and its limited memory version [L-BFGS](https://en.wikipedia.org/wiki/Limited-memory_BFGS).
+
 ## Constructors
+
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
@@ -26,39 +30,54 @@ LBFGS(; m = 10,
         manifold = Flat(),
         scaleinvH0::Bool = P === nothing)
 ```
+
 ## Description
-This means that it takes steps according to
+
+In both algorithms the aim is to compute a descent direction ``d_ n``
+by approximately solving the Newton equation
 
 ```math
-x_{n+1} = x_n - P^{-1}\nabla f(x_n)
+H_n d_n = - ∇f(x_n),
 ```
 
-where ``P`` is a positive definite matrix. If ``P`` is the Hessian, we get Newton's method.
-In (L-)BFGS, the matrix is an approximation to the Hessian built using differences
-in the gradient across iterations. As long as the initial matrix is positive definite
- it is possible to show that all the follow matrices will be as well. The starting
-matrix could simply be the identity matrix, such that the first step is identical
-to the Gradient Descent algorithm, or even the actual Hessian.
+where ``H_n`` is an approximation to the Hessian of ``f``. Instead of approximating
+the Hessian, both BFGS as well as L-BFGS approximate the inverse ``B_n = H_n^{-1}`` of the Hessian,
+since that yields a matrix multiplication instead of requiring that we solve the linear system of
+equations above.
 
-There are two versions of BFGS in the package: BFGS, and L-BFGS. The latter is different
-from the former because it doesn't use a complete history of the iterative procedure to
-construct ``P``, but rather only the latest ``m`` steps. It doesn't actually build the Hessian
-approximation matrix either, but computes the direction directly. This makes more suitable for
-large scale problems, as the memory requirement to store the relevant vectors will
-grow quickly in large problems.
-
-As with the other quasi-Newton solvers in this package, a scalar ``\alpha`` is introduced
-as follows
+Then
 
 ```math
-x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
+x_{n+1} = x_n - \alpha_n d_n,
 ```
 
-and is chosen by a linesearch algorithm such that each step gives sufficient descent.
+where ``α_n`` is the step size resulting from the specified `linesearch`.
 
-## Example
+In (L-)BFGS, the matrix is an approximation to the inverse of the Hessian built using differences of the gradients and iterates during the iterations.
+As long as the initial matrix is positive definite it is possible to show that all the follow matrices will be as well.
+
+For BFGS, the starting matrix could simply be the identity matrix, such that the first step is identical
+to the Gradient Descent algorithm, or even the actual inverse of the initial Hessian.
+While BFGS stores the full matrix ``B_n`` and performs an update of that approximate Hessian in every step.
+
+L-BFGS on the other hand only stores ``m`` differences of gradients and iterates
+instead of a full matrix. This is more memory-efficient especially for large-scale problems.
+
+For L-BFGS, the inverse of the Hessian can be preconditioned in two ways.
+
+You can either set `scaleinvH0` to `true`, then the `m` steps of approximating
+the inverse of the Hessian start from a scaled version of the identity.
+If it is set to `false`, the approximation starts from the identity matrix.
+
+Alternatively, you can provide a positive definite preconditioning matrix `P`; the approximation then starts from ``P^{-1}``.
+The preconditioner can be changed during the iterations by providing the `precondprep` keyword which, based on `P` and the current iterate `x`, updates
+the preconditioner matrix accordingly.
+
 ## References
 
 ```@bibliography
+Pages = []
+Canonical = false
+
 nocedal2006
 ```
