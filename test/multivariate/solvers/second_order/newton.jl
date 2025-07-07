@@ -1,4 +1,5 @@
 @testset "Newton" begin
+
     function f_1(x::Vector)
         (x[1] - 5.0)^4
     end
@@ -10,6 +11,7 @@
     function h!_1(storage::Matrix, x::Vector)
         storage[1, 1] = 12.0 * (x[1] - 5.0)^2
     end
+
     initial_x = [0.0]
 
     Optim.optimize(NonDifferentiable(f_1, initial_x), [0.0], Newton())
@@ -20,7 +22,7 @@
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
-
+    
     eta = 0.9
 
     function f_2(x::Vector)
@@ -44,7 +46,7 @@
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
     @test summary(results) == "Newton's Method"
-
+    
     @testset "newton in concave region" begin
         prob = MultivariateProblems.UnconstrainedProblems.examples["Himmelblau"]
         res = optimize(
@@ -56,8 +58,39 @@
         )
         @test norm(Optim.minimizer(res) - prob.solutions) < 1e-9
     end
-
+    
     @testset "Optim problems" begin
         run_optim_tests(Newton(); skip = ("Trigonometric",), show_name = debug_printing)
+    end
+    
+    @testset "Custom Solver" begin
+        # Custom solver using LU decomposition
+        custom_solve(H, g) = -(lu(H) \ g)
+        
+        result = optimize(f_2, g!_2, h!_2, [10.0, 20.0], Newton(solve=custom_solve))
+        @test Optim.g_converged(result)
+        @test norm(Optim.minimizer(result) - [0.0, 0.0]) < 0.01
+        
+        # Custom solver using QR decomposition
+        qr_solve(H, g) = -(qr(H) \ g)
+        result2 = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=qr_solve))
+        @test Optim.g_converged(result2)
+        @test norm(Optim.minimizer(result2) - [0.0, 0.0]) < 0.01
+    end
+    
+    @testset "Hessian Types" begin
+        using SparseArrays
+        
+        # Test sparse solver
+        sparse_solve(H, g) = -(sparse(H) \ g)
+        result_sparse = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=sparse_solve))
+        @test Optim.g_converged(result_sparse)
+        @test norm(Optim.minimizer(result_sparse) - [0.0, 0.0]) < 0.01
+        
+        # Test default solver handles both dense and sparse correctly
+        using LinearAlgebra
+        result_default = optimize(f_2, g!_2, h!_2, [3.0, 4.0], Newton())
+        @test Optim.g_converged(result_default)
+        @test norm(Optim.minimizer(result_default) - [0.0, 0.0]) < 0.01
     end
 end
