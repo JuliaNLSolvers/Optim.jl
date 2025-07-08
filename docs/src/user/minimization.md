@@ -242,10 +242,11 @@ function.  Using this interface, `optimize(args...; kwargs...)` is equivalent to
 
 ```jl
 let istate
-    for istate′ in Optim.optimizing(args...; kwargs...)
+    iter = Optim.optimizing(args...; kwargs...)
+    for istate′ in iter
         istate = istate′
     end
-    Optim.OptimizationResults(istate)
+    Optim.OptimizationResults(iter, istate)
 end
 ```
 

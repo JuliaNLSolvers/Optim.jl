@@ -29,7 +29,6 @@ function initial_convergence(d, state, method::AbstractOptimizer, initial_x, opt
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
     g_residual(d, state) <= options.g_abstol, stopped
 end
-
 function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
     false, false
 end
@@ -51,10 +50,7 @@ Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
 Base.eltype(::Type{<:OptimIterator}) = IteratorState
 
-struct IteratorState{IT<:OptimIterator,TR<:OptimizationTrace}
-    # Put `OptimIterator` in iterator state so that `OptimizationResults` can
-    # be constructed from `IteratorState`.
-    iter::IT
+struct IteratorState{TR<:OptimizationTrace}
     t0::Float64
     _time::Float64
     tr::TR
@@ -201,9 +197,8 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
     return new_istate, new_istate
 end
 
-function OptimizationResults(istate::IteratorState)
+function OptimizationResults(iter::OptimIterator, istate::IteratorState)
     (;
-        iter,
         t0,
         _time,
         tr,

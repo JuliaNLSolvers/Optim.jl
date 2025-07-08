@@ -327,10 +327,11 @@ end
 
 function optimize(args...; kwargs...)
     local istate
-    for istate′ in optimizing(args...; kwargs...)
+    iter = optimizing(args...; kwargs...)
+    for istate′ in iter
         istate = istate′
     end
     # We can safely assume that `istate` is defined at this point.  That is to say,
     # `OptimIterator` guarantees that `iterate(::OptimIterator) !== nothing`.
-    return OptimizationResults(istate)
+    return OptimizationResults(iter, istate)
 end
