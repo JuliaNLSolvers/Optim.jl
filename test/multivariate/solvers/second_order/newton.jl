@@ -63,7 +63,7 @@
         run_optim_tests(Newton(); skip = ("Trigonometric",), show_name = debug_printing)
     end
     
-    @testset "Custom Solver" begin
+    @testset "Custom Solvers" begin
         # Custom solver using LU decomposition
         custom_solve(H, g) = -(lu(H) \ g)
         
@@ -82,6 +82,13 @@
         result3 = optimize(f_2, g!_2, h!_2, [3.0, 4.0], Newton(solve=simple_solve))
         @test Optim.g_converged(result3)
         @test norm(Optim.minimizer(result3) - [0.0, 0.0]) < 0.01
+
+        # Solver with specialized matrx types--can add more late i.e., BlockBanded, Block, etc. for right now, only testing StaticArrays
+        using StaticArrays
+        static_solve(H, g) = -(SMatrix{2, 2}(H) \ SVector{2}(g))
+        result_static = optimize(f_2, g!_2, h!_2, [6.0, 7.0], Newton(solve=static_solve))
+        @test Optim.g_converged(result_static)
+        @test norm(Optim.minimizer(result_static) - [0.0, 0.0]) < 0.01
     end
     
     @testset "Hessian Types" begin
