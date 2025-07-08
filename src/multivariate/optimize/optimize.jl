@@ -174,7 +174,6 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
     end
 
     new_istate = IteratorState(
-        iter,
         t0,
         _time,
         tr,
