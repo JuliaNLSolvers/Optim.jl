@@ -100,7 +100,6 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
     else
         (;
-            iter,
             t0,
             _time,
             tr,
