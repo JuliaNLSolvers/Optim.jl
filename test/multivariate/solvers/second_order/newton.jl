@@ -76,6 +76,12 @@
         result2 = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=qr_solve))
         @test Optim.g_converged(result2)
         @test norm(Optim.minimizer(result2) - [0.0, 0.0]) < 0.01
+
+        # Simple solver
+        simple_solve(H, g) = -(H \ g)
+        result3 = optimize(f_2, g!_2, h!_2, [3.0, 4.0], Newton(solve=simple_solve))
+        @test Optim.g_converged(result3)
+        @test norm(Optim.minimizer(result3) - [0.0, 0.0]) < 0.01
     end
     
     @testset "Hessian Types" begin
