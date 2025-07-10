@@ -22,8 +22,6 @@ end
 update_h!(d, state, method) = nothing
 update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
-after_while!(d, state, method, options) = nothing
-
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
@@ -224,8 +222,6 @@ function OptimizationResults(iter::OptimIterator, istate::IteratorState)
     if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
         options.show_warnings && @warn "Terminated early due to NaN in Hessian."
     end
-
-    after_while!(d, state, method, options)
 
     Tf = typeof(value(d))
     Tx = typeof(state.x)

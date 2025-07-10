@@ -358,8 +358,6 @@ function optimize(
         end
     end # while
 
-    after_while!(d, constraints, state, method, options)
-
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_reltol)
@@ -394,7 +392,6 @@ function optimize(
 end
 
 # Fallbacks (for methods that don't need these)
-after_while!(d, constraints::AbstractConstraints, state, method, options) = nothing
 update_h!(d, constraints::AbstractConstraints, state, method) = nothing
 
 """
