@@ -106,4 +106,160 @@
         @test Optim.g_converged(result_default)
         @test norm(Optim.minimizer(result_default) - [0.0, 0.0]) < 0.01
     end
+
+    @testset "Block Tridiagonal System - Kalman Smoothing" begin
+        using LinearAlgebra, Random, Optim
+
+        # ----------------------------
+        # Utility: Block tridiagonal solver
+        # ----------------------------
+        function block_thomas_solve(H, g, block_size)
+            n_blocks = length(g) ÷ block_size
+            B = [Matrix(H[(i-1)*block_size+1:i*block_size, (i-1)*block_size+1:i*block_size]) for i in 1:n_blocks]
+            A = [Matrix(H[i*block_size+1:(i+1)*block_size, (i-1)*block_size+1:i*block_size]) for i in 1:n_blocks-1]
+            C = [Matrix(H[(i-1)*block_size+1:i*block_size, i*block_size+1:(i+1)*block_size]) for i in 1:n_blocks-1]
+            d = [g[(i-1)*block_size+1:i*block_size] for i in 1:n_blocks]
+            B_work = copy(B)
+            d_work = copy(d)
+            for i in 2:n_blocks
+                L = A[i-1] / B_work[i-1]
+                B_work[i] .-= L * C[i-1]
+                d_work[i] .-= L * d_work[i-1]
+            end
+            x = Vector{Vector{Float64}}(undef, n_blocks)
+            x[end] = B_work[end] \ d_work[end]
+            for i in n_blocks-1:-1:1
+                x[i] = B_work[i] \ (d_work[i] - C[i] * x[i+1])
+            end
+            return vcat(x...)
+        end
+
+        # ----------------------------
+        # Problem setup
+        # ----------------------------
+        function create_kalman_problem(T::Int, D::Int)
+            Random.seed!(1)
+            A = 0.9I + 0.1 * randn(D, D)
+            C = randn(2, D)
+            Q = I + 0.1 * randn(D, D); Q = Q'Q
+            R = I + 0.1 * randn(2, 2); R = R'R
+            x0 = randn(D)
+            P0 = Matrix{Float64}(I, D, D)
+            y = randn(2, T)
+            w = ones(T)
+            return (; A, C, Q, R, x0, P0, y, w)
+        end
+
+        # ----------------------------
+        # Negative log-likelihood
+        # ----------------------------
+        function nll(x_vec, p)
+            X = reshape(x_vec, size(p.A, 1), size(p.y, 2))
+            R_chol = cholesky(Symmetric(p.R)).U
+            Q_chol = cholesky(Symmetric(p.Q)).U
+            P0_chol = cholesky(Symmetric(p.P0)).U
+
+            ll = sum(abs2, P0_chol \ (X[:,1] - p.x0))
+            for t in 1:size(p.y, 2)
+                if t > 1
+                    ll += sum(abs2, Q_chol \ (X[:,t] - p.A * X[:,t-1]))
+                end
+                ll += p.w[t] * sum(abs2, R_chol \ (p.y[:,t] - p.C * X[:,t]))
+            end
+            return 0.5 * ll
+        end
+
+        # ----------------------------
+        # Gradient
+        # ----------------------------
+        function g!(g, x_vec, p)
+            D, T = size(p.A, 1), size(p.y, 2)
+            X = reshape(x_vec, D, T)
+            R_chol = cholesky(Symmetric(p.R))
+            Q_chol = cholesky(Symmetric(p.Q))
+            P0_chol = cholesky(Symmetric(p.P0))
+            C_inv_R = (R_chol \ p.C)'
+            A_inv_Q = (Q_chol \ p.A)'
+
+            grad = zeros(D, T)
+
+            grad[:,1] .= A_inv_Q * (X[:,2] - p.A * X[:,1]) +
+                        p.w[1] * C_inv_R * (p.y[:,1] - p.C * X[:,1]) -
+                        (P0_chol \ (X[:,1] - p.x0))
+
+            for t in 2:T-1
+                grad[:,t] .= p.w[t] * C_inv_R * (p.y[:,t] - p.C * X[:,t]) -
+                            Q_chol \ (X[:,t] - p.A * X[:,t-1]) +
+                            A_inv_Q * (X[:,t+1] - p.A * X[:,t])
+            end
+
+            grad[:,T] .= p.w[T] * C_inv_R * (p.y[:,T] - p.C * X[:,T]) -
+                        Q_chol \ (X[:,T] - p.A * X[:,T-1])
+
+            g .= vec(-grad)  
+            return nothing
+        end
+
+        # ----------------------------
+        # Hessian
+        # ----------------------------
+        function h!(H, x_vec, p)
+            D, T = size(p.A, 1), size(p.y, 2)
+            inv_R = inv(p.R)
+            inv_Q = inv(p.Q)
+            inv_P0 = inv(p.P0)
+            yt_xt = p.C' * inv_R * p.C
+            xt_xt_1 = inv_Q
+            xt1_xt = p.A' * inv_Q * p.A
+            x0_term = inv_P0
+
+            diag = Vector{Matrix{Float64}}(undef, T)
+            sub = fill(-inv_Q * p.A, T-1)
+            sup = fill(-p.A' * inv_Q, T-1)
+
+            diag[1] = p.w[1] * yt_xt + xt1_xt + x0_term
+            for t in 2:T-1
+                diag[t] = p.w[t] * yt_xt + xt_xt_1 + xt1_xt
+            end
+            diag[T] = p.w[T] * yt_xt + xt_xt_1
+
+            H_mat = zeros(D*T, D*T)
+            for t in 1:T
+                idx = (t-1)*D + 1 : t*D
+                H_mat[idx, idx] = diag[t]
+                if t < T
+                    H_mat[idx, idx .+ D] = sup[t]
+                    H_mat[idx .+ D, idx] = sub[t]
+                end
+            end
+            mul!(H, -1.0, H_mat)
+            return nothing
+        end
+
+        # ----------------------------
+        # Main test
+        # ----------------------------
+        function run()
+            T, D = 50, 4
+            p = create_kalman_problem(T, D)
+            x0 = zeros(T * D)
+
+            f = x -> nll(x, p)
+            g = (storage, x) -> g!(storage, x, p)
+            h = (storage, x) -> h!(storage, x, p)
+
+            println("Standard Newton:")
+            res1 = optimize(f, g, h, copy(x0), Newton())
+            println("  Iterations: ", Optim.iterations(res1))
+
+            println("Block Thomas Newton:")
+            res2 = optimize(f, g, h, copy(x0), Newton(solve = (H, g) -> block_thomas_solve(H, g, D)), Optim.Options(show_trace=true))
+            println("  Iterations: ", Optim.iterations(res2))
+
+            @test Optim.g_converged(res1)
+            @test Optim.g_converged(res2)
+            @test norm(Optim.minimizer(res1) - Optim.minimizer(res2)) < 1e-8
+        end
+    end
 end
+
