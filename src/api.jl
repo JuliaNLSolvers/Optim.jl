@@ -1,6 +1,6 @@
 _method(r::OptimizationResults) = r.method
 
-Base.summary(r::Union{OptimizationResults, IteratorState, OptimIterator}) =
+Base.summary(r::Union{OptimizationResults, OptimIterator}) =
     summary(_method(r)) # might want to do more here than just return summary of the method used
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
@@ -53,7 +53,7 @@ function x_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     [state.metadata["x"] for state in tr]
 end
 
-function centroid_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
+function centroid_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -67,7 +67,7 @@ function centroid_trace(r::Union{MultivariateOptimizationResults, OptimIterator}
     )
     [state.metadata["centroid"] for state in tr]
 end
-function simplex_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
+function simplex_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -81,7 +81,7 @@ function simplex_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
     )
     [state.metadata["simplex"] for state in tr]
 end
-function simplex_value_trace(r::Union{MultivariateOptimizationResults, OptimIterator})
+function simplex_value_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -117,7 +117,7 @@ h_calls(d) = first(d.h_calls)
 h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
-function converged(r::Union{MultivariateOptimizationResults, OptimIterator})
+function converged(r::Union{MultivariateOptimizationResults, IteratorState})
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
     f_isfinite = if r.stopped_by.iterations > 0

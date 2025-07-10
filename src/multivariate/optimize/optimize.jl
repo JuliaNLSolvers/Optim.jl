@@ -344,31 +344,31 @@ _method(istate::IteratorState) = istate.iter.method
 # we can just check minimum, as we've earlier enforced same types/eltypes
 # in variables besides the option settings
 
-function minimizer(istate::IteratorState)
-    (; iter, f_increased) = istate
+function minimizer(iter::OptimIterator, istate::IteratorState)
+    (; f_increased) = istate
     (; options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_x(f_incr_pick, state)
 end
 
-function minimum(istate::IteratorState)
-    (; iter, f_increased) = istate
+function minimum(iter::OptimIterator, istate::IteratorState)
+    (; f_increased) = istate
     (; d, options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
     return pick_best_f(f_incr_pick, state, d)
 end
 
 iterations(istate::IteratorState) = istate.iteration
-iteration_limit_reached(istate::IteratorState) =
-    istate.iteration == istate.iter.options.iterations
+iteration_limit_reached(iter::OptimIterator, istate::IteratorState) =
+    istate.iteration == iter.options.iterations # this should be a precalculated one like the others
 trace(istate::IteratorState) = istate.tr
 
 converged(istate::IteratorState) = istate.converged
 x_converged(istate::IteratorState) = istate.x_converged
 f_converged(istate::IteratorState) = istate.f_converged
 g_converged(istate::IteratorState) = istate.g_converged
-initial_state(istate::IteratorState) = istate.iter.initial_x
+initial_state(iter::OptimIterator) = iter.initial_x
 
-f_calls(istate::IteratorState) = f_calls(istate.iter.d)
-g_calls(istate::IteratorState) = g_calls(istate.iter.d)
-h_calls(istate::IteratorState) = h_calls(istate.iter.d)
+f_calls(iter::OptimIterator) = f_calls(iter.d)
+g_calls(iter::OptimIterator) = g_calls(iter.d)
+h_calls(iter::OptimIterator) = h_calls(iter.d)
