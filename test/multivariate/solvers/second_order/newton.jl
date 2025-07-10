@@ -90,7 +90,53 @@
         @test Optim.g_converged(result_static)
         @test norm(Optim.minimizer(result_static) - [0.0, 0.0]) < 0.01
     end
-    
+
+    @testset "BlockArray Hessian with custom solver" begin
+        using BlockArrays
+
+        function f(x)
+            return sum((x .- 1.0).^2)
+        end
+
+        function g!(storage, x)
+            storage .= 2.0 .* (x .- 1.0)
+        end
+
+        function h!(H::BlockArray{<:Any,2}, x)
+            for i in 1:size(H.blocks, 1)
+                blk = H.blocks[i, i]
+                fill!(blk, 0.0)
+                for j in 1:min(size(blk)...)
+                    blk[j,j] = 2.0
+                end
+            end
+            return nothing
+        end
+
+        # --- Setup ---
+        block_sizes = (2, 3)
+        n = sum(block_sizes)
+
+        x0 = zeros(n)
+        initial_f = f(x0)
+        initial_g = similar(x0)
+        g!(initial_g, x0)
+
+        H_data = zeros(n, n)
+        H_block = BlockArray(H_data, [2, 3], [2, 3])
+        h!(H_block, x0)
+
+        custom_solve(H::BlockArray, g) = -(Matrix(H) \ g)
+
+        td = TwiceDifferentiable(f, g!, h!, x0, initial_f, initial_g, H_block)
+        result = optimize(td, x0, Newton(solve=custom_solve))
+
+        @test Optim.g_converged(result)
+        @test typeof(NLSolversBase.hessian(td)) <: BlockArray
+        @test typeof(result.minimizer) == Vector{Float64}
+        @test norm(result.minimizer .- ones(n)) < 1e-6
+    end
+
     @testset "Hessian Types" begin
         using SparseArrays
         

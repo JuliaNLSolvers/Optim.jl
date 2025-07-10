@@ -56,7 +56,8 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Distributions", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations", "ReverseDiff", "ADTypes", "StaticArrays"]
+test = ["Test", "Distributions", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations", "ReverseDiff", "ADTypes", "StaticArrays", "BlockArrays"]
