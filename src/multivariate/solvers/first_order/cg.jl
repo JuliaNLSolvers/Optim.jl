@@ -184,6 +184,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     # extra copy, which is probably minimal overhead.
     # -----------------
     # also updates P for the preconditioning step below
+    _apply_precondprep(method, state.x)
     dPd = _inverse_precondition(method, state)
     etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
     state.y .= gradient(d) .- state.g_previous
