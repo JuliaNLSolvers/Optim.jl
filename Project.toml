@@ -2,6 +2,7 @@ name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "1.13.3"
 
+
 [deps]
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
@@ -28,7 +29,7 @@ Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0, 4"
 EnumX = "1.0.4"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 ForwardDiff = "0.10, 1"
-LineSearches = "7.0.1"
+LineSearches = "7.4.0"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
 NLSolversBase = "7.9.0"
