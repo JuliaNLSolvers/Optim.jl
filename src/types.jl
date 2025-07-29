@@ -189,45 +189,19 @@ function Options(;
 end
 
 function Options(o::Options; kws...)
+    fields = fieldnames(typeof(o))
     foreach(keys(kws)) do kw
-        if kw ∉ (:x_abstol, :x_reltol, :f_abstol, :f_reltol, :g_abstol, :outer_x_abstol, 
-                 :outer_x_reltol, :outer_f_abstol, :outer_f_reltol, :outer_g_abstol,
-                 :f_calls_limit, :g_calls_limit, :h_calls_limit, :allow_f_increases,
-                 :allow_outer_f_increases, :successive_f_tol, :iterations,
-                 :outer_iterations, :store_trace, :trace_simplex, :show_trace,
-                 :extended_trace, :show_warnings, :show_every, :callback, :time_limit)
+        if kw ∉ fields
             error(lazy"`$kw` is not a valid keyword argument of `Options(opts; kws...)`")
         end
     end
-    Options(
-        get(kws, :x_abstol,                o.x_abstol),
-        get(kws, :x_reltol,                o.x_reltol),
-        get(kws, :f_abstol,                o.f_abstol),
-        get(kws, :f_reltol,                o.f_reltol),
-        get(kws, :g_abstol,                o.g_abstol),
-        get(kws, :outer_x_abstol,          o.outer_x_abstol),
-        get(kws, :outer_x_reltol,          o.outer_x_reltol),
-        get(kws, :outer_f_abstol,          o.outer_f_abstol),
-        get(kws, :outer_f_reltol,          o.outer_f_reltol),
-        get(kws, :outer_g_abstol,          o.outer_g_abstol),
-        get(kws, :f_calls_limit,           o.f_calls_limit),
-        get(kws, :g_calls_limit,           o.g_calls_limit),
-        get(kws, :h_calls_limit,           o.h_calls_limit),
-        get(kws, :allow_f_increases,       o.allow_f_increases),
-        get(kws, :allow_outer_f_increases, o.allow_outer_f_increases),
-        get(kws, :successive_f_tol,        o.successive_f_tol),
-        get(kws, :iterations,              o.iterations),
-        get(kws, :outer_iterations,        o.outer_iterations),
-        get(kws, :store_trace,             o.store_trace),
-        get(kws, :trace_simplex,           o.trace_simplex),
-        get(kws, :show_trace,              o.show_trace),
-        get(kws, :extended_trace,          o.extended_trace),
-        get(kws, :show_warnings,           o.show_warnings),
-        get(kws, :show_every,              o.show_every),
-        get(kws, :callback,                o.callback),
-        get(kws, :time_limit,              o.time_limit),
-    )
+    newargs = ntuple(Val(nfields(o))) do i
+        field = fields[i]
+        get(kws, field, getfield(o, field))
+    end
+    return Options(newargs...)
 end
+
 _show_helper(output, k, v) = output * "$k = $v, "
 _show_helper(output, k, ::Nothing) = output
 
