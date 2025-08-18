@@ -73,14 +73,15 @@ function reset!(method, state::BFGSState, obj, x)
     T = eltype(x)
     retract!(method.manifold, x)
     value_gradient!(obj, x)
-    project_tangent!(method.manifold, gradient(obj), x)
+    gobj = gradient(obj)
+    project_tangent!(method.manifold, gobj, x)
 
     if method.initial_invH === nothing
         if method.initial_stepnorm === nothing
             # Identity matrix of size n x n
             state.invH = _init_identity_matrix(x)
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(obj), Inf))
+            initial_scale = T(method.initial_stepnorm) * inv(norm(gobj, Inf))
             state.invH = _init_identity_matrix(x, initial_scale)
         end
     else
@@ -130,12 +131,13 @@ function update_state!(d, state::BFGSState, method::BFGS)
     T = eltype(state.s)
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    mul!(vec(state.s), state.invH, vec(gradient(d)))
+    gd = gradient(d)
+    mul!(vec(state.s), state.invH, vec(gd))
     rmul!(state.s, T(-1))
     project_tangent!(method.manifold, state.s, state.x)
 
     # Maintain a record of the previous gradient
-    copyto!(state.g_previous, gradient(d))
+    copyto!(state.g_previous, gd)
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH is the former in not positive
@@ -191,13 +193,14 @@ end
 function trace!(tr, d, state, iteration, method::BFGS, options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
+    gd = gradient(d)
     if options.extended_trace
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(gradient(d))
+        dt["g(x)"] = copy(gd)
         dt["~inv(H)"] = copy(state.invH)
         dt["Current step size"] = state.alpha
     end
-    g_norm = norm(gradient(d), Inf)
+    g_norm = norm(gd, Inf)
     update!(
         tr,
         iteration,
