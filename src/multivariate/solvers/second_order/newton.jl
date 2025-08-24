@@ -18,7 +18,7 @@ The `Newton` method implements Newton's method for optimizing a function.
 
 The `solve` function should take (H, g) and return s such that H*s = -g.
 Defaults to a robust solver that handles dense or sparse matrices.
-To do this, we use a special factorization from the package `PositiveFactorizations.jl` to ensure
+If the matrix is not an `AbstractSparseMatrix`, we use a special factorization from the package `PositiveFactorizations.jl` to ensure
 that each search direction is a direction of descent. See Wright and Nocedal and
 Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 
