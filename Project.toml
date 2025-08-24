@@ -1,6 +1,6 @@
 name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "1.13.3"
+version = "1.14.0"
 
 
 [deps]
