@@ -190,7 +190,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     state.y .= gradient(d) .- state.g_previous
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
-    # P already updated in _inverse_precondition above
+    # P already updated in _apply_precondprep above
     __precondition!(state.pg, method.P, gradient(d))
 
     state.py .= state.pg .- state.py
