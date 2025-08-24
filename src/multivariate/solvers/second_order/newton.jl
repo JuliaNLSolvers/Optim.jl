@@ -39,6 +39,11 @@ function default_newton_solve(H, g)
         return -(H \ g)
     else
         # Use PositiveFactorizations for robustness on dense matrices
+         # Search direction is always the negative gradient divided by
+         # a matrix encoding the absolute values of the curvatures
+         # represented by H. It deviates from the usual "add a scaled
+         # identity matrix" version of the modified Newton method. More
+         # information can be found in the discussion at issue #153.
         F = cholesky(Positive, H)
         return -(F \ g)
     end
