@@ -43,6 +43,7 @@ struct OptimIterator{
     options::O
     state::S
 end
+_method(r::OptimIterator) = r.method
 
 Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
