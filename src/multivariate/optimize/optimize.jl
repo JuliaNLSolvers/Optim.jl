@@ -335,8 +335,6 @@ function optimizing(
     return OptimIterator(d, initial_x, method, options, state)
 end
 
-_method(istate::IteratorState) = istate.iter.method
-
 # we can just check minimum, as we've earlier enforced same types/eltypes
 # in variables besides the option settings
 

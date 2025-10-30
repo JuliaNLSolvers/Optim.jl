@@ -38,7 +38,8 @@ end
 x_upper_trace(r::MultivariateOptimizationResults) =
     error("x_upper_trace is not implemented for $(summary(r)).")
 
-function x_trace(r::Union{MultivariateOptimizationResults, IteratorState})
+x_trace(ot::OptimIterator, os::IteratorState) = x_trace(OptimizationResults(ot, os))
+function x_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
     if isa(_method(r), NelderMead)
         throw(
@@ -53,7 +54,8 @@ function x_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     [state.metadata["x"] for state in tr]
 end
 
-function centroid_trace(r::Union{MultivariateOptimizationResults, IteratorState})
+centroid_trace(ot::OptimIterator, os::IteratorState) = centroid_trace(OptimizationResults(ot, os))
+function centroid_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -67,7 +69,8 @@ function centroid_trace(r::Union{MultivariateOptimizationResults, IteratorState}
     )
     [state.metadata["centroid"] for state in tr]
 end
-function simplex_trace(r::Union{MultivariateOptimizationResults, IteratorState})
+simplex_trace(ot::OptimIterator, os::IteratorState) = simplex_trace(OptimizationResults(ot, os))
+function simplex_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -81,7 +84,8 @@ function simplex_trace(r::Union{MultivariateOptimizationResults, IteratorState})
     )
     [state.metadata["simplex"] for state in tr]
 end
-function simplex_value_trace(r::Union{MultivariateOptimizationResults, IteratorState})
+simplex_value_trace(ot::OptimIterator, os::IteratorState) = simplex_value_trace(OptimizationResults(ot, os))
+function simplex_value_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
     if !isa(_method(r), NelderMead)
         throw(
@@ -97,10 +101,12 @@ function simplex_value_trace(r::Union{MultivariateOptimizationResults, IteratorS
 end
 
 
-f_trace(r::Union{OptimizationResults, IteratorState}) = [state.value for state in trace(r)]
+f_trace(ot::OptimIterator, os::IteratorState) = f_trace(OptimizationResults(ot, os))
+f_trace(r::OptimizationResults) = [state.value for state in trace(r)]
 g_norm_trace(r::OptimizationResults) =
     error("g_norm_trace is not implemented for $(summary(r)).")
-g_norm_trace(r::Union{MultivariateOptimizationResults, IteratorState}) = [state.g_norm for state in trace(r)]
+g_norm_trace(ot::OptimIterator, os::IteratorState) = g_norm_trace(OptimizationResults(ot, os))
+g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
 f_calls(r::OptimizationResults) = r.f_calls
 f_calls(d) = first(d.f_calls)

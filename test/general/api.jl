@@ -171,11 +171,11 @@
     @test Optim.iterations(istate) == 0
     @test Optim.iteration_limit_reached(iter_tmp, istate) == false # this should be a precalculated one like the others
     @test Optim.trace(istate) isa Vector{<:Optim.OptimizationState}
-    @test_broken Optim.x_trace(istate) == [initial_x]
-    @test Optim.f_trace(istate) == [f(initial_x)]
+    @test Optim.x_trace(iter_tmp, istate) == [initial_x]
+    @test Optim.f_trace(iter_tmp, istate) == [f(initial_x)]
     @test Optim.f_calls(iter_tmp) == 1
     @test Optim.converged(istate) == false
-    @test Optim.g_norm_trace(istate) ≈ [215.6] rtol=1e-6
+    @test Optim.g_norm_trace(iter_tmp, istate) ≈ [215.6] rtol=1e-6
     @test Optim.g_calls(iter_tmp) == 1
     @test Optim.x_converged(istate) == false
     @test Optim.f_converged(istate) == false
