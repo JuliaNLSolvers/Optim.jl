@@ -110,7 +110,7 @@ function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
     if cg.P !== nothing
         project_tangent!(cg.manifold, cgs.pg, x)
     end
-    cgs.s .= -cgs.pg
+    cgs.s .= .-cgs.pg
     cgs.f_x_previous = typeof(cgs.f_x_previous)(NaN)
 end
 function initial_state(method::ConjugateGradient, options, d, initial_x)
