@@ -233,7 +233,7 @@ function run_optim_tests_constrained(
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
-        options = Optim.Options(
+        options = Optim.Options(;
             Optim.default_options(method)...,
             iterations = iters,
             show_trace = show_trace,
