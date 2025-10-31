@@ -135,11 +135,11 @@ promote_objtype(
 # if no method or options are present
 function optimize(
     f,
-    initial_x::AbstractArray
+    initial_x::AbstractArray;
+    inplace = true,
+    autodiff = :finite,
 )
     method = fallback_method(f)
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
 
     options = Options(; default_options(method)...)
@@ -148,13 +148,12 @@ end
 function optimize(
     f,
     g,
-    initial_x::AbstractArray,
+    initial_x::AbstractArray;
+    autodiff = :finite,
+    inplace = true,
 )
 
     method = fallback_method(f, g)
-
-    autodiff = :finite
-    inplace = true
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
  
@@ -165,10 +164,10 @@ function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray,
-)
-    inplace = true
+    initial_x::AbstractArray;
+    inplace = true,
     autodiff = :finite
+)
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
@@ -200,11 +199,11 @@ function optimize(
     f,
     g,
     initial_x::AbstractArray,
-    options::Options
+    options::Options;
+    inplace = true,
+    autodiff = :finite,
 )
 
-    inplace = true
-    autodiff = :finite
     method = fallback_method(f, g)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
     optimize(d, initial_x, method, options)
@@ -214,11 +213,10 @@ function optimize(
     g,
     h,
     initial_x::AbstractArray{T},
-    options::Options
+    options::Options;
+    inplace = true,
+    autodiff = :finite,
 ) where {T}
-
-    inplace = true
-    autodiff = :finite
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
@@ -230,11 +228,10 @@ function optimize(
     f,
     initial_x::AbstractArray,
     method::AbstractOptimizer,
-    options::Options = Options(; default_options(method)...)
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
 )
-
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
 end
@@ -243,11 +240,11 @@ function optimize(
     c::AbstractConstraints,
     initial_x::AbstractArray,
     method::AbstractOptimizer,
-    options::Options = Options(; default_options(method)...)
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
 )
 
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, c, initial_x, method, options)
 end
@@ -256,11 +253,10 @@ function optimize(
     g,
     initial_x::AbstractArray,
     method::AbstractOptimizer,
-    options::Options = Options(; default_options(method)...)
-
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
 )
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
     optimize(d, initial_x, method, options)
@@ -271,11 +267,11 @@ function optimize(
     h,
     initial_x::AbstractArray{T},
     method::AbstractOptimizer,
-    options::Options = Options(; default_options(method)...)
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
    
 ) where {T}
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
     optimize(d, initial_x, method, options)
