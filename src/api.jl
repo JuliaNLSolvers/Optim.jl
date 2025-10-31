@@ -123,6 +123,7 @@ h_calls(d) = first(d.h_calls)
 h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
+converged(ot::OptimIterator, os::IteratorState) = converged(OptimizationResults(ot, os)) 
 function converged(r::Union{MultivariateOptimizationResults, IteratorState})
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
