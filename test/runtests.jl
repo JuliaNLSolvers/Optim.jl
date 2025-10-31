@@ -109,7 +109,8 @@ input_tuple(method::Optim.SecondOrderOptimizer, prob) = (
 )
 
 function run_optim_tests(
-    method;
+    method,
+    problems = MultivariateProblems.UnconstrainedProblems.examples;
     convergence_exceptions = (),
     minimizer_exceptions = (),
     minimum_exceptions = (),
@@ -122,7 +123,7 @@ function run_optim_tests(
     show_itcalls = false,
 )
     # Loop over unconstrained problems
-    for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
+    for (name, prob) in problems
         if !isfinite(prob.minimum) || !any(isfinite, prob.solutions)
             debug_printing &&
                 println("$name has no registered minimum/minimizer. Skipping ...")
@@ -233,9 +234,9 @@ function run_optim_tests_constrained(
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
         options = Optim.Options(
-            iterations = iters,
-            show_trace = show_trace;
             Optim.default_options(method)...,
+            iterations = iters,
+            show_trace = show_trace,
         )
 
         # Use finite difference if it is not differentiable enough
@@ -291,6 +292,12 @@ function run_optim_tests_constrained(
 end
 
 @testset verbose = true "Optim.jl" begin
+     run_optim_tests(
+                NewtonTrustRegion(),
+                [((name, prob),) (name, prob) in problems
+                     MultivariateProblems.UnconstrainedProblems.examples if name == "Extended Powell"];
+                show_trace=true,
+            )
     @testset "special" begin
         @testset for my_test in special_tests
             println(my_test)

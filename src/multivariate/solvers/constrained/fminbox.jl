@@ -315,10 +315,6 @@ function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = 
         Optim.Options(),
     )
 end
-    optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray; inplace::Bool=true, autodiff = :finite) =
-    optimize(OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff), promote(l, Fill(u, size(initial_x)...), initial_x)..., Fminbox(), Options())
-optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray; inplace::Bool=true, autodiff = :finite) =
-    optimize(OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff), promote(Fill(l, size(initial_x)...), u, initial_x)..., Fminbox(), Options())
 
 optimize(
     f,
@@ -344,7 +340,7 @@ function optimize(
     l::AbstractArray,
     u::Number,
     initial_x::AbstractArray,
-    mo::AbstractConstrainedOptimizer,
+    mo::AbstractConstrainedOptimizer = Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
@@ -357,7 +353,7 @@ function optimize(
     l::Number,
     u::AbstractArray,
     initial_x::AbstractArray,
-    mo::AbstractConstrainedOptimizer,
+    mo::AbstractConstrainedOptimizer=Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
