@@ -136,17 +136,17 @@ function run_optim_tests(
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        allow_f_increases = !(name in f_increase_exceptions)
+        allow_f_increases = (name in f_increase_exceptions)
         dopts = Optim.default_options(method)
         if haskey(dopts, :allow_f_increases)
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
             dopts = (; dopts..., allow_f_increases = allow_f_increases)
         end
         options = Optim.Options(; 
-            dopts...,
             allow_f_increases = allow_f_increases,
             iterations = iters,
             show_trace = show_trace,
+            dopts...,
         )
 
         # Use finite difference if it is not differentiable enough
