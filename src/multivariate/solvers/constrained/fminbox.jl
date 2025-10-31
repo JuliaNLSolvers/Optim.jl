@@ -289,17 +289,16 @@ end
 
 optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
     optimize(
-        f,
+        OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff),
         Fill(T(l), size(initial_x)...),
         Fill(T(u), size(initial_x)...),
-        initial_x;
-        inplace,
-        autodiff
+        initial_x,
+        Fminbox(),
     )
 optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
-    optimize(f, l, Fill(T(u), size(initial_x)...), initial_x; inplace, autodiff)
+    optimize(OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff), l, Fill(T(u), size(initial_x)...), initial_x, Fminbox())
 optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
-    optimize(f, Fill(T(l), size(initial_x)...), u, initial_x, inplace=inplace, autodiff=autodiff)
+    optimize(OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff), Fill(T(l), size(initial_x)...), u, initial_x, Fminbox())
 
 optimize(
     f,
@@ -356,6 +355,7 @@ optimize(
     Fill(T(l), size(initial_x)...),
     Fill(T(u), size(initial_x)...),
     initial_x,
+    Fminbox(),
     opt;
     inplace,
     autodiff,
