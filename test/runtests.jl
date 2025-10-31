@@ -231,7 +231,7 @@ function run_optim_tests_constrained(
         iter_id = findall(n -> n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         default_opts = Optim.default_options(method)
-        iters = length(iter_id) == 0 ? default_opts.iterations : iteration_exceptions[iter_id[1]][2]
+        iters = length(iter_id) == 0 ? get(default_opts, :iterations, 1000) : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
         options = Optim.Options(;
