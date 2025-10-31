@@ -20,7 +20,7 @@ function update!(
             flush(stdout)
         end
     end
-    if callback !== nothing && (iteration % show_every == 0)
+    if callback !== nothing
         if store_trace
             stopped = callback(tr)
         else
