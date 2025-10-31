@@ -155,6 +155,34 @@
     @test haskey(Optim.trace(res_extended)[1].metadata, "x")
     options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
     res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
+
+    local istate
+    iter_tmp = Optim.optimizing(f, initial_x, BFGS(),
+                                    Optim.Options(extended_trace = true,
+                                                  store_trace = true))
+    for istate′ in iter_tmp
+        istate = istate′
+        break
+    end
+    # (smoke) tests for accessor functions:
+    @test summary(iter_tmp) == "BFGS"
+    @test Optim.minimizer(iter_tmp, istate) == initial_x
+    @test Optim.minimum(iter_tmp, istate) == f(initial_x)
+    @test Optim.iterations(istate) == 0
+    @test Optim.iteration_limit_reached(iter_tmp, istate) == false # this should be a precalculated one like the others
+    @test Optim.trace(istate) isa Vector{<:Optim.OptimizationState}
+    @test Optim.x_trace(iter_tmp, istate) == [initial_x]
+    @test Optim.f_trace(iter_tmp, istate) == [f(initial_x)]
+    @test Optim.f_calls(iter_tmp) == 1
+    @test Optim.converged(istate) == false
+    @test Optim.g_norm_trace(iter_tmp, istate) ≈ [215.6] rtol=1e-6
+    @test Optim.g_calls(iter_tmp) == 1
+    @test Optim.x_converged(istate) == false
+    @test Optim.f_converged(istate) == false
+    @test Optim.g_converged(istate) == false
+    @test Optim.initial_state(iter_tmp) == initial_x
+    @test Optim.OptimizationResults(iter_tmp, istate) isa Optim.MultivariateOptimizationResults
+
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "centroid")
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "step_type")
 

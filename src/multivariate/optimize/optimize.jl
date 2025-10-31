@@ -22,8 +22,6 @@ end
 update_h!(d, state, method) = nothing
 update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
 
-after_while!(d, state, method, options) = nothing
-
 function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
     gradient!(d, initial_x)
     stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
@@ -32,40 +30,100 @@ end
 function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
     false, false
 end
-function optimize(
-    d::D,
-    initial_x::Tx,
-    method::M,
-    options::Options{T,TCallback} = Options(; default_options(method)...),
-    state = initial_state(method, options, d, initial_x),
-) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray,T,TCallback}
+struct OptimIterator{
+    D<:AbstractObjective,
+    M<:AbstractOptimizer,
+    Tx<:AbstractArray,
+    O<:Options,
+    S,
+}
+    d::D
+    initial_x::Tx
+    method::M
+    options::O
+    state::S
+end
+_method(r::OptimIterator) = r.method
 
-    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
-    tracing =
-        options.store_trace ||
-        options.show_trace ||
-        options.extended_trace ||
-        options.callback !== nothing
-    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
-    f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
-    x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
+Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
+Base.eltype(::Type{<:OptimIterator}) = IteratorState
 
-    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
-    converged = g_converged || stopped
-    # prepare iteration counter (used to make "initial state" trace entry)
-    iteration = 0
+struct IteratorState{TR<:OptimizationTrace}
+    t0::Float64
+    _time::Float64
+    tr::TR
+    tracing::Bool
+    stopped::Bool
+    stopped_by_callback::Bool
+    stopped_by_time_limit::Bool
+    f_limit_reached::Bool
+    g_limit_reached::Bool
+    h_limit_reached::Bool
+    x_converged::Bool
+    f_converged::Bool
+    f_increased::Bool
+    counter_f_tol::Int
+    g_converged::Bool
+    converged::Bool
+    iteration::Int
+    ls_success::Bool
+end
 
-    options.show_trace && print_header(method)
-    _time = time()
-    trace!(tr, d, state, iteration, method, options, _time - t0)
-    ls_success::Bool = true
-    while !converged && !stopped && iteration < options.iterations
+function Base.iterate(iter::OptimIterator, istate = nothing)
+    (; d, initial_x, method, options, state) = iter
+    if istate === nothing
+        t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+        tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+        tracing =
+            options.store_trace ||
+            options.show_trace ||
+            options.extended_trace ||
+            options.callback != nothing
+        stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
+        f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
+        x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+
+        g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+        converged = g_converged
+
+        # prepare iteration counter (used to make "initial state" trace entry)
+        iteration = 0
+
+        options.show_trace && print_header(method)
+        _time = time()
+        trace!(tr, d, state, iteration, method, options, _time - t0)
+        ls_success::Bool = true
+
+        # Note: `optimize` depends on that first iteration always yields something
+        # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
+    else
+        (;
+            t0,
+            _time,
+            tr,
+            tracing,
+            stopped,
+            stopped_by_callback,
+            stopped_by_time_limit,
+            f_limit_reached,
+            g_limit_reached,
+            h_limit_reached,
+            x_converged,
+            f_converged,
+            f_increased,
+            counter_f_tol,
+            g_converged,
+            converged,
+            iteration,
+            ls_success,
+        ) = istate
+
+        !converged && !stopped && iteration < options.iterations || return nothing
+
         iteration += 1
         ls_success = !update_state!(d, state, method)
-        if !ls_success
-            break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
-        end
+
         if !(method isa NewtonTrustRegion)
             update_g!(d, state, method) # TODO: Should this be `update_fg!`?
         end
@@ -95,15 +153,6 @@ function optimize(
         h_limit_reached =
             options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
 
-        if (f_increased && !options.allow_f_increases) ||
-           stopped_by_callback ||
-           stopped_by_time_limit ||
-           f_limit_reached ||
-           g_limit_reached ||
-           h_limit_reached
-            stopped = true
-        end
-
         if method isa NewtonTrustRegion
             # If the trust region radius keeps on reducing we need to stop
             # because something is wrong. Wrong gradients or a non-differentiability
@@ -112,24 +161,76 @@ function optimize(
                 stopped = true
             end
         end
-
-        if g_calls(d) > 0 && !all(isfinite, gradient(d))
-            options.show_warnings && @warn "Terminated early due to NaN in gradient."
-            break
+        if (f_increased && !options.allow_f_increases) ||
+           stopped_by_callback ||
+           stopped_by_time_limit ||
+           f_limit_reached ||
+           g_limit_reached ||
+           h_limit_reached
+            stopped = true
         end
-        if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
-            options.show_warnings && @warn "Terminated early due to NaN in Hessian."
-            break
-        end
-    end # while
+    end
 
-    after_while!(d, state, method, options)
+    new_istate = IteratorState(
+        t0,
+        _time,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+    )
+    return new_istate, new_istate
+end
 
-    # we can just check minimum, as we've earlier enforced same types/eltypes
-    # in variables besides the option settings
+function OptimizationResults(iter::OptimIterator, istate::IteratorState)
+    (;
+        t0,
+        _time,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+    ) = istate
+    (; d, initial_x, method, options, state) = iter
+
+    if g_calls(d) > 0 && !all(isfinite, gradient(d))
+        options.show_warnings && @warn "Terminated early due to NaN in gradient."
+    end
+    if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+        options.show_warnings && @warn "Terminated early due to NaN in Hessian."
+    end
+
     Tf = typeof(value(d))
+    Tx = typeof(state.x)
     f_incr_pick = f_increased && !options.allow_f_increases
-    stopped_by = (x_converged, f_converged, g_converged,
+    stopped_by = (
+        x_converged,
+        f_converged,
+        g_converged,
         f_limit_reached = f_limit_reached,
         g_limit_reached = g_limit_reached,
         h_limit_reached = h_limit_reached,
@@ -178,11 +279,12 @@ function optimize(
 end
 
 function _termination_code(d, gres, state, stopped_by, options)
-
     if state isa NelderMeadState && gres <= options.g_abstol
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
         TerminationCode.GradientNorm
+    elseif stopped_by.ls_failed
+        TerminationCode.FailedLinesearch
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) ||
            (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol)
         TerminationCode.NoXChange
@@ -194,8 +296,6 @@ function _termination_code(d, gres, state, stopped_by, options)
     elseif f_abschange(d, state) <= options.f_abstol ||
            f_relchange(d, state) <= options.f_reltol
         TerminationCode.SmallObjectiveChange
-    elseif stopped_by.ls_failed
-        TerminationCode.FailedLinesearch
     elseif stopped_by.callback
         TerminationCode.Callback
     elseif stopped_by.iterations
@@ -220,3 +320,50 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.NotImplemented
     end
 end
+
+function optimizing(
+    d::D,
+    initial_x::Tx,
+    method::M,
+    options::Options = Options(; default_options(method)...),
+    state = initial_state(method, options, d, initial_x),
+) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray}
+    if length(initial_x) == 1 && typeof(method) <: NelderMead
+        error(
+            "You cannot use NelderMead for univariate problems. Alternatively, use either interval bound univariate optimization, or another method such as BFGS or Newton.",
+        )
+    end
+    return OptimIterator(d, initial_x, method, options, state)
+end
+
+# we can just check minimum, as we've earlier enforced same types/eltypes
+# in variables besides the option settings
+
+function minimizer(iter::OptimIterator, istate::IteratorState)
+    (; f_increased) = istate
+    (; options, state) = iter
+    f_incr_pick = f_increased && !options.allow_f_increases
+    return pick_best_x(f_incr_pick, state)
+end
+
+function minimum(iter::OptimIterator, istate::IteratorState)
+    (; f_increased) = istate
+    (; d, options, state) = iter
+    f_incr_pick = f_increased && !options.allow_f_increases
+    return pick_best_f(f_incr_pick, state, d)
+end
+
+iterations(istate::IteratorState) = istate.iteration
+iteration_limit_reached(iter::OptimIterator, istate::IteratorState) =
+    istate.iteration == iter.options.iterations # this should be a precalculated one like the others
+trace(istate::IteratorState) = istate.tr
+
+converged(istate::IteratorState) = istate.converged
+x_converged(istate::IteratorState) = istate.x_converged
+f_converged(istate::IteratorState) = istate.f_converged
+g_converged(istate::IteratorState) = istate.g_converged
+initial_state(iter::OptimIterator) = iter.initial_x
+
+f_calls(iter::OptimIterator) = f_calls(iter.d)
+g_calls(iter::OptimIterator) = g_calls(iter.d)
+h_calls(iter::OptimIterator) = h_calls(iter.d)

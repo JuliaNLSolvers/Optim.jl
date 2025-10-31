@@ -287,8 +287,6 @@ function optimize(
     ==#
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-    _time = t0
-
     tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
     tracing =
         options.store_trace ||
@@ -306,8 +304,10 @@ function optimize(
     iteration = 0
 
     options.show_trace && print_header(method)
-    trace!(tr, d, state, iteration, method, options, t0)
-
+    _time = t0
+    trace!(tr, d, state, iteration, method, options, _time - t0)
+    ls_success::Bool = true
+    
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
@@ -358,8 +358,6 @@ function optimize(
         end
     end # while
 
-    after_while!(d, constraints, state, method, options)
-
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_reltol)
@@ -394,7 +392,6 @@ function optimize(
 end
 
 # Fallbacks (for methods that don't need these)
-after_while!(d, constraints::AbstractConstraints, state, method, options) = nothing
 update_h!(d, constraints::AbstractConstraints, state, method) = nothing
 
 """
