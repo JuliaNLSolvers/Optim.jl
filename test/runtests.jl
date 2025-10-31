@@ -233,11 +233,12 @@ function run_optim_tests_constrained(
         default_opts = Optim.default_options(method)
         iters = length(iter_id) == 0 ? get(default_opts, :iterations, 1000) : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        allow_f_increases = (name in f_increase_exceptions)
+        allow_f_increases = get(defaults_opts, :allow_f_increases, !(name in f_increase_exceptions))
         options = Optim.Options(;
             default_opts...,
             iterations = iters,
             show_trace = show_trace,
+            allow_f_increases
         )
 
         # Use finite difference if it is not differentiable enough
