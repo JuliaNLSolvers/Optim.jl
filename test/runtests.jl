@@ -136,7 +136,7 @@ function run_optim_tests(
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        allow_f_increases = (name in f_increase_exceptions)
+        allow_f_increases = !(name in f_increase_exceptions)
         dopts = Optim.default_options(method)
         if haskey(dopts, :allow_f_increases)
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
@@ -200,7 +200,7 @@ function run_optim_tests(
             end
         else
             @test_broken false    # marked skipped tests as broken
-            debug_printing && printstyled("Skipping $name\n", color = :blue)
+            debug_printing && @info "Skipping $name"
         end
     end
 end
@@ -230,11 +230,12 @@ function run_optim_tests_constrained(
         # Look for name in the first elements of the iteration_exceptions tuples
         iter_id = findall(n -> n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
-        iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
+        default_opts = Optim.default_options(method)
+        iters = length(iter_id) == 0 ? default_opts.iteration : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
         options = Optim.Options(;
-            Optim.default_options(method)...,
+            default_opts...,
             iterations = iters,
             show_trace = show_trace,
         )
@@ -296,6 +297,7 @@ end
                 NewtonTrustRegion(),
                 [(name, prob) for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples if name == "Extended Powell"];
                 show_trace=true,
+                show_name = true,
             )
     @testset "special" begin
         @testset for my_test in special_tests
