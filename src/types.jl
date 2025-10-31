@@ -9,7 +9,11 @@ abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
 """
-Configurable options with defaults (values 0 and NaN indicate unlimited):
+    Options(; opts...)
+
+Specify configurable optimizer options `opts...`. Unspecified options are set to the default
+values below (values 0 and NaN indicate unlimited):
+
 ```
 x_abstol::Real = 0.0,
 x_reltol::Real = 0.0,
@@ -37,7 +41,19 @@ show_every::Int = 1,
 callback = nothing,
 time_limit = NaN
 ```
-See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
+
+It is also possible to pass a previously defined `Options` argument as the first argument,
+i.e., as:
+
+```jl
+    Options(inherit_options; opts...)
+```
+
+Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
+can be used to modify a subset of options in a previously defined `Options` variable.
+
+For more information on individual options, see the documentaton at
+http://julianlsolvers.github.io/Optim.jl/stable/#user/config/.
 """
 struct Options{T, TCallback}
     x_abstol::T
@@ -170,6 +186,20 @@ function Options(;
         callback,
         Float64(time_limit),
     )
+end
+
+function Options(o::Options; kws...)
+    fields = fieldnames(typeof(o))
+    foreach(keys(kws)) do kw
+        if kw ∉ fields
+            error(lazy"`$kw` is not a valid keyword argument of `Options(opts; kws...)`")
+        end
+    end
+    newargs = ntuple(Val(nfields(o))) do i
+        field = fields[i]
+        get(kws, field, getfield(o, field))
+    end
+    return Options(newargs...)
 end
 
 _show_helper(output, k, v) = output * "$k = $v, "

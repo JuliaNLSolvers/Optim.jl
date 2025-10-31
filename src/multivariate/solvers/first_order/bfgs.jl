@@ -138,7 +138,7 @@ function update_state!(d, state::BFGSState, method::BFGS)
     copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
-    # This call resets invH to initial_invH is the former in not positive
+    # This call resets invH to initial_invH if the former is not positive
     # semi-definite
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
@@ -152,22 +152,20 @@ end
 
 function update_h!(d, state, method::BFGS)
     n = length(state.x)
+    (; invH, dx, dg, u) = state
     # Measure the change in the gradient
-    state.dg .= gradient(d) .- state.g_previous
+    dg .= gradient(d) .- state.g_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
-    dx_dg = real(dot(state.dx, state.dg))
+    dx_dg = real(dot(dx, dg))
     if dx_dg > 0
-        mul!(vec(state.u), state.invH, vec(state.dg))
+        mul!(vec(u), invH, vec(dg))
 
-        c1 = (dx_dg + real(dot(state.dg, state.u))) / (dx_dg' * dx_dg)
+        c1 = (dx_dg + real(dot(dg, u))) / abs2(dx_dg)
         c2 = 1 / dx_dg
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-        if (state.invH isa Array) # i.e. not a CuArray
-            invH = state.invH
-            dx = state.dx
-            u = state.u
+        if (invH isa Array) # i.e. not a CuArray
             @inbounds for j = 1:n
                 c1dxj = c1 * dx[j]'
                 c2dxj = c2 * dx[j]'
@@ -181,9 +179,9 @@ function update_h!(d, state, method::BFGS)
                 end
             end
         else
-            mul!(state.invH, vec(state.dx), vec(state.dx)', c1, 1)
-            mul!(state.invH, vec(state.u), vec(state.dx)', -c2, 1)
-            mul!(state.invH, vec(state.dx), vec(state.u)', -c2, 1)
+            mul!(invH, vec(dx), vec(dx)', c1, 1)
+            mul!(invH, vec(u), vec(dx)', -c2, 1)
+            mul!(invH, vec(dx), vec(u)', -c2, 1)
         end
     end
 end
