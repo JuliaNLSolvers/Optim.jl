@@ -272,6 +272,21 @@ barrier_method(
 
 function optimize(
     f,
+    l::AbstractArray{T},
+    u::AbstractArray{T},
+    initial_x::AbstractArray{T},
+    F::Fminbox = Fminbox(),
+    options = Options();
+    inplace = true,
+    autodiff = :finite,
+) where {T<:AbstractFloat}
+
+    od = OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff)
+
+    optimize(od, l, u, initial_x, F, options)
+end
+function optimize(
+    f,
     g,
     l::AbstractArray{T},
     u::AbstractArray{T},
