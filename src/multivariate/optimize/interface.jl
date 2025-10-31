@@ -265,13 +265,13 @@ function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
     autodiff = :finite,
    
-) where {T}
+)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
     optimize(d, initial_x, method, options)

@@ -272,59 +272,64 @@ barrier_method(
 
 function optimize(
     f,
-    l::AbstractArray{T},
-    u::AbstractArray{T},
-    initial_x::AbstractArray{T},
+    l::AbstractArray,
+    u::AbstractArray,
+    initial_x::AbstractArray,
     F::Fminbox = Fminbox(),
-    options = Options();
-    inplace = true,
+    options::Options = Options();
+    inplace::Bool=true,
     autodiff = :finite,
-) where {T<:AbstractFloat}
-
-    od = OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff)
-
-    optimize(od, l, u, initial_x, F, options)
+)
+    if f isa NonDifferentiable
+        f = f.f
+    end
+    od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff)
+    optimize(od, promote(l, u, initial_x)..., F, options)
 end
+
 function optimize(
     f,
     g,
-    l::AbstractArray{T},
-    u::AbstractArray{T},
-    initial_x::AbstractArray{T},
+    l::AbstractArray,
+    u::AbstractArray,
+    initial_x::AbstractArray,
     F::Fminbox = Fminbox(),
     options = Options();
     inplace = true,
-) where {T<:AbstractFloat}
+)
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
-    od = OnceDifferentiable(f, g!, initial_x, zero(T))
+    od = OnceDifferentiable(f, g!, initial_x, zero(eltype(initial_x)))
 
-    optimize(od, l, u, initial_x, F, options)
+    optimize(od, promote(l, u, initial_x)..., F, options)
 end
 
-optimize(f, l::Number, u::Number, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
+function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = :finite)
+    T = eltype(initial_x)
     optimize(
-        OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff),
+        OnceDifferentiable(f, initial_x, zero(T); autodiff),
         Fill(T(l), size(initial_x)...),
         Fill(T(u), size(initial_x)...),
         initial_x,
         Fminbox(),
+        Optim.Options(),
     )
-optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
-    optimize(OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff), l, Fill(T(u), size(initial_x)...), initial_x, Fminbox())
-optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray{T}; inplace::Bool=true, autodiff = :finite) where {T} =
-    optimize(OnceDifferentiable(f, initial_x, zero(T); inplace, autodiff), Fill(T(l), size(initial_x)...), u, initial_x, Fminbox())
+end
+    optimize(f, l::AbstractArray, u::Number, initial_x::AbstractArray; inplace::Bool=true, autodiff = :finite) =
+    optimize(OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff), promote(l, Fill(u, size(initial_x)...), initial_x)..., Fminbox(), Options())
+optimize(f, l::Number, u::AbstractArray, initial_x::AbstractArray; inplace::Bool=true, autodiff = :finite) =
+    optimize(OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff), promote(Fill(l, size(initial_x)...), u, initial_x)..., Fminbox(), Options())
 
 optimize(
     f,
     l::Number,
     u::Number,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     mo::AbstractConstrainedOptimizer,
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(
+) = optimize(
     f,
     Fill(T(l), size(initial_x)...),
     Fill(T(u), size(initial_x)...),
@@ -334,37 +339,45 @@ optimize(
     inplace,
     autodiff,
 )
-optimize(
+function optimize(
     f,
     l::AbstractArray,
     u::Number,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     mo::AbstractConstrainedOptimizer,
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(f, l, Fill(T(u), size(initial_x)...), initial_x, mo, opt; inplace, autodiff)
-optimize(
+)
+  T = eltype(initial_x)
+optimize(f, T.(l), Fill(T(u), size(initial_x)...), initial_x, mo, opt; inplace, autodiff)
+end
+function optimize(
     f,
     l::Number,
     u::AbstractArray,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     mo::AbstractConstrainedOptimizer,
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(f, Fill(T(l), size(initial_x)...), u, initial_x, mo, opt; inplace, autodiff)
-
-optimize(
+)
+    T = eltype(initial_x)
+    optimize(f, Fill(T(l), size(initial_x)...), T.(u), initial_x, mo, opt; inplace, autodiff)
+end
+function optimize(
     f,
     g,
     l::Number,
     u::Number,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(
+) 
+
+T = eltype(initial_x)
+optimize(
     f,
     g,
     Fill(T(l), size(initial_x)...),
@@ -375,42 +388,33 @@ optimize(
     inplace,
     autodiff,
 )
-optimize(
+end
+function optimize(
     f,
     g,
     l::AbstractArray,
     u::Number,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(f, g, l, Fill(T(u), size(initial_x)...), initial_x, opt; inplace, autodiff)
-optimize(
+)
+T = eltype(initial_x)
+optimize(f, g, T.(l), Fill(T(u), size(initial_x)...), initial_x, opt; inplace, autodiff)
+end
+
+function optimize(
     f,
     g,
     l::Number,
     u::AbstractArray,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff = :finite,
-) where {T} = optimize(f, g, Fill(T(l), size(initial_x)...), u, initial_x, opt, inplace, autodiff)
-
-function optimize(
-    f,
-    l::AbstractArray,
-    u::AbstractArray,
-    initial_x::AbstractArray,
-    F::Fminbox = Fminbox(),
-    options::Options = Options(),
-    inplace::Bool=true,
-    autodiff = :finite,
 )
-    if f isa NonDifferentiable
-        f = f.f
-    end
-    od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff)
-    optimize(od, l, u, initial_x, F, options)
+    T= eltype(initial_x)
+    optimize(f, g, Fill(T(l), size(initial_x)...), T.(u), initial_x, opt, inplace, autodiff)
 end
 
 function optimize(
