@@ -294,8 +294,7 @@ end
 @testset verbose = true "Optim.jl" begin
      run_optim_tests(
                 NewtonTrustRegion(),
-                [((name, prob),) for (name, prob) in problems
-                     MultivariateProblems.UnconstrainedProblems.examples if name == "Extended Powell"];
+                [((name, prob),) for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples if name == "Extended Powell"];
                 show_trace=true,
             )
     @testset "special" begin
