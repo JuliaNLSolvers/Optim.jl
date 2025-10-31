@@ -23,9 +23,11 @@
     res = Optim.optimize(
         MVP.objective(prob),
         prob.initial_x,
-        method = NelderMead(),
-        store_trace = true,
-        extended_trace = true,
+        NelderMead(),
+        Optim.Options(
+            store_trace = true,
+            extended_trace = true,
+        ),
     )
     @test (
         length(unique(Optim.g_norm_trace(res))) != 1 ||
