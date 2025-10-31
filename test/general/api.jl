@@ -165,7 +165,7 @@
         break
     end
     # (smoke) tests for accessor functions:
-    @test_broken summary(iter_tmp) == "BFGS"
+    @test summary(iter_tmp) == "BFGS"
     @test Optim.minimizer(iter_tmp, istate) == initial_x
     @test Optim.minimum(iter_tmp, istate) == f(initial_x)
     @test Optim.iterations(istate) == 0
