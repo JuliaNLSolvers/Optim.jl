@@ -240,10 +240,10 @@ function run_optim_tests_constrained(
             dopts = (; dopts..., allow_f_increases = allow_f_increases)
         end
         options = Optim.Options(
+            dopts...,
             allow_f_increases = allow_f_increases,
             iterations = iters,
-            show_trace = show_trace;
-            dopts...,
+            show_trace = show_trace.
          )
 
         # Use finite difference if it is not differentiable enough
