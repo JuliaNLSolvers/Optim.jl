@@ -230,21 +230,14 @@ function run_optim_tests_constrained(
         # Look for name in the first elements of the iteration_exceptions tuples
         iter_id = findall(n -> n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
-        default_opts = Optim.default_options(method)
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
-        dopts = Optim.default_options(method)
-        if haskey(dopts, :allow_f_increases)
-            allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
-            dopts = (; dopts..., allow_f_increases = allow_f_increases)
-        end
-        options = Optim.Options(
-            dopts...,
-            allow_f_increases = allow_f_increases,
+        options = Optim.Options(;
+            Optim.default_options(method)...,
             iterations = iters,
             show_trace = show_trace,
-         )
+        )
 
         # Use finite difference if it is not differentiable enough
         if !(name in skip) && prob.istwicedifferentiable
