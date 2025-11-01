@@ -133,7 +133,7 @@ function LBFGS(;
     LBFGS(Int(m), _alphaguess(alphaguess), linesearch, P, precondprep, manifold, scaleinvH0)
 end
 
-Base.summary(::LBFGS) = "L-BFGS"
+Base.summary(io::IO, ::LBFGS) = print(io, "L-BFGS")
 
 mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     x::Tx

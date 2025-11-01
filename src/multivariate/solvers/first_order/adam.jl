@@ -40,7 +40,7 @@ end
 # could use epsilon = T->sqrt(eps(T)) and input the promoted type
 Adam(; alpha = 0.0001, beta_mean = 0.9, beta_var = 0.999, epsilon = 1e-8) =
     Adam(alpha, beta_mean, beta_var, epsilon, Flat())
-Base.summary(::Adam) = "Adam"
+Base.summary(io::IO, ::Adam) = print(io, "Adam")
 function default_options(method::Adam)
     (; allow_f_increases = true, iterations = 10_000)
 end

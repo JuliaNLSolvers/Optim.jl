@@ -6,7 +6,7 @@ struct GradientDescent{IL,L,T,Tprep} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::GradientDescent) = "Gradient Descent"
+Base.summary(io::IO, ::GradientDescent) = print(io, "Gradient Descent")
 
 """
 # Gradient Descent

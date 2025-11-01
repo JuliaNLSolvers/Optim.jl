@@ -5,7 +5,7 @@ struct IPNewton{F,Tμ<:Union{Symbol,Number}} <: IPOptimizer{F}
     # TODO: μ0, and show_linesearch were originally in options
 end
 
-Base.summary(::IPNewton) = "Interior Point Newton"
+Base.summary(io::IO, ::IPNewton) = print(io, "Interior Point Newton")
 
 promote_objtype(method::IPNewton, x, autodiff, inplace::Bool, f::TwiceDifferentiable) = f
 promote_objtype(method::IPNewton, x, autodiff, inplace::Bool, f) =

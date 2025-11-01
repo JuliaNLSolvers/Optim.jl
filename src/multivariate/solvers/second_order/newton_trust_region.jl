@@ -275,7 +275,7 @@ NewtonTrustRegion(;
     use_fg,
 )
 
-Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
+Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
 
 mutable struct NewtonTrustRegionState{Tx,T,G} <: AbstractOptimizerState
     x::Tx

@@ -10,7 +10,7 @@ struct BFGS{IL,L,H,T,TM} <: FirstOrderOptimizer
     manifold::TM
 end
 
-Base.summary(::BFGS) = "BFGS"
+Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 
 """
 # BFGS

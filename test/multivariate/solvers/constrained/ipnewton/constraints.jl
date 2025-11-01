@@ -671,7 +671,7 @@
             minval = NLSolversBase.value(df, prob.solutions)
 
             results = optimize(df, constraints, prob.initial_x, method, options)
-            @test isa(summary(results), String)
+            test_summary(results)
             @test Optim.converged(results)
             @test Optim.minimum(results) < minval + sqrt(eps(minval))
 
@@ -686,7 +686,7 @@
 
             results =
                 optimize(MVP.objective(prob), constraints, prob.initial_x, method, options)
-            @test isa(summary(results), String)
+            test_summary(results)
             @test Optim.converged(results)
             @test Optim.minimum(results) < minval + sqrt(eps(minval))
         end
@@ -714,7 +714,7 @@
         minval = NLSolversBase.value(df, xsol)
 
         results = optimize(df, constraints, [12, 14.0], method, options)
-        @test isa(Optim.summary(results), String)
+        test_summary(results)
         @test Optim.converged(results)
         @test Optim.minimum(results) < minval + sqrt(eps(minval))
 

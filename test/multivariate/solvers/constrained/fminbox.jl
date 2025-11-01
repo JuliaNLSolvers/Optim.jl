@@ -56,7 +56,7 @@
         debug_printing && printstyled("Solver: ", summary(_optimizer), "\n", color = :green)
         results = optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
         @test Optim.converged(results)
-        @test summary(results) == "Fminbox with $(summary(_optimizer))"
+        test_summary(results, "Fminbox with $(summary(_optimizer))")
         opt_x = Optim.minimizer(results)
         NLSolversBase.gradient!(_objective, opt_x)
         g = NLSolversBase.gradient(_objective)

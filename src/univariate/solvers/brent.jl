@@ -18,7 +18,7 @@ R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover editio
 """
 struct Brent <: UnivariateOptimizer end
 
-Base.summary(::Brent) = "Brent's Method"
+Base.summary(io::IO, ::Brent) = print(io, "Brent's Method")
 
 function optimize(
     f,

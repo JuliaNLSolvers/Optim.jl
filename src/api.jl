@@ -1,4 +1,4 @@
-Base.summary(r::OptimizationResults) = summary(r.method) # might want to do more here than just return summary of the method used
+Base.summary(io::IO, r::OptimizationResults) = summary(io, r.method) # might want to do more here than just return summary of the method used
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
 iterations(r::OptimizationResults) = r.iterations

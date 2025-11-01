@@ -36,7 +36,7 @@ reaches the maximum number of iterations set in Optim.Options(iterations=x)`.
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) =
     ParticleSwarm(lower, upper, n_particles)
 
-Base.summary(::ParticleSwarm) = "Particle Swarm"
+Base.summary(io::IO, ::ParticleSwarm) = print(io, "Particle Swarm")
 
 mutable struct ParticleSwarmState{Tx,T} <: ZerothOrderState
     x::Tx

@@ -232,7 +232,11 @@ function Fminbox(
     Fminbox(method, promote(mu0, mufactor)..., precondprep) # default optimizer
 end
 
-Base.summary(F::Fminbox) = "Fminbox with $(summary(F.method))"
+function Base.summary(io::IO, F::Fminbox)
+    print(io, "Fminbox with ")
+    summary(io, F.method)
+    return
+end
 
 # barrier_method() constructs an optimizer to solve the barrier problem using m = Fminbox.method as the reference.
 # Essentially it only updates the P and precondprep fields of `m`.

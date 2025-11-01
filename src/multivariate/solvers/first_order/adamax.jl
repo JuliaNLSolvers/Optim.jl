@@ -39,7 +39,7 @@ struct AdaMax{Tα,T,Tm} <: FirstOrderOptimizer
 end
 AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999, epsilon = sqrt(eps(Float64))) =
     AdaMax(alpha, beta_mean, beta_var, epsilon, Flat())
-Base.summary(::AdaMax) = "AdaMax"
+Base.summary(io::IO, ::AdaMax) = print(io, "AdaMax")
 function default_options(method::AdaMax)
     (; allow_f_increases = true, iterations = 10_000)
 end
