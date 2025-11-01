@@ -36,7 +36,7 @@ mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     cg_iters::Int
 end
 
-function initial_state(method::KrylovTrustRegion, options, d, initial_x::Array{T}) where {T}
+function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x::Array{T}) where {T}
     n = length(initial_x)
     # Maintain current gradient in gr
     @assert(method.max_radius > 0)
@@ -68,10 +68,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::KrylovTrustRegionState,
+    iteration::Integer,
     method::KrylovTrustRegion,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()

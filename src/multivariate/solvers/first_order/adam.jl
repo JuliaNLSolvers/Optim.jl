@@ -67,7 +67,7 @@ function _get_init_params(method::Adam)
     method.α(1), method.β₁, method.β₂
 end
 
-function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::Adam, options::Options, d, initial_x::AbstractArray{T}) where {T}
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
@@ -122,6 +122,6 @@ function update_state!(d, state::AdamState{T}, method::Adam) where {T}
     false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::Adam, options, curr_time = time())
+function trace!(tr, d, state::AdamState, iteration::Integer, method::Adam, options::Options, curr_time = time())
     common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

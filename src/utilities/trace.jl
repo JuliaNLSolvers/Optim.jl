@@ -4,9 +4,9 @@ function common_trace!(
     tr,
     d,
     state,
-    iteration,
+    iteration::Integer,
     method::FirstOrderOptimizer,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()

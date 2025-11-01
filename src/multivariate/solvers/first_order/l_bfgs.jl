@@ -152,14 +152,14 @@ mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     s::Tx
     @add_linesearch_fields()
 end
-function reset!(method, state::LBFGSState, obj, x)
+function reset!(method::LBFGS, state::LBFGSState, obj, x::AbstractArray)
     retract!(method.manifold, x)
     value_gradient!(obj, x)
     project_tangent!(method.manifold, gradient(obj), x)
 
     state.pseudo_iteration = 0
 end
-function initial_state(method::LBFGS, options, d, initial_x)
+function initial_state(method::LBFGS, options::Options, d, initial_x::AbstractArray)
     T = real(eltype(initial_x))
     n = length(initial_x)
     initial_x = copy(initial_x)
@@ -228,7 +228,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
 end
 
 
-function update_h!(d, state, method::LBFGS)
+function update_h!(d, state::LBFGSState, method::LBFGS)
     n = length(state.x)
     # Measure the change in the gradient
     state.dg .= gradient(d) .- state.g_previous
@@ -247,6 +247,6 @@ function update_h!(d, state, method::LBFGS)
     false
 end
 
-function trace!(tr, d, state, iteration, method::LBFGS, options, curr_time = time())
+function trace!(tr, d, state::LBFGSState, iteration::Integer, method::LBFGS, options::Options, curr_time = time())
     common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

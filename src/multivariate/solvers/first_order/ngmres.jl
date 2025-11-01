@@ -213,7 +213,7 @@ end
 const ngmres_oaccel_warned = Ref{Bool}(false)
 function initial_state(
     method::AbstractNGMRES,
-    options,
+    options::Options,
     d,
     initial_x::AbstractArray{eTx},
 ) where {eTx}
@@ -442,10 +442,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::NGMRESState,
+    iteration::Integer,
     method::AbstractNGMRES,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()

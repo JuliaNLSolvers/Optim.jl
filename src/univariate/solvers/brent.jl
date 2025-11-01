@@ -216,7 +216,7 @@ function optimize(
 end
 
 
-function trace!(tr, d, state, iteration, method::Brent, options, curr_time = time())
+function trace!(tr, d::Nothing, state::NamedTuple, iteration::Integer, method::Brent, options::Options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     dt["minimizer"] = state.new_minimizer

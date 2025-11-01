@@ -420,10 +420,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::NewtonTrustRegionState,
+    iteration::Integer,
     method::NewtonTrustRegion,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()
