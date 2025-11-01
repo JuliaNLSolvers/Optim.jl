@@ -457,3 +457,38 @@ function gf(bounds::ConstraintBounds, state)
     [gtildeμ; state.bgrad.λxE; state.bgrad.λcE]
 end
 gf(constraints, state) = gf(constraints.bounds, state)
+
+function optimize(
+    f,
+    g,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    method::IPNewton,
+    options::Options = Options(; default_options(method)...),
+)
+    d = TwiceDifferentiable(f, g, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
+function optimize(
+    f,
+    g,
+    h,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    method::IPNewton = IPNewton(),
+    options::Options = Options(; default_options(method)...),
+)
+    d = TwiceDifferentiable(f, g, h, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
+function optimize(
+    d::TwiceDifferentiable,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    options::Options = Options(; default_options(IPNewton())...),
+)
+    optimize(d, lower, upper, initial_x, IPNewton(), options)
+end

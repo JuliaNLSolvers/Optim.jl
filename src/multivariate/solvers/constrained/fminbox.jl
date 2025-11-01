@@ -284,7 +284,7 @@ function optimize(
         f = f.f
     end
     od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff)
-    optimize(od, promote(l, u, initial_x)..., F, options)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(
@@ -294,14 +294,14 @@ function optimize(
     u::AbstractArray,
     initial_x::AbstractArray,
     F::Fminbox = Fminbox(),
-    options = Options();
+    options::Options = Options();
     inplace = true,
 )
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
     od = OnceDifferentiable(f, g!, initial_x, zero(eltype(initial_x)))
 
-    optimize(od, promote(l, u, initial_x)..., F, options)
+    optimize(od, l, u, initial_x, F, options)
 end
 
 function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = :finite)

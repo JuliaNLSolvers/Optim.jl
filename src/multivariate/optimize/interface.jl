@@ -281,10 +281,10 @@ function optimize(
     d::D,
     initial_x::AbstractArray,
     method::SecondOrderOptimizer,
-    options::Options = Options(; default_options(method)...)
+    options::Options = Options(; default_options(method)...);
+    inplace = true,
+    autodiff = :finite,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
-    inplace = true
-    autodiff = :finite
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
     optimize(d, initial_x, method, options)
 end
