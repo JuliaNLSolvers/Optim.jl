@@ -4,75 +4,15 @@ on:
   pull_request_target:
     branches:
       - master
-
 permissions:
-  pull-requests: write
+  pull-requests: write    # needed to post comments
 
 jobs:
-    generate_plots:
-        runs-on: ubuntu-latest
-
-        steps:
-            - uses: actions/checkout@v5
-            - uses: julia-actions/setup-julia@v1
-              with:
-                version: "1"
-            - uses: julia-actions/cache@v2
-            - name: Extract Package Name from Project.toml
-              id: extract-package-name
-              run: |
-                PACKAGE_NAME=$(grep "^name" Project.toml | sed 's/^name = "\(.*\)"$/\1/')
-                echo "::set-output name=package_name::$PACKAGE_NAME"
-            - name: Build AirspeedVelocity
-              env:
-                JULIA_NUM_THREADS: 2
-              run: |
-                # Lightweight build step, as sometimes the runner runs out of memory:
-                julia -e 'ENV["JULIA_PKG_PRECOMPILE_AUTO"]=0; import Pkg; Pkg.add(;url="https://github.com/MilesCranmer/AirspeedVelocity.jl.git")'
-                julia -e 'ENV["JULIA_PKG_PRECOMPILE_AUTO"]=0; import Pkg; Pkg.build("AirspeedVelocity")'
-            - name: Add ~/.julia/bin to PATH
-              run: |
-                echo "$HOME/.julia/bin" >> $GITHUB_PATH
-            - name: Run benchmarks
-              run: |
-                echo $PATH
-                ls -l ~/.julia/bin
-                mkdir results
-                benchpkg ${{ steps.extract-package-name.outputs.package_name }} --rev="${{github.event.repository.default_branch}},${{github.event.pull_request.head.sha}}" --url=${{ github.event.repository.clone_url }} --bench-on="${{github.event.pull_request.head.sha}}" --output-dir=results/ --exeflags="-O3 --threads=auto"
-            - name: Create plots from benchmarks
-              run: |
-                mkdir -p plots
-                benchpkgplot ${{ steps.extract-package-name.outputs.package_name }} --rev="${{github.event.repository.default_branch}},${{github.event.pull_request.head.sha}}" --npart=10 --format=png --input-dir=results/ --output-dir=plots/
-            - name: Upload plot as artifact
-              uses: actions/upload-artifact@v5
-              with:
-                name: plots
-                path: plots
-            - name: Create markdown table from benchmarks
-              run: |
-                benchpkgtable ${{ steps.extract-package-name.outputs.package_name }} --rev="${{github.event.repository.default_branch}},${{github.event.pull_request.head.sha}}" --input-dir=results/ --ratio > table.md
-                echo '### Benchmark Results' > body.md
-                echo '' >> body.md
-                echo '' >> body.md
-                cat table.md >> body.md
-                echo '' >> body.md
-                echo '' >> body.md
-                echo '### Benchmark Plots' >> body.md
-                echo 'A plot of the benchmark results have been uploaded as an artifact to the workflow run for this PR.' >> body.md
-                echo 'Go to "Actions"->"Benchmark a pull request"->[the most recent run]->"Artifacts" (at the bottom).' >> body.md
-
-            - name: Find Comment
-              uses: peter-evans/find-comment@v4
-              id: fcbenchmark
-              with:
-                issue-number: ${{ github.event.pull_request.number }}
-                comment-author: 'github-actions[bot]'
-                body-includes: Benchmark Results
-
-            - name: Comment on PR
-              uses: peter-evans/create-or-update-comment@v5
-              with:
-                comment-id: ${{ steps.fcbenchmark.outputs.comment-id }}
-                issue-number: ${{ github.event.pull_request.number }}
-                body-path: body.md
-                edit-mode: replace
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
+        with:
+          julia-version: '1'
+          enable-plots: true
+          exeflags: '-O3 --threads=auto'
