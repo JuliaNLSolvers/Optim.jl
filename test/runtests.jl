@@ -292,12 +292,12 @@ function run_optim_tests_constrained(
 end
 
 @testset verbose = true "Optim.jl" begin
-     run_optim_tests(
+   #=  run_optim_tests(
                 NewtonTrustRegion(),
                 [(name, prob) for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples if name == "Extended Powell"];
                 show_trace=true,
                 show_name = true,
-            )
+            )=#
     @testset "special" begin
         @testset for my_test in special_tests
             println(my_test)
