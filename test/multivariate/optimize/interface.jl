@@ -28,7 +28,6 @@
         fgh_res = []
         push!(fgh_res, optimize(tup..., problem.initial_x))
         for m in (NelderMead(), LBFGS(), Newton())
-            push!(fgh_res, optimize(tup..., problem.initial_x; f_abstol = 1e-8))
             push!(fgh_res, optimize(tup..., problem.initial_x, m))
             push!(fgh_res, optimize(tup..., problem.initial_x, m, Optim.Options()))
         end
@@ -141,9 +140,4 @@ end
     res = Optim.optimize(Optim.only_fg_and_hv!(fg!, _hv!), w)
     @test res.method isa Optim.KrylovTrustRegion
 
-end
-
-@testset "issue 1041 and 1038" begin
-    g(x) = -exp(-(x - pi)^2)
-    @test_nowarn optimize(x -> g(x[1]), [0.0], method = AcceleratedGradientDescent())
 end

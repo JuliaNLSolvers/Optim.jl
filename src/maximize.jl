@@ -22,34 +22,33 @@ function maximize(f, lb::Real, ub::Real; kwargs...)
     MaximizationWrapper(optimize(fmax, lb, ub; kwargs...))
 end
 
+
 # ==============================================================================
 # Multivariate warppers
 # ==============================================================================
-function maximize(f, x0::AbstractArray; kwargs...)
+function maximize(f, x0::AbstractArray, options::Options = Options())
     fmax = let f=f
         x -> -f(x)
     end
-    MaximizationWrapper(optimize(fmax, x0; kwargs...))
+    MaximizationWrapper(optimize(fmax, x0, options))
 end
 function maximize(
     f,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options();
-    kwargs...,
+    options = Optim.Options()
 )
     fmax = let f=f
         x -> -f(x)
     end
-    MaximizationWrapper(optimize(fmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, x0, method, options))
 end
 function maximize(
     f,
     g,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options();
-    kwargs...,
+    options = Optim.Options()
 )
     fmax = let f=f
         x -> -f(x)
@@ -57,7 +56,7 @@ function maximize(
     gmax = let g=g
         (G, x) -> (g(G, x); G .= .-G)
     end
-    MaximizationWrapper(optimize(fmax, gmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, gmax, x0, method, options))
 end
 
 function maximize(
@@ -66,8 +65,7 @@ function maximize(
     h,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options();
-    kwargs...,
+    options = Optim.Options()
 )
     fmax = let f=f
         x -> -f(x)
@@ -78,7 +76,7 @@ function maximize(
     hmax = let h=h
         (H, x) -> (h(H, x); H .= .-H)
     end
-    MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options; kwargs...))
+    MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options))
 end
 
 minimum(r::MaximizationWrapper) = throw(MethodError())

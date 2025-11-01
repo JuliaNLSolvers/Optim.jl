@@ -1,30 +1,4 @@
-# Multivariate optimization
-function check_kwargs(kwargs, fallback_method)
-    kws = Dict{Symbol,Any}()
-    method = nothing
-    for kwarg in kwargs
-        if kwarg[1] != :method
-            kws[kwarg[1]] = kwarg[2]
-        else
-            method = kwarg[2]
-        end
-    end
-
-    if method === nothing
-        method = fallback_method
-    end
-    kws, method
-end
-
 default_options(method::AbstractOptimizer) = NamedTuple()
-
-function add_default_opts!(opts::Dict{Symbol,Any}, method::AbstractOptimizer)
-    for newopt in pairs(default_options(method))
-        if !haskey(opts, newopt[1])
-            opts[newopt[1]] = newopt[2]
-        end
-    end
-end
 
 fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
@@ -164,32 +138,26 @@ function optimize(
     initial_x::AbstractArray;
     inplace = true,
     autodiff = :finite,
-    kwargs...,
 )
     method = fallback_method(f)
-    checked_kwargs, method = check_kwargs(kwargs, method)
-
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    add_default_opts!(checked_kwargs, method)
 
-    options = Options(; checked_kwargs...)
+    options = Options(; default_options(method)...)
     optimize(d, initial_x, method, options)
 end
 function optimize(
     f,
     g,
     initial_x::AbstractArray;
-    inplace = true,
     autodiff = :finite,
-    kwargs...,
+    inplace = true,
 )
 
     method = fallback_method(f, g)
-    checked_kwargs, method = check_kwargs(kwargs, method)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
-    add_default_opts!(checked_kwargs, method)
 
-    options = Options(; checked_kwargs...)
+    d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
+ 
+    options = Options(; default_options(method)...)
     optimize(d, initial_x, method, options)
 end
 function optimize(
@@ -198,16 +166,12 @@ function optimize(
     h,
     initial_x::AbstractArray;
     inplace = true,
-    autodiff = :finite,
-    kwargs...,
+    autodiff = :finite
 )
-
     method = fallback_method(f, g, h)
-    checked_kwargs, method = check_kwargs(kwargs, method)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
-    add_default_opts!(checked_kwargs, method)
 
-    options = Options(; checked_kwargs...)
+    options = Options(; default_options(method)...)
     optimize(d, initial_x, method, options)
 end
 
@@ -253,7 +217,6 @@ function optimize(
     inplace = true,
     autodiff = :finite,
 ) where {T}
-
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
@@ -269,7 +232,6 @@ function optimize(
     inplace = true,
     autodiff = :finite,
 )
-
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
 end
@@ -295,7 +257,6 @@ function optimize(
     inplace = true,
     autodiff = :finite,
 )
-
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
     optimize(d, initial_x, method, options)
@@ -304,13 +265,13 @@ function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray{T},
+    initial_x::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
     autodiff = :finite,
-) where {T}
-
+   
+)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
 
     optimize(d, initial_x, method, options)
@@ -321,8 +282,8 @@ function optimize(
     initial_x::AbstractArray,
     method::SecondOrderOptimizer,
     options::Options = Options(; default_options(method)...);
-    autodiff = :finite,
     inplace = true,
+    autodiff = :finite,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
     optimize(d, initial_x, method, options)
