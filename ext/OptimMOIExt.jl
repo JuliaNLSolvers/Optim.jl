@@ -336,8 +336,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
         )
     else
         d = Optim.promote_objtype(method, initial_x, :finite, true, f, g!, h!)
-        Optim.add_default_opts!(options, method)
-        options = Optim.Options(; options...)
+        options = Optim.Options(; Optim.default_options(method)..., options...)
         if nl_constrained || has_bounds
             if nl_constrained
                 lc = [b.lower for b in nlp_data.constraint_bounds]

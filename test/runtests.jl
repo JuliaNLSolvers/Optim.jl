@@ -109,7 +109,8 @@ input_tuple(method::Optim.SecondOrderOptimizer, prob) = (
 )
 
 function run_optim_tests(
-    method;
+    method,
+    problems = MultivariateProblems.UnconstrainedProblems.examples;
     convergence_exceptions = (),
     minimizer_exceptions = (),
     minimum_exceptions = (),
@@ -122,7 +123,7 @@ function run_optim_tests(
     show_itcalls = false,
 )
     # Loop over unconstrained problems
-    for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
+    for (name, prob) in problems
         if !isfinite(prob.minimum) || !any(isfinite, prob.solutions)
             debug_printing &&
                 println("$name has no registered minimum/minimizer. Skipping ...")
@@ -141,10 +142,10 @@ function run_optim_tests(
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
             dopts = (; dopts..., allow_f_increases = allow_f_increases)
         end
-        options = Optim.Options(
+        options = Optim.Options(; 
             allow_f_increases = allow_f_increases,
             iterations = iters,
-            show_trace = show_trace;
+            show_trace = show_trace,
             dopts...,
         )
 
@@ -199,7 +200,7 @@ function run_optim_tests(
             end
         else
             @test_broken false    # marked skipped tests as broken
-            debug_printing && printstyled("Skipping $name\n", color = :blue)
+            debug_printing && @info "Skipping $name"
         end
     end
 end
@@ -232,10 +233,10 @@ function run_optim_tests_constrained(
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
-        options = Optim.Options(
-            iterations = iters,
-            show_trace = show_trace;
+        options = Optim.Options(;
             Optim.default_options(method)...,
+            iterations = iters,
+            show_trace = show_trace,
         )
 
         # Use finite difference if it is not differentiable enough
