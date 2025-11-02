@@ -43,7 +43,7 @@ SimulatedAnnealing(;
     keep_best::Bool = true,
 ) = SimulatedAnnealing(neighbor, temperature, keep_best)
 
-Base.summary(::SimulatedAnnealing) = "Simulated Annealing"
+Base.summary(io::IO, ::SimulatedAnnealing) = print(io, "Simulated Annealing")
 
 mutable struct SimulatedAnnealingState{Tx,T} <: ZerothOrderState
     x::Tx

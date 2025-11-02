@@ -85,7 +85,7 @@ function NelderMead(; kwargs...)
     end
 end
 
-Base.summary(::NelderMead) = "Nelder-Mead"
+Base.summary(io::IO, ::NelderMead) = print(io, "Nelder-Mead")
 
 # centroid except h-th vertex
 function centroid!(c::AbstractArray{T}, simplex, h = 0) where {T}

@@ -8,7 +8,7 @@ struct MomentumGradientDescent{Tf,IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::MomentumGradientDescent) = "Momentum Gradient Descent"
+Base.summary(io::IO, ::MomentumGradientDescent) = print(io, "Momentum Gradient Descent")
 
 function MomentumGradientDescent(;
     mu::Real = 0.01,

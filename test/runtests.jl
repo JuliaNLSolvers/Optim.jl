@@ -108,6 +108,22 @@ input_tuple(method::Optim.SecondOrderOptimizer, prob) = (
     (MVP.objective(prob), MVP.gradient(prob), MVP.hessian(prob)),
 )
 
+function test_summary(x, ref::String)
+    @test summary(x) == ref
+    io = IOBuffer()
+    summary(io, x)
+    @test String(take!(io)) == ref
+    return
+end
+function test_summary(x)
+    summary_x = summary(x)
+    @test summary_x isa String
+    io = IOBuffer()
+    summary(io, x)
+    @test String(take!(io)) == summary_x
+    return
+end
+
 function run_optim_tests(
     method,
     problems = MultivariateProblems.UnconstrainedProblems.examples;
@@ -159,7 +175,7 @@ function run_optim_tests(
 
                 # Loop over appropriate input combinations of f, g!, and h!
                 results = Optim.optimize(input..., prob.initial_x, method, options)
-                @test isa(summary(results), String)
+                test_summary(results)
                 show_res && println(results)
                 show_itcalls &&
                     printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)
@@ -252,7 +268,7 @@ function run_optim_tests_constrained(
             infvec = fill(Inf, size(prob.initial_x))
             constraints = TwiceDifferentiableConstraints(-infvec, infvec)
             results = optimize(df, constraints, prob.initial_x, method, options)
-            @test isa(Optim.summary(results), String)
+            test_summary(results)
             show_res && println(results)
             show_itcalls &&
                 printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)

@@ -29,8 +29,18 @@ struct OACCEL{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
 end
 
 
-Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.nlprecon))"
-Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.nlprecon))"
+function Base.summary(io::IO, s::NGMRES)
+    print(io, "Nonlinear GMRES preconditioned with ")
+    summary(io, s.nlprecon)
+    print(io, ")")
+    return
+end
+function Base.summary(io::IO, s::OACCEL)
+    print(io, "O-ACCEL preconditioned with ")
+    summary(io, s.nlprecon)
+    print(io, ")")
+    return
+end
 
 """
 # N-GMRES

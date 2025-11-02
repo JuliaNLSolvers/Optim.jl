@@ -122,7 +122,7 @@
     )
     res_ext = optimize(f, g!, h!, initial_x, BFGS(), options_ext)
 
-    @test summary(res) == "BFGS"
+    test_summary(res, "BFGS")
     @test Optim.minimum(res) ≈ 1.2580194638225255
     @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol = 0.001
     @test Optim.iterations(res) == 10
@@ -236,7 +236,7 @@ end
 @testset "Univariate API" begin
     f(x) = 2x^2 + 3x + 1
     res = optimize(f, -2.0, 1.0, GoldenSection())
-    @test summary(res) == "Golden Section Search"
+    test_summary(res, "Golden Section Search")
     @test Optim.minimum(res) ≈ -0.125
     @test Optim.minimizer(res) ≈ -0.749999994377939
     @test Optim.iterations(res) == 38

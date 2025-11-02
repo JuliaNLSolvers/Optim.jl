@@ -158,7 +158,7 @@ Random.seed!(3288)
         @test length(results.trace) == 0
         @test Optim.g_converged(results)
         @test norm(Optim.minimizer(results) - [5.0]) < 0.01
-        @test summary(results) == "Newton's Method (Trust Region)"
+        test_summary(results, "Newton's Method (Trust Region)")
 
         eta = 0.9
 

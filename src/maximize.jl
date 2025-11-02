@@ -68,7 +68,7 @@ maximizer(r::MaximizationWrapper) = minimizer(res(r))
 maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) =
     throw(MethodError())
 maximum(r::MaximizationWrapper) = -minimum(res(r))
-Base.summary(r::MaximizationWrapper) = summary(res(r))
+Base.summary(io::IO, r::MaximizationWrapper) = summary(io, res(r))
 
 for api_method in (
     :lower_bound,
@@ -101,8 +101,10 @@ for api_method in (
 end
 
 function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResults})
-    @printf io "Results of Maximization Algorithm\n"
-    @printf io " * Algorithm: %s\n" summary(r)
+    println(io, "Results of Maximization Algorithm")
+    print(io, " * Algorithm: ")
+    summary(io, r)
+    println(io)
     @printf io " * Search Interval: [%f, %f]\n" lower_bound(r) upper_bound(r)
     @printf io " * Maximizer: %e\n" maximizer(r)
     @printf io " * Maximum: %e\n" maximum(r)
@@ -117,8 +119,11 @@ end
 function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResults})
     take = Iterators.take
 
-    @printf io "Results of Optimization Algorithm\n"
-    @printf io " * Algorithm: %s\n" summary(r.res)
+    println(io, "Results of Optimization Algorithm")
+    print(io, " * Algorithm: ")
+    summary(io, r.res)
+    println(io)
+
     if length(join(initial_state(r), ",")) < 40
         @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
     else

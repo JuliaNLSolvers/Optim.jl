@@ -51,7 +51,7 @@ struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::ConjugateGradient) = "Conjugate Gradient"
+Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 
 """
 # Conjugate Gradient Descent

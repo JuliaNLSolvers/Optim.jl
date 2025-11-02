@@ -16,7 +16,7 @@ https://en.wikipedia.org/wiki/Golden-section_search
 """
 struct GoldenSection <: UnivariateOptimizer end
 
-Base.summary(::GoldenSection) = "Golden Section Search"
+Base.summary(io::IO, ::GoldenSection) = print(io, "Golden Section Search")
 
 function optimize(
     f,

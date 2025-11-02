@@ -27,7 +27,7 @@ function Newton(;
     Newton(_alphaguess(alphaguess), linesearch)
 end
 
-Base.summary(::Newton) = "Newton's Method"
+Base.summary(io::IO, ::Newton) = print(io, "Newton's Method")
 
 mutable struct NewtonState{Tx,T,F<:Cholesky} <: AbstractOptimizerState
     x::Tx

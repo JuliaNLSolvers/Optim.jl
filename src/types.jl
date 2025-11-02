@@ -341,38 +341,32 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
-    take = Iterators.take
-
+    print(io, " * Status: ")
     if converged(r)
-        status_string = "success"
+        print(io, "success")
     else
-        status_string = "failure"
+        print(io, "failure")
     end
     if iteration_limit_reached(r)
-        status_string *= " (reached maximum number of iterations)"
-    end
-    if f_increased(r) && !iteration_limit_reached(r)
-        status_string *= " (objective increased between iterations)"
+        print(io, " (reached maximum number of iterations)")
+    elseif f_increased(r)
+        print(io, " (objective increased between iterations)")
     end
     if isa(r.stopped_by.ls_failed, Bool) && r.stopped_by.ls_failed
-        status_string *= " (line search failed)"
+        print(io, " (line search failed)")
     end
     if time_run(r) > time_limit(r)
-        status_string *= " (exceeded time limit of $(time_limit(r)))"
+        print(io, " (exceeded time limit of ", time_limit(r), ")")
     end
 
-    @printf io " * Status: %s\n\n" status_string
+    println(io, "\n\n * Candidate solution")
+    @printf io "    Final objective value:     %e" minimum(r)
 
-    @printf io " * Candidate solution\n"
-    @printf io "    Final objective value:     %e\n" minimum(r)
-    @printf io "\n"
+    println(io, "\n\n * Found with")
+    print(io, "    Algorithm:     ")
+    summary(io, r)
 
-    @printf io " * Found with\n"
-    @printf io "    Algorithm:     %s\n" summary(r)
-
-
-    @printf io "\n"
-    @printf io " * Convergence measures\n"
+    println(io, "\n\n * Convergence measures")
     if isa(r.method, NelderMead)
         @printf io "    √(Σ(yᵢ-ȳ)²)/n %s %.1e\n" g_converged(r) ? "≤" : "≰" g_tol(r)
     else
