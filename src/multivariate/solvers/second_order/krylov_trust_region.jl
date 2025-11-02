@@ -113,7 +113,7 @@ function cg_steihaug!(
 
     fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
     r .= g  # so at first the whole gradient is the residual.
-    d .= -r # the first direction is the direction of steepest descent.
+    d .= .-r # the first direction is the direction of steepest descent.
     rho0 = 1e100  # just a big number
 
     state.cg_iters = 0
