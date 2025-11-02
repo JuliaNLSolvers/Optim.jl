@@ -196,7 +196,7 @@ end
 _show_helper(output, k, v) = output * "$k = $v, "
 _show_helper(output, k, ::Nothing) = output
 
-function Base.show(io::IO, o::Optim.Options)
+function Base.show(io::IO, o::Options)
     content = foldl(fieldnames(typeof(o)), init = "Optim.Options(") do output, k
         v = getfield(o, k)
         return _show_helper(output, k, v)
@@ -205,7 +205,7 @@ function Base.show(io::IO, o::Optim.Options)
     println(io, ")")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", o::Optim.Options)
+function Base.show(io::IO, ::MIME"text/plain", o::Options)
     for k in fieldnames(typeof(o))
         v = getfield(o, k)
         if v isa Nothing
@@ -235,7 +235,6 @@ end
 
 const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
 
-using EnumX
 "Termination codes for Optim.jl."
 @enumx TerminationCode begin
     "Nelder-Mead simplex converged."

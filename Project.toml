@@ -2,9 +2,7 @@ name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
 version = "1.14.0"
 
-
 [deps]
-Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 EnumX = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -25,27 +23,38 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 OptimMOIExt = "MathOptInterface"
 
 [compat]
-Compat = "3.2.0, 3.3.0, 3.4.0, 3.5.0, 3.6.0, 4"
+ADTypes = "1.11"
+Aqua = "0.8.14"
+Distributions = "0.25.122"
 EnumX = "1.0.4"
+ExplicitImports = "1.13.2"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 ForwardDiff = "0.10, 1"
+JET = "0.9, 0.10"
 LineSearches = "7.4.0"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
+Measurements = "2.14.1"
 NLSolversBase = "7.9.0"
 NaNMath = "0.3.2, 1"
 OptimTestProblems = "2.0.3"
 PositiveFactorizations = "0.2.2"
 Printf = "<0.0.1, 1.6"
 Random = "<0.0.1, 1.6"
+RecursiveArrayTools = "3.39"
+ReverseDiff = "1.16.1"
 SparseArrays = "<0.0.1, 1.6"
+StableRNGs = "1.0.3"
 StatsBase = "0.29, 0.30, 0.31, 0.32, 0.33, 0.34"
 Test = "<0.0.1, 1.6"
 julia = "1.10"
 
 [extras]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
 LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
@@ -59,4 +68,4 @@ StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Distributions", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations", "ReverseDiff", "ADTypes"]
+test = ["Test", "Aqua", "Distributions", "ExplicitImports", "JET", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "LineSearches", "NLSolversBase", "PositiveFactorizations", "ReverseDiff", "ADTypes"]

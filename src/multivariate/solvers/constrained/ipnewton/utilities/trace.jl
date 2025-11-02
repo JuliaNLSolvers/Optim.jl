@@ -42,7 +42,7 @@ function trace!(tr, d, state, iteration, method::IPOptimizer, options, curr_time
         end
     end
     g_norm = norm(state.g, Inf) + norm(state.bgrad, Inf)
-    Optim.update!(
+    update!(
         tr,
         iteration,
         value(d),

@@ -80,7 +80,7 @@ mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     constr_c::Vector{T}   # value of the user-supplied constraints at x
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
-    Optim.@add_linesearch_fields() # x_ls and alpha
+    @add_linesearch_fields() # x_ls and alpha
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
     Htilde::Any               # Positive Cholesky factorization of H from PositiveFactorizations.jl
@@ -179,7 +179,7 @@ function initial_state(
         constr_c,
         constr_J,
         T(NaN),
-        Optim.@initial_linesearch()..., # Maintain a cache for line search results in state.lsr
+        @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
         gtilde,
         0,

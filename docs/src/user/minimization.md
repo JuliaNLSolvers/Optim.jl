@@ -176,7 +176,7 @@ julia> Optim.minimizer(res)
  -0.3333
  -1.49994
 
-julia> Optim.minimum(res)
+julia> minimum(res)
  -2.8333333205768865
 ```
 

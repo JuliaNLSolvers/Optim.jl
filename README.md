@@ -4,6 +4,7 @@
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://julianlsolvers.github.io/Optim.jl/dev)
 [![Build Status](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/JuliaNLSolvers/Optim.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![Codecov branch](https://img.shields.io/codecov/c/github/JuliaNLSolvers/Optim.jl/master.svg)](https://codecov.io/gh/JuliaNLSolvers/Optim.jl)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 [![JOSS](http://joss.theoj.org/papers/10.21105/joss.00615/status.svg)](https://doi.org/10.21105/joss.00615)
 
 Univariate and multivariate optimization in Julia.

@@ -316,7 +316,7 @@ function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = 
         Fill(T(u), size(initial_x)...),
         initial_x,
         Fminbox(),
-        Optim.Options(),
+        Options(),
     )
 end
 

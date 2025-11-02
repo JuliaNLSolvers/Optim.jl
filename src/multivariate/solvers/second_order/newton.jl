@@ -51,7 +51,7 @@ function initial_state(method::Newton, options, d, initial_x)
         copy(initial_x), # Maintain current state in state.x
         copy(initial_x), # Maintain previous state in state.x_previous
         T(NaN), # Store previous f in state.f_x_previous
-        Cholesky(similar(d.H, T, 0, 0), :U, BLAS.BlasInt(0)),
+        Cholesky(similar(d.H, T, 0, 0), :U, 0),
         similar(initial_x), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )

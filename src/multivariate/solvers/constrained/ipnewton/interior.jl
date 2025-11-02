@@ -124,7 +124,7 @@ Base.hash(b::BarrierStateVars, u::UInt) = hash(
     hash(b.λxE, hash(b.λc, hash(b.λx, hash(b.slack_c, hash(b.slack_x, u + bsv_seed))))),
 )
 
-function dot(v::BarrierStateVars, w::BarrierStateVars)
+function LinearAlgebra.dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.slack_x, w.slack_x) +
     dot(v.slack_c, w.slack_c) +
     dot(v.λx, w.λx) +
@@ -133,7 +133,7 @@ function dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.λcE, w.λcE)
 end
 
-function norm(b::BarrierStateVars, p::Real)
+function LinearAlgebra.norm(b::BarrierStateVars, p::Real)
     norm(b.slack_x, p) +
     norm(b.slack_c, p) +
     norm(b.λx, p) +

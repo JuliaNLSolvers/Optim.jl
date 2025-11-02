@@ -36,7 +36,7 @@ function maximize(
     f,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options()
+    options = Options()
 )
     fmax = let f=f
         x -> -f(x)
@@ -48,7 +48,7 @@ function maximize(
     g,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options()
+    options = Options()
 )
     fmax = let f=f
         x -> -f(x)
@@ -65,7 +65,7 @@ function maximize(
     h,
     x0::AbstractArray,
     method::AbstractOptimizer,
-    options = Optim.Options()
+    options = Options()
 )
     fmax = let f=f
         x -> -f(x)
@@ -80,7 +80,7 @@ function maximize(
 end
 
 maximizer(r::MaximizationWrapper) = minimizer(res(r))
-maximum(r::MaximizationWrapper) = -minimum(res(r))
+Base.maximum(r::MaximizationWrapper) = -minimum(res(r))
 Base.summary(io::IO, r::MaximizationWrapper) = summary(io, res(r))
 
 for api_method in (

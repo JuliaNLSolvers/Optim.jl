@@ -15,40 +15,43 @@ Besides the help provided at the REPL, it is possible to find help and general
 documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
-using Compat
-using NLSolversBase          # for shared infrastructure in JuliaNLSolvers
 
-using PositiveFactorizations # for globalization strategy in Newton
-import PositiveFactorizations: cholesky!, cholesky
+using PositiveFactorizations: Positive # for globalization strategy in Newton
 
-using LineSearches           # for globalization strategy in Quasi-Newton algs
+using LineSearches: LineSearches # for globalization strategy in Quasi-Newton algs
 
 import NaNMath               # for functions that ignore NaNs (no poisoning)
 
-using Printf                 # For printing, maybe look into other options
+using Printf: @printf        # For printing, maybe look into other options
 
-using FillArrays             # For handling scalar bounds in Fminbox
-
-#using Compat                 # for compatibility across multiple julia versions
-
-# for extensions of functions defined in Base.
-import Base: length, push!, show, getindex, setindex!, maximum, minimum
+using FillArrays: Fill       # For handling scalar bounds in Fminbox
 
 # objective and constraints types and functions relevant to them.
-import NLSolversBase:
+using NLSolversBase:
+    NLSolversBase,
+    AbstractObjective,
+    InplaceObjective,
+    NotInplaceObjective,
     NonDifferentiable,
     OnceDifferentiable,
     TwiceDifferentiable,
+    TwiceDifferentiableHV,
+    AbstractConstraints,
+    ConstraintBounds,
+    TwiceDifferentiableConstraints,
     nconstraints,
     nconstraints_x,
-    NotInplaceObjective,
-    InplaceObjective
+    hessian,
+    hessian!,
+    hessian!!,
+    hv_product,
+    hv_product!
 
 # var for NelderMead
 import StatsBase: var
 
-import LinearAlgebra
-import LinearAlgebra:
+using LinearAlgebra:
+    LinearAlgebra,
     Diagonal,
     diag,
     Hermitian,
@@ -56,11 +59,10 @@ import LinearAlgebra:
     rmul!,
     mul!,
     norm,
-    normalize!,
     diagind,
     eigen,
-    BLAS,
     cholesky,
+    cholesky!,
     Cholesky, # factorizations
     I,
     svd,
@@ -69,7 +71,9 @@ import LinearAlgebra:
     ldiv!,
     dot
 
-import SparseArrays: AbstractSparseMatrix
+using SparseArrays: AbstractSparseMatrix
+
+using EnumX: @enumx # Better enums
 
 # exported functions and types
 export optimize,
