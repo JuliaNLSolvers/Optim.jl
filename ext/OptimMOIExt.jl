@@ -333,7 +333,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
             inplace = true,
         )
     else
-        d = Optim.promote_objtype(method, initial_x, :finite, true, f, g!, h!)
+        d = Optim.promote_objtype(method, initial_x, Optim.DEFAULT_AD_TYPE, true, f, g!, h!)
         options = Optim.Options(; Optim.default_options(method)..., options...)
         if nl_constrained || has_bounds
             if nl_constrained

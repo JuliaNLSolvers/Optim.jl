@@ -282,7 +282,7 @@ function optimize(
     F::Fminbox = Fminbox(),
     options::Options = Options();
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     if f isa NonDifferentiable
         f = f.f
@@ -308,7 +308,7 @@ function optimize(
     optimize(od, l, u, initial_x, F, options)
 end
 
-function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = :finite)
+function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE)
     T = eltype(initial_x)
     optimize(
         OnceDifferentiable(f, initial_x, zero(T); autodiff),
@@ -328,7 +328,7 @@ function optimize(
     mo::AbstractConstrainedOptimizer,
     opt::Options = Options();
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     T = eltype(initial_x)
     optimize(
@@ -350,7 +350,7 @@ function optimize(
     mo::AbstractConstrainedOptimizer = Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
   T = eltype(initial_x)
 optimize(f, T.(l), Fill(T(u), size(initial_x)...), initial_x, mo, opt; inplace, autodiff)
@@ -363,7 +363,7 @@ function optimize(
     mo::AbstractConstrainedOptimizer=Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     T = eltype(initial_x)
     optimize(f, Fill(T(l), size(initial_x)...), T.(u), initial_x, mo, opt; inplace, autodiff)
@@ -376,7 +376,7 @@ function optimize(
     initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) 
 
 T = eltype(initial_x)
@@ -400,7 +400,7 @@ function optimize(
     initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
 T = eltype(initial_x)
 optimize(f, g, T.(l), Fill(T(u), size(initial_x)...), initial_x, opt; inplace, autodiff)
@@ -414,7 +414,7 @@ function optimize(
     initial_x::AbstractArray,
     opt::Options;
     inplace::Bool=true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     T= eltype(initial_x)
     optimize(f, g, Fill(T(l), size(initial_x)...), T.(u), initial_x, opt; inplace, autodiff)
