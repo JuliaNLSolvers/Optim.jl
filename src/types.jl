@@ -190,7 +190,7 @@ end
 
 function Options(o::Options; kws...)
     o_nt = (; (name => getproperty(o, name) for name in propertynames(o))...)
-    return Options(o_nt..., kws...)
+    return Options(; o_nt..., kws...)
 end
 
 _show_helper(output, k, v) = output * "$k = $v, "
