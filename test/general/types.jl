@@ -53,6 +53,6 @@ import Compat.String
     @test opts2.f_calls_limit == 100 && opts2.f_calls_limit != opts1.f_calls_limit
     @test opts2.f_abstol == opts1.f_abstol == 1e-6
     @test opts2.iterations == opts1.iterations == 1000
-    @test_throws "not a valid keyword argument" Optim.Options(opts1; invalid_keyword=1)
+    @test_throws MethodError Optim.Options(opts1; invalid_keyword=1)
     @test Optim.Options(opts1) == opts1
 end
