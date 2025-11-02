@@ -97,7 +97,7 @@ end
 function trace!(
     tr,
     d,
-    state::GradientDescent,
+    state::GradientDescentState,
     iteration::Integer,
     method::GradientDescent,
     options::Options,
