@@ -130,21 +130,21 @@ res = optimize(df, dfc, β0, IPNewton())</code></pre><pre class="documenter-exam
     Algorithm:     Interior Point Newton
 
  * Convergence measures
-    |x - x&#39;|               = 1.68e-10 ≰ 0.0e+00
-    |x - x&#39;|/|x&#39;|          = 6.41e-11 ≰ 0.0e+00
-    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
-    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
-    |g(x)|                 = 2.51e-09 ≤ 1.0e-08
+    |x - x&#39;|               = 1.25e-07 ≰ 0.0e+00
+    |x - x&#39;|/|x&#39;|          = 4.76e-08 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|         = 6.82e-13 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 5.89e-16 ≰ 0.0e+00
+    |g(x)|                 = 3.46e-09 ≤ 1.0e-08
 
  * Work counters
     Seconds run:   0  (vs limit Inf)
-    Iterations:    22
-    f(x) calls:    40
-    ∇f(x) calls:   40
+    Iterations:    23
+    f(x) calls:    44
+    ∇f(x) calls:   44
 </code></pre><p>Compare the estimate to the truth</p><pre><code class="language-julia hljs">delta_hat = res.minimizer
 [delta delta_hat]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5×2 Matrix{Float64}:
  -0.915143  -0.387085
  -0.242781   0.242732
   1.22279    1.66615
  -3.05756   -2.62454
-  0.667647   1.10274</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../maxlikenlm/">« Maximum likelihood estimation</a><a class="docs-footer-nextpage" href="../../../algo/nelder_mead/">Nelder Mead »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Sunday 2 November 2025 16:47">Sunday 2 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  0.667647   1.10274</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../maxlikenlm/">« Maximum likelihood estimation</a><a class="docs-footer-nextpage" href="../../../algo/nelder_mead/">Nelder Mead »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Sunday 2 November 2025 18:57">Sunday 2 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

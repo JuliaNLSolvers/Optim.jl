@@ -109,38 +109,38 @@ end</code></pre><pre class="documenter-example-output"><code class="nohighlight 
  * Convergence measures
     |x - x&#39;|               = 2.79e-10 ≰ 0.0e+00
     |x - x&#39;|/|x&#39;|          = 9.12e-11 ≰ 0.0e+00
-    |f(x) - f(x&#39;)|         = 0.00e+00 ≤ 0.0e+00
-    |f(x) - f(x&#39;)|/|f(x&#39;)| = 0.00e+00 ≤ 0.0e+00
-    |g(x)|                 = 5.93e-14 ≤ 1.0e-08
+    |f(x) - f(x&#39;)|         = 7.11e-15 ≰ 0.0e+00
+    |f(x) - f(x&#39;)|/|f(x&#39;)| = 4.13e-16 ≰ 0.0e+00
+    |g(x)|                 = 5.61e-14 ≤ 1.0e-08
 
  * Work counters
     Seconds run:   0  (vs limit Inf)
     Iterations:    9
-    f(x) calls:    39
-    ∇f(x) calls:   39
+    f(x) calls:    40
+    ∇f(x) calls:   40
     ∇²f(x) calls:  9
 </code></pre><p>The first input to the command is the function we wish to optimize and the second input are the starting values.</p><p>After a brief period of time, you should see output of the optimization routine, with the parameter  estimates being very close to our simulated values.</p><p>The optimization routine stores several quantities and we can obtain the maximim likelihood estimates with the following command:</p><pre><code class="language-julia hljs">parameters = Optim.minimizer(opt)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
   2.836642512088644
-  3.053452125511052
- -0.9883745114256862</code></pre><div class="admonition is-info" id="Note-7ae86888fef5549"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-7ae86888fef5549" title="Permalink"></a></header><div class="admonition-body"><p>Fieldnames for all of the quantities can be obtained with the following command: fieldnames(opt)</p></div></div><p>In order to obtain the correct Hessian matrix, we have to &quot;push&quot; the actual parameter values that maximizes the likelihood function since the <code>TwiceDifferentiable</code> command uses the next to last values to calculate the Hessian:</p><pre><code class="language-julia hljs">numerical_hessian = hessian!(func, parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
- 288.769        -21.7755        1.18621e-13
- -21.7755       223.84         -1.17018e-13
-   1.18621e-13   -1.17018e-13  80.0</code></pre><p>Let&#39;s find the estimated value of σ, rather than log σ, and it&#39;s standard error To do this, we will use the Delta Method: <a href="https://en.wikipedia.org/wiki/Delta_method">https://en.wikipedia.org/wiki/Delta_method</a></p><p>this function exponetiates log σ</p><pre><code class="language-julia hljs">function transform(parameters)
+  3.0534521255110514
+ -0.9883745114256861</code></pre><div class="admonition is-info" id="Note-7ae86888fef5549"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-7ae86888fef5549" title="Permalink"></a></header><div class="admonition-body"><p>Fieldnames for all of the quantities can be obtained with the following command: fieldnames(opt)</p></div></div><p>In order to obtain the correct Hessian matrix, we have to &quot;push&quot; the actual parameter values that maximizes the likelihood function since the <code>TwiceDifferentiable</code> command uses the next to last values to calculate the Hessian:</p><pre><code class="language-julia hljs">numerical_hessian = hessian!(func, parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
+ 288.769        -21.7755        9.29735e-14
+ -21.7755       223.84          1.12209e-13
+   9.29735e-14    1.12209e-13  80.0</code></pre><p>Let&#39;s find the estimated value of σ, rather than log σ, and it&#39;s standard error To do this, we will use the Delta Method: <a href="https://en.wikipedia.org/wiki/Delta_method">https://en.wikipedia.org/wiki/Delta_method</a></p><p>this function exponetiates log σ</p><pre><code class="language-julia hljs">function transform(parameters)
     parameters[end] = exp(parameters[end])
     parameters
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">transform (generic function with 1 method)</code></pre><p>get the Jacobian of the transformation</p><pre><code class="language-julia hljs">J = ForwardDiff.jacobian(transform, parameters)&#39;
 parameters = transform(parameters)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
  2.836642512088644
- 3.053452125511052
- 0.37218117584627275</code></pre><p>We can now invert our Hessian matrix  and use the Delta Method, to obtain the variance-covariance matrix:</p><pre><code class="language-julia hljs">var_cov_matrix = J * inv(numerical_hessian) * J&#39;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
-  0.00348856   0.000339373  -1.74044e-18
-  0.000339373  0.00450049    2.26279e-18
- -1.74044e-18  2.26279e-18   0.00173149</code></pre><p>test the estimated parameters and t-stats for correctness</p><pre><code class="language-julia hljs">t_stats = parameters ./ sqrt.(diag(var_cov_matrix))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
- 48.02654897758058
- 45.515682746940136
-  8.94427190999916</code></pre><p>see the results</p><pre><code class="language-julia hljs">println(&quot;parameter estimates:&quot;, parameters)
-println(&quot;t-statsitics: &quot;, t_stats)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">parameter estimates:[2.836642512088644, 3.053452125511052, 0.37218117584627275]
-t-statsitics: [48.02654897758058, 45.515682746940136, 8.94427190999916]</code></pre><p>From here, one may examine other statistics of interest using the output from the optimization routine.</p><h2 id="maxlikenlm-plain-program"><a class="docs-heading-anchor" href="#maxlikenlm-plain-program">Plain Program</a><a id="maxlikenlm-plain-program-1"></a><a class="docs-heading-anchor-permalink" href="#maxlikenlm-plain-program" title="Permalink"></a></h2><p>Below follows a version of the program without any comments. The file is also available here: <a href="../maxlikenlm.jl">maxlikenlm.jl</a></p><pre><code class="language-julia hljs">using Optim, NLSolversBase
+ 3.0534521255110514
+ 0.3721811758462728</code></pre><p>We can now invert our Hessian matrix  and use the Delta Method, to obtain the variance-covariance matrix:</p><pre><code class="language-julia hljs">var_cov_matrix = J * inv(numerical_hessian) * J&#39;</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
+  0.00348856    0.000339373  -1.6861e-18
+  0.000339373   0.00450049   -2.49618e-18
+ -1.6861e-18   -2.49618e-18   0.00173149</code></pre><p>test the estimated parameters and t-stats for correctness</p><pre><code class="language-julia hljs">t_stats = parameters ./ sqrt.(diag(var_cov_matrix))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element Vector{Float64}:
+ 48.02654897758057
+ 45.515682746940115
+  8.944271909999161</code></pre><p>see the results</p><pre><code class="language-julia hljs">println(&quot;parameter estimates:&quot;, parameters)
+println(&quot;t-statsitics: &quot;, t_stats)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">parameter estimates:[2.836642512088644, 3.0534521255110514, 0.3721811758462728]
+t-statsitics: [48.02654897758057, 45.515682746940115, 8.944271909999161]</code></pre><p>From here, one may examine other statistics of interest using the output from the optimization routine.</p><h2 id="maxlikenlm-plain-program"><a class="docs-heading-anchor" href="#maxlikenlm-plain-program">Plain Program</a><a id="maxlikenlm-plain-program-1"></a><a class="docs-heading-anchor-permalink" href="#maxlikenlm-plain-program" title="Permalink"></a></h2><p>Below follows a version of the program without any comments. The file is also available here: <a href="../maxlikenlm.jl">maxlikenlm.jl</a></p><pre><code class="language-julia hljs">using Optim, NLSolversBase
 using LinearAlgebra: diag
 using ForwardDiff
 
@@ -268,4 +268,4 @@ t_stats = parameters ./ sqrt.(diag(var_cov_matrix))
 println(&quot;parameter estimates:&quot;, parameters)
 println(&quot;t-statsitics: &quot;, t_stats)
 
-# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ipnewton_basics/">« Interior point Newton</a><a class="docs-footer-nextpage" href="../rasch/">Conditional maximum likelihood estimation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Sunday 2 November 2025 16:47">Sunday 2 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../ipnewton_basics/">« Interior point Newton</a><a class="docs-footer-nextpage" href="../rasch/">Conditional maximum likelihood estimation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Sunday 2 November 2025 18:57">Sunday 2 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
