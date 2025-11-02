@@ -189,17 +189,8 @@ function Options(;
 end
 
 function Options(o::Options; kws...)
-    fields = fieldnames(typeof(o))
-    foreach(keys(kws)) do kw
-        if kw ∉ fields
-            error(lazy"`$kw` is not a valid keyword argument of `Options(opts; kws...)`")
-        end
-    end
-    newargs = ntuple(Val(nfields(o))) do i
-        field = fields[i]
-        get(kws, field, getfield(o, field))
-    end
-    return Options(newargs...)
+    o_nt = (; (name => getproperty(o, name) for name in propertynames(o))...)
+    return Options(; o_nt..., kws...)
 end
 
 _show_helper(output, k, v) = output * "$k = $v, "

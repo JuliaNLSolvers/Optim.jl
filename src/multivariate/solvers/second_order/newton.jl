@@ -87,7 +87,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     return !lssuccess # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::Newton, options, curr_time = time())
+function trace!(tr, d, state::NewtonState, iteration::Integer, method::Newton, options::Options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace

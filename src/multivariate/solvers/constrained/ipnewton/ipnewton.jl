@@ -121,7 +121,7 @@ end
 
 function initial_state(
     method::IPNewton,
-    options,
+    options::Options,
     d::TwiceDifferentiable,
     constraints::TwiceDifferentiableConstraints,
     initial_x::AbstractArray{T},
@@ -270,7 +270,7 @@ function update_state!(
     constraints::TwiceDifferentiableConstraints,
     state::IPNewtonState{T},
     method::IPNewton,
-    options,
+    options::Options,
 ) where {T}
     state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
@@ -331,7 +331,7 @@ end
 function solve_step!(
     state::IPNewtonState,
     constraints,
-    options,
+    options::Options,
     show_linesearch::Bool = false,
 )
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds

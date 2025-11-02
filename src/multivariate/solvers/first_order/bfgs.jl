@@ -88,7 +88,7 @@ function reset!(method, state::BFGSState, obj, x)
     end
 end
 
-function initial_state(method::BFGS, options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::BFGS, options::Options, d, initial_x::AbstractArray{T}) where {T}
     n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
@@ -186,7 +186,7 @@ function update_h!(d, state, method::BFGS)
     end
 end
 
-function trace!(tr, d, state, iteration, method::BFGS, options, curr_time = time())
+function trace!(tr, d, state::BFGSState, iteration::Integer, method::BFGS, options::Options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace

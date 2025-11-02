@@ -97,10 +97,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::GradientDescentState,
+    iteration::Integer,
     method::GradientDescent,
-    options,
+    options::Options,
     curr_time = time(),
 )
     common_trace!(tr, d, state, iteration, method, options, curr_time)

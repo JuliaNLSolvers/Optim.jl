@@ -113,7 +113,7 @@ function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
     cgs.s .= .-cgs.pg
     cgs.f_x_previous = typeof(cgs.f_x_previous)(NaN)
 end
-function initial_state(method::ConjugateGradient, options, d, initial_x)
+function initial_state(method::ConjugateGradient, options::Options, d, initial_x)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)

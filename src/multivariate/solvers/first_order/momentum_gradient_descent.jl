@@ -28,7 +28,7 @@ mutable struct MomentumGradientDescentState{Tx,T} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-function initial_state(method::MomentumGradientDescent, options, d, initial_x)
+function initial_state(method::MomentumGradientDescent, options::Options, d, initial_x::AbstractArray)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
@@ -70,10 +70,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::MomentumGradientDescentState,
+    iteration::Integer,
     method::MomentumGradientDescent,
-    options,
+    options::Options,
     curr_time = time(),
 )
     common_trace!(tr, d, state, iteration, method, options, curr_time)
