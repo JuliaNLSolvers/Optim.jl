@@ -47,6 +47,8 @@ import NLSolversBase:
 # var for NelderMead
 import StatsBase: var
 
+import ADTypes
+
 import LinearAlgebra
 import LinearAlgebra:
     Diagonal,
