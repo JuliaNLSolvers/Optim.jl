@@ -127,9 +127,9 @@ res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-examp
 
  * Work counters
     Seconds run:   0  (vs limit Inf)
-    Iterations:    32
-    f(x) calls:    111
-    ∇f(x) calls:   111
+    Iterations:    28
+    f(x) calls:    109
+    ∇f(x) calls:   109
 </code></pre><p>We can add a lower bound on the constraint, and thus optimize the objective on the annulus with inner and outer radii <span>$0.1$</span> and <span>$0.5$</span> respectively.</p><pre><code class="language-julia hljs">lc = [0.1^2]
 dfc = TwiceDifferentiableConstraints(con_c!, con_jacobian!, con_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"> * Status: success
@@ -149,9 +149,9 @@ res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-examp
 
  * Work counters
     Seconds run:   0  (vs limit Inf)
-    Iterations:    36
-    f(x) calls:    162
-    ∇f(x) calls:   162
+    Iterations:    34
+    f(x) calls:    158
+    ∇f(x) calls:   158
 </code></pre><p><strong>Note that the algorithm warns that the Initial guess is not an interior point.</strong> <code>IPNewton</code> can often handle this, however, if the initial guess is such that <code>c(x) = u_c</code>, then the algorithm currently fails. We may fix this in the future.</p><h2 id="Multiple-constraints"><a class="docs-heading-anchor" href="#Multiple-constraints">Multiple constraints</a><a id="Multiple-constraints-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-constraints" title="Permalink"></a></h2><p>The following example illustrates how to add an additional constraint. In particular, we add a constraint function</p><p class="math-container">\[   c(x)_2 = x_2\sin(x_1)-x_1\]</p><pre><code class="language-julia hljs">function con2_c!(c, x)
     c[1] = x[1]^2 + x[2]^2     ## First constraint
     c[2] = x[2] * sin(x[1]) - x[1] ## Second constraint
@@ -198,8 +198,8 @@ res = optimize(df, dfc, x0, IPNewton())</code></pre><pre class="documenter-examp
  * Work counters
     Seconds run:   0  (vs limit Inf)
     Iterations:    29
-    f(x) calls:    219
-    ∇f(x) calls:   219
+    f(x) calls:    215
+    ∇f(x) calls:   215
 </code></pre><h2 id="ipnewton_basics-plain-program"><a class="docs-heading-anchor" href="#ipnewton_basics-plain-program">Plain Program</a><a id="ipnewton_basics-plain-program-1"></a><a class="docs-heading-anchor-permalink" href="#ipnewton_basics-plain-program" title="Permalink"></a></h2><p>Below follows a version of the program without any comments. The file is also available here: <a href="../ipnewton_basics.jl">ipnewton_basics.jl</a></p><pre><code class="language-julia hljs">using Optim, NLSolversBase #hide
 import NLSolversBase: clear! #hide
 
@@ -300,4 +300,4 @@ uc = [0.5^2, 0.0];
 dfc = TwiceDifferentiableConstraints(con2_c!, con2_jacobian!, con2_h!, lx, ux, lc, uc)
 res = optimize(df, dfc, x0, IPNewton())
 
-# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../user/tipsandtricks/">« Tips and tricks</a><a class="docs-footer-nextpage" href="../maxlikenlm/">Maximum likelihood estimation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Sunday 2 November 2025 18:57">Sunday 2 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+# This file was generated using Literate.jl, https://github.com/fredrikekre/Literate.jl</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../../user/tipsandtricks/">« Tips and tricks</a><a class="docs-footer-nextpage" href="../maxlikenlm/">Maximum likelihood estimation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.15.0 on <span class="colophon-date" title="Monday 3 November 2025 06:47">Monday 3 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
