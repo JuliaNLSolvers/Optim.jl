@@ -10,9 +10,15 @@ permissions:
 jobs:
   bench:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        julia:
+          - 'lts'
+          # TODO: Enable when https://github.com/MilesCranmer/AirspeedVelocity.jl/issues/113 is fixed
+          # - '1'
     steps:
       - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:
-          julia-version: '1'
+          julia-version: '${{ matrix.julia }}'
           enable-plots: true
           exeflags: '-O3 --threads=auto'
