@@ -1,13 +1,11 @@
 module OptimMOIExt
 
 using Optim
-using Optim.LinearAlgebra
+using Optim.LinearAlgebra: rmul! 
 import MathOptInterface as MOI
 
 function __init__()
-    @static if isdefined(Base, :get_extension)
-        setglobal!(Optim, :Optimizer, Optimizer)
-    end
+    setglobal!(Optim, :Optimizer, Optimizer)
 end
 
 mutable struct Optimizer{T} <: MOI.AbstractOptimizer

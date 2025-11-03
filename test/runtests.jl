@@ -344,4 +344,8 @@ end
     @testset "MOI wrapper" begin
         include("MOI_wrapper.jl")
     end
+
+    @testset "QA" begin
+        include("qa.jl")
+    end
 end

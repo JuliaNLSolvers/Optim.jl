@@ -193,7 +193,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
-        f.F = Base.minimum(state.score)
+        f.F = minimum(state.score)
     end
     f.F = housekeeping!(
         state.score,

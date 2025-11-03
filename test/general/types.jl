@@ -1,6 +1,3 @@
-using Compat
-import Compat.String
-
 @testset "Types" begin
     solver = NelderMead()
     T = typeof(solver)
