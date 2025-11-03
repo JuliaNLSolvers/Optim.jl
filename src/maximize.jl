@@ -79,12 +79,7 @@ function maximize(
     MaximizationWrapper(optimize(fmax, gmax, hmax, x0, method, options))
 end
 
-minimum(r::MaximizationWrapper) = throw(MethodError())
-maximizer(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) =
-    throw(MethodError())
 maximizer(r::MaximizationWrapper) = minimizer(res(r))
-maximum(r::Union{UnivariateOptimizationResults,MultivariateOptimizationResults}) =
-    throw(MethodError())
 maximum(r::MaximizationWrapper) = -minimum(res(r))
 Base.summary(io::IO, r::MaximizationWrapper) = summary(io, res(r))
 
@@ -102,6 +97,7 @@ for api_method in (
     :x_converged,
     :x_abschange,
     :g_tol,
+    :g_abstol,
     :g_converged,
     :g_residual,
     :f_tol,
@@ -134,47 +130,5 @@ function Base.show(io::IO, r::MaximizationWrapper{<:UnivariateOptimizationResult
     return
 end
 
-function Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResults})
-    take = Iterators.take
 
-    println(io, "Results of Optimization Algorithm")
-    print(io, " * Algorithm: ")
-    summary(io, r.res)
-    println(io)
-
-    if length(join(initial_state(r), ",")) < 40
-        @printf io " * Starting Point: [%s]\n" join(initial_state(r), ",")
-    else
-        @printf io " * Starting Point: [%s, ...]\n" join(take(initial_state(r), 2), ",")
-    end
-    if length(join(maximizer(r), ",")) < 40
-        @printf io " * Maximizer: [%s]\n" join(maximizer(r), ",")
-    else
-        @printf io " * Maximizer: [%s, ...]\n" join(take(maximizer(r), 2), ",")
-    end
-    @printf io " * Maximum: %e\n" maximum(r)
-    @printf io " * Iterations: %d\n" iterations(r)
-    @printf io " * Convergence: %s\n" converged(r)
-    if isa(r.res.method, NelderMead)
-        @printf io "   *  √(Σ(yᵢ-ȳ)²)/n < %.1e: %s\n" g_abstol(r) g_converged(r)
-    else
-        @printf io "   * |x - x'| ≤ %.1e: %s \n" x_reltol(r) x_converged(r)
-        @printf io "     |x - x'| = %.2e \n" x_abschange(r)
-        @printf io "   * |f(x) - f(x')| ≤ %.1e |f(x)|: %s\n" f_reltol(r) f_converged(r)
-        @printf io "     |f(x) - f(x')| = %.2e |f(x)|\n" f_relchange(r)
-        @printf io "   * |g(x)| ≤ %.1e: %s \n" g_abstol(r) g_converged(r)
-        @printf io "     |g(x)| = %.2e \n" g_residual(r)
-        @printf io "   * Stopped by an decreasing objective: %s\n" (
-            f_increased(r) && !iteration_limit_reached(r)
-        )
-    end
-    @printf io "   * Reached Maximum Number of Iterations: %s\n" iteration_limit_reached(r)
-    @printf io " * Objective Calls: %d" f_calls(r)
-    if !(isa(r.res.method, NelderMead) || isa(r.res.method, SimulatedAnnealing))
-        @printf io "\n * Gradient Calls: %d" g_calls(r)
-    end
-    if isa(r.res.method, Newton) || isa(r.res.method, NewtonTrustRegion)
-        @printf io "\n * Hessian Calls: %d" h_calls(r)
-    end
-    return
-end
+Base.show(io::IO, r::MaximizationWrapper{<:MultivariateOptimizationResults}) = show(io, r.res)

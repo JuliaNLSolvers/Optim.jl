@@ -51,6 +51,24 @@
     end
 
     @testset "IPNewton computations" begin
+
+        ## Utilities for representing total state as single vector
+        # TODO: Most of these seem to be unused (IPNewton)?
+        function pack_vec(x, b::Optim.BarrierStateVars)
+            n = length(x)
+            for fn in propertynames(b)
+                n += length(getfield(b, fn))
+            end
+            vec = Array{eltype(x)}(undef, n)
+            pack_vec!(vec, x, b)
+        end
+
+        function pack_vec!(vec, x, k::Int)
+            for i = 1:length(x)
+                vec[k+=1] = x[i]
+            end
+            k
+        end
         # Compare hand-computed gradient against that from automatic differentiation
         function check_autodiff(d, bounds, x, cfun::Function, bstate, μ)
             c = cfun(x)

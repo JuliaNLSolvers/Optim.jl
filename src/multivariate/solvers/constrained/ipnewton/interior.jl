@@ -576,6 +576,18 @@ end
 
 # TODO: do we need lagrangian_vec? Maybe for automatic differentiation?
 ## Computation of Lagrangian and derivatives when passing all parameters as a single vector
+# FIXME: Seems unused
+
+#=
+function unpack_vec!(x, b::BarrierStateVars, vec::Vector)
+    k = unpack_vec!(x, vec, 0)
+    for fn in fieldnames(b)
+        k = unpack_vec!(getfield(b, fn), vec, k)
+    end
+    k == length(vec) ||
+        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
+    x, b
+end
 function lagrangian_vec(
     p,
     d,
@@ -589,6 +601,7 @@ function lagrangian_vec(
     f_x, L_xsλ, ev = lagrangian(d, bounds, x, c, bstate, μ)
     L_xsλ
 end
+ #FIXME: Seems unused
 function lagrangian_vec(
     p,
     d,
@@ -603,6 +616,7 @@ function lagrangian_vec(
     f_x, L_xsλ, ev = lagrangian(d, bounds, x, c(x), bstate, μ)
     L_xsλ
 end
+ #FIXME: Seems unused
 function lagrangian_fgvec!(
     p,
     storage,
@@ -621,6 +635,7 @@ function lagrangian_fgvec!(
     pack_vec!(storage, gx, bgrad)
     L_xsλ
 end
+=#
 
 ## for line searches that don't use the gradient along the line
 function lagrangian_linefunc(αs, d, constraints, state)
@@ -1043,41 +1058,6 @@ isinterior(constraints::AbstractConstraints, x, c) = isinterior(constraints.boun
 isinterior(constraints::Nothing, state::AbstractBarrierState) = true
 isinterior(constraints::Nothing, x) = true
 
-## Utilities for representing total state as single vector
-# TODO: Most of these seem to be unused (IPNewton)?
-function pack_vec(x, b::BarrierStateVars)
-    n = length(x)
-    for fn in fieldnames(b)
-        n += length(getfield(b, fn))
-    end
-    vec = Array{eltype(x)}(undef, n)
-    pack_vec!(vec, x, b)
-end
-
-function pack_vec!(vec, x, b::BarrierStateVars)
-    k = pack_vec!(vec, x, 0)
-    for fn in fieldnames(b)
-        k = pack_vec!(vec, getfield(b, fn), k)
-    end
-    k == length(vec) ||
-        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
-    vec
-end
-function pack_vec!(vec, x, k::Int)
-    for i = 1:length(x)
-        vec[k+=1] = x[i]
-    end
-    k
-end
-function unpack_vec!(x, b::BarrierStateVars, vec::Vector)
-    k = unpack_vec!(x, vec, 0)
-    for fn in fieldnames(b)
-        k = unpack_vec!(getfield(b, fn), vec, k)
-    end
-    k == length(vec) ||
-        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
-    x, b
-end
 function unpack_vec!(x, vec::Vector, k::Int)
     for i = 1:length(x)
         x[i] = vec[k+=1]
