@@ -994,22 +994,21 @@ specify bounds `lx`, `ux`, `lc`, and `uc`. `x` is feasible if
 
 for all possible `i`.
 """
-function isfeasible(bounds::ConstraintBounds, x, c)
-    isf = true
-    for (i, j) in enumerate(bounds.eqx)
-        isf &= x[j] == bounds.valx[i]
-    end
-    for (i, j) in enumerate(bounds.ineqx)
-        isf &= bounds.σx[i] * (x[j] - bounds.bx[i]) >= 0
-    end
-    for (i, j) in enumerate(bounds.eqc)
-        isf &= c[j] == bounds.valc[i]
-    end
-    for (i, j) in enumerate(bounds.ineqc)
-        isf &= bounds.σc[i] * (c[j] - bounds.bc[i]) >= 0
-    end
-    isf
+function isfeasible(bounds::ConstraintBounds, x::Vector{<:Real}, c::Vector{<:Real})
+    return _isfeasible(x, bounds.eqx, bounds.valx, bounds.ineqx, bounds.σx, bounds.bx) &&
+        _isfeasible(c, bounds.eqc, bounds.valc, bounds.ineqc, bounds.σc, bounds.bc)
 end
+function _isfeasible(x::Vector{<:Real}, eqx::Vector{Int}, valx::Vector{<:Real}, ineqx::Vector{Int}, σx::Vector{Int8}, bx::Vector{<:Real})
+    for (i, v) in zip(eqx, valx)
+        x[i] == v || return false
+    end
+    for (i, σ, b) in zip(ineqx, σx, bx)
+        y = x[i] - b
+        iszero(y) || sign(y) == σ || return false
+    end
+    return true
+end
+
 isfeasible(constraints, state::AbstractBarrierState) =
     isfeasible(constraints, state.x, state.constraints_c)
 function isfeasible(constraints, x)
@@ -1037,16 +1036,17 @@ given the `constraints` which specify bounds `lx`, `ux`, `lc`, and
 
 for all possible `i`.
 """
-function isinterior(bounds::ConstraintBounds, x, c)
-    isi = true
-    for (i, j) in enumerate(bounds.ineqx)
-        isi &= bounds.σx[i] * (x[j] - bounds.bx[i]) > 0
-    end
-    for (i, j) in enumerate(bounds.ineqc)
-        isi &= bounds.σc[i] * (c[j] - bounds.bc[i]) > 0
-    end
-    isi
+function isinterior(bounds::ConstraintBounds, x::Vector{<:Real}, c::Vector{<:Real})
+    return _isinterior(x, bounds.ineqx, bounds.σx, bounds.bx) &&
+        _isinterior(c, bounds.ineqc, bounds.σc, bounds.bc)
 end
+function _isinterior(x::Vector{<:Real}, ineqx::Vector{Int}, σx::Vector{Int8}, bx::Vector{<:Real})
+    for (i, σ, b) in zip(ineqx, σx, bx)
+        sign(x[i] - b) == σ || return false
+    end
+    return true
+end
+
 isinterior(constraints, state::AbstractBarrierState) =
     isinterior(constraints, state.x, state.constraints_c)
 function isinterior(constraints, x)
