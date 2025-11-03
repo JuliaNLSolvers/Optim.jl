@@ -101,7 +101,6 @@ Base.isempty(bstate::BarrierStateVars) =
     isempty(bstate.λcE)
 
 Base.eltype(::Type{BarrierStateVars{T}}) where {T} = T
-Base.eltype(sv::BarrierStateVars) = eltype(typeof(sv))
 
 function Base.show(io::IO, b::BarrierStateVars)
     print(io, "BarrierStateVars{$(eltype(b))}:")
