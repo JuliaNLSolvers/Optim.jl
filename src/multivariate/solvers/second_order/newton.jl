@@ -1,7 +1,7 @@
 struct Newton{IL,L,S} <: SecondOrderOptimizer
     alphaguess!::IL
     linesearch!::L
-    solve::S  # Function that takes (H, g) -> s where H*s = -g
+    solve!::S   # mutating solver: (d, state, method) i.e., writes state.s (and maybe state.F)
 end
 
 
@@ -27,16 +27,46 @@ Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
 """
 function Newton(;
     alphaguess = LineSearches.InitialStatic(),
-    linesearch = LineSearches.HagerZhang(), 
-    solve = default_newton_solve
+    linesearch = LineSearches.HagerZhang(),
+    solve = default_newton_solve!
 )
     Newton(_alphaguess(alphaguess), linesearch, solve)
 end
 
+mutable struct NewtonState{Tx,T,F<:Cholesky} <: AbstractOptimizerState
+    x::Tx
+    x_previous::Tx  
+    f_x_previous::T
+    F::F
+    s::Tx
+    @add_linesearch_fields()
+end
+
+function initial_state(method::Newton, options, d, initial_x)
+    T = eltype(initial_x)
+
+    value_gradient!!(d, initial_x)
+    hessian!!(d, initial_x)
+
+    NewtonState(
+        copy(initial_x),                  # x
+        copy(initial_x),                  # x_previous
+        T(NaN),                           # f_x_previous
+        Cholesky(similar(d.H, T, 0, 0),   # F
+                :U, 0),
+        similar(initial_x),               # s
+        @initial_linesearch()...,
+    )
+end
+
 # Default solver that handles common matrix types intelligently
-function default_newton_solve(H, g)
+function default_newton_solve!(d, state::NewtonState, method::Newton)
+    H = NLSolversBase.hessian(d)
+    g = gradient(d)
+    T = eltype(state.x)
+
     if H isa AbstractSparseMatrix
-        return -(H \ g)
+        state.s .= -(H \ convert(Vector{T}, gradient(d)))
     else
         # Use PositiveFactorizations for robustness on dense matrices
          # Search direction is always the negative gradient divided by
@@ -44,49 +74,24 @@ function default_newton_solve(H, g)
          # represented by H. It deviates from the usual "add a scaled
          # identity matrix" version of the modified Newton method. More
          # information can be found in the discussion at issue #153.
-        F = cholesky(Positive, H)
-        return -(F \ g)
+         state.F = cholesky!(Positive, H)
+         if g isa Array
+            ldiv!(state.s, state.F, -g)
+         else
+            gv = convert(Vector{T}, length(g))
+            copyto!(gv, -g)
+            copyto!(state.s, state.F \ gv)
+         end
     end
 end
 
-Base.summary(::Newton) = "Newton's Method"
-
-mutable struct NewtonState{Tx,T} <: AbstractOptimizerState
-    x::Tx
-    x_previous::Tx  
-    f_x_previous::T
-    s::Tx
-    @add_linesearch_fields()
-end
-
-function initial_state(method::Newton, options, d, initial_x)
-    T = eltype(initial_x)
-    
-    value_gradient!!(d, initial_x)
-    hessian!!(d, initial_x)
-    
-    NewtonState(
-        copy(initial_x),     # Current state
-        copy(initial_x),     # Previous state
-        T(NaN),             # Previous function value  
-        similar(initial_x), # Search direction
-        @initial_linesearch()...,
-    )
-end
+Base.summary(io::IO, ::Newton) = print(io, "Newton's Method")
 
 function update_state!(d, state::NewtonState, method::Newton)
-    H = NLSolversBase.hessian(d)
-    g = gradient(d)
-    
-    # Clean and simple - just call the user's solve function
-    state.s .= method.solve(H, g)
-    
-    # Perform line search
+    method.solve!(d, state, method)  # should mutate state.s (and maybe state.F)
+
     lssuccess = perform_linesearch!(state, method, d)
-    
-    # Update position
     @. state.x = state.x + state.alpha * state.s
-    
     return !lssuccess
 end
 

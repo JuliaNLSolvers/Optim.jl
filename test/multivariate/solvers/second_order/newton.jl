@@ -62,31 +62,39 @@
     @testset "Optim problems" begin
         run_optim_tests(Newton(); skip = ("Trigonometric",), show_name = debug_printing)
     end
+
+    wrap_solver(Hg_solver) = (d, state, method) -> begin
+        H = NLSolversBase.hessian(d)
+        g = NLSolversBase.gradient(d)
+        state.s .= Hg_solver(H, g)
+        nothing
+    end
     
     @testset "Custom Solvers" begin
+
         # Custom solver using LU decomposition
         custom_solve(H, g) = -(lu(H) \ g)
-        
-        result = optimize(f_2, g!_2, h!_2, [10.0, 20.0], Newton(solve=custom_solve))
+
+        result = optimize(f_2, g!_2, h!_2, [10.0, 20.0], Newton(solve=wrap_solver(custom_solve)))
         @test Optim.g_converged(result)
         @test norm(Optim.minimizer(result) - [0.0, 0.0]) < 0.01
         
         # Custom solver using QR decomposition
         qr_solve(H, g) = -(qr(H) \ g)
-        result2 = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=qr_solve))
+        result2 = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=wrap_solver(qr_solve)))
         @test Optim.g_converged(result2)
         @test norm(Optim.minimizer(result2) - [0.0, 0.0]) < 0.01
 
         # Simple solver
         simple_solve(H, g) = -(H \ g)
-        result3 = optimize(f_2, g!_2, h!_2, [3.0, 4.0], Newton(solve=simple_solve))
+        result3 = optimize(f_2, g!_2, h!_2, [3.0, 4.0], Newton(solve=wrap_solver(simple_solve)))
         @test Optim.g_converged(result3)
         @test norm(Optim.minimizer(result3) - [0.0, 0.0]) < 0.01
 
         # Solver with specialized matrx types--can add more late i.e., BlockBanded, Block, etc. for right now, only testing StaticArrays
         using StaticArrays
         static_solve(H, g) = -(SMatrix{2, 2}(H) \ SVector{2}(g))
-        result_static = optimize(f_2, g!_2, h!_2, [6.0, 7.0], Newton(solve=static_solve))
+        result_static = optimize(f_2, g!_2, h!_2, [6.0, 7.0], Newton(solve=wrap_solver(static_solve)))
         @test Optim.g_converged(result_static)
         @test norm(Optim.minimizer(result_static) - [0.0, 0.0]) < 0.01
     end
@@ -129,7 +137,7 @@
         custom_solve(H::BlockArray, g) = -(Matrix(H) \ g)
 
         td = TwiceDifferentiable(f, g!, h!, x0, initial_f, initial_g, H_block)
-        result = optimize(td, x0, Newton(solve=custom_solve))
+        result = optimize(td, x0, Newton(solve=wrap_solver(custom_solve)))
 
         @test Optim.g_converged(result)
         @test typeof(NLSolversBase.hessian(td)) <: BlockArray
@@ -142,7 +150,7 @@
         
         # Test sparse solver
         sparse_solve(H, g) = -(sparse(H) \ g)
-        result_sparse = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=sparse_solve))
+        result_sparse = optimize(f_2, g!_2, h!_2, [5.0, 5.0], Newton(solve=wrap_solver(sparse_solve)))
         @test Optim.g_converged(result_sparse)
         @test norm(Optim.minimizer(result_sparse) - [0.0, 0.0]) < 0.01
         
@@ -299,7 +307,7 @@
             println("  Iterations: ", Optim.iterations(res1))
 
             println("Block Thomas Newton:")
-            res2 = optimize(f, g, h, copy(x0), Newton(solve = (H, g) -> block_thomas_solve(H, g, D)), Optim.Options(show_trace=true))
+            res2 = optimize(f, g, h, copy(x0), Newton(solve = wrap_solver((H, g) -> block_thomas_solve(H, g, D)), Optim.Options(show_trace=true)))
             println("  Iterations: ", Optim.iterations(res2))
 
             @test Optim.g_converged(res1)
