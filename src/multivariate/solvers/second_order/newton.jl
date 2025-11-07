@@ -76,7 +76,8 @@ function default_newton_solve!(d, state::NewtonState, method::Newton)
          # information can be found in the discussion at issue #153.
          state.F = cholesky!(Positive, H)
          if g isa StridedArray
-            ldiv!(state.s, state.F, -g)
+            ldiv!(state.s, state.F, g)
+            state.s .= .-state.s
          else
             gv = Vector{T}(undef, length(g))
             gv .= .-g
