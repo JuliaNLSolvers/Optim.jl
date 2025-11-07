@@ -66,7 +66,7 @@ function default_newton_solve!(d, state::NewtonState, method::Newton)
     T = eltype(state.x)
 
     if H isa AbstractSparseMatrix
-        state.s .= -(H \ convert(Vector{T}, gradient(d)))
+        state.s .= .-(H \ convert(Vector{T}, gradient(d)))
     else
         # Use PositiveFactorizations for robustness on dense matrices
          # Search direction is always the negative gradient divided by
