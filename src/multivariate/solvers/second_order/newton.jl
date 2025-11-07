@@ -78,8 +78,8 @@ function default_newton_solve!(d, state::NewtonState, method::Newton)
          if g isa StridedArray
             ldiv!(state.s, state.F, -g)
          else
-            gv = convert(Vector{T}, length(g))
-            copyto!(gv, -g)
+            gv = Vector{T}(undef, length(g))
+            gv .= .-g
             copyto!(state.s, state.F \ gv)
          end
     end
