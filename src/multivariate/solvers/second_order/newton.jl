@@ -75,7 +75,7 @@ function default_newton_solve!(d, state::NewtonState, method::Newton)
          # identity matrix" version of the modified Newton method. More
          # information can be found in the discussion at issue #153.
          state.F = cholesky!(Positive, H)
-         if g isa Array
+         if g isa StridedArray
             ldiv!(state.s, state.F, -g)
          else
             gv = convert(Vector{T}, length(g))
