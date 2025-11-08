@@ -29,8 +29,18 @@ struct OACCEL{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
 end
 
 
-Base.summary(s::NGMRES) = "Nonlinear GMRES preconditioned with $(summary(s.nlprecon))"
-Base.summary(s::OACCEL) = "O-ACCEL preconditioned with $(summary(s.nlprecon))"
+function Base.summary(io::IO, s::NGMRES)
+    print(io, "Nonlinear GMRES preconditioned with ")
+    summary(io, s.nlprecon)
+    print(io, ")")
+    return
+end
+function Base.summary(io::IO, s::OACCEL)
+    print(io, "O-ACCEL preconditioned with ")
+    summary(io, s.nlprecon)
+    print(io, ")")
+    return
+end
 
 """
 # N-GMRES
@@ -213,7 +223,7 @@ end
 const ngmres_oaccel_warned = Ref{Bool}(false)
 function initial_state(
     method::AbstractNGMRES,
-    options,
+    options::Options,
     d,
     initial_x::AbstractArray{eTx},
 ) where {eTx}
@@ -442,10 +452,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::NGMRESState,
+    iteration::Integer,
     method::AbstractNGMRES,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()

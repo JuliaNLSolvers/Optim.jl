@@ -39,7 +39,7 @@ struct AdaMax{Tα,T,Tm} <: FirstOrderOptimizer
 end
 AdaMax(; alpha = 0.002, beta_mean = 0.9, beta_var = 0.999, epsilon = sqrt(eps(Float64))) =
     AdaMax(alpha, beta_mean, beta_var, epsilon, Flat())
-Base.summary(::AdaMax) = "AdaMax"
+Base.summary(io::IO, ::AdaMax) = print(io, "AdaMax")
 function default_options(method::AdaMax)
     (; allow_f_increases = true, iterations = 10_000)
 end
@@ -67,7 +67,7 @@ function _get_init_params(method::AdaMax)
     method.α(1), method.β₁, method.β₂
 end
 
-function initial_state(method::AdaMax, options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::AdaMax, options::Options, d, initial_x::AbstractArray{T}) where {T}
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
@@ -115,6 +115,6 @@ function update_state!(d, state::AdaMaxState{T}, method::AdaMax) where {T}
     false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::AdaMax, options, curr_time = time())
+function trace!(tr, d, state::AdaMaxState, iteration::Integer, method::AdaMax, options::Options, curr_time = time())
     common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

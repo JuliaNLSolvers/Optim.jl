@@ -16,7 +16,7 @@ https://en.wikipedia.org/wiki/Golden-section_search
 """
 struct GoldenSection <: UnivariateOptimizer end
 
-Base.summary(::GoldenSection) = "Golden Section Search"
+Base.summary(io::IO, ::GoldenSection) = print(io, "Golden Section Search")
 
 function optimize(
     f,
@@ -154,7 +154,7 @@ function optimize(
 end
 
 
-function trace!(tr, d, state, iteration, method::GoldenSection, options, curr_time = time())
+function trace!(tr, d, state, iteration::Integer, method::GoldenSection, options::NamedTuple, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     dt["minimizer"] = state.new_minimizer

@@ -40,7 +40,7 @@
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [5.0]) < 0.01
-    @test summary(results) == "Gradient Descent"
+    test_summary(results, "Gradient Descent")
 
     function f_gd_2(x)
         eta = 0.9

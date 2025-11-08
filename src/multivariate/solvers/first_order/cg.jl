@@ -51,7 +51,7 @@ struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::ConjugateGradient) = "Conjugate Gradient"
+Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 
 """
 # Conjugate Gradient Descent
@@ -110,10 +110,10 @@ function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
     if cg.P !== nothing
         project_tangent!(cg.manifold, cgs.pg, x)
     end
-    cgs.s .= -cgs.pg
+    cgs.s .= .-cgs.pg
     cgs.f_x_previous = typeof(cgs.f_x_previous)(NaN)
 end
-function initial_state(method::ConjugateGradient, options, d, initial_x)
+function initial_state(method::ConjugateGradient, options::Options, d, initial_x)
     T = eltype(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
@@ -184,12 +184,13 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     # extra copy, which is probably minimal overhead.
     # -----------------
     # also updates P for the preconditioning step below
+    _apply_precondprep(method, state.x)
     dPd = _inverse_precondition(method, state)
     etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
     state.y .= gradient(d) .- state.g_previous
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
-    # P already updated in _inverse_precondition above
+    # P already updated in _apply_precondprep above
     __precondition!(state.pg, method.P, gradient(d))
 
     state.py .= state.pg .- state.py

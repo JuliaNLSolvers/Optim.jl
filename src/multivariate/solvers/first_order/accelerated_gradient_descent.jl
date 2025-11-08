@@ -12,7 +12,7 @@ struct AcceleratedGradientDescent{IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
+Base.summary(io::IO, ::AcceleratedGradientDescent) = print(io, "Accelerated Gradient Descent")
 
 function AcceleratedGradientDescent(;
     alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
@@ -88,10 +88,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::AcceleratedGradientDescentState,
+    iteration::Integer,
     method::AcceleratedGradientDescent,
-    options,
+    options::Options,
     curr_time = time(),
 )
     common_trace!(tr, d, state, iteration, method, options, curr_time)

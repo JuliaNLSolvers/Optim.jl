@@ -40,7 +40,7 @@ end
 # could use epsilon = T->sqrt(eps(T)) and input the promoted type
 Adam(; alpha = 0.0001, beta_mean = 0.9, beta_var = 0.999, epsilon = 1e-8) =
     Adam(alpha, beta_mean, beta_var, epsilon, Flat())
-Base.summary(::Adam) = "Adam"
+Base.summary(io::IO, ::Adam) = print(io, "Adam")
 function default_options(method::Adam)
     (; allow_f_increases = true, iterations = 10_000)
 end
@@ -67,7 +67,7 @@ function _get_init_params(method::Adam)
     method.α(1), method.β₁, method.β₂
 end
 
-function initial_state(method::Adam, options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::Adam, options::Options, d, initial_x::AbstractArray{T}) where {T}
     initial_x = copy(initial_x)
 
     value_gradient!!(d, initial_x)
@@ -122,6 +122,6 @@ function update_state!(d, state::AdamState{T}, method::Adam) where {T}
     false # break on linesearch error
 end
 
-function trace!(tr, d, state, iteration, method::Adam, options, curr_time = time())
+function trace!(tr, d, state::AdamState, iteration::Integer, method::Adam, options::Options, curr_time = time())
     common_trace!(tr, d, state, iteration, method, options, curr_time)
 end

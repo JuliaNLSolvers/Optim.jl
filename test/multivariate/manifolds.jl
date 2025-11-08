@@ -17,7 +17,7 @@ using StableRNGs
 
         # AcceleratedGradientDescent should be compatible also, but I haven't been able to make it converge
         for ls in
-            (Optim.BackTracking, Optim.HagerZhang, Optim.StrongWolfe, Optim.MoreThuente)
+            (LineSearches.BackTracking, LineSearches.HagerZhang, LineSearches.StrongWolfe, LineSearches.MoreThuente)
             for method in (
                 Optim.GradientDescent,
                 Optim.ConjugateGradient,

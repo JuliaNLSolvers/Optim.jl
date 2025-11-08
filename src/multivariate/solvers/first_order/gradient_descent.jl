@@ -6,7 +6,7 @@ struct GradientDescent{IL,L,T,Tprep} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::GradientDescent) = "Gradient Descent"
+Base.summary(io::IO, ::GradientDescent) = print(io, "Gradient Descent")
 
 """
 # Gradient Descent
@@ -97,10 +97,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::GradientDescentState,
+    iteration::Integer,
     method::GradientDescent,
-    options,
+    options::Options,
     curr_time = time(),
 )
     common_trace!(tr, d, state, iteration, method, options, curr_time)

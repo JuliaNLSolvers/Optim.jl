@@ -51,6 +51,24 @@
     end
 
     @testset "IPNewton computations" begin
+
+        ## Utilities for representing total state as single vector
+        # TODO: Most of these seem to be unused (IPNewton)?
+        function pack_vec(x, b::Optim.BarrierStateVars)
+            n = length(x)
+            for fn in propertynames(b)
+                n += length(getfield(b, fn))
+            end
+            vec = Array{eltype(x)}(undef, n)
+            pack_vec!(vec, x, b)
+        end
+
+        function pack_vec!(vec, x, k::Int)
+            for i = 1:length(x)
+                vec[k+=1] = x[i]
+            end
+            k
+        end
         # Compare hand-computed gradient against that from automatic differentiation
         function check_autodiff(d, bounds, x, cfun::Function, bstate, μ)
             c = cfun(x)
@@ -671,7 +689,7 @@
             minval = NLSolversBase.value(df, prob.solutions)
 
             results = optimize(df, constraints, prob.initial_x, method, options)
-            @test isa(summary(results), String)
+            test_summary(results)
             @test Optim.converged(results)
             @test Optim.minimum(results) < minval + sqrt(eps(minval))
 
@@ -686,7 +704,7 @@
 
             results =
                 optimize(MVP.objective(prob), constraints, prob.initial_x, method, options)
-            @test isa(summary(results), String)
+            test_summary(results)
             @test Optim.converged(results)
             @test Optim.minimum(results) < minval + sqrt(eps(minval))
         end
@@ -714,7 +732,7 @@
         minval = NLSolversBase.value(df, xsol)
 
         results = optimize(df, constraints, [12, 14.0], method, options)
-        @test isa(Optim.summary(results), String)
+        test_summary(results)
         @test Optim.converged(results)
         @test Optim.minimum(results) < minval + sqrt(eps(minval))
 

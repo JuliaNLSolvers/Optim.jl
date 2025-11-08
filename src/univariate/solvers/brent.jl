@@ -18,7 +18,7 @@ R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover editio
 """
 struct Brent <: UnivariateOptimizer end
 
-Base.summary(::Brent) = "Brent's Method"
+Base.summary(io::IO, ::Brent) = print(io, "Brent's Method")
 
 function optimize(
     f,
@@ -216,7 +216,7 @@ function optimize(
 end
 
 
-function trace!(tr, d, state, iteration, method::Brent, options, curr_time = time())
+function trace!(tr, d::Nothing, state::NamedTuple, iteration::Integer, method::Brent, options::NamedTuple, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     dt["minimizer"] = state.new_minimizer

@@ -1,7 +1,7 @@
 function assess_convergence(state::IPNewtonState, d, options::Options)
     # We use the whole bstate-gradient `bgrad`
     bgrad = state.bgrad
-    Optim.assess_convergence(
+    assess_convergence(
         state.x,
         state.x_previous,
         state.L,

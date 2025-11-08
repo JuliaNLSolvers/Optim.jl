@@ -36,7 +36,7 @@ reaches the maximum number of iterations set in Optim.Options(iterations=x)`.
 ParticleSwarm(; lower = [], upper = [], n_particles = 0) =
     ParticleSwarm(lower, upper, n_particles)
 
-Base.summary(::ParticleSwarm) = "Particle Swarm"
+Base.summary(io::IO, ::ParticleSwarm) = print(io, "Particle Swarm")
 
 mutable struct ParticleSwarmState{Tx,T} <: ZerothOrderState
     x::Tx
@@ -193,7 +193,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
-        f.F = Base.minimum(state.score)
+        f.F = minimum(state.score)
     end
     f.F = housekeeping!(
         state.score,

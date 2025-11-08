@@ -5,7 +5,7 @@ struct IPNewton{F,Tμ<:Union{Symbol,Number}} <: IPOptimizer{F}
     # TODO: μ0, and show_linesearch were originally in options
 end
 
-Base.summary(::IPNewton) = "Interior Point Newton"
+Base.summary(io::IO, ::IPNewton) = print(io, "Interior Point Newton")
 
 promote_objtype(method::IPNewton, x, autodiff, inplace::Bool, f::TwiceDifferentiable) = f
 promote_objtype(method::IPNewton, x, autodiff, inplace::Bool, f) =
@@ -80,7 +80,7 @@ mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     constr_c::Vector{T}   # value of the user-supplied constraints at x
     constr_J::Matrix{T}   # value of the user-supplied Jacobian at x
     ev::T                 # equality violation, ∑_i λ_Ei (c*_i - c_i)
-    Optim.@add_linesearch_fields() # x_ls and alpha
+    @add_linesearch_fields() # x_ls and alpha
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
     Htilde::Any               # Positive Cholesky factorization of H from PositiveFactorizations.jl
@@ -121,7 +121,7 @@ end
 
 function initial_state(
     method::IPNewton,
-    options,
+    options::Options,
     d::TwiceDifferentiable,
     constraints::TwiceDifferentiableConstraints,
     initial_x::AbstractArray{T},
@@ -179,7 +179,7 @@ function initial_state(
         constr_c,
         constr_J,
         T(NaN),
-        Optim.@initial_linesearch()..., # Maintain a cache for line search results in state.lsr
+        @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
         gtilde,
         0,
@@ -270,7 +270,7 @@ function update_state!(
     constraints::TwiceDifferentiableConstraints,
     state::IPNewtonState{T},
     method::IPNewton,
-    options,
+    options::Options,
 ) where {T}
     state.f_x_previous, state.L_previous = state.f_x, state.L
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
@@ -331,7 +331,7 @@ end
 function solve_step!(
     state::IPNewtonState,
     constraints,
-    options,
+    options::Options,
     show_linesearch::Bool = false,
 )
     x, s, μ, bounds = state.x, state.s, state.μ, constraints.bounds
@@ -457,3 +457,38 @@ function gf(bounds::ConstraintBounds, state)
     [gtildeμ; state.bgrad.λxE; state.bgrad.λcE]
 end
 gf(constraints, state) = gf(constraints.bounds, state)
+
+function optimize(
+    f,
+    g,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    method::IPNewton,
+    options::Options = Options(; default_options(method)...),
+)
+    d = TwiceDifferentiable(f, g, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
+function optimize(
+    f,
+    g,
+    h,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    method::IPNewton = IPNewton(),
+    options::Options = Options(; default_options(method)...),
+)
+    d = TwiceDifferentiable(f, g, h, initial_x)
+    optimize(d, lower, upper, initial_x, method, options)
+end
+function optimize(
+    d::TwiceDifferentiable,
+    lower::AbstractArray,
+    upper::AbstractArray,
+    initial_x::AbstractArray,
+    options::Options = Options(; default_options(IPNewton())...),
+)
+    optimize(d, lower, upper, initial_x, IPNewton(), options)
+end

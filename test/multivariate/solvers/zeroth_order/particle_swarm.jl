@@ -42,12 +42,12 @@
         ParticleSwarm(lower, upper, n_particles),
         options,
     )
-    @test summary(res) == "Particle Swarm"
+    test_summary(res, "Particle Swarm")
     res = Optim.optimize(
         rosenbrock_s,
         initial_x,
         ParticleSwarm(n_particles = n_particles),
         options,
     )
-    @test summary(res) == "Particle Swarm"
+    test_summary(res, "Particle Swarm")
 end

@@ -9,7 +9,11 @@ abstract type AbstractOptimizerState end
 abstract type ZerothOrderState <: AbstractOptimizerState end
 
 """
-Configurable options with defaults (values 0 and NaN indicate unlimited):
+    Options(; opts...)
+
+Specify configurable optimizer options `opts...`. Unspecified options are set to the default
+values below (values 0 and NaN indicate unlimited):
+
 ```
 x_abstol::Real = 0.0,
 x_reltol::Real = 0.0,
@@ -37,7 +41,19 @@ show_every::Int = 1,
 callback = nothing,
 time_limit = NaN
 ```
-See http://julianlsolvers.github.io/Optim.jl/stable/#user/config/
+
+It is also possible to pass a previously defined `Options` argument as the first argument,
+i.e., as:
+
+```jl
+    Options(inherit_options; opts...)
+```
+
+Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
+can be used to modify a subset of options in a previously defined `Options` variable.
+
+For more information on individual options, see the documentaton at
+http://julianlsolvers.github.io/Optim.jl/stable/#user/config/.
 """
 struct Options{T, TCallback}
     x_abstol::T
@@ -172,10 +188,15 @@ function Options(;
     )
 end
 
+function Options(o::Options; kws...)
+    o_nt = (; (name => getproperty(o, name) for name in propertynames(o))...)
+    return Options(; o_nt..., kws...)
+end
+
 _show_helper(output, k, v) = output * "$k = $v, "
 _show_helper(output, k, ::Nothing) = output
 
-function Base.show(io::IO, o::Optim.Options)
+function Base.show(io::IO, o::Options)
     content = foldl(fieldnames(typeof(o)), init = "Optim.Options(") do output, k
         v = getfield(o, k)
         return _show_helper(output, k, v)
@@ -184,7 +205,7 @@ function Base.show(io::IO, o::Optim.Options)
     println(io, ")")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", o::Optim.Options)
+function Base.show(io::IO, ::MIME"text/plain", o::Options)
     for k in fieldnames(typeof(o))
         v = getfield(o, k)
         if v isa Nothing
@@ -214,7 +235,6 @@ end
 
 const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
 
-using EnumX
 "Termination codes for Optim.jl."
 @enumx TerminationCode begin
     "Nelder-Mead simplex converged."
@@ -311,38 +331,32 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
-    take = Iterators.take
-
+    print(io, " * Status: ")
     if converged(r)
-        status_string = "success"
+        print(io, "success")
     else
-        status_string = "failure"
+        print(io, "failure")
     end
     if iteration_limit_reached(r)
-        status_string *= " (reached maximum number of iterations)"
-    end
-    if f_increased(r) && !iteration_limit_reached(r)
-        status_string *= " (objective increased between iterations)"
+        print(io, " (reached maximum number of iterations)")
+    elseif f_increased(r)
+        print(io, " (objective increased between iterations)")
     end
     if isa(r.stopped_by.ls_failed, Bool) && r.stopped_by.ls_failed
-        status_string *= " (line search failed)"
+        print(io, " (line search failed)")
     end
     if time_run(r) > time_limit(r)
-        status_string *= " (exceeded time limit of $(time_limit(r)))"
+        print(io, " (exceeded time limit of ", time_limit(r), ")")
     end
 
-    @printf io " * Status: %s\n\n" status_string
+    println(io, "\n\n * Candidate solution")
+    @printf io "    Final objective value:     %e" minimum(r)
 
-    @printf io " * Candidate solution\n"
-    @printf io "    Final objective value:     %e\n" minimum(r)
-    @printf io "\n"
+    println(io, "\n\n * Found with")
+    print(io, "    Algorithm:     ")
+    summary(io, r)
 
-    @printf io " * Found with\n"
-    @printf io "    Algorithm:     %s\n" summary(r)
-
-
-    @printf io "\n"
-    @printf io " * Convergence measures\n"
+    println(io, "\n\n * Convergence measures")
     if isa(r.method, NelderMead)
         @printf io "    √(Σ(yᵢ-ȳ)²)/n %s %.1e\n" g_converged(r) ? "≤" : "≰" g_tol(r)
     else

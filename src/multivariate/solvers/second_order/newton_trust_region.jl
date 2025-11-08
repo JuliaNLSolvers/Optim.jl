@@ -275,7 +275,7 @@ NewtonTrustRegion(;
     use_fg,
 )
 
-Base.summary(::NewtonTrustRegion) = "Newton's Method (Trust Region)"
+Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
 
 mutable struct NewtonTrustRegionState{Tx,T,G} <: AbstractOptimizerState
     x::Tx
@@ -420,10 +420,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::NewtonTrustRegionState,
+    iteration::Integer,
     method::NewtonTrustRegion,
-    options,
+    options::Options,
     curr_time = time(),
 )
     dt = Dict()

@@ -86,7 +86,7 @@ that only use the gradient in some iterations but not in others.
 Now we call `optimize` with the following syntax:
 
 ```julia
-Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS())
+Optim.optimize(NLSolversBase.only_fg!(fg!), [0., 0.], Optim.LBFGS())
 ```
 
 Similarly, for a computation that requires the Hessian, we can write:
@@ -99,7 +99,7 @@ function fgh!(F, G, H, x)
   nothing
 end
 
-Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.Newton())
+Optim.optimize(NLSolversBase.only_fgh!(fgh!), [0., 0.], Optim.Newton())
 ```
 
 ## Provide gradients

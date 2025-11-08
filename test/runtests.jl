@@ -108,8 +108,25 @@ input_tuple(method::Optim.SecondOrderOptimizer, prob) = (
     (MVP.objective(prob), MVP.gradient(prob), MVP.hessian(prob)),
 )
 
+function test_summary(x, ref::String)
+    @test summary(x) == ref
+    io = IOBuffer()
+    summary(io, x)
+    @test String(take!(io)) == ref
+    return
+end
+function test_summary(x)
+    summary_x = summary(x)
+    @test summary_x isa String
+    io = IOBuffer()
+    summary(io, x)
+    @test String(take!(io)) == summary_x
+    return
+end
+
 function run_optim_tests(
-    method;
+    method,
+    problems = MultivariateProblems.UnconstrainedProblems.examples;
     convergence_exceptions = (),
     minimizer_exceptions = (),
     minimum_exceptions = (),
@@ -122,7 +139,7 @@ function run_optim_tests(
     show_itcalls = false,
 )
     # Loop over unconstrained problems
-    for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
+    for (name, prob) in problems
         if !isfinite(prob.minimum) || !any(isfinite, prob.solutions)
             debug_printing &&
                 println("$name has no registered minimum/minimizer. Skipping ...")
@@ -141,10 +158,10 @@ function run_optim_tests(
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
             dopts = (; dopts..., allow_f_increases = allow_f_increases)
         end
-        options = Optim.Options(
+        options = Optim.Options(; 
             allow_f_increases = allow_f_increases,
             iterations = iters,
-            show_trace = show_trace;
+            show_trace = show_trace,
             dopts...,
         )
 
@@ -158,7 +175,7 @@ function run_optim_tests(
 
                 # Loop over appropriate input combinations of f, g!, and h!
                 results = Optim.optimize(input..., prob.initial_x, method, options)
-                @test isa(summary(results), String)
+                test_summary(results)
                 show_res && println(results)
                 show_itcalls &&
                     printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)
@@ -199,7 +216,7 @@ function run_optim_tests(
             end
         else
             @test_broken false    # marked skipped tests as broken
-            debug_printing && printstyled("Skipping $name\n", color = :blue)
+            debug_printing && @info "Skipping $name"
         end
     end
 end
@@ -232,10 +249,10 @@ function run_optim_tests_constrained(
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
         allow_f_increases = (name in f_increase_exceptions)
-        options = Optim.Options(
-            iterations = iters,
-            show_trace = show_trace;
+        options = Optim.Options(;
             Optim.default_options(method)...,
+            iterations = iters,
+            show_trace = show_trace,
         )
 
         # Use finite difference if it is not differentiable enough
@@ -251,7 +268,7 @@ function run_optim_tests_constrained(
             infvec = fill(Inf, size(prob.initial_x))
             constraints = TwiceDifferentiableConstraints(-infvec, infvec)
             results = optimize(df, constraints, prob.initial_x, method, options)
-            @test isa(Optim.summary(results), String)
+            test_summary(results)
             show_res && println(results)
             show_itcalls &&
                 printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)
@@ -326,5 +343,9 @@ end
 
     @testset "MOI wrapper" begin
         include("MOI_wrapper.jl")
+    end
+
+    @testset "QA" begin
+        include("qa.jl")
     end
 end
