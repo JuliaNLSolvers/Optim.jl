@@ -80,7 +80,7 @@ function maximize(
 end
 
 maximizer(r::MaximizationWrapper) = minimizer(res(r))
-Base.maximum(r::MaximizationWrapper) = -minimum(res(r))
+maximum(r::MaximizationWrapper) = -minimum(res(r))
 Base.summary(io::IO, r::MaximizationWrapper) = summary(io, res(r))
 
 for api_method in (

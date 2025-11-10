@@ -304,7 +304,7 @@ function optimize(
                 else
                     converge = 1
                     x_converged = true
-                    x_absΔ = maximum(bounds)
+                    x_absΔ = Base.maximum(bounds) # maximum !== Base.maximum
                 end
             else
                 f_converged = false

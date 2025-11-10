@@ -6,13 +6,13 @@ f_relchange(f_x::T, f_x_previous) where {T} = abs(f_x - f_x_previous) / abs(f_x)
 x_abschange(state) = x_abschange(state.x, state.x_previous)
 x_abschange(x, x_previous) = maxdiff(x, x_previous)
 x_relchange(state) = x_relchange(state.x, state.x_previous)
-x_relchange(x, x_previous) = maxdiff(x, x_previous) / maximum(abs, x)
+x_relchange(x, x_previous) = maxdiff(x, x_previous) / Base.maximum(abs, x) # Base.maximum !== maximum
 
 g_residual(d, state) = g_residual(d)
 g_residual(d, state::NelderMeadState) = state.nm_x
 g_residual(d::AbstractObjective) = g_residual(gradient(d))
 g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
-g_residual(g) = maximum(abs, g)
+g_residual(g) = Base.maximum(abs, g) # Base.maximum !== maximum
 gradient_convergence_assessment(state::AbstractOptimizerState, d, options) =
     g_residual(gradient(d)) ≤ options.g_abstol
 gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
@@ -52,7 +52,7 @@ function assess_convergence(
     if x_abschange(x, x_previous) ≤ x_abstol
         x_converged = true
     end
-    if x_abschange(x, x_previous) ≤ x_reltol * maximum(abs, x)
+    if x_abschange(x, x_previous) ≤ x_reltol * Base.maximum(abs, x) # Base.maximum !== maximum
         x_converged = true
     end
 

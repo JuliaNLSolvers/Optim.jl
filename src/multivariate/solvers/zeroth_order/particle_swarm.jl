@@ -110,7 +110,7 @@ function initial_state(
         end
     else
         # user did not define number of particles
-        n_particles = maximum([3, length(initial_x)])
+        n_particles = max(3, length(initial_x))
     end
     c1 = T(2)
     c2 = T(2)
@@ -193,7 +193,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
-        f.F = minimum(state.score)
+        f.F = Base.minimum(state.score) # Base.minimum !== minimum
     end
     f.F = housekeeping!(
         state.score,
