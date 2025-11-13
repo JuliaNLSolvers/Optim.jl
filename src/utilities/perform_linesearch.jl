@@ -40,13 +40,14 @@ end
 
 function perform_linesearch!(state, method, d)
     # Calculate search direction dphi0
-    gx = gradient!(d, state.x)
+    fx = value_gradient!(d, state.x)
+    gx = gradient(d)
     dphi_0 = real(dot(gx, state.s))
     # reset the direction if it becomes corrupted
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, d, method)
         dphi_0 = real(dot(gx, state.s)) # update after direction reset
     end
-    phi_0 = value(d)
+    phi_0 = value!(d, state.x)
 
     # Guess an alpha
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
