@@ -53,7 +53,6 @@ import StatsBase: var
 using LinearAlgebra:
     LinearAlgebra,
     Diagonal,
-    diag,
     Hermitian,
     Symmetric,
     rmul!,

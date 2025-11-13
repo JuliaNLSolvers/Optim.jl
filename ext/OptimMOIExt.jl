@@ -421,7 +421,7 @@ MOI.get(::Optimizer, ::MOI.DualStatus) = MOI.NO_SOLUTION
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    val = minimum(model.results)
+    val = Optim.minimum(model.results)
     if model.sense == MOI.MAX_SENSE
         val = -val
     end

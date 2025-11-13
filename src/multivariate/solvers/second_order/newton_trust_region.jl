@@ -52,7 +52,7 @@ work well without these safeguards when the Hessian is not positive definite.
 function initial_safeguards(H, gr, delta, lambda)
     # equations are on p. 560 of [MORESORENSEN]
     T = eltype(gr)
-    λS = maximum(-diag(H))
+    λS = -Base.minimum(@view(H[diagind(H)])) # Base.minimum !== minimum
     # they state on the first page that ||⋅|| is the Euclidean norm
     gr_norm = norm(gr)
     Hnorm = opnorm(H, 1)

@@ -560,7 +560,7 @@ function optimize(
             dfbox.obj.h_calls[1] = 0
         end
         copyto!(x, minimizer(results))
-        boxdist = min(minimum(x - l), minimum(u - x))
+        boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
         if show_trace > 0
             println()
             println("Exiting inner optimizer with x = ", x)

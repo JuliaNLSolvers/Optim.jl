@@ -16,7 +16,7 @@ function common_trace!(
         dt["g(x)"] = copy(gradient(d))
         dt["Current step size"] = state.alpha
     end
-    g_norm = maximum(abs, gradient(d))
+    g_norm = Base.maximum(abs, gradient(d)) # Base.maximum !== maximum
     update!(
         tr,
         iteration,

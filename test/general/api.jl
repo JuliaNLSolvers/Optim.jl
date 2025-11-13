@@ -1,5 +1,9 @@
 # Test multivariate optimization
 @testset "Multivariate API" begin
+    # We do not overload `Base.minimum` and `Base.maximum`
+    @test Optim.minimum !== minimum
+    @test Optim.maximum !== maximum
+
     rosenbrock = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
     f = MVP.objective(rosenbrock)
     g! = MVP.gradient(rosenbrock)
