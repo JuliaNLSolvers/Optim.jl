@@ -30,13 +30,13 @@ end
 
 
 function Base.summary(io::IO, s::NGMRES)
-    print(io, "Nonlinear GMRES preconditioned with ")
+    print(io, "Nonlinear GMRES (preconditioned with ")
     summary(io, s.nlprecon)
     print(io, ")")
     return
 end
 function Base.summary(io::IO, s::OACCEL)
-    print(io, "O-ACCEL preconditioned with ")
+    print(io, "O-ACCEL (preconditioned with ")
     summary(io, s.nlprecon)
     print(io, ")")
     return

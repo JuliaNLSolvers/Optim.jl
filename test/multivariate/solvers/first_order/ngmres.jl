@@ -4,6 +4,7 @@ using Optim, Test
 @testset "N-GMRES" begin
     method = NGMRES
     solver = method()
+    test_summary(solver, "Nonlinear GMRES (preconditioned with Gradient Descent)")
 
     skip = ("Trigonometric",)
     run_optim_tests(
@@ -94,6 +95,8 @@ end
 @testset "O-ACCEL" begin
     method = OACCEL
     solver = method()
+    test_summary(solver, "O-ACCEL (preconditioned with Gradient Descent)")
+
     skip = ("Trigonometric",)
     run_optim_tests(
         solver;
