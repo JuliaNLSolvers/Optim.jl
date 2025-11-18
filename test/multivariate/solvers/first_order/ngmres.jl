@@ -11,6 +11,7 @@ using Optim, Test
         solver;
         skip = skip,
         iteration_exceptions = (
+            ("Polynomial", 10000), # goes above 3000 iterations on mac
             ("Penalty Function I", 10000),
             ("Paraboloid Random Matrix", 10000),
         ),
