@@ -172,7 +172,7 @@ function initial_state(method::LBFGS, options::Options, d, initial_x::AbstractAr
         initial_x, # Maintain current state in state.x
         copy(initial_x), # Maintain previous state in state.x_previous
         copy(gradient(d)), # Store previous gradient in state.g_previous
-        fill(T(NaN), method.m), # state.rho
+        fill!(Vector{T}(undef, method.m), NaN), # state.rho
         [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
         [eltype(gradient(d))(NaN) .* gradient(d) for i = 1:method.m], # Store changes in position in state.dg_history
         T(NaN) * initial_x, # Buffer for new entry in state.dx_history
