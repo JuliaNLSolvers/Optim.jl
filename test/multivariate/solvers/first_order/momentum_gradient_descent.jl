@@ -8,6 +8,8 @@
         "Penalty Function I",
         "Beale",
         "Paraboloid Random Matrix",
+        "Paraboloid Diagonal",
+        "Powell",
     )
     run_optim_tests(
         MomentumGradientDescent(),
