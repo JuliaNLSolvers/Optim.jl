@@ -48,16 +48,9 @@ import JET
 
     @testset "JET" begin
         # Check that there are no undefined global references and undefined field accesses
-        res = JET.report_package(Optim; target_defined_modules = true, mode = :typo, toplevel_logger = nothing)
-        reports = JET.get_reports(res)
-        @test_broken isempty(reports)
-        @test length(reports) <= 36
-
+        JET.test_package(Optim; target_defined_modules = true, mode = :typo)
 
         # Analyze methods based on their declared signature
-        res = JET.report_package(Optim; target_defined_modules = true, toplevel_logger = nothing)
-        reports = JET.get_reports(res)
-        @test_broken isempty(reports)
-        @test length(reports) <= 12
+        JET.test_package(Optim; target_defined_modules = true)
     end
 end

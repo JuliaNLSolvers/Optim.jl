@@ -320,7 +320,7 @@ function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff = 
     )
 end
 
-optimize(
+function optimize(
     f,
     l::Number,
     u::Number,
@@ -329,16 +329,19 @@ optimize(
     opt::Options = Options();
     inplace::Bool=true,
     autodiff = :finite,
-) = optimize(
-    f,
-    Fill(T(l), size(initial_x)...),
-    Fill(T(u), size(initial_x)...),
-    initial_x,
-    mo,
-    opt;
-    inplace,
-    autodiff,
 )
+    T = eltype(initial_x)
+    optimize(
+        f,
+        Fill(T(l), size(initial_x)...),
+        Fill(T(u), size(initial_x)...),
+        initial_x,
+        mo,
+        opt;
+        inplace,
+        autodiff,
+    )
+end
 function optimize(
     f,
     l::AbstractArray,
@@ -414,7 +417,7 @@ function optimize(
     autodiff = :finite,
 )
     T= eltype(initial_x)
-    optimize(f, g, Fill(T(l), size(initial_x)...), T.(u), initial_x, opt, inplace, autodiff)
+    optimize(f, g, Fill(T(l), size(initial_x)...), T.(u), initial_x, opt; inplace, autodiff)
 end
 
 function optimize(
@@ -503,102 +506,161 @@ function optimize(
     fval_all = Vector{Vector{T}}()
 
     # Count the total number of outer iterations
-    iteration = 0
+    iteration = 1
 
     # define the function (dfbox) to optimize by the inner optimizer
 
     xold = copy(x)
-    converged = false
-    local results, fval0, _x_converged, _f_converged, _g_converged
-    first = true
-    f_increased, stopped_by_time_limit, stopped_by_callback = false, false, false
-    stopped = false
     _time = time()
+    fval0 = dfbox.obj.F
 
-    while !converged && !stopped && iteration < outer_iterations
-        fval0 = dfbox.obj.F
-        # Increment the number of steps we've had to perform
-        iteration += 1
+    # Optimize with current setting of mu
+    if show_trace > 0
+        header_string = "Fminbox iteration $iteration"
+        println(header_string)
+        println("-"^length(header_string))
+        print("Calling inner optimizer with mu = ")
+        show(IOContext(stdout, :compact => true), "text/plain", dfbox.mu)
+        println("\n")
+        println("(numbers below include barrier contribution)")
+    end
 
-        copyto!(xold, x)
-        # Optimize with current setting of mu
-        if show_trace > 0
-            header_string = "Fminbox iteration $iteration"
-            println(header_string)
-            println("-"^length(header_string))
-            print("Calling inner optimizer with mu = ")
-            show(IOContext(stdout, :compact => true), "text/plain", dfbox.mu)
-            println("\n")
-            println("(numbers below include barrier contribution)")
-        end
+    # we need to update the +mu*barrier_grad part. Since we're using the
+    # value_gradient! not !! as in initial_state, we won't make a superfluous
+    # evaluation
+    if !(F.method isa NelderMead)
+        value_gradient!(dfbox, x)
+        reset!(_optimizer, state, dfbox, x)
+    else
+        value!(dfbox, x)
+    end
+    results = optimize(dfbox, x, _optimizer, options, state)
+    stopped_by_callback = results.stopped_by.callback
+    dfbox.obj.f_calls[1] = 0
+    if hasfield(typeof(dfbox.obj), :df_calls)
+        dfbox.obj.df_calls[1] = 0
+    end
+    if hasfield(typeof(dfbox.obj), :h_calls)
+        dfbox.obj.h_calls[1] = 0
+    end
+    copyto!(x, minimizer(results))
+    boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
+    if show_trace > 0
+        println()
+        println("Exiting inner optimizer with x = ", x)
+        print("Current distance to box: ")
+        show(IOContext(stdout, :compact => true), "text/plain", boxdist)
+        println()
+        println("Decreasing barrier term μ.\n")
+    end
 
-        # we need to update the +mu*barrier_grad part. Since we're using the
-        # value_gradient! not !! as in initial_state, we won't make a superfluous
-        # evaluation
+    # Decrease mu
+    dfbox.mu *= T(F.mufactor)
+    # Test for convergence
+    g = x .- min.(max.(x .- gradient(dfbox.obj), l), u)
+    _x_converged, _f_converged, _g_converged, f_increased =
+        assess_convergence(
+            x,
+            xold,
+            minimum(results),
+            fval0,
+            g,
+            options.outer_x_abstol,
+            options.outer_x_reltol,
+            options.outer_f_abstol,
+            options.outer_f_reltol,
+            options.outer_g_abstol,
+        )
+    converged =
+        _x_converged ||
+        _f_converged ||
+        _g_converged ||
+        stopped_by_callback
+    _time = time()
+    stopped_by_time_limit = _time - t0 > options.time_limit
+    stopped = stopped_by_time_limit
 
-        if !(F.method isa NelderMead)
-            value_gradient!(dfbox, x)
-        else
-            value!(dfbox, x)
-        end
-        if !(F.method isa NelderMead && iteration == 1)
+    if f_increased && !allow_outer_f_increases
+        @warn("f(x) increased: stopping optimization")
+    else
+        while !converged && !stopped && iteration < outer_iterations
+            fval0 = dfbox.obj.F
+            # Increment the number of steps we've had to perform
+            iteration += 1
+
+            copyto!(xold, x)
+            # Optimize with current setting of mu
+            if show_trace > 0
+                header_string = "Fminbox iteration $iteration"
+                println(header_string)
+                println("-"^length(header_string))
+                print("Calling inner optimizer with mu = ")
+                show(IOContext(stdout, :compact => true), "text/plain", dfbox.mu)
+                println("\n")
+                println("(numbers below include barrier contribution)")
+            end
+
+            # we need to update the +mu*barrier_grad part. Since we're using the
+            # value_gradient! not !! as in initial_state, we won't make a superfluous
+            # evaluation
+
+            if !(F.method isa NelderMead)
+                value_gradient!(dfbox, x)
+            else
+                value!(dfbox, x)
+            end
             reset!(_optimizer, state, dfbox, x)
-        end
-        resultsnew = optimize(dfbox, x, _optimizer, options, state)
-        stopped_by_callback = resultsnew.stopped_by.callback
-        if first
-            results = resultsnew
-            first = false
-        else
+            resultsnew = optimize(dfbox, x, _optimizer, options, state)
+            stopped_by_callback = resultsnew.stopped_by.callback
             append!(results, resultsnew)
-        end
-        dfbox.obj.f_calls[1] = 0
-        if hasfield(typeof(dfbox.obj), :df_calls)
-            dfbox.obj.df_calls[1] = 0
-        end
-        if hasfield(typeof(dfbox.obj), :h_calls)
-            dfbox.obj.h_calls[1] = 0
-        end
-        copyto!(x, minimizer(results))
-        boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
-        if show_trace > 0
-            println()
-            println("Exiting inner optimizer with x = ", x)
-            print("Current distance to box: ")
-            show(IOContext(stdout, :compact => true), "text/plain", boxdist)
-            println()
-            println("Decreasing barrier term μ.\n")
-        end
+            dfbox.obj.f_calls[1] = 0
+            if hasfield(typeof(dfbox.obj), :df_calls)
+                dfbox.obj.df_calls[1] = 0
+            end
+            if hasfield(typeof(dfbox.obj), :h_calls)
+                dfbox.obj.h_calls[1] = 0
+            end
+            copyto!(x, minimizer(results))
+            boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
+            if show_trace > 0
+                println()
+                println("Exiting inner optimizer with x = ", x)
+                print("Current distance to box: ")
+                show(IOContext(stdout, :compact => true), "text/plain", boxdist)
+                println()
+                println("Decreasing barrier term μ.\n")
+            end
 
-        # Decrease mu
-        dfbox.mu *= T(F.mufactor)
-        # Test for convergence
-        g = x .- min.(max.(x .- gradient(dfbox.obj), l), u)
-        _x_converged, _f_converged, _g_converged, f_increased =
-            assess_convergence(
-                x,
-                xold,
-                minimum(results),
-                fval0,
-                g,
-                options.outer_x_abstol,
-                options.outer_x_reltol,
-                options.outer_f_abstol,
-                options.outer_f_reltol,
-                options.outer_g_abstol,
-            )
-        converged =
-            _x_converged ||
-            _f_converged ||
-            _g_converged ||
-            stopped_by_callback
-        if f_increased && !allow_outer_f_increases
-            @warn("f(x) increased: stopping optimization")
-            break
+            # Decrease mu
+            dfbox.mu *= T(F.mufactor)
+            # Test for convergence
+            g = x .- min.(max.(x .- gradient(dfbox.obj), l), u)
+            _x_converged, _f_converged, _g_converged, f_increased =
+                assess_convergence(
+                    x,
+                    xold,
+                    minimum(results),
+                    fval0,
+                    g,
+                    options.outer_x_abstol,
+                    options.outer_x_reltol,
+                    options.outer_f_abstol,
+                    options.outer_f_reltol,
+                    options.outer_g_abstol,
+                )
+            converged =
+                _x_converged ||
+                _f_converged ||
+                _g_converged ||
+                stopped_by_callback
+            if f_increased && !allow_outer_f_increases
+                @warn("f(x) increased: stopping optimization")
+                break
+            end
+            _time = time()
+            stopped_by_time_limit = _time - t0 > options.time_limit
+            stopped = stopped_by_time_limit
         end
-        _time = time()
-        stopped_by_time_limit = _time - t0 > options.time_limit ? true : false
-        stopped = stopped_by_time_limit
     end
 
     stopped_by = (
