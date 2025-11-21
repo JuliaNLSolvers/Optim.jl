@@ -4,6 +4,9 @@ fallback_method(f) = NelderMead()
 fallback_method(f, g!) = LBFGS()
 fallback_method(f, g!, h!) = Newton()
 
+# By default, use central finite difference method
+const DEFAULT_AD_TYPE = ADTypes.AutoFiniteDiff(; fdtype = Val(:central))
+
 function fallback_method(f::InplaceObjective)
     if !(f.fdf isa Nothing)
         if !(f.hv isa Nothing)
@@ -137,7 +140,7 @@ function optimize(
     f,
     initial_x::AbstractArray;
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
@@ -149,7 +152,7 @@ function optimize(
     f,
     g,
     initial_x::AbstractArray;
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
     inplace = true,
 )
 
@@ -166,7 +169,7 @@ function optimize(
     h,
     initial_x::AbstractArray;
     inplace = true,
-    autodiff = :finite
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE, 
 )
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
@@ -189,7 +192,7 @@ function optimize(
     initial_x::AbstractArray,
     options::Options;
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     method = fallback_method(f)
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
@@ -201,7 +204,7 @@ function optimize(
     initial_x::AbstractArray,
     options::Options;
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
 
     method = fallback_method(f, g)
@@ -215,7 +218,7 @@ function optimize(
     initial_x::AbstractArray{T},
     options::Options;
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {T}
     method = fallback_method(f, g, h)
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
@@ -230,7 +233,7 @@ function optimize(
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
     optimize(d, initial_x, method, options)
@@ -242,7 +245,7 @@ function optimize(
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
 
     d = promote_objtype(method, initial_x, autodiff, inplace, f)
@@ -255,7 +258,7 @@ function optimize(
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
 
@@ -269,7 +272,7 @@ function optimize(
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
    
 )
     d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
@@ -283,7 +286,7 @@ function optimize(
     method::SecondOrderOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace = true,
-    autodiff = :finite,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
     d = promote_objtype(method, initial_x, autodiff, inplace, d)
     optimize(d, initial_x, method, options)

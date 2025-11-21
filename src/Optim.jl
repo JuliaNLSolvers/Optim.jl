@@ -50,6 +50,8 @@ using NLSolversBase:
 # var for NelderMead
 import StatsBase: var
 
+import ADTypes
+
 using LinearAlgebra:
     LinearAlgebra,
     Diagonal,

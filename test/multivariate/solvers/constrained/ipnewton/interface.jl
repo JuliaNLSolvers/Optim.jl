@@ -11,7 +11,7 @@ using Optim, Test
     ux = fill(+1.2, dof)
     dfc = TwiceDifferentiableConstraints(lx, ux)
 
-    res = optimize(df, dfc, x0, IPNewton(); autodiff = :forward)
+    res = optimize(df, dfc, x0, IPNewton(); autodiff = AutoForwardDiff())
     res = optimize(df, dfc, x0, IPNewton())
 end
 
