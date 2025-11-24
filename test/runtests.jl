@@ -15,7 +15,7 @@ import SparseArrays: normalize!, spdiagm
 
 import ForwardDiff
 import ReverseDiff
-using ADTypes: AutoReverseDiff
+using ADTypes: AutoFiniteDiff, AutoForwardDiff, AutoReverseDiff
 
 debug_printing = false
 test_broken = false

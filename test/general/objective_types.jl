@@ -4,8 +4,8 @@
         @test_throws ErrorException OnceDifferentiable(x -> x, rand(10); autodiff = :wah)
 
         for T in (OnceDifferentiable, TwiceDifferentiable)
-            odad1 = T(x -> 5.0, rand(1); autodiff = :finite)
-            odad2 = T(x -> 5.0, rand(1); autodiff = :forward)
+            odad1 = T(x -> 5.0, rand(1); autodiff = AutoFiniteDiff(; fdtype = Val(:central)))
+            odad2 = T(x -> 5.0, rand(1); autodiff = AutoForwardDiff())
             odad3 = T(x -> 5.0, rand(1); autodiff = AutoReverseDiff())
             Optim.gradient!(odad1, rand(1))
             Optim.gradient!(odad2, rand(1))
@@ -17,8 +17,8 @@
 
         for a in (1.0, 5.0)
             xa = rand(1)
-            odad1 = OnceDifferentiable(x -> a * x[1], xa; autodiff = :finite)
-            odad2 = OnceDifferentiable(x -> a * x[1], xa; autodiff = :forward)
+            odad1 = OnceDifferentiable(x -> a * x[1], xa; autodiff = AutoFiniteDiff(; fdtype = Val(:central)))
+            odad2 = OnceDifferentiable(x -> a * x[1], xa; autodiff = AutoForwardDiff())
             odad3 = OnceDifferentiable(x -> a * x[1], xa; autodiff = AutoReverseDiff())
             Optim.gradient!(odad1, xa)
             Optim.gradient!(odad2, xa)
@@ -29,8 +29,8 @@
         end
         for a in (1.0, 5.0)
             xa = rand(1)
-            odad1 = OnceDifferentiable(x -> a * x[1]^2, xa; autodiff = :finite)
-            odad2 = OnceDifferentiable(x -> a * x[1]^2, xa; autodiff = :forward)
+            odad1 = OnceDifferentiable(x -> a * x[1]^2, xa; autodiff = AutoFiniteDiff(; fdtype = Val(:central)))
+            odad2 = OnceDifferentiable(x -> a * x[1]^2, xa; autodiff = AutoForwardDiff())
             odad3 = OnceDifferentiable(x -> a * x[1]^2, xa; autodiff = AutoReverseDiff())
             Optim.gradient!(odad1, xa)
             Optim.gradient!(odad2, xa)
@@ -40,7 +40,7 @@
             @test Optim.gradient(odad3) == 2.0 * a * xa
         end
         for dtype in (OnceDifferentiable, TwiceDifferentiable)
-            for autodiff in (:finite, :forward, AutoReverseDiff())
+            for autodiff in (AutoFiniteDiff(; fdtype = Val(:central)), AutoForwardDiff(), AutoReverseDiff())
                 differentiable = dtype(x -> sum(x), rand(2); autodiff = autodiff)
                 Optim.value(differentiable)
                 Optim.value!(differentiable, rand(2))

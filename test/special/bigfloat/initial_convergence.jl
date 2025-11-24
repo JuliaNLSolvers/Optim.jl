@@ -1,7 +1,7 @@
 @testset "bigfloat initial convergence #720" begin
     f(x) = x[1]^2
     x0 = BigFloat[0]
-    obj = OnceDifferentiable(f, x0; autodiff = :forward)
+    obj = OnceDifferentiable(f, x0; autodiff = AutoForwardDiff())
     for method in (
         GradientDescent,
         BFGS,

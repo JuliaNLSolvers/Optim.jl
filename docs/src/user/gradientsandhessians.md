@@ -16,10 +16,10 @@ Automatic differentiation techniques are a middle ground between finite differen
 
 Reverse-mode automatic differentiation can be seen as an automatic implementation of the adjoint method mentioned above, and requires a runtime comparable to only one evaluation of ``f``. It is however considerably more complex to implement, requiring to record the execution of the program to then run it backwards, and incurs a larger overhead.
 
-Forward-mode automatic differentiation is supported through the [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) package by providing the `autodiff=:forward` keyword to `optimize`.
-More generic automatic differentiation is supported thanks to [DifferentiationInterface.jl](https://github.com/JuliaDiff/DifferentiationInterface.jl), by setting `autodiff` to any compatible backend object from [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
-For instance, the user can choose `autodiff=AutoReverseDiff()`, `autodiff=AutoEnzyme()`, `autodiff=AutoMooncake()` or `autodiff=AutoZygote()` for a reverse-mode gradient computation, which is generally faster than forward mode on large inputs.
-Each of these choices requires loading the corresponding package beforehand.
+Generic automatic differentiation is supported thanks to [DifferentiationInterface.jl](https://github.com/JuliaDiff/DifferentiationInterface.jl), by setting `autodiff` to any compatible backend object from [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
+For instance, forward-mode automatic differentiation through the [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) package by providing the `autodiff=ADTypes.AutoForwardDiff()` keyword to `optimize`.
+Additionally, the user can choose `autodiff=AutoReverseDiff()`, `autodiff=AutoEnzyme()`, `autodiff=AutoMooncake()` or `autodiff=AutoZygote()` for a reverse-mode gradient computation, which is generally faster than forward mode on large inputs.
+Each of these choices requires loading the `ADTypes` package and the corresponding automatic differentiation package (e.g., `ForwardDiff` or `ReverseDiff`) beforehand.
 
 ## Example
 
@@ -66,14 +66,16 @@ julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 ```
 Still looks good. Returning to automatic differentiation, let us try both solvers using this
 method.  We enable [forward mode](https://github.com/JuliaDiff/ForwardDiff.jl) automatic
-differentiation by using the `autodiff = :forward` keyword.
+differentiation by using the `autodiff = AutoForwardDiff()` keyword.
 ```jlcon
-julia> Optim.minimizer(optimize(f, initial_x, BFGS(); autodiff = :forward))
+julia> using ADTypes: AutoForwardDiff
+
+julia> Optim.minimizer(optimize(f, initial_x, BFGS(); autodiff = AutoForwardDiff()))
 2-element Array{Float64,1}:
  1.0
  1.0
 
-julia> Optim.minimizer(optimize(f, initial_x, Newton(); autodiff = :forward))
+julia> Optim.minimizer(optimize(f, initial_x, Newton(); autodiff = AutoForwardDiff()))
 2-element Array{Float64,1}:
  1.0
  1.0
