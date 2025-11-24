@@ -128,7 +128,7 @@ function initial_state(
 ) where {T}
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
-    constr_c = fill(T(NaN), mc)
+    constr_c = fill!(Vector{T}(undef, mc), NaN)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
     constraints.c!(constr_c, initial_x)
@@ -149,7 +149,7 @@ function initial_state(
     Hd = zeros(Int8, n)
 
     # More constraints
-    constr_J = fill(T(NaN), mc, n)
+    constr_J = fill!(Matrix{T}(undef, mc, n), NaN)
     gtilde = copy(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
