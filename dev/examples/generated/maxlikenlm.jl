@@ -1,6 +1,7 @@
 using Optim, NLSolversBase
 using LinearAlgebra: diag
 using ForwardDiff
+using ADTypes: AutoForwardDiff
 
 n = 40                              # Number of observations
 nvar = 2                            # Number of variables
@@ -102,7 +103,7 @@ end
 func = TwiceDifferentiable(
     vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar+1]),
     ones(nvar + 1);
-    autodiff = :forward,
+    autodiff = AutoForwardDiff(),
 );
 
 opt = optimize(func, ones(nvar + 1))
