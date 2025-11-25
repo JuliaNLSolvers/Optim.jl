@@ -107,8 +107,7 @@ function initial_state(
     # Allocate fields for the objective function
     n = length(initial_x)
 
-    # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, initial_x)
 
     # More constraints
     constr_J = fill!(Matrix{T}(undef, mc, n), NaN)
@@ -157,8 +156,7 @@ end
 
 function update_fgh!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
     # Compute objective function, gradient and Hessian matrix
-    # TODO: Switch to `value_gradient_hessian!!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, state.x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, state.x)
     copyto!(state.g_x, g_x)
     copyto!(state.H_x, H_x)
     state.f_x = f_x
