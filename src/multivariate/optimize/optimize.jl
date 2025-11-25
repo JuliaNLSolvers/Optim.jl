@@ -113,11 +113,11 @@ function optimize(
             end
         end
 
-        if g_calls(d) > 0 && !all(isfinite, gradient(d))
+        if !NLSolversBase.isfinite_gradient(d)
             options.show_warnings && @warn "Terminated early due to NaN in gradient."
             break
         end
-        if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+        if !NLSolversBase.isfinite_hessian(d)
             options.show_warnings && @warn "Terminated early due to NaN in Hessian."
             break
         end
@@ -210,11 +210,11 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.HessianCalls
     elseif stopped_by.f_increased
         TerminationCode.ObjectiveIncreased
-    elseif f_calls(d) > 0 && !isfinite(value(d))
+    elseif !NLSolversBase.isfinite_value(d)
+        TerminationCode.ObjectiveNotFinite
+    elseif !NLSolversBase.isfinite_gradient(d)
         TerminationCode.GradientNotFinite
-    elseif g_calls(d) > 0 && !all(isfinite, gradient(d))
-        TerminationCode.GradientNotFinite
-    elseif h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+    elseif !NLSolversBase.isfinite_hessian(d)
         TerminationCode.HessianNotFinite
     else
         TerminationCode.NotImplemented

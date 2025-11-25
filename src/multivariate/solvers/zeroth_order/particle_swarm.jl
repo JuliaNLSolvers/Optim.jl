@@ -127,8 +127,7 @@ function initial_state(
 
     current_state = 0
 
-    value!!(d, initial_x)
-    score[1] = value(d)
+    score[1] = value!!(d, initial_x)
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space

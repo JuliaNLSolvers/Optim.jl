@@ -44,8 +44,7 @@ function initial_state(method::Newton, options, d, initial_x)
     # Maintain current gradient in gr
     s = similar(initial_x)
 
-    value_gradient!!(d, initial_x)
-    hessian!!(d, initial_x)
+    NLSolversBase.value_gradient_hessian!!(d, initial_x)
 
     NewtonState(
         copy(initial_x), # Maintain current state in state.x
