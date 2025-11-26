@@ -76,8 +76,8 @@ project_tangent(M::Flat, g, x) = g
 project_tangent!(M::Flat, g, x) = g
 
 # Optimizations for `Flat` manifold
-NLSolversBase.jvp!(obj::ManifoldObjective{Flat}, x, v) = jvp!(obj.inner_obj, x, v)
-NLSolversBase.value_jvp!(obj::ManifoldObjective{Flat}, x, v) = value_jvp!(obj.inner_obj, x, v)
+#NLSolversBase.jvp!(obj::ManifoldObjective{Flat}, x, v) = jvp!(obj.inner_obj, x, v)
+#NLSolversBase.value_jvp!(obj::ManifoldObjective{Flat}, x, v) = value_jvp!(obj.inner_obj, x, v)
 
 """Spherical manifold {|x| = 1}."""
 struct Sphere <: Manifold end
