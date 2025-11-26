@@ -28,16 +28,7 @@ end
 # TODO: is it safe here to call retract! and change x?
 function NLSolversBase.value!(obj::ManifoldObjective, x)
     xin = retract(obj.manifold, x)
-    value!(obj.inner_obj, xin)
-end
-function NLSolversBase.value(obj::ManifoldObjective)
-    value(obj.inner_obj)
-end
-function NLSolversBase.gradient(obj::ManifoldObjective)
-    gradient(obj.inner_obj)
-end
-function NLSolversBase.gradient(obj::ManifoldObjective, i::Int)
-    gradient(obj.inner_obj, i)
+    return value!(obj.inner_obj, xin)
 end
 function NLSolversBase.gradient!(obj::ManifoldObjective, x)
     xin = retract(obj.manifold, x)

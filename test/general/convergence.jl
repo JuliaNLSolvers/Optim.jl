@@ -3,7 +3,7 @@ mutable struct DummyState <: Optim.AbstractOptimizerState
     x_previous::Any
     f_x::Any
     f_x_previous::Any
-    g::Any
+    g_x::Any
 end
 
 mutable struct DummyStateZeroth <: Optim.ZerothOrderState
@@ -11,7 +11,7 @@ mutable struct DummyStateZeroth <: Optim.ZerothOrderState
     x_previous::Any
     f_x::Any
     f_x_previous::Any
-    g::Any
+    g_x::Any
 end
 
 mutable struct DummyOptions
@@ -63,26 +63,32 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     ## initial_convergence and gradient_convergence_assessment
 
     ds = DummyState(x1, x0, f1, f0, g)
-    dOpt = DummyOptions(x_tol, f_tol, g_tol, g_abstol)
+    opt = Optim.Options(; x_abstol = x_tol, f_abstol = f_tol, g_tol, g_abstol)
     dm = DummyMethod()
 
     # >= First Order
     d = Optim.OnceDifferentiable(x -> sum(abs2.(x)), zeros(2))
 
-    Optim.gradient!(d, ones(2))
-    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
-    Optim.gradient!(d, zeros(2))
-    @test Optim.gradient_convergence_assessment(ds, d, dOpt)
-
-    @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
-    @test Optim.initial_convergence(d, ds, dm, zeros(2), dOpt) == (true, false)
+    x = ones(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test !Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (false, false)
+    x = zeros(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (true, false)
 
     # Zeroth order methods have no gradient -> returns false by default
     ds = DummyStateZeroth(x1, x0, f1, f0, g)
     dm = DummyMethodZeroth()
 
-    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
-    @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
+    x = ones(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test !Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (false, false)
 
     # should check all other methods as well
 

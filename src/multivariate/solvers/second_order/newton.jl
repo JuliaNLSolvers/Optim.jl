@@ -29,8 +29,11 @@ end
 
 Base.summary(io::IO, ::Newton) = print(io, "Newton's Method")
 
-mutable struct NewtonState{Tx,T,F<:Cholesky} <: AbstractOptimizerState
+mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    H_x::TH
+    f_x::T
     x_previous::Tx
     f_x_previous::T
     F::F
@@ -39,20 +42,18 @@ mutable struct NewtonState{Tx,T,F<:Cholesky} <: AbstractOptimizerState
 end
 
 function initial_state(method::Newton, options, d, initial_x)
-    T = eltype(initial_x)
-    n = length(initial_x)
-    # Maintain current gradient in gr
-    s = similar(initial_x)
-
-    value_gradient!!(d, initial_x)
-    hessian!!(d, initial_x)
+    # TODO: Switch to `value_gradient_hessian!`
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
 
     NewtonState(
         copy(initial_x), # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        T(NaN), # Store previous f in state.f_x_previous
-        Cholesky(similar(d.H, T, 0, 0), :U, 0),
-        similar(initial_x), # Maintain current search direction in state.s
+        copy(g_x), # Maintain current gradient in state.g_x
+        copy(H_x), # Maintain current Hessian in state.H_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        Cholesky(similar(H_x, 0, 0), :U, 0),
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end
@@ -63,19 +64,19 @@ function update_state!(d, state::NewtonState, method::Newton)
     # represented by H. It deviates from the usual "add a scaled
     # identity matrix" version of the modified Newton method. More
     # information can be found in the discussion at issue #153.
-    T = eltype(state.x)
 
-    if typeof(NLSolversBase.hessian(d)) <: AbstractSparseMatrix
-        state.s .= .-(NLSolversBase.hessian(d) \ convert(Vector{T}, gradient(d)))
+    if state.H_x isa AbstractSparseMatrix
+        state.s .= .-(state.H_x \ convert(Vector, state.g_x))
     else
-        state.F = cholesky!(Positive, NLSolversBase.hessian(d))
-        if typeof(gradient(d)) <: Array
+        state.F = cholesky!(Positive, state.H_x)
+        if state.g_x isa Array
             # is this actually StridedArray?
-            ldiv!(state.s, state.F, -gradient(d))
+            ldiv!(state.s, state.F, state.g_x)
+            state.s .= .-state.s
         else
             # not Array, we can't do inplace ldiv
-            gv = Vector{T}(undef, length(gradient(d)))
-            copyto!(gv, -gradient(d))
+            gv = Vector{eltype(state.g_x)}(undef, length(state.g_x))
+            gv .= .-state.g_x
             copyto!(state.s, state.F \ gv)
         end
     end
@@ -87,21 +88,20 @@ function update_state!(d, state::NewtonState, method::Newton)
     return !lssuccess # break on linesearch error
 end
 
-function trace!(tr, d, state::NewtonState, iteration::Integer, method::Newton, options::Options, curr_time = time())
+function trace!(tr, d, state::NewtonState, iteration::Integer, ::Newton, options::Options, curr_time = time())
     dt = Dict()
     dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(gradient(d))
-        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["g(x)"] = copy(state.g_x)
+        dt["h(x)"] = copy(state.H_x)
         dt["Current step size"] = state.alpha
     end
-    g_norm = norm(gradient(d), Inf)
     update!(
         tr,
         iteration,
-        value(d),
-        g_norm,
+        state.f_x,
+        g_residual(state),
         dt,
         options.store_trace,
         options.show_trace,

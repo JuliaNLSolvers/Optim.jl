@@ -41,10 +41,7 @@ using NLSolversBase:
     TwiceDifferentiableConstraints,
     nconstraints,
     nconstraints_x,
-    hessian,
     hessian!,
-    hessian!!,
-    hv_product,
     hv_product!
 
 # var for NelderMead
