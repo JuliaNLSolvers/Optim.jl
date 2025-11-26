@@ -1,45 +1,12 @@
-import NLSolversBase:
-    value, value!, value!!, gradient, gradient!, value_gradient!, value_gradient!!
 ####### FIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIX THE MIDDLE OF BOX CASE THAT WAS THERE
-mutable struct BarrierWrapper{TO,TB,Tm,TF,TDF} <: AbstractObjective
-    obj::TO
-    b::TB # barrier
-    mu::Tm # multipler
-    Fb::TF
-    Ftotal::TF
-    DFb::TDF
-    DFtotal::TDF
-end
-f_calls(obj::BarrierWrapper) = f_calls(obj.obj)
-g_calls(obj::BarrierWrapper) = g_calls(obj.obj)
-h_calls(obj::BarrierWrapper) = h_calls(obj.obj)
-function BarrierWrapper(obj::NonDifferentiable, mu, lower, upper)
-    barrier_term = BoxBarrier(lower, upper)
-
-    BarrierWrapper(obj, barrier_term, mu, copy(obj.F), copy(obj.F), nothing, nothing)
-end
-function BarrierWrapper(obj::OnceDifferentiable, mu, lower, upper)
-    barrier_term = BoxBarrier(lower, upper)
-
-    BarrierWrapper(
-        obj,
-        barrier_term,
-        mu,
-        copy(obj.F),
-        copy(obj.F),
-        copy(obj.DF),
-        copy(obj.DF),
-    )
-end
-
 struct BoxBarrier{L,U}
     lower::L
     upper::U
 end
 function in_box(bb::BoxBarrier, x)
-    all(x -> x[1] >= x[2] && x[1] <= x[3], zip(x, bb.lower, bb.upper))
+    all(x -> x[1] <= x[2] <= x[3], zip(bb.lower, x, bb.upper))
 end
-in_box(bw::BarrierWrapper, x) = in_box(bw.b, x)
+
 # evaluates the value and gradient components comming from the log barrier
 function _barrier_term_value(x::T, l, u) where {T}
     dxl = x - l
@@ -52,6 +19,10 @@ function _barrier_term_value(x::T, l, u) where {T}
     vu = ifelse(isfinite(dxu), -log(dxu), T(0))
     return vl + vu
 end
+function _barrier_value(bb::BoxBarrier, x)
+    return sum(Broadcast.instantiate(Broadcast.broadcasted(_barrier_term_value, x, bb.lower, bb.upper)))
+end
+
 function _barrier_term_gradient(x::T, l, u) where {T}
     dxl = x - l
     dxu = u - x
@@ -64,72 +35,162 @@ function _barrier_term_gradient(x::T, l, u) where {T}
     end
     return g
 end
-function value_gradient!(bb::BoxBarrier, g, x)
-    g .= _barrier_term_gradient.(x, bb.lower, bb.upper)
-    value(bb, x)
+function _barrier_gradient!(bb::BoxBarrier, DF, x)
+    DF .= _barrier_term_gradient.(x, bb.lower, bb.upper)
+    return DF
 end
-function gradient(bb::BoxBarrier, g, x)
-    g = copy(g)
-    g .= _barrier_term_gradient.(x, bb.lower, bb.upper)
+
+function _barrier_jvp(bb::BoxBarrier, x, v)
+    return sum(Broadcast.instantiate(Broadcast.broadcasted((xi, vi, li, ui) -> _barrier_term_gradient(xi, li, ui) * vi, x, v, bb.lower, bb.upper)))
 end
+
+mutable struct BarrierWrapper{TF<:Real,TO<:Union{NonDifferentiable{TF},OnceDifferentiable{TF}},TB<:BoxBarrier,Tm<:Real,TDF<:Union{AbstractArray,Nothing},TJVP<:Union{Number,Nothing}} <: AbstractObjective
+    const obj::TO
+    const b::TB # barrier
+    mu::Tm # multipler
+    Fb::TF
+    Ftotal::TF
+    const DFb::TDF
+    const DFtotal::TDF
+    JVPb::TJVP
+    JVPtotal::TJVP
+end
+
+NLSolversBase.f_calls(obj::BarrierWrapper) = NLSolversBase.f_calls(obj.obj)
+NLSolversBase.g_calls(obj::BarrierWrapper) = NLSolversBase.g_calls(obj.obj)
+NLSolversBase.jvp_calls(obj::BarrierWrapper) = NLSolversBase.jvp_calls(obj.obj)
+NLSolversBase.h_calls(obj::BarrierWrapper) = 0
+NLSolversBase.hv_calls(obj::BarrierWrapper) = 0
+
+NLSolversBase.isfinite_value(obj::BarrierWrapper) = iszero(NLSolversBase.f_calls(obj.obj)) || isfinite(obj.Ftotal)
+function NLSolversBase.isfinite_gradient(obj::BarrierWrapper)
+    (; DFtotal, JVPtotal) = obj
+    return (DFtotal === nothing || iszero(NLSolversBase.g_calls(obj.obj)) || all(isfinite, DFtotal)) && (JVPtotal === nothing || iszero(NLSolversBase.jvp_calls(obj.obj)) || isfinite(obj.JVPtotal))
+end
+NLSolversBase.isfinite_jacobian(obj::BarrierWrapper) = NLSolversBase.isfinite_gradient(obj)
+NLSolversBase.isfinite_hessian(obj::BarrierWrapper) = true
+
+function BarrierWrapper(obj::NonDifferentiable{<:Real}, mu::Real, lower, upper)
+    barrier_term = BoxBarrier(lower, upper)
+    BarrierWrapper(obj, barrier_term, mu, copy(obj.F), copy(obj.F), nothing, nothing, nothing, nothing)
+end
+function BarrierWrapper(obj::OnceDifferentiable{<:Real}, mu::Real, lower, upper)
+    barrier_term = BoxBarrier(lower, upper)
+    BarrierWrapper(
+        obj,
+        barrier_term,
+        mu,
+        copy(obj.F),
+        copy(obj.F),
+        copy(obj.DF),
+        copy(obj.DF),
+        copy(obj.JVP),
+        copy(obj.JVP)
+    )
+end
+
 # Wrappers
-function value!!(bw::BarrierWrapper, x)
-    bw.Fb = value(bw.b, x)
-    bw.Ftotal = bw.mu * bw.Fb
-    if in_box(bw, x)
-        value!!(bw.obj, x)
-        bw.Ftotal += value(bw.obj)
+NLSolversBase.value(obj::BarrierWrapper) = obj.Ftotal
+function NLSolversBase.value(obj::BarrierWrapper, x)
+    (; b, mu) = obj
+    Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F = value(obj.obj, x)
+        return muladd(mu, Fb, F)
+    else
+        return mu * Fb
     end
 end
-function value_gradient!!(bw::BarrierWrapper, x)
-    bw.Fb = value(bw.b, x)
-    bw.Ftotal = bw.mu * bw.Fb
-    bw.DFb .= _barrier_term_gradient.(x, bw.b.lower, bw.b.upper)
-    bw.DFtotal .= bw.mu .* bw.DFb
-    if in_box(bw, x)
-        value_gradient!!(bw.obj, x)
-        bw.Ftotal += value(bw.obj)
-        bw.DFtotal .+= gradient(bw.obj)
+function NLSolversBase.value!(obj::BarrierWrapper, x)
+    (; b, mu) = obj
+    obj.Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F = value!(obj.obj, x)
+        obj.Ftotal = muladd(mu, obj.Fb, F)
+    else
+        obj.Ftotal = obj.mu * obj.Fb
     end
+    return obj.Ftotal
+end
+function NLSolversBase.value!!(obj::BarrierWrapper, x)
+    (; b, mu) = obj
+    Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F = value!!(obj.obj, x)
+        return muladd(mu, Fb, F)
+    else
+        return mu * Fb
+    end
+end
 
-end
-function value_gradient!(bb::BarrierWrapper, x)
-    bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
-    bb.Fb = value(bb.b, x)
-    bb.DFtotal .= bb.mu .* bb.DFb
-    bb.Ftotal = bb.mu * bb.Fb
 
-    if in_box(bb, x)
-        value_gradient!(bb.obj, x)
-        bb.DFtotal .+= gradient(bb.obj)
-        bb.Ftotal += value(bb.obj)
+NLSolversBase.gradient(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}) = obj.DFtotal
+function NLSolversBase.gradient!(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}, x)
+    (; b, mu) = obj
+    _barrier_gradient!(b, obj.DFb, x)
+    if in_box(b, x)
+        DF = gradient!(obj.obj, x)
+        obj.DFtotal .= muladd.(mu, obj.DFb, DF)
+    else
+        obj.DFtotal .= mu .* obj.DFb
     end
+    return obj.DFtotal
 end
-value(bb::BoxBarrier, x) =
-    mapreduce(x -> _barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
-function value!(obj::BarrierWrapper, x)
-    obj.Fb = value(obj.b, x)
-    obj.Ftotal = obj.mu * obj.Fb
-    if in_box(obj, x)
-        value!(obj.obj, x)
-        obj.Ftotal += value(obj.obj)
+
+function NLSolversBase.value_gradient!(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}, x)
+    (; b, mu) = obj
+    _barrier_gradient!(b, obj.DFb, x)
+    obj.Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F, DF = value_gradient!(obj.obj, x)
+        obj.DFtotal .= muladd.(mu, obj.DFb, DF)
+        obj.Ftotal = muladd(mu, obj.Fb, F)
+    else
+        obj.DFtotal .= mu .* obj.DFb
+        obj.Ftotal = mu * obj.Fb
     end
-    obj.Ftotal
+    return obj.Ftotal, obj.DFtotal
 end
-value(obj::BarrierWrapper) = obj.Ftotal
-function value(obj::BarrierWrapper, x)
-    F = obj.mu * value(obj.b, x)
-    if in_box(obj, x)
-        F += value(obj.obj, x)
+function NLSolversBase.value_gradient!!(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}, x)
+    (; b, mu) = obj
+    _barrier_gradient!(b, obj.DFb, x)
+    obj.Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F, DF = value_gradient!!(obj.obj, x)
+        obj.DFtotal .= muladd.(mu, obj.DFb, DF)
+        obj.Ftotal = muladd(mu, obj.Fb, F)
+    else
+        obj.DFtotal .= mu .* obj.DFb
+        obj.Ftotal = mu * obj.Fb
     end
-    F
+    return obj.Ftotal, obj.DFtotal
 end
-function gradient!(obj::BarrierWrapper, x)
-    gradient!(obj.obj, x)
-    obj.DFb .= gradient(obj.b, obj.DFb, x) # this should just be inplace?
-    obj.DFtotal .= gradient(obj.obj) .+ obj.mu * obj.Fb
+
+function NLSolversBase.jvp!(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}, x, v)
+    (; b, mu) = obj
+    obj.JVPb = _barrier_jvp(b, x, v)
+    if in_box(b, x)
+        jvp = jvp!(obj.obj, x, v)
+        obj.JVPtotal = muladd(mu, obj.JVPb, jvp)
+    else
+        obj.JVPtotal = mu * obj.JVPb
+    end
+    return obj.JVPtotal
 end
-gradient(obj::BarrierWrapper) = obj.DFtotal
+function NLSolversBase.value_jvp!(obj::BarrierWrapper{<:Real,<:OnceDifferentiable}, x, v)
+    (; b, mu) = obj
+    obj.JVPb = _barrier_jvp(b, x, v)
+    obj.Fb = _barrier_value(b, x)
+    if in_box(b, x)
+        F, jvp = value_jvp!(obj.obj, x, v)
+        obj.JVPtotal = muladd(mu, obj.JVPb, jvp)
+        obj.Ftotal = muladd(mu, obj.Fb, F)
+    else
+        obj.JVPtotal = mu * obj.JVPb
+        obj.Ftotal = mu * obj.Fb
+    end
+    return obj.Ftotal, obj.JVPtotal
+end
 
 # this mutates mu but not the gradients
 # Super unsafe in that it depends on x_df being correct!
@@ -299,7 +360,7 @@ function optimize(
     initial_x::AbstractArray,
     F::Fminbox = Fminbox(),
     options::Options = Options();
-    inplace = true,
+    inplace::Bool = true,
 )
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
@@ -489,7 +550,7 @@ function optimize(
     if F.method isa NelderMead
         for i = 1:length(state.f_simplex)
             x = state.simplex[i]
-            boxval = value(dfbox.b, x)
+            boxval = _barrier_value(dfbox.b, x)
             state.f_simplex[i] += boxval
         end
         state.i_order = sortperm(state.f_simplex)
@@ -536,12 +597,13 @@ function optimize(
     end
     results = optimize(dfbox, x, _optimizer, options, state)
     stopped_by_callback = results.stopped_by.callback
-    dfbox.obj.f_calls[1] = 0
+    # TODO: Reset everything? Add upstream API for resetting call counters?
+    dfbox.obj.f_calls = 0
     if hasfield(typeof(dfbox.obj), :df_calls)
-        dfbox.obj.df_calls[1] = 0
+        dfbox.obj.df_calls = 0
     end
     if hasfield(typeof(dfbox.obj), :h_calls)
-        dfbox.obj.h_calls[1] = 0
+        dfbox.obj.h_calls = 0
     end
     copyto!(x, minimizer(results))
     boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
@@ -613,12 +675,13 @@ function optimize(
             resultsnew = optimize(dfbox, x, _optimizer, options, state)
             stopped_by_callback = resultsnew.stopped_by.callback
             append!(results, resultsnew)
-            dfbox.obj.f_calls[1] = 0
+            # TODO: Reset everything? Add upstream API for resetting call counters?
+            dfbox.obj.f_calls = 0
             if hasfield(typeof(dfbox.obj), :df_calls)
-                dfbox.obj.df_calls[1] = 0
+                dfbox.obj.df_calls = 0
             end
             if hasfield(typeof(dfbox.obj), :h_calls)
-                dfbox.obj.h_calls[1] = 0
+                dfbox.obj.h_calls = 0
             end
             copyto!(x, minimizer(results))
             boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum

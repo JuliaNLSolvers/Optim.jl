@@ -64,11 +64,11 @@ function initial_state(
     initial_x::AbstractArray{T},
 ) where {T}
 
-    value!!(d, initial_x)
+    v = value!!(d, initial_x)
 
     # Store the best state ever visited
     best_x = copy(initial_x)
-    SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), value(d), value(d))
+    SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), v, v)
 end
 
 function update_state!(

@@ -16,6 +16,8 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
 
+import ADTypes
+
 using PositiveFactorizations: Positive # for globalization strategy in Newton
 
 using LineSearches: LineSearches # for globalization strategy in Quasi-Newton algs
@@ -35,16 +37,22 @@ using NLSolversBase:
     NonDifferentiable,
     OnceDifferentiable,
     TwiceDifferentiable,
-    TwiceDifferentiableHV,
     AbstractConstraints,
     ConstraintBounds,
     TwiceDifferentiableConstraints,
     nconstraints,
     nconstraints_x,
+    value,
+    value!,
+    value!!,
+    gradient,
+    gradient!,
+    value_gradient!,
+    value_gradient!!,
+    jvp!,
+    value_jvp!,
     hessian,
     hessian!,
-    hessian!!,
-    hv_product,
     hv_product!
 
 # var for NelderMead

@@ -26,7 +26,7 @@ end
         storage
     end
     function exponential_hessian!(storage, x)
-        Optim.NLSolversBase.ForwardDiff.hessian!(storage, exponential, x)
+        ForwardDiff.hessian!(storage, exponential, x)
     end
 
     function exponential_gradient(x)

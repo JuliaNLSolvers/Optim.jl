@@ -103,23 +103,23 @@ end
 
 
 function cg_steihaug!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState{T},
     method::KrylovTrustRegion,
 ) where {T}
-    n = length(state.x)
-    x, g, d, r, z, Hd =
-        state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
+    (; x, d, r) = state
+    z = state.s
 
     fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
+    g = gradient!(objective, x)
     r .= g  # so at first the whole gradient is the residual.
     d .= .-r # the first direction is the direction of steepest descent.
     rho0 = 1e100  # just a big number
 
     state.cg_iters = 0
-    for i = 1:n
+    for i = 1:length(x)
         state.cg_iters += 1
-        hv_product!(objective, x, d)
+        Hd = hv_product!(objective, x, d)
         dHd = dot(d, Hd)
         if -1e-15 < dHd < 1e-15
             break
@@ -151,13 +151,13 @@ function cg_steihaug!(
         end
     end
 
-    hv_product!(objective, x, z)
+    Hd = hv_product!(objective, x, z)
     return dot(g, z) + 0.5 * dot(z, Hd)
 end
 
 
 function update_state!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState,
     method::KrylovTrustRegion,
 )

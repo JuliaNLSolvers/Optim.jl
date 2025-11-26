@@ -34,7 +34,7 @@ LineSearches = "7.4.0"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
 Measurements = "2.14.1"
-NLSolversBase = "7.9.0"
+NLSolversBase = "8"
 NaNMath = "0.3.2, 1"
 OptimTestProblems = "2.0.3"
 PositiveFactorizations = "0.2.2"
@@ -65,3 +65,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Aqua", "Distributions", "ExplicitImports", "ForwardDiff", "JET", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "ReverseDiff"]
+
+[sources]
+LineSearches = { url = "https://github.com/devmotion/LineSearches.jl.git", rev = "dmw/jvp" }
+NLSolversBase = { url = "https://github.com/devmotion/NLSolversBase.jl.git", rev = "dmw/jvp" }
