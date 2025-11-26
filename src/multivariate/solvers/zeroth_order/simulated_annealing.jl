@@ -46,29 +46,38 @@ SimulatedAnnealing(;
 Base.summary(io::IO, ::SimulatedAnnealing) = print(io, "Simulated Annealing")
 
 mutable struct SimulatedAnnealingState{Tx,T} <: ZerothOrderState
-    x::Tx
-    iteration::Int
-    x_current::Tx
-    x_proposal::Tx
-    f_x_current::T
-    f_proposal::T
+    x::Tx            # Best state ever visited
+    f_x::T           # Function value of the best state ever visited
+    iteration::Int   # Iteration number
+    x_current::Tx    # Current state
+    f_x_current::T   # Function value of current state
+    x_proposal::Tx   # Proposed state
+    f_proposal::T    # Function value of proposed state
 end
-# We don't have an f_x_previous in SimulatedAnnealing, so we need to special case these
-pick_best_x(f_increased, state::SimulatedAnnealingState) = state.x
-pick_best_f(f_increased, state::SimulatedAnnealingState, d) = value(d)
+
+# We don't have an x_previous and f_x_previous in SimulatedAnnealing, so we need to special case these
+# The best state ever visited is stored in x, and its function value in f_x
+pick_best_x(::Bool, state::SimulatedAnnealingState) = state.x
+pick_best_f(::Bool, state::SimulatedAnnealingState) = state.f_x
 
 function initial_state(
-    method::SimulatedAnnealing,
-    options,
+    ::SimulatedAnnealing,
+    ::Options,
     d,
-    initial_x::AbstractArray{T},
-) where {T}
+    initial_x::AbstractArray,
+)
+    # Compute function value
+    f_x = value!(d, initial_x)
 
-    value!!(d, initial_x)
-
-    # Store the best state ever visited
-    best_x = copy(initial_x)
-    SimulatedAnnealingState(copy(best_x), 1, best_x, copy(initial_x), value(d), value(d))
+    return SimulatedAnnealingState(
+        copy(initial_x), # best state ever visited
+        f_x, # function value of the best state ever visited
+        1, # iteration
+        copy(initial_x), # current state
+        f_x, # function value of the current state
+        fill!(similar(initial_x), NaN), # proposed state
+        oftype(f_x, NaN), # function value of the proposed state
+    )
 end
 
 function update_state!(
@@ -76,7 +85,6 @@ function update_state!(
     state::SimulatedAnnealingState{Tx,T},
     method::SimulatedAnnealing,
 ) where {Tx,T}
-
     # Determine the temperature for current iteration
     t = method.temperature(state.iteration)
 
@@ -84,7 +92,7 @@ function update_state!(
     method.neighbor!(state.x_current, state.x_proposal)
 
     # Evaluate the cost function at the proposed state
-    state.f_proposal = value(nd, state.x_proposal)
+    state.f_proposal = value!(nd, state.x_proposal)
 
     if state.f_proposal <= state.f_x_current
         # If proposal is superior, we always move to it
@@ -92,9 +100,9 @@ function update_state!(
         state.f_x_current = state.f_proposal
 
         # If the new state is the best state yet, keep a record of it
-        if state.f_proposal < value(nd)
-            nd.F = state.f_proposal
+        if state.f_proposal < state.f_x
             copyto!(state.x, state.x_proposal)
+            state.f_x = state.f_proposal
         end
     else
         # If proposal is inferior, we move to it with probability p
@@ -106,5 +114,6 @@ function update_state!(
     end
 
     state.iteration += 1
+
     false
 end

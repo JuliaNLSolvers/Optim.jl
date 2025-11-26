@@ -62,7 +62,7 @@ function optimize(
     obj_fn,
     lb::AbstractArray,
     ub::AbstractArray,
-    x::AbstractArray{Tx},
+    initial_x::AbstractArray{Tx},
     method::SAMIN,
     options::Options = Options(),
 ) where {Tx}
@@ -70,9 +70,11 @@ function optimize(
     time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
+    x = copy(initial_x)
     d = NonDifferentiable(obj_fn, x)
+    f_x = value!(d, x)
 
-    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+    tr = OptimizationTrace{typeof(f_x),typeof(method)}()
     tracing =
         options.store_trace ||
         options.show_trace ||
@@ -84,7 +86,6 @@ function optimize(
 
     x_tol, f_tol = options.x_abstol, options.f_abstol
 
-    x0 = copy(x)
     n = size(x, 1) # dimension of parameter
     #  Set initial values
     nacc = 0 # total accepted trials
@@ -96,11 +97,10 @@ function optimize(
     f_absΔ = Inf
     # most recent values, to compare to when checking convergend
     fstar = typemax(Float64) * ones(neps)
-    # Initial obj_value
-    xopt = copy(x)
-    f_old = value!(d, x)
-    fopt = copy(f_old) # give it something to compare to
-    details = [f_calls(d) t fopt xopt']
+    # Best values
+    f_opt = f_x
+    x_opt = copy(x)
+    details = [f_calls(d) t f_opt x_opt']
     bounds = ub - lb
     # check for out-of-bounds starting values
     for i = 1:n
@@ -114,7 +114,7 @@ function optimize(
     trace!(
         tr,
         d,
-        (x = xopt, iteration = iteration),
+        (; x, f_x, iteration = iteration),
         iteration,
         method,
         options,
@@ -122,6 +122,7 @@ function optimize(
     )
     stopped_by_callback = false
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
+    xp = copy(x) # proposal
     while converge == 0
         # statistics to report at each temp change, set back to zero
         nup = 0
@@ -141,37 +142,35 @@ function optimize(
                     # new Sept 2011, if bounds are same, skip the search for that vbl.
                     # Allows restrictions without complicated programming
                     if (lb[h] != ub[h])
-                        xp = copy(x)
+                        copyto!(xp, x)
                         xp[h] += (Tx(2.0) * rand(Tx) - Tx(1.0)) * bounds[h]
                         if (xp[h] < lb[h]) || (xp[h] > ub[h])
                             xp[h] = lb[h] + (ub[h] - lb[h]) * rand(Tx)
                             lnobds += 1
                         end
                         # Evaluate function at new point
-                        f_proposal = value(d, xp)
+                        f_proposal = value!(d, xp)
                         #  Accept the new point if the function value decreases
-                        if (f_proposal <= f_old)
-                            x = copy(xp)
-                            f_old = f_proposal
+                        if (f_proposal <= f_x)
+                            copyto!(x, xp)
+                            f_x = f_proposal
                             nacc += 1 # total number of acceptances
                             nacp[h] += 1 # acceptances for this parameter
                             nup += 1
                             #  If lower than any other point, record as new optimum
-                            if f_proposal < fopt
-                                xopt = copy(xp)
-                                fopt = f_proposal
-                                d.F = f_proposal
+                            if f_proposal < f_opt
+                                copyto!(x_opt, xp)
+                                f_opt = f_proposal
                                 nnew += 1
                                 details = [details; [f_calls(d) t f_proposal xp']]
                             end
                             # If the point is higher, use the Metropolis criteria to decide on
                             # acceptance or rejection.
                         else
-                            p = exp(-(f_proposal - f_old) / t)
+                            p = exp(-(f_proposal - f_x) / t)
                             if rand(Tx) < p
-                                x = copy(xp)
-                                f_old = copy(f_proposal)
-                                d.F = f_proposal
+                                copyto!(x, xp)
+                                f_x = f_proposal
                                 nacc += 1
                                 nacp[h] += 1
                                 ndown += 1
@@ -186,7 +185,7 @@ function optimize(
                         stopped_by_callback = trace!(
                             tr,
                             d,
-                            (x = xopt, iteration = iteration),
+                            (; x = x_opt, f_x = f_opt, iteration = iteration),
                             iteration,
                             method,
                             options,
@@ -204,10 +203,10 @@ function optimize(
                             println(hline)
                             println("SAMIN results")
                             println("NO CONVERGENCE: MAXEVALS exceeded")
-                            @printf("\n     Obj. value:  %16.5f\n\n", fopt)
+                            @printf("\n     Obj. value:  %16.5f\n\n", f_opt)
                             println("       parameter      search width")
                             for i = 1:n
-                                @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
+                                @printf("%16.5f  %16.5f \n", x_opt[i], bounds[i])
                             end
                             println(hline)
                         end
@@ -215,9 +214,9 @@ function optimize(
                         termination_code = TerminationCode.NotImplemented
                         return MultivariateOptimizationResults(
                             method,
-                            x0,# initial_x,
-                            xopt, #pick_best_x(f_incr_pick, state),
-                            fopt, # pick_best_f(f_incr_pick, state, d),
+                            initial_x,
+                            x_opt, #pick_best_x(f_incr_pick, state),
+                            f_opt, # pick_best_f(f_incr_pick, state),
                             f_calls(d), #iteration,
                             x_tol,#T(options.x_tol),
                             0.0,#T(options.x_tol),
@@ -225,10 +224,10 @@ function optimize(
                             NaN,# x_abschange(state),
                             f_tol,#T(options.f_tol),
                             0.0,#T(options.f_tol),
-                            f_absΔ,#f_abschange(d, state),
-                            NaN,#f_abschange(d, state),
+                            f_absΔ,#f_abschange(state),
+                            NaN,#f_abschange(state),
                             0.0,#T(options.g_tol),
-                            NaN,#g_residual(d),
+                            NaN,#g_residual(state),
                             tr,
                             f_calls(d),
                             g_calls(d),
@@ -274,7 +273,7 @@ function optimize(
             println(hline)
             println("samin: intermediate results before next temperature change")
             println("temperature: ", round(t, digits = 5))
-            println("current best function value: ", round(fopt, digits = 5))
+            println("current best function value: ", round(f_opt, digits = 5))
             println("total evaluations so far: ", f_calls(d))
             println("total moves since last temperature reduction: ", nup + ndown + nrej)
             println("downhill: ", nup)
@@ -285,16 +284,16 @@ function optimize(
             println()
             println("       parameter      search width")
             for i = 1:n
-                @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
+                @printf("%16.5f  %16.5f \n", x_opt[i], bounds[i])
             end
             println(hline * "\n")
         end
         # Check for convergence, if we have covered the parameter space
         if coverage_ok
             # last value close enough to last neps values?
-            fstar[1] = f_old
-            f_absΔ = abs.(fopt - f_old) # close enough to best so far?
-            if all((abs.(fopt .- fstar)) .< f_tol) # within to for last neps trials?
+            fstar[1] = f_x
+            f_absΔ = abs.(f_opt - f_x) # close enough to best so far?
+            if all((abs.(f_opt .- fstar)) .< f_tol) # within to for last neps trials?
                 f_converged = true
                 # check for bound narrow enough for parameter convergence
                 if any(bounds .> x_tol)
@@ -336,10 +335,10 @@ function optimize(
                         )
                     end
                     println("total number of objective function evaluations: ", f_calls(d))
-                    @printf("\n     Obj. value:  %16.10f\n\n", fopt)
+                    @printf("\n     Obj. value:  %16.10f\n\n", f_opt)
                     println("       parameter      search width")
                     for i = 1:n
-                        @printf("%16.5f  %16.5f \n", xopt[i], bounds[i])
+                        @printf("%16.5f  %16.5f \n", x_opt[i], bounds[i])
                     end
                     println(hline * "\n")
                 end
@@ -347,18 +346,17 @@ function optimize(
             # Reduce temperature, record current function value in the
             # list of last "neps" values, and loop again
             t *= rt
-            pushfirst!(fstar, f_old)
+            pushfirst!(fstar, f_x)
             fstar = fstar[1:end-1]
-            f_old = copy(fopt)
-            x = copy(xopt)
         else  # coverage not ok - increase temperature quickly to expand search area
             t *= r_expand
             for i = neps:-1:2
                 fstar[i] = fstar[i-1]
             end
-            f_old = fopt
-            x = xopt
         end
+
+        f_x = f_opt
+        copyto!(x, x_opt)
     end
 end
 

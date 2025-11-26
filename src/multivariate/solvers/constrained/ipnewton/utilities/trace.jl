@@ -25,15 +25,15 @@ end
 
 function trace!(tr, d, state, iteration, method::IPOptimizer, options, curr_time = time())
     dt = Dict()
-    dt["Lagrangian"] = state.L
+    dt["Lagrangian"] = state.L_x
     dt["μ"] = state.μ
     dt["ev"] = abs(state.ev)
     dt["time"] = curr_time
     if options.extended_trace
         dt["α"] = state.alpha
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(state.g)
-        dt["h(x)"] = copy(state.H)
+        dt["g(x)"] = copy(state.g_x)
+        dt["h(x)"] = copy(state.H_x)
         if !isempty(state.bstate)
             dt["gtilde(x)"] = copy(state.gtilde)
             dt["bstate"] = copy(state.bstate)
@@ -41,11 +41,11 @@ function trace!(tr, d, state, iteration, method::IPOptimizer, options, curr_time
             dt["c"] = copy(state.constr_c)
         end
     end
-    g_norm = norm(state.g, Inf) + norm(state.bgrad, Inf)
+    g_norm = norm(state.g_x, Inf) + norm(state.bgrad, Inf)
     update!(
         tr,
         iteration,
-        value(d),
+        state.f_x,
         g_norm,
         dt,
         options.store_trace,

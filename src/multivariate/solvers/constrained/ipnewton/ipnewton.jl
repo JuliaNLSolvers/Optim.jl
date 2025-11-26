@@ -59,21 +59,21 @@ IPNewton(;
     show_linesearch::Bool = false,
 ) = IPNewton(linesearch, μ0, show_linesearch)
 
-mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
-    x::Tx
-    f_x::T
-    x_previous::Tx
-    g::Tx
-    f_x_previous::T
-    H::Matrix{T}          # Hessian of the Lagrangian?
-    HP::Any # TODO: remove HP? It's not used
-    Hd::Vector{Int8}  # TODO: remove Hd? It's not used
-    s::Tx  # step for x
+mutable struct IPNewtonState{T,Tx,Tg} <: AbstractBarrierState
+    x::Tx                   # Current state
+    g_x::Tg                 # Gradient of the objective function at x
+    H_x::Matrix{T}          # Hessian of the objective function at x
+    f_x::T                  # Value of objective function at x
+    x_previous::Tx          # Previous state
+    f_x_previous::T         # Value of the objective function at x_previous
+    s::Tx                   # Step for x
     # Barrier penalty fields
-    μ::T                  # coefficient of the barrier penalty
-    μnext::T              # μ for the next iteration
-    L::T                  # value of the Lagrangian (objective + barrier + equality)
-    L_previous::T
+    μ::T                    # coefficient of the barrier penalty
+    μnext::T                # μ for the next iteration
+    L_x::T                  # value of the Lagrangian (objective + barrier + equality) at x
+    g_L_x::Tg               # gradient of the Lagrangian at x
+    H_L_x::Matrix{T}        # Hessian of the Lagrangian at x
+    L_x_previous::T           # value of the Lagrangian at x_previous
     bstate::BarrierStateVars{T}   # value of slack and λ variables (current "position")
     bgrad::BarrierStateVars{T}    # gradient of slack and λ variables at current "position"
     bstep::BarrierStateVars{T}    # search direction for slack and λ
@@ -84,39 +84,6 @@ mutable struct IPNewtonState{T,Tx} <: AbstractBarrierState
     b_ls::BarrierLineSearchGrad{T}
     gtilde::Tx
     Htilde::Any               # Positive Cholesky factorization of H from PositiveFactorizations.jl
-end
-
-# TODO: Do we need this convert thing? (It seems to be used with `show(IPNewtonState)`)
-function Base.convert(
-    ::Type{IPNewtonState{T,Tx}},
-    state::IPNewtonState{S,Sx},
-) where {T,Tx,S,Sx}
-    IPNewtonState(
-        convert(Tx, state.x),
-        T(state.f_x),
-        convert(Tx, state.x_previous),
-        convert(Tx, state.g),
-        T(state.f_x_previous),
-        convert(Matrix{T}, state.H),
-        state.HP,
-        state.Hd,
-        convert(Tx, state.s),
-        T(state.μ),
-        T(state.μnext),
-        T(state.L),
-        T(state.L_previous),
-        convert(BarrierStateVars{T}, state.bstate),
-        convert(BarrierStateVars{T}, state.bgrad),
-        convert(BarrierStateVars{T}, state.bstep),
-        convert(Vector{T}, state.constr_c),
-        convert(Matrix{T}, state.constr_J),
-        T(state.ev),
-        convert(Tx, state.x_ls),
-        T(state.alpha),
-        convert(BarrierLineSearchGrad{T}, state.b_ls),
-        convert(Tx, state.gtilde),
-        state.Htilde,
-    )
 end
 
 function initial_state(
@@ -139,18 +106,12 @@ function initial_state(
     end
     # Allocate fields for the objective function
     n = length(initial_x)
-    g = similar(initial_x)
-    s = similar(initial_x)
-    f_x_previous = NaN
-    f_x, g_x = value_gradient!(d, initial_x)
-    g .= g_x # needs to be a separate copy of g_x
-    hessian!(d, initial_x)
-    H = collect(T, hessian(d))
-    Hd = zeros(Int8, n)
+
+    # TODO: Switch to `value_gradient_hessian!`
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
 
     # More constraints
     constr_J = fill!(Matrix{T}(undef, mc, n), NaN)
-    gtilde = copy(g)
     constraints.jacobian!(constr_J, initial_x)
     μ = T(1)
     bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
@@ -161,18 +122,18 @@ function initial_state(
 
     state = IPNewtonState(
         copy(initial_x), # Maintain current state in state.x
+        copy(g_x), # Store current gradient in state.g_x
+        copy(H_x), # Store current Hessian in state.H_x
         f_x, # Store current f in state.f_x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        g, # Store current gradient in state.g (TODO: includes Lagrangian calculation?)
-        T(NaN), # Store previous f in state.f_x_previous
-        H,
-        0,    # will be replaced
-        Hd,
-        similar(initial_x), # Maintain current x-search direction in state.s
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), # Maintain current x-search direction in state.s
         μ,
         μ,
-        T(NaN),
-        T(NaN),
+        oftype(f_x, NaN), # Store Lagrangian at x
+        fill!(similar(g_x), NaN), # Store gradient of Lagrangian at x
+        fill!(similar(H_x), NaN), # Store Hessian of Lagrangian at x
+        oftype(f_x, NaN), # Store Lagrangian at x_previous
         bstate,
         bgrad,
         bstep,
@@ -181,31 +142,48 @@ function initial_state(
         T(NaN),
         @initial_linesearch()..., # Maintain a cache for line search results in state.lsr
         b_ls,
-        gtilde,
+        fill!(similar(g_x), NaN), # Modified gradient at x
         0,
     )
 
-    Hinfo = (state.H, hessianI(initial_x, constraints, 1 ./ bstate.slack_c, 1))
-    initialize_μ_λ!(state, constraints.bounds, Hinfo, method.μ0)
-    update_fg!(d, constraints, state, method)
-    update_h!(d, constraints, state, method)
+    HcI = hessianI(initial_x, constraints, 1 ./ bstate.slack_c, 1)
+    initialize_μ_λ!(state, constraints.bounds, HcI, method.μ0)
+
+    # Update function value, gradient and Hessian matrix
+    update_fgh!(d, constraints, state, method)
 
     state
 end
 
-function update_fg!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
-    state.f_x, state.L, state.ev = lagrangian_fg!(
-        state.g,
+function update_fgh!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
+    # Compute objective function, gradient and Hessian matrix
+    # TODO: Switch to `value_gradient_hessian!!`
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, state.x)
+    copyto!(state.g_x, g_x)
+    copyto!(state.H_x, H_x)
+    state.f_x = f_x
+
+    # Compute value and gradient of the Lagrangian
+    state.L_x, state.ev = lagrangian_fg!(
+        state.g_L_x,
         state.bgrad,
-        d,
         constraints.bounds,
         state.x,
+        state.f_x,
+        state.g_x,
         state.constr_c,
         state.constr_J,
         state.bstate,
         state.μ,
     )
+
+    # Calculate the modified gradient (see below)
     update_gtilde!(d, constraints, state, method)
+
+    # Compute the Hessian of the Lagrangian
+    update_lagrangian_h!(d, constraints, state, method)
+
+    return nothing
 end
 
 function update_gtilde!(
@@ -217,9 +195,9 @@ function update_gtilde!(
     # Calculate the modified x-gradient for the block-eliminated problem
     # gtilde is the gradient for the affine-scaling problem, i.e.,
     # with μ=0, used in the adaptive setting of μ. Once we calculate μ we'll correct it
-    gtilde, bstate, bgrad = state.gtilde, state.bstate, state.bgrad
+    (; gtilde, bstate, bgrad) = state
     bounds = constraints.bounds
-    copyto!(gtilde, state.g)
+    copyto!(gtilde, state.g_L_x)
     JIc = view(state.constr_J, bounds.ineqc, :)
     if !isempty(JIc)
         Hssc = Diagonal(bstate.λc ./ bstate.slack_c)
@@ -234,13 +212,14 @@ function update_gtilde!(
     state
 end
 
-function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
-    x, μ, Hxx, J = state.x, state.μ, state.H, state.constr_J
+function update_lagrangian_h!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
+    x, μ, Hxx, J = state.x, state.μ, state.H_L_x, state.constr_J
     bstate, bgrad, bounds = state.bstate, state.bgrad, constraints.bounds
     m, n = size(J, 1), size(J, 2)
 
-    hessian!(d, state.x)  # objective's Hessian
-    copyto!(Hxx, hessian(d))  # objective's Hessian
+    # Initialize the Hessian of the Langrangian with the Hessian of the objective function
+    copyto!(Hxx, state.H_x)  # objective's Hessian
+
     # accumulate the constraint second derivatives
     λ = userλ(bstate.λc, constraints)
     λ[bounds.eqc] = -bstate.λcE  # the negative sign is from the Hessian
@@ -265,18 +244,24 @@ function update_h!(d, constraints::TwiceDifferentiableConstraints, state, method
     state
 end
 
+# TODO: This only works for method.linesearch = backtracking_constrained_grad
+# TODO: How are we meant to implement backtracking_constrained?.
+#       It requires both an alpha and an alphaI (αmax and αImax) ...
 function update_state!(
     d,
     constraints::TwiceDifferentiableConstraints,
     state::IPNewtonState{T},
-    method::IPNewton,
+    method::IPNewton{typeof(backtrack_constrained_grad)},
     options::Options,
 ) where {T}
-    state.f_x_previous, state.L_previous = state.f_x, state.L
+    state.f_x_previous, state.L_x_previous = state.f_x, state.L_x
     bstate, bstep, bounds = state.bstate, state.bstep, constraints.bounds
     qp = solve_step!(state, constraints, options, method.show_linesearch)
     # If a step α=1 will not change any of the parameters, we can quit now.
     # This prevents a futile linesearch.
+    if !(qp isa NTuple{3,Any})
+        return false
+    end
     if is_smaller_eps(state.x, state.s) &&
        is_smaller_eps(bstate.slack_x, bstep.slack_x) &&
        is_smaller_eps(bstate.slack_c, bstep.slack_c) &&
@@ -294,9 +279,7 @@ function update_state!(
 
     # Determine the actual distance of movement along the search line
     ϕ = linesearch_anon(d, constraints, state, method)
-    # TODO: This only works for method.linesearch = backtracking_constrained_grad
-    # TODO: How are we meant to implement backtracking_constrained?.
-    #       It requires both an alpha and an alphaI (αmax and αImax) ...
+
     state.alpha =
         method.linesearch!(ϕ, T(1), αmax, qp; show_linesearch = method.show_linesearch)
 
@@ -395,9 +378,9 @@ function solve_step!(
     k == length(ΔλE) || error("exhausted targets before ΔλE")
     solve_slack!(bstep, Δx, bounds, bstate, bgrad, J, μ)
     # Solve for the quadratic parameters (use the real H, not the posdef H)
-    Hstepx, HstepλE = state.H * Δx - JE' * ΔλE, -JE * Δx
-    qp = state.L,
-    slopealpha(state.s, state.g, bstep, bgrad),
+    Hstepx, HstepλE = state.H_L_x * Δx - JE' * ΔλE, -JE * Δx
+    qp = state.L_x,
+    slopealpha(state.s, state.g_L_x, bstep, bgrad),
     dot(Δx, Hstepx) + dot(ΔλE, HstepλE)
     qp
 end

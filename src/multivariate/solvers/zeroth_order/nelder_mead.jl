@@ -130,6 +130,7 @@ end
 
 mutable struct NelderMeadState{Tx,T,Tfs} <: ZerothOrderState
     x::Tx
+    f_x::T
     m::Int
     simplex::Vector{Tx}
     x_centroid::Tx
@@ -150,27 +151,31 @@ mutable struct NelderMeadState{Tx,T,Tfs} <: ZerothOrderState
 end
 function reset!(method::NelderMead, state::NelderMeadState, obj, x)
     state.simplex = simplexer(method.initial_simplex, x)
+    @assert state.simplex[1] == x
 
-    value!(obj, first(state.simplex))
-    state.f_simplex[1] = value(obj)
+    state.f_simplex[1] = state.f_x = value!(obj, state.simplex[1])
     for i = 2:length(state.simplex)
         state.f_simplex[i] = value(obj, state.simplex[i])
     end
+
     # Get the indices that correspond to the ordering of the f values
     # at the vertices. i_order[1] is the index in the simplex of the vertex
     # with the lowest function value, and i_order[end] is the index in the
     # simplex of the vertex with the highest function value
     state.i_order = sortperm(state.f_simplex)
+
+    return nothing
 end
 function initial_state(method::NelderMead, options, d, initial_x)
     T = eltype(initial_x)
     n = length(initial_x)
     m = n + 1
     simplex = simplexer(method.initial_simplex, initial_x)
-    f_simplex = zeros(T, m)
+    @assert simplex[1] == initial_x
 
-    value!!(d, first(simplex))
-    f_simplex[1] = value(d)
+    f_x = value!(d, simplex[1])
+    f_simplex = Vector{typeof(f_x)}(undef, m)
+    f_simplex[1] = f_x
     for i = 2:length(simplex)
         f_simplex[i] = value(d, simplex[i])
     end
@@ -184,6 +189,7 @@ function initial_state(method::NelderMead, options, d, initial_x)
 
     NelderMeadState(
         copy(initial_x), # Variable to hold final minimizer value for MultivariateOptimizationResults
+        f_x, # Variable to hold final objective function value
         m, # Number of vertices in the simplex
         simplex, # Maintain simplex in state.simplex
         centroid(simplex, i_order[m]), # Maintain centroid in state.centroid
@@ -309,26 +315,22 @@ function after_while!(f, state, method::NelderMead, options)
         f.F = f_min
     end
     state.x .= x_min
+    state.f_x = f_min
+    return nothing
 end
-# We don't have an f_x_previous in NelderMeadState, so we need to special case these
-pick_best_x(f_increased, state::NelderMeadState) = state.x
-pick_best_f(f_increased, state::NelderMeadState, d) = value(d)
+
+# We don't have an x_previous and f_x_previous in NelderMeadState, so we need to special case these
+pick_best_x(f_increased::Bool, state::NelderMeadState) = state.x
+pick_best_f(f_increased::Bool, state::NelderMeadState) = state.f_x
 
 function assess_convergence(state::NelderMeadState, d, options::Options)
     g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterior
     return false, false, g_converged, false
 end
 
-function initial_convergence(
-    d,
-    state::NelderMeadState,
-    method::NelderMead,
-    initial_x,
-    options,
-)
-    nmo = nmobjective(state.f_simplex, state.m, length(initial_x))
-
-    nmo <= options.g_abstol, !isfinite(value(d)) || !isfinite(nmo)
+function initial_convergence(state::NelderMeadState, options::Options)
+    nmo = nmobjective(state.f_simplex, state.m, length(state.x))
+    nmo <= options.g_abstol, !isfinite(state.f_x) || !isfinite(nmo)
 end
 
 function trace!(

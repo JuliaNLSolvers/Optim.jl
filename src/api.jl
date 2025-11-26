@@ -100,18 +100,15 @@ g_norm_trace(r::OptimizationResults) =
 g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
 f_calls(r::OptimizationResults) = r.f_calls
-f_calls(d) = first(d.f_calls)
+f_calls(d::AbstractObjective) = NLSolversBase.f_calls(d)
 
 g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(summary(r)).")
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
-g_calls(d::NonDifferentiable) = 0
-g_calls(d) = first(d.df_calls)
+g_calls(d::AbstractObjective) = NLSolversBase.g_calls(d)
 
 h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summary(r)).")
 h_calls(r::MultivariateOptimizationResults) = r.h_calls
-h_calls(d::Union{NonDifferentiable,OnceDifferentiable}) = 0
-h_calls(d) = first(d.h_calls)
-h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
+h_calls(d::AbstractObjective) = NLSolversBase.h_calls(d) + NLSolversBase.hv_calls(d)
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 function converged(r::MultivariateOptimizationResults)

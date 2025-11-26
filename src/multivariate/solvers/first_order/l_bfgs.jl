@@ -137,8 +137,10 @@ Base.summary(io::IO, ::LBFGS) = print(io, "L-BFGS")
 
 mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     x::Tx
+    g_x::G
+    f_x::T
     x_previous::Tx
-    g_previous::G
+    g_x_previous::G
     rho::Vector{T}
     dx_history::Tdx
     dg_history::Tdg
@@ -154,45 +156,52 @@ mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
 end
 function reset!(method::LBFGS, state::LBFGSState, obj, x::AbstractArray)
     retract!(method.manifold, x)
-    value_gradient!(obj, x)
-    project_tangent!(method.manifold, gradient(obj), x)
+    f_x, g_x = value_gradient!(obj, x)
+    project_tangent!(method.manifold, g_x, x)
+    state.f_x = f_x
+    copyto!(state.g_x, g_x)
+
+    fill!(state.x_previous, NaN)
+    fill!(state.g_x_previous, NaN)
+    state.f_x_previous = oftype(state.f_x_previous, NaN)
 
     state.pseudo_iteration = 0
+
+    return nothing
 end
 function initial_state(method::LBFGS, options::Options, d, initial_x::AbstractArray)
     T = real(eltype(initial_x))
-    n = length(initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    f_x, g_x = value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, g_x, initial_x)
     LBFGSState(
         initial_x, # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        copy(gradient(d)), # Store previous gradient in state.g_previous
+        copy(g_x), # Maintain current gradient in state.g_x
+        f_x, # Main current f in state.f_x
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         fill!(Vector{T}(undef, method.m), NaN), # state.rho
-        [similar(initial_x) for i = 1:method.m], # Store changes in position in state.dx_history
-        [eltype(gradient(d))(NaN) .* gradient(d) for i = 1:method.m], # Store changes in position in state.dg_history
-        T(NaN) * initial_x, # Buffer for new entry in state.dx_history
-        T(NaN) * initial_x, # Buffer for new entry in state.dg_history
-        T(NaN) * initial_x, # Buffer stored in state.u
-        real(T)(NaN), # Store previous f in state.f_x_previous
-        similar(initial_x), #Buffer for use by twoloop
-        Vector{T}(undef, method.m), #Buffer for use by twoloop
+        [fill!(similar(initial_x), NaN) for i = 1:method.m], # Store changes in position in state.dx_history
+        [fill!(similar(g_x), NaN) for i = 1:method.m], # Store changes in position in state.dg_history
+        fill!(similar(initial_x), NaN), # Buffer for new entry in state.dx_history
+        fill!(similar(initial_x), NaN), # Buffer for new entry in state.dg_history
+        fill!(similar(initial_x), NaN), # Buffer stored in state.u
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), #Buffer for use by twoloop
+        fill!(Vector{T}(undef, method.m), NaN),#Buffer for use by twoloop
         0,
-        eltype(gradient(d))(NaN) .* gradient(d), # Store current search direction in state.s
+        fill!(similar(g_x), NaN), # Store current search direction in state.s
         @initial_linesearch()...,
     )
 end
 
 function update_state!(d, state::LBFGSState, method::LBFGS)
-    n = length(state.x)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
 
-    project_tangent!(method.manifold, gradient(d), state.x)
+    # TODO: Can this be removed?
+    project_tangent!(method.manifold, state.g_x, state.x)
 
     # update the preconditioner
     _apply_precondprep(method, state.x)
@@ -200,7 +209,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Determine the L-BFGS search direction # FIXME just pass state and method?
     twoloop!(
         state.s,
-        gradient(d),
+        state.g_x,
         state.rho,
         state.dx_history,
         state.dg_history,
@@ -212,9 +221,6 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
         method.P,
     )
     project_tangent!(method.manifold, state.s, state.x)
-
-    # Save g value to prepare for update_g! call
-    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -228,10 +234,15 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
 end
 
 
-function update_h!(d, state::LBFGSState, method::LBFGS)
-    n = length(state.x)
+function update_fgh!(d, state::LBFGSState, method::LBFGS)
+    # Update function value and gradient
+    f_x, g_x = value_gradient!(d, state.x)
+    copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
+
     # Measure the change in the gradient
-    state.dg .= gradient(d) .- state.g_previous
+    state.dg .= state.g_x .- state.g_x_previous
 
     # Update the L-BFGS history of positions and gradients
     rho_iteration = one(eltype(state.dx)) / real(dot(state.dx, state.dg))

@@ -49,8 +49,10 @@ end
 
 mutable struct BFGSState{Tx,Tm,T,G} <: AbstractOptimizerState
     x::Tx
+    g_x::G
+    f_x::T
     x_previous::Tx
-    g_previous::G
+    g_x_previous::G
     f_x_previous::T
     dx::Tx
     dg::Tx
@@ -69,73 +71,81 @@ function _init_identity_matrix(x::AbstractArray{T}, scale::T = T(1)) where {T}
 end
 
 function reset!(method, state::BFGSState, obj, x)
-    n = length(x)
-    T = eltype(x)
+    # Update function value and gradient
     retract!(method.manifold, x)
-    value_gradient!(obj, x)
-    project_tangent!(method.manifold, gradient(obj), x)
+    f_x, g_x = value_gradient!(obj, x)
+    project_tangent!(method.manifold, g_x, x)
+    state.f_x = f_x
+    copyto!(state.g_x, g_x)
 
+    # Delete history
+    fill!(state.x_previous, NaN)
+    fill!(state.g_x_previous, NaN)
+    state.f_x_previous = oftype(state.f_x_previous, NaN)
+
+    # Update approximation of inverse Hessian
     if method.initial_invH === nothing
         if method.initial_stepnorm === nothing
             # Identity matrix of size n x n
             state.invH = _init_identity_matrix(x)
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(obj), Inf))
+            T = eltype(state.invH)
+            initial_scale = T(method.initial_stepnorm) * inv(norm(g_x, Inf))
             state.invH = _init_identity_matrix(x, initial_scale)
         end
     else
         state.invH .= method.initial_invH(x)
     end
+
+    return nothing
 end
 
-function initial_state(method::BFGS, options::Options, d, initial_x::AbstractArray{T}) where {T}
-    n = length(initial_x)
+function initial_state(method::BFGS, ::Options, d, initial_x::AbstractArray)
+    # Compute function value and gradient
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
+    f_x, g_x = value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, g_x, initial_x)
 
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
-
+    # Initialize approximation of inverse Hessian
     if method.initial_invH === nothing
         if method.initial_stepnorm === nothing
             # Identity matrix of size n x n
             invH0 = _init_identity_matrix(initial_x)
         else
-            initial_scale = T(method.initial_stepnorm) * inv(norm(gradient(d), Inf))
+            T = eltype(g_x)
+            initial_scale = T(method.initial_stepnorm) * inv(norm(g_x, Inf))
             invH0 = _init_identity_matrix(initial_x, initial_scale)
         end
     else
         invH0 = method.initial_invH(initial_x)
     end
+
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(
         initial_x, # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        copy(gradient(d)), # Store previous gradient in state.g_previous
-        real(T)(NaN), # Store previous f in state.f_x_previous
-        similar(initial_x), # Store changes in position in state.dx
-        similar(initial_x), # Store changes in gradient in state.dg
-        similar(initial_x), # Buffer stored in state.u
+        copy(g_x), # Maintain current gradient in state.g_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), # Store changes in position in state.dx
+        fill!(similar(initial_x), NaN), # Store changes in gradient in state.dg
+        fill!(similar(initial_x), NaN), # Buffer stored in state.u
         invH0, # Store current invH in state.invH
-        similar(initial_x), # Store current search direction in state.s
+        fill!(similar(initial_x), NaN), # Store current search direction in state.s
         @initial_linesearch()...,
     )
 end
 
 
 function update_state!(d, state::BFGSState, method::BFGS)
-    n = length(state.x)
-    T = eltype(state.s)
     # Set the search direction
     # Search direction is the negative gradient divided by the approximate Hessian
-    mul!(vec(state.s), state.invH, vec(gradient(d)))
-    rmul!(state.s, T(-1))
+    mul!(vec(state.s), state.invH, vec(state.g_x))
+    rmul!(state.s, eltype(state.s)(-1))
     project_tangent!(method.manifold, state.s, state.x)
-
-    # Maintain a record of the previous gradient
-    copyto!(state.g_previous, gradient(d))
 
     # Determine the distance of movement along the search line
     # This call resets invH to initial_invH if the former is not positive
@@ -150,11 +160,17 @@ function update_state!(d, state::BFGSState, method::BFGS)
     return !lssuccess # break on linesearch error
 end
 
-function update_h!(d, state, method::BFGS)
-    n = length(state.x)
+function update_fgh!(d, state::BFGSState, method::BFGS)
     (; invH, dx, dg, u) = state
+    
+    # Update function value and gradient
+    f_x, g_x = value_gradient!(d, state.x)
+    copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
+
     # Measure the change in the gradient
-    dg .= gradient(d) .- state.g_previous
+    dg .= state.g_x .- state.g_x_previous
 
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = real(dot(dx, dg))
@@ -166,6 +182,7 @@ function update_h!(d, state, method::BFGS)
 
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
         if (invH isa Array) # i.e. not a CuArray
+            n = length(dx)
             @inbounds for j = 1:n
                 c1dxj = c1 * dx[j]'
                 c2dxj = c2 * dx[j]'
@@ -191,16 +208,15 @@ function trace!(tr, d, state::BFGSState, iteration::Integer, method::BFGS, optio
     dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(gradient(d))
+        dt["g(x)"] = copy(state.g_x)
         dt["~inv(H)"] = copy(state.invH)
         dt["Current step size"] = state.alpha
     end
-    g_norm = norm(gradient(d), Inf)
     update!(
         tr,
         iteration,
-        value(d),
-        g_norm,
+        state.f_x,
+        g_residual(state),
         dt,
         options.store_trace,
         options.show_trace,

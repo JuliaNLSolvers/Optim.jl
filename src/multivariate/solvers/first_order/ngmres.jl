@@ -136,20 +136,22 @@ function OACCEL(;
 end
 
 
-mutable struct NGMRESState{P,Tx,Te,T,eTx} <:
-               AbstractOptimizerState where {P<:AbstractOptimizerState}
+mutable struct NGMRESState{P<:AbstractOptimizerState,eTx,Tx<:AbstractArray{eTx},eTg,Tg<:AbstractArray{eTg},T,Te<:VecOrMat{T}} <:
+               AbstractOptimizerState
     # eTx is the eltype of Tx
-    x::Tx                    # Reference to nlpreconstate.x
-    x_previous::Tx           # Reference to nlpreconstate.x_previous
+    x::Tx                    # Current state. Reference to nlpreconstate.x
+    g_x::Tg                  # Gradient at x. Reference to nlpreconstate.g_x
+    f_x::T                   # Function value of x
+    x_previous::Tx           # Previous state. Reference to nlpreconstate.x_previous
     x_previous_0::Tx         # Used to deal with assess_convergence of NGMRES
-    f_x_previous::T
+    f_x_previous::T          # Function value of previous state.
     f_x_previous_0::T        # Used to deal with assess_convergence of NGMRES
     f_xP::T                  # For tracing purposes
     grnorm_xP::T             # For tracing purposes
     s::Tx                    # Search direction for linesearch between xP and xA
     nlpreconstate::P         # Nonlinear preconditioner state
     X::Array{eTx,2}          # Solution vectors in the window
-    R::Array{eTx,2}          # Gradient vectors in the window
+    R::Array{eTg,2}          # Gradient vectors in the window
     Q::Array{T,2}            # Storage to create linear system (TODO: make Symmetric?)
     ξ::Te                    # Storage to create linear system
     curw::Int                # Counter for current window size
@@ -158,7 +160,7 @@ mutable struct NGMRESState{P,Tx,Te,T,eTx} <:
     xA::Vector{eTx}          # Container for accelerated step
     k::Int                   # Used for indexing where to put values in the Storage containers
     restart::Bool            # Restart flag
-    g_abstol::T                 # Exit tolerance to be checked after nonlinear preconditioner apply
+    g_abstol::T              # Exit tolerance to be checked after nonlinear preconditioner apply
     subspacealpha::Vector{T} # Storage for coefficients in the subspace for the acceleration step
     @add_linesearch_fields()
 end
@@ -225,8 +227,8 @@ function initial_state(
     method::AbstractNGMRES,
     options::Options,
     d,
-    initial_x::AbstractArray{eTx},
-) where {eTx}
+    initial_x::AbstractArray,
+)
     if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
         if !ngmres_oaccel_warned[]
             @warn "Use caution. N-GMRES/O-ACCEL has only been tested with Gradient Descent and L-BFGS preconditioning."
@@ -235,36 +237,38 @@ function initial_state(
     end
 
     nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, initial_x)
+    (; f_x, x, g_x) = nlpreconstate
     # Manifold comment:
     # We assume nlprecon calls retract! and project_tangent! on
-    # nlpreconstate.x and gradient(d)
-    T = real(eTx)
-
-    n = length(nlpreconstate.x)
+    # nlpreconstate.x and nlpreconstate.g_x
+ 
+    T = typeof(f_x)
+    n = length(x)
     wmax = method.wmax
-    X = Array{eTx}(undef, n, wmax)
-    R = Array{eTx}(undef, n, wmax)
-    Q = Array{T}(undef, wmax, wmax)
+    X = fill!(Array{eltype(x)}(undef, n, wmax), NaN)
+    R = fill!(Array{eltype(g_x)}(undef, n, wmax), NaN)
+    Q = fill!(Array{typeof(f_x)}(undef, wmax, wmax), NaN)
     ξ = if typeof(method) <: OACCEL
-        Array{T}(undef, wmax, 2)
+        fill!(Array{T}(undef, wmax, 2), NaN)
     else
-        Array{T}(undef, wmax)
+        fill!(Array{T}(undef, wmax), NaN)
     end
 
-    copyto!(view(X, :, 1), nlpreconstate.x)
-    copyto!(view(R, :, 1), gradient(d))
-
+    copyto!(view(X, :, 1), x)
+    copyto!(view(R, :, 1), g_x)
     _updateQ!(Q, 1, 1, X, R, method)
 
     NGMRESState(
-        nlpreconstate.x,          # Maintain current state in state.x. Use same vector as preconditioner.
-        nlpreconstate.x_previous, # Maintain  in state.x_previous. Use same vector as preconditioner.
-        copy(nlpreconstate.x), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+        nlpreconstate.x,          # Maintain current state in state.x. Uses same vector as preconditioner.
+        nlpreconstate.g_x,        # Maintain current gradient in state.g_x. Uses same vector as preconditioner.
+        nlpreconstate.f_x,        # Maintain current f in state.f_x.
+        nlpreconstate.x_previous, # Maintain in state.x_previous. Use same vector as preconditioner.
+        fill!(similar(nlpreconstate.x), NaN), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
         T(NaN),                   # Store previous f in state.f_x_previous
         T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
         T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
         T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
-        similar(initial_x),       # Maintain current search direction in state.s
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
         nlpreconstate,            # State storage for preconditioner
         X,
         R,
@@ -282,17 +286,15 @@ function initial_state(
     )
 end
 
-nlprecon_post_optimize!(d, state, method) = update_h!(d, state.nlpreconstate, method)
-
-nlprecon_post_accelerate!(d, state, method) = update_h!(d, state.nlpreconstate, method)
-
+nlprecon_post_optimize!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
+nlprecon_post_accelerate!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
 function nlprecon_post_accelerate!(
     d,
     state::NGMRESState{X,T},
     method::LBFGS,
 ) where {X} where {T}
     state.nlpreconstate.pseudo_iteration += 1
-    update_h!(d, state.nlpreconstate, method)
+    update_fgh!(d, state.nlpreconstate, method)
 end
 
 
@@ -303,32 +305,26 @@ function update_state!(
 ) where {X} where {T}
     # Maintain a record of previous position, for convergence assessment
     copyto!(state.x_previous_0, state.x)
-    state.f_x_previous_0 = value(d)
+    state.f_x_previous_0 = state.f_x
 
     state.k += 1
     curw = state.curw
 
     # Step 1: Call preconditioner to get x^P
-    res = optimize(d, state.x, method.nlprecon, method.nlpreconopts, state.nlpreconstate)
+    optimize(d, state.x, method.nlprecon, method.nlpreconopts, state.nlpreconstate)
     # TODO: Is project_tangent! necessary, or is it called by nlprecon before exit?
-    project_tangent!(method.manifold, gradient(d), state.x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_xP = state.nlpreconstate.f_x
+    state.f_x = state.nlpreconstate.f_x
 
-    if any(.!isfinite.(state.x)) || any(.!isfinite.(gradient(d))) || !isfinite(value(d))
+    if !all(isfinite, state.x) || !all(isfinite, state.g_x) || !isfinite(state.f_xP)
         @warn("Non-finite values attained from preconditioner $(summary(method.nlprecon)).")
         return true
     end
 
+    state.grnorm_xP = g_residual(state.g_x)
 
-    # Calling value_gradient! in normally done on state.x in optimize or update_g! above,
-    # but there are corner cases where we need this.
-    state.f_xP, _g = value_gradient!(d, state.x)
-    # Manifold start
-    project_tangent!(method.manifold, gradient(d), state.x)
-    # Manifold stop
-    gP = gradient(d)
-    state.grnorm_xP = g_residual(gP)
-
-    if g_residual(gP) ≤ state.g_abstol
+    if state.grnorm_xP ≤ state.g_abstol
         return false # Exit on gradient norm convergence
     end
 
@@ -336,11 +332,11 @@ function update_state!(
     nlprecon_post_optimize!(d, state, method.nlprecon)
 
     # Step 2: Do acceleration calculation
-    η = _updateη(state.x, gP, method)
+    η = _updateη(state.x, state.g_x, method)
 
     for i = 1:curw
         # Update storage vectors according to method {NGMRES, OACCEL}
-        _updateξ!(state.ξ, i, state.X, state.x, state.R, gP, method)
+        _updateξ!(state.ξ, i, state.X, state.x, state.R, state.g_x, method)
         _updateb!(state.b, i, state.ξ, η, method)
     end
 
@@ -377,7 +373,8 @@ function update_state!(
     end
 
     # 3: Perform condition checks
-    if real(dot(state.s, gP)) ≥ 0 || !isfinite(real(dot(state.s, gP)))
+    sTg_x = real(dot(state.s, state.g_x))
+    if sTg_x ≥ 0 || !isfinite(sTg_x)
         # Moving from xP to xA is *not* a descent direction
         # Discard xA
         state.restart = true # TODO: expand restart heuristics
@@ -428,11 +425,13 @@ function update_state!(
     return !lssuccess # Break on linesearch error
 end
 
-function update_g!(d, state, method::AbstractNGMRES)
+function update_fgh!(d, state, method::AbstractNGMRES)
     # Update the function value and gradient
     # TODO: do we need a retract! on state.x here?
-    value_gradient!(d, state.x)
-    project_tangent!(method.manifold, gradient(d), state.x)
+    f_x, g_x = value_gradient!(d, state.x)
+    project_tangent!(method.manifold, g_x, state.x)
+    state.f_x = f_x
+    copyto!(state.g_x, g_x)
 
     if state.restart
         state.k = 0
@@ -443,11 +442,13 @@ function update_g!(d, state, method::AbstractNGMRES)
     j = mod(state.k, method.wmax) + 1
 
     copyto!(view(state.X, :, j), vec(state.x))
-    copyto!(view(state.R, :, j), vec(gradient(d)))
+    copyto!(view(state.R, :, j), vec(g_x))
 
     for i = 1:state.curw
         _updateQ!(state.Q, i, j, state.X, state.R, method)
     end
+
+    return nothing
 end
 
 function trace!(
@@ -463,7 +464,7 @@ function trace!(
     dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(gradient(d))
+        dt["g(x)"] = copy(state.g_x)
         dt["subspace-α"] = state.subspacealpha[1:state.curw-1]
         if state.restart
             dt["Current step size"] = NaN
@@ -481,12 +482,11 @@ function trace!(
         dt["|g(x^P)|"] = state.grnorm_xP
     end
 
-    g_norm = g_residual(d)
     update!(
         tr,
         iteration,
-        value(d),
-        g_norm,
+        state.f_x,
+        g_residual(state),
         dt,
         options.store_trace,
         options.show_trace,

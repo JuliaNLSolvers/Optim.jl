@@ -1,21 +1,20 @@
-f_abschange(d::AbstractObjective, state) = f_abschange(value(d), state.f_x_previous)
-f_abschange(f_x::T, f_x_previous) where {T} = abs(f_x - f_x_previous)
-f_relchange(d::AbstractObjective, state) = f_relchange(value(d), state.f_x_previous)
-f_relchange(f_x::T, f_x_previous) where {T} = abs(f_x - f_x_previous) / abs(f_x)
+f_abschange(state::AbstractOptimizerState) = f_abschange(state.f_x, state.f_x_previous)
+f_abschange(f_x, f_x_previous) = abs(f_x - f_x_previous)
+f_relchange(state::AbstractOptimizerState) = f_relchange(state.f_x, state.f_x_previous)
+f_relchange(f_x, f_x_previous) = abs(f_x - f_x_previous) / abs(f_x)
 
-x_abschange(state) = x_abschange(state.x, state.x_previous)
+x_abschange(state::AbstractOptimizerState) = x_abschange(state.x, state.x_previous)
 x_abschange(x, x_previous) = maxdiff(x, x_previous)
-x_relchange(state) = x_relchange(state.x, state.x_previous)
+x_relchange(state::AbstractOptimizerState) = x_relchange(state.x, state.x_previous)
 x_relchange(x, x_previous) = maxdiff(x, x_previous) / Base.maximum(abs, x) # Base.maximum !== maximum
 
-g_residual(d, state) = g_residual(d)
-g_residual(d, state::NelderMeadState) = state.nm_x
-g_residual(d::AbstractObjective) = g_residual(gradient(d))
-g_residual(d::NonDifferentiable) = convert(typeof(value(d)), NaN)
-g_residual(g) = Base.maximum(abs, g) # Base.maximum !== maximum
-gradient_convergence_assessment(state::AbstractOptimizerState, d, options) =
-    g_residual(gradient(d)) ≤ options.g_abstol
-gradient_convergence_assessment(state::ZerothOrderState, d, options) = false
+g_residual(state::NelderMeadState) = state.nm_x
+g_residual(state::ZerothOrderState) = oftype(state.f_x, NaN)
+g_residual(state::AbstractOptimizerState) = g_residual(state.g_x)
+g_residual(g_x::AbstractArray) = Base.maximum(abs, g_x) # Base.maximum !== maximum
+gradient_convergence_assessment(state::AbstractOptimizerState, options::Options) =
+    g_residual(state) ≤ options.g_abstol
+gradient_convergence_assessment(state::ZerothOrderState, options::Options) = false
 
 # Default function for convergence assessment used by
 # AcceleratedGradientDescentState, BFGSState, ConjugateGradientState,
@@ -24,9 +23,9 @@ function assess_convergence(state::AbstractOptimizerState, d, options::Options)
     assess_convergence(
         state.x,
         state.x_previous,
-        value(d),
+        state.f_x,
         state.f_x_previous,
-        gradient(d),
+        state.g_x,
         options.x_abstol,
         options.x_reltol,
         options.f_abstol,
@@ -39,65 +38,41 @@ function assess_convergence(
     x_previous,
     f_x,
     f_x_previous,
-    gx,
+    g_x,
     x_abstol,
     x_reltol,
     f_abstol,
     f_reltol,
     g_abstol,
 )
-    x_converged, f_converged, f_increased, g_converged = false, false, false, false
-
     # TODO: Create function for x_convergence_assessment
-    if x_abschange(x, x_previous) ≤ x_abstol
-        x_converged = true
-    end
-    if x_abschange(x, x_previous) ≤ x_reltol * Base.maximum(abs, x) # Base.maximum !== maximum
-        x_converged = true
-    end
+    x_converged = x_abschange(x, x_previous) ≤ x_abstol ||
+        x_abschange(x, x_previous) ≤ x_reltol * Base.maximum(abs, x) # Base.maximum !== maximum
 
     # Relative Tolerance
     # TODO: Create function for f_convergence_assessment
-    if f_abschange(f_x, f_x_previous) ≤ f_abstol
-        f_converged = true
-    end
+    f_converged = f_abschange(f_x, f_x_previous) ≤ f_abstol ||
+        f_abschange(f_x, f_x_previous) ≤ f_reltol * abs(f_x)
 
-    if f_abschange(f_x, f_x_previous) ≤ f_reltol * abs(f_x)
-        f_converged = true
-    end
+    f_increased = f_x > f_x_previous
 
-    if f_x > f_x_previous
-        f_increased = true
-    end
-
-    g_converged = g_residual(gx) ≤ g_abstol
+    g_converged = g_residual(g_x) ≤ g_abstol # Base.maximum !== maximum
 
     return x_converged, f_converged, g_converged, f_increased
 end
 
 # Used by Fminbox and IPNewton
-function assess_convergence(x, x_previous, f_x, f_x_previous, g, x_tol, f_tol, g_tol)
-
-    x_converged, f_converged, f_increased, g_converged = false, false, false, false
-
-    if x_abschange(x, x_previous) ≤ x_tol
-        x_converged = true
-    end
+function assess_convergence(x, x_previous, f_x, f_x_previous, g_x, x_tol, f_tol, g_tol)
+    x_converged = x_abschange(x, x_previous) ≤ x_tol
 
     # Absolute Tolerance
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
-    if f_abschange(f_x, f_x_previous) ≤ f_tol * abs(f_x)
-        f_converged = true
-    end
+    f_converged = f_abschange(f_x, f_x_previous) ≤ f_tol * abs(f_x)
 
-    if f_x > f_x_previous
-        f_increased = true
-    end
+    f_increased = f_x > f_x_previous
 
-    if g_residual(g) ≤ g_tol
-        g_converged = true
-    end
+    g_converged = g_residual(g_x) ≤ g_tol # Base.maximum !== maximum
 
     return x_converged, f_converged, g_converged, f_increased
 end
