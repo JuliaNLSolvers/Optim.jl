@@ -39,47 +39,59 @@ function GradientDescent(;
     GradientDescent(_alphaguess(alphaguess), linesearch, P, precondprep, manifold)
 end
 
-mutable struct GradientDescentState{Tx,T} <: AbstractOptimizerState
+mutable struct GradientDescentState{Tx,Tg,T} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    f_x::T
     x_previous::Tx
     f_x_previous::T
     s::Tx
     @add_linesearch_fields()
 end
-function reset!(method, state::GradientDescentState, obj, x)
-    retract!(method.manifold, x)
 
-    value_gradient!!(obj, x)
+function reset!(method::GradientDescent, state::GradientDescentState, obj, x)
+    # Update function value and gradient
+    copyto!(state.x, x)
+    retract!(method.manifold, state.x)
+    f_x, g_x = value_gradient!(obj, state.x)
+    copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, g_x, state.x)
+    state.f_x = f_x
 
-    project_tangent!(method.manifold, gradient(obj), x)
+    # Delete history
+    fill!(state.x_previous, NaN)
+    state.f_x_previous = oftype(state.f_x_previous, NaN)
+    fill!(state.s, NaN)
+
+    return nothing
 end
 function initial_state(
     method::GradientDescent,
-    options,
+    ::Options,
     d,
     initial_x::AbstractArray{T},
 ) where {T}
+    # Compute function value and gradient
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    f_x, g_x = value_gradient!(d, initial_x)
+    g_x = copy(g_x)
+    project_tangent!(method.manifold, g_x, initial_x)
 
     GradientDescentState(
         initial_x, # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        real(T(NaN)), # Store previous f in state.f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        g_x, # Maintain current gradient in state.g_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end
 
 function update_state!(d, state::GradientDescentState{T}, method::GradientDescent) where {T}
-    value_gradient!(d, state.x)
     # Search direction is always the negative preconditioned gradient
-    project_tangent!(method.manifold, gradient(d), state.x)
-    _precondition!(state.s, method, state.x, gradient(d))
+    _precondition!(state.s, method, state.x, state.g_x)
     rmul!(state.s, eltype(state.s)(-1))
     if method.P !== nothing
         project_tangent!(method.manifold, state.s, state.x)
@@ -91,6 +103,7 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # Update current position # x = x + alpha * s
     @. state.x = state.x + state.alpha * state.s
     retract!(method.manifold, state.x)
+
     return !lssuccess # break on linesearch error
 end
 

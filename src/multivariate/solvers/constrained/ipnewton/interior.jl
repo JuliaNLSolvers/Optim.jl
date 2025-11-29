@@ -1,7 +1,7 @@
 # TODO: when Optim supports sparse arrays, make a SparseMatrixCSC version of jacobianx
 
 
-abstract type AbstractBarrierState end
+abstract type AbstractBarrierState <: AbstractOptimizerState end
 
 # These are used not only for the current state, but also for the step and the gradient
 struct BarrierStateVars{T}
@@ -209,9 +209,8 @@ ls_update!(
 function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, options)
     # TODO: Make sure state.bgrad has been evaluated at initial_x
     # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
-    gradient!(d, initial_x)
-    stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    g_residual(d, state) + norm(state.bgrad, Inf) < options.g_abstol, stopped
+    stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
+    norm(state.g_x, Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
 end
 
 function optimize(
@@ -253,7 +252,7 @@ function optimize(
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     _time = t0
 
-    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+    tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
     tracing =
         options.store_trace ||
         options.show_trace ||
@@ -275,9 +274,20 @@ function optimize(
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update_state!(d, constraints, state, method, options) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS or linesearch errors)
+        # Convention: When `update_state!` is called, then `state` satisfies:
+        # - `state.x`: Current state
+        # - `state.f`: Objective function value of the current state, ie. `d(state.x)`
+        # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
+        # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)` 
+        fail = update_state!(d, constraints, state, method, options)
+        if fail
+            # `fail = true` e.g. if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS or linesearch errors)
+            break
+        end
 
-        update_fg!(d, constraints, state, method)
+        # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
+        # TODO: Already perform in `update_state!`?
+        update_fgh!(d, constraints, state, method)
 
         # TODO: Do we need to rethink f_increased for `ConstrainedOptimizer`s?
         x_converged, f_converged, g_converged, f_increased =
@@ -291,10 +301,6 @@ function optimize(
         # declaring convergence.
         counter_f_tol = f_converged ? counter_f_tol + 1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
-
-        # We don't use the Hessian for anything if we have declared convergence,
-        # so we might as well not make the (expensive) update if converged == true
-        !converged && update_h!(d, constraints, state, method)
 
         if tracing
             # update trace; callbacks can stop routine early by returning true
@@ -327,14 +333,13 @@ function optimize(
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_reltol)
-    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
     termination_code = TerminationCode.NotImplemented
     return MultivariateOptimizationResults(
         method,
         initial_x,
         pick_best_x(f_incr_pick, state),
-        pick_best_f(f_incr_pick, state, d),
+        pick_best_f(f_incr_pick, state),
         iteration,
         T(options.x_abstol),
         T(options.x_reltol),
@@ -342,10 +347,10 @@ function optimize(
         x_relchange(state),
         T(options.f_abstol),
         T(options.f_reltol),
-        f_abschange(d, state),
-        f_relchange(d, state),
+        f_abschange(state),
+        f_relchange(state),
         T(options.g_abstol),
-        g_residual(d, state),
+        g_residual(state),
         tr,
         f_calls(d),
         g_calls(d),
@@ -357,9 +362,8 @@ function optimize(
     )
 end
 
-# Fallbacks (for methods that don't need these)
+# Fallback (for methods that don't need this)
 after_while!(d, constraints::AbstractConstraints, state, method, options) = nothing
-update_h!(d, constraints::AbstractConstraints, state, method) = nothing
 
 """
     initialize_μ_λ!(state, bounds, μ0=:auto, β=0.01)
@@ -372,7 +376,7 @@ without the barrier (μ = 0). This ensures that the search isn't pushed
 out of the basin of the user-supplied initial guess.
 
 Upon entry, the objective function gradient, constraint values, and
-constraint jacobian must be set in `state.g`, `state.c`, and `state.J`
+constraint jacobian must be set in `state.g_x`, `state.c`, and `state.J`
 respectively. If you also wish to ensure that the projection of
 Hessian is minimally-perturbed along the initial gradient, supply the
 hessian of the objective (`Hobj`) and
@@ -399,7 +403,8 @@ function initialize_μ_λ!(
         fill!(state.bstate, 0)
         return state
     end
-    gf = state.g  # must be pre-set to ∇f
+    copyto!(state.g_L_x, state.g_x)
+    gf = state.g_L_x
     # Calculate projection of ∇f into the subspace spanned by the
     # equality constraint Jacobian
     JE = jacobianE(state, bounds)
@@ -553,24 +558,31 @@ function lagrangian(d, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars,
 end
 
 function lagrangian_fg!(
-    gx,
+    g_L_x,
     bgrad,
-    d,
     bounds::ConstraintBounds,
     x,
+    f_x,
+    g_x,
     c,
     J,
     bstate::BarrierStateVars,
     μ,
 )
-    fill!(bgrad, 0)
-    f_x, g_x = NLSolversBase.value_gradient!(d, x)
-    gx .= g_x
+    # Compute the value of the Lagrangian at x
     ev = equality_violation(bounds, x, c, bstate)
-    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) + ev
+    L_x = f_x + barrier_value(bounds, x, bstate, μ) + ev
+ 
+    # Compute gradient of the Lagrangian at x:
+    # - store the gradient of the barrier at x in `bgrad`
+    # - store the gradient of the Lagrangian at x in `g_L_x`
+    copyto!(g_L_x, g_x)
+    fill!(bgrad, 0)
     barrier_grad!(bgrad, bounds, x, bstate, μ)
-    equality_grad!(gx, bgrad, bounds, x, c, J, bstate)
-    f_x, L_xsλ, ev
+    equality_grad!(g_L_x, bgrad, bounds, x, c, J, bstate)
+
+    
+    return L_x, ev
 end
 
 # TODO: do we need lagrangian_vec? Maybe for automatic differentiation?
@@ -680,18 +692,22 @@ function _lagrangian_lineslope(αs, d, constraints, state)
     ls_update!(b_ls.bstate, state.bstate, bstep, αs)
     constraints.c!(b_ls.c, state.x_ls)
     constraints.jacobian!(b_ls.J, state.x_ls)
-    f_x, L, ev = lagrangian_fg!(
-        state.g,
+    f_x, g_x = value_gradient!(d, state.x_ls)
+    copyto!(state.g_x, g_x)
+    state.f_x = f_x
+    L, ev = lagrangian_fg!(
+        state.g_L_x,
         bgrad,
-        d,
         bounds,
         state.x_ls,
+        f_x,
+        state.g_x,
         b_ls.c,
         b_ls.J,
         b_ls.bstate,
         state.μ,
     )
-    slopeα = slopealpha(state.s, state.g, bstep, bgrad)
+    slopeα = slopealpha(state.s, state.g_x, bstep, bgrad)
     f_x, L, ev, slopeα
 end
 
@@ -704,8 +720,8 @@ function lagrangian_lineslope!(
 )
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    state.f_x, state.L, state.ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
-    state.L, slope
+    state.f_x, state.L_x, state.ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
+    state.L_x, slope
 end
 lagrangian_lineslope!(αs, d, constraints, state, method) =
     lagrangian_lineslope(αs, d, constraints, state)

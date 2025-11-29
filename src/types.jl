@@ -308,8 +308,8 @@ termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
 
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
-pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
-pick_best_f(f_increased, state, d) = f_increased ? state.f_x_previous : value(d)
+pick_best_x(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.x_previous : state.x
+pick_best_f(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.f_x_previous : state.f_x
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm
