@@ -2,8 +2,7 @@
     # Utility function for hand-setting the μ parameter
     function setstate!(state, μ, d, constraints, method)
         state.μ = μ
-        Optim.update_fg!(d, constraints, state, method)
-        Optim.update_h!(d, constraints, state, method)
+        Optim.update_fgh!(d, constraints, state, method)
     end
 
     @testset "Bounds parsing" begin
@@ -141,19 +140,22 @@
         bounds = Optim.ConstraintBounds(Float64[], Float64[], Float64[], Float64[])
         bstate = Optim.BarrierStateVars(bounds, x)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(
+        f_x = NLSolversBase.value(dg, x)
+        g_x = NLSolversBase.gradient(dg, x)
+        L, ev = Optim.lagrangian_fg!(
             gx,
             bgrad,
-            dg,
             bounds,
             x,
+            f_x,
+            g_x,
             Float64[],
             Array{Float64}(undef, 0, 0),
             bstate,
             μ,
         )
         @test f_x == L == dg.f(x)
-        @test gx == H * x
+        @test gx == g_x == H * x
         constraints = TwiceDifferentiableConstraints(
             (c, x) -> nothing,
             (J, x) -> nothing,
@@ -172,7 +174,9 @@
         bstate = Optim.BarrierStateVars(bounds)
         rand!(bstate.λxE)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
+        f_x = NLSolversBase.value(d0, x)
+        g_x = NLSolversBase.gradient(d0, x)
+        L, ev = Optim.lagrangian_fg!(gx, bgrad, bounds, x, f_x, g_x, c, J, bstate, μ)
         @test f_x == 0
         @test L ≈ dot(bstate.λxE, xbar - x)
         @test gx == -bstate.λxE
@@ -213,12 +217,15 @@
         bstate = Optim.BarrierStateVars(bounds, y)
         rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(
+        f_y = NLSolversBase.value(d0, y)
+        g_y = NLSolversBase.gradient(d0, y)
+        L, ev = Optim.lagrangian_fg!(
             gx,
             bgrad,
-            d0,
             bounds,
             y,
+            f_y,
+            g_y,
             Float64[],
             Array{Float64}(undef, 0, 0),
             bstate,
@@ -254,12 +261,15 @@
         rand!(bstate.slack_x)  # intentionally displace from the correct value
         rand!(bstate.λx)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(
+        f_x = NLSolversBase.value(d0, x)
+        g_x = NLSolversBase.gradient(d0, x)
+        L, ev = Optim.lagrangian_fg!(
             gx,
             bgrad,
-            d0,
             bounds,
             x,
+            f_x,
+            g_x,
             Float64[],
             Array{Float64}(undef, 0, 0),
             bstate,
@@ -336,7 +346,9 @@
         bstate = Optim.BarrierStateVars(bounds, x, c)
         rand!(bstate.λcE)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
+        f_x = NLSolversBase.value(d0, x)
+        g_x = NLSolversBase.gradient(d0, x)
+        L, ev = Optim.lagrangian_fg!(gx, bgrad, bounds, x, f_x, g_x, c, J, bstate, μ)
         @test f_x == 0
         @test L ≈ dot(bstate.λcE, cbar - c)
         @test gx ≈ -J' * bstate.λcE
@@ -361,7 +373,9 @@
         rand!(bstate.slack_c)  # intentionally displace from the correct value
         rand!(bstate.λc)
         bgrad = similar(bstate)
-        f_x, L = Optim.lagrangian_fg!(gx, bgrad, d0, bounds, x, c, J, bstate, μ)
+        f_x = NLSolversBase.value(d0, x)
+        g_x = NLSolversBase.gradient(d0, x)
+        L, ev = Optim.lagrangian_fg!(gx, bgrad, bounds, x, f_x, g_x, c, J, bstate, μ)
         @test f_x == 0
         Ltarget =
             -μ * sum(log, bstate.slack_c) +
@@ -415,8 +429,8 @@
         constraints =
             TwiceDifferentiableConstraints([0.5, 0.0, -Inf, -Inf], [Inf, Inf, 1.0, 0.8])
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
-        @test norm(f_g - state.g) ≈ 0.01 * norm(f_g)
+        Optim.update_fgh!(d, constraints, state, method)
+        @test norm(f_g - state.g_L_x) ≈ 0.01 * norm(f_g)
         # Nonlinear inequalities
         constraints = TwiceDifferentiableConstraints(
             (c, x) -> (c[1] = x[1] * x[2]; c[2] = 3 * x[3] + x[4]^2),
@@ -429,8 +443,8 @@
         )
         @test Optim.isinterior(constraints, x)
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
-        @test norm(f_g - state.g) ≈ 0.01 * norm(f_g)
+        Optim.update_fgh!(d, constraints, state, method)
+        @test norm(f_g - state.g_L_x) ≈ 0.01 * norm(f_g)
         # Mixed equalities and inequalities
         constraints = TwiceDifferentiableConstraints(
             (c, x) -> (c[1] = x[1] * x[2]; c[2] = 3 * x[3] + x[4]^2),
@@ -443,14 +457,14 @@
         )
         @test Optim.isfeasible(constraints, x)
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
+        Optim.update_fgh!(d, constraints, state, method)
         J = zeros(2, 4)
         constraints.jacobian!(J, x)
         eqnormal = vec(J[1, :])
         eqnormal = eqnormal / norm(eqnormal)
-        @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
+        @test abs(dot(state.g_L_x, eqnormal)) < 1e-12  # orthogonal to equality constraint
         Pfg = f_g - dot(f_g, eqnormal) * eqnormal
-        Pg = state.g - dot(state.g, eqnormal) * eqnormal
+        Pg = state.g_L_x - dot(state.g_L_x, eqnormal) * eqnormal
         @test norm(Pfg - Pg) ≈ 0.01 * norm(Pfg)
         ## An objective function with a nonzero hessian
         hd = [1.0, 100.0, 0.01, 2.0]   # diagonal terms of hessian
@@ -467,10 +481,10 @@
         constraints =
             TwiceDifferentiableConstraints([0.5, 0.0, -Inf, -Inf], [Inf, Inf, 1.0, 0.8])
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
-        @test abs(dot(gx, state.g) / dot(gx, gx) - 1) <= 0.011
-        Optim.update_h!(d, constraints, state, method)
-        @test abs(dot(gx, state.H * gx) / dot(gx, hx * gx) - 1) <= 0.011
+        Optim.update_fgh!(d, constraints, state, method)
+        @test abs(dot(gx, state.g_L_x) / dot(gx, gx) - 1) <= 0.011
+        Optim.update_fgh!(d, constraints, state, method)
+        @test abs(dot(gx, state.H_L_x * gx) / dot(gx, hx * gx) - 1) <= 0.011
         # Nonlinear inequalities
         constraints = TwiceDifferentiableConstraints(
             (c, x) -> (c[1] = x[1] * x[2]; c[2] = 3 * x[3] + x[4]^2),
@@ -483,10 +497,10 @@
         )
         @test Optim.isinterior(constraints, x)
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
-        @test abs(dot(gx, state.g) / dot(gx, gx) - 1) <= 0.011
-        Optim.update_h!(d, constraints, state, method)
-        @test abs(dot(gx, state.H * gx) / dot(gx, hx * gx) - 1) <= 0.011
+        Optim.update_fgh!(d, constraints, state, method)
+        @test abs(dot(gx, state.g_L_x) / dot(gx, gx) - 1) <= 0.011
+        Optim.update_fgh!(d, constraints, state, method)
+        @test abs(dot(gx, state.H_L_x * gx) / dot(gx, hx * gx) - 1) <= 0.011
         # Mixed equalities and inequalities
         constraints = TwiceDifferentiableConstraints(
             (c, x) -> (c[1] = x[1] * x[2]; c[2] = 3 * x[3] + x[4]^2),
@@ -499,16 +513,16 @@
         )
         @test Optim.isfeasible(constraints, x)
         state = Optim.initial_state(method, options, d, constraints, x)
-        Optim.update_fg!(d, constraints, state, method)
+        Optim.update_fgh!(d, constraints, state, method)
         J = zeros(2, 4)
         constraints.jacobian!(J, x)
         eqnormal = vec(J[1, :])
         eqnormal = eqnormal / norm(eqnormal)
-        @test abs(dot(state.g, eqnormal)) < 1e-12  # orthogonal to equality constraint
+        @test abs(dot(state.g_L_x, eqnormal)) < 1e-12  # orthogonal to equality constraint
         Pgx = gx - dot(gx, eqnormal) * eqnormal
-        @test abs(dot(Pgx, state.g) / dot(Pgx, Pgx) - 1) <= 0.011
-        Optim.update_h!(d, constraints, state, method)
-        @test abs(dot(Pgx, state.H * Pgx) / dot(Pgx, hx * Pgx) - 1) <= 0.011
+        @test abs(dot(Pgx, state.g_L_x) / dot(Pgx, Pgx) - 1) <= 0.011
+        Optim.update_fgh!(d, constraints, state, method)
+        @test abs(dot(Pgx, state.H_L_x * Pgx) / dot(Pgx, hx * Pgx) - 1) <= 0.011
     end
 
     @testset "IPNewton step" begin
@@ -609,8 +623,7 @@
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method, options)
                 state.μ = μ
-                Optim.update_fg!(d, constraints, state, method)
-                Optim.update_h!(d, constraints, state, method)
+                Optim.update_fgh!(d, constraints, state, method)
             end
             @test isapprox(first(state.x), μ / F, rtol = 1e-4)
             # |x| ≥ 1, and check that we get slack precision better than eps(1.0)
@@ -626,8 +639,7 @@
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method, options)
                 state.μ = μ
-                Optim.update_fg!(d, constraints, state, method)
-                Optim.update_h!(d, constraints, state, method)
+                Optim.update_fgh!(d, constraints, state, method)
             end
             @test state.x[1] == σ
             @test state.bstate.slack_x[1] < eps(float(σ))
@@ -650,8 +662,7 @@
                 Optim.initial_state(method, options, d, constraints, [(1 + eps(1.0)) * σ])
             for i = 1:10
                 Optim.update_state!(d, constraints, state, method, options)
-                Optim.update_fg!(d, constraints, state, method)
-                Optim.update_h!(d, constraints, state, method)
+                Optim.update_fgh!(d, constraints, state, method)
             end
             @test state.x[1] ≈ σ
             @test state.bstate.slack_c[1] < eps(float(σ))

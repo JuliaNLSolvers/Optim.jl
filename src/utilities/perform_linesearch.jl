@@ -5,11 +5,8 @@ reset_search_direction!(state, d, method) = false # no-op
 _alphaguess(a) = a
 _alphaguess(a::Number) = LineSearches.InitialStatic(alpha = a)
 
-# Note that for these resets we're using `gradient(d)` but we don't need to use
-# project_tangent! here, because we already did that inplace on gradient(d) after
-# the last evaluation (we basically just always do it)
-function reset_search_direction!(state, d, method::BFGS)
-    gx = gradient!(d, state.x)
+function reset_search_direction!(state::BFGSState, method::BFGS)
+    gx = state.g_x
     if method.initial_invH === nothing
         n = length(state.x)
         T = typeof(state.invH)
@@ -27,27 +24,25 @@ function reset_search_direction!(state, d, method::BFGS)
     return true
 end
 
-function reset_search_direction!(state, d, method::LBFGS)
+function reset_search_direction!(state::LBFGSState, ::LBFGS)
     state.pseudo_iteration = 1
-    state.s .= .-gradient!(d, state.x)
+    state.s .= .-state.g_x
     return true
 end
 
-function reset_search_direction!(state, d, method::ConjugateGradient)
+function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradient)
     state.s .= .-state.pg
     return true
 end
 
 function perform_linesearch!(state, method, d)
     # Calculate search direction dphi0
-    fx = value_gradient!(d, state.x)
-    gx = gradient(d)
-    dphi_0 = real(dot(gx, state.s))
+    dphi_0 = real(dot(state.g_x, state.s))
     # reset the direction if it becomes corrupted
-    if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, d, method)
-        dphi_0 = real(dot(gx, state.s)) # update after direction reset
+    if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, method)
+        dphi_0 = real(dot(state.g_x, state.s)) # update after direction reset
     end
-    phi_0 = value!(d, state.x)
+    phi_0 = state.f_x
 
     # Guess an alpha
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
@@ -55,6 +50,9 @@ function perform_linesearch!(state, method, d)
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)
+    if hasproperty(state, :g_x_previous)
+        copyto!(state.g_x_previous, state.g_x)
+    end
 
     # Perform line search; catch LineSearchException to allow graceful exit
     try

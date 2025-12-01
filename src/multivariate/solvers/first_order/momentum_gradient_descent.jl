@@ -19,8 +19,10 @@ function MomentumGradientDescent(;
     MomentumGradientDescent(mu, _alphaguess(alphaguess), linesearch, manifold)
 end
 
-mutable struct MomentumGradientDescentState{Tx,T} <: AbstractOptimizerState
+mutable struct MomentumGradientDescentState{Tx,Tg,T} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    f_x::T
     x_previous::Tx
     x_momentum::Tx
     f_x_previous::T
@@ -28,21 +30,21 @@ mutable struct MomentumGradientDescentState{Tx,T} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-function initial_state(method::MomentumGradientDescent, options::Options, d, initial_x::AbstractArray)
-    T = eltype(initial_x)
+function initial_state(method::MomentumGradientDescent, ::Options, d, initial_x::AbstractArray)
+    # Compute function value and gradient
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    f_x, g_x = value_gradient!(d, initial_x)
+    project_tangent!(method.manifold, g_x, initial_x)
 
     MomentumGradientDescentState(
         initial_x, # Maintain current state in state.x
+        copy(g_x), # Maintain current gradient in state.g_x
+        f_x, # Maintain current f in state.f_x 
         copy(initial_x), # Maintain previous state in state.x_previous
-        similar(initial_x), # Record momentum correction direction in state.x_momentum
-        real(T)(NaN), # Store previous f in state.f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        fill!(similar(initial_x), NaN), # Record momentum correction direction in state.x_momentum
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end
@@ -52,18 +54,19 @@ function update_state!(
     state::MomentumGradientDescentState,
     method::MomentumGradientDescent,
 )
-    project_tangent!(method.manifold, gradient(d), state.x)
     # Search direction is always the negative gradient
-    state.s .= .-gradient(d)
+    state.s .= .-state.g_x
 
-    # Update position, and backup current one
+    # Update momentum
     state.x_momentum .= state.x .- state.x_previous
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
+    # Update state
     state.x .+= state.alpha .* state.s .+ method.mu .* state.x_momentum
     retract!(method.manifold, state.x)
+
     return !lssuccess # break on linesearch error
 end
 

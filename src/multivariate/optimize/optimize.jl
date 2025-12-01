@@ -1,37 +1,42 @@
-update_g!(d, state, method) = nothing
-function update_g!(d, state, method::FirstOrderOptimizer)
-    # Update the function value and gradient
-    value_gradient!(d, state.x)
-    project_tangent!(method.manifold, gradient(d), state.x)
+# Update function value, gradient and Hessian
+function update_fgh!(d, state, ::ZerothOrderOptimizer)
+    f_x = value!(d, state.x)
+    state.f_x = f_x
+    return nothing
 end
-function update_g!(d, state, method::Newton)
-    # Update the function value and gradient
-    value_gradient!(d, state.x)
+function update_fgh!(d, state, method::FirstOrderOptimizer)
+    f_x, g_x = value_gradient!(d, state.x)
+    if hasproperty(method, :manifold)
+        project_tangent!(method.manifold, g_x, state.x)
+    end
+    state.f_x = f_x
+    copyto!(state.g_x, g_x)
+    return nothing
 end
-update_fg!(d, state, method) = nothing
-update_fg!(d, state, method::ZerothOrderOptimizer) = value!(d, state.x)
-function update_fg!(d, state, method::FirstOrderOptimizer)
-    value_gradient!(d, state.x)
-    project_tangent!(method.manifold, gradient(d), state.x)
-end
-function update_fg!(d, state, method::Newton)
-    value_gradient!(d, state.x)
-end
+function update_fgh!(d, state, method::SecondOrderOptimizer)
+    # Manifold optimization is currently not supported for second order optimization algorithms
+    @assert !hasproperty(method, :manifold)
 
-# Update the Hessian
-update_h!(d, state, method) = nothing
-update_h!(d, state, method::SecondOrderOptimizer) = hessian!(d, state.x)
+    # TODO: Switch to `value_gradient_hessian!` when it becomes available
+    f_x, g_x = value_gradient!(d, state.x)
+    H_x = hessian!(d, state.x)
+    state.f_x = f_x
+    copyto!(state.g_x, g_x)
+    copyto!(state.H_x, H_x)
+
+    return nothing
+end
 
 after_while!(d, state, method, options) = nothing
 
-function initial_convergence(d, state, method::AbstractOptimizer, initial_x, options)
-    gradient!(d, initial_x)
-    stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    g_residual(d, state) <= options.g_abstol, stopped
+function initial_convergence(state::AbstractOptimizerState, options::Options)
+    stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
+    return g_residual(state) <= options.g_abstol, stopped
 end
-function initial_convergence(d, state, method::ZerothOrderOptimizer, initial_x, options)
+function initial_convergence(::ZerothOrderState, ::Options)
     false, false
 end
+
 function optimize(
     d::D,
     initial_x::Tx,
@@ -41,7 +46,7 @@ function optimize(
 ) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray,T,TCallback}
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+    tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
     tracing =
         options.store_trace ||
         options.show_trace ||
@@ -51,7 +56,7 @@ function optimize(
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+    g_converged, stopped = initial_convergence(state, options)
     converged = g_converged || stopped
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
@@ -62,22 +67,29 @@ function optimize(
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
+
+        # Convention: When `update_state!` is called, then `state` satisfies:
+        # - `state.x`: Current state
+        # - `state.f`: Objective function value of the current state, ie. `d(state.x)`
+        # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
+        # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)` 
         ls_success = !update_state!(d, state, method)
         if !ls_success
             break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
         end
-        if !(method isa NewtonTrustRegion)
-            update_g!(d, state, method) # TODO: Should this be `update_fg!`?
-        end
+
+        # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
+        # TODO: Already perform in `update_state!`?
+        update_fgh!(d, state, method)
+
+        # Check convergence
         x_converged, f_converged, g_converged, f_increased =
             assess_convergence(state, d, options)
         # For some problems it may be useful to require `f_converged` to be hit multiple times
         # TODO: Do the same for x_tol?
         counter_f_tol = f_converged ? counter_f_tol + 1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
-        if !(converged && method isa Newton) && !(method isa NewtonTrustRegion)
-            update_h!(d, state, method) # only relevant if not converged
-        end
+
         if tracing
             # update trace; callbacks can stop routine early by returning true
             stopped_by_callback =
@@ -113,11 +125,11 @@ function optimize(
             end
         end
 
-        if g_calls(d) > 0 && !all(isfinite, gradient(d))
+        if hasproperty(state, :g_x) && !all(isfinite, state.g_x)
             options.show_warnings && @warn "Terminated early due to NaN in gradient."
             break
         end
-        if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+        if hasproperty(state, :H_x) && !all(isfinite, state.H_x)
             options.show_warnings && @warn "Terminated early due to NaN in Hessian."
             break
         end
@@ -127,7 +139,7 @@ function optimize(
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
-    Tf = typeof(value(d))
+    Tf = typeof(state.f_x)
     f_incr_pick = f_increased && !options.allow_f_increases
     stopped_by = (x_converged, f_converged, g_converged,
         f_limit_reached = f_limit_reached,
@@ -141,7 +153,7 @@ function optimize(
     )
 
     termination_code =
-        _termination_code(d, g_residual(d, state), state, stopped_by, options)
+        _termination_code(d, g_residual(state), state, stopped_by, options)
 
     return MultivariateOptimizationResults{
         typeof(method),
@@ -154,7 +166,7 @@ function optimize(
         method,
         initial_x,
         pick_best_x(f_incr_pick, state),
-        pick_best_f(f_incr_pick, state, d),
+        pick_best_f(f_incr_pick, state),
         iteration,
         Tf(options.x_abstol),
         Tf(options.x_reltol),
@@ -162,10 +174,10 @@ function optimize(
         x_relchange(state),
         Tf(options.f_abstol),
         Tf(options.f_reltol),
-        f_abschange(d, state),
-        f_relchange(d, state),
+        f_abschange(state),
+        f_relchange(state),
         Tf(options.g_abstol),
-        g_residual(d, state),
+        g_residual(state),
         tr,
         f_calls(d),
         g_calls(d),
@@ -186,13 +198,13 @@ function _termination_code(d, gres, state, stopped_by, options)
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) ||
            (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol)
         TerminationCode.NoXChange
-    elseif (iszero(options.f_abstol) && f_abschange(d, state) <= options.f_abstol) ||
-           (iszero(options.f_reltol) && f_relchange(d, state) <= options.f_reltol)
+    elseif (iszero(options.f_abstol) && f_abschange(state) <= options.f_abstol) ||
+           (iszero(options.f_reltol) && f_relchange(state) <= options.f_reltol)
         TerminationCode.NoObjectiveChange
     elseif x_abschange(state) <= options.x_abstol || x_relchange(state) <= options.x_reltol
         TerminationCode.SmallXChange
-    elseif f_abschange(d, state) <= options.f_abstol ||
-           f_relchange(d, state) <= options.f_reltol
+    elseif f_abschange(state) <= options.f_abstol ||
+           f_relchange(state) <= options.f_reltol
         TerminationCode.SmallObjectiveChange
     elseif stopped_by.ls_failed
         TerminationCode.FailedLinesearch
@@ -210,11 +222,11 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.HessianCalls
     elseif stopped_by.f_increased
         TerminationCode.ObjectiveIncreased
-    elseif f_calls(d) > 0 && !isfinite(value(d))
+    elseif !isfinite(state.f_x)
+        TerminationCode.ObjectiveNotFinite
+    elseif hasproperty(state, :g_x) && !all(isfinite, state.g_x)
         TerminationCode.GradientNotFinite
-    elseif g_calls(d) > 0 && !all(isfinite, gradient(d))
-        TerminationCode.GradientNotFinite
-    elseif h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+    elseif hasproperty(state, :H_x) && !all(isfinite, state.H_x)
         TerminationCode.HessianNotFinite
     else
         TerminationCode.NotImplemented

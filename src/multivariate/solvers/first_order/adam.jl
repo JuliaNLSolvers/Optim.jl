@@ -45,81 +45,96 @@ function default_options(method::Adam)
     (; allow_f_increases = true, iterations = 10_000)
 end
 
-mutable struct AdamState{Tx,T,Tm,Tu,Ti} <: AbstractOptimizerState
+mutable struct AdamState{Tx,T,Tg,Tu,Ti} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    f_x::T
     x_previous::Tx
     f_x_previous::T
     s::Tx
-    m::Tm
+    m::Tg
     u::Tu
     alpha::T
     iter::Ti
 end
-function reset!(method, state::AdamState, obj, x)
-    value_gradient!!(obj, x)
+
+function reset!(method::Adam, state::AdamState, obj, x)
+    # Update function value and gradient
+    copyto!(state.x, x)
+    retract!(method.manifold, state.x)
+    f_x, g_x = value_gradient!(obj, state.x)
+    copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
+
+    # Reset history
+    fill!(state.x_previous, NaN)
+    state.f_x_previous = oftype(state.f_x_previous, NaN)
+    fill!(state.s, NaN)
+
+    # Reset momentum
+    copyto!(state.m, state.g_x)
+    fill!(state.u, false)
+
+    return nothing
 end
 
-function _get_init_params(method::Adam{T}) where {T<:Real}
-    method.α, method.β₁, method.β₂
+function _init_alpha(method::Adam)
+    (; α) = method
+    return α isa Real ? α : α(1)
 end
 
-function _get_init_params(method::Adam)
-    method.α(1), method.β₁, method.β₂
-end
-
-function initial_state(method::Adam, options::Options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::Adam, ::Options, d, initial_x::AbstractArray)
+    # Compute function value and gradient
     initial_x = copy(initial_x)
-
-    value_gradient!!(d, initial_x)
-    α, β₁, β₂ = _get_init_params(method)
-
-    m = copy(gradient(d))
-    u = zero(m)
-    iter = 0
+    retract!(method.manifold, initial_x)
+    f_x, g_x = value_gradient!(d, initial_x)
+    g_x = copy(g_x)
+    project_tangent!(method.manifold, g_x, initial_x)
 
     AdamState(
         initial_x, # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        real(T(NaN)), # Store previous f in state.f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
-        m,
-        u,
-        α,
-        iter,
+        g_x, # Maintain current gradient in state.g_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
+        copy(g_x), # m
+        zero(g_x), # u
+        _init_alpha(method), # alpha
+        0, # iter
     )
 end
 
-function _update_iter_alpha_in_state!(state::AdamState, method::Adam{T}) where {T<:Real}
+function update_state!(d, state::AdamState, method::Adam)
+    state.iter += 1
 
-    state.iter = state.iter + 1
-end
+    # Update α parameter if it is not constant
+    if !(method.α isa Real)
+        state.alpha = method.α(state.iter)
+    end
 
-function _update_iter_alpha_in_state!(state::AdamState, method::Adam)
-
-    state.iter = state.iter + 1
-    state.alpha = method.α(state.iter)
-end
-
-function update_state!(d, state::AdamState{T}, method::Adam) where {T}
-
-    _update_iter_alpha_in_state!(state, method)
-    value_gradient!(d, state.x)
-
-    α, β₁, β₂, ϵ = state.alpha, method.β₁, method.β₂, method.ϵ
+    # Unpack parameters
+    α = state.alpha
+    (; β₁, β₂, ϵ) = method
     a = 1 - β₁
     b = 1 - β₂
 
     m, u = state.m, state.u
     v = u
-    m .= β₁ .* m .+ a .* gradient(d)
-    v .= β₂ .* v .+ b .* gradient(d) .^ 2
+    m .= β₁ .* m .+ a .* state.g_x
+    v .= β₂ .* v .+ b .* state.g_x .^ 2
     #  m̂ = m./(1-β₁^state.iter)
     # v̂ = v./(1-β₂^state.iter)
     #@. z = z - α*m̂/(sqrt(v̂+ϵ))
     αₜ = α * sqrt(1 - β₂^state.iter) / (1 - β₁^state.iter)
+
+    # Update current state
+    copyto!(state.x_previous, state.x)
+    state.f_x_previous = state.f_x
     @. state.x = state.x - αₜ * m / (sqrt(v) + ϵ)
-    # Update current position # x = x + alpha * s
-    false # break on linesearch error
+
+    false # no error
 end
 
 function trace!(tr, d, state::AdamState, iteration::Integer, method::Adam, options::Options, curr_time = time())

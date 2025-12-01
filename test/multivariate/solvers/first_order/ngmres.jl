@@ -52,8 +52,8 @@ using Optim, Test
     # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
     @test 64 < Optim.iterations(res) < 100
-    @test 234 < Optim.f_calls(res) < 310
-    @test 234 < Optim.g_calls(res) < 310
+    @test 234 <= Optim.f_calls(res) < 310
+    @test 234 <= Optim.g_calls(res) < 310
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(
