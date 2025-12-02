@@ -108,18 +108,18 @@ end
 function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
     copyto!(cgs.x, x)
     retract!(cg.manifold, cgs.x)
-    f_x, g_x = value_gradient!(obj, cgs.x)
-    project_tangent!(cg.manifold, g_x, cgs.x)
-    cgs.f_x = f_x
+    f_x, g_x = NLSolversBase.value_gradient!(obj, cgs.x)
     copyto!(cgs.g_x, g_x)
+    project_tangent!(cg.manifold, cgs.g_x, cgs.x)
+    cgs.f_x = f_x
 
     fill!(cgs.x_previous, NaN)
     cgs.f_x_previous = oftype(cgs.f_x_previous, NaN)
     fill!(cgs.g_x_previous, NaN)
 
-    _precondition!(cgs.pg, cg, x, g_x)
+    _precondition!(cgs.pg, cg, cgs.x, cgs.g_x)
     if cg.P !== nothing
-        project_tangent!(cg.manifold, cgs.pg, x)
+        project_tangent!(cg.manifold, cgs.pg, cgs.x)
     end
     cgs.s .= .-cgs.pg
 
@@ -129,6 +129,7 @@ function initial_state(method::ConjugateGradient, ::Options, d, initial_x)
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
     f_x, g_x = value_gradient!(d, initial_x)
+    g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, initial_x)
 
     # Could move this out? as a general check?
@@ -152,7 +153,7 @@ function initial_state(method::ConjugateGradient, ::Options, d, initial_x)
 
     ConjugateGradientState(
         initial_x, # Maintain current state in state.x
-        copy(g_x), # Maintain current gradient in state.g
+        g_x, # Maintain current gradient in state.g
         f_x, # Maintain current f in state.f
         fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
@@ -179,10 +180,10 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     retract!(method.manifold, state.x)
 
     # Update the function value and gradient
-    f_x, g_x = value_gradient!(d, state.x)
-    project_tangent!(method.manifold, g_x, state.x)
-    state.f_x = f_x
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
     copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
 
     # Check sanity of function and gradient
     isfinite(f_x) || error(LazyString("Non-finite f(x) while optimizing (", f_x, ")"))
@@ -200,7 +201,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     _apply_precondprep(method, state.x)
     dPd = _inverse_precondition(method, state)
     etak = method.eta * real(dot(state.s, state.g_x_previous)) / dPd # New in HZ2013
-    state.y .= g_x .- state.g_x_previous
+    state.y .= state.g_x .- state.g_x_previous
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
     # P already updated in _apply_precondprep above
@@ -211,7 +212,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     betak =
         (
             real(dot(state.y, state.pg)) -
-            real(dot(state.y, state.py)) * real(dot(g_x, state.s)) / ydots
+            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?

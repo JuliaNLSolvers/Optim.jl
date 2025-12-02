@@ -427,11 +427,10 @@ end
 
 function update_fgh!(d, state, method::AbstractNGMRES)
     # Update the function value and gradient
-    # TODO: do we need a retract! on state.x here?
-    f_x, g_x = value_gradient!(d, state.x)
-    project_tangent!(method.manifold, g_x, state.x)
-    state.f_x = f_x
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
     copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
 
     if state.restart
         state.k = 0
