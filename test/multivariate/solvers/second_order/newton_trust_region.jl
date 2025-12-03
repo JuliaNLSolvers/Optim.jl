@@ -262,6 +262,5 @@ Random.seed!(3288)
             NewtonTrustRegion(delta_min = 0.0),
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
-
     end
 end
