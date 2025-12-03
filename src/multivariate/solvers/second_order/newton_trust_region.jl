@@ -215,7 +215,6 @@ end
 struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     initial_delta::T
     delta_hat::T
-    delta_min::T
     eta::T
     rho_lower::T
     rho_upper::T
@@ -224,7 +223,6 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     function NewtonTrustRegion(
         initial_delta::T,
         delta_hat::T,
-        delta_min::T,
         eta::T,
         rho_lower::T,
         rho_upper::T,
@@ -236,9 +234,6 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
         if !(0 < initial_delta < delta_hat)
             throw(DomainError(initial_delta, LazyString("initial trust region radius must be positive and below the maiximum trust region radius (", delta_hat, ")")))
         end
-        if !(delta_min >= 0)
-            throw(DomainError(delta_min, "smallest allowable trust region radius must be non-negative"))
-        end
         if !(eta >= 0)
             throw(DomainError(eta, "minimum threshold of actual and predicted reduction for accepting a step must be positivethreshold eta must be non-negative"))
         end
@@ -249,7 +244,7 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
             throw(DomainError(rho_upper, LazyString("minimum threshold of actual and predicted reduction for growing the trust region must be greater than the minimum threshold for shrinking it (", rho_lower, ")")))
         end
 
-        return new{T}(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, use_fg)
+        return new{T}(initial_delta, delta_hat, eta, rho_lower, rho_upper, use_fg)
     end
 end
 
@@ -259,17 +254,15 @@ end
 ```julia
 NewtonTrustRegion(; initial_delta = 1.0,
                     delta_hat = 100.0,
-                    delta_min = 0.0,
                     eta = 0.1,
                     rho_lower = 0.25,
                     rho_upper = 0.75,
                     use_fg = true)
 ```
 
-The constructor has 7 keywords:
+The constructor has 6 keywords:
 * `initial_delta`, the initial trust region radius. Defaults to `1.0`.
 * `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
-* `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is smaller than this value. Defaults to `sqrt(eps(Float64))`.
 * `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
 * `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
 * `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
@@ -291,13 +284,12 @@ trust-region methods in practice.
 function NewtonTrustRegion(;
     initial_delta::Real = 1.0,
     delta_hat::Real = 100.0,
-    delta_min::Real = sqrt(eps(Float64)),
     eta::Real = 0.1,
     rho_lower::Real = 0.25,
     rho_upper::Real = 0.75,
     use_fg::Bool = true,
 )
-    NewtonTrustRegion(promote(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper)..., use_fg)
+    NewtonTrustRegion(promote(initial_delta, delta_hat, eta, rho_lower, rho_upper)..., use_fg)
 end
 
 Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")

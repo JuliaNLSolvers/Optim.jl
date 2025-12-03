@@ -116,15 +116,6 @@ function optimize(
             stopped = true
         end
 
-        if method isa NewtonTrustRegion
-            # If the trust region radius keeps on reducing we need to stop
-            # because something is wrong. Wrong gradients or a non-differentiability
-            # at the solution could be explanations.
-            if state.delta ≤ method.delta_min
-                stopped = true
-            end
-        end
-
         if hasproperty(state, :g_x) && !all(isfinite, state.g_x)
             options.show_warnings && @warn "Terminated early due to NaN in gradient."
             break
