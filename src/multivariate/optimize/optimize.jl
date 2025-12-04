@@ -55,6 +55,7 @@ function optimize(
     stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+    small_trustregion_radius = false
 
     g_converged, stopped = initial_convergence(state, options)
     converged = g_converged || stopped
@@ -121,6 +122,7 @@ function optimize(
             # because something is wrong. Wrong gradients or a non-differentiability
             # at the solution could be explanations.
             if state.delta ≤ method.delta_min
+                small_trustregion_radius = true
                 stopped = true
             end
         end
@@ -150,6 +152,7 @@ function optimize(
         f_increased = f_incr_pick,
         ls_failed = !ls_success,
         iterations = iteration == options.iterations,
+        small_trustregion_radius,
     )
 
     termination_code =
@@ -228,6 +231,8 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.GradientNotFinite
     elseif hasproperty(state, :H_x) && !all(isfinite, state.H_x)
         TerminationCode.HessianNotFinite
+    elseif stopped_by.small_trustregion_radius
+        TerminationCode.SmallTrustRegionRadius
     else
         TerminationCode.NotImplemented
     end

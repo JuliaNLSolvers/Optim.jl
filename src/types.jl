@@ -271,6 +271,8 @@ const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
     GradientNotFinite
     "Hessian was not finite"
     HessianNotFinite
+    "The trust region radius was less than or equal to the minimum radius allowed."
+    SmallTrustRegionRadius
     "For algorithms where the TerminationCode is not yet implemented."
     NotImplemented
 end
