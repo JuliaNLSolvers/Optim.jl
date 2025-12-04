@@ -249,19 +249,23 @@ Random.seed!(3288)
                 )
             end
 
-        @test_throws DomainError Optim.optimize(
+        @test_throws DomainError NewtonTrustRegion(delta_min = -1.0)
+        @test iszero(NewtonTrustRegion().delta_min)
+
+        res = Optim.optimize(
             t -> -ll(t[1]),
             [2.1],
-            NewtonTrustRegion(delta_min = -1.0),
+            NewtonTrustRegion(),
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
+        @test Optim.termination_code(res) == Optim.TerminationCode.NoXChange
 
-        Optim.optimize(
+        res = Optim.optimize(
             t -> -ll(t[1]),
             [2.1],
-            NewtonTrustRegion(delta_min = 0.0),
+            NewtonTrustRegion(; delta_min = 1e-8),
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
-
+        @test Optim.termination_code(res) == Optim.TerminationCode.SmallTrustRegionRadius
     end
 end

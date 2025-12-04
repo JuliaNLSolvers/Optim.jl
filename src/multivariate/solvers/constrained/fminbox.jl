@@ -644,6 +644,7 @@ function optimize(
         x_converged = _x_converged,
         f_converged = _f_converged,
         g_converged = _g_converged,
+        small_trustregion_radius = false,
     )
     termination_code = _termination_code(df, g_residual(g), BoxState(x, f_x, x_previous, f_x_previous), stopped_by, options)
 

@@ -269,7 +269,7 @@ NewtonTrustRegion(; initial_delta = 1.0,
 The constructor has 7 keywords:
 * `initial_delta`, the initial trust region radius. Defaults to `1.0`.
 * `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
-* `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is smaller than this value. Defaults to `sqrt(eps(Float64))`.
+* `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is less than or equal to this value. Defaults to `0.0`.
 * `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
 * `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
 * `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
@@ -291,7 +291,7 @@ trust-region methods in practice.
 function NewtonTrustRegion(;
     initial_delta::Real = 1.0,
     delta_hat::Real = 100.0,
-    delta_min::Real = sqrt(eps(Float64)),
+    delta_min::Real = 0.0,
     eta::Real = 0.1,
     rho_lower::Real = 0.25,
     rho_upper::Real = 0.75,
