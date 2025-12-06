@@ -146,7 +146,6 @@ include("multivariate/precon.jl") # preconditioning functionality
 
 # utilities
 include("utilities/generic.jl") # generic utilities
-include("utilities/maxdiff.jl") # find largest difference
 include("utilities/update.jl")  # trace code
 
 # Unconstrained optimization

@@ -4,9 +4,21 @@ f_relchange(state::AbstractOptimizerState) = f_relchange(state.f_x, state.f_x_pr
 f_relchange(f_x, f_x_previous) = abs(f_x - f_x_previous) / abs(f_x)
 
 x_abschange(state::AbstractOptimizerState) = x_abschange(state.x, state.x_previous)
-x_abschange(x, x_previous) = maxdiff(x, x_previous)
+x_abschange(x::AbstractArray{<:Number}, x_previous::AbstractArray{<:Number}) = Linfdist(x, x_previous)
 x_relchange(state::AbstractOptimizerState) = x_relchange(state.x, state.x_previous)
-x_relchange(x, x_previous) = maxdiff(x, x_previous) / Base.maximum(abs, x) # Base.maximum !== maximum
+x_relchange(x::AbstractArray{<:Number}, x_previous::AbstractArray{<:Number}) = Linfdist(x, x_previous) / Base.maximum(abs, x) # Base.maximum !== maximum
+
+# Copied and adapted from https://github.com/JuliaStats/StatsBase.jl/blob/d70c4a203177c79d851c1cdca450bc6dbd2a4683/src/deviation.jl#L100-L110
+function Linfdist(x::AbstractArray{<:Number}, y::AbstractArray{<:Number})
+    n = length(x)
+    length(y) == n || throw(DimensionMismatch("Inconsistent array lengths."))
+    if iszero(n)
+        return zero(abs(zero(eltype(x)) - zero(eltype(y))))
+    else
+        broadcasted = Broadcast.broadcasted((xi, yi) -> abs(xi - yi), vec(x), vec(y))
+        return Base.maximum(Broadcast.instantiate(broadcasted)) # Base.maximum !== maximum
+    end
+end
 
 g_residual(state::NelderMeadState) = state.nm_x
 g_residual(state::ZerothOrderState) = oftype(state.f_x, NaN)
