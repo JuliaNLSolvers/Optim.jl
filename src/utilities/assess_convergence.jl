@@ -9,6 +9,11 @@ x_relchange(state::AbstractOptimizerState) = x_relchange(state.x, state.x_previo
 x_relchange(x::AbstractArray{<:Number}, x_previous::AbstractArray{<:Number}) = Linfdist(x, x_previous) / Base.maximum(abs, x) # Base.maximum !== maximum
 
 # Copied and adapted from https://github.com/JuliaStats/StatsBase.jl/blob/d70c4a203177c79d851c1cdca450bc6dbd2a4683/src/deviation.jl#L100-L110
+#    Linfdist(a, b)
+#
+# Compute the L∞ distance, also called the Chebyshev distance, between
+# two arrays: ``\\max_{1≤i≤n} |a_i - b_i|``.
+# Efficient equivalent of `maximum(abs, a - b)`.
 function Linfdist(x::AbstractArray{<:Number}, y::AbstractArray{<:Number})
     n = length(x)
     length(y) == n || throw(DimensionMismatch("Inconsistent array lengths."))
