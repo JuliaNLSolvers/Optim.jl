@@ -45,7 +45,7 @@ using NLSolversBase:
     hv_product!
 
 # var for NelderMead
-import StatsBase: var
+using Statistics: var
 
 import ADTypes
 
