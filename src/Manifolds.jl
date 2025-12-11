@@ -20,9 +20,8 @@ project_tangent(M::Manifold, x) = project_tangent!(M, similar(x), x)
 retract(M::Manifold, x) = retract!(M, copy(x))
 
 # Fake objective function implementing a retraction
-mutable struct ManifoldObjective{T<:NLSolversBase.AbstractObjective} <:
-               NLSolversBase.AbstractObjective
-    manifold::Manifold
+struct ManifoldObjective{M<:Manifold,T<:AbstractObjective} <: AbstractObjective
+    manifold::M
     inner_obj::T
 end
 # TODO: is it safe here to call retract! and change x?
@@ -43,6 +42,20 @@ function NLSolversBase.value_gradient!(obj::ManifoldObjective, x)
     return f_x, g_x
 end
 
+# In general, we have to compute the gradient/Jacobian separately as it has to be projected
+function NLSolversBase.jvp!(obj::ManifoldObjective, x, v)
+    xin = retract(obj.manifold, x)
+    g_x = gradient!(obj.inner_obj, xin)
+    project_tangent!(obj.manifold, g_x, xin)
+    return dot(g_x, v)
+end
+function NLSolversBase.value_jvp!(obj::ManifoldObjective, x, v)
+    xin = retract(obj.manifold, x)
+    f_x, g_x = value_gradient!(obj.inner_obj, xin)
+    project_tangent!(obj.manifold, g_x, xin)
+    return f_x, dot(g_x, v)
+end
+
 """Flat Euclidean space {R,C}^N, with projections equal to the identity."""
 struct Flat <: Manifold end
 # all the functions below are no-ops, and therefore the generated code
@@ -52,6 +65,10 @@ retract(M::Flat, x) = x
 retract!(M::Flat, x) = x
 project_tangent(M::Flat, g, x) = g
 project_tangent!(M::Flat, g, x) = g
+
+# Optimizations for `Flat` manifold
+NLSolversBase.jvp!(obj::ManifoldObjective{Flat}, x, v) = NLSolversBase.jvp!(obj.inner_obj, x, v)
+NLSolversBase.value_jvp!(obj::ManifoldObjective{Flat}, x, v) = NLSolversBase.value_jvp!(obj.inner_obj, x, v)
 
 """Spherical manifold {|x| = 1}."""
 struct Sphere <: Manifold end

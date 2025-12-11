@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         version:
-          - "min"
-          - "lts"
+          # - "min"
+          # - "lts"
           - "1"
         os:
           - ubuntu-latest

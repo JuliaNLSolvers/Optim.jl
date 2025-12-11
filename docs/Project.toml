@@ -12,5 +12,6 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Documenter = "1"
 Literate = "2"
 
-[sources.Optim]
-path = ".."
+[sources]
+Optim = { path = ".." }
+NLSolversBase = { url = "https://github.com/devmotion/NLSolversBase.jl.git", rev = "dmw/jvp" }

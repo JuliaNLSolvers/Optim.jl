@@ -62,7 +62,7 @@ function reset!(method::Adam, state::AdamState, obj, x)
     # Update function value and gradient
     copyto!(state.x, x)
     retract!(method.manifold, state.x)
-    f_x, g_x = value_gradient!(obj, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(obj, state.x)
     copyto!(state.g_x, g_x)
     project_tangent!(method.manifold, state.g_x, state.x)
     state.f_x = f_x
@@ -88,7 +88,7 @@ function initial_state(method::Adam, ::Options, d, initial_x::AbstractArray)
     # Compute function value and gradient
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, initial_x)
     g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, initial_x)
 

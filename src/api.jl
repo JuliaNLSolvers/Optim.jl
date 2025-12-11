@@ -104,7 +104,7 @@ f_calls(d::AbstractObjective) = NLSolversBase.f_calls(d)
 
 g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(summary(r)).")
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
-g_calls(d::AbstractObjective) = NLSolversBase.g_calls(d)
+g_calls(d::AbstractObjective) = NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)
 
 h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summary(r)).")
 h_calls(r::MultivariateOptimizationResults) = r.h_calls

@@ -71,7 +71,7 @@
         # Compare hand-computed gradient against that from automatic differentiation
         function check_autodiff(d, bounds, x, cfun::Function, bstate, μ)
             c = cfun(x)
-            J = Optim.NLSolversBase.ForwardDiff.jacobian(cfun, x)
+            J = ForwardDiff.jacobian(cfun, x)
             p = Optim.pack_vec(x, bstate)
             ftot! =
                 (storage, p) -> Optim.lagrangian_fgvec!(
@@ -90,8 +90,8 @@
             pgrad = similar(p)
             ftot!(pgrad, p)
             chunksize = min(8, length(p))
-            TD = Optim.NLSolversBase.ForwardDiff.Dual{
-                Optim.ForwardDiff.Tag{Nothing,Float64},
+            TD = ForwardDiff.Dual{
+                ForwardDiff.Tag{Nothing,Float64},
                 eltype(p),
                 chunksize,
             }
@@ -100,7 +100,7 @@
             pcmp = similar(p)
             ftot = p -> Optim.lagrangian_vec(p, d, bounds, xd, cfun, bstated, μ)
             #ForwardDiff.gradient!(pcmp, ftot, p, Optim.ForwardDiff.{chunksize}())
-            Optim.NLSolversBase.ForwardDiff.gradient!(pcmp, ftot, p)
+            ForwardDiff.gradient!(pcmp, ftot, p)
             @test pcmp ≈ pgrad
         end
         # Basic setup (using two objectives, one equal to zero and the other a Gaussian)
@@ -338,7 +338,7 @@
             h[3, 3] += 2 * λ[2] * x[2]
         end
         c = cfun(x)
-        J = Optim.NLSolversBase.ForwardDiff.jacobian(cfun, x)
+        J = ForwardDiff.jacobian(cfun, x)
         Jtmp = similar(J)
         @test cJ!(Jtmp, x) ≈ J  # just to check we did it right
         cbar = rand(length(c))
@@ -535,8 +535,8 @@
             # TODO: How do we deal with the new Tags in ForwardDiff?
 
             # TD = ForwardDiff.Dual{chunksize, eltype(y)}
-            TD = Optim.NLSolversBase.ForwardDiff.Dual{
-                Optim.NLSolversBase.ForwardDiff.Tag{Nothing,Float64},
+            TD = ForwardDiff.Dual{
+                ForwardDiff.Tag{Nothing,Float64},
                 eltype(p),
                 chunksize,
             }
@@ -554,7 +554,7 @@
             #ϕd2 = αs->Optim.lagrangian_linefunc(αs, d, constraints, stated2)
 
             #ForwardDiff.gradient(ϕd, zeros(4)), ForwardDiff.hessian(ϕd2, zeros(4))
-            Optim.NLSolversBase.ForwardDiff.gradient(ϕd, [0.0])#, ForwardDiff.hessian(ϕd2, [0.0])
+            ForwardDiff.gradient(ϕd, [0.0])#, ForwardDiff.hessian(ϕd2, [0.0])
         end
         F = 1000
         d = TwiceDifferentiable(

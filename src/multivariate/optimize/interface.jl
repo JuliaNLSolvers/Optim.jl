@@ -66,20 +66,6 @@ promote_objtype(
     inplace::Bool,
     f::InplaceObjective,
 ) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(
-    method::SecondOrderOptimizer,
-    x,
-    autodiff::ADTypes.AbstractADType,
-    inplace::Bool,
-    f::NLSolversBase.InPlaceObjectiveFGHv,
-) = TwiceDifferentiableHV(f, x)
-promote_objtype(
-    method::SecondOrderOptimizer,
-    x,
-    autodiff::ADTypes.AbstractADType,
-    inplace::Bool,
-    f::NLSolversBase.InPlaceObjectiveFG_Hv,
-) = TwiceDifferentiableHV(f, x)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::ADTypes.AbstractADType, inplace::Bool, f, g) =
     TwiceDifferentiable(
         f,

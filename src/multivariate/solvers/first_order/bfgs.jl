@@ -72,11 +72,12 @@ end
 
 function reset!(method, state::BFGSState, obj, x)
     # Update function value and gradient
-    retract!(method.manifold, x)
-    f_x, g_x = value_gradient!(obj, x)
-    project_tangent!(method.manifold, g_x, x)
-    state.f_x = f_x
+    copyto!(state.x, x)
+    retract!(method.manifold, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(obj, state.x)
     copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
 
     # Delete history
     fill!(state.x_previous, NaN)
@@ -104,7 +105,8 @@ function initial_state(method::BFGS, ::Options, d, initial_x::AbstractArray)
     # Compute function value and gradient
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, initial_x)
+    g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, initial_x)
 
     # Initialize approximation of inverse Hessian
@@ -125,7 +127,7 @@ function initial_state(method::BFGS, ::Options, d, initial_x::AbstractArray)
     # Trace the history of states visited
     BFGSState(
         initial_x, # Maintain current state in state.x
-        copy(g_x), # Maintain current gradient in state.g_x
+        g_x, # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x
         fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
@@ -164,7 +166,7 @@ function update_fgh!(d, state::BFGSState, method::BFGS)
     (; invH, dx, dg, u) = state
     
     # Update function value and gradient
-    f_x, g_x = value_gradient!(d, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
     copyto!(state.g_x, g_x)
     project_tangent!(method.manifold, state.g_x, state.x)
     state.f_x = f_x

@@ -1,7 +1,7 @@
 module OptimMOIExt
 
 using Optim
-using Optim.LinearAlgebra: rmul! 
+using Optim.LinearAlgebra: rmul!
 import MathOptInterface as MOI
 
 function __init__()
