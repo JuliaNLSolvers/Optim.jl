@@ -109,7 +109,9 @@ for api_method in (
     :iteration_limit_reached,
     :f_calls,
     :g_calls,
+    :jvp_calls,
     :h_calls,
+    :hvp_calls,
 )
     @eval $api_method(r::MaximizationWrapper) = $api_method(res(r))
 end

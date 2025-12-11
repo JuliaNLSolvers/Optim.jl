@@ -99,7 +99,7 @@ function optimize(
     # Best values
     f_opt = f_x
     x_opt = copy(x)
-    details = [f_calls(d) t f_opt x_opt']
+    details = [NLSolversBase.f_calls(d) t f_opt x_opt']
     bounds = ub - lb
     # check for out-of-bounds starting values
     for i = 1:n
@@ -161,7 +161,7 @@ function optimize(
                                 copyto!(x_opt, xp)
                                 f_opt = f_proposal
                                 nnew += 1
-                                details = [details; [f_calls(d) t f_proposal xp']]
+                                details = [details; [NLSolversBase.f_calls(d) t f_proposal xp']]
                             end
                             # If the point is higher, use the Metropolis criteria to decide on
                             # acceptance or rejection.
@@ -198,7 +198,7 @@ function optimize(
 
                     # If options.iterations exceeded, terminate the algorithm
                     _time = time()
-                    if f_calls(d) >= options.iterations ||
+                    if NLSolversBase.f_calls(d) >= options.iterations ||
                        _time - time0 > options.time_limit ||
                        stopped_by_callback
 
@@ -220,7 +220,7 @@ function optimize(
                             x0,
                             x_opt, #pick_best_x(f_incr_pick, state),
                             f_opt, # pick_best_f(f_incr_pick, state),
-                            f_calls(d), #iteration,
+                            NLSolversBase.f_calls(d), #iteration,
                             x_tol,#T(options.x_tol),
                             0.0,#T(options.x_tol),
                             x_absΔ,# x_abschange(state),
@@ -232,12 +232,14 @@ function optimize(
                             0.0,#T(options.g_tol),
                             NaN,#g_residual(state),
                             tr,
-                            f_calls(d),
-                            g_calls(d),
-                            h_calls(d),
+                            NLSolversBase.f_calls(d),
+                            NLSolversBase.g_calls(d),
+                            NLSolversBase.jvp_calls(d),
+                            NLSolversBase.h_calls(d),
+                            NLSolversBase.hvp_calls(d),
                             options.time_limit,
                             _time - time0,
-                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
+                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = NLSolversBase.f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
                             # not hit ever since stopped_by were not here?
                             termination_code,
                         )
@@ -277,7 +279,7 @@ function optimize(
             println("samin: intermediate results before next temperature change")
             println("temperature: ", round(t, digits = 5))
             println("current best function value: ", round(f_opt, digits = 5))
-            println("total evaluations so far: ", f_calls(d))
+            println("total evaluations so far: ", NLSolversBase.f_calls(d))
             println("total moves since last temperature reduction: ", nup + ndown + nrej)
             println("downhill: ", nup)
             println("accepted uphill: ", ndown)
@@ -337,7 +339,7 @@ function optimize(
                             "Expand bounds and re-run, unless this is a constrained minimization.",
                         )
                     end
-                    println("total number of objective function evaluations: ", f_calls(d))
+                    println("total number of objective function evaluations: ", NLSolversBase.f_calls(d))
                     @printf("\n     Obj. value:  %16.10f\n\n", f_opt)
                     println("       parameter      search width")
                     for i = 1:n

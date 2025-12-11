@@ -333,8 +333,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
     interior = true
     lambda = NaN
 
-    # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, x0)
 
     NewtonTrustRegionState(
         copy(x0), # Maintain current state in state.x
@@ -419,8 +418,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         if method.use_fg
             copyto!(state.H_x, hessian!(d, state.x))
         else
-            # TODO: Switch to `gradient_hessian!`
-            g_x, H_x = NLSolversBase.gradient_hessian!!(d, state.x)
+            g_x, H_x = NLSolversBase.gradient_hessian!(d, state.x)
             copyto!(state.g_x, g_x)
             copyto!(state.H_x, H_x)
         end

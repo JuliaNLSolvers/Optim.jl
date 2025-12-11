@@ -1,25 +1,23 @@
 # Update function value, gradient and Hessian
 function update_fgh!(d, state, ::ZerothOrderOptimizer)
-    f_x = value!(d, state.x)
+    f_x = NLSolversBase.value!(d, state.x)
     state.f_x = f_x
     return nothing
 end
 function update_fgh!(d, state, method::FirstOrderOptimizer)
-    f_x, g_x = value_gradient!(d, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
+    copyto!(state.g_x, g_x)
     if hasproperty(method, :manifold)
-        project_tangent!(method.manifold, g_x, state.x)
+        project_tangent!(method.manifold, state.g_x, state.x)
     end
     state.f_x = f_x
-    copyto!(state.g_x, g_x)
     return nothing
 end
 function update_fgh!(d, state, method::SecondOrderOptimizer)
     # Manifold optimization is currently not supported for second order optimization algorithms
     @assert !hasproperty(method, :manifold)
 
-    # TODO: Switch to `value_gradient_hessian!` when it becomes available
-    f_x, g_x = value_gradient!(d, state.x)
-    H_x = hessian!(d, state.x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, state.x)
     state.f_x = f_x
     copyto!(state.g_x, g_x)
     copyto!(state.H_x, H_x)
@@ -109,11 +107,11 @@ function optimize(
         _time = time()
         stopped_by_time_limit = _time - t0 > options.time_limit
         f_limit_reached =
-            options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
+            options.f_calls_limit > 0 && NLSolversBase.f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached =
-            options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
+            options.g_calls_limit > 0 && (NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)) >= options.g_calls_limit ? true : false
         h_limit_reached =
-            options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
+            options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
 
         if (f_increased && !options.allow_f_increases) ||
            stopped_by_callback ||
@@ -189,9 +187,11 @@ function optimize(
         Tf(options.g_abstol),
         g_residual(state),
         tr,
-        f_calls(d),
-        g_calls(d),
-        h_calls(d),
+        NLSolversBase.f_calls(d),
+        NLSolversBase.g_calls(d),
+        NLSolversBase.jvp_calls(d),
+        NLSolversBase.h_calls(d),
+        NLSolversBase.hvp_calls(d),
         options.time_limit,
         _time - t0,
         stopped_by,

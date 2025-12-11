@@ -9,13 +9,13 @@ const DEFAULT_AD_TYPE = ADTypes.AutoFiniteDiff(; fdtype = Val(:central))
 
 function fallback_method(f::InplaceObjective)
     if !(f.fdf isa Nothing)
-        if !(f.hv isa Nothing)
+        if !(f.hvp isa Nothing)
             return KrylovTrustRegion()
         end
         return LBFGS()
     elseif !(f.fgh isa Nothing)
         return Newton()
-    elseif !(f.fghv isa Nothing)
+    elseif !(f.fghvp isa Nothing)
         return KrylovTrustRegion()
     end
 end
@@ -66,20 +66,6 @@ promote_objtype(
     inplace::Bool,
     f::InplaceObjective,
 ) = TwiceDifferentiable(f, x, real(zero(eltype(x))))
-promote_objtype(
-    method::SecondOrderOptimizer,
-    x,
-    autodiff::ADTypes.AbstractADType,
-    inplace::Bool,
-    f::NLSolversBase.InPlaceObjectiveFGHv,
-) = TwiceDifferentiableHV(f, x)
-promote_objtype(
-    method::SecondOrderOptimizer,
-    x,
-    autodiff::ADTypes.AbstractADType,
-    inplace::Bool,
-    f::NLSolversBase.InPlaceObjectiveFG_Hv,
-) = TwiceDifferentiableHV(f, x)
 promote_objtype(method::SecondOrderOptimizer, x, autodiff::ADTypes.AbstractADType, inplace::Bool, f, g) =
     TwiceDifferentiable(
         f,

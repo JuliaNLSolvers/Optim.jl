@@ -99,16 +99,16 @@ g_norm_trace(r::OptimizationResults) =
     error("g_norm_trace is not implemented for $(summary(r)).")
 g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
+# TODO: Overload `NLSolversBase.xxx` instead of defining separate `Optim.xxx` methods?
 f_calls(r::OptimizationResults) = r.f_calls
-f_calls(d::AbstractObjective) = NLSolversBase.f_calls(d)
-
-g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(summary(r)).")
+g_calls(r::OptimizationResults) = error(LazyString("`g_calls` is not implemented for ", summary(r), "."))
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
-g_calls(d::AbstractObjective) = NLSolversBase.g_calls(d)
-
-h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summary(r)).")
+jvp_calls(r::OptimizationResults) = error(LazyString("`jvp_calls` is not implemented for ", summary(r), "."))
+jvp_calls(r::MultivariateOptimizationResults) = r.jvp_calls
+h_calls(r::OptimizationResults) = error(LazyString("`h_calls` is not implemented for ", summary(r), "."))
 h_calls(r::MultivariateOptimizationResults) = r.h_calls
-h_calls(d::AbstractObjective) = NLSolversBase.h_calls(d) + NLSolversBase.hv_calls(d)
+hvp_calls(r::OptimizationResults) = error(LazyString("`hvp_calls` is not implemented for ", summary(r), "."))
+hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 function converged(r::MultivariateOptimizationResults)

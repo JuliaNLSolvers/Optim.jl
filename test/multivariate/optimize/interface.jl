@@ -92,8 +92,7 @@ end
     g!(G, x) = @. G = 2x
     g(x) = 2x
     h!(H, x) = @. H = [2.0 0.0; 0.0 2.0]
-    hv!(Hv, x) = @. Hv = [2.0, 2.0] .* x
-    _hv!(Hv, x, v) = @. Hv = [2.0, 2.0] .* x
+    _hvp!(HVP, x, v) = @. HVP = [2.0, 2.0] .* v
     res = Optim.optimize(f, w)
     @test res.method isa NelderMead
 
@@ -128,16 +127,16 @@ end
     res = Optim.optimize(NLSolversBase.only_fgh!(fgh!), w)
     @test res.method isa Newton
 
-    function fghv!(_, G, Hv, x, v)
+    function fghvp!(_, G, HVP, x, v)
         isnothing(G) || g!(G, x)
-        isnothing(Hv) || hv!(Hv, v)
+        isnothing(HVP) || _hvp!(HVP, x, v)
         return f(x)
     end
 
-    res = Optim.optimize(NLSolversBase.only_fghv!(fghv!), w)
+    res = Optim.optimize(NLSolversBase.only_fghvp!(fghvp!), w)
     @test res.method isa Optim.KrylovTrustRegion
 
-    res = Optim.optimize(NLSolversBase.only_fg_and_hv!(fg!, _hv!), w)
+    res = Optim.optimize(NLSolversBase.only_fg_and_hvp!(fg!, _hvp!), w)
     @test res.method isa Optim.KrylovTrustRegion
 
 end

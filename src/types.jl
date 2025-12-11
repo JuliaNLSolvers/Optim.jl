@@ -295,7 +295,9 @@ mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: Optimization
     trace::M
     f_calls::Int
     g_calls::Int
+    jvp_calls::Int
     h_calls::Int
+    hvp_calls::Int
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
@@ -391,11 +393,13 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
                                                                     Inf : time_limit(r)
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
-    if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))
+    if !iszero(g_calls(r)) || !iszero(jvp_calls(r))
         @printf io "    ∇f(x) calls:   %d\n" g_calls(r)
+        @printf io "    ∇f(x)ᵀv calls: %d\n" jvp_calls(r)
     end
-    if isa(r.method, Newton) || isa(r.method, NewtonTrustRegion)
+    if !iszero(h_calls(r)) || !iszero(hvp_calls(r))
         @printf io "    ∇²f(x) calls:  %d\n" h_calls(r)
+        @printf io "    ∇²f(x)v calls: %d\n" hvp_calls(r)
     end
     return
 end
