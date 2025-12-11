@@ -24,6 +24,7 @@ mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     g_x::Vector{T}
     x_previous::Vector{T}
     f_x_previous::T
+    x_cache::Vector{T}
     s::Vector{T}
     interior::Bool
     accept_step::Bool
@@ -50,10 +51,11 @@ function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x
     KrylovTrustRegionState(
         copy(initial_x),    # Maintain current state in state.x
         f_x,                # Maintain f of current state in state.f_x
-        g_x,                # Maintain gradient of current state in state.g_x
+        copy(g_x),          # Maintain gradient of current state in state.g_x
         copy(initial_x), # x_previous
-        zero(T),            # f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        oftype(f_x, NaN),   # f_x_previous
+        fill!(similar(initial_x), NaN), # In-place cache for `update_state!`
+        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
         true,               # interior
         true,               # accept step
         convert(T, method.initial_radius),
@@ -104,7 +106,7 @@ end
 
 
 function cg_steihaug!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState{T},
     method::KrylovTrustRegion,
 ) where {T}
@@ -157,14 +159,16 @@ end
 
 
 function update_state!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState,
     method::KrylovTrustRegion,
 )
     state.m_diff = cg_steihaug!(objective, state, method)
     @assert state.m_diff <= 0
 
-    state.f_diff = value(objective, state.x .+ state.s) - state.f_x
+    state.x_cache .= state.x .+ state.s
+    f_x_cache = NLSolversBase.value!(objective, state.x_cache)
+    state.f_diff = f_x_cache - state.f_x
     state.rho = state.f_diff / state.m_diff
     state.interior = norm(state.s) < 0.9 * state.radius
 
@@ -176,22 +180,22 @@ function update_state!(
 
     state.accept_step = state.rho > method.eta
     if state.accept_step
-        state.x .+= state.s
+        # Update history
+        copyto!(state.x_previous, state.x)
+        state.f_x_previous = state.f_x
+
+        # Update state, function value and its gradient
+        copyto!(state.x, state.x_cache)
+        state.f_x = f_x_cache
+        g_x = gradient!(objective, state.x)
+        copyto!(state.g_x, g_x)
     end
 
     return false
 end
 
-
-function update_fgh!(objective, state::KrylovTrustRegionState, ::KrylovTrustRegion)
-    if state.accept_step
-        # Update the function value and gradient
-        state.f_x_previous = state.f_x
-        f_x, g_x = value_gradient!(objective, state.x)
-        state.f_x = f_x
-        copyto!(state.g_x, g_x)
-    end
-end
+# Function value and gradient are already updated in update_state!
+update_fgh!(objective, state::KrylovTrustRegionState, ::KrylovTrustRegion) = nothing
 
 function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     if !state.accept_step

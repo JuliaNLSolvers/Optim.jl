@@ -13,6 +13,7 @@ end
 
 NLSolversBase.f_calls(obj::BarrierWrapper) = NLSolversBase.f_calls(obj.obj)
 NLSolversBase.g_calls(obj::BarrierWrapper) = NLSolversBase.g_calls(obj.obj)
+NLSolversBase.jvp_calls(obj::BarrierWrapper) = NLSolversBase.jvp_calls(obj.obj)
 NLSolversBase.h_calls(obj::BarrierWrapper) = NLSolversBase.h_calls(obj.obj)
 NLSolversBase.hv_calls(obj::BarrierWrapper) = NLSolversBase.hv_calls(obj.obj)
 
@@ -40,9 +41,9 @@ struct BoxBarrier{L,U}
     upper::U
 end
 function in_box(bb::BoxBarrier, x)
-    all(x -> x[1] >= x[2] && x[1] <= x[3], zip(x, bb.lower, bb.upper))
+    all(x -> x[1] <= x[2] <= x[3], zip(bb.lower, x, bb.upper))
 end
-in_box(bw::BarrierWrapper, x) = in_box(bw.b, x)
+
 # evaluates the value and gradient components comming from the log barrier
 function _barrier_term_value(x::T, l, u) where {T}
     dxl = x - l
@@ -71,11 +72,15 @@ function _barrier_term_gradient(x::T, l, u) where {T}
     return g
 end
 
+function _barrier_jvp(bb::BoxBarrier, x, v)
+    return sum(Broadcast.instantiate(Broadcast.broadcasted((xi, li, ui, vi) -> dot(_barrier_term_gradient(xi, li, ui), vi), x, bb.lower, bb.upper, v)))
+end
+
 # Wrappers
 function NLSolversBase.value_gradient!(bb::BarrierWrapper, x)
     bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
     bb.Fb = _barrier_value(bb.b, x)
-    if in_box(bb, x)
+    if in_box(bb.b, x)
         F, DF = value_gradient!(bb.obj, x)
         bb.DFtotal .= muladd.(bb.mu, bb.DFb, DF)
         bb.Ftotal = muladd(bb.mu, bb.Fb, F)
@@ -87,7 +92,7 @@ function NLSolversBase.value_gradient!(bb::BarrierWrapper, x)
 end
 function NLSolversBase.value!(obj::BarrierWrapper, x)
     obj.Fb = _barrier_value(obj.b, x)
-    if in_box(obj, x)
+    if in_box(obj.b, x)
         F = value!(obj.obj, x)
         obj.Ftotal = muladd(obj.mu, obj.Fb, F)
     else
@@ -97,7 +102,7 @@ function NLSolversBase.value!(obj::BarrierWrapper, x)
 end
 function NLSolversBase.value(obj::BarrierWrapper, x)
     Fb = _barrier_value(obj.b, x)
-    if in_box(obj, x)
+    if in_box(obj.b, x)
         return muladd(obj.mu, Fb, value(obj.obj, x))
     else
         return obj.mu * Fb
@@ -105,13 +110,36 @@ function NLSolversBase.value(obj::BarrierWrapper, x)
 end
 function NLSolversBase.gradient!(obj::BarrierWrapper, x)
     obj.DFb .= _barrier_term_gradient.(x, obj.b.lower, obj.b.upper)
-    if in_box(obj, x)
+    if in_box(obj.b, x)
         DF = gradient!(obj.obj, x)
         obj.DFtotal .= muladd.(obj.mu, obj.DFb, DF)
     else
         obj.DFtotal .= obj.mu .* obj.DFb
     end
     return obj.DFtotal
+end
+
+function NLSolversBase.jvp!(obj::BarrierWrapper, x, v)
+    JVPb = _barrier_jvp(obj.b, x, v)
+    if in_box(obj.b, x)
+        JVP = NLSolversBase.jvp!(obj.obj, x, v)
+        return muladd(obj.mu, JVPb, JVP)
+    else
+        return obj.mu * JVPb
+    end
+end
+function NLSolversBase.value_jvp!(obj::BarrierWrapper, x, v)
+    JVPb = _barrier_jvp(obj.b, x, v)
+    obj.Fb = _barrier_value(obj.b, x)
+    if in_box(obj.b, x)
+        F, JVP = NLSolversBase.value_jvp!(obj.obj, x, v)
+        JVPtotal = muladd(obj.mu, JVPb, JVP)
+        obj.Ftotal = muladd(obj.mu, obj.Fb, F)
+    else
+        JVPtotal = obj.mu * JVPb
+        obj.Ftotal = obj.mu * obj.Fb
+    end
+    return obj.Ftotal, JVPtotal
 end
 
 function limits_box(
@@ -274,7 +302,7 @@ function optimize(
     initial_x::AbstractArray,
     F::Fminbox = Fminbox(),
     options::Options = Options();
-    inplace = true,
+    inplace::Bool = true,
 )
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
@@ -499,12 +527,13 @@ function optimize(
 
     results = optimize(dfbox, x, _optimizer, options, state)
     stopped_by_callback = results.stopped_by.callback
-    dfbox.obj.f_calls[1] = 0
+    # TODO: Reset everything? Add upstream API for resetting call counters?
+    dfbox.obj.f_calls = 0
     if hasfield(typeof(dfbox.obj), :df_calls)
-        dfbox.obj.df_calls[1] = 0
+        dfbox.obj.df_calls = 0
     end
     if hasfield(typeof(dfbox.obj), :h_calls)
-        dfbox.obj.h_calls[1] = 0
+        dfbox.obj.h_calls = 0
     end
 
     # Compute function value and gradient (without barrier term)
@@ -579,12 +608,13 @@ function optimize(
             resultsnew = optimize(dfbox, x, _optimizer, options, state)
             stopped_by_callback = resultsnew.stopped_by.callback
             append!(results, resultsnew)
-            dfbox.obj.f_calls[1] = 0
+            # TODO: Reset everything? Add upstream API for resetting call counters?
+            dfbox.obj.f_calls = 0
             if hasfield(typeof(dfbox.obj), :df_calls)
-                dfbox.obj.df_calls[1] = 0
+                dfbox.obj.df_calls = 0
             end
             if hasfield(typeof(dfbox.obj), :h_calls)
-                dfbox.obj.h_calls[1] = 0
+                dfbox.obj.h_calls = 0
             end
 
             # Compute function value and gradient (without barrier term)

@@ -43,12 +43,13 @@ function initial_state(
 )
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, initial_x)
+    g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, initial_x)
 
     AcceleratedGradientDescentState(
         initial_x, # Maintain current state in state.x
-        copy(g_x), # Maintain current gradient in state.g_x
+        g_x, # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x
         fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous

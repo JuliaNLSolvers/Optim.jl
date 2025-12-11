@@ -5,27 +5,27 @@
         function f(x::Vector)
             (x[1] - 5.0)^4
         end
-
-        function fg!(g, x)
-            g[1] = 4.0 * (x[1] - 5.0)^3
-            f(x)
+        function fg!(_f, g, x)
+            if g !== nothing
+                g[1] = 4.0 * (x[1] - 5.0)^3
+            end
+            return _f === nothing ? nothing : f(x)
         end
-
-        function fg2!(_f, g, x)
-            g === nothing || (g[1] = 4.0 * (x[1] - 5.0)^3)
-            _f === nothing || return f(x)
-        end
-
 
         function hv!(Hv, x, v)
             Hv[1] = 12.0 * (x[1] - 5.0)^2 * v[1]
         end
-
-        d = Optim.TwiceDifferentiableHV(f, fg!, hv!, [0.0])
-        d2 = Optim.TwiceDifferentiableHV(NLSolversBase.only_fg_and_hv!(fg2!, hv!), [0.0])
-
+        d = TwiceDifferentiable(NLSolversBase.only_fg_and_hv!(fg!, hv!), [0.0])
         result = Optim.optimize(d, [0.0], Optim.KrylovTrustRegion())
         @test norm(Optim.minimizer(result) - [5.0]) < 0.01
+
+        function fgh!(f, g, H, x)
+            if H !== nothing
+                H[1, 1] = 12.0 * (x[1] - 5.0)^2
+            end
+            return fg!(f, g, x)
+        end
+        d2 = TwiceDifferentiable(NLSolversBase.only_fgh!(fgh!), [0.0])
         result = Optim.optimize(d2, [0.0], Optim.KrylovTrustRegion())
         @test norm(Optim.minimizer(result) - [5.0]) < 0.01
     end
@@ -37,16 +37,19 @@
             0.5 * (x[1]^2 + eta * x[2]^2)
         end
 
-        function fg2!(storage::Vector, x::Vector)
-            storage[:] = [x[1], eta * x[2]]
-            f2(x)
+        function fg2!(_f, _g, x::Vector)
+            if _g !== nothing
+                _g[1] = x[1]
+                _g[2] = eta * x[2]
+            end
+            return _f === nothing ? nothing : f2(x)
         end
 
         function hv2!(Hv::Vector, x::Vector, v::Vector)
-            Hv[:] = [1.0 0.0; 0.0 eta] * v
+            return mul!(Hv, Diagonal([1.0, eta]), v)
         end
 
-        d2 = Optim.TwiceDifferentiableHV(f2, fg2!, hv2!, Float64[127, 921])
+        d2 = Optim.TwiceDifferentiable(NLSolversBase.only_fg_and_hv!(fg2!, hv2!), Float64[127, 921])
 
         result = Optim.optimize(d2, Float64[127, 921], Optim.KrylovTrustRegion())
         @test Optim.g_converged(result)
@@ -56,20 +59,21 @@
     @testset "Stock test problems" begin
         for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
             if prob.istwicedifferentiable
-                hv!(storage::Vector, x::Vector, v::Vector) = begin
-                    n = length(x)
-                    H = Matrix{Float64}(undef, n, n)
-                    MVP.hessian(prob)(H, x)
-                    storage .= H * v
+                n = length(prob.initial_x)
+                hv! = let H = Matrix{Float64}(undef, n, n)
+                    function (storage::Vector, x::Vector, v::Vector)
+                        MVP.hessian(prob)(H, x)
+                        return mul!(storage, H, v)
+                    end
                 end
-                fg!(g::Vector, x::Vector) = begin
-                    MVP.gradient(prob)(g, x)
-                    MVP.objective(prob)(x)
+                fg!(_f, _g, x::Vector) = begin
+                    if _g !== nothing
+                        MVP.gradient(prob)(_g, x)
+                    end
+                    return _f === nothing ? nothing : MVP.objective(prob)(x)
                 end
-                ddf = Optim.TwiceDifferentiableHV(
-                    MVP.objective(prob),
-                    fg!,
-                    hv!,
+                ddf = Optim.TwiceDifferentiable(
+                    NLSolversBase.only_fg_and_hv!(fg!, hv!),
                     prob.initial_x,
                 )
                 result = Optim.optimize(ddf, prob.initial_x, Optim.KrylovTrustRegion())

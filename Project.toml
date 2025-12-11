@@ -18,6 +18,10 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [weakdeps]
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
+[sources]
+LineSearches = { url = "https://github.com/devmotion/LineSearches.jl.git", rev = "dmw/jvp" }
+NLSolversBase = { url = "https://github.com/devmotion/NLSolversBase.jl.git", rev = "dmw/jvp" }
+
 [extensions]
 OptimMOIExt = "MathOptInterface"
 
@@ -30,11 +34,11 @@ ExplicitImports = "1.13.2"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 ForwardDiff = "0.10, 1"
 JET = "0.9, 0.10"
-LineSearches = "7.5.1"
+LineSearches = "7.6"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
 Measurements = "2.14.1"
-NLSolversBase = "7.9.0"
+NLSolversBase = "8"
 NaNMath = "0.3.2, 1"
 OptimTestProblems = "2.0.3"
 PositiveFactorizations = "0.2.2"

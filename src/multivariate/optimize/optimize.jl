@@ -1,25 +1,23 @@
 # Update function value, gradient and Hessian
 function update_fgh!(d, state, ::ZerothOrderOptimizer)
-    f_x = value!(d, state.x)
+    f_x = NLSolversBase.value!(d, state.x)
     state.f_x = f_x
     return nothing
 end
 function update_fgh!(d, state, method::FirstOrderOptimizer)
-    f_x, g_x = value_gradient!(d, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
+    copyto!(state.g_x, g_x)
     if hasproperty(method, :manifold)
-        project_tangent!(method.manifold, g_x, state.x)
+        project_tangent!(method.manifold, state.g_x, state.x)
     end
     state.f_x = f_x
-    copyto!(state.g_x, g_x)
     return nothing
 end
 function update_fgh!(d, state, method::SecondOrderOptimizer)
     # Manifold optimization is currently not supported for second order optimization algorithms
     @assert !hasproperty(method, :manifold)
 
-    # TODO: Switch to `value_gradient_hessian!` when it becomes available
-    f_x, g_x = value_gradient!(d, state.x)
-    H_x = hessian!(d, state.x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, state.x)
     state.f_x = f_x
     copyto!(state.g_x, g_x)
     copyto!(state.H_x, H_x)

@@ -155,11 +155,12 @@ mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 function reset!(method::LBFGS, state::LBFGSState, obj, x::AbstractArray)
-    retract!(method.manifold, x)
-    f_x, g_x = value_gradient!(obj, x)
-    project_tangent!(method.manifold, g_x, x)
-    state.f_x = f_x
+    copyto!(state.x, x)
+    retract!(method.manifold, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(obj, state.x)
     copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
 
     fill!(state.x_previous, NaN)
     fill!(state.g_x_previous, NaN)
@@ -173,11 +174,12 @@ function initial_state(method::LBFGS, options::Options, d, initial_x::AbstractAr
     T = real(eltype(initial_x))
     initial_x = copy(initial_x)
     retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, initial_x)
+    g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, initial_x)
     LBFGSState(
         initial_x, # Maintain current state in state.x
-        copy(g_x), # Maintain current gradient in state.g_x
+        g_x, # Maintain current gradient in state.g_x
         f_x, # Main current f in state.f_x
         fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
@@ -199,9 +201,6 @@ end
 function update_state!(d, state::LBFGSState, method::LBFGS)
     # Increment the number of steps we've had to perform
     state.pseudo_iteration += 1
-
-    # TODO: Can this be removed?
-    project_tangent!(method.manifold, state.g_x, state.x)
 
     # update the preconditioner
     _apply_precondprep(method, state.x)
@@ -236,7 +235,7 @@ end
 
 function update_fgh!(d, state::LBFGSState, method::LBFGS)
     # Update function value and gradient
-    f_x, g_x = value_gradient!(d, state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
     copyto!(state.g_x, g_x)
     project_tangent!(method.manifold, state.g_x, state.x)
     state.f_x = f_x

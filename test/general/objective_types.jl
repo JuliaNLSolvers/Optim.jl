@@ -1,8 +1,5 @@
 @testset "objective types" begin
     @testset "autodiff" begin
-        # Should throw, as :wah is not a proper autodiff choice
-        @test_throws ErrorException OnceDifferentiable(x -> x, rand(10); autodiff = :wah)
-
         for T in (OnceDifferentiable, TwiceDifferentiable)
             odad1 = T(x -> 5.0, rand(1); autodiff = AutoFiniteDiff(; fdtype = Val(:central)))
             odad2 = T(x -> 5.0, rand(1); autodiff = AutoForwardDiff())
