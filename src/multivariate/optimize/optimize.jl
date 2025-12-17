@@ -44,15 +44,15 @@ function optimize(
     options::Options{T,TCallback} = Options(; default_options(method)...),
     state = initial_state(method, options, d, initial_x),
 ) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray,T,TCallback}
+    (; callback) = options
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
     tracing =
         options.store_trace ||
         options.show_trace ||
-        options.extended_trace ||
-        options.callback !== nothing
-    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
+        options.extended_trace
+    stopped, stopped_by_time_limit = false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
     small_trustregion_radius = false
@@ -65,6 +65,10 @@ function optimize(
     options.show_trace && print_header(method)
     _time = time()
     trace!(tr, d, state, iteration, method, options, _time - t0)
+    # callbacks can stop routine early by returning true
+    stopped_by_callback = callback !== nothing && callback(state)
+    stopped |= stopped_by_callback
+    
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
@@ -91,10 +95,13 @@ function optimize(
         counter_f_tol = f_converged ? counter_f_tol + 1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
 
+        # update trace
         if tracing
-            # update trace; callbacks can stop routine early by returning true
-            stopped_by_callback =
-                trace!(tr, d, state, iteration, method, options, time() - t0)
+            trace!(tr, d, state, iteration, method, options, time() - t0)
+        end
+        # callbacks can stop routine early by returning true
+        if callback !== nothing
+            stopped_by_callback = callback(state)
         end
 
         # Check time_limit; if none is provided it is NaN and the comparison

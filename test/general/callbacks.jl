@@ -9,68 +9,90 @@
     d3 = TwiceDifferentiable(f, g!, h!, initial_x)
 
     for method in (NelderMead(), SimulatedAnnealing())
-        ot_count = 0
-        cb = tr -> begin
-            ot_count += 1
+        a = 0
+        cb = _ -> begin
+            a += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         res1 = optimize(f, initial_x, method, options)
-        @test ot_count == 1+res1.iterations
+        @test a == 1+res1.iterations
 
-        os_count_2 = 0
+        b = 0
         cb = os -> begin
-            os_count_2 += 1
+            b += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3)
         res2 = optimize(f, initial_x, method, options)
-        @test os_count_2 == 1+res2.iterations
+        @test b == 1+res2.iterations
 
         # Test early stopping by callbacks
-        options = Optim.Options(callback = x -> x.iteration == 5 ? true : false)
+        iteration = -1
+        cb = _ -> begin
+            return (iteration += 1) == 5
+        end
+        options = Optim.Options(callback = cb)
         res3 = optimize(f, zeros(2), NelderMead(), options)
         @test res3.iterations == 5
     end
 
     for method in (BFGS(), ConjugateGradient(), GradientDescent(), MomentumGradientDescent())
-        ot_count = 0
-        cb = tr -> begin
-            ot_count += 1
+        a = 0
+        cb = _ -> begin
+            a += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         res1 = optimize(d2, initial_x, method, options)
-        @test ot_count == 1+res1.iterations
+        @test a == 1+res1.iterations
 
-        os_count = 0
-        cb = os -> begin
-            os_count += 1
+        b = 0
+        cb = _ -> begin
+            b += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3)
         res2 = optimize(d2, initial_x, method, options)
-        @test os_count == 1+res2.iterations
+        @test b == 1+res2.iterations
+
+        c = 0
+        cb = _ -> begin
+            c += 1
+            false
+        end
+        options = Optim.Options(callback = cb)
+        res2 = optimize(d2, initial_x, method, options)
+        @test c == 1+res2.iterations
     end
 
     for method in (Newton(),)
-        ot_count = 0
-        cb = tr -> begin
-            ot_count += 1
+        a = 0
+        cb = _ -> begin
+            a += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3, store_trace = true)
         res1 = optimize(d3, initial_x, method, options)
-        @test ot_count == 1+res1.iterations
+        @test a == 1+res1.iterations
 
-        os_count = 0
-        cb = os -> begin
-            os_count += 1
+        b = 0
+        cb = _ -> begin
+            b += 1
             false
         end
         options = Optim.Options(callback = cb, show_every = 3)
         res2 = optimize(d3, initial_x, method, options)
-        @test os_count == 1+res2.iterations
+        @test b == 1+res2.iterations
+
+        c = 0
+        cb = _ -> begin
+            c += 1
+            false
+        end
+        options = Optim.Options(callback = cb)
+        res2 = optimize(d3, initial_x, method, options)
+        @test c == 1+res2.iterations
     end
 
     res = optimize(x -> x^2, -5, 5, callback = _ -> true)

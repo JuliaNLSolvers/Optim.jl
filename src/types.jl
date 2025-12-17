@@ -119,9 +119,6 @@ function Options(;
     time_limit = NaN,
 )
     show_every = show_every > 0 ? show_every : 1
-    #if extended_trace && callback === nothing
-    #    show_trace = true
-    #end
     if !(x_tol === nothing)
         @warn(
             lazy"x_tol is deprecated. Use x_abstol or x_reltol instead. The provided value ($(x_tol)) will be used as x_abstol.",

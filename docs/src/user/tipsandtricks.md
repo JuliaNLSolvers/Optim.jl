@@ -236,15 +236,17 @@ function very_slow(x)
 end
 
 start_time = time()
-time_to_setup = zeros(1)
-function advanced_time_control(x)
-    println(" * Iteration:       ", x.iteration)
+time_to_setup = Ref(NaN)
+iteration = Ref(-1)
+function advanced_time_control(_)
+    iteration[] += 1
+    println(" * Iteration:       ", iteration[])
     so_far =  time()-start_time
     println(" * Time so far:     ", so_far)
-    if x.iteration == 0
-        time_to_setup .= time()-start_time
+    if iteration[] == 0
+        time_to_setup[] = time()-start_time
     else
-        expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
+        expected_next_time = so_far + (time()-start_time-time_to_setup[])/iteration[]
         println(" * Next iteration ≈ ", expected_next_time)
         println()
         return expected_next_time < 13 ? false : true

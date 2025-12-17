@@ -66,7 +66,7 @@ function optimize(
     method::SAMIN,
     options::Options = Options(),
 ) where {Tx}
-
+    (; callback) = options
     time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
@@ -78,8 +78,7 @@ function optimize(
     tracing =
         options.store_trace ||
         options.show_trace ||
-        options.extended_trace ||
-        options.callback !== nothing
+        options.extended_trace
 
     (;nt, ns, t0, rt, r_expand, bounds_ratio, neps, coverage_ok, verbosity) = method
     verbose = verbosity > 0
@@ -120,7 +119,7 @@ function optimize(
         options,
         _time - time0,
     )
-    stopped_by_callback = false
+    stopped_by_callback = callback !== nothing && callback((; x, f_x, iteration))
     # main loop, first increase temperature until parameter space covered, then reduce until convergence
     xp = copy(x) # proposal
     while converge == 0
@@ -180,9 +179,9 @@ function optimize(
                         end
                     end
 
+                    # update trace
                     if tracing
-                        # update trace; callbacks can stop routine early by returning true
-                        stopped_by_callback = trace!(
+                        trace!(
                             tr,
                             d,
                             (; x = x_opt, f_x = f_opt, iteration = iteration),
@@ -191,6 +190,10 @@ function optimize(
                             options,
                             time() - time0,
                         )
+                    end
+                    # callbacks can stop routine early by returning true
+                    if callback !== nothing
+                        stopped_by_callback = callback((; x = x_opt, f_x = f_opt, iteration = iteration))
                     end
 
                     # If options.iterations exceeded, terminate the algorithm
