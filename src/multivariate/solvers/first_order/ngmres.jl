@@ -491,7 +491,6 @@ function trace!(
         options.store_trace,
         options.show_trace,
         options.show_every,
-        options.callback,
     )
 end
 #

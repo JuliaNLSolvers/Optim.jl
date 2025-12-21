@@ -221,6 +221,5 @@ function trace!(tr, d, state::BFGSState, iteration::Integer, method::BFGS, optio
         options.store_trace,
         options.show_trace,
         options.show_every,
-        options.callback,
     )
 end

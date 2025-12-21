@@ -51,6 +51,5 @@ function trace!(tr, d, state, iteration, method::IPOptimizer, options, curr_time
         options.store_trace,
         options.show_trace,
         options.show_every,
-        options.callback,
     )
 end
