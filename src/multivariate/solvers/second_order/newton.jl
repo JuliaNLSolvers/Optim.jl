@@ -41,19 +41,19 @@ mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
     @add_linesearch_fields()
 end
 
-function initial_state(method::Newton, options, d, initial_x)
+function initial_state(method::Newton, options, d, x0)
     # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
 
     NewtonState(
-        copy(initial_x), # Maintain current state in state.x
+        copy(x0), # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g_x
         copy(H_x), # Maintain current Hessian in state.H_x
         f_x, # Maintain current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         Cholesky(similar(H_x, 0, 0), :U, 0),
-        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end

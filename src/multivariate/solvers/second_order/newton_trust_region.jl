@@ -322,8 +322,8 @@ mutable struct NewtonTrustRegionState{Tx,T,Tg,TH} <: AbstractOptimizerState
     rho::T
 end
 
-function initial_state(method::NewtonTrustRegion, options, d, initial_x)
-    T = eltype(initial_x)
+function initial_state(method::NewtonTrustRegion, options, d, x0)
+    T = eltype(x0)
     # Keep track of trust region sizes
     delta = copy(method.initial_delta)
 
@@ -334,18 +334,18 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     lambda = NaN
 
     # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
 
     NewtonTrustRegionState(
-        copy(initial_x), # Maintain current state in state.x
+        copy(x0), # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g_x
         copy(H_x), # Maintain current Hessian in state.H_x
         f_x, # Maintain current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
-        fill!(similar(initial_x), NaN), # Cache to be able to reset state.x
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Cache to be able to reset state.x
         fill!(method.use_fg ? similar(g_x) : empty(g_x), NaN), # Cache to be able to reset state.g_x
         hard_case,
         reached_subproblem_solution,

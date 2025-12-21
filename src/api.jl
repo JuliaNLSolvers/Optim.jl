@@ -159,9 +159,9 @@ g_abstol(r::MultivariateOptimizationResults) = r.g_abstol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
 
 
-initial_state(r::OptimizationResults) =
-    error("initial_state is not implemented for $(summary(r)).")
-initial_state(r::MultivariateOptimizationResults) = r.initial_x
+initial_x(r::OptimizationResults) =
+    error("initial_x is not implemented for $(summary(r)).")
+initial_x(r::MultivariateOptimizationResults) = r.initial_x
 
 lower_bound(r::OptimizationResults) =
     error("lower_bound is not implemented for $(summary(r)).")

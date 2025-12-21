@@ -227,7 +227,7 @@ function initial_state(
     method::AbstractNGMRES,
     options::Options,
     d,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
 )
     if !(typeof(method.nlprecon) <: Union{GradientDescent,LBFGS})
         if !ngmres_oaccel_warned[]
@@ -236,7 +236,7 @@ function initial_state(
         end
     end
 
-    nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, initial_x)
+    nlpreconstate = initial_state(method.nlprecon, method.nlpreconopts, d, x0)
     (; f_x, x, g_x) = nlpreconstate
     # Manifold comment:
     # We assume nlprecon calls retract! and project_tangent! on
@@ -268,7 +268,7 @@ function initial_state(
         T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
         T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
         T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
-        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         nlpreconstate,            # State storage for preconditioner
         X,
         R,
@@ -277,7 +277,7 @@ function initial_state(
         1,                        # curw
         Array{T}(undef, wmax, wmax),     # A
         Array{T}(undef, wmax),           # b
-        vec(similar(initial_x)),  # xA
+        vec(similar(x0)),  # xA
         0,                        # iteration counter
         false,                    # Restart flag
         options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply

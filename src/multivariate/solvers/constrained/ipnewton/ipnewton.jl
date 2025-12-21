@@ -91,43 +91,43 @@ function initial_state(
     options::Options,
     d::TwiceDifferentiable,
     constraints::TwiceDifferentiableConstraints,
-    initial_x::AbstractArray{T},
+    x0::AbstractArray{T},
 ) where {T}
     # Check feasibility of the initial state
     mc = nconstraints(constraints)
     constr_c = fill!(Vector{T}(undef, mc), NaN)
     # TODO: When we change to `value!` from NLSolversBase instead of c!
     # we can also update `initial_convergence` for ConstrainedOptimizer in interior.jl
-    constraints.c!(constr_c, initial_x)
-    if !isinterior(constraints, initial_x, constr_c)
+    constraints.c!(constr_c, x0)
+    if !isinterior(constraints, x0, constr_c)
         @warn("Initial guess is not an interior point")
         Base.show_backtrace(stderr, backtrace())
         println(stderr)
     end
     # Allocate fields for the objective function
-    n = length(initial_x)
+    n = length(x0)
 
     # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, initial_x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
 
     # More constraints
     constr_J = fill!(Matrix{T}(undef, mc, n), NaN)
-    constraints.jacobian!(constr_J, initial_x)
+    constraints.jacobian!(constr_J, x0)
     μ = T(1)
-    bstate = BarrierStateVars(constraints.bounds, initial_x, constr_c)
+    bstate = BarrierStateVars(constraints.bounds, x0, constr_c)
     bgrad = copy(bstate)
     bstep = copy(bstate)
     # b_ls = BarrierLineSearch(similar(constr_c), similar(bstate))
     b_ls = BarrierLineSearchGrad(copy(constr_c), copy(constr_J), copy(bstate), copy(bstate))
 
     state = IPNewtonState(
-        copy(initial_x), # Maintain current state in state.x
+        copy(x0), # Maintain current state in state.x
         copy(g_x), # Store current gradient in state.g_x
         copy(H_x), # Store current Hessian in state.H_x
         f_x, # Store current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        fill!(similar(initial_x), NaN), # Maintain current x-search direction in state.s
+        fill!(similar(x0), NaN), # Maintain current x-search direction in state.s
         μ,
         μ,
         oftype(f_x, NaN), # Store Lagrangian at x
@@ -146,7 +146,7 @@ function initial_state(
         0,
     )
 
-    HcI = hessianI(initial_x, constraints, 1 ./ bstate.slack_c, 1)
+    HcI = hessianI(x0, constraints, 1 ./ bstate.slack_c, 1)
     initialize_μ_λ!(state, constraints.bounds, HcI, method.μ0)
 
     # Update function value, gradient and Hessian matrix
@@ -446,12 +446,12 @@ function optimize(
     g,
     lower::AbstractArray,
     upper::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::IPNewton,
     options::Options = Options(; default_options(method)...),
 )
-    d = TwiceDifferentiable(f, g, initial_x)
-    optimize(d, lower, upper, initial_x, method, options)
+    d = TwiceDifferentiable(f, g, x0)
+    optimize(d, lower, upper, x0, method, options)
 end
 function optimize(
     f,
@@ -459,19 +459,19 @@ function optimize(
     h,
     lower::AbstractArray,
     upper::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::IPNewton = IPNewton(),
     options::Options = Options(; default_options(method)...),
 )
-    d = TwiceDifferentiable(f, g, h, initial_x)
-    optimize(d, lower, upper, initial_x, method, options)
+    d = TwiceDifferentiable(f, g, h, x0)
+    optimize(d, lower, upper, x0, method, options)
 end
 function optimize(
     d::TwiceDifferentiable,
     lower::AbstractArray,
     upper::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     options::Options = Options(; default_options(IPNewton())...),
 )
-    optimize(d, lower, upper, initial_x, IPNewton(), options)
+    optimize(d, lower, upper, x0, IPNewton(), options)
 end

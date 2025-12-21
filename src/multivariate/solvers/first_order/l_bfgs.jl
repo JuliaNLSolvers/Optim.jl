@@ -169,26 +169,26 @@ function reset!(method::LBFGS, state::LBFGSState, obj, x::AbstractArray)
 
     return nothing
 end
-function initial_state(method::LBFGS, options::Options, d, initial_x::AbstractArray)
-    T = real(eltype(initial_x))
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, g_x, initial_x)
+function initial_state(method::LBFGS, options::Options, d, x0::AbstractArray)
+    T = real(eltype(x0))
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
+    project_tangent!(method.manifold, g_x, x0)
     LBFGSState(
-        initial_x, # Maintain current state in state.x
+        x0, # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g_x
         f_x, # Main current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         fill!(Vector{T}(undef, method.m), NaN), # state.rho
-        [fill!(similar(initial_x), NaN) for i = 1:method.m], # Store changes in position in state.dx_history
+        [fill!(similar(x0), NaN) for i = 1:method.m], # Store changes in position in state.dx_history
         [fill!(similar(g_x), NaN) for i = 1:method.m], # Store changes in position in state.dg_history
-        fill!(similar(initial_x), NaN), # Buffer for new entry in state.dx_history
-        fill!(similar(initial_x), NaN), # Buffer for new entry in state.dg_history
-        fill!(similar(initial_x), NaN), # Buffer stored in state.u
+        fill!(similar(x0), NaN), # Buffer for new entry in state.dx_history
+        fill!(similar(x0), NaN), # Buffer for new entry in state.dg_history
+        fill!(similar(x0), NaN), # Buffer stored in state.u
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        fill!(similar(initial_x), NaN), #Buffer for use by twoloop
+        fill!(similar(x0), NaN), #Buffer for use by twoloop
         fill!(Vector{T}(undef, method.m), NaN),#Buffer for use by twoloop
         0,
         fill!(similar(g_x), NaN), # Store current search direction in state.s

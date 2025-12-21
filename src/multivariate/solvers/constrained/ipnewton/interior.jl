@@ -206,9 +206,9 @@ ls_update!(
     αs::AbstractVector,
 ) = ls_update!(out, base, step, αs[1]) # (αs...,))
 
-function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, options)
-    # TODO: Make sure state.bgrad has been evaluated at initial_x
-    # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
+function initial_convergence(d, state, method::ConstrainedOptimizer, x0, options)
+    # TODO: Make sure state.bgrad has been evaluated at x0
+    # state.bgrad normally comes from constraints.c!(..., x0) in initial_state
     stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
     norm(state.g_x, Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
 end
@@ -217,11 +217,11 @@ function optimize(
     d,
     lower::AbstractArray,
     upper::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::ConstrainedOptimizer,
     options::Options = Options(; default_options(method)...),
 )
-    twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, initial_x)
+    twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, x0)
 
     bounds = ConstraintBounds(lower, upper, [], [])
     constraints = TwiceDifferentiableConstraints(
@@ -231,17 +231,17 @@ function optimize(
         bounds,
     )
 
-    state = initial_state(method, options, twicediffed, constraints, initial_x)
+    state = initial_state(method, options, twicediffed, constraints, x0)
 
-    optimize(twicediffed, constraints, initial_x, method, options, state)
+    optimize(twicediffed, constraints, x0, method, options, state)
 end
 function optimize(
     d::AbstractObjective,
     constraints::AbstractConstraints,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::ConstrainedOptimizer,
     options::Options = Options(; default_options(method)...),
-    state = initial_state(method, options, d, constraints, initial_x),
+    state = initial_state(method, options, d, constraints, x0),
 )
     #== TODO:
     Let's try to unify this with the unconstrained `optimize` in Optim
@@ -262,7 +262,7 @@ function optimize(
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+    g_converged, stopped = initial_convergence(d, state, method, x0, options)
     converged = g_converged
 
     # prepare iteration counter (used to make "initial state" trace entry)
@@ -347,7 +347,7 @@ function optimize(
     termination_code = TerminationCode.NotImplemented
     return MultivariateOptimizationResults(
         method,
-        initial_x,
+        x0,
         pick_best_x(f_incr_pick, state),
         pick_best_f(f_incr_pick, state),
         iteration,

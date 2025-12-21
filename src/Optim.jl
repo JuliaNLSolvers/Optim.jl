@@ -85,9 +85,9 @@ export optimize,
     # Re-export constraint types from NLSolversBase
     TwiceDifferentiableConstraints,
 
-    # I don't think these should be here [pkofod]
     OptimizationState,
     OptimizationTrace,
+    initial_state,
 
     # Optimization algorithms
     ## Zeroth order methods (heuristics)

@@ -213,7 +213,7 @@ Defined for multivariate optimization:
 * `x_converged(res)`
 * `f_converged(res)`
 * `g_converged(res)`
-* `initial_state(res)`
+* `initial_x(res)`
 
 Defined for `NelderMead` with the option `trace_simplex=true`:
 

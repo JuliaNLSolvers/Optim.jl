@@ -100,41 +100,41 @@ function reset!(method, state::BFGSState, obj, x)
     return nothing
 end
 
-function initial_state(method::BFGS, ::Options, d, initial_x::AbstractArray)
+function initial_state(method::BFGS, ::Options, d, x0::AbstractArray)
     # Compute function value and gradient
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, g_x, initial_x)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
+    project_tangent!(method.manifold, g_x, x0)
 
     # Initialize approximation of inverse Hessian
     if method.initial_invH === nothing
         if method.initial_stepnorm === nothing
             # Identity matrix of size n x n
-            invH0 = _init_identity_matrix(initial_x)
+            invH0 = _init_identity_matrix(x0)
         else
             T = eltype(g_x)
             initial_scale = T(method.initial_stepnorm) * inv(norm(g_x, Inf))
-            invH0 = _init_identity_matrix(initial_x, initial_scale)
+            invH0 = _init_identity_matrix(x0, initial_scale)
         end
     else
-        invH0 = method.initial_invH(initial_x)
+        invH0 = method.initial_invH(x0)
     end
 
     # Maintain a cache for line search results
     # Trace the history of states visited
     BFGSState(
-        initial_x, # Maintain current state in state.x
+        x0, # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        fill!(similar(initial_x), NaN), # Store changes in position in state.dx
-        fill!(similar(initial_x), NaN), # Store changes in gradient in state.dg
-        fill!(similar(initial_x), NaN), # Buffer stored in state.u
+        fill!(similar(x0), NaN), # Store changes in position in state.dx
+        fill!(similar(x0), NaN), # Store changes in gradient in state.dg
+        fill!(similar(x0), NaN), # Buffer stored in state.u
         invH0, # Store current invH in state.invH
-        fill!(similar(initial_x), NaN), # Store current search direction in state.s
+        fill!(similar(x0), NaN), # Store current search direction in state.s
         @initial_linesearch()...,
     )
 end

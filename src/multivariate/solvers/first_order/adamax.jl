@@ -83,21 +83,21 @@ function _init_alpha(method::AdaMax)
     return α isa Real ? α : α(1)
 end
 
-function initial_state(method::AdaMax, options::Options, d, initial_x::AbstractArray{T}) where {T}
+function initial_state(method::AdaMax, options::Options, d, x0::AbstractArray{T}) where {T}
     # Compute function value and gradient
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
     g_x = copy(g_x)
-    project_tangent!(method.manifold, g_x, initial_x)
+    project_tangent!(method.manifold, g_x, x0)
 
     AdaMaxState(
-        initial_x, # Maintain current state in state.x
+        x0, # Maintain current state in state.x
         g_x, # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         copy(g_x), # m
         zero(g_x), # u
         _init_alpha(method), # alpha
