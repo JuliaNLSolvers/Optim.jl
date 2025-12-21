@@ -254,7 +254,7 @@ end
     @test Optim.upper_bound(res) == 1.0
     @test Optim.rel_tol(res) ≈ 1.4901161193847656e-8
     @test Optim.abs_tol(res) ≈ 2.220446049250313e-16
-    @test_throws ErrorException Optim.initial_state(res)
+    @test_throws ErrorException Optim.initial_x(res)
     @test_throws ErrorException Optim.g_norm_trace(res)
     @test_throws ErrorException Optim.g_calls(res)
     @test_throws ErrorException Optim.x_converged(res)
