@@ -83,14 +83,14 @@ end
         nothing
     end
 
-    optimize(Optim.only_fg!(fg!), [0.0, 0.0], NelderMead())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], NelderMead())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], ParticleSwarm())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], SimulatedAnnealing())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], GradientDescent())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], LBFGS())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], BFGS())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], NewtonTrustRegion())
-    optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], Newton())
+    optimize(NLSolversBase.only_fg!(fg!), [0.0, 0.0], NelderMead())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], NelderMead())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], ParticleSwarm())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], SimulatedAnnealing())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], GradientDescent())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], LBFGS())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], BFGS())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], NewtonTrustRegion())
+    optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], Newton())
 
 end

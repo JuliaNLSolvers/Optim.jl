@@ -7,7 +7,6 @@ function update!(
     store_trace::Bool,
     show_trace::Bool,
     show_every::Int = 1,
-    callback = nothing,
     trace_simplex = false,
 ) where {Tf,T}
     os = OptimizationState{Tf,T}(iteration, f_x, grnorm, dt)
@@ -20,14 +19,5 @@ function update!(
             flush(stdout)
         end
     end
-    if callback !== nothing && (iteration % show_every == 0)
-        if store_trace
-            stopped = callback(tr)
-        else
-            stopped = callback(os)
-        end
-    else
-        stopped = false
-    end
-    stopped
+    return nothing
 end

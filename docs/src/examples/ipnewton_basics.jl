@@ -78,7 +78,7 @@ using Test                 #src
 @test Optim.converged(res)      #src
 @test Optim.minimum(res) ≈ 0.25 #src
 
-# Like the rest of Optim, you can also use `autodiff=:forward` and just pass in
+# Like the rest of Optim, you can also use `autodiff=ADTypes.AutoForwardDiff()` and just pass in
 # `fun`.
 
 # If we only want to set lower bounds, use `ux = fill(Inf, 2)`

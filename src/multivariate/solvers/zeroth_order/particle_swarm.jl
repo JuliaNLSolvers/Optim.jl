@@ -55,10 +55,11 @@ reaches the maximum number of iterations set in Optim.Options(iterations=x)`.
 ParticleSwarm(; lower = [], upper = [], n_particles = 0, batched=false) = 
     ParticleSwarm(lower, upper, n_particles, batched)
 
-Base.summary(::ParticleSwarm) = "Particle Swarm"
+Base.summary(io::IO, ::ParticleSwarm) = print(io, "Particle Swarm")
 
 mutable struct ParticleSwarmState{Tx,T} <: ZerothOrderState
     x::Tx
+    f_x::T
     iteration::Int
     lower::Tx
     upper::Tx
@@ -129,7 +130,7 @@ function initial_state(
         end
     else
         # user did not define number of particles
-        n_particles = maximum([3, length(initial_x)])
+        n_particles = max(3, length(initial_x))
     end
     c1 = T(2)
     c2 = T(2)
@@ -146,8 +147,8 @@ function initial_state(
 
     current_state = 0
 
-    value!!(d, initial_x)
-    score[1] = value(d)
+    f_x = value!(d, initial_x)
+    score[1] = f_x
 
     # if search space is limited, spread the initial population
     # uniformly over the whole search space
@@ -194,6 +195,7 @@ function initial_state(
 
     ParticleSwarmState(
         x,
+        f_x,
         0,
         lower,
         upper,
@@ -218,15 +220,15 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
 
     if state.iteration == 0
         copyto!(state.best_score, state.score)
-        f.F = Base.minimum(state.score)
+        # state.f_x = Base.minimum(state.score) # Base.minimum !== minimum
     end
-    f.F = housekeeping!(
+    state.f_x = housekeeping!(
         state.score,
         state.best_score,
         state.X,
         state.X_best,
         state.x,
-        value(f),
+        state.f_x,
         state.n_particles,
     )
     # Elitist Learning:
@@ -263,14 +265,13 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
         end
     end
 
-    score_learn = value(f, state.x_learn)
-    if score_learn < f.F
-        f.F = score_learn * 1.0
-        for j = 1:n
-            state.X_best[j, i_worst] = state.x_learn[j]
-            state.X[j, i_worst] = state.x_learn[j]
-            state.x[j] = state.x_learn[j]
-        end
+    score_learn = value!(f, state.x_learn)
+    if score_learn < state.f_x
+        copyto!(state.x, state.x_learn)
+        copyto!(view(state.X_best, :, i_worst), state.x_learn)
+        copyto!(view(state.X, :, i_worst), state.x_learn)
+
+        state.f_x = score_learn
         state.score[i_worst] = score_learn
         state.best_score[i_worst] = score_learn
     end

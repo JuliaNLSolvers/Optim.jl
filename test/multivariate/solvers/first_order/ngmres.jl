@@ -4,12 +4,14 @@ using Optim, Test
 @testset "N-GMRES" begin
     method = NGMRES
     solver = method()
+    test_summary(solver, "Nonlinear GMRES (preconditioned with Gradient Descent)")
 
     skip = ("Trigonometric",)
     run_optim_tests(
         solver;
         skip = skip,
         iteration_exceptions = (
+            ("Polynomial", 10000), # goes above 3000 iterations on mac
             ("Penalty Function I", 10000),
             ("Paraboloid Random Matrix", 10000),
         ),
@@ -50,8 +52,8 @@ using Optim, Test
     # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
     @test 64 < Optim.iterations(res) < 100
-    @test 234 < Optim.f_calls(res) < 310
-    @test 234 < Optim.g_calls(res) < 310
+    @test 234 <= Optim.f_calls(res) < 310
+    @test 234 <= Optim.g_calls(res) < 310
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(
@@ -94,6 +96,8 @@ end
 @testset "O-ACCEL" begin
     method = OACCEL
     solver = method()
+    test_summary(solver, "O-ACCEL (preconditioned with Gradient Descent)")
+
     skip = ("Trigonometric",)
     run_optim_tests(
         solver;

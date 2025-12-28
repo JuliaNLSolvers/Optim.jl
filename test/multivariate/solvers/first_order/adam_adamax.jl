@@ -13,7 +13,7 @@
     )
     results = Optim.optimize(f, g!, initial_x, Adam(), options)
     @test norm(Optim.minimum(results)) < 1e-6
-    @test summary(results) == "Adam"
+    test_summary(results, "Adam")
 
     # TODO: Check why skip problems fail
     skip = (
@@ -52,7 +52,7 @@ end
     )
     results = Optim.optimize(f, g!, initial_x, AdaMax(), options)
     @test norm(Optim.minimum(results)) < 1e-6
-    @test summary(results) == "AdaMax"
+    test_summary(results, "AdaMax")
 
     # TODO: Check why skip problems fail
     skip = (
@@ -95,7 +95,7 @@ end
     alpha_scheduler(iter) = 0.0001 * (1 + 0.99^iter)
     results = Optim.optimize(f, g!, initial_x, Adam(alpha = alpha_scheduler), options)
     @test norm(Optim.minimum(results)) < 1e-6
-    @test summary(results) == "Adam"
+    test_summary(results, "Adam")
 
     # verifying the alpha values over iterations and also testing extended_trace
     # this way we test both alpha scheduler and the working of
@@ -148,7 +148,7 @@ end
     alpha_scheduler(iter) = 0.002 * (1 + 0.99^iter)
     results = Optim.optimize(f, g!, initial_x, AdaMax(alpha = alpha_scheduler), options)
     @test norm(Optim.minimum(results)) < 1e-6
-    @test summary(results) == "AdaMax"
+    test_summary(results, "AdaMax")
 
     # verifying the alpha values over iterations and also testing extended_trace
     # this way we test both alpha scheduler and the working of

@@ -43,7 +43,7 @@
     @test_throws ErrorException Optim.x_trace(results)
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
-    @test summary(results) == "Newton's Method"
+    test_summary(results, "Newton's Method")
 
     @testset "newton in concave region" begin
         prob = MultivariateProblems.UnconstrainedProblems.examples["Himmelblau"]

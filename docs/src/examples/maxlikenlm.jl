@@ -22,6 +22,7 @@
 using Optim, NLSolversBase
 using LinearAlgebra: diag
 using ForwardDiff
+using ADTypes: AutoForwardDiff
 
 #md # !!! tip
 #md #     Add Optim with the following command at the Julia command prompt:
@@ -152,7 +153,7 @@ end
 func = TwiceDifferentiable(
     vars -> Log_Likelihood(x, y, vars[1:nvar], vars[nvar+1]),
     ones(nvar + 1);
-    autodiff = :forward,
+    autodiff = AutoForwardDiff(),
 );
 
 # The above statment accepts 4 inputs: the x matrix, the dependent
@@ -163,7 +164,7 @@ func = TwiceDifferentiable(
 # the error variance.
 #
 # The `ones(nvar+1)` are the starting values for the parameters and
-# the `autodiff=:forward` command performs forward mode automatic
+# the `autodiff=ADTypes.AutoForwardDiff()` command performs forward mode automatic
 # differentiation.
 #
 # The actual optimization of the likelihood function is accomplished
