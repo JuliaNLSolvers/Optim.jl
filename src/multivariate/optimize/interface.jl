@@ -39,7 +39,7 @@ fallback_method(d::OnceDifferentiable) = LBFGS()
 fallback_method(d::TwiceDifferentiable) = Newton()
 
 # promote the objective (tuple of callables or an AbstractObjective) according to method requirement
-promote_objtype(method, initial_x, autodiff::ADTypes.AbstractADType, inplace::Bool, args...) =
+promote_objtype(method, x0, autodiff::ADTypes.AbstractADType, inplace::Bool, args...) =
     error("No default objective type for $method and $args.")
 # actual promotions, notice that (args...) captures FirstOrderOptimizer and NonDifferentiable, etc
 promote_objtype(method::ZerothOrderOptimizer, x, autodiff::ADTypes.AbstractADType, inplace::Bool, args...) =
@@ -138,156 +138,156 @@ promote_objtype(
 # if no method or options are present
 function optimize(
     f,
-    initial_x::AbstractArray;
+    x0::AbstractArray;
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     method = fallback_method(f)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f)
+    d = promote_objtype(method, x0, autodiff, inplace, f)
 
     options = Options(; default_options(method)...)
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     g,
-    initial_x::AbstractArray;
+    x0::AbstractArray;
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
     inplace::Bool = true,
 )
 
     method = fallback_method(f, g)
 
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g)
  
     options = Options(; default_options(method)...)
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray;
+    x0::AbstractArray;
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE, 
 )
     method = fallback_method(f, g, h)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
     options = Options(; default_options(method)...)
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 
 # no method supplied with objective
 function optimize(
     d::T,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     options::Options,
 ) where {T<:AbstractObjective}
-    optimize(d, initial_x, fallback_method(d), options)
+    optimize(d, x0, fallback_method(d), options)
 end
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
 function optimize(
     f,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     options::Options;
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     method = fallback_method(f)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimize(d, initial_x, method, options)
+    d = promote_objtype(method, x0, autodiff, inplace, f)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     g,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     options::Options;
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
 
     method = fallback_method(f, g)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
-    optimize(d, initial_x, method, options)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray{T},
+    x0::AbstractArray{T},
     options::Options;
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {T}
     method = fallback_method(f, g, h)
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 
 # potentially everything is supplied (besides caches)
 function optimize(
     f,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimize(d, initial_x, method, options)
+    d = promote_objtype(method, x0, autodiff, inplace, f)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     c::AbstractConstraints,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
 
-    d = promote_objtype(method, initial_x, autodiff, inplace, f)
-    optimize(d, c, initial_x, method, options)
+    d = promote_objtype(method, x0, autodiff, inplace, f)
+    optimize(d, c, x0, method, options)
 end
 function optimize(
     f,
     g,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g)
 
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 function optimize(
     f,
     g,
     h,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::AbstractOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
    
 )
-    d = promote_objtype(method, initial_x, autodiff, inplace, f, g, h)
+    d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, initial_x, method, options)
+    optimize(d, x0, method, options)
 end
 
 function optimize(
     d::D,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::SecondOrderOptimizer,
     options::Options = Options(; default_options(method)...);
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
-    d = promote_objtype(method, initial_x, autodiff, inplace, d)
-    optimize(d, initial_x, method, options)
+    d = promote_objtype(method, x0, autodiff, inplace, d)
+    optimize(d, x0, method, options)
 end

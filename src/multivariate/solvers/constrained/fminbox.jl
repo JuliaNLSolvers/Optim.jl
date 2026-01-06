@@ -253,7 +253,7 @@ function optimize(
     f,
     l::AbstractArray,
     u::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     F::Fminbox = Fminbox(),
     options::Options = Options();
     inplace::Bool=true,
@@ -262,8 +262,8 @@ function optimize(
     if f isa NonDifferentiable
         f = f.f
     end
-    od = OnceDifferentiable(f, initial_x, zero(eltype(initial_x)); inplace, autodiff)
-    optimize(od, l, u, initial_x, F, options)
+    od = OnceDifferentiable(f, x0, zero(eltype(x0)); inplace, autodiff)
+    optimize(od, l, u, x0, F, options)
 end
 
 function optimize(
@@ -271,25 +271,25 @@ function optimize(
     g,
     l::AbstractArray,
     u::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     F::Fminbox = Fminbox(),
     options::Options = Options();
     inplace = true,
 )
 
     g! = inplace ? g : (G, x) -> copyto!(G, g(x))
-    od = OnceDifferentiable(f, g!, initial_x, zero(eltype(initial_x)))
+    od = OnceDifferentiable(f, g!, x0, zero(eltype(x0)))
 
-    optimize(od, l, u, initial_x, F, options)
+    optimize(od, l, u, x0, F, options)
 end
 
-function optimize(f, l::Number, u::Number, initial_x::AbstractArray; autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE)
-    T = eltype(initial_x)
+function optimize(f, l::Number, u::Number, x0::AbstractArray; autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE)
+    T = eltype(x0)
     optimize(
-        OnceDifferentiable(f, initial_x, zero(T); autodiff),
-        Fill(T(l), size(initial_x)...),
-        Fill(T(u), size(initial_x)...),
-        initial_x,
+        OnceDifferentiable(f, x0, zero(T); autodiff),
+        Fill(T(l), size(x0)...),
+        Fill(T(u), size(x0)...),
+        x0,
         Fminbox(),
         Options(),
     )
@@ -299,18 +299,18 @@ function optimize(
     f,
     l::Number,
     u::Number,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     mo::AbstractConstrainedOptimizer,
     opt::Options = Options();
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    T = eltype(initial_x)
+    T = eltype(x0)
     optimize(
         f,
-        Fill(T(l), size(initial_x)...),
-        Fill(T(u), size(initial_x)...),
-        initial_x,
+        Fill(T(l), size(x0)...),
+        Fill(T(u), size(x0)...),
+        x0,
         mo,
         opt;
         inplace,
@@ -321,46 +321,46 @@ function optimize(
     f,
     l::AbstractArray,
     u::Number,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     mo::AbstractConstrainedOptimizer = Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-  T = eltype(initial_x)
-optimize(f, T.(l), Fill(T(u), size(initial_x)...), initial_x, mo, opt; inplace, autodiff)
+  T = eltype(x0)
+optimize(f, T.(l), Fill(T(u), size(x0)...), x0, mo, opt; inplace, autodiff)
 end
 function optimize(
     f,
     l::Number,
     u::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     mo::AbstractConstrainedOptimizer=Fminbox(),
     opt::Options = Options();
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    T = eltype(initial_x)
-    optimize(f, Fill(T(l), size(initial_x)...), T.(u), initial_x, mo, opt; inplace, autodiff)
+    T = eltype(x0)
+    optimize(f, Fill(T(l), size(x0)...), T.(u), x0, mo, opt; inplace, autodiff)
 end
 function optimize(
     f,
     g,
     l::Number,
     u::Number,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) 
 
-T = eltype(initial_x)
+T = eltype(x0)
 optimize(
     f,
     g,
-    Fill(T(l), size(initial_x)...),
-    Fill(T(u), size(initial_x)...),
-    initial_x,
+    Fill(T(l), size(x0)...),
+    Fill(T(u), size(x0)...),
+    x0,
     Fminbox(),
     opt;
     inplace,
@@ -372,13 +372,13 @@ function optimize(
     g,
     l::AbstractArray,
     u::Number,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-T = eltype(initial_x)
-optimize(f, g, T.(l), Fill(T(u), size(initial_x)...), initial_x, opt; inplace, autodiff)
+T = eltype(x0)
+optimize(f, g, T.(l), Fill(T(u), size(x0)...), x0, opt; inplace, autodiff)
 end
 
 function optimize(
@@ -386,25 +386,25 @@ function optimize(
     g,
     l::Number,
     u::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     opt::Options;
     inplace::Bool=true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    T= eltype(initial_x)
-    optimize(f, g, Fill(T(l), size(initial_x)...), T.(u), initial_x, opt; inplace, autodiff)
+    T= eltype(x0)
+    optimize(f, g, Fill(T(l), size(x0)...), T.(u), x0, opt; inplace, autodiff)
 end
 
 function optimize(
     df::OnceDifferentiable,
     l::AbstractArray,
     u::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     F::Fminbox = Fminbox(),
     options::Options = Options(),
 )
 
-    T = eltype(initial_x)
+    T = eltype(x0)
     t0 = time()
 
     outer_iterations = options.outer_iterations
@@ -412,8 +412,8 @@ function optimize(
     show_trace, store_trace, extended_trace =
         options.show_trace, options.store_trace, options.extended_trace
 
-    x = copy(initial_x)
-    P = InverseDiagonal(copy(initial_x))
+    x = copy(x0)
+    P = InverseDiagonal(copy(x0))
     # to be careful about one special case that might occur commonly
     # in practice: the initial guess x is exactly in the center of the
     # box. In that case, gbarrier is zero. But since the
@@ -650,7 +650,7 @@ function optimize(
 
     return MultivariateOptimizationResults(
         F,
-        initial_x,
+        x0,
         x,
         f_x,
         iteration,

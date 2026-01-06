@@ -13,7 +13,7 @@ end
 
 @def initial_linesearch begin
     (
-        fill!(similar(initial_x), NaN), # Buffer of x for line search in state.x_ls
-        real(oneunit(eltype(initial_x))),
+        fill!(similar(x0), NaN), # Buffer of x for line search in state.x_ls
+        real(oneunit(eltype(x0))),
     )             # Keep track of step size in state.alpha
 end

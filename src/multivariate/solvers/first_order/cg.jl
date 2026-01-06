@@ -125,11 +125,11 @@ function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
 
     return nothing
 end
-function initial_state(method::ConjugateGradient, ::Options, d, initial_x)
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, g_x, initial_x)
+function initial_state(method::ConjugateGradient, ::Options, d, x0)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
+    project_tangent!(method.manifold, g_x, x0)
 
     # Could move this out? as a general check?
     #=
@@ -145,20 +145,20 @@ function initial_state(method::ConjugateGradient, ::Options, d, initial_x)
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
     pg = copy(g_x)
-    _precondition!(pg, method, initial_x, g_x)
+    _precondition!(pg, method, x0, g_x)
     if method.P !== nothing
-        project_tangent!(method.manifold, pg, initial_x)
+        project_tangent!(method.manifold, pg, x0)
     end
 
     ConjugateGradientState(
-        initial_x, # Maintain current state in state.x
+        x0, # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g
         f_x, # Maintain current f in state.f
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        0 .* (initial_x), # Intermediate value in CG calculation
-        0 .* (initial_x), # Preconditioned intermediate value in CG calculation
+        0 .* (x0), # Intermediate value in CG calculation
+        0 .* (x0), # Preconditioned intermediate value in CG calculation
         pg, # Maintain the preconditioned gradient in pg
         -pg, # Maintain current search direction in state.s
         @initial_linesearch()...,

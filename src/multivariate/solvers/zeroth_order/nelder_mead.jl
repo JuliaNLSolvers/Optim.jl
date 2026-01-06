@@ -6,10 +6,10 @@ struct AffineSimplexer <: Simplexer
 end
 AffineSimplexer(; a = 0.025, b = 0.5) = AffineSimplexer(a, b)
 
-function simplexer(S::AffineSimplexer, initial_x::Tx) where {Tx}
-    n = length(initial_x)
-    initial_simplex = Tx[copy(initial_x) for i = 1:n+1]
-    for j ∈ eachindex(initial_x)
+function simplexer(S::AffineSimplexer, x0::Tx) where {Tx}
+    n = length(x0)
+    initial_simplex = Tx[copy(x0) for i = 1:n+1]
+    for j ∈ eachindex(x0)
         initial_simplex[j+1][j] = (1 + S.b) * initial_simplex[j+1][j] + S.a
     end
     initial_simplex
@@ -166,12 +166,12 @@ function reset!(method::NelderMead, state::NelderMeadState, obj, x)
 
     return nothing
 end
-function initial_state(method::NelderMead, options, d, initial_x)
-    T = eltype(initial_x)
-    n = length(initial_x)
+function initial_state(method::NelderMead, options, d, x0)
+    T = eltype(x0)
+    n = length(x0)
     m = n + 1
-    simplex = simplexer(method.initial_simplex, initial_x)
-    @assert simplex[1] == initial_x
+    simplex = simplexer(method.initial_simplex, x0)
+    @assert simplex[1] == x0
 
     f_x = value!(d, simplex[1])
     f_simplex = Vector{typeof(f_x)}(undef, m)
@@ -188,16 +188,16 @@ function initial_state(method::NelderMead, options, d, initial_x)
     α, β, γ, δ = parameters(method.parameters, n)
 
     NelderMeadState(
-        copy(initial_x), # Variable to hold final minimizer value for MultivariateOptimizationResults
+        copy(x0), # Variable to hold final minimizer value for MultivariateOptimizationResults
         f_x, # Variable to hold final objective function value
         m, # Number of vertices in the simplex
         simplex, # Maintain simplex in state.simplex
         centroid(simplex, i_order[m]), # Maintain centroid in state.centroid
-        copy(initial_x), # Store cache in state.x_lowest
-        copy(initial_x), # Store cache in state.x_second_highest
-        copy(initial_x), # Store cache in state.x_highest
-        copy(initial_x), # Store cache in state.x_reflect
-        copy(initial_x), # Store cache in state.x_cache
+        copy(x0), # Store cache in state.x_lowest
+        copy(x0), # Store cache in state.x_second_highest
+        copy(x0), # Store cache in state.x_highest
+        copy(x0), # Store cache in state.x_reflect
+        copy(x0), # Store cache in state.x_cache
         f_simplex, # Store objective values at the vertices in state.f_simplex
         T(nmobjective(f_simplex, n, m)), # Store nmobjective in state.nm_x
         f_simplex[i_order[1]], # Store lowest f in state.f_lowest

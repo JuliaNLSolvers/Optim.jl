@@ -89,7 +89,7 @@ for api_method in (
     :rel_tol,
     :abs_tol,
     :iterations,
-    :initial_state,
+    :initial_x,
     :converged,
     :x_tol,
     :x_abstol,

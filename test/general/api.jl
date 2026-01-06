@@ -138,7 +138,7 @@
     @test !Optim.g_converged(res)
     @test Optim.g_abstol(res) == 1e-12
     @test Optim.iteration_limit_reached(res)
-    @test Optim.initial_state(res) == [-1.2, 1.0]
+    @test Optim.initial_x(res) == [-1.2, 1.0]
     @test haskey(Optim.trace(res_ext)[1].metadata, "x")
     @test Optim.termination_code(res_ext) == Optim.TerminationCode.Iterations
     # just testing if it runs
@@ -254,7 +254,7 @@ end
     @test Optim.upper_bound(res) == 1.0
     @test Optim.rel_tol(res) ≈ 1.4901161193847656e-8
     @test Optim.abs_tol(res) ≈ 2.220446049250313e-16
-    @test_throws ErrorException Optim.initial_state(res)
+    @test_throws ErrorException Optim.initial_x(res)
     @test_throws ErrorException Optim.g_norm_trace(res)
     @test_throws ErrorException Optim.g_calls(res)
     @test_throws ErrorException Optim.x_converged(res)

@@ -64,18 +64,18 @@ function initial_state(
     ::SimulatedAnnealing,
     ::Options,
     d,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
 )
     # Compute function value
-    f_x = value!(d, initial_x)
+    f_x = value!(d, x0)
 
     return SimulatedAnnealingState(
-        copy(initial_x), # best state ever visited
+        copy(x0), # best state ever visited
         f_x, # function value of the best state ever visited
         1, # iteration
-        copy(initial_x), # current state
+        copy(x0), # current state
         f_x, # function value of the current state
-        fill!(similar(initial_x), NaN), # proposed state
+        fill!(similar(x0), NaN), # proposed state
         oftype(f_x, NaN), # function value of the proposed state
     )
 end

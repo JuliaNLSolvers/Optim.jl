@@ -36,8 +36,8 @@ mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     cg_iters::Int
 end
 
-function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x::Array{T}) where {T}
-    n = length(initial_x)
+function initial_state(method::KrylovTrustRegion, options::Options, d, x0::Array{T}) where {T}
+    n = length(x0)
     # Maintain current gradient in gr
     @assert(method.max_radius > 0)
     @assert(0 < method.initial_radius < method.max_radius)
@@ -45,15 +45,15 @@ function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x
     @assert(method.rho_lower < method.rho_upper)
     @assert(method.rho_lower >= 0)
 
-    f_x, g_x = value_gradient!(d, initial_x)
+    f_x, g_x = value_gradient!(d, x0)
 
     KrylovTrustRegionState(
-        copy(initial_x),    # Maintain current state in state.x
+        copy(x0),    # Maintain current state in state.x
         f_x,                # Maintain f of current state in state.f_x
         g_x,                # Maintain gradient of current state in state.g_x
-        copy(initial_x), # x_previous
+        copy(x0), # x_previous
         zero(T),            # f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        similar(x0), # Maintain current search direction in state.s
         true,               # interior
         true,               # accept step
         convert(T, method.initial_radius),

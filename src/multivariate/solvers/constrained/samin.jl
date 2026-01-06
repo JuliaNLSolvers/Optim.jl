@@ -62,7 +62,7 @@ function optimize(
     obj_fn,
     lb::AbstractArray,
     ub::AbstractArray,
-    initial_x::AbstractArray{Tx},
+    x0::AbstractArray{Tx},
     method::SAMIN,
     options::Options = Options(),
 ) where {Tx}
@@ -70,7 +70,7 @@ function optimize(
     time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
-    x = copy(initial_x)
+    x = copy(x0)
     d = NonDifferentiable(obj_fn, x)
     f_x = value!(d, x)
 
@@ -217,7 +217,7 @@ function optimize(
                         termination_code = TerminationCode.NotImplemented
                         return MultivariateOptimizationResults(
                             method,
-                            initial_x,
+                            x0,
                             x_opt, #pick_best_x(f_incr_pick, state),
                             f_opt, # pick_best_f(f_incr_pick, state),
                             f_calls(d), #iteration,

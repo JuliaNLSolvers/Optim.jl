@@ -63,7 +63,7 @@ function initial_state(
     method::ParticleSwarm,
     options,
     d,
-    initial_x::AbstractArray{T},
+    x0::AbstractArray{T},
 ) where {T}
     #=
     Variable X represents the whole swarm of solutions with
@@ -81,17 +81,17 @@ function initial_state(
     the swarm jumping out of local minima.
     =#
 
-    n = length(initial_x)
+    n = length(x0)
     if isempty(method.lower)
         limit_search_space = false
-        lower = copy(initial_x)
+        lower = copy(x0)
         lower .= -Inf
     else
         lower = method.lower
         limit_search_space = true
     end
     if isempty(method.upper)
-        upper = copy(initial_x)
+        upper = copy(x0)
         upper .= Inf
         # limit_search_space is whatever it was for lower
     else
@@ -99,7 +99,7 @@ function initial_state(
         limit_search_space = true
     end
 
-    @assert length(lower) == length(initial_x) "limits must be of same length as x_initial."
+    @assert length(lower) == length(x0) "limits must be of same length as x_initial."
     @assert all(upper .> lower) "upper must be greater than lower"
 
     if method.n_particles > 0
@@ -111,7 +111,7 @@ function initial_state(
         end
     else
         # user did not define number of particles
-        n_particles = max(3, length(initial_x))
+        n_particles = max(3, length(x0))
     end
     c1 = T(2)
     c2 = T(2)
@@ -122,13 +122,13 @@ function initial_state(
     X_best = Array{T,2}(undef, n, n_particles)
     dx = zeros(T, n)
     score = zeros(T, n_particles)
-    x = copy(initial_x)
+    x = copy(x0)
     best_score = zeros(T, n_particles)
-    x_learn = copy(initial_x)
+    x_learn = copy(x0)
 
     current_state = 0
 
-    f_x = value!(d, initial_x)
+    f_x = value!(d, x0)
     score[1] = f_x
 
     # if search space is limited, spread the initial population
@@ -146,13 +146,13 @@ function initial_state(
         for i = 1:n_particles
             for j = 1:n
                 if i == 1
-                    if abs(initial_x[i]) > T(0)
-                        dx[j] = abs(initial_x[i])
+                    if abs(x0[i]) > T(0)
+                        dx[j] = abs(x0[i])
                     else
                         dx[j] = T(1)
                     end
                 end
-                X[j, i] = initial_x[j] + dx[j] * rand(T)
+                X[j, i] = x0[j] + dx[j] * rand(T)
                 X_best[j, i] = X[j, i]
                 V[j, i] = abs(X[j, i]) * (rand(T) * T(2) - T(1))
             end
@@ -160,8 +160,8 @@ function initial_state(
     end
 
     for j = 1:n
-        X[j, 1] = initial_x[j]
-        X_best[j, 1] = initial_x[j]
+        X[j, 1] = x0[j]
+        X_best[j, 1] = x0[j]
     end
 
     for i = 2:n_particles

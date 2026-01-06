@@ -39,23 +39,23 @@ function initial_state(
     method::AcceleratedGradientDescent,
     ::Options,
     d,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
 )
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-    f_x, g_x = value_gradient!(d, initial_x)
-    project_tangent!(method.manifold, g_x, initial_x)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
+    project_tangent!(method.manifold, g_x, x0)
 
     AcceleratedGradientDescentState(
-        initial_x, # Maintain current state in state.x
+        x0, # Maintain current state in state.x
         copy(g_x), # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x
-        fill!(similar(initial_x), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         0, # Iteration
-        copy(initial_x), # Maintain intermediary current state in state.y
-        fill!(similar(initial_x), NaN), # Maintain intermediary state in state.y_previous
-        fill!(similar(initial_x), NaN), # Maintain current search direction in state.s
+        copy(x0), # Maintain intermediary current state in state.y
+        fill!(similar(x0), NaN), # Maintain intermediary state in state.y_previous
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end
