@@ -526,7 +526,7 @@ constraints do not contribute to `h`, because the hessian of `x_i` is
 zero. (They contribute indirectly via their slack variables.)
 """
 hessianI(x, constraints, λcI, μ) =
-    hessianI!(zeros(eltype(x), length(x), length(x)), x, constraints, λcI, μ)
+    hessianI!(zeros(eltype(x), (length(x), length(x))), x, constraints, λcI, μ)
 
 """
     userλ(λcI, bounds) -> λ

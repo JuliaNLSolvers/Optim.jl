@@ -357,7 +357,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
 end
 
 
-function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(state.g_x, state.H_x, state.delta, state.s)
