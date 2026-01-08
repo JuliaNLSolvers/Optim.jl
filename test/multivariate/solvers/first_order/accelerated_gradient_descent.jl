@@ -46,7 +46,7 @@
             "Quadratic Diagonal",
             "Rosenbrock",
         ),
-        show_name = debug_printing,
+        show_name = true,
     )#,
     #show_res = debug_printing)
 end
