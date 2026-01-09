@@ -76,6 +76,7 @@ end
 
 function Base.iterate(iter::OptimIterator, istate = nothing)
     (; d, initial_x, method, options, state) = iter
+    (; callback) = options
     if istate === nothing
         t0 = time() # Initial time stamp used to control early stopping by options.time_limit
         tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
@@ -89,7 +90,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
         small_trustregion_radius = false
 
-        g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+        g_converged, stopped = initial_convergence(state, options)
         converged = g_converged
 
         # prepare iteration counter (used to make "initial state" trace entry)
@@ -136,9 +137,6 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
         # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)` 
         ls_success = !update_state!(d, state, method)
-        if !ls_success
-            break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS, or linesearch errors)
-        end
 
         # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
         # TODO: Already perform in `update_state!`?
@@ -180,6 +178,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
                 stopped = true
             end
         end
+
         if (f_increased && !options.allow_f_increases) ||
            stopped_by_callback ||
            stopped_by_time_limit ||
@@ -235,20 +234,11 @@ function OptimizationResults(iter::OptimIterator, istate::IteratorState)
         ls_success,
     ) = istate
     (; d, initial_x, method, options, state) = iter
-        if method isa NewtonTrustRegion
-            # If the trust region radius keeps on reducing we need to stop
-            # because something is wrong. Wrong gradients or a non-differentiability
-            # at the solution could be explanations.
-            if state.delta ≤ method.delta_min
-                small_trustregion_radius = true
-                stopped = true
-            end
-        end
-
-    if g_calls(d) > 0 && !all(isfinite, gradient(d))
+    (; g_x, H_x) = state
+    if NLSolversBase.g_calls(d) > 0 && !all(isfinite, g_x)
         options.show_warnings && @warn "Terminated early due to NaN in gradient."
     end
-    if h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, hessian(d))
+    if NLSolversBase.h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, H_x)
         options.show_warnings && @warn "Terminated early due to NaN in Hessian."
     end
 

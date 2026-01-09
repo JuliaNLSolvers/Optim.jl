@@ -251,6 +251,7 @@ function optimize(
 
     (; callback) = options
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+    _time = t0
     tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
 
     tracing =

@@ -161,12 +161,12 @@ function optimizing(
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
     options = Options(; default_options(method)...)
-    optimizing(d, initial_x, method, options)
+    optimizing(d, x0, method, options)
 end
 
 # no method supplied with objective
-function optimizing(d::AbstractObjective, initial_x::AbstractArray, options::Options)
-    optimizing(d, initial_x, fallback_method(d), options)
+function optimizing(d::AbstractObjective, x0::AbstractArray, options::Options)
+    optimizing(d, x0, fallback_method(d), options)
 end
 
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
@@ -179,7 +179,7 @@ function optimizing(
 )
     method = fallback_method(f)
     d = promote_objtype(method, x0, autodiff, inplace, f)
-    optimizing(d, initial_x, method, options)
+    optimizing(d, x0, method, options)
 end
 function optimizing(
     f,
