@@ -76,12 +76,14 @@
         @test hcount == Optim.h_calls(res)
     end
 
-    # Need to define fg! and hv! for KrylovTrustRegion
-    fg!(out, x) = begin
-        g!(out, x)
-        f(x)
+    # define fg! and hv! for KrylovTrustRegion
+    fg!(F, G, x) = begin
+        if G !== nothing
+            g!(G, x)
+        end
+        return F === nothing ? nothing : f(x)
     end
-    hv!(out, x, v) = begin
+    _hvp!(out, x, v) = begin
         n = length(x)
         H = Matrix{Float64}(undef, n, n)
         h!(H, x)
@@ -92,10 +94,10 @@
         fcounter(true)
         gcounter(true)
         hcounter(true)
-        df = Optim.TwiceDifferentiableHV(f, fg!, hv!, prob.initial_x)
+        df = Optim.TwiceDifferentiable(NLSolversBase.only_fg_and_hvp!(fg!, _hvp!), prob.initial_x)
         res = Optim.optimize(df, prob.initial_x, solver)
         @test fcount == Optim.f_calls(res)
         @test gcount == Optim.g_calls(res)
-        @test hcount == Optim.h_calls(res)
+        @test hcount == Optim.hvp_calls(res)
     end
 end

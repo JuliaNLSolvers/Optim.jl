@@ -333,8 +333,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
     interior = true
     lambda = NaN
 
-    # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, x0)
 
     NewtonTrustRegionState(
         copy(x0), # Maintain current state in state.x
@@ -358,7 +357,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
 end
 
 
-function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(state.g_x, state.H_x, state.delta, state.s)
@@ -419,8 +418,7 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         if method.use_fg
             copyto!(state.H_x, hessian!(d, state.x))
         else
-            # TODO: Switch to `gradient_hessian!`
-            g_x, H_x = NLSolversBase.gradient_hessian!!(d, state.x)
+            g_x, H_x = NLSolversBase.gradient_hessian!(d, state.x)
             copyto!(state.g_x, g_x)
             copyto!(state.H_x, H_x)
         end

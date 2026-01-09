@@ -35,11 +35,12 @@ function initial_state(method::MomentumGradientDescent, ::Options, d, x0::Abstra
     x0 = copy(x0)
     retract!(method.manifold, x0)
     f_x, g_x = value_gradient!(d, x0)
+    g_x = copy(g_x)
     project_tangent!(method.manifold, g_x, x0)
 
     MomentumGradientDescentState(
         x0, # Maintain current state in state.x
-        copy(g_x), # Maintain current gradient in state.g_x
+        g_x, # Maintain current gradient in state.g_x
         f_x, # Maintain current f in state.f_x 
         copy(x0), # Maintain previous state in state.x_previous
         fill!(similar(x0), NaN), # Record momentum correction direction in state.x_momentum

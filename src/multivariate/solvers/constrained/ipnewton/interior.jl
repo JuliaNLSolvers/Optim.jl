@@ -322,11 +322,11 @@ function optimize(
         _time = time()
         stopped_by_time_limit = _time - t0 > options.time_limit ? true : false
         f_limit_reached =
-            options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
+            options.f_calls_limit > 0 && NLSolversBase.f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached =
-            options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
+            options.g_calls_limit > 0 && (NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)) >= options.g_calls_limit ? true : false
         h_limit_reached =
-            options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
+            options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
 
         if (f_increased && !options.allow_f_increases) ||
            stopped_by_callback ||
@@ -362,9 +362,11 @@ function optimize(
         T(options.g_abstol),
         g_residual(state),
         tr,
-        f_calls(d),
-        g_calls(d),
-        h_calls(d),
+        NLSolversBase.f_calls(d),
+        NLSolversBase.g_calls(d),
+        NLSolversBase.jvp_calls(d),
+        NLSolversBase.h_calls(d),
+        NLSolversBase.hvp_calls(d),
         options.time_limit,
         _time - t0,
         (;x_converged, f_converged, g_converged,f_increased, iterations = iteration == options.iterations, ls_failed=false,),
@@ -524,7 +526,7 @@ constraints do not contribute to `h`, because the hessian of `x_i` is
 zero. (They contribute indirectly via their slack variables.)
 """
 hessianI(x, constraints, λcI, μ) =
-    hessianI!(zeros(eltype(x), length(x), length(x)), x, constraints, λcI, μ)
+    hessianI!(zeros(eltype(x), (length(x), length(x))), x, constraints, λcI, μ)
 
 """
     userλ(λcI, bounds) -> λ

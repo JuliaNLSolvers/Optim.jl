@@ -42,8 +42,7 @@ mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
 end
 
 function initial_state(method::Newton, options, d, x0)
-    # TODO: Switch to `value_gradient_hessian!`
-    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!!(d, x0)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, x0)
 
     NewtonState(
         copy(x0), # Maintain current state in state.x

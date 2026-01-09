@@ -178,13 +178,17 @@ function run_optim_tests(
                 test_summary(results)
                 show_res && println(results)
                 show_itcalls &&
-                    printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)
+                    printstyled("Iterations: ", Optim.iterations(results), "\n"; color = :red)
                 show_itcalls &&
-                    printstyled("f-calls: $(Optim.f_calls(results))\n", color = :red)
+                    printstyled("f-calls: ", Optim.f_calls(results), "\n"; color = :red)
                 show_itcalls &&
-                    printstyled("g-calls: $(Optim.g_calls(results))\n", color = :red)
+                    printstyled("g-calls: ", Optim.g_calls(results), "\n"; color = :red)
                 show_itcalls &&
-                    printstyled("h-calls: $(Optim.h_calls(results))\n", color = :red)
+                    printstyled("jvp-calls: ", Optim.jvp_calls(results), "\n"; color = :red)
+                show_itcalls &&
+                    printstyled("h-calls: ", Optim.h_calls(results), "\n"; color = :red)
+                show_itcalls &&
+                    printstyled("hvp-calls: ", Optim.hvp_calls(results), "\n"; color = :red)
                 if !((name, i) in convergence_exceptions)
                     @test Optim.converged(results)
                     # Print on error, easier to debug CI
@@ -271,13 +275,17 @@ function run_optim_tests_constrained(
             test_summary(results)
             show_res && println(results)
             show_itcalls &&
-                printstyled("Iterations: $(Optim.iterations(results))\n", color = :red)
+                printstyled("Iterations: ", Optim.iterations(results), "\n"; color = :red)
             show_itcalls &&
-                printstyled("f-calls: $(Optim.f_calls(results))\n", color = :red)
+                printstyled("f-calls: ", Optim.f_calls(results), "\n"; color = :red)
             show_itcalls &&
-                printstyled("g-calls: $(Optim.g_calls(results))\n", color = :red)
+                printstyled("g-calls: ", Optim.g_calls(results), "\n"; color = :red)
             show_itcalls &&
-                printstyled("h-calls: $(Optim.h_calls(results))\n", color = :red)
+                printstyled("jvp-calls: ", Optim.jvp_calls(results), "\n"; color = :red)
+            show_itcalls &&
+                printstyled("h-calls: ", Optim.h_calls(results), "\n"; color = :red)
+            show_itcalls &&
+                printstyled("hvp-calls: ", Optim.hvp_calls(results), "\n"; color = :red)
             if !(name in convergence_exceptions)
                 @test Optim.converged(results)
                 # Print on error
