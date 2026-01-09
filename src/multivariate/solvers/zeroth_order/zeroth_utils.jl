@@ -15,7 +15,7 @@ function trace!(
     update!(
         tr,
         state.iteration,
-        d.F,
+        state.f_x,
         NaN,
         dt,
         options.store_trace,
@@ -29,7 +29,7 @@ function assess_convergence(state::ZerothOrderState, d, options::Options)
     false, false, false, false
 end
 
-f_abschange(d::AbstractObjective, state::ZerothOrderState) = convert(typeof(value(d)), NaN)
-f_relchange(d::AbstractObjective, state::ZerothOrderState) = convert(typeof(value(d)), NaN)
+f_abschange(state::ZerothOrderState) = oftype(state.f_x, NaN)
+f_relchange(state::ZerothOrderState) = oftype(state.f_x, NaN)
 x_abschange(state::ZerothOrderState) = convert(real(eltype(state.x)), NaN)
 x_relchange(state::ZerothOrderState) = convert(real(eltype(state.x)), NaN)

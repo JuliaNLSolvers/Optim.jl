@@ -24,7 +24,9 @@
         Optim.minimum,
         Optim.f_calls,
         Optim.g_calls,
+        Optim.jvp_calls,
         Optim.h_calls,
+        Optim.hvp_calls,
         Optim.iterations,
         Optim.converged,
     )

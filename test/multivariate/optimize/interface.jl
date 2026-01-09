@@ -28,7 +28,6 @@
         fgh_res = []
         push!(fgh_res, optimize(tup..., problem.initial_x))
         for m in (NelderMead(), LBFGS(), Newton())
-            push!(fgh_res, optimize(tup..., problem.initial_x; f_abstol = 1e-8))
             push!(fgh_res, optimize(tup..., problem.initial_x, m))
             push!(fgh_res, optimize(tup..., problem.initial_x, m, Optim.Options()))
         end
@@ -80,9 +79,9 @@ end
         nothing
     end
 
-    result_fg! = Optim.optimize(Optim.only_fg!(fg!), [0.0, 0.0], Optim.LBFGS()) # works fine
+    result_fg! = Optim.optimize(NLSolversBase.only_fg!(fg!), [0.0, 0.0], Optim.LBFGS()) # works fine
     @test result_fg!.minimizer ≈ [1, 1]
-    result_fgh! = Optim.optimize(Optim.only_fgh!(fgh!), [0.0, 0.0], Optim.Newton())
+    result_fgh! = Optim.optimize(NLSolversBase.only_fgh!(fgh!), [0.0, 0.0], Optim.Newton())
     @test result_fgh!.minimizer ≈ [1, 1]
 end
 
@@ -93,8 +92,7 @@ end
     g!(G, x) = @. G = 2x
     g(x) = 2x
     h!(H, x) = @. H = [2.0 0.0; 0.0 2.0]
-    hv!(Hv, x) = @. Hv = [2.0, 2.0] .* x
-    _hv!(Hv, x, v) = @. Hv = [2.0, 2.0] .* x
+    _hvp!(HVP, x, v) = @. HVP = [2.0, 2.0] .* v
     res = Optim.optimize(f, w)
     @test res.method isa NelderMead
 
@@ -108,13 +106,13 @@ end
         return f(x), g(x)
     end
 
-    res = Optim.optimize(Optim.only_fg!(fg!), w)
+    res = Optim.optimize(NLSolversBase.only_fg!(fg!), w)
     @test res.method isa LBFGS
 
-    res = Optim.optimize(Optim.only_fg(fg), w)
+    res = Optim.optimize(NLSolversBase.only_fg(fg), w)
     @test res.method isa LBFGS
 
-    res = Optim.optimize(Optim.only_g_and_fg(g, fg), w)
+    res = Optim.optimize(NLSolversBase.only_g_and_fg(g, fg), w)
     @test res.method isa LBFGS
 
     function fgh!(_, G, H, x)
@@ -123,27 +121,22 @@ end
         return f(x)
     end
 
-    res = Optim.optimize(Optim.only_fgh!(fgh!), w)
+    res = Optim.optimize(NLSolversBase.only_fgh!(fgh!), w)
     @test res.method isa Newton
 
-    res = Optim.optimize(Optim.only_fgh!(fgh!), w)
+    res = Optim.optimize(NLSolversBase.only_fgh!(fgh!), w)
     @test res.method isa Newton
 
-    function fghv!(_, G, Hv, x, v)
+    function fghvp!(_, G, HVP, x, v)
         isnothing(G) || g!(G, x)
-        isnothing(Hv) || hv!(Hv, v)
+        isnothing(HVP) || _hvp!(HVP, x, v)
         return f(x)
     end
 
-    res = Optim.optimize(Optim.only_fghv!(fghv!), w)
+    res = Optim.optimize(NLSolversBase.only_fghvp!(fghvp!), w)
     @test res.method isa Optim.KrylovTrustRegion
 
-    res = Optim.optimize(Optim.only_fg_and_hv!(fg!, _hv!), w)
+    res = Optim.optimize(NLSolversBase.only_fg_and_hvp!(fg!, _hvp!), w)
     @test res.method isa Optim.KrylovTrustRegion
 
-end
-
-@testset "issue 1041 and 1038" begin
-    g(x) = -exp(-(x - pi)^2)
-    @test_nowarn optimize(x -> g(x[1]), [0.0], method = AcceleratedGradientDescent())
 end

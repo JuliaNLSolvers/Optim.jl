@@ -56,7 +56,7 @@
         debug_printing && printstyled("Solver: ", summary(_optimizer), "\n", color = :green)
         results = optimize(_objective, l, u, initial_x, Fminbox(_optimizer))
         @test Optim.converged(results)
-        @test summary(results) == "Fminbox with $(summary(_optimizer))"
+        test_summary(results, "Fminbox with $(summary(_optimizer))")
         opt_x = Optim.minimizer(results)
         NLSolversBase.gradient!(_objective, opt_x)
         g = NLSolversBase.gradient(_objective)
@@ -121,7 +121,7 @@
         optimize(od, lb, ub, initial_x, Fminbox())
         nd = NonDifferentiable(exponential, initial_x)
         optimize(nd, lb, ub, initial_x, Fminbox(NelderMead()))
-        od_forward = OnceDifferentiable(exponential, initial_x; autodiff = :forward)
+        od_forward = OnceDifferentiable(exponential, initial_x; autodiff = AutoForwardDiff())
         optimize(od_forward, lb, ub, initial_x, Fminbox())
         optimize(exponential, lb, ub, initial_x, Fminbox())
         optimize(exponential, exponential_gradient!, lb, ub, initial_x, Fminbox())
@@ -131,8 +131,8 @@
         optimize(exponential, exponential_gradient!, lb, ub, initial_x)
         @testset "inplace and autodiff keywords #616" begin
             optimize(exponential, lb, ub, initial_x, Fminbox())
-            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = :finite)
-            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = :forward)
+            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = AutoFiniteDiff(; fdtype = Val(:central)))
+            optimize(exponential, lb, ub, initial_x, Fminbox(); autodiff = AutoForwardDiff())
             optimize(
                 exponential,
                 exponential_gradient,
@@ -196,7 +196,7 @@ end
             [1.0],
             Fminbox(m),
         )
-        optimize(x -> sqrt(x[1]), [0.0], [10.0], [1.0], Fminbox(m); autodiff = :forwarddiff)
+        optimize(x -> sqrt(x[1]), [0.0], [10.0], [1.0], Fminbox(m); autodiff = AutoForwardDiff())
     end
 end
 

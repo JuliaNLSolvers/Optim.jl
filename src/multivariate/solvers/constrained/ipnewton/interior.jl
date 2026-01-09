@@ -1,7 +1,7 @@
 # TODO: when Optim supports sparse arrays, make a SparseMatrixCSC version of jacobianx
 
 
-abstract type AbstractBarrierState end
+abstract type AbstractBarrierState <: AbstractOptimizerState end
 
 # These are used not only for the current state, but also for the step and the gradient
 struct BarrierStateVars{T}
@@ -101,7 +101,6 @@ Base.isempty(bstate::BarrierStateVars) =
     isempty(bstate.λcE)
 
 Base.eltype(::Type{BarrierStateVars{T}}) where {T} = T
-Base.eltype(sv::BarrierStateVars) = eltype(typeof(sv))
 
 function Base.show(io::IO, b::BarrierStateVars)
     print(io, "BarrierStateVars{$(eltype(b))}:")
@@ -125,7 +124,7 @@ Base.hash(b::BarrierStateVars, u::UInt) = hash(
     hash(b.λxE, hash(b.λc, hash(b.λx, hash(b.slack_c, hash(b.slack_x, u + bsv_seed))))),
 )
 
-function dot(v::BarrierStateVars, w::BarrierStateVars)
+function LinearAlgebra.dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.slack_x, w.slack_x) +
     dot(v.slack_c, w.slack_c) +
     dot(v.λx, w.λx) +
@@ -134,7 +133,7 @@ function dot(v::BarrierStateVars, w::BarrierStateVars)
     dot(v.λcE, w.λcE)
 end
 
-function norm(b::BarrierStateVars, p::Real)
+function LinearAlgebra.norm(b::BarrierStateVars, p::Real)
     norm(b.slack_x, p) +
     norm(b.slack_c, p) +
     norm(b.λx, p) +
@@ -207,58 +206,22 @@ ls_update!(
     αs::AbstractVector,
 ) = ls_update!(out, base, step, αs[1]) # (αs...,))
 
-function initial_convergence(d, state, method::ConstrainedOptimizer, initial_x, options)
-    # TODO: Make sure state.bgrad has been evaluated at initial_x
-    # state.bgrad normally comes from constraints.c!(..., initial_x) in initial_state
-    gradient!(d, initial_x)
-    stopped = !isfinite(value(d)) || any(!isfinite, gradient(d))
-    g_residual(d, state) + norm(state.bgrad, Inf) < options.g_abstol, stopped
-end
-
-function optimize(
-    f,
-    g,
-    lower::AbstractArray,
-    upper::AbstractArray,
-    initial_x::AbstractArray,
-    method::ConstrainedOptimizer = IPNewton(),
-    options::Options = Options(; default_options(method)...),
-)
-    d = TwiceDifferentiable(f, g, initial_x)
-    optimize(d, lower, upper, initial_x, method, options)
-end
-function optimize(
-    f,
-    g,
-    h,
-    lower::AbstractArray,
-    upper::AbstractArray,
-    initial_x::AbstractArray,
-    method::ConstrainedOptimizer = IPNewton(),
-    options::Options = Options(; default_options(method)...),
-)
-    d = TwiceDifferentiable(f, g, h, initial_x)
-    optimize(d, lower, upper, initial_x, method, options)
-end
-function optimize(
-    d::TwiceDifferentiable,
-    lower::AbstractArray,
-    upper::AbstractArray,
-    initial_x::AbstractArray,
-    options::Options = Options(; default_options(IPNewton())...),
-)
-    optimize(d, lower, upper, initial_x, IPNewton(), options)
+function initial_convergence(d, state, method::ConstrainedOptimizer, x0, options)
+    # TODO: Make sure state.bgrad has been evaluated at x0
+    # state.bgrad normally comes from constraints.c!(..., x0) in initial_state
+    stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
+    norm(state.g_x, Inf) + norm(state.bgrad, Inf) < options.g_abstol, stopped
 end
 
 function optimize(
     d,
     lower::AbstractArray,
     upper::AbstractArray,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::ConstrainedOptimizer,
     options::Options = Options(; default_options(method)...),
 )
-    twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, initial_x)
+    twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, x0)
 
     bounds = ConstraintBounds(lower, upper, [], [])
     constraints = TwiceDifferentiableConstraints(
@@ -268,17 +231,17 @@ function optimize(
         bounds,
     )
 
-    state = initial_state(method, options, twicediffed, constraints, initial_x)
+    state = initial_state(method, options, twicediffed, constraints, x0)
 
-    optimize(twicediffed, constraints, initial_x, method, options, state)
+    optimize(twicediffed, constraints, x0, method, options, state)
 end
 function optimize(
     d::AbstractObjective,
     constraints::AbstractConstraints,
-    initial_x::AbstractArray,
+    x0::AbstractArray,
     method::ConstrainedOptimizer,
     options::Options = Options(; default_options(method)...),
-    state = initial_state(method, options, d, constraints, initial_x),
+    state = initial_state(method, options, d, constraints, x0),
 )
     #== TODO:
     Let's try to unify this with the unconstrained `optimize` in Optim
@@ -286,34 +249,53 @@ function optimize(
     the univariate `optimize` to one with empty constraints::AbstractConstraints
     ==#
 
+    (; callback) = options
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-    tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
+    tr = OptimizationTrace{typeof(state.f_x)),typeof(method)}()
+
     tracing =
         options.store_trace ||
         options.show_trace ||
-        options.extended_trace ||
-        options.callback !== nothing
-    stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
+        options.extended_trace
+    stopped, stopped_by_time_limit = false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
 
-    g_converged, stopped = initial_convergence(d, state, method, initial_x, options)
+    g_converged, stopped = initial_convergence(d, state, method, x0, options)
     converged = g_converged
-
+    
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
     options.show_trace && print_header(method)
-    _time = t0
-    trace!(tr, d, state, iteration, method, options, _time - t0)
+
+    # update trace
+    if tracing
+        trace!(tr, d, state, iteration, method, options, t0)
+    end
     ls_success::Bool = true
     
+    # callbacks can stop routine early by returning true
+    stopped_by_callback = callback !== nothing && callback(state)
+    stopped |= stopped_by_callback
+
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        update_state!(d, constraints, state, method, options) && break # it returns true if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS or linesearch errors)
+        # Convention: When `update_state!` is called, then `state` satisfies:
+        # - `state.x`: Current state
+        # - `state.f`: Objective function value of the current state, ie. `d(state.x)`
+        # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
+        # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)` 
+        fail = update_state!(d, constraints, state, method, options)
+        if fail
+            # `fail = true` e.g. if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS or linesearch errors)
+            break
+        end
 
-        update_fg!(d, constraints, state, method)
+        # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
+        # TODO: Already perform in `update_state!`?
+        update_fgh!(d, constraints, state, method)
 
         # TODO: Do we need to rethink f_increased for `ConstrainedOptimizer`s?
         x_converged, f_converged, g_converged, f_increased =
@@ -328,13 +310,13 @@ function optimize(
         counter_f_tol = f_converged ? counter_f_tol + 1 : 0
         converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
 
-        # We don't use the Hessian for anything if we have declared convergence,
-        # so we might as well not make the (expensive) update if converged == true
-        !converged && update_h!(d, constraints, state, method)
-
+        # update trace
         if tracing
-            # update trace; callbacks can stop routine early by returning true
-            stopped_by_callback = trace!(tr, d, state, iteration, method, options)
+            trace!(tr, d, state, iteration, method, options)
+        end
+        # callbacks can stop routine early by returning true
+        if callback !== nothing
+            stopped_by_callback = callback(state)
         end
 
         # Check time_limit; if none is provided it is NaN and the comparison
@@ -342,11 +324,11 @@ function optimize(
         _time = time()
         stopped_by_time_limit = _time - t0 > options.time_limit ? true : false
         f_limit_reached =
-            options.f_calls_limit > 0 && f_calls(d) >= options.f_calls_limit ? true : false
+            options.f_calls_limit > 0 && NLSolversBase.f_calls(d) >= options.f_calls_limit ? true : false
         g_limit_reached =
-            options.g_calls_limit > 0 && g_calls(d) >= options.g_calls_limit ? true : false
+            options.g_calls_limit > 0 && (NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)) >= options.g_calls_limit ? true : false
         h_limit_reached =
-            options.h_calls_limit > 0 && h_calls(d) >= options.h_calls_limit ? true : false
+            options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
 
         if (f_increased && !options.allow_f_increases) ||
            stopped_by_callback ||
@@ -361,14 +343,13 @@ function optimize(
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_reltol)
-    Tf = typeof(value(d))
     f_incr_pick = f_increased && !options.allow_f_increases
     termination_code = TerminationCode.NotImplemented
     return MultivariateOptimizationResults(
         method,
-        initial_x,
+        x0,
         pick_best_x(f_incr_pick, state),
-        pick_best_f(f_incr_pick, state, d),
+        pick_best_f(f_incr_pick, state),
         iteration,
         T(options.x_abstol),
         T(options.x_reltol),
@@ -376,14 +357,16 @@ function optimize(
         x_relchange(state),
         T(options.f_abstol),
         T(options.f_reltol),
-        f_abschange(d, state),
-        f_relchange(d, state),
+        f_abschange(state),
+        f_relchange(state),
         T(options.g_abstol),
-        g_residual(d, state),
+        g_residual(state),
         tr,
-        f_calls(d),
-        g_calls(d),
-        h_calls(d),
+        NLSolversBase.f_calls(d),
+        NLSolversBase.g_calls(d),
+        NLSolversBase.jvp_calls(d),
+        NLSolversBase.h_calls(d),
+        NLSolversBase.hvp_calls(d),
         options.time_limit,
         _time - t0,
         (;x_converged, f_converged, g_converged,f_increased, iterations = iteration == options.iterations, ls_failed=false,),
@@ -391,12 +374,11 @@ function optimize(
     )
 end
 
-# Fallbacks (for methods that don't need these)
-update_h!(d, constraints::AbstractConstraints, state, method) = nothing
+# Fallback (for methods that don't need this)
+after_while!(d, constraints::AbstractConstraints, state, method, options) = nothing
 
 """
-    initialize_μ_λ!(state, bounds, μ0=:auto, β=0.01)
-    initialize_μ_λ!(state, bounds, (Hobj,HcI), μ0=:auto, β=0.01)
+    initialize_μ_λ!(state, bounds, HcI, μ0=:auto, β=0.01)
 
 Pick μ and λ to ensure that the equality constraints are satisfied
 locally (at the current `state.x`), and that the initial gradient
@@ -404,11 +386,10 @@ including the barrier would be a descent direction for the problem
 without the barrier (μ = 0). This ensures that the search isn't pushed
 out of the basin of the user-supplied initial guess.
 
-Upon entry, the objective function gradient, constraint values, and
-constraint jacobian must be set in `state.g`, `state.c`, and `state.J`
-respectively. If you also wish to ensure that the projection of
-Hessian is minimally-perturbed along the initial gradient, supply the
-hessian of the objective (`Hobj`) and
+Upon entry, the objective function gradient and Hessian, constraint values, and
+constraint jacobian must be set in `state.g_x`, `state.H_x`, `state.c`, and `state.J`,
+respectively. To ensure that the projection of Hessian is minimally-perturbed
+along the initial gradient, additionally supply
 
     HcI = ∑_i (σ_i/s_i)∇∇ c_{Ii}
 
@@ -423,7 +404,7 @@ values of `λ` are set using the chosen `μ`.
 function initialize_μ_λ!(
     state,
     bounds::ConstraintBounds,
-    Hinfo,
+    HcI::AbstractMatrix{<:Real},
     μ0::Union{Symbol,Number},
     β::Number = 1 // 100,
 )
@@ -432,7 +413,8 @@ function initialize_μ_λ!(
         fill!(state.bstate, 0)
         return state
     end
-    gf = state.g  # must be pre-set to ∇f
+    copyto!(state.g_L_x, state.g_x)
+    gf = state.g_L_x
     # Calculate projection of ∇f into the subspace spanned by the
     # equality constraint Jacobian
     JE = jacobianE(state, bounds)
@@ -453,7 +435,7 @@ function initialize_μ_λ!(
         Δg = JI' * σdivs
         PperpΔg = Δg - JE' * (Cc \ (JE * Δg))
         DI = dot(PperpΔg, PperpΔg)
-        κperp, κI = hessian_projections(Hinfo, Pperpg, (JI * Pperpg) ./ s)
+        κperp, κI = hessian_projections((state.H_x, HcI), Pperpg, (JI * Pperpg) ./ s)
         # Calculate μ and λI
         μ = β * (κperp == 0 ? sqrt(Dperp / DI) : min(sqrt(Dperp / DI), abs(κperp / κI)))
         if !isfinite(μ)
@@ -481,14 +463,6 @@ function initialize_μ_λ!(
     k = unpack_vec!(state.bstate.λcE, λE, k)
     k == length(λE) || error("Something is wrong when initializing μ and λ.")
     state
-end
-function initialize_μ_λ!(
-    state,
-    bounds::ConstraintBounds,
-    μ0::Union{Number,Symbol},
-    β::Number = 1 // 100,
-)
-    initialize_μ_λ!(state, bounds, nothing, μ0, β)
 end
 
 function hessian_projections(Hinfo::Tuple{AbstractMatrix,AbstractMatrix}, Pperpg, y)
@@ -552,7 +526,7 @@ constraints do not contribute to `h`, because the hessian of `x_i` is
 zero. (They contribute indirectly via their slack variables.)
 """
 hessianI(x, constraints, λcI, μ) =
-    hessianI!(zeros(eltype(x), length(x), length(x)), x, constraints, λcI, μ)
+    hessianI!(zeros(eltype(x), (length(x), length(x))), x, constraints, λcI, μ)
 
 """
     userλ(λcI, bounds) -> λ
@@ -578,36 +552,54 @@ userλ(λcI, constraints) = userλ(λcI, constraints.bounds)
 ## Computation of the Lagrangian and its gradient
 # This is in a parametrization that is also useful during linesearch
 # TODO: `lagrangian` does not seem to be used (IPNewton)?
-function lagrangian(d, bounds::ConstraintBounds, x, c, bstate::BarrierStateVars, μ)
-    f_x = NLSolversBase.value!(d, x)
+function lagrangian(bounds::ConstraintBounds, x, f_x, c, bstate::BarrierStateVars, μ)
     ev = equality_violation(bounds, x, c, bstate)
-    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) + ev
-    f_x, L_xsλ, ev
+    L_x = f_x + barrier_value(bounds, x, bstate, μ) + ev
+    return L_x, ev
 end
 
 function lagrangian_fg!(
-    gx,
+    g_L_x,
     bgrad,
-    d,
     bounds::ConstraintBounds,
     x,
+    f_x,
+    g_x,
     c,
     J,
     bstate::BarrierStateVars,
     μ,
 )
-    fill!(bgrad, 0)
-    f_x, g_x = NLSolversBase.value_gradient!(d, x)
-    gx .= g_x
+    # Compute the value of the Lagrangian at x
     ev = equality_violation(bounds, x, c, bstate)
-    L_xsλ = f_x + barrier_value(bounds, x, bstate, μ) + ev
+    L_x = f_x + barrier_value(bounds, x, bstate, μ) + ev
+ 
+    # Compute gradient of the Lagrangian at x:
+    # - store the gradient of the barrier at x in `bgrad`
+    # - store the gradient of the Lagrangian at x in `g_L_x`
+    copyto!(g_L_x, g_x)
+    fill!(bgrad, 0)
     barrier_grad!(bgrad, bounds, x, bstate, μ)
-    equality_grad!(gx, bgrad, bounds, x, c, J, bstate)
-    f_x, L_xsλ, ev
+    equality_grad!(g_L_x, bgrad, bounds, x, c, J, bstate)
+
+    
+    return L_x, ev
 end
 
 # TODO: do we need lagrangian_vec? Maybe for automatic differentiation?
 ## Computation of Lagrangian and derivatives when passing all parameters as a single vector
+# FIXME: Seems unused
+
+#=
+function unpack_vec!(x, b::BarrierStateVars, vec::Vector)
+    k = unpack_vec!(x, vec, 0)
+    for fn in fieldnames(b)
+        k = unpack_vec!(getfield(b, fn), vec, k)
+    end
+    k == length(vec) ||
+        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
+    x, b
+end
 function lagrangian_vec(
     p,
     d,
@@ -621,6 +613,7 @@ function lagrangian_vec(
     f_x, L_xsλ, ev = lagrangian(d, bounds, x, c, bstate, μ)
     L_xsλ
 end
+ #FIXME: Seems unused
 function lagrangian_vec(
     p,
     d,
@@ -635,6 +628,7 @@ function lagrangian_vec(
     f_x, L_xsλ, ev = lagrangian(d, bounds, x, c(x), bstate, μ)
     L_xsλ
 end
+ #FIXME: Seems unused
 function lagrangian_fgvec!(
     p,
     storage,
@@ -653,6 +647,7 @@ function lagrangian_fgvec!(
     pack_vec!(storage, gx, bgrad)
     L_xsλ
 end
+=#
 
 ## for line searches that don't use the gradient along the line
 function lagrangian_linefunc(αs, d, constraints, state)
@@ -660,11 +655,13 @@ function lagrangian_linefunc(αs, d, constraints, state)
 end
 
 function _lagrangian_linefunc(αs, d, constraints, state)
-    b_ls, bounds = state.b_ls, constraints.bounds
+    b_ls = state.b_ls
     ls_update!(state.x_ls, state.x, state.s, alphax(αs))
     ls_update!(b_ls.bstate, state.bstate, state.bstep, αs)
     constraints.c!(b_ls.c, state.x_ls)
-    lagrangian(d, constraints.bounds, state.x_ls, b_ls.c, b_ls.bstate, state.μ)
+    f_x_ls = NLSolversBase.value!(d, state.x_ls)
+    L_x_ls, ev_ls = lagrangian(constraints.bounds, state.x_ls, f_x_ls, b_ls.c, b_ls.bstate, state.μ)
+    return f_x_ls, L_x_ls, ev_ls
 end
 alphax(α::Number) = α
 alphax(αs::Union{Tuple,AbstractVector}) = αs[1]
@@ -676,10 +673,8 @@ function lagrangian_linefunc!(
     state,
     method::IPOptimizer{typeof(backtrack_constrained)},
 )
-    # For backtrack_constrained, the last evaluation is the one we
-    # keep, so it's safe to store the results in state
-    state.f_x, state.L, state.ev = _lagrangian_linefunc(α, d, constraints, state)
-    state.L
+    _, L_x_ls, _ = _lagrangian_linefunc(α, d, constraints, state)
+    return L_x_ls
 end
 lagrangian_linefunc!(α, d, constraints, state, method) =
     lagrangian_linefunc(α, d, constraints, state)
@@ -687,8 +682,8 @@ lagrangian_linefunc!(α, d, constraints, state, method) =
 
 ## for line searches that do use the gradient along the line
 function lagrangian_lineslope(αs, d, constraints, state)
-    f_x, L, ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
-    L, slope
+    _, L_x_ls, _, slope = _lagrangian_lineslope(αs, d, constraints, state)
+    return L_x_ls, slope
 end
 
 function _lagrangian_lineslope(αs, d, constraints, state)
@@ -698,19 +693,22 @@ function _lagrangian_lineslope(αs, d, constraints, state)
     ls_update!(b_ls.bstate, state.bstate, bstep, αs)
     constraints.c!(b_ls.c, state.x_ls)
     constraints.jacobian!(b_ls.J, state.x_ls)
-    f_x, L, ev = lagrangian_fg!(
-        state.g,
+    f_x_ls, g_x_ls = value_gradient!(d, state.x_ls)
+    g_L_x_ls = copy(state.g_L_x)
+    L_x_ls, ev_ls = lagrangian_fg!(
+        g_L_x_ls,
         bgrad,
-        d,
         bounds,
         state.x_ls,
+        f_x_ls,
+        g_x_ls,
         b_ls.c,
         b_ls.J,
         b_ls.bstate,
         state.μ,
     )
-    slopeα = slopealpha(state.s, state.g, bstep, bgrad)
-    f_x, L, ev, slopeα
+    slopeα = slopealpha(state.s, g_L_x_ls, bstep, bgrad)
+    f_x_ls, L_x_ls, ev_ls, slopeα
 end
 
 function lagrangian_lineslope!(
@@ -722,8 +720,8 @@ function lagrangian_lineslope!(
 )
     # For backtrack_constrained, the last evaluation is the one we
     # keep, so it's safe to store the results in state
-    state.f_x, state.L, state.ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
-    state.L, slope
+    state.f_x, state.L_x, state.ev, slope = _lagrangian_lineslope(αs, d, constraints, state)
+    state.L_x, slope
 end
 lagrangian_lineslope!(αs, d, constraints, state, method) =
     lagrangian_lineslope(αs, d, constraints, state)
@@ -1011,22 +1009,21 @@ specify bounds `lx`, `ux`, `lc`, and `uc`. `x` is feasible if
 
 for all possible `i`.
 """
-function isfeasible(bounds::ConstraintBounds, x, c)
-    isf = true
-    for (i, j) in enumerate(bounds.eqx)
-        isf &= x[j] == bounds.valx[i]
-    end
-    for (i, j) in enumerate(bounds.ineqx)
-        isf &= bounds.σx[i] * (x[j] - bounds.bx[i]) >= 0
-    end
-    for (i, j) in enumerate(bounds.eqc)
-        isf &= c[j] == bounds.valc[i]
-    end
-    for (i, j) in enumerate(bounds.ineqc)
-        isf &= bounds.σc[i] * (c[j] - bounds.bc[i]) >= 0
-    end
-    isf
+function isfeasible(bounds::ConstraintBounds, x::Vector{<:Real}, c::Vector{<:Real})
+    return _isfeasible(x, bounds.eqx, bounds.valx, bounds.ineqx, bounds.σx, bounds.bx) &&
+        _isfeasible(c, bounds.eqc, bounds.valc, bounds.ineqc, bounds.σc, bounds.bc)
 end
+function _isfeasible(x::Vector{<:Real}, eqx::Vector{Int}, valx::Vector{<:Real}, ineqx::Vector{Int}, σx::Vector{Int8}, bx::Vector{<:Real})
+    for (i, v) in zip(eqx, valx)
+        x[i] == v || return false
+    end
+    for (i, σ, b) in zip(ineqx, σx, bx)
+        y = x[i] - b
+        iszero(y) || sign(y) == σ || return false
+    end
+    return true
+end
+
 isfeasible(constraints, state::AbstractBarrierState) =
     isfeasible(constraints, state.x, state.constraints_c)
 function isfeasible(constraints, x)
@@ -1054,16 +1051,17 @@ given the `constraints` which specify bounds `lx`, `ux`, `lc`, and
 
 for all possible `i`.
 """
-function isinterior(bounds::ConstraintBounds, x, c)
-    isi = true
-    for (i, j) in enumerate(bounds.ineqx)
-        isi &= bounds.σx[i] * (x[j] - bounds.bx[i]) > 0
-    end
-    for (i, j) in enumerate(bounds.ineqc)
-        isi &= bounds.σc[i] * (c[j] - bounds.bc[i]) > 0
-    end
-    isi
+function isinterior(bounds::ConstraintBounds, x::Vector{<:Real}, c::Vector{<:Real})
+    return _isinterior(x, bounds.ineqx, bounds.σx, bounds.bx) &&
+        _isinterior(c, bounds.ineqc, bounds.σc, bounds.bc)
 end
+function _isinterior(x::Vector{<:Real}, ineqx::Vector{Int}, σx::Vector{Int8}, bx::Vector{<:Real})
+    for (i, σ, b) in zip(ineqx, σx, bx)
+        sign(x[i] - b) == σ || return false
+    end
+    return true
+end
+
 isinterior(constraints, state::AbstractBarrierState) =
     isinterior(constraints, state.x, state.constraints_c)
 function isinterior(constraints, x)
@@ -1075,41 +1073,6 @@ isinterior(constraints::AbstractConstraints, x, c) = isinterior(constraints.boun
 isinterior(constraints::Nothing, state::AbstractBarrierState) = true
 isinterior(constraints::Nothing, x) = true
 
-## Utilities for representing total state as single vector
-# TODO: Most of these seem to be unused (IPNewton)?
-function pack_vec(x, b::BarrierStateVars)
-    n = length(x)
-    for fn in fieldnames(b)
-        n += length(getfield(b, fn))
-    end
-    vec = Array{eltype(x)}(undef, n)
-    pack_vec!(vec, x, b)
-end
-
-function pack_vec!(vec, x, b::BarrierStateVars)
-    k = pack_vec!(vec, x, 0)
-    for fn in fieldnames(b)
-        k = pack_vec!(vec, getfield(b, fn), k)
-    end
-    k == length(vec) ||
-        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
-    vec
-end
-function pack_vec!(vec, x, k::Int)
-    for i = 1:length(x)
-        vec[k+=1] = x[i]
-    end
-    k
-end
-function unpack_vec!(x, b::BarrierStateVars, vec::Vector)
-    k = unpack_vec!(x, vec, 0)
-    for fn in fieldnames(b)
-        k = unpack_vec!(getfield(b, fn), vec, k)
-    end
-    k == length(vec) ||
-        throw(DimensionMismatch("vec should have length $k, got $(length(vec))"))
-    x, b
-end
 function unpack_vec!(x, vec::Vector, k::Int)
     for i = 1:length(x)
         x[i] = vec[k+=1]

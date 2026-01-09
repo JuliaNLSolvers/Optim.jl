@@ -12,7 +12,7 @@ struct AcceleratedGradientDescent{IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::AcceleratedGradientDescent) = "Accelerated Gradient Descent"
+Base.summary(io::IO, ::AcceleratedGradientDescent) = print(io, "Accelerated Gradient Descent")
 
 function AcceleratedGradientDescent(;
     alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
@@ -22,8 +22,10 @@ function AcceleratedGradientDescent(;
     AcceleratedGradientDescent(_alphaguess(alphaguess), linesearch, manifold)
 end
 
-mutable struct AcceleratedGradientDescentState{T,Tx} <: AbstractOptimizerState
+mutable struct AcceleratedGradientDescentState{T,Tx,Tg} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    f_x::T
     x_previous::Tx
     f_x_previous::T
     iteration::Int
@@ -35,25 +37,26 @@ end
 
 function initial_state(
     method::AcceleratedGradientDescent,
-    options,
+    ::Options,
     d,
-    initial_x::AbstractArray{T},
-) where {T}
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
+    x0::AbstractArray,
+)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = NLSolversBase.value_gradient!(d, x0)
+    g_x = copy(g_x)
+    project_tangent!(method.manifold, g_x, x0)
 
     AcceleratedGradientDescentState(
-        copy(initial_x), # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        real(T)(NaN), # Store previous f in state.f_x_previous
+        x0, # Maintain current state in state.x
+        g_x, # Maintain current gradient in state.g_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
         0, # Iteration
-        copy(initial_x), # Maintain intermediary current state in state.y
-        similar(initial_x), # Maintain intermediary state in state.y_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        copy(x0), # Maintain intermediary current state in state.y
+        fill!(similar(x0), NaN), # Maintain intermediary state in state.y_previous
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         @initial_linesearch()...,
     )
 end
@@ -63,11 +66,10 @@ function update_state!(
     state::AcceleratedGradientDescentState,
     method::AcceleratedGradientDescent,
 )
-    value_gradient!(d, state.x)
     state.iteration += 1
-    project_tangent!(method.manifold, gradient(d), state.x)
+
     # Search direction is always the negative gradient
-    state.s .= .-gradient(d)
+    state.s .= .-state.g_x
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -88,10 +90,10 @@ end
 function trace!(
     tr,
     d,
-    state,
-    iteration,
+    state::AcceleratedGradientDescentState,
+    iteration::Integer,
     method::AcceleratedGradientDescent,
-    options,
+    options::Options,
     curr_time = time(),
 )
     common_trace!(tr, d, state, iteration, method, options, curr_time)

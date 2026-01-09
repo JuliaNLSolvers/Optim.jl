@@ -51,7 +51,7 @@ struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     manifold::Manifold
 end
 
-Base.summary(::ConjugateGradient) = "Conjugate Gradient"
+Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 
 """
 # Conjugate Gradient Descent
@@ -93,8 +93,10 @@ end
 
 mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
     x::Tx
+    g_x::G
+    f_x::T
     x_previous::Tx
-    g_previous::G
+    g_x_previous::G
     f_x_previous::T
     y::Tx
     py::Tx
@@ -104,24 +106,31 @@ mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
 end
 
 function reset!(cg::ConjugateGradient, cgs::ConjugateGradientState, obj, x)
-    cgs.x .= x
-    _precondition!(cgs.pg, cg, x, gradient(obj))
+    copyto!(cgs.x, x)
+    retract!(cg.manifold, cgs.x)
+    f_x, g_x = NLSolversBase.value_gradient!(obj, cgs.x)
+    copyto!(cgs.g_x, g_x)
+    project_tangent!(cg.manifold, cgs.g_x, cgs.x)
+    cgs.f_x = f_x
 
+    fill!(cgs.x_previous, NaN)
+    cgs.f_x_previous = oftype(cgs.f_x_previous, NaN)
+    fill!(cgs.g_x_previous, NaN)
+
+    _precondition!(cgs.pg, cg, cgs.x, cgs.g_x)
     if cg.P !== nothing
-        project_tangent!(cg.manifold, cgs.pg, x)
+        project_tangent!(cg.manifold, cgs.pg, cgs.x)
     end
-    cgs.s .= -cgs.pg
-    cgs.f_x_previous = typeof(cgs.f_x_previous)(NaN)
+    cgs.s .= .-cgs.pg
+
+    return nothing
 end
-function initial_state(method::ConjugateGradient, options, d, initial_x)
-    T = eltype(initial_x)
-    initial_x = copy(initial_x)
-    retract!(method.manifold, initial_x)
-
-    value_gradient!!(d, initial_x)
-
-    project_tangent!(method.manifold, gradient(d), initial_x)
-    pg = copy(gradient(d))
+function initial_state(method::ConjugateGradient, ::Options, d, x0)
+    x0 = copy(x0)
+    retract!(method.manifold, x0)
+    f_x, g_x = value_gradient!(d, x0)
+    g_x = copy(g_x)
+    project_tangent!(method.manifold, g_x, x0)
 
     # Could move this out? as a general check?
     #=
@@ -136,18 +145,21 @@ function initial_state(method::ConjugateGradient, options, d, initial_x)
     # Determine the intial search direction
     #    if we don't precondition, then this is an extra superfluous copy
     #    TODO: consider allowing a reference for pg instead of a copy
-    _precondition!(pg, method, initial_x, gradient(d))
+    pg = copy(g_x)
+    _precondition!(pg, method, x0, g_x)
     if method.P !== nothing
-        project_tangent!(method.manifold, pg, initial_x)
+        project_tangent!(method.manifold, pg, x0)
     end
 
     ConjugateGradientState(
-        initial_x, # Maintain current state in state.x
-        0 .* (initial_x), # Maintain previous state in state.x_previous
-        0 .* (gradient(d)), # Store previous gradient in state.g_previous
-        real(T)(NaN), # Store previous f in state.f_x_previous
-        0 .* (initial_x), # Intermediate value in CG calculation
-        0 .* (initial_x), # Preconditioned intermediate value in CG calculation
+        x0, # Maintain current state in state.x
+        g_x, # Maintain current gradient in state.g
+        f_x, # Maintain current f in state.f
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        0 .* (x0), # Intermediate value in CG calculation
+        0 .* (x0), # Preconditioned intermediate value in CG calculation
         pg, # Maintain the preconditioned gradient in pg
         -pg, # Maintain current search direction in state.s
         @initial_linesearch()...,
@@ -158,21 +170,23 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     # Search direction is predetermined
 
     # Maintain a record of the previous gradient
-    copyto!(state.g_previous, gradient(d))
+    copyto!(state.g_x_previous, state.g_x)
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Update current position # x = x + alpha * s
-    @. state.x = state.x + state.alpha * state.s
+    state.x .= muladd.(state.alpha, state.s, state.x)
     retract!(method.manifold, state.x)
 
     # Update the function value and gradient
-    value_gradient!(d, state.x)
-    project_tangent!(method.manifold, gradient(d), state.x)
+    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
+    copyto!(state.g_x, g_x)
+    project_tangent!(method.manifold, state.g_x, state.x)
+    state.f_x = f_x
 
     # Check sanity of function and gradient
-    isfinite(value(d)) || error("Non-finite f(x) while optimizing ($(value(d)))")
+    isfinite(f_x) || error(LazyString("Non-finite f(x) while optimizing (", f_x, ")"))
 
     # Determine the next search direction using HZ's CG rule
     #  Calculate the beta factor (HZ2013)
@@ -186,19 +200,19 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     # also updates P for the preconditioning step below
     _apply_precondprep(method, state.x)
     dPd = _inverse_precondition(method, state)
-    etak = method.eta * real(dot(state.s, state.g_previous)) / dPd # New in HZ2013
-    state.y .= gradient(d) .- state.g_previous
+    etak = method.eta * real(dot(state.s, state.g_x_previous)) / dPd # New in HZ2013
+    state.y .= state.g_x .- state.g_x_previous
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
     # P already updated in _apply_precondprep above
-    __precondition!(state.pg, method.P, gradient(d))
+    __precondition!(state.pg, method.P, g_x)
 
     state.py .= state.pg .- state.py
     # ydots may be zero if f is not strongly convex or the line search does not satisfy Wolfe
     betak =
         (
             real(dot(state.y, state.pg)) -
-            real(dot(state.y, state.py)) * real(dot(gradient(d), state.s)) / ydots
+            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
@@ -207,7 +221,8 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     return !lssuccess # break on linesearch error
 end
 
-update_g!(d, state, method::ConjugateGradient) = nothing
+# Function value, gradient and Hessian are already updated in `update_state!`
+update_fgh!(d, state, ::ConjugateGradient) = nothing
 
 function trace!(
     tr,

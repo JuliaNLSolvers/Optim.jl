@@ -119,9 +119,6 @@ function Options(;
     time_limit = NaN,
 )
     show_every = show_every > 0 ? show_every : 1
-    #if extended_trace && callback === nothing
-    #    show_trace = true
-    #end
     if !(x_tol === nothing)
         @warn(
             lazy"x_tol is deprecated. Use x_abstol or x_reltol instead. The provided value ($(x_tol)) will be used as x_abstol.",
@@ -189,23 +186,14 @@ function Options(;
 end
 
 function Options(o::Options; kws...)
-    fields = fieldnames(typeof(o))
-    foreach(keys(kws)) do kw
-        if kw ∉ fields
-            error(lazy"`$kw` is not a valid keyword argument of `Options(opts; kws...)`")
-        end
-    end
-    newargs = ntuple(Val(nfields(o))) do i
-        field = fields[i]
-        get(kws, field, getfield(o, field))
-    end
-    return Options(newargs...)
+    o_nt = (; (name => getproperty(o, name) for name in propertynames(o))...)
+    return Options(; o_nt..., kws...)
 end
 
 _show_helper(output, k, v) = output * "$k = $v, "
 _show_helper(output, k, ::Nothing) = output
 
-function Base.show(io::IO, o::Optim.Options)
+function Base.show(io::IO, o::Options)
     content = foldl(fieldnames(typeof(o)), init = "Optim.Options(") do output, k
         v = getfield(o, k)
         return _show_helper(output, k, v)
@@ -214,7 +202,7 @@ function Base.show(io::IO, o::Optim.Options)
     println(io, ")")
 end
 
-function Base.show(io::IO, ::MIME"text/plain", o::Optim.Options)
+function Base.show(io::IO, ::MIME"text/plain", o::Options)
     for k in fieldnames(typeof(o))
         v = getfield(o, k)
         if v isa Nothing
@@ -244,7 +232,6 @@ end
 
 const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
 
-using EnumX
 "Termination codes for Optim.jl."
 @enumx TerminationCode begin
     "Nelder-Mead simplex converged."
@@ -281,6 +268,8 @@ using EnumX
     GradientNotFinite
     "Hessian was not finite"
     HessianNotFinite
+    "The trust region radius was less than or equal to the minimum radius allowed."
+    SmallTrustRegionRadius
     "For algorithms where the TerminationCode is not yet implemented."
     NotImplemented
 end
@@ -306,7 +295,9 @@ mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: Optimization
     trace::M
     f_calls::Int
     g_calls::Int
+    jvp_calls::Int
     h_calls::Int
+    hvp_calls::Int
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
@@ -318,8 +309,8 @@ termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
 
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
-pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
-pick_best_f(f_increased, state, d) = f_increased ? state.f_x_previous : value(d)
+pick_best_x(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.x_previous : state.x
+pick_best_f(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.f_x_previous : state.f_x
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm
@@ -341,38 +332,32 @@ function Base.show(io::IO, tr::OptimizationTrace)
 end
 
 function Base.show(io::IO, r::MultivariateOptimizationResults)
-    take = Iterators.take
-
+    print(io, " * Status: ")
     if converged(r)
-        status_string = "success"
+        print(io, "success")
     else
-        status_string = "failure"
+        print(io, "failure")
     end
     if iteration_limit_reached(r)
-        status_string *= " (reached maximum number of iterations)"
-    end
-    if f_increased(r) && !iteration_limit_reached(r)
-        status_string *= " (objective increased between iterations)"
+        print(io, " (reached maximum number of iterations)")
+    elseif f_increased(r)
+        print(io, " (objective increased between iterations)")
     end
     if isa(r.stopped_by.ls_failed, Bool) && r.stopped_by.ls_failed
-        status_string *= " (line search failed)"
+        print(io, " (line search failed)")
     end
     if time_run(r) > time_limit(r)
-        status_string *= " (exceeded time limit of $(time_limit(r)))"
+        print(io, " (exceeded time limit of ", time_limit(r), ")")
     end
 
-    @printf io " * Status: %s\n\n" status_string
+    println(io, "\n\n * Candidate solution")
+    @printf io "    Final objective value:     %e" minimum(r)
 
-    @printf io " * Candidate solution\n"
-    @printf io "    Final objective value:     %e\n" minimum(r)
-    @printf io "\n"
+    println(io, "\n\n * Found with")
+    print(io, "    Algorithm:     ")
+    summary(io, r)
 
-    @printf io " * Found with\n"
-    @printf io "    Algorithm:     %s\n" summary(r)
-
-
-    @printf io "\n"
-    @printf io " * Convergence measures\n"
+    println(io, "\n\n * Convergence measures")
     if isa(r.method, NelderMead)
         @printf io "    √(Σ(yᵢ-ȳ)²)/n %s %.1e\n" g_converged(r) ? "≤" : "≰" g_tol(r)
     else
@@ -408,11 +393,13 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
                                                                     Inf : time_limit(r)
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
-    if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))
+    if !iszero(g_calls(r)) || !iszero(jvp_calls(r))
         @printf io "    ∇f(x) calls:   %d\n" g_calls(r)
+        @printf io "    ∇f(x)ᵀv calls: %d\n" jvp_calls(r)
     end
-    if isa(r.method, Newton) || isa(r.method, NewtonTrustRegion)
+    if !iszero(h_calls(r)) || !iszero(hvp_calls(r))
         @printf io "    ∇²f(x) calls:  %d\n" h_calls(r)
+        @printf io "    ∇²f(x)v calls: %d\n" hvp_calls(r)
     end
     return
 end

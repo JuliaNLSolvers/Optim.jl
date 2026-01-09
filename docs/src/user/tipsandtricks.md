@@ -86,7 +86,7 @@ that only use the gradient in some iterations but not in others.
 Now we call `optimize` with the following syntax:
 
 ```julia
-Optim.optimize(Optim.only_fg!(fg!), [0., 0.], Optim.LBFGS())
+Optim.optimize(NLSolversBase.only_fg!(fg!), [0., 0.], Optim.LBFGS())
 ```
 
 Similarly, for a computation that requires the Hessian, we can write:
@@ -99,7 +99,7 @@ function fgh!(F, G, H, x)
   nothing
 end
 
-Optim.optimize(Optim.only_fgh!(fgh!), [0., 0.], Optim.Newton())
+Optim.optimize(NLSolversBase.only_fgh!(fgh!), [0., 0.], Optim.Newton())
 ```
 
 ## Provide gradients
@@ -236,15 +236,17 @@ function very_slow(x)
 end
 
 start_time = time()
-time_to_setup = zeros(1)
-function advanced_time_control(x)
-    println(" * Iteration:       ", x.iteration)
+time_to_setup = Ref(NaN)
+iteration = Ref(-1)
+function advanced_time_control(_)
+    iteration[] += 1
+    println(" * Iteration:       ", iteration[])
     so_far =  time()-start_time
     println(" * Time so far:     ", so_far)
-    if x.iteration == 0
-        time_to_setup .= time()-start_time
+    if iteration[] == 0
+        time_to_setup[] = time()-start_time
     else
-        expected_next_time = so_far + (time()-start_time-time_to_setup[1])/(x.iteration)
+        expected_next_time = so_far + (time()-start_time-time_to_setup[])/iteration[]
         println(" * Next iteration ≈ ", expected_next_time)
         println()
         return expected_next_time < 13 ? false : true

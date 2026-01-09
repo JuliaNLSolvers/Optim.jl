@@ -59,7 +59,7 @@
                 display(res)
                 println("########################")
             end
-            ressum = summary(res) # Just check that no errors arise when doing display(res)
+            test_summary(res) # Just check that no errors arise when doing display(res)
             @test typeof(fcomplex(x0)) == typeof(Optim.minimum(res))
             @test eltype(x0) == eltype(Optim.minimizer(res))
             @test Optim.converged(res)

@@ -1,7 +1,4 @@
-_method(r::OptimizationResults) = r.method
-
-Base.summary(r::Union{OptimizationResults, OptimIterator}) =
-    summary(_method(r)) # might want to do more here than just return summary of the method used
+Base.summary(io::IO, r::OptimizationResults) = summary(io, r.method) # might want to do more here than just return summary of the method used
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
 iterations(r::OptimizationResults) = r.iterations
@@ -108,19 +105,16 @@ g_norm_trace(r::OptimizationResults) =
 g_norm_trace(ot::OptimIterator, os::IteratorState) = g_norm_trace(OptimizationResults(ot, os))
 g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
+# TODO: Overload `NLSolversBase.xxx` instead of defining separate `Optim.xxx` methods?
 f_calls(r::OptimizationResults) = r.f_calls
-f_calls(d) = first(d.f_calls)
-
-g_calls(r::OptimizationResults) = error("g_calls is not implemented for $(summary(r)).")
+g_calls(r::OptimizationResults) = error(LazyString("`g_calls` is not implemented for ", summary(r), "."))
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
-g_calls(d::NonDifferentiable) = 0
-g_calls(d) = first(d.df_calls)
-
-h_calls(r::OptimizationResults) = error("h_calls is not implemented for $(summary(r)).")
+jvp_calls(r::OptimizationResults) = error(LazyString("`jvp_calls` is not implemented for ", summary(r), "."))
+jvp_calls(r::MultivariateOptimizationResults) = r.jvp_calls
+h_calls(r::OptimizationResults) = error(LazyString("`h_calls` is not implemented for ", summary(r), "."))
 h_calls(r::MultivariateOptimizationResults) = r.h_calls
-h_calls(d::Union{NonDifferentiable,OnceDifferentiable}) = 0
-h_calls(d) = first(d.h_calls)
-h_calls(d::TwiceDifferentiableHV) = first(d.hv_calls)
+hvp_calls(r::OptimizationResults) = error(LazyString("`hvp_calls` is not implemented for ", summary(r), "."))
+hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 converged(ot::OptimIterator, os::IteratorState) = converged(OptimizationResults(ot, os)) 
@@ -172,9 +166,9 @@ g_abstol(r::MultivariateOptimizationResults) = r.g_abstol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
 
 
-initial_state(r::OptimizationResults) =
-    error("initial_state is not implemented for $(summary(r)).")
-initial_state(r::MultivariateOptimizationResults) = r.initial_x
+initial_x(r::OptimizationResults) =
+    error("initial_x is not implemented for $(summary(r)).")
+initial_x(r::MultivariateOptimizationResults) = r.initial_x
 
 lower_bound(r::OptimizationResults) =
     error("lower_bound is not implemented for $(summary(r)).")

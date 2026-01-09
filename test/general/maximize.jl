@@ -37,8 +37,8 @@
     g! = gradient(prob)
     h! = hessian(prob)
     fmax(x) = -f(x)
-    gmax = (G, x) -> (g!(G, x); G .= -G)
-    hmax = (H, x) -> (h!(H, x); H .= -H)
+    gmax = (G, x) -> (g!(G, x); G .= .-G)
+    hmax = (H, x) -> (h!(H, x); H .= .-H)
 
     function test_same_content(f1, f2)
         for prop in (:minimizer, :minimum)
