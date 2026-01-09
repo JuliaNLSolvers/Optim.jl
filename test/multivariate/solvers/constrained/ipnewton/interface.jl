@@ -11,7 +11,7 @@ using Optim, Test
     ux = fill(+1.2, dof)
     dfc = TwiceDifferentiableConstraints(lx, ux)
 
-    res = optimize(df, dfc, x0, IPNewton(); autodiff = :forward)
+    res = optimize(df, dfc, x0, IPNewton(); autodiff = AutoForwardDiff())
     res = optimize(df, dfc, x0, IPNewton())
 end
 
@@ -26,7 +26,7 @@ end
         storage
     end
     function exponential_hessian!(storage, x)
-        Optim.NLSolversBase.ForwardDiff.hessian!(storage, exponential, x)
+        ForwardDiff.hessian!(storage, exponential, x)
     end
 
     function exponential_gradient(x)

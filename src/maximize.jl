@@ -80,7 +80,7 @@ function maximize(
 end
 
 maximizer(r::MaximizationWrapper) = minimizer(res(r))
-Base.maximum(r::MaximizationWrapper) = -minimum(res(r))
+maximum(r::MaximizationWrapper) = -minimum(res(r))
 Base.summary(io::IO, r::MaximizationWrapper) = summary(io, res(r))
 
 for api_method in (
@@ -89,7 +89,7 @@ for api_method in (
     :rel_tol,
     :abs_tol,
     :iterations,
-    :initial_state,
+    :initial_x,
     :converged,
     :x_tol,
     :x_abstol,
@@ -109,7 +109,9 @@ for api_method in (
     :iteration_limit_reached,
     :f_calls,
     :g_calls,
+    :jvp_calls,
     :h_calls,
+    :hvp_calls,
 )
     @eval $api_method(r::MaximizationWrapper) = $api_method(res(r))
 end

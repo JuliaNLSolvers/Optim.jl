@@ -1,17 +1,16 @@
-mutable struct DummyState <: Optim.AbstractOptimizerState
-    x::Any
-    x_previous::Any
-    f_x::Any
-    f_x_previous::Any
-    g::Any
+mutable struct DummyState{TX,TF,TG} <: Optim.AbstractOptimizerState
+    x::TX
+    x_previous::TX
+    f_x::TF
+    f_x_previous::TF
+    g_x::TG
 end
 
-mutable struct DummyStateZeroth <: Optim.ZerothOrderState
-    x::Any
-    x_previous::Any
-    f_x::Any
-    f_x_previous::Any
-    g::Any
+mutable struct DummyStateZeroth{TX,TF} <: Optim.ZerothOrderState
+    x::TX
+    x_previous::TX
+    f_x::TF
+    f_x_previous::TF
 end
 
 mutable struct DummyOptions
@@ -63,27 +62,47 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     ## initial_convergence and gradient_convergence_assessment
 
     ds = DummyState(x1, x0, f1, f0, g)
-    dOpt = DummyOptions(x_tol, f_tol, g_tol, g_abstol)
+    opt = Optim.Options(; x_abstol = x_tol, f_abstol = f_tol, g_tol, g_abstol)
     dm = DummyMethod()
 
     # >= First Order
     d = Optim.OnceDifferentiable(x -> sum(abs2.(x)), zeros(2))
 
-    Optim.gradient!(d, ones(2))
-    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
-    Optim.gradient!(d, zeros(2))
-    @test Optim.gradient_convergence_assessment(ds, d, dOpt)
-
-    @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
-    @test Optim.initial_convergence(d, ds, dm, zeros(2), dOpt) == (true, false)
+    x = ones(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test !Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (false, false)
+    x = zeros(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (true, false)
 
     # Zeroth order methods have no gradient -> returns false by default
-    ds = DummyStateZeroth(x1, x0, f1, f0, g)
+    ds = DummyStateZeroth(x1, x0, f1, f0)
     dm = DummyMethodZeroth()
 
-    @test !Optim.gradient_convergence_assessment(ds, d, dOpt)
-    @test Optim.initial_convergence(d, ds, dm, ones(2), dOpt) == (false, false)
+    x = ones(2)
+    f_x, g_x = Optim.value_gradient!(d, x)
+    ds = DummyState(x, x0, f_x, f0, g_x)
+    @test !Optim.gradient_convergence_assessment(ds, opt)
+    @test Optim.initial_convergence(ds, opt) == (false, false)
 
     # should check all other methods as well
 
+    for T in (Float32, Float64)
+        ds = DummyState(T[-1.3, 2.5, -4.1], T[-1.1, 2.8, -4.0], f_x, f0, zeros(3))
+        @test @inferred(Optim.x_abschange(ds))::T ≈ 0.3
+        @test iszero((s -> @allocated(Optim.x_abschange(s)))(ds))
+        @test @inferred(Optim.x_relchange(ds))::T ≈ 0.3 / 4.1
+        @test iszero((s -> @allocated(Optim.x_relchange(s)))(ds))
+
+        # Special case: Empty state
+        ds = DummyState(T[], T[], f_x, f0, empty(g_x))
+        @test iszero(@inferred(Optim.x_abschange(ds))::T)
+        @test iszero((s -> @allocated(Optim.x_abschange(s)))(ds))
+        @test isnan(@inferred(Optim.x_relchange(ds))::T)
+        @test iszero((s -> @allocated(Optim.x_relchange(s)))(ds))
+    end
 end

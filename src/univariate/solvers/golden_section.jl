@@ -63,20 +63,20 @@ function optimize(
 
     # Trace the history of states visited
     tr = OptimizationTrace{T,typeof(mo)}()
-    tracing = store_trace || show_trace || extended_trace || callback !== nothing
-    stopped_by_callback = false
+    state = (
+        new_minimizer = new_minimizer,
+        x_lower = x_lower,
+        x_upper = x_upper,
+        best_bound = best_bound,
+        new_minimum = new_minimum,
+    )
+    # update trace
+    tracing = store_trace || show_trace || extended_trace
     if tracing
-        # update trace; callbacks can stop routine early by returning true
-        state = (
-            new_minimizer = new_minimizer,
-            x_lower = x_lower,
-            x_upper = x_upper,
-            best_bound = best_bound,
-            new_minimum = new_minimum,
-        )
-        stopped_by_callback =
-            trace!(tr, nothing, state, iteration, mo, options, time() - t0)
+        trace!(tr, nothing, state, iteration, mo, options, time() - t0)
     end
+    # callbacks can stop routine early by returning true
+    stopped_by_callback = callback !== nothing && callback(state)
 
     _time = time() - t0
 
@@ -121,17 +121,20 @@ function optimize(
             end
         end
 
+        state = (
+            new_minimizer = new_minimizer,
+            x_lower = x_lower,
+            x_upper = x_upper,
+            best_bound = best_bound,
+            new_minimum = new_minimum,
+        )
+        # update trace
         if tracing
-            # update trace; callbacks can stop routine early by returning true
-            state = (
-                new_minimizer = new_minimizer,
-                x_lower = x_lower,
-                x_upper = x_upper,
-                best_bound = best_bound,
-                new_minimum = new_minimum,
-            )
-            stopped_by_callback =
-                trace!(tr, nothing, state, iteration, mo, options, time() - t0)
+            trace!(tr, nothing, state, iteration, mo, options, time() - t0)
+        end
+        # callbacks can stop routine early by returning true
+        if callback !== nothing
+            stopped_by_callback = callback(state)
         end
         _time = time() - t0
     end

@@ -17,13 +17,14 @@ KrylovTrustRegion(;
     cg_tol::Real = 0.01,
 ) = KrylovTrustRegion(initial_radius, max_radius, eta, rho_lower, rho_upper, cg_tol)
 
-update_h!(d, state, method::KrylovTrustRegion) = nothing
-
 # TODO: support x::Array{T,N} et al.?
 mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     x::Vector{T}
+    f_x::T
+    g_x::Vector{T}
     x_previous::Vector{T}
     f_x_previous::T
+    x_cache::Vector{T}
     s::Vector{T}
     interior::Bool
     accept_step::Bool
@@ -36,8 +37,8 @@ mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     cg_iters::Int
 end
 
-function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x::Array{T}) where {T}
-    n = length(initial_x)
+function initial_state(method::KrylovTrustRegion, options::Options, d, x0::Array{T}) where {T}
+    n = length(x0)
     # Maintain current gradient in gr
     @assert(method.max_radius > 0)
     @assert(0 < method.initial_radius < method.max_radius)
@@ -45,13 +46,16 @@ function initial_state(method::KrylovTrustRegion, options::Options, d, initial_x
     @assert(method.rho_lower < method.rho_upper)
     @assert(method.rho_lower >= 0)
 
-    value_gradient!!(d, initial_x)
+    f_x, g_x = value_gradient!(d, x0)
 
     KrylovTrustRegionState(
-        copy(initial_x),    # Maintain current state in state.x
-        copy(initial_x), # x_previous
-        zero(T),            # f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        copy(x0),    # Maintain current state in state.x
+        f_x,                # Maintain f of current state in state.f_x
+        copy(g_x),          # Maintain gradient of current state in state.g_x
+        copy(x0), # x_previous
+        oftype(f_x, NaN),   # f_x_previous
+        fill!(similar(x0), NaN), # In-place cache for `update_state!`
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
         true,               # interior
         true,               # accept step
         convert(T, method.initial_radius),
@@ -87,39 +91,36 @@ function trace!(
         dt["f_diff"] = state.f_diff
         dt["cg_iters"] = state.cg_iters
     end
-    g_norm = norm(gradient(d), Inf)
     update!(
         tr,
         iteration,
-        value(d),
-        g_norm,
+        state.f_x,
+        g_residual(state),
         dt,
         options.store_trace,
         options.show_trace,
         options.show_every,
-        options.callback,
     )
 end
 
 
 function cg_steihaug!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState{T},
     method::KrylovTrustRegion,
 ) where {T}
-    n = length(state.x)
-    x, g, d, r, z, Hd =
-        state.x, gradient(objective), state.d, state.r, state.s, hv_product(objective)
+    (; x, g_x, d, r) = state
+    z = state.s
 
     fill!(z, 0.0)  # the search direction is initialized to the 0 vector,
-    r .= g  # so at first the whole gradient is the residual.
+    copyto!(r, g_x)  # so at first the whole gradient is the residual.
     d .= .-r # the first direction is the direction of steepest descent.
     rho0 = 1e100  # just a big number
 
     state.cg_iters = 0
-    for i = 1:n
+    for i = 1:length(x)
         state.cg_iters += 1
-        hv_product!(objective, x, d)
+        Hd = hvp!(objective, x, d)
         dHd = dot(d, Hd)
         if -1e-15 < dHd < 1e-15
             break
@@ -151,20 +152,22 @@ function cg_steihaug!(
         end
     end
 
-    hv_product!(objective, x, z)
-    return dot(g, z) + 0.5 * dot(z, Hd)
+    Hd = hvp!(objective, x, z)
+    return dot(g_x, z) + 0.5 * dot(z, Hd)
 end
 
 
 function update_state!(
-    objective::TwiceDifferentiableHV,
+    objective::TwiceDifferentiable,
     state::KrylovTrustRegionState,
     method::KrylovTrustRegion,
 )
     state.m_diff = cg_steihaug!(objective, state, method)
     @assert state.m_diff <= 0
 
-    state.f_diff = value(objective, state.x .+ state.s) - value(objective)
+    state.x_cache .= state.x .+ state.s
+    f_x_cache = NLSolversBase.value!(objective, state.x_cache)
+    state.f_diff = f_x_cache - state.f_x
     state.rho = state.f_diff / state.m_diff
     state.interior = norm(state.s) < 0.9 * state.radius
 
@@ -176,20 +179,22 @@ function update_state!(
 
     state.accept_step = state.rho > method.eta
     if state.accept_step
-        state.x .+= state.s
+        # Update history
+        copyto!(state.x_previous, state.x)
+        state.f_x_previous = state.f_x
+
+        # Update state, function value and its gradient
+        copyto!(state.x, state.x_cache)
+        state.f_x = f_x_cache
+        g_x = gradient!(objective, state.x)
+        copyto!(state.g_x, g_x)
     end
 
     return false
 end
 
-
-function update_g!(objective, state::KrylovTrustRegionState, method::KrylovTrustRegion)
-    if state.accept_step
-        # Update the function value and gradient
-        state.f_x_previous = value(objective)
-        value_gradient!(objective, state.x)
-    end
-end
+# Function value and gradient are already updated in update_state!
+update_fgh!(objective, state::KrylovTrustRegionState, ::KrylovTrustRegion) = nothing
 
 function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     if !state.accept_step
@@ -206,13 +211,13 @@ function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     # if abs(f_x - f_x_previous) < f_tol
     # Relative Tolerance
     if abs(state.f_diff) < max(
-        options.f_reltol * (abs(value(d)) + options.f_reltol),
-        eps(abs(value(d)) + abs(state.f_x_previous)),
+        options.f_reltol * (abs(state.f_x) + options.f_reltol),
+        eps(abs(state.f_x) + abs(state.f_x_previous)),
     )
         f_converged = true
     end
 
-    if norm(gradient(d), Inf) < options.g_abstol
+    if norm(state.g_x, Inf) < options.g_abstol
         g_converged = true
     end
 

@@ -119,9 +119,6 @@ function Options(;
     time_limit = NaN,
 )
     show_every = show_every > 0 ? show_every : 1
-    #if extended_trace && callback === nothing
-    #    show_trace = true
-    #end
     if !(x_tol === nothing)
         @warn(
             lazy"x_tol is deprecated. Use x_abstol or x_reltol instead. The provided value ($(x_tol)) will be used as x_abstol.",
@@ -271,6 +268,8 @@ const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
     GradientNotFinite
     "Hessian was not finite"
     HessianNotFinite
+    "The trust region radius was less than or equal to the minimum radius allowed."
+    SmallTrustRegionRadius
     "For algorithms where the TerminationCode is not yet implemented."
     NotImplemented
 end
@@ -296,7 +295,9 @@ mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: Optimization
     trace::M
     f_calls::Int
     g_calls::Int
+    jvp_calls::Int
     h_calls::Int
+    hvp_calls::Int
     time_limit::Float64
     time_run::Float64
     stopped_by::Tsb
@@ -308,8 +309,8 @@ termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
 
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
-pick_best_x(f_increased, state) = f_increased ? state.x_previous : state.x
-pick_best_f(f_increased, state, d) = f_increased ? state.f_x_previous : value(d)
+pick_best_x(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.x_previous : state.x
+pick_best_f(f_increased::Bool, state::AbstractOptimizerState) = f_increased ? state.f_x_previous : state.f_x
 
 function Base.show(io::IO, t::OptimizationState)
     @printf io "%6d   %14e   %14e\n" t.iteration t.value t.g_norm
@@ -392,11 +393,13 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
                                                                     Inf : time_limit(r)
     @printf io "    Iterations:    %d\n" iterations(r)
     @printf io "    f(x) calls:    %d\n" f_calls(r)
-    if !(isa(r.method, NelderMead) || isa(r.method, SimulatedAnnealing))
+    if !iszero(g_calls(r)) || !iszero(jvp_calls(r))
         @printf io "    ∇f(x) calls:   %d\n" g_calls(r)
+        @printf io "    ∇f(x)ᵀv calls: %d\n" jvp_calls(r)
     end
-    if isa(r.method, Newton) || isa(r.method, NewtonTrustRegion)
+    if !iszero(h_calls(r)) || !iszero(hvp_calls(r))
         @printf io "    ∇²f(x) calls:  %d\n" h_calls(r)
+        @printf io "    ∇²f(x)v calls: %d\n" hvp_calls(r)
     end
     return
 end

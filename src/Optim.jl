@@ -16,6 +16,8 @@ documentation online at http://julianlsolvers.github.io/Optim.jl/stable/ .
 """
 module Optim
 
+import ADTypes
+
 using PositiveFactorizations: Positive # for globalization strategy in Newton
 
 using LineSearches: LineSearches # for globalization strategy in Quasi-Newton algs
@@ -35,25 +37,22 @@ using NLSolversBase:
     NonDifferentiable,
     OnceDifferentiable,
     TwiceDifferentiable,
-    TwiceDifferentiableHV,
     AbstractConstraints,
     ConstraintBounds,
     TwiceDifferentiableConstraints,
     nconstraints,
     nconstraints_x,
-    hessian,
     hessian!,
-    hessian!!,
-    hv_product,
-    hv_product!
+    hvp!
 
 # var for NelderMead
-import StatsBase: var
+using Statistics: var
+
+import ADTypes
 
 using LinearAlgebra:
     LinearAlgebra,
     Diagonal,
-    diag,
     Hermitian,
     Symmetric,
     rmul!,
@@ -87,9 +86,9 @@ export optimize,
     # Re-export constraint types from NLSolversBase
     TwiceDifferentiableConstraints,
 
-    # I don't think these should be here [pkofod]
     OptimizationState,
     OptimizationTrace,
+    initial_state,
 
     # Optimization algorithms
     ## Zeroth order methods (heuristics)
@@ -148,7 +147,6 @@ include("multivariate/precon.jl") # preconditioning functionality
 
 # utilities
 include("utilities/generic.jl") # generic utilities
-include("utilities/maxdiff.jl") # find largest difference
 include("utilities/update.jl")  # trace code
 
 # Unconstrained optimization

@@ -1,5 +1,9 @@
 # Test multivariate optimization
 @testset "Multivariate API" begin
+    # We do not overload `Base.minimum` and `Base.maximum`
+    @test Optim.minimum !== minimum
+    @test Optim.maximum !== maximum
+
     rosenbrock = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
     f = MVP.objective(rosenbrock)
     g! = MVP.gradient(rosenbrock)
@@ -126,15 +130,15 @@
     @test Optim.minimum(res) ≈ 1.2580194638225255
     @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol = 0.001
     @test Optim.iterations(res) == 10
-    @test Optim.f_calls(res) == 38
-    @test Optim.g_calls(res) == 38
+    @test Optim.f_calls(res) in (42,43)
+    @test Optim.g_calls(res) in (42,43)
     @test !Optim.converged(res)
     @test !Optim.x_converged(res)
     @test !Optim.f_converged(res)
     @test !Optim.g_converged(res)
     @test Optim.g_abstol(res) == 1e-12
     @test Optim.iteration_limit_reached(res)
-    @test Optim.initial_state(res) == [-1.2, 1.0]
+    @test Optim.initial_x(res) == [-1.2, 1.0]
     @test haskey(Optim.trace(res_ext)[1].metadata, "x")
     @test Optim.termination_code(res_ext) == Optim.TerminationCode.Iterations
     # just testing if it runs
@@ -250,7 +254,7 @@ end
     @test Optim.upper_bound(res) == 1.0
     @test Optim.rel_tol(res) ≈ 1.4901161193847656e-8
     @test Optim.abs_tol(res) ≈ 2.220446049250313e-16
-    @test_throws ErrorException Optim.initial_state(res)
+    @test_throws ErrorException Optim.initial_x(res)
     @test_throws ErrorException Optim.g_norm_trace(res)
     @test_throws ErrorException Optim.g_calls(res)
     @test_throws ErrorException Optim.x_converged(res)

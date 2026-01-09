@@ -40,7 +40,7 @@ end
 function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where {T}
     fill!(p, zero(T))
     for i = min_i:n
-        p[:] -= qg[i] / (H_eig.values[i] + lambda) * H_eig.vectors[:, i]
+        LinearAlgebra.axpy!(-qg[i] / (H_eig.values[i] + lambda), view(H_eig.vectors, :, i), p)
     end
     return nothing
 end
@@ -52,14 +52,14 @@ work well without these safeguards when the Hessian is not positive definite.
 function initial_safeguards(H, gr, delta, lambda)
     # equations are on p. 560 of [MORESORENSEN]
     T = eltype(gr)
-    λS = maximum(-diag(H))
+    λS = -Base.minimum(@view(H[diagind(H)])) # Base.minimum !== minimum
     # they state on the first page that ||⋅|| is the Euclidean norm
     gr_norm = norm(gr)
     Hnorm = opnorm(H, 1)
     λL = max(T(0), λS, gr_norm / delta - Hnorm)
     λU = gr_norm / delta + Hnorm
     # p. 558
-    lambda = min(max(lambda, λL), λU)
+    lambda = clamp(lambda, λL, λU)
     if lambda ≤ λS
         lambda = max(T(1) / 1000 * λU, sqrt(λL * λU))
     end
@@ -160,7 +160,7 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
                 # I don't think it matters which eigenvector we pick so take
                 # the first.
                 calc_p!(lambda, min_i, n, qg, H_eig, s)
-                s[:] = -s + tau * H_eig.vectors[:, 1]
+                LinearAlgebra.axpby!(tau, view(H_eig.vectors, :, 1), -1, s)
             end
         end
 
@@ -174,8 +174,8 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
             for iter = 1:max_iters
                 lambda_previous = lambda
 
-                for i = 1:n
-                    H_ridged[i, i] = H[i, i] + lambda
+                for i in diagind(H_ridged)
+                    H_ridged[i] = H[i] + lambda
                 end
 
                 F = cholesky(Hermitian(H_ridged), check = false)
@@ -196,7 +196,7 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
                 # Check that lambda is not less than lambda_lb, and if so, go
                 # half the way to lambda_lb.
                 if lambda < lambda_lb
-                    lambda = 0.5 * (lambda_previous - lambda_lb) + lambda_lb
+                    lambda = (lambda_previous + lambda_lb) / 2
                 end
 
                 if abs(lambda - lambda_previous) < tolerance
@@ -207,7 +207,7 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
         end
     end
 
-    m = dot(gr, s) + 0.5 * dot(s, H * s)
+    m = dot(gr, s) + dot(s, H, s) / 2
 
     return m, interior, lambda, hard_case, reached_solution
 end
@@ -220,6 +220,37 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     rho_lower::T
     rho_upper::T
     use_fg::Bool
+
+    function NewtonTrustRegion(
+        initial_delta::T,
+        delta_hat::T,
+        delta_min::T,
+        eta::T,
+        rho_lower::T,
+        rho_upper::T,
+        use_fg::Bool,
+    ) where {T<:Real}
+        if !(delta_hat > 0)
+            throw(DomainError(delta_hat, "maximum trust region radius must be positive"))
+        end
+        if !(0 < initial_delta < delta_hat)
+            throw(DomainError(initial_delta, LazyString("initial trust region radius must be positive and below the maiximum trust region radius (", delta_hat, ")")))
+        end
+        if !(delta_min >= 0)
+            throw(DomainError(delta_min, "smallest allowable trust region radius must be non-negative"))
+        end
+        if !(eta >= 0)
+            throw(DomainError(eta, "minimum threshold of actual and predicted reduction for accepting a step must be positivethreshold eta must be non-negative"))
+        end
+        if !(rho_lower > eta)
+            throw(DomainError(rho_lower, LazyString("maximum threshold of actual and predicted reduction for shrinking the trust region must be greater than the minimum threshold for accepting a step (", eta, ")")))
+        end
+        if !(rho_upper > rho_lower)
+            throw(DomainError(rho_upper, LazyString("minimum threshold of actual and predicted reduction for growing the trust region must be greater than the minimum threshold for shrinking it (", rho_lower, ")")))
+        end
+
+        return new{T}(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, use_fg)
+    end
 end
 
 """
@@ -235,13 +266,13 @@ NewtonTrustRegion(; initial_delta = 1.0,
                     use_fg = true)
 ```
 
-The constructor has 5 keywords:
-* `initial_delta`, the starting trust region radius. Defaults to `1.0`.
+The constructor has 7 keywords:
+* `initial_delta`, the initial trust region radius. Defaults to `1.0`.
 * `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
-* `delta_min`, the smallest alowable trust region radius. Optimization halts if the updated radius is smaller than this value. Defaults to `sqrt(eps(Float64))`.
-* `eta`, when `rho` is at least `eta`, accept the step. Defaults to `0.1`.
-* `rho_lower`, when `rho` is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
-* `rho_upper`, when `rho` is greater than `rho_upper`, grow the trust region. Defaults to `0.75`.
+* `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is less than or equal to this value. Defaults to `0.0`.
+* `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
+* `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
+* `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
 * `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
 
 ## Description
@@ -257,32 +288,31 @@ trust-region methods in practice.
 ## References
  - Nocedal, J., & Wright, S. (2006). Numerical optimization. Springer Science & Business Media.
 """
-NewtonTrustRegion(;
+function NewtonTrustRegion(;
     initial_delta::Real = 1.0,
     delta_hat::Real = 100.0,
-    delta_min::Real = sqrt(eps(Float64)),
+    delta_min::Real = 0.0,
     eta::Real = 0.1,
     rho_lower::Real = 0.25,
     rho_upper::Real = 0.75,
-    use_fg = true,
-) = NewtonTrustRegion(
-    initial_delta,
-    delta_hat,
-    delta_min,
-    eta,
-    rho_lower,
-    rho_upper,
-    use_fg,
+    use_fg::Bool = true,
 )
+    NewtonTrustRegion(promote(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper)..., use_fg)
+end
 
 Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
 
-mutable struct NewtonTrustRegionState{Tx,T,G} <: AbstractOptimizerState
+mutable struct NewtonTrustRegionState{Tx,T,Tg,TH} <: AbstractOptimizerState
     x::Tx
+    g_x::Tg
+    H_x::TH
+    f_x::T
     x_previous::Tx
-    g_previous::G
+    g_x_previous::Tg
     f_x_previous::T
     s::Tx
+    x_cache::Tx
+    g_cache::Tg
     hard_case::Bool
     reached_subproblem_solution::Bool
     interior::Bool
@@ -292,15 +322,8 @@ mutable struct NewtonTrustRegionState{Tx,T,G} <: AbstractOptimizerState
     rho::T
 end
 
-function initial_state(method::NewtonTrustRegion, options, d, initial_x)
-    T = eltype(initial_x)
-    n = length(initial_x)
-    # Maintain current gradient in gr
-    @assert(method.delta_hat > 0, "delta_hat must be strictly positive")
-    @assert(0 < method.initial_delta < method.delta_hat, "delta must be in (0, delta_hat)")
-    @assert(0 <= method.eta < method.rho_lower, "eta must be in [0, rho_lower)")
-    @assert(method.rho_lower < method.rho_upper, "must have rho_lower < rho_upper")
-    @assert(method.rho_lower >= 0.0)
+function initial_state(method::NewtonTrustRegion, options, d, x0)
+    T = eltype(x0)
     # Keep track of trust region sizes
     delta = copy(method.initial_delta)
 
@@ -310,14 +333,19 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
     interior = true
     lambda = NaN
 
-    NLSolversBase.value_gradient_hessian!!(d, initial_x)
+    f_x, g_x, H_x = NLSolversBase.value_gradient_hessian!(d, x0)
 
     NewtonTrustRegionState(
-        copy(initial_x), # Maintain current state in state.x
-        copy(initial_x), # Maintain previous state in state.x_previous
-        copy(gradient(d)), # Store previous gradient in state.g_previous
-        T(NaN), # Store previous f in state.f_x_previous
-        similar(initial_x), # Maintain current search direction in state.s
+        copy(x0), # Maintain current state in state.x
+        copy(g_x), # Maintain current gradient in state.g_x
+        copy(H_x), # Maintain current Hessian in state.H_x
+        f_x, # Maintain current f in state.f_x
+        fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
+        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
+        oftype(f_x, NaN), # Store previous f in state.f_x_previous
+        fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Cache to be able to reset state.x
+        fill!(method.use_fg ? similar(g_x) : empty(g_x), NaN), # Cache to be able to reset state.g_x
         hard_case,
         reached_subproblem_solution,
         interior,
@@ -329,29 +357,32 @@ function initial_state(method::NewtonTrustRegion, options, d, initial_x)
 end
 
 
-function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
-    T = eltype(state.x)
+function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
-        solve_tr_subproblem!(gradient(d), NLSolversBase.hessian(d), state.delta, state.s)
+        solve_tr_subproblem!(state.g_x, state.H_x, state.delta, state.s)
 
-    # Maintain a record of previous position
-    copyto!(state.x_previous, state.x)
-    state.f_x_previous = value(d)
+    # Maintain a record of current position, to be able to reset it below
+    copyto!(state.x_cache, state.x)
+    f_cache = state.f_x
 
     # Update current position
     state.x .+= state.s
+
     # Update the function value and gradient
     if method.use_fg
-        state.g_previous .= gradient(d)
-        value_gradient!(d, state.x)
+        copyto!(state.g_cache, state.g_x)
+        f_x, g_x = value_gradient!(d, state.x)
+        copyto!(state.g_x, g_x)
+        state.f_x = f_x
     else
-        value!(d, state.x)
+        f_x = value!(d, state.x)
+        state.f_x = f_x
     end
     # Update the trust region size based on the discrepancy between
     # the predicted and actual function values.  (Algorithm 4.1 in N&W (2006))
-    f_x_diff = state.f_x_previous - value(d)
-    if abs(m) <= eps(T)
+    f_x_diff = f_cache - f_x
+    if abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
         # we should accept the step and assess_convergence().
         state.rho = 1.0
@@ -361,37 +392,47 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
         # region.
         state.rho = -1.0
     else
-        state.rho = f_x_diff / (0 - m)
+        state.rho = f_x_diff / (- m)
     end
 
-    if state.rho < method.rho_lower
-        state.delta *= 0.25
-    elseif (state.rho > method.rho_upper) && (!state.interior)
-        state.delta = min(2 * state.delta, method.delta_hat)
-    else
-        # else leave delta unchanged.
-    end
-    if state.rho <= state.eta
+    # The step is accepted if the ratio is greater than eta
+    accept_step = state.rho > state.eta
+
+    # Update trust region radius
+    if !accept_step
         # The improvement is too small and we won't take it.
         # If you reject an interior solution, make sure that the next
-        # delta is smaller than the current step. Otherwise you waste
+        # delta is smaller than the current step (state.s). Otherwise you waste
         # steps reducing delta by constant factors while each solution
         # will be the same. If this keeps on happening it could be a sign
         # errors in the gradient or a non-differentiability at the optimum.
-        x_diff = state.x - state.x_previous
-        state.delta = 0.25 * norm(x_diff)
+        state.delta = norm(state.s) / 4
+    elseif state.rho < method.rho_lower
+        state.delta /= 4
+    elseif (state.rho > method.rho_upper) && !state.interior
+        state.delta = min(2 * state.delta, method.delta_hat)
+    end
 
-        d.F = state.f_x_previous
-        copyto!(state.x, state.x_previous)
+    # Update/reset gradients and function values
+    if accept_step
         if method.use_fg
-            copyto!(d.DF, state.g_previous)
-            copyto!(d.x_df, state.x_previous)
-        end
-    else
-        if method.use_fg
-            hessian!(d, state.x)
+            copyto!(state.H_x, hessian!(d, state.x))
         else
-            NLSolversBase.gradient_hessian!!(d, state.x)
+            g_x, H_x = NLSolversBase.gradient_hessian!(d, state.x)
+            copyto!(state.g_x, g_x)
+            copyto!(state.H_x, H_x)
+        end
+
+        # Update history
+        copyto!(state.x_previous, state.x_cache)
+        copyto!(state.g_x_previous, state.g_cache)
+        state.f_x_previous = f_cache
+    else
+        # Reset state
+        copyto!(state.x, state.x_cache)
+        state.f_x = f_cache
+        if method.use_fg
+            copyto!(state.g_x, state.g_cache)
         end
     end
 
@@ -399,30 +440,32 @@ function update_state!(d, state::NewtonTrustRegionState, method::NewtonTrustRegi
 end
 
 function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
-    x_converged, f_converged, g_converged, converged, f_increased =
-        false, false, false, false, false
     if state.rho > state.eta
         # Accept the point and check convergence
-        x_converged, f_converged, g_converged, f_increased = assess_convergence(
+        return assess_convergence(
             state.x,
             state.x_previous,
-            value(d),
+            state.f_x,
             state.f_x_previous,
-            gradient(d),
+            state.g_x,
             options.x_abstol,
             options.f_reltol,
             options.g_abstol,
         )
+    else
+        return false, false, false, false
     end
-    x_converged, f_converged, g_converged, f_increased
 end
+
+# Function value, gradient and Hessian matrix are already updated in update_state!
+update_fgh!(d, state, ::NewtonTrustRegion) = nothing
 
 function trace!(
     tr,
     d,
     state::NewtonTrustRegionState,
     iteration::Integer,
-    method::NewtonTrustRegion,
+    ::NewtonTrustRegion,
     options::Options,
     curr_time = time(),
 )
@@ -430,24 +473,22 @@ function trace!(
     dt["time"] = curr_time
     if options.extended_trace
         dt["x"] = copy(state.x)
-        dt["g(x)"] = copy(gradient(d))
-        dt["h(x)"] = copy(NLSolversBase.hessian(d))
+        dt["g(x)"] = copy(state.g_x)
+        dt["h(x)"] = copy(state.H_x)
         dt["delta"] = copy(state.delta)
         dt["interior"] = state.interior
         dt["hard case"] = state.hard_case
         dt["reached_subproblem_solution"] = state.reached_subproblem_solution
         dt["lambda"] = state.lambda
     end
-    g_norm = norm(gradient(d), Inf)
     update!(
         tr,
         iteration,
-        value(d),
-        g_norm,
+        state.f_x,
+        g_residual(state),
         dt,
         options.store_trace,
         options.show_trace,
         options.show_every,
-        options.callback,
     )
 end

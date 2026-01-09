@@ -14,8 +14,7 @@ jobs:
       matrix:
         julia:
           - 'lts'
-          # TODO: Enable when https://github.com/MilesCranmer/AirspeedVelocity.jl/issues/113 is fixed
-          # - '1'
+          - '1'
     steps:
       - uses: MilesCranmer/AirspeedVelocity.jl@action-v1
         with:

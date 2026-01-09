@@ -22,13 +22,11 @@
         "Penalty Function I",
         "Beale",
         "Extended Powell",
+        "Rosenbrock",
     )
     run_optim_tests(
         AcceleratedGradientDescent();
         skip = skip,
-        convergence_exceptions = (("Rosenbrock", 1), ("Rosenbrock", 2)),
-        minimum_exceptions = (("Rosenbrock", 2),),
-        minimizer_exceptions = (("Rosenbrock", 2),),
         iteration_exceptions = (
             ("Powell", 1100),
             ("Rosenbrock", 10000),
@@ -47,6 +45,5 @@
             "Rosenbrock",
         ),
         show_name = debug_printing,
-    )#,
-    #show_res = debug_printing)
+    )
 end

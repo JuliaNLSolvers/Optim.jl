@@ -1,7 +1,7 @@
 module OptimMOIExt
 
 using Optim
-using Optim.LinearAlgebra: rmul! 
+using Optim.LinearAlgebra: rmul!
 import MathOptInterface as MOI
 
 function __init__()
@@ -333,7 +333,7 @@ function MOI.optimize!(model::Optimizer{T}) where {T}
             inplace = true,
         )
     else
-        d = Optim.promote_objtype(method, initial_x, :finite, true, f, g!, h!)
+        d = Optim.promote_objtype(method, initial_x, Optim.DEFAULT_AD_TYPE, true, f, g!, h!)
         options = Optim.Options(; Optim.default_options(method)..., options...)
         if nl_constrained || has_bounds
             if nl_constrained
@@ -421,7 +421,7 @@ MOI.get(::Optimizer, ::MOI.DualStatus) = MOI.NO_SOLUTION
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     MOI.check_result_index_bounds(model, attr)
-    val = minimum(model.results)
+    val = Optim.minimum(model.results)
     if model.sense == MOI.MAX_SENSE
         val = -val
     end

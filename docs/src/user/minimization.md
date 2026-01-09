@@ -26,9 +26,10 @@ If we pass `f` alone, Optim will construct an approximate gradient for us using 
 ```jl
 optimize(f, x0, LBFGS())
 ```
-For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the `autodiff` keyword and setting it to `:forward`:
+For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the `autodiff` keyword and setting it to `AutoForwardDiff()`:
 ```julia
-optimize(f, x0, LBFGS(); autodiff = :forward)
+using ADTypes: AutoForwardDiff
+optimize(f, x0, LBFGS(); autodiff = AutoForwardDiff())
 ```
 
 For the Rosenbrock example, the analytical gradient can be shown to be:
@@ -176,7 +177,7 @@ julia> Optim.minimizer(res)
  -0.3333
  -1.49994
 
-julia> minimum(res)
+julia> Optim.minimum(res)
  -2.8333333205768865
 ```
 
@@ -212,7 +213,7 @@ Defined for multivariate optimization:
 * `x_converged(res)`
 * `f_converged(res)`
 * `g_converged(res)`
-* `initial_state(res)`
+* `initial_x(res)`
 
 Defined for `NelderMead` with the option `trace_simplex=true`:
 
