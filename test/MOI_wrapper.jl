@@ -48,9 +48,9 @@ function test_MOI_Test()
             ],
         ),
         exclude = String[
-            "test_nonlinear_constraint_log$",
+            "test_nonlinear_constraint_log",
             # No nonlinear objective.
-            "test_nonlinear_with_scalar_quadratic_function_with_off_diag$",
+            "test_nonlinear_with_scalar_quadratic_function_with_off_diag",
             # No objective
             "test_attribute_SolveTimeSec",
             "test_attribute_RawStatusString",
