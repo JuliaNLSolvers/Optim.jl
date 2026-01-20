@@ -49,7 +49,7 @@ function NLSolversBase.value_gradient!(obj::ManifoldObjective,x)
     xin = retract(obj.manifold, x)
     value_gradient!(obj.inner_obj,xin)
     project_tangent!(obj.manifold,gradient(obj.inner_obj),xin)
-    return value(obj.inner_obj)
+    return value(obj.inner_obj), gradient(obj.inner_obj)
 end
 
 """Flat Euclidean space {R,C}^N, with projections equal to the identity."""

@@ -142,3 +142,10 @@ end
 @testset "#865" begin
     optimize(x -> sum(x), [0.,0.0], [2.0,2.0], [1.,1.0], Fminbox(NelderMead()))
 end
+
+@testset "#1229" begin
+    # shouldn't throw
+    optimize(sum, [0.1, 0.0], [1.0, 1.0], [0.5, 0.5],)
+    # More directly
+    @test all(Optim.value_gradient!(Optim.ManifoldObjective(Optim.Flat(), OnceDifferentiable(sum, [0.0])), [1.0]) .≈ (1.0, [0.9999999999960525]))
+end
