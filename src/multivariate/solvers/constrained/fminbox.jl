@@ -59,26 +59,29 @@ end
 _barrier_value(bb::BoxBarrier, x) =
     mapreduce(x -> _barrier_term_value(x...), +, zip(x, bb.lower, bb.upper))
 
-function _barrier_term_gradient(x::T, l, u) where {T}
+# Evaluates the gradient components coming from the log barrier
+# usually identity is passed as transform but for the initial mu computation
+# we use abs. This is a heuristic to avoid zero at central starting points.
+function _barrier_term_gradient(x::T, l, u, transform) where {T}
     dxl = x - l
     dxu = u - x
     g = zero(T)
     if isfinite(l)
-        g += -one(T) / dxl
+        g += transform(-one(T) / dxl)
     end
     if isfinite(u)
-        g += one(T) / dxu
+        g += transform(one(T) / dxu)
     end
     return g
 end
 
 function _barrier_jvp(bb::BoxBarrier, x, v)
-    return sum(Broadcast.instantiate(Broadcast.broadcasted((xi, li, ui, vi) -> dot(_barrier_term_gradient(xi, li, ui), vi), x, bb.lower, bb.upper, v)))
+    return sum(Broadcast.instantiate(Broadcast.broadcasted((xi, li, ui, vi) -> dot(_barrier_term_gradient(xi, li, ui, identity), vi), x, bb.lower, bb.upper, v)))
 end
 
 # Wrappers
 function NLSolversBase.value_gradient!(bb::BarrierWrapper, x)
-    bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper)
+    bb.DFb .= _barrier_term_gradient.(x, bb.b.lower, bb.b.upper, identity)
     bb.Fb = _barrier_value(bb.b, x)
     if in_box(bb.b, x)
         F, DF = value_gradient!(bb.obj, x)
@@ -109,7 +112,7 @@ function NLSolversBase.value(obj::BarrierWrapper, x)
     end
 end
 function NLSolversBase.gradient!(obj::BarrierWrapper, x)
-    obj.DFb .= _barrier_term_gradient.(x, obj.b.lower, obj.b.upper)
+    obj.DFb .= _barrier_term_gradient.(x, obj.b.lower, obj.b.upper, identity)
     if in_box(obj.b, x)
         DF = gradient!(obj.obj, x)
         obj.DFtotal .= muladd.(obj.mu, obj.DFb, DF)
@@ -260,20 +263,17 @@ end
 function initial_mu(box::BoxBarrier, x::AbstractArray, g_x::AbstractArray, F::Fminbox)
     # Compute 1-norm of gradient of input function and the gradient of the barrier
     _gnorm = sum(abs, g_x)
-    _gbarrier_norm = sum(Broadcast.instantiate(Broadcast.broadcasted((xi, li, ui) -> abs(_barrier_term_gradient(xi, li, ui)), x, box.lower, box.upper)))
+    _gbarrier_norm = sum(Broadcast.instantiate(Broadcast.broadcasted((xi, li, ui) -> (_barrier_term_gradient(xi, li, ui, abs)), x, box.lower, box.upper)))
 
     gnorm, gbarrier_norm, mufactor, mu0 = promote(_gnorm, _gbarrier_norm, F.mufactor, F.mu0)
     mu = if isnan(mu0)
-        if gbarrier_norm > 0
-            mufactor * gnorm / gbarrier_norm
-        else
-            # Presumably, there is no barrier function
-            zero(gnorm)
-        end
+        mufactor * gnorm / gbarrier_norm
     else
         mu0
     end
-
+    if !isfinite(mu)
+        throw(ArgumentError(LazyString("Could not compute finite initial mu for Fminbox, got: ", mu0, ". Please provide a finite mu0 value.")))
+    end
     return mu
 end
 
@@ -633,7 +633,7 @@ function optimize(
             end
 
             # Test for convergence
-            g .= x .- clamp.(g_x, l, u)
+            g .= x .- clamp.(x .- g_x, l, u)
             _x_converged, _f_converged, _g_converged, f_increased =
                 assess_convergence(
                     x,
