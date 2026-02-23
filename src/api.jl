@@ -35,9 +35,10 @@ end
 x_upper_trace(r::MultivariateOptimizationResults) =
     error("x_upper_trace is not implemented for $(summary(r)).")
 
+x_trace(ot::OptimIterator, os::IteratorState) = x_trace(OptimizationResults(ot, os))
 function x_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
-    if isa(r.method, NelderMead)
+    if isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "Nelder Mead does not operate with a single x. Please use either centroid_trace(...) or simplex_trace(...) to extract the relevant points from the trace.",
@@ -45,14 +46,15 @@ function x_trace(r::MultivariateOptimizationResults)
         )
     end
     !haskey(tr[1].metadata, "x") && error(
-        "Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true",
+        "Trace does not contain x. To get a trace of x, run optimize() with extended_trace = true and make sure x is stored in the trace for the method of choice.",
     )
     [state.metadata["x"] for state in tr]
 end
 
+centroid_trace(ot::OptimIterator, os::IteratorState) = centroid_trace(OptimizationResults(ot, os))
 function centroid_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There is no centroid involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace.",
@@ -64,9 +66,10 @@ function centroid_trace(r::MultivariateOptimizationResults)
     )
     [state.metadata["centroid"] for state in tr]
 end
+simplex_trace(ot::OptimIterator, os::IteratorState) = simplex_trace(OptimizationResults(ot, os))
 function simplex_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There is no simplex involved in optimization using $(r.method). Please use x_trace(...) to grab the points from the trace.",
@@ -78,9 +81,10 @@ function simplex_trace(r::MultivariateOptimizationResults)
     )
     [state.metadata["simplex"] for state in tr]
 end
+simplex_value_trace(ot::OptimIterator, os::IteratorState) = simplex_value_trace(OptimizationResults(ot, os))
 function simplex_value_trace(r::MultivariateOptimizationResults)
     tr = trace(r)
-    if !isa(r.method, NelderMead)
+    if !isa(_method(r), NelderMead)
         throw(
             ArgumentError(
                 "There are no simplex values involved in optimization using $(r.method). Please use f_trace(...) to grab the objective values from the trace.",
@@ -94,9 +98,11 @@ function simplex_value_trace(r::MultivariateOptimizationResults)
 end
 
 
+f_trace(ot::OptimIterator, os::IteratorState) = f_trace(OptimizationResults(ot, os))
 f_trace(r::OptimizationResults) = [state.value for state in trace(r)]
 g_norm_trace(r::OptimizationResults) =
     error("g_norm_trace is not implemented for $(summary(r)).")
+g_norm_trace(ot::OptimIterator, os::IteratorState) = g_norm_trace(OptimizationResults(ot, os))
 g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
 # TODO: Overload `NLSolversBase.xxx` instead of defining separate `Optim.xxx` methods?
@@ -111,7 +117,8 @@ hvp_calls(r::OptimizationResults) = error(LazyString("`hvp_calls` is not impleme
 hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
-function converged(r::MultivariateOptimizationResults)
+converged(ot::OptimIterator, os::IteratorState) = converged(OptimizationResults(ot, os)) 
+function converged(r::Union{MultivariateOptimizationResults, IteratorState})
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
     f_isfinite = if r.stopped_by.iterations > 0

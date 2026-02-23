@@ -122,7 +122,7 @@ promote_objtype(
 ) = td
 
 # if no method or options are present
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray;
     inplace::Bool = true,
@@ -134,7 +134,7 @@ function optimize(
     options = Options(; default_options(method)...)
     optimize(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray;
@@ -149,7 +149,7 @@ function optimize(
     options = Options(; default_options(method)...)
     optimize(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -161,19 +161,16 @@ function optimize(
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
 # no method supplied with objective
-function optimize(
-    d::T,
-    x0::AbstractArray,
-    options::Options,
-) where {T<:AbstractObjective}
-    optimize(d, x0, fallback_method(d), options)
+function optimizing(d::AbstractObjective, x0::AbstractArray, options::Options)
+    optimizing(d, x0, fallback_method(d), options)
 end
+
 # no method supplied with inplace and autodiff keywords becauase objective is not supplied
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray,
     options::Options;
@@ -182,9 +179,9 @@ function optimize(
 )
     method = fallback_method(f)
     d = promote_objtype(method, x0, autodiff, inplace, f)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray,
@@ -195,9 +192,9 @@ function optimize(
 
     method = fallback_method(f, g)
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -209,11 +206,11 @@ function optimize(
     method = fallback_method(f, g, h)
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
 # potentially everything is supplied (besides caches)
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray,
     method::AbstractOptimizer,
@@ -221,8 +218,9 @@ function optimize(
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
+
     d = promote_objtype(method, x0, autodiff, inplace, f)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 function optimize(
     f,
@@ -237,7 +235,7 @@ function optimize(
     d = promote_objtype(method, x0, autodiff, inplace, f)
     optimize(d, c, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray,
@@ -247,10 +245,9 @@ function optimize(
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
-
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -263,10 +260,10 @@ function optimize(
 )
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
-function optimize(
+function optimizing(
     d::D,
     x0::AbstractArray,
     method::SecondOrderOptimizer,
@@ -274,6 +271,18 @@ function optimize(
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
+
     d = promote_objtype(method, x0, autodiff, inplace, d)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
+end
+
+function optimize(args...; kwargs...)
+    local istate
+    iter = optimizing(args...; kwargs...)
+    for istate′ in iter
+        istate = istate′
+    end
+    # We can safely assume that `istate` is defined at this point.  That is to say,
+    # `OptimIterator` guarantees that `iterate(::OptimIterator) !== nothing`.
+    return OptimizationResults(iter, istate)
 end

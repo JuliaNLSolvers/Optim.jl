@@ -252,8 +252,8 @@ function optimize(
     (; callback) = options
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     _time = t0
-
     tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
+
     tracing =
         options.store_trace ||
         options.show_trace ||
@@ -264,15 +264,18 @@ function optimize(
 
     g_converged, stopped = initial_convergence(d, state, method, x0, options)
     converged = g_converged
-
+    
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
     options.show_trace && print_header(method)
+
     # update trace
     if tracing
         trace!(tr, d, state, iteration, method, options, t0)
     end
+    ls_success::Bool = true
+    
     # callbacks can stop routine early by returning true
     stopped_by_callback = callback !== nothing && callback(state)
     stopped |= stopped_by_callback
@@ -337,8 +340,6 @@ function optimize(
             stopped = true
         end
     end # while
-
-    after_while!(d, constraints, state, method, options)
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
