@@ -141,7 +141,7 @@ end
 
 # The log likelihood function accepts 4 inputs: the matrix of
 # explanatory variables (X), the dependent variable (Y), the β's, and
-# the error varicance. Note that we exponentiate the error variance in
+# the error variance. Note that we exponentiate the error variance in
 # the second line of the code because the error variance cannot be
 # negative and we want to avoid this situation when maximizing the
 # likelihood.
@@ -156,7 +156,7 @@ func = TwiceDifferentiable(
     autodiff = AutoForwardDiff(),
 );
 
-# The above statment accepts 4 inputs: the x matrix, the dependent
+# The above statement accepts 4 inputs: the x matrix, the dependent
 # variable y, and a vector of β's and the error variance.  The
 # `vars[1:nvar]` is how we pass the vector of β's and the `vars[nvar +
 # 1]` is how we pass the error variance. You can think of this as a
@@ -186,7 +186,7 @@ using Test                    #src
 # to our simulated values.
 #
 # The optimization routine stores several quantities and we can obtain
-# the maximim likelihood estimates with the following command:
+# the maximum likelihood estimates with the following command:
 
 parameters = Optim.minimizer(opt)
 @test parameters ≈ [2.83664, 3.05345, -0.98837] atol = 1e-5 #src
@@ -206,7 +206,7 @@ numerical_hessian = hessian!(func, parameters)
 # Let's find the estimated value of σ, rather than log σ, and it's standard error
 # To do this, we will use the Delta Method: <https://en.wikipedia.org/wiki/Delta_method>
 
-# this function exponetiates log σ
+# this function exponentiates log σ
 function transform(parameters)
     parameters[end] = exp(parameters[end])
     parameters
