@@ -19,7 +19,7 @@ Reverse-mode automatic differentiation can be seen as an automatic implementatio
 Generic automatic differentiation is supported thanks to [DifferentiationInterface.jl](https://github.com/JuliaDiff/DifferentiationInterface.jl), by setting `autodiff` to any compatible backend object from [ADTypes.jl](https://github.com/SciML/ADTypes.jl).
 For instance, forward-mode automatic differentiation through the [ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl) package by providing the `autodiff=ADTypes.AutoForwardDiff()` keyword to `optimize`.
 Additionally, the user can choose `autodiff=AutoReverseDiff()`, `autodiff=AutoEnzyme()`, `autodiff=AutoMooncake()` or `autodiff=AutoZygote()` for a reverse-mode gradient computation, which is generally faster than forward mode on large inputs.
-Each of these choices requires loading the `ADTypes` package and the corresponding automatic differentiation package (e.g., `ForwardDiff` or `ReverseDiff`) beforehand.
+Each of these choices requires loading the `ADTypes` package.
 
 ## Example
 
