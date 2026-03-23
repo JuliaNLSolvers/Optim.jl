@@ -580,8 +580,6 @@ function optimize(
         @warn("f(x) increased: stopping optimization")
     else
         while !converged && !stopped && iteration < outer_iterations
-            @show 2
-            @show iteration
             # Increment the number of steps we've had to perform
             iteration += 1
 
