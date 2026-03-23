@@ -41,7 +41,7 @@ struct BoxBarrier{L,U}
     upper::U
 end
 function in_box(bb::BoxBarrier, x)
-    all(x -> x[1] <= x[2] <= x[3], zip(bb.lower, x, bb.upper))
+    all(x -> x[1] < x[2] < x[3], zip(bb.lower, x, bb.upper))
 end
 
 # evaluates the value and gradient components comming from the log barrier
@@ -475,7 +475,10 @@ function optimize(
             "Initial position cannot be on the boundary of the box. Moving elements to the interior.\nElement indices affected: $boundaryidx"
         )
     end
-
+    _l = copy(l)
+    _u = copy(u)
+    l = prevfloat.(l)
+    u = nextfloat.(u)
     dfbox = BarrierWrapper(df, zero(T), l, u)
     # Use the barrier-aware preconditioner to define
     # barrier-aware optimization method instance (precondition relevance)
@@ -505,6 +508,10 @@ function optimize(
     iteration = 1
     _time = time()
 
+    # We add the barrier term to the objective function
+    # Since this changes the objective of the inner optimizer, we have to reset its state
+    dfbox = BarrierWrapper(df, mu, l, u)
+    reset!(_optimizer, state, dfbox, x)
     # Optimize with current setting of mu
     if show_trace > 0
         header_string = "Fminbox iteration $iteration"
@@ -515,11 +522,6 @@ function optimize(
         println("\n")
         println("(numbers below include barrier contribution)")
     end
-
-    # We add the barrier term to the objective function
-    # Since this changes the objective of the inner optimizer, we have to reset its state
-    dfbox = BarrierWrapper(df, mu, l, u)
-    reset!(_optimizer, state, dfbox, x)
 
     # Store current state
     x_previous = copy(x)
@@ -537,7 +539,7 @@ function optimize(
     end
 
     # Compute function value and gradient (without barrier term)
-    copyto!(x, minimizer(results))
+    copyto!(x, clamp.(minimizer(results), _l, _u))
     f_x, _g_x = value_gradient!(df, x)
     copyto!(g_x, _g_x)
 
@@ -574,11 +576,12 @@ function optimize(
     _time = time()
     stopped_by_time_limit = _time - t0 > options.time_limit
     stopped = stopped_by_time_limit
-
     if f_increased && !allow_outer_f_increases
         @warn("f(x) increased: stopping optimization")
     else
         while !converged && !stopped && iteration < outer_iterations
+            @show 2
+            @show iteration
             # Increment the number of steps we've had to perform
             iteration += 1
 
@@ -618,11 +621,11 @@ function optimize(
             end
 
             # Compute function value and gradient (without barrier term)
-            copyto!(x, minimizer(results))
+            copyto!(x, clamp.(minimizer(results), _l, _u))
             f_x, _g_x = value_gradient!(df, x)
             copyto!(g_x, _g_x)
 
-            boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, l, u)) # Base.minimum !== minimum
+            boxdist = Base.minimum(((xi, li, ui),) -> min(xi - li, ui - xi), zip(x, _l, _u)) # Base.minimum !== minimum
             if show_trace > 0
                 println()
                 println("Exiting inner optimizer with x = ", x)
@@ -633,7 +636,7 @@ function optimize(
             end
 
             # Test for convergence
-            g .= x .- clamp.(x .- g_x, l, u)
+            g .= x .- clamp.(x .- g_x, _l, _u)
             _x_converged, _f_converged, _g_converged, f_increased =
                 assess_convergence(
                     x,
