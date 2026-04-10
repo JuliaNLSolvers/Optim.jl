@@ -16,9 +16,9 @@ The constructor takes three keywords:
 The Particle Swarm implementation in Optim.jl is the so-called Adaptive Particle
 Swarm algorithm in [1]. It attempts to improve global coverage and convergence by
 switching between four evolutionary states: exploration, exploitation, convergence,
-and jumping out. In the jumping out state it intentially tries to take the best
+and jumping out. In the jumping out state it intentionally tries to take the best
 particle and move it away from its (potentially and probably) local optimum, to
-improve the ability to find a global optimum. Of course, this comes a the cost
+improve the ability to find a global optimum. Of course, this comes at the cost
 of slower convergence, but hopefully converges to the global optimum as a result.
 
 ## References

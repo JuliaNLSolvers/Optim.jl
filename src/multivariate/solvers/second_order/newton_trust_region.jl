@@ -67,7 +67,7 @@ function initial_safeguards(H, gr, delta, lambda)
 end
 
 # Choose a point in the trust region for the next step using
-# the interative (nearly exact) method of section 4.3 of N&W (2006).
+# the iterative (nearly exact) method of section 4.3 of N&W (2006).
 # This is appropriate for Hessians that you factorize quickly.
 #
 # Args:
@@ -167,7 +167,7 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
         lambda = initial_safeguards(H, gr, delta, lambda)
 
         if !hard_case
-            # Algorithim 4.3 of N&W (2006), with s insted of p_l for consistency
+            # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
             # with Optim.jl
 
             reached_solution = false

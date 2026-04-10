@@ -241,7 +241,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
             @inbounds state.f_simplex[state.i_order[m]] = f_reflect
             state.step_type = "reflection"
         end
-        # shift all order indeces, and wrap the last one around to the first
+        # shift all order indices, and wrap the last one around to the first
         i_highest = state.i_order[m]
         @inbounds for i = m:-1:2
             state.i_order[i] = state.i_order[i-1]
@@ -268,7 +268,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
                 shrink = true
             end
         else # f_reflect > f_highest
-            # Inside constraction
+            # Inside contraction
             @. state.x_cache =
                 state.x_centroid - state.γ * (state.x_reflect - state.x_centroid)
             f_inside_contraction = value(f, state.x_cache)
@@ -324,7 +324,7 @@ pick_best_x(f_increased::Bool, state::NelderMeadState) = state.x
 pick_best_f(f_increased::Bool, state::NelderMeadState) = state.f_x
 
 function assess_convergence(state::NelderMeadState, d, options::Options)
-    g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterior
+    g_converged = state.nm_x <= options.g_abstol # Hijact g_converged for NM stopping criterion
     return false, false, g_converged, false
 end
 

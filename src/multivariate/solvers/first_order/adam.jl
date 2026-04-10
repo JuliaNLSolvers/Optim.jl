@@ -11,7 +11,7 @@
 Alternative to the above (default) usage where `alpha` is a fixed constant for
 all the iterations, the following constructor provides flexibility for `alpha`
 to be a callable object (a scheduler) that maps the current iteration count to
-a value of `alpha` that is to-be used for the current optimization iteraion's
+a value of `alpha` that is to-be used for the current optimization iteration's
 update step. This helps us in scheduling `alpha` over the iterations as
 desired, using the following usage,
 
@@ -21,7 +21,7 @@ desired, using the following usage,
 ```
 
 ## Description
-Adam is a gradient based optimizer that choses its search direction by building
+Adam is a gradient based optimizer that chooses its search direction by building
 up estimates of the first two moments of the gradient vector. This makes it
 suitable for problems with a stochastic objective and thus gradient. The method
 is introduced in [1] where the related AdaMax method is also introduced, see

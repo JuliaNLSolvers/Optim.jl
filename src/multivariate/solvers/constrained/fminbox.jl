@@ -4,7 +4,7 @@ using NLSolversBase:
 mutable struct BarrierWrapper{TO,TB,Tm,TF,TDF} <: AbstractObjective
     obj::TO
     b::TB # barrier
-    mu::Tm # multipler
+    mu::Tm # multiplier
     Fb::TF
     Ftotal::TF
     DFb::TDF
@@ -44,7 +44,7 @@ function in_box(bb::BoxBarrier, x)
     all(x -> x[1] <= x[2] <= x[3], zip(bb.lower, x, bb.upper))
 end
 
-# evaluates the value and gradient components comming from the log barrier
+# evaluates the value and gradient components coming from the log barrier
 function _barrier_term_value(x::T, l, u) where {T}
     dxl = x - l
     dxu = u - x

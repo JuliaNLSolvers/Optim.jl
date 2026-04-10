@@ -7,7 +7,7 @@
 
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
-# TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
+# TODO: Enforce TPrec <: Union{FirstOrderOptimizer,SecondOrderOptimizer}?
 struct NGMRES{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
@@ -263,12 +263,12 @@ function initial_state(
         nlpreconstate.g_x,        # Maintain current gradient in state.g_x. Uses same vector as preconditioner.
         nlpreconstate.f_x,        # Maintain current f in state.f_x.
         nlpreconstate.x_previous, # Maintain in state.x_previous. Use same vector as preconditioner.
-        fill!(similar(nlpreconstate.x), NaN), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+        fill!(similar(nlpreconstate.x), NaN), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence assessment.
         T(NaN),                   # Store previous f in state.f_x_previous
-        T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
+        T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence assessment.
         T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
         T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
-        fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN),  # Maintain current search direction in state.s
         nlpreconstate,            # State storage for preconditioner
         X,
         R,
@@ -280,8 +280,8 @@ function initial_state(
         vec(similar(x0)),  # xA
         0,                        # iteration counter
         false,                    # Restart flag
-        options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply
-        Array{T}(undef, wmax),           # subspacealpha
+        options.g_abstol,         # Exit tolerance check after nonlinear preconditioner apply
+        Array{T}(undef, wmax),    # subspacealpha
         @initial_linesearch()...,
     )
 end
