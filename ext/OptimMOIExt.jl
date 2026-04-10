@@ -40,9 +40,23 @@ Optimizer() = Optimizer{Float64}()
 
 MOI.supports(::Optimizer, ::MOI.NLPBlock) = true
 
-function MOI.supports(::Optimizer, ::Union{MOI.ObjectiveSense,MOI.ObjectiveFunction})
+MOI.supports(::Optimizer, ::MOI.ObjectiveSense) = true
+
+function MOI.supports(
+    ::Optimizer{T},
+    ::MOI.ObjectiveFunction{F},
+) where {
+    T,
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+}
     return true
 end
+
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 function MOI.supports(::Optimizer, p::MOI.RawOptimizerAttribute)
     return p.name == "method" || hasfield(Optim.Options, Symbol(p.name))
@@ -83,6 +97,7 @@ function MOI.set(model::Optimizer, ::MOI.ObjectiveSense, sense::MOI.Optimization
     model.sense = sense
     return
 end
+
 function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, func::F) where {F}
     nl = convert(MOI.ScalarNonlinearFunction, func)
     if isnothing(model.nlp_model)
@@ -133,7 +148,7 @@ function MOI.get(model::Optimizer, p::MOI.RawOptimizerAttribute)
     error("RawOptimizerAttribute with name $(p.name) is not set.")
 end
 
-MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = time_run(model.results)
+MOI.get(model::Optimizer, ::MOI.SolveTimeSec) = Optim.time_run(model.results)
 
 function MOI.empty!(model::Optimizer)
     MOI.empty!(model.variables)
@@ -256,15 +271,16 @@ function sym_sparse_to_dense!(A, I::Vector, nzval)
 end
 
 function MOI.optimize!(model::Optimizer{T}) where {T}
+    if model.sense == MOI.FEASIBILITY_SENSE ||
+       isnothing(model.nlp_model) ||
+       model.nlp_model.objective === nothing
+        f = zero(MOI.ScalarAffineFunction{T})
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    end
     backend = MOI.Nonlinear.SparseReverseMode()
     vars = MOI.get(model.variables, MOI.ListOfVariableIndices())
     evaluator = MOI.Nonlinear.Evaluator(model.nlp_model, backend, vars)
     nlp_data = MOI.NLPBlockData(evaluator)
-
-    # load parameters
-    if isnothing(model.nlp_model)
-        error("An objective should be provided to Optim with `@objective`.")
-    end
     objective_scale = model.sense == MOI.MAX_SENSE ? -one(T) : one(T)
     zero_μ = zeros(T, length(nlp_data.constraint_bounds))
     function f(x)
