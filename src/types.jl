@@ -52,7 +52,7 @@ i.e., as:
 Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
 can be used to modify a subset of options in a previously defined `Options` variable.
 
-For more information on individual options, see the documentaton at
+For more information on individual options, see the documentation at
 http://julianlsolvers.github.io/Optim.jl/stable/#user/config/.
 """
 struct Options{T, TCallback}

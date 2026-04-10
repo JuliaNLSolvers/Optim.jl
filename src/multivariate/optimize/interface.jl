@@ -172,7 +172,7 @@ function optimize(
 ) where {T<:AbstractObjective}
     optimize(d, x0, fallback_method(d), options)
 end
-# no method supplied with inplace and autodiff keywords becauase objective is not supplied
+# no method supplied with inplace and autodiff keywords because objective is not supplied
 function optimize(
     f,
     x0::AbstractArray,
