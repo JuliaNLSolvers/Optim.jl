@@ -1,6 +1,7 @@
 # Reset the search direction if it becomes corrupted
 # return true if the direction was changed
 reset_search_direction!(state, d, method) = false # no-op
+reset_search_direction!(state, method) = false # no-op (2-arg fallback)
 
 _alphaguess(a) = a
 _alphaguess(a::Number) = LineSearches.InitialStatic(alpha = a)
@@ -55,10 +56,24 @@ function perform_linesearch!(state, method, d)
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
-            # We shouldn't warn here, we should just carry it to the output
-            # @warn("Linesearch failed, using alpha = $(state.alpha) and
-            # exiting optimization.\nThe linesearch exited with message:\n$(ex.message)")
-            false
+            # Reset Hessian approximation to identity and retry line search once
+            if reset_search_direction!(state, method)
+                dphi_0 = real(dot(state.g_x, state.s))
+                try
+                    state.alpha, ϕalpha =
+                        method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
+                    true
+                catch ex2
+                    if ex2 isa LineSearches.LineSearchException
+                        state.alpha = ex2.alpha
+                        false
+                    else
+                        rethrow()
+                    end
+                end
+            else
+                false
+            end
         else
             rethrow()
         end
