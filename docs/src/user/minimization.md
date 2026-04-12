@@ -172,7 +172,7 @@ summary(res)
 which will return `"Nelder Mead"`. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using
 ```jlcon
 julia> Optim.minimizer(res)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  -0.499921
  -0.3333
  -1.49994
