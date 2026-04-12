@@ -1,3 +1,5 @@
+using Random
+
 struct ParticleSwarm{Tl,Tu} <: ZerothOrderOptimizer
     lower::Tl
     upper::Tu
