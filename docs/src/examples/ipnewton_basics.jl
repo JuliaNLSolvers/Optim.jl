@@ -52,7 +52,8 @@ end;
 # To solve a constrained optimization problem we call the `optimize`
 # method
 # ``` julia
-# optimize(d::AbstractObjective, constraints::AbstractConstraints, initial_x::Tx, method::ConstrainedOptimizer, options::Options)
+# optimize(d::AbstractObjective, constraints::AbstractConstraints,
+#          initial_x::Tx, method::ConstrainedOptimizer, options::Options)
 # ```
 
 # We can create instances of `AbstractObjective` and

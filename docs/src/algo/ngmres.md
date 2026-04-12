@@ -34,7 +34,7 @@ and proposes an accelerated step on a subspace spanned by the previous
 `wmax` iterates.
 
 - N-GMRES accelerates based on a minimization of an approximation to the $\ell_2$ norm of the
-gradient.
+  gradient.
 - O-ACCEL accelerates based on a minimization of a n approximation to the objective.
 
 N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
