@@ -4,13 +4,13 @@ To show how the Optim package can be used, we minimize the
 a classical test problem for numerical optimization. We'll assume that you've already
 installed the Optim package using Julia's package manager.
 First, we load Optim and define the Rosenbrock function:
-```jl
+```julia
 using Optim
 f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 ```
 Once we've defined this function, we can find the minimizer (the input that minimizes the objective) and the minimum (the value of the objective at the minimizer) using any of our favorite optimization algorithms. With a function defined,
 we just specify an initial point `x` and call `optimize` with a starting point `x0`:
-```jl
+```julia
 x0 = [0.0, 0.0]
 optimize(f, x0)
 ```
@@ -18,12 +18,12 @@ optimize(f, x0)
 
 Optim will default to using the Nelder-Mead method in the multivariate case, as we did not provide a gradient. This can also
 be explicitly specified using:
-```jl
+```julia
 optimize(f, x0, NelderMead())
 ```
 Other solvers are available. Below, we use L-BFGS, a quasi-Newton method that requires a gradient.
 If we pass `f` alone, Optim will construct an approximate gradient for us using central finite differencing:
-```jl
+```julia
 optimize(f, x0, LBFGS())
 ```
 For better performance and greater precision, you can pass your own gradient function. If your objective is written in all Julia code with no special calls to external (that is non-Julia) libraries, you can also use automatic differentiation, by using the `autodiff` keyword and setting it to `AutoForwardDiff()`:
@@ -33,28 +33,28 @@ optimize(f, x0, LBFGS(); autodiff = AutoForwardDiff())
 ```
 
 For the Rosenbrock example, the analytical gradient can be shown to be:
-```jl
+```julia
 function g!(G, x)
     G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
     G[2] = 200.0 * (x[2] - x[1]^2)
 end
 ```
 Note, that the functions we're using to calculate the gradient (and later the Hessian `h!`) of the Rosenbrock function mutate a fixed-sized storage array, which is passed as an additional argument called `G` (or `H` for the Hessian) in these examples. By mutating a single array over many iterations, this style of function definition removes the sometimes considerable costs associated with allocating a new array during each call to the `g!` or `h!` functions. If you prefer to have your gradients simply accept an `x`, you can still use `optimize` by setting the `inplace` keyword to `false`:
-```jl
+```julia
 optimize(f, g, x0; inplace = false)
 ```
 where `g` is a function of `x` only.
 
 Returning to our in-place version, you simply pass `g!` together with `f` from before to use the gradient:
-```jl
+```julia
 optimize(f, g!, x0, LBFGS())
 ```
 For some methods, like simulated annealing, the gradient will be ignored:
-```jl
+```julia
 optimize(f, g!, x0, SimulatedAnnealing())
 ```
 In addition to providing gradients, you can provide a Hessian function `h!` as well. In our current case this is:
-```jl
+```julia
 function h!(H, x)
     H[1, 1] = 2.0 - 400.0 * x[2] + 1200.0 * x[1]^2
     H[1, 2] = -400.0 * x[1]
@@ -63,11 +63,11 @@ function h!(H, x)
 end
 ```
 Now we can use Newton's method for optimization by running:
-```jl
+```julia
 optimize(f, g!, h!, x0)
 ```
 Which defaults to `Newton()` since a Hessian function was provided. Like gradients, the Hessian function will be ignored if you use a method that does not require it:
-```jl
+```julia
 optimize(f, g!, h!, x0, LBFGS())
 ```
 Note that Optim will not generate approximate Hessians using finite differencing
@@ -78,7 +78,7 @@ exact Hessians.
 ## Box Constrained Optimization
 
 A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:
-```jl
+```julia
 lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
@@ -87,7 +87,7 @@ results = optimize(f, g!, lower, upper, initial_x, Fminbox(inner_optimizer))
 ```
 
 This performs optimization with a barrier penalty, successively scaling down the barrier coefficient and using the chosen `inner_optimizer` (`GradientDescent()` above) for convergence at each step. To change algorithm specific options, such as the line search algorithm, specify it directly in the `inner_optimizer` constructor:
-```
+```julia
 lower = [1.25, -2.1]
 upper = [Inf, Inf]
 initial_x = [2.0, 2.0]
@@ -120,12 +120,12 @@ results = optimize(f, g!, h!, lower, upper, initial_x, IPNewton())
 
 Minimization of univariate functions without derivatives is available through
 the `optimize` interface:
-```jl
+```julia
 optimize(f, lower, upper, method; kwargs...)
 ```
 Notice the lack of initial `x`. A specific example is the following quadratic
 function.
-```jl
+```julia-repl
 julia> f_univariate(x) = 2x^2+3x+1
 f_univariate (generic function with 1 method)
 
@@ -148,9 +148,9 @@ which is one out of two available methods:
 * Golden section search, available with `GoldenSection()`.
 
 If we want to manually specify this method, we use the usual syntax as for multivariate optimization.
-```jl
-    optimize(f, lower, upper, Brent(); kwargs...)
-    optimize(f, lower, upper, GoldenSection(); kwargs...)
+```julia
+optimize(f, lower, upper, Brent(); kwargs...)
+optimize(f, lower, upper, GoldenSection(); kwargs...)
 ```
 
 Keywords are used to set options for this special type of optimization. In addition to the `iterations`, `store_trace`, `show_trace`, `show_warnings`, and `extended_trace` options, the following options are also available:
@@ -162,15 +162,15 @@ Keywords are used to set options for this special type of optimization. In addit
 After we have our results in `res`, we can use the API for getting optimization results.
 This consists of a collection of functions. They are not exported, so they have to be prefixed by `Optim.`.
 Say we do the following optimization:
-```jl
+```julia
 res = optimize(x->dot(x,[1 0. 0; 0 3 0; 0 0 1]*x), zeros(3))
 ```
  If we can't remember what method we used, we simply use
-```jl
+```julia
 summary(res)
 ```
 which will return `"Nelder Mead"`. A bit more useful information is the minimizer and minimum of the objective functions, which can be found using
-```jlcon
+```julia-repl
 julia> Optim.minimizer(res)
 3-element Array{Float64,1}:
  -0.499921

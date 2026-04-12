@@ -38,7 +38,7 @@ res_hz = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_hz
 ```
 
 This gives the result
-``` julia
+```text
  * Algorithm: Newton's Method
  * Starting Point: [0.0,0.0]
  * Minimizer: [0.9999999999999994,0.9999999999999989]
@@ -59,13 +59,13 @@ This gives the result
 ```
 
 Now we can try `Newton` with the More-Thuente line search:
-``` julia
+```julia
 algo_mt = Newton(;alphaguess = LineSearches.InitialStatic(), linesearch = LineSearches.MoreThuente())
 res_mt = Optim.optimize(prob.f, prob.g!, prob.h!, prob.initial_x, method=algo_mt)
 ```
 
 This gives the following result, reducing the number of function and gradient calls:
-``` julia
+```text
 Results of Optimization Algorithm
  * Algorithm: Newton's Method
  * Starting Point: [0.0,0.0]

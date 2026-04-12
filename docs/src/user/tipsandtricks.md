@@ -10,7 +10,7 @@ input argument to the function we want to minimize, call it `sqerror`.
 The problem is that we want to optimize a function `sqerror` that really depends
 on three inputs, and two of them are constant throughout the optimization procedure.
 To do this, we need to define the variables `x` and `y`
-```jl
+```julia
 x = [1.0, 2.0, 3.0]
 y = 1.0 .+ 2.0 .* x .+ [-0.3, 0.3, -0.1]
 ```
@@ -26,12 +26,12 @@ function sqerror(betas, X, Y)
 end
 ```
 and then optimize the following anonymous function
-```jl
+```julia
 res = optimize(b -> sqerror(b, x, y), [0.0, 0.0])
 ```
 Alternatively, we can define a closure `sqerror(betas)` that is aware of the variables we
 just defined
-```jl
+```julia
 function sqerror(betas)
     err = 0.0
     for i in 1:length(x)
@@ -42,7 +42,7 @@ function sqerror(betas)
 end
 ```
 We can then optimize the `sqerror` function just like any other function
-```jl
+```julia
 res = optimize(sqerror, [0.0, 0.0])
 ```
 
@@ -110,7 +110,7 @@ Rosenbrock function in dimension 5000, see [SROSENBR](ftp://ftp.numerical.rl.ac.
 Below, we use the gradients and objective functions from [mastsif](http://www.cuter.rl.ac.uk/Problems/mastsif.shtml) through [CUTEst.jl](https://github.com/JuliaSmoothOptimizers/CUTEst.jl).
 We only show the first five iterations of an attempt to minimize the function using
 Gradient Descent.
-```jlcon
+```julia-repl
 julia> @time optimize(f, initial_x, GradientDescent(),
                       Optim.Options(show_trace=true, iterations = 5))
 Iter     Function value   Gradient norm
@@ -259,7 +259,7 @@ optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_ti
 It will try to predict the elapsed time after the next iteration is over, and stop now
 if it is expected to exceed the limit of 13 seconds. Running it, we get something like
 the following output
-```jlcon
+```julia-repl
 julia> optimize(very_slow, zeros(2), NelderMead(), Optim.Options(callback = advanced_time_control))
  * Iteration:       0
  * Time so far:     2.219298839569092

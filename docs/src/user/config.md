@@ -82,7 +82,7 @@ If you specify `outer_iterations = 10` and `iterations = 100`, the outer algorit
 #### Example usage
 We currently recommend the statically dispatched interface by using the `Optim.Options`
 constructor:
-```jl
+```julia-repl
 res = optimize(f, g!,
                [0.0, 0.0],
                GradientDescent(),
@@ -93,7 +93,7 @@ res = optimize(f, g!,
                              show_warnings = true))
 ```
 Another interface is also available, based directly on keywords:
-```jl
+```julia-repl
 res = optimize(f, g!,
                [0.0, 0.0],
                method = GradientDescent(),
