@@ -160,9 +160,7 @@ Results of Optimization Algorithm
 ```
 
 ## References
-[1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
-[2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
-[3] Riseth. Objective acceleration for unconstrained optimization. 2018.
+
 ```@bibliography
 sterck2013
 washio1997

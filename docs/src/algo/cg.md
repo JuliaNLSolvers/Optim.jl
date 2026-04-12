@@ -72,8 +72,6 @@ We see that for this objective and starting point, `ConjugateGradient()` require
 fewer gradient evaluations to reach convergence.
 
 ## References
-- W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
-- W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
 
 ```@bibliography
 hager2006
