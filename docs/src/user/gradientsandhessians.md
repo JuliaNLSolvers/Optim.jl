@@ -7,7 +7,7 @@ This results in the fastest run times, but requires the user to perform the ofte
 To use analytic derivatives, simply pass `g!` and `h!` functions to `optimize`.
 
 ## Finite differences
-This uses the functionality in [DiffEqDiffTools.jl](https://github.com/JuliaDiffEq/DiffEqDiffTools.jl) to compute gradients and Hessians through central finite differences: ``f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}``. For a ``\mathbb{R}^N \to \mathbb{R}`` objective function ``f``, this requires ``2N`` evaluations of ``f``. It is therefore efficient in low dimensions but slow when ``N`` is large. It is also inaccurate: ``h`` is chosen equal to ``\epsilon^{1/3}`` where ``\epsilon`` is the machine epsilon (about ``10^{-16}`` for `Float64`) to balance the truncation and rounding errors, resulting in an error of ``\epsilon^{2/3}`` (about ``10^{-11}`` for `Float64`) for the derivative.
+This uses the functionality in [FiniteDiff.jl](https://github.com/JuliaDiff/FiniteDiff.jl) to compute gradients and Hessians through central finite differences: ``f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}``. For a ``\mathbb{R}^N \to \mathbb{R}`` objective function ``f``, this requires ``2N`` evaluations of ``f``. It is therefore efficient in low dimensions but slow when ``N`` is large. It is also inaccurate: ``h`` is chosen equal to ``\epsilon^{1/3}`` where ``\epsilon`` is the machine epsilon (about ``10^{-16}`` for `Float64`) to balance the truncation and rounding errors, resulting in an error of ``\epsilon^{2/3}`` (about ``10^{-11}`` for `Float64`) for the derivative.
 
 Finite differences are on by default if gradients and Hessians are not supplied to the `optimize` call.
 
