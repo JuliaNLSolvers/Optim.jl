@@ -1,5 +1,5 @@
 # generate examples
-import Literate
+import Literate: Literate, CommonMarkFlavor, DocumenterFlavor
 
 # TODO: Remove items from `SKIPFILE` as soon as they run on the latest
 # stable `Optim` (or other dependency)
@@ -17,7 +17,7 @@ for example in filter!(x -> endswith(x, ".jl"), readdir(EXAMPLEDIR))
         input,
         GENERATEDDIR,
         postprocess = mdpost,
-        documenter = !(example in ONLYSTATIC),
+        flavor = example in ONLYSTATIC ? CommonMarkFlavor() : DocumenterFlavor(),
     )
     Literate.notebook(input, GENERATEDDIR, execute = !(example in ONLYSTATIC))
 end
