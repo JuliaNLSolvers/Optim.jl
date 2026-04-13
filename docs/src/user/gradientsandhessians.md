@@ -7,7 +7,7 @@ This results in the fastest run times, but requires the user to perform the ofte
 To use analytic derivatives, simply pass `g!` and `h!` functions to `optimize`.
 
 ## Finite differences
-This uses the functionality in [DiffEqDiffTools.jl](https://github.com/JuliaDiffEq/DiffEqDiffTools.jl) to compute gradients and Hessians through central finite differences: ``f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}``. For a ``\mathbb{R}^N \to \mathbb{R}`` objective function ``f``, this requires ``2N`` evaluations of ``f``. It is therefore efficient in low dimensions but slow when ``N`` is large. It is also inaccurate: ``h`` is chosen equal to ``\epsilon^{1/3}`` where ``\epsilon`` is the machine epsilon (about ``10^{-16}`` for `Float64`) to balance the truncation and rounding errors, resulting in an error of ``\epsilon^{2/3}`` (about ``10^{-11}`` for `Float64`) for the derivative.
+This uses the functionality in [FiniteDiff.jl](https://github.com/JuliaDiff/FiniteDiff.jl) to compute gradients and Hessians through central finite differences: ``f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}``. For a ``\mathbb{R}^N \to \mathbb{R}`` objective function ``f``, this requires ``2N`` evaluations of ``f``. It is therefore efficient in low dimensions but slow when ``N`` is large. It is also inaccurate: ``h`` is chosen equal to ``\epsilon^{1/3}`` where ``\epsilon`` is the machine epsilon (about ``10^{-16}`` for `Float64`) to balance the truncation and rounding errors, resulting in an error of ``\epsilon^{2/3}`` (about ``10^{-11}`` for `Float64`) for the derivative.
 
 Finite differences are on by default if gradients and Hessians are not supplied to the `optimize` call.
 
@@ -25,9 +25,7 @@ Each of these choices requires loading the `ADTypes` package and the correspondi
 
 Let us consider the Rosenbrock example again.
 ```julia
-function f(x)
-    return (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
-end
+f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 
 function g!(G, x)
     G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
@@ -47,20 +45,19 @@ Let us see if BFGS and Newton's Method can solve this problem with the functions
 provided.
 ```jlcon
 julia> Optim.minimizer(optimize(f, g!, h!, initial_x, BFGS()))
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  1.0
  1.0
 
 julia> Optim.minimizer(optimize(f, g!, h!, initial_x, Newton()))
-
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  1.0
  1.0
 ```
 This is indeed the case. Now let us use finite differences for BFGS.
 ```jlcon
 julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  1.0
  1.0
 ```
@@ -71,12 +68,12 @@ differentiation by using the `autodiff = AutoForwardDiff()` keyword.
 julia> using ADTypes: AutoForwardDiff
 
 julia> Optim.minimizer(optimize(f, initial_x, BFGS(); autodiff = AutoForwardDiff()))
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  1.0
  1.0
 
 julia> Optim.minimizer(optimize(f, initial_x, Newton(); autodiff = AutoForwardDiff()))
-2-element Array{Float64,1}:
+2-element Vector{Float64}:
  1.0
  1.0
 ```

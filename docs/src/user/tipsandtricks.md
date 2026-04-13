@@ -49,7 +49,7 @@ res = optimize(sqerror, [0.0, 0.0])
 ## Avoid repeating computations
 Say you are optimizing a function
 ```julia
-f(x) = x[1]^2+x[2]^2
+f(x) = x[1]^2 + x[2]^2
 g!(storage, x) = copyto!(storage, [2x[1], 2x[2]])
 ```
 In this situation, no calculations from `f` could be reused in `g!`. However, sometimes
@@ -186,13 +186,11 @@ f(x    ) =  @timeit to "f"  prob.f(x)
 g!(x, g) =  @timeit to "g!" prob.g!(x, g)
 h!(x, h) =  @timeit to "h!" prob.h!(x, h)
 
-begin
 reset_timer!(to)
 @timeit to "Trust Region" begin
     res = Optim.optimize(f, g!, h!, prob.initial_x, NewtonTrustRegion())
 end
 show(to; allocations = false)
-end
 ```
 We see that the time is actually *not* spent in our provided functions, but most
 of the time is spent in the code for the trust region method.

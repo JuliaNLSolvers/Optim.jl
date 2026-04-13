@@ -193,7 +193,7 @@ parameters = Optim.minimizer(opt)
 
 #md # !!! note
 #md #     Fieldnames for all of the quantities can be obtained with the following command:
-#md #     fieldnames(opt)
+#md #     `fieldnames(opt)`
 #md #
 
 # In order to obtain the correct Hessian matrix, we have to "push" the
