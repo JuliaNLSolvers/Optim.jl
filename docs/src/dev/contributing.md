@@ -20,7 +20,7 @@ the iterative procedure, an `initial_state` that initializes such a state, and  
 that does the actual work. Say you want to contribute a solver called
 `Minim`, then your `src/minim.jl` file would look something like
 
-```
+```julia
 struct Minim{IF, F<:Function, T} <: Optimizer
     alphaguess!::IF
     linesearch!::F

@@ -45,7 +45,7 @@ initial_x = zeros(2)
 ```
 Let us see if BFGS and Newton's Method can solve this problem with the functions
 provided.
-```jlcon
+```julia-repl
 julia> Optim.minimizer(optimize(f, g!, h!, initial_x, BFGS()))
 2-element Array{Float64,1}:
  1.0
@@ -58,7 +58,7 @@ julia> Optim.minimizer(optimize(f, g!, h!, initial_x, Newton()))
  1.0
 ```
 This is indeed the case. Now let us use finite differences for BFGS.
-```jlcon
+```julia-repl
 julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 2-element Array{Float64,1}:
  1.0
@@ -67,7 +67,7 @@ julia> Optim.minimizer(optimize(f, initial_x, BFGS()))
 Still looks good. Returning to automatic differentiation, let us try both solvers using this
 method.  We enable [forward mode](https://github.com/JuliaDiff/ForwardDiff.jl) automatic
 differentiation by using the `autodiff = AutoForwardDiff()` keyword.
-```jlcon
+```julia-repl
 julia> using ADTypes: AutoForwardDiff
 
 julia> Optim.minimizer(optimize(f, initial_x, BFGS(); autodiff = AutoForwardDiff()))

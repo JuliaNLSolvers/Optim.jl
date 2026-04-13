@@ -33,7 +33,7 @@ use second-order optimization, convert to real variables.
 We show how to minimize a quadratic plus quartic function with
 the `LBFGS` optimization algorithm.
 
-```jl
+```julia
 using Random
 Random.seed!(0) # Set the seed for reproducibility
 # μ is the strength of the quartic. μ = 0 is just a quadratic problem
@@ -53,7 +53,7 @@ res = optimize(fcomplex, gcomplex!, x0, LBFGS())
 ```
 
 The output of the optimization is
-```
+```text
 Results of Optimization Algorithm
  * Algorithm: L-BFGS
  * Starting Point: [0.48155603952425174 - 1.477880724921868im,-0.3219431528959694 - 0.18542418173298963im, ...]
@@ -75,11 +75,11 @@ Results of Optimization Algorithm
 
 Similarly, with `ConjugateGradient`.
 
-``` julia
+```julia
 res = optimize(fcomplex, gcomplex!, x0, ConjugateGradient())
 ```
 
-```
+```text
 Results of Optimization Algorithm
  * Algorithm: Conjugate Gradient
  * Starting Point: [0.48155603952425174 - 1.477880724921868im,-0.3219431528959694 - 0.18542418173298963im, ...]
@@ -103,11 +103,11 @@ Results of Optimization Algorithm
 The finite difference methods used by `Optim` support real functions
 with complex inputs.
 
-``` julia
+```julia
 res = optimize(fcomplex, x0, LBFGS())
 ```
 
-```
+```text
 Results of Optimization Algorithm
  * Algorithm: L-BFGS
  * Starting Point: [0.48155603952425174 - 1.477880724921868im,-0.3219431528959694 - 0.18542418173298963im, ...]
