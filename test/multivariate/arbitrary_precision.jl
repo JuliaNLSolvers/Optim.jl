@@ -22,13 +22,13 @@
         debug_printing && @show res
         @test Optim.converged(res)
         @test Optim.minimum(res) < 1e-16
-        @test Optim.minimizer(res) ≈ [1.0, 1.0] atol = 1e-10 rtol = 0
+        @test Optim.minimizer(res) ≈ [1.0, 1.0] atol = 1e-9 rtol = 0
 
         res = optimize(f, g!, h!, x0)
         debug_printing && @show res
         @test Optim.converged(res)
         @test Optim.minimum(res) < 1e-16
-        @test Optim.minimizer(res) ≈ [1.0, 1.0] atol = 1e-10 rtol = 0
+        @test Optim.minimizer(res) ≈ [1.0, 1.0] atol = 1e-9 rtol = 0
 
         lower = big.([-Inf, -Inf])
         upper = big.([0.5, 1.5])

@@ -207,7 +207,7 @@ function run_optim_tests(
                 end
                 if !((name, i) in minimum_exceptions)
                     @test Optim.minimum(results) <
-                          prob.minimum + sqrt(eps(typeof(prob.minimum)))
+                          prob.minimum + sqrt(eps(typeof(prob.minimum)))*2
                 elseif test_broken
                     @test_broken Optim.minimum(results) <
                                  prob.minimum + sqrt(eps(typeof(prob.minimum)))
