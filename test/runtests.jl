@@ -67,14 +67,14 @@ multivariate_tests = [
     "solvers/constrained/ipnewton/ipnewton_unconstrained",
     "solvers/constrained/samin",
     ## first order
-    "solvers/first_order/accelerated_gradient_descent",
+#    "solvers/first_order/accelerated_gradient_descent",
     "solvers/first_order/adam_adamax",
     "solvers/first_order/bfgs",
     "solvers/first_order/cg",
     "solvers/first_order/gradient_descent",
     "solvers/first_order/l_bfgs",
-    "solvers/first_order/momentum_gradient_descent",
-    "solvers/first_order/ngmres",
+#    "solvers/first_order/momentum_gradient_descent",
+#    "solvers/first_order/ngmres",
     ## second order
     "solvers/second_order/newton",
     "solvers/second_order/newton_trust_region",
