@@ -60,4 +60,47 @@
         @test Optim.converged(res)
         @test Optim.minimum(res) ≈ 1.0
     end
+
+    @testset "Access beta from callback" begin
+        # Access beta from callback and check we can apply the same update rule as CG
+
+        f(x) = 100 - x[1] + exp(x[1] - 100)
+        g!(grad, x) = grad[1] = -1 + exp(x[1] - 100)
+        x0 = [0.0]
+        x_global = copy(x0)
+        iter_global = 0
+        g_k = zeros(1)
+        s_k = zeros(1)
+        g!(g_k, x0)
+        beta_k = 0.0
+
+        function my_callback(state)
+            if iter_global == 0
+                @test hasproperty(state, :beta)
+                @test state.beta == 0
+                g_k[1] = state.pg[1]
+                beta_k = state.beta
+                s_k[1] = -g_k[1] + beta_k * s_k[1]
+            else
+                x_global[1] += state.alpha * s_k[1]
+                g_k[1] = state.g_x[1]
+                beta_k = state.beta
+                s_k[1] = -g_k[1] + beta_k * s_k[1]
+            end
+            iter_global += 1
+            return false
+        end
+
+        res = optimize(
+            f,
+            g!,
+            x0,
+            ConjugateGradient(
+                alphaguess = LineSearches.InitialStatic(alpha = 1.0),
+                linesearch = LineSearches.BackTracking(),
+            ),
+            Optim.Options(iterations = 3, callback = my_callback),
+        )
+        @test Optim.minimizer(res)[1] ≈ x_global[1]
+    end
 end
