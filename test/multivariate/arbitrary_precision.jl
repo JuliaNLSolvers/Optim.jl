@@ -9,7 +9,9 @@
 
     @testset "BigFloat" begin
         x0 = big.(prob.initial_x)
-        res = optimize(f, x0)
+        res = optimize(f, x0, Optim.Options(
+                g_abstol = sqrt(eps(big(1.0))),
+            ))
         debug_printing && @show res
         @test Optim.converged(res)
         @test Optim.minimum(res) < 1e-8
