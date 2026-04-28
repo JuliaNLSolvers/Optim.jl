@@ -14,6 +14,7 @@
             ("Penalty Function I", 2),
         ),
         iteration_exceptions = (
+            ("Beale", 10000),
             ("Rosenbrock", 10000),
             ("Extended Rosenbrock", 12000),
             ("Fletcher-Powell", 10000),
