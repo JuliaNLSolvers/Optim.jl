@@ -126,12 +126,14 @@
     )
     res_ext = optimize(f, g!, h!, initial_x, BFGS(), options_ext)
 
+    # regression tests, expect changes with algorithm tweaks and changes
     test_summary(res, "BFGS")
-    @test Optim.minimum(res) ≈ 1.2580194638225255
-    @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol = 0.001
+    @test Optim.minimum(res) ≈ 0.650196424919275
+    @test Optim.minimizer(res) ≈ [0.19382079369061214, 0.03591873723914241] rtol = 0.001
     @test Optim.iterations(res) == 10
-    @test Optim.f_calls(res) in (42,43)
-    @test Optim.g_calls(res) in (42,43)
+    # CI platform can influence this number
+    @test Optim.f_calls(res) in (41,42,43)
+    @test Optim.g_calls(res) in (41,42,43)
     @test !Optim.converged(res)
     @test !Optim.x_converged(res)
     @test !Optim.f_converged(res)

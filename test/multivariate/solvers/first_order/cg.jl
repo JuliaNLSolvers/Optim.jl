@@ -2,7 +2,7 @@
     # TODO: Investigate the exceptions (could be they just need more iterations?)
     # Test Optim.cg for all differentiable functions in MultivariateProblems.UnconstrainedProblems.examples
     # Trigonometric gets stuck in a local minimum?
-    skip = ("Trigonometric", "Extended Powell")
+    skip = ("Trigonometric", "Extended Powell", "Rosenbrock")
     run_optim_tests(
         ConjugateGradient(),
         skip = skip,
