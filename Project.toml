@@ -67,4 +67,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 test = ["Test", "Aqua", "Distributions", "ExplicitImports", "ForwardDiff", "JET", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "ReverseDiff"]
 
 [sources]
-LineSearches = {url = "https://github.com/JuliaNLSolvers/LineSearches.jl", rev = "master"}
+LineSearches = {url = "https://github.com/JuliaNLSolvers/LineSearches.jl", rev = "pkm/hzstop"}
