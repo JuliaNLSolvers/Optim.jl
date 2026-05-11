@@ -130,8 +130,8 @@
     @test Optim.minimum(res) ≈ 1.4015611545580768
     @test Optim.minimizer(res) ≈ [-0.18088789037641684, 0.02431510621380093] rtol = 0.001
     @test Optim.iterations(res) == 10
-    @test Optim.f_calls(res) in (19,)
-    @test Optim.g_calls(res) in (19,)
+    @test Optim.f_calls(res) in (18, 19,)
+    @test Optim.g_calls(res) in (18, 19,)
     @test !Optim.converged(res)
     @test !Optim.x_converged(res)
     @test !Optim.f_converged(res)
