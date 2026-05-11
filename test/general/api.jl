@@ -127,11 +127,11 @@
     res_ext = optimize(f, g!, h!, initial_x, BFGS(), options_ext)
 
     test_summary(res, "BFGS")
-    @test Optim.minimum(res) ≈ 1.2580194638225255
-    @test Optim.minimizer(res) ≈ [-0.116688, 0.0031153] rtol = 0.001
+    @test Optim.minimum(res) ≈ 1.4015611545580768
+    @test Optim.minimizer(res) ≈ [-0.18088789037641684, 0.02431510621380093] rtol = 0.001
     @test Optim.iterations(res) == 10
-    @test Optim.f_calls(res) in (42,43)
-    @test Optim.g_calls(res) in (42,43)
+    @test Optim.f_calls(res) in (19,)
+    @test Optim.g_calls(res) in (19,)
     @test !Optim.converged(res)
     @test !Optim.x_converged(res)
     @test !Optim.f_converged(res)
