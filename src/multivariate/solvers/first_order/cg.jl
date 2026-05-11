@@ -102,6 +102,7 @@ mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
     py::Tx
     pg::Tx
     s::Tx
+    beta::T
     @add_linesearch_fields()
 end
 
@@ -162,6 +163,7 @@ function initial_state(method::ConjugateGradient, ::Options, d, x0)
         0 .* (x0), # Preconditioned intermediate value in CG calculation
         pg, # Maintain the preconditioned gradient in pg
         -pg, # Maintain current search direction in state.s
+        oftype(f_x, 0), # Store beta in state.beta
         @initial_linesearch()...,
     )
 end
@@ -216,6 +218,7 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
+    state.beta = beta
     state.s .= beta .* state.s .- state.pg
     project_tangent!(method.manifold, state.s, state.x)
     return !lssuccess # break on linesearch error

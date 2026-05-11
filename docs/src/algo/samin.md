@@ -28,7 +28,7 @@ hard constraints on `x`.
 
 ## Example
 This example shows a successful minimization:
-```julia
+```julia-repl
 julia> using Optim, OptimTestProblems
 
 julia> prob = UnconstrainedProblems.examples["Rosenbrock"];
@@ -67,10 +67,11 @@ Results of Optimization Algorithm
 ## Example
 This example shows an unsuccessful minimization, because the cooling rate,
 rt=0.5, is too rapid:
-```julia
+```julia-repl
 julia> using Optim, OptimTestProblems
 
 julia> prob = UnconstrainedProblems.examples["Rosenbrock"];
+
 julia> res = Optim.optimize(prob.f, fill(-100.0, 2), fill(100.0, 2), prob.initial_x, SAMIN(rt=0.5), Optim.Options(iterations=10^6))
 ================================================================================
 SAMIN results
