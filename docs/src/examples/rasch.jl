@@ -3,7 +3,7 @@
 #-
 #md # !!! tip
 #md #     This example is also available as a Jupyter notebook:
-#md #     [``rasch.ipynb``](@__NBVIEWER_ROOT_URL__examples/generated/rasch.ipynb)
+#md #     [`rasch.ipynb`](@__NBVIEWER_ROOT_URL__examples/generated/rasch.ipynb)
 #-
 using Optim, Random #hide
 #

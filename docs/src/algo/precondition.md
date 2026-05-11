@@ -18,7 +18,7 @@ approximates the Hessian (not the inverse Hessian) in some vague sense.
 Finally, it is possible to update the preconditioner as the state variable `x`
 changes. This is done through  `precondprep` which is passed to the
 optimizers as kw-argument, e.g.,
-```jl
+```julia
    method=ConjugateGradient(P = precond(100), precondprep = (P, x)->copyto!(P, precond(x)))
 ```
 though in this case it would always return the same matrix.
@@ -29,7 +29,7 @@ though in this case it would always return the same matrix.
 ## Example
 Below, we see an example where a function is minimized without and with a preconditioner
 applied.
-```jl
+```julia
 using ForwardDiff, Optim, SparseArrays
 plap(U; n = length(U)) = (n - 1) * sum((0.1 .+ diff(U) .^ 2) .^ 2) - sum(U) / (n - 1)
 plap1(U; n = length(U), dU = diff(U), dW = 4 .* (0.1 .+ dU .^ 2) .* dU) =
@@ -51,7 +51,4 @@ The former optimize call converges at a slower rate than the latter. Looking at 
 The contours are shaped like ellipsoids, but we would rather want them to be circles.
 Using the preconditioner effectively changes the coordinates such that the contours
 becomes less ellipsoid-like. Benchmarking shows that using preconditioning provides
- an approximate speed-up factor of 15 in this 100 dimensional case.
-
-
-## References
+an approximate speed-up factor of 15 in this 100 dimensional case.

@@ -1,9 +1,7 @@
 # Particle Swarm
 ## Constructor
 ```julia
-ParticleSwarm(; lower = [],
-                upper = [],
-                n_particles = 0)
+ParticleSwarm(; lower = [], upper = [], n_particles = 0)
 ```
 
 The constructor takes three keywords:

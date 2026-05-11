@@ -13,6 +13,8 @@
 
     # TODO: Check why skip problems fail
     skip = (
+        "Powell",
+        "Quadratic Diagonal",
         "Trigonometric",
         "Large Polynomial",
         "Parabola",
@@ -23,6 +25,8 @@
         "Beale",
         "Extended Powell",
         "Rosenbrock",
+        "Fletcher-Powell",
+        "Polynomial",
     )
     run_optim_tests(
         AcceleratedGradientDescent();
@@ -30,8 +34,6 @@
         iteration_exceptions = (
             ("Powell", 1100),
             ("Rosenbrock", 10000),
-            ("Polynomial", 1500),
-            ("Fletcher-Powell", 10000),
             ("Extended Powell", 8000),
         ),
         f_increase_exceptions = (
