@@ -51,7 +51,4 @@ The former optimize call converges at a slower rate than the latter. Looking at 
 The contours are shaped like ellipsoids, but we would rather want them to be circles.
 Using the preconditioner effectively changes the coordinates such that the contours
 becomes less ellipsoid-like. Benchmarking shows that using preconditioning provides
- an approximate speed-up factor of 15 in this 100 dimensional case.
-
-
-## References
+an approximate speed-up factor of 15 in this 100 dimensional case.

@@ -85,5 +85,3 @@ Results of Optimization Algorithm
  * Gradient Calls: 17
  * Hessian Calls: 14
 ```
-
-## References

@@ -1,7 +1,7 @@
-## Configurable options
+# Configurable options
 There are several options that simply take on some default values if the user
 doesn't supply anything else than a function (and gradient) and a starting point.
-### Solver options
+## Solver options
 There quite a few different solvers available in Optim, and they are all listed
 below. Notice that the constructors are written without input here, but they
 generally take keywords to tweak the way they work. See the pages describing each
@@ -35,10 +35,10 @@ Special methods for bounded univariate optimization:
 * `Brent()`
 * `GoldenSection()`
 
-### General Options
-In addition to the solver, you can alter the behavior of the Optim package by using the list of keyword below in the `Optim.Options` constructor. 
+## General Options
+In addition to the solver, you can alter the behavior of the Optim package by using the list of keyword below in the `Optim.Options` constructor.
 
-#### Termination
+### Termination
 * `x_abstol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `x_reltol`: Relative tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `f_abstol`: Absolute tolerance in changes of the objective value. Defaults to `0.0`.
@@ -55,9 +55,9 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 
 !!! tip "Disabling a termination criterion"
     If the `x_abstol`, `x_reltol`, `f_abstol`, `f_reltol`, `g_tol`, or `time_limit` tolerances are set to `NaN` all comparisons will be false internally, and this fact can be used to turn off the check. For example, `x_reltol` defaults to `0`. This does not mean that the check is turned off it only means that we stop at exactly zero change. However, if we set it to `NaN` specifically, the check of the termination criterion is always false and as such we will never stop due to any value of the infinity norm of the vector of relative changes.
-    
 
-#### Progress printing and storage
+
+### Progress printing and storage
 * `store_trace`: Should a trace of the optimization algorithm's state be stored? Defaults to `false`.
 * `show_trace`: Should a trace of the optimization algorithm's state be shown on `stdout`? Defaults to `false`.
 * `extended_trace`: Save additional information. Solver dependent. Defaults to `false`.
@@ -66,7 +66,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `show_every`: Trace output is printed every `show_every`th iteration.
 * `trace_simplex`: Include the full simplex in the trace for `NelderMead`. Defaults to `false`.
 
-#### Box constrained optimization (`Fminbox`)
+### Box constrained optimization (`Fminbox`)
 Box constrained optimization has additional keywords to alter the behavior of the outer solver:
 
 * `outer_x_abstol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
@@ -79,7 +79,7 @@ Box constrained optimization has additional keywords to alter the behavior of th
 
 If you specify `outer_iterations = 10` and `iterations = 100`, the outer algorithm will run for `10` iterations, and for each outer iteration the inner algorithm will run for `100` iterations.
 
-#### Example usage
+### Example usage
 We currently recommend the statically dispatched interface by using the `Optim.Options`
 constructor:
 ```jl

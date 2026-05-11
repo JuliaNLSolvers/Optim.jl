@@ -8,19 +8,20 @@ first-order methods.
 The gradient of a complex-to-real function is defined as the only
 vector ``g`` such that
 ```math
-f(x+h) = f(x) + \mbox{Re}(g' * h) + \mathcal{O}(h^2).
+f(x+h) = f(x) + \operatorname{Re}(g' * h) + \mathcal{O}(h^2).
 ```
 This is sometimes written
 ```math
-g = \frac{df}{d(z*)} = \frac{df}{d(\mbox{Re}(z))} + i \frac{df}{d(\mbox{Im(z)})}.
+g = \frac{df}{dz^*} = \frac{df}{da} + i \frac{df}{db}.
 ```
+where ``z = a + bi``.
 
 The gradient of a ``\mathbb{C}^n \to \mathbb{R}`` function is a
 ``\mathbb{C}^n \to \mathbb{C}^n`` map. Even if it is differentiable when
 seen as a function of ``\mathbb{R}^{2n}`` to ``\mathbb{R}^{2n}``, it
 might not be
-complex-differentiable. For instance, take ``f(z) = \mbox{Re}(z)^2``.
-Then ``g(z) = 2 \mbox{Re}(z)``, which is not complex-differentiable
+complex-differentiable. For instance, take ``f(z) = \operatorname{Re}(z)^2``.
+Then ``g(z) = 2 \operatorname{Re}(z)``, which is not complex-differentiable
 (holomorphic). Therefore,
 the Hessian of a ``\mathbb{C}^n \to \mathbb{R}`` function is in
 general not well-defined as a ``n \times n`` complex matrix (only as a
