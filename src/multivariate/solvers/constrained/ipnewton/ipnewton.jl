@@ -25,7 +25,7 @@ promote_objtype(method::IPNewton, x, autodiff::ADTypes.AbstractADType, inplace::
 """
 # Interior-point Newton
 ## Constructor
-```jl
+```julia-repl
 IPNewton(; linesearch::Function = Optim.backtrack_constrained_grad,
          μ0::Union{Symbol,Number} = :auto,
          show_linesearch::Bool = false)

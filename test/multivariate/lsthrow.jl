@@ -22,7 +22,10 @@
         @test optimize(
             MVP.objective(prob),
             prob.initial_x,
-            optimizer(alphaguess = LineSearches.InitialPrevious(), linesearch = hz),
+            optimizer(
+                alphaguess = LineSearches.InitialStatic(; alpha = 1000.0),
+                linesearch = hz,
+            ),
         ).stopped_by.ls_failed
     end
 end

@@ -14,7 +14,7 @@ abstract type ZerothOrderState <: AbstractOptimizerState end
 Specify configurable optimizer options `opts...`. Unspecified options are set to the default
 values below (values 0 and NaN indicate unlimited):
 
-```
+```julia
 x_abstol::Real = 0.0,
 x_reltol::Real = 0.0,
 f_abstol::Real = 0.0,
@@ -45,15 +45,15 @@ time_limit = NaN
 It is also possible to pass a previously defined `Options` argument as the first argument,
 i.e., as:
 
-```jl
-    Options(inherit_options; opts...)
+```julia
+Options(inherit_options; opts...)
 ```
 
 Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
 can be used to modify a subset of options in a previously defined `Options` variable.
 
 For more information on individual options, see the documentation at
-http://julianlsolvers.github.io/Optim.jl/stable/#user/config/.
+<http://julianlsolvers.github.io/Optim.jl/stable/user/config>.
 """
 struct Options{T, TCallback}
     x_abstol::T
