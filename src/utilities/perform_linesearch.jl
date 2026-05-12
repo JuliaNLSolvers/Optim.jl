@@ -67,6 +67,7 @@ function perform_linesearch!(state, method, d)
     # On failure, reset the search direction and retry once
     if !lssuccess && reset_search_direction!(state, method)
         dphi_0 = real(dot(state.g_x, state.s))
+        method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
         lssuccess = try
             state.alpha, ϕalpha =
                 method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
