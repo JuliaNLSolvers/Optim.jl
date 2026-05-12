@@ -27,7 +27,6 @@
                 linesearch = hz,
             ),
         )
-        @show opt
         @test opt.stopped_by.ls_failed
     end
 end
