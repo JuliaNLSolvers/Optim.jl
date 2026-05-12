@@ -52,7 +52,7 @@ function perform_linesearch!(state, method, d)
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-        true
+        return true
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
@@ -62,23 +62,23 @@ function perform_linesearch!(state, method, d)
                 try
                     state.alpha, ϕalpha =
                         method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-                    true
+                    return true
                 catch ex2
                     if ex2 isa LineSearches.LineSearchException
                         state.alpha = ex2.alpha
-                        false
+                        return false
                     else
                         rethrow()
                     end
                 end
             else
-                false
+                return false
             end
         else
             rethrow()
         end
     end
-
+    @show lssuccess
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)
