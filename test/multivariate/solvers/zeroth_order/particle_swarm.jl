@@ -30,6 +30,25 @@
         options,
     )
     @test norm(Optim.minimizer(res) - [1.0, 1.0]) < 0.1
+
+    local_rng1 = Random.TaskLocalRNG()
+    Random.seed!(local_rng, 12042026)
+    res1 = Optim.optimize(
+        rosenbrock_s,
+        initial_x,
+        ParticleSwarm(lower, upper, n_particles, rng = local_rng1),
+        options,
+    )
+    local_rng2 = Random.TaskLocalRNG()
+    Random.seed!(local_rng, 12042026)
+    res2 = Optim.optimize(
+        rosenbrock_s,
+        initial_x,
+        ParticleSwarm(lower, upper, n_particles, rng = local_rng2),
+        options,
+    )
+    @test Optim.minimizer(res1) == Optim.minimizer(res2)
+
     options = Optim.Options(
         iterations = 10,
         show_trace = true,
