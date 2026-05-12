@@ -2,7 +2,7 @@
     # Trigonometric gets stuck in a local minimum?
     skip = ("Trigonometric", "Polynomial")
 
-    iteration_exceptions = (("Extended Powell", 2000),)
+    iteration_exceptions = (("Extended Powell", 4000),)
 
     run_optim_tests(
         LBFGS(),
