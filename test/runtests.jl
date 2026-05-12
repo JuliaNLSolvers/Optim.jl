@@ -54,6 +54,7 @@ univariate_tests = [
 univariate_tests = map(s -> "./univariate/" * s * ".jl", univariate_tests)
 
 multivariate_tests = [
+    "lsthrow",
     ## optimize
     "optimize/interface",
     "optimize/optimize",
@@ -87,7 +88,6 @@ multivariate_tests = [
     ## other
     "array",
     "extrapolate",
-    "lsthrow",
     "precon",
     "manifolds",
     "complex",
