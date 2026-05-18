@@ -32,6 +32,12 @@ mutable struct AcceleratedGradientDescentState{T,Tx,Tg} <: AbstractOptimizerStat
     y::Tx
     y_previous::Tx
     s::Tx
+    # Trial iterates produced by update_state! / update_fgh!. Committed to
+    # state.x / state.g_x / state.f_x / state.y by accept_step! once validated.
+    x_candidate::Tx
+    y_candidate::Tx
+    g_candidate::Tg
+    f_candidate::T
     @add_linesearch_fields()
 end
 
@@ -57,6 +63,10 @@ function initial_state(
         copy(x0), # Maintain intermediary current state in state.y
         fill!(similar(x0), NaN), # Maintain intermediary state in state.y_previous
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
+        fill!(similar(x0), NaN), # Trial y iterate in state.y_candidate
+        fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
+        oftype(f_x, NaN), # Trial f value in state.f_candidate
         @initial_linesearch()...,
     )
 end
@@ -66,25 +76,57 @@ function update_state!(
     state::AcceleratedGradientDescentState,
     method::AcceleratedGradientDescent,
 )
-    state.iteration += 1
-
     # Search direction is always the negative gradient
     state.s .= .-state.g_x
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Make one move in the direction of the gradient
-    copyto!(state.y_previous, state.y)
-    state.y .= state.x .+ state.alpha .* state.s
-    retract!(method.manifold, state.y)
+    # Propose trial intermediary y (do NOT mutate state.y; accept_step! commits)
+    state.y_candidate .= state.x .+ state.alpha .* state.s
+    retract!(method.manifold, state.y_candidate)
 
-    # Update current position with Nesterov correction
-    scaling = (state.iteration - 1) / (state.iteration + 2)
-    state.x .= state.y .+ scaling .* (state.y .- state.y_previous)
-    retract!(method.manifold, state.x)
+    # Propose trial position with Nesterov correction. iteration is incremented
+    # on accept so the scaling here uses the would-be next iteration index.
+    next_iteration = state.iteration + 1
+    scaling = (next_iteration - 1) / (next_iteration + 2)
+    state.x_candidate .= state.y_candidate .+ scaling .* (state.y_candidate .- state.y)
+    retract!(method.manifold, state.x_candidate)
 
     return !lssuccess # break on linesearch error
+end
+
+function update_fgh!(
+    d,
+    state::AcceleratedGradientDescentState,
+    method::AcceleratedGradientDescent,
+)
+    f_c, g_c = NLSolversBase.value_gradient!(d, state.x_candidate)
+    copyto!(state.g_candidate, g_c)
+    project_tangent!(method.manifold, state.g_candidate, state.x_candidate)
+    state.f_candidate = f_c
+    return nothing
+end
+
+function accept_step!(
+    d,
+    state::AcceleratedGradientDescentState,
+    method::AcceleratedGradientDescent,
+    options,
+)
+    if !isfinite(state.f_candidate) ||
+       !all(isfinite, state.g_candidate) ||
+       !all(isfinite, state.x_candidate) ||
+       !all(isfinite, state.y_candidate)
+        return false
+    end
+    copyto!(state.y_previous, state.y)
+    copyto!(state.y, state.y_candidate)
+    copyto!(state.x, state.x_candidate)
+    copyto!(state.g_x, state.g_candidate)
+    state.f_x = state.f_candidate
+    state.iteration += 1
+    return true
 end
 
 function trace!(

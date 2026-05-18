@@ -46,6 +46,11 @@ mutable struct GradientDescentState{Tx,Tg,T} <: AbstractOptimizerState
     x_previous::Tx
     f_x_previous::T
     s::Tx
+    # Trial iterate produced by update_state! / update_fgh!. Committed to
+    # state.x / state.g_x / state.f_x by accept_step! once validated.
+    x_candidate::Tx
+    g_candidate::Tg
+    f_candidate::T
     @add_linesearch_fields()
 end
 
@@ -85,6 +90,9 @@ function initial_state(
         fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
+        fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
+        oftype(f_x, NaN), # Trial f value in state.f_candidate
         @initial_linesearch()...,
     )
 end
@@ -100,11 +108,33 @@ function update_state!(d, state::GradientDescentState{T}, method::GradientDescen
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Update current position # x = x + alpha * s
-    @. state.x = state.x + state.alpha * state.s
-    retract!(method.manifold, state.x)
+    # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
+    @. state.x_candidate = state.x + state.alpha * state.s
+    retract!(method.manifold, state.x_candidate)
 
     return !lssuccess # break on linesearch error
+end
+
+function update_fgh!(d, state::GradientDescentState, method::GradientDescent)
+    f_c, g_c = NLSolversBase.value_gradient!(d, state.x_candidate)
+    copyto!(state.g_candidate, g_c)
+    project_tangent!(method.manifold, state.g_candidate, state.x_candidate)
+    state.f_candidate = f_c
+    return nothing
+end
+
+function accept_step!(d, state::GradientDescentState, method::GradientDescent, options)
+    if !isfinite(state.f_candidate) ||
+       !all(isfinite, state.g_candidate) ||
+       !all(isfinite, state.x_candidate)
+        return false
+    end
+    # state.x_previous / state.f_x_previous were captured by perform_linesearch!
+    # before the step was proposed, so they already hold the prior accepted values.
+    copyto!(state.x, state.x_candidate)
+    copyto!(state.g_x, state.g_candidate)
+    state.f_x = state.f_candidate
+    return true
 end
 
 function trace!(
