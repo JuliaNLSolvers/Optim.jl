@@ -1,6 +1,6 @@
 @testset "L-BFGS" begin
     # Trigonometric gets stuck in a local minimum?
-    skip = ("Trigonometric", "Polynomial")
+    skip = ("Trigonometric",)
 
     iteration_exceptions = (("Extended Powell", 4000),)
 
