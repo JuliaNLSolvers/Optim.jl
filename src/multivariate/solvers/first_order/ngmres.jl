@@ -398,22 +398,32 @@ function update_state!(
 
         lssuccess =
             perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-        @. state.x = state.x + state.alpha * state.s
-        # Manifold start
-        retract!(method.manifold, state.x)
-        # Manifold stop
+        if lssuccess
+            @. state.x = state.x + state.alpha * state.s
+            # Manifold start
+            retract!(method.manifold, state.x)
+            # Manifold stop
 
-        # TODO: Move these into `nlprecon_post_accelerate!` ?
-        state.nlpreconstate.f_x_previous = state.f_x_previous
-        if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
-            nlprec = method.nlprecon
-            if isdefined(nlprec, :alphaguess!) &&
-               typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
-                nlprec.alphaguess!.dϕ_0_previous[] = method.alphaguess!.dϕ_0_previous[]
+            # TODO: Move these into `nlprecon_post_accelerate!` ?
+            state.nlpreconstate.f_x_previous = state.f_x_previous
+            if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
+                nlprec = method.nlprecon
+                if isdefined(nlprec, :alphaguess!) &&
+                   typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
+                    nlprec.alphaguess!.dϕ_0_previous[] = method.alphaguess!.dϕ_0_previous[]
+                end
             end
+            # Deals with update_h! etc. for preconditioner, if needed
+            nlprecon_post_accelerate!(d, state, method.nlprecon)
+        else
+            # Line search along the acceleration direction failed; discard xA
+            # and restart. The preconditioner already moved state.x earlier
+            # this iteration, so we still make progress this iteration; we
+            # just skip the acceleration step.
+            state.restart = true
+            state.alpha = zero(state.alpha)
+            lssuccess = true
         end
-        # Deals with update_h! etc. for preconditioner, if needed
-        nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
     #=
     Update x_previous and f_x_previous to be the values at the beginning
