@@ -51,6 +51,7 @@ function perform_linesearch!(state, method, d)
     # Perform line search; catch LineSearchException to allow graceful exit.
     # A returned alpha of zero counts as a failure (some line searches, e.g.
     # HagerZhang, can silently return alpha = 0 without throwing).
+    local ϕalpha
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
@@ -81,7 +82,6 @@ function perform_linesearch!(state, method, d)
             end
         end
     end
-
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)

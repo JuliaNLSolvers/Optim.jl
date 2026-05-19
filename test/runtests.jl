@@ -132,6 +132,7 @@ function run_optim_tests(
     minimum_exceptions = (),
     f_increase_exceptions = (),
     iteration_exceptions = (),
+    option_overrides = (),
     skip = (),
     show_name = false,
     show_trace = false,
@@ -158,11 +159,17 @@ function run_optim_tests(
             allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
             dopts = (; dopts..., allow_f_increases = allow_f_increases)
         end
-        options = Optim.Options(; 
+        # Look for name in option_overrides: a tuple of (name, NamedTuple) pairs
+        # whose contents are splatted into Optim.Options for the matching problem.
+        override_id = findall(n -> n[1] == name, option_overrides)
+        overrides =
+            length(override_id) == 0 ? (;) : option_overrides[override_id[1]][2]
+        options = Optim.Options(;
             allow_f_increases = allow_f_increases,
             iterations = iters,
             show_trace = show_trace,
             dopts...,
+            overrides...,
         )
 
         # Use finite difference if it is not differentiable enough
