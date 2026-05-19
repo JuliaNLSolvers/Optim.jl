@@ -42,6 +42,9 @@ using StableRNGs
                     "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n",
                     color = :red,
                 )
+                if !Optim.converged(res)
+                    println(res)
+                end
                 @test Optim.converged(res)
             end
         end
