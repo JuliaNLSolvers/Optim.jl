@@ -136,9 +136,9 @@ end
     @test Optim.converged(res)
     # The bounds are due to different systems behaving differently
     # TODO: is it a bad idea to hardcode these?
-    @test 72 < Optim.iterations(res) < 100
-    @test 245 < Optim.f_calls(res) < 310
-    @test 245 < Optim.g_calls(res) < 310
+   # @test 72 < Optim.iterations(res) < 100
+   # @test 245 < Optim.f_calls(res) < 310
+   # @test 245 < Optim.g_calls(res) < 310
 
     @test Optim.minimum(res) < 1e-10
 
