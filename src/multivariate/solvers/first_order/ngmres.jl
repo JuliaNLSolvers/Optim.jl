@@ -302,13 +302,72 @@ end
 
 nlprecon_post_optimize!(d, state, method) = _refresh_precon_fg!(d, state, method)
 nlprecon_post_accelerate!(d, state, method) = _refresh_precon_fg!(d, state, method)
+
+# Restore the pre-migration behavior: after the acceleration step, push a
+# curvature pair into the L-BFGS history at the bumped pseudo_iteration slot.
+# Without this, the migrated update_fgh! (which writes to candidate fields)
+# leaves half the history slots NaN-initialized, degrading the preconditioner
+# into gradient-descent-with-resets.
 function nlprecon_post_accelerate!(
     d,
     state::NGMRESState{X,T},
     method::LBFGS,
 ) where {X} where {T}
-    state.nlpreconstate.pseudo_iteration += 1
+    inner = state.nlpreconstate
+    inner.pseudo_iteration += 1
     _refresh_precon_fg!(d, state, method)
+    inner.dg .= inner.g_x .- inner.g_x_previous
+    rho_iteration = one(eltype(inner.dx)) / real(dot(inner.dx, inner.dg))
+    if isinf(rho_iteration)
+        inner.pseudo_iteration = 0
+        return nothing
+    end
+    idx = mod1(inner.pseudo_iteration, method.m)
+    inner.dx_history[idx] .= inner.dx
+    inner.dg_history[idx] .= inner.dg
+    inner.rho[idx] = rho_iteration
+    return nothing
+end
+
+# Restore the pre-migration behavior: after the acceleration step, run the
+# Sherman-Morrison update on the BFGS preconditioner's inverse-Hessian
+# approximation, using state.dx (from the inner step) and dg (gradient change
+# from inner iteration start to post-acceleration point).
+function nlprecon_post_accelerate!(
+    d,
+    state::NGMRESState{X,T},
+    method::BFGS,
+) where {X} where {T}
+    _refresh_precon_fg!(d, state, method)
+    inner = state.nlpreconstate
+    (; invH, dx, dg, u) = inner
+    dg .= inner.g_x .- inner.g_x_previous
+    dx_dg = real(dot(dx, dg))
+    if dx_dg > 0
+        mul!(vec(u), invH, vec(dg))
+        c1 = (dx_dg + real(dot(dg, u))) / abs2(dx_dg)
+        c2 = 1 / dx_dg
+        if (invH isa Array)
+            n = length(dx)
+            @inbounds for j = 1:n
+                c1dxj = c1 * dx[j]'
+                c2dxj = c2 * dx[j]'
+                c2uj = c2 * u[j]'
+                for i = 1:n
+                    invH[i, j] = muladd(
+                        dx[i],
+                        c1dxj,
+                        muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])),
+                    )
+                end
+            end
+        else
+            mul!(invH, vec(dx), vec(dx)', c1, 1)
+            mul!(invH, vec(u), vec(dx)', -c2, 1)
+            mul!(invH, vec(dx), vec(u)', -c2, 1)
+        end
+    end
+    return nothing
 end
 
 
