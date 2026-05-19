@@ -286,15 +286,29 @@ function initial_state(
     )
 end
 
-nlprecon_post_optimize!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
-nlprecon_post_accelerate!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
+# Refresh the inner preconditioner's f_x / g_x to match the (possibly externally
+# updated) state.nlpreconstate.x. Bypasses the migrated update_fgh! path, which
+# writes to *_candidate fields rather than to f_x / g_x.
+function _refresh_precon_fg!(d, state, method)
+    inner = state.nlpreconstate
+    f_x, g_x = NLSolversBase.value_gradient!(d, inner.x)
+    inner.f_x = f_x
+    copyto!(inner.g_x, g_x)
+    if hasproperty(method, :manifold)
+        project_tangent!(method.manifold, inner.g_x, inner.x)
+    end
+    return nothing
+end
+
+nlprecon_post_optimize!(d, state, method) = _refresh_precon_fg!(d, state, method)
+nlprecon_post_accelerate!(d, state, method) = _refresh_precon_fg!(d, state, method)
 function nlprecon_post_accelerate!(
     d,
     state::NGMRESState{X,T},
     method::LBFGS,
 ) where {X} where {T}
     state.nlpreconstate.pseudo_iteration += 1
-    update_fgh!(d, state.nlpreconstate, method)
+    _refresh_precon_fg!(d, state, method)
 end
 
 
