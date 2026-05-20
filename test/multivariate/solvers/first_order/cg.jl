@@ -15,7 +15,6 @@
         ),
         minimum_exceptions = (("Paraboloid Diagonal", 1)),
         minimizer_exceptions = (("Extended Powell", 1), ("Extended Powell", 2)),
-        f_increase_exceptions = (("Hosaki"),),
         iteration_exceptions = (("Paraboloid Diagonal", 10000),),
         show_name = debug_printing,
     )

@@ -36,16 +36,6 @@
             ("Rosenbrock", 10000),
             ("Extended Powell", 8000),
         ),
-        f_increase_exceptions = (
-            "Hosaki",
-            "Polynomial",
-            "Powell",
-            "Himmelblau",
-            "Extended Powell",
-            "Fletcher-Powell",
-            "Quadratic Diagonal",
-            "Rosenbrock",
-        ),
         show_name = debug_printing,
     )
 end

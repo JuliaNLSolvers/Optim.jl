@@ -47,7 +47,7 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
-* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `true`. Note that, when this setting is `true`, the last iterate will be returned as the minimizer even if the objective increased.
+* `allow_f_increases`: Allow steps that increase the objective value. Defaults to `true`. Note that, when this setting is `true`, the last iterate will be returned as the minimizer even if the objective increased. This is useful in some methods such as line search based methods with HagerZhang() that allows for a slight increase in the objective function as long as the directional derivative decreases. 
 * `successive_f_tol`: Determines the number of times the objective is allowed to increase across iterations. Defaults to 1.
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `time_limit`: A soft upper limit on the total run time. Defaults to `NaN` (unlimited).
