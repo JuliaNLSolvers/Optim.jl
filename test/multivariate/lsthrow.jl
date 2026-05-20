@@ -19,13 +19,14 @@
     )
         debug_printing && println("Testing $(string(optimizer))")
         prob = MultivariateProblems.UnconstrainedProblems.examples["Exponential"]
-        @test optimize(
+        opt = optimize(
             MVP.objective(prob),
             prob.initial_x,
             optimizer(
                 alphaguess = LineSearches.InitialStatic(; alpha = 1000.0),
                 linesearch = hz,
             ),
-        ).stopped_by.ls_failed
+        )
+        @test opt.stopped_by.ls_failed
     end
 end

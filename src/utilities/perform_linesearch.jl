@@ -1,6 +1,7 @@
 # Reset the search direction if it becomes corrupted
 # return true if the direction was changed
 reset_search_direction!(state, d, method) = false # no-op
+reset_search_direction!(state, method) = false # no-op (2-arg fallback)
 
 _alphaguess(a) = a
 _alphaguess(a::Number) = LineSearches.InitialStatic(alpha = a)
@@ -47,23 +48,40 @@ function perform_linesearch!(state, method, d)
     # Guess an alpha
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
-    # Perform line search; catch LineSearchException to allow graceful exit
+    # Perform line search; catch LineSearchException to allow graceful exit.
+    # A returned alpha of zero counts as a failure (some line searches, e.g.
+    # HagerZhang, can silently return alpha = 0 without throwing).
+    local ϕalpha
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-        true
+        state.alpha > zero(state.alpha)
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
-            # We shouldn't warn here, we should just carry it to the output
-            # @warn("Linesearch failed, using alpha = $(state.alpha) and
-            # exiting optimization.\nThe linesearch exited with message:\n$(ex.message)")
             false
         else
             rethrow()
         end
     end
 
+    # On failure, reset the search direction and retry once
+    if !lssuccess && reset_search_direction!(state, method)
+        dphi_0 = real(dot(state.g_x, state.s))
+        method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
+        lssuccess = try
+            state.alpha, ϕalpha =
+                method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
+            state.alpha > zero(state.alpha)
+        catch ex2
+            if ex2 isa LineSearches.LineSearchException
+                state.alpha = ex2.alpha
+                false
+            else
+                rethrow()
+            end
+        end
+    end
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)

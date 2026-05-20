@@ -54,6 +54,7 @@ univariate_tests = [
 univariate_tests = map(s -> "./univariate/" * s * ".jl", univariate_tests)
 
 multivariate_tests = [
+    "lsthrow",
     ## optimize
     "optimize/interface",
     "optimize/optimize",
@@ -87,7 +88,6 @@ multivariate_tests = [
     ## other
     "array",
     "extrapolate",
-    "lsthrow",
     "precon",
     "manifolds",
     "complex",
@@ -130,8 +130,8 @@ function run_optim_tests(
     convergence_exceptions = (),
     minimizer_exceptions = (),
     minimum_exceptions = (),
-    f_increase_exceptions = (),
     iteration_exceptions = (),
+    option_overrides = (),
     skip = (),
     show_name = false,
     show_trace = false,
@@ -151,18 +151,16 @@ function run_optim_tests(
         iter_id = findall(n -> n[1] == name, iteration_exceptions)
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
-        # Construct options
-        allow_f_increases = (name in f_increase_exceptions)
-        dopts = Optim.default_options(method)
-        if haskey(dopts, :allow_f_increases)
-            allow_f_increases = allow_f_increases || dopts[:allow_f_increases]
-            dopts = (; dopts..., allow_f_increases = allow_f_increases)
-        end
-        options = Optim.Options(; 
-            allow_f_increases = allow_f_increases,
+        # Look for name in option_overrides: a tuple of (name, NamedTuple) pairs
+        # whose contents are splatted into Optim.Options for the matching problem.
+        override_id = findall(n -> n[1] == name, option_overrides)
+        overrides =
+            length(override_id) == 0 ? (;) : option_overrides[override_id[1]][2]
+        options = Optim.Options(;
             iterations = iters,
             show_trace = show_trace,
-            dopts...,
+            Optim.default_options(method)...,
+            overrides...,
         )
 
         # Use finite difference if it is not differentiable enough
@@ -230,7 +228,6 @@ function run_optim_tests_constrained(
     convergence_exceptions = (),
     minimizer_exceptions = (),
     minimum_exceptions = (),
-    f_increase_exceptions = (),
     iteration_exceptions = (),
     skip = (),
     show_name = false,
@@ -252,7 +249,6 @@ function run_optim_tests_constrained(
         # If name wasn't found, use default 1000 iterations, else use provided number
         iters = length(iter_id) == 0 ? 1000 : iteration_exceptions[iter_id[1]][2]
         # Construct options
-        allow_f_increases = (name in f_increase_exceptions)
         options = Optim.Options(;
             Optim.default_options(method)...,
             iterations = iters,

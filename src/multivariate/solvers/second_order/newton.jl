@@ -38,6 +38,12 @@ mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
     f_x_previous::T
     F::F
     s::Tx
+    # Trial iterate produced by update_state! / update_fgh!. Committed to
+    # state.x / state.g_x / state.H_x / state.f_x by accept_step! once validated.
+    x_candidate::Tx
+    g_candidate::Tg
+    H_candidate::TH
+    f_candidate::T
     @add_linesearch_fields()
 end
 
@@ -53,6 +59,10 @@ function initial_state(method::Newton, options, d, x0)
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         Cholesky(similar(H_x, 0, 0), :U, 0),
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
+        fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
+        similar(H_x), # Trial Hessian in state.H_candidate
+        oftype(f_x, NaN), # Trial f value in state.f_candidate
         @initial_linesearch()...,
     )
 end
@@ -82,9 +92,31 @@ function update_state!(d, state::NewtonState, method::Newton)
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)
 
-    # Update current position # x = x + alpha * s
-    @. state.x = state.x + state.alpha * state.s
+    # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
+    @. state.x_candidate = state.x + state.alpha * state.s
     return !lssuccess # break on linesearch error
+end
+
+function update_fgh!(d, state::NewtonState, method::Newton)
+    f_c, g_c, H_c = NLSolversBase.value_gradient_hessian!(d, state.x_candidate)
+    state.f_candidate = f_c
+    copyto!(state.g_candidate, g_c)
+    copyto!(state.H_candidate, H_c)
+    return nothing
+end
+
+function accept_step!(d, state::NewtonState, method::Newton, options)
+    if !isfinite(state.f_candidate) ||
+       !all(isfinite, state.g_candidate) ||
+       !all(isfinite, state.H_candidate) ||
+       !all(isfinite, state.x_candidate)
+        return false
+    end
+    copyto!(state.x, state.x_candidate)
+    copyto!(state.g_x, state.g_candidate)
+    copyto!(state.H_x, state.H_candidate)
+    state.f_x = state.f_candidate
+    return true
 end
 
 function trace!(tr, d, state::NewtonState, iteration::Integer, ::Newton, options::Options, curr_time = time())
