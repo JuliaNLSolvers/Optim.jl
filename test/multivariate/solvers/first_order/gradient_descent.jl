@@ -5,8 +5,6 @@
         convergence_exceptions = (
             ("Polynomial", 1),
             ("Polynomial", 2),
-            ("Rosenbrock", 1),
-            ("Rosenbrock", 2),
             ("Extended Rosenbrock", 1),
             ("Extended Rosenbrock", 2),
             ("Penalty Function I", 1),
