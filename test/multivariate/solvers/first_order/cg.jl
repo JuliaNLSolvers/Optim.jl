@@ -9,12 +9,7 @@
         convergence_exceptions = (
             ("Powell", 1),
             ("Powell", 2),
-            ("Polynomial", 1),
-            ("Extended Powell", 1),
-            ("Extended Powell", 2),
         ),
-        minimum_exceptions = (("Paraboloid Diagonal", 1)),
-        minimizer_exceptions = (("Extended Powell", 1), ("Extended Powell", 2)),
         iteration_exceptions = (("Paraboloid Diagonal", 10000),),
         show_name = debug_printing,
     )
