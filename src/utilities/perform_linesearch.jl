@@ -55,7 +55,10 @@ function perform_linesearch!(state, method, d)
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-        state.alpha > zero(state.alpha)
+        if !(state.alpha > zero(state.alpha))
+            throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
+        end
+        true
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
@@ -72,7 +75,10 @@ function perform_linesearch!(state, method, d)
         lssuccess = try
             state.alpha, ϕalpha =
                 method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-            state.alpha > zero(state.alpha)
+            if !(state.alpha > zero(state.alpha))
+                throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
+            end
+            true
         catch ex2
             if ex2 isa LineSearches.LineSearchException
                 state.alpha = ex2.alpha
