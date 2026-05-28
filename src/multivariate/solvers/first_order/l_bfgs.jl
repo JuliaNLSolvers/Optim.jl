@@ -152,6 +152,11 @@ mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     twoloop_alpha::Any
     pseudo_iteration::Int
     s::Tx
+    # Trial iterate produced by update_state! / update_fgh!. Committed to
+    # state.x / state.g_x / state.f_x by accept_step! once validated.
+    x_candidate::Tx
+    g_candidate::G
+    f_candidate::T
     @add_linesearch_fields()
 end
 function reset!(method::LBFGS, state::LBFGSState, obj, x::AbstractArray)
@@ -194,12 +199,17 @@ function initial_state(method::LBFGS, options::Options, d, x0::AbstractArray)
         fill!(Vector{T}(undef, method.m), NaN),#Buffer for use by twoloop
         0,
         fill!(similar(g_x), NaN), # Store current search direction in state.s
+        fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
+        fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
+        oftype(f_x, NaN), # Trial f value in state.f_candidate
         @initial_linesearch()...,
     )
 end
 
 function update_state!(d, state::LBFGSState, method::LBFGS)
-    # Increment the number of steps we've had to perform
+    # Increment the number of steps we've had to perform. Rolled back in
+    # accept_step! if the candidate is rejected, so the history index for the
+    # next attempt stays consistent.
     state.pseudo_iteration += 1
 
     # update the preconditioner
@@ -224,21 +234,38 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Update current position
+    # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
     state.dx .= state.alpha .* state.s
-    state.x .= state.x .+ state.dx
-    retract!(method.manifold, state.x)
+    state.x_candidate .= state.x .+ state.dx
+    retract!(method.manifold, state.x_candidate)
 
     return !lssuccess # break on linesearch error
 end
 
 
 function update_fgh!(d, state::LBFGSState, method::LBFGS)
-    # Update function value and gradient
-    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
-    copyto!(state.g_x, g_x)
-    project_tangent!(method.manifold, state.g_x, state.x)
-    state.f_x = f_x
+    f_c, g_c = NLSolversBase.value_gradient!(d, state.x_candidate)
+    copyto!(state.g_candidate, g_c)
+    project_tangent!(method.manifold, state.g_candidate, state.x_candidate)
+    state.f_candidate = f_c
+    return nothing
+end
+
+function accept_step!(d, state::LBFGSState, method::LBFGS, options)
+    if !isfinite(state.f_candidate) ||
+       !all(isfinite, state.g_candidate) ||
+       !all(isfinite, state.x_candidate)
+        # Roll back the iteration counter so the (terminating) loop's view of
+        # state is consistent.
+        state.pseudo_iteration -= 1
+        return false
+    end
+
+    # Commit candidates. state.x_previous / g_x_previous were captured by
+    # perform_linesearch! before the step was proposed.
+    copyto!(state.x, state.x_candidate)
+    copyto!(state.g_x, state.g_candidate)
+    state.f_x = state.f_candidate
 
     # Measure the change in the gradient
     state.dg .= state.g_x .- state.g_x_previous
@@ -246,7 +273,8 @@ function update_fgh!(d, state::LBFGSState, method::LBFGS)
     # Update the L-BFGS history of positions and gradients
     rho_iteration = one(eltype(state.dx)) / real(dot(state.dx, state.dg))
     if isinf(rho_iteration)
-        # TODO: Introduce a formal error? There was a warning here previously
+        # Drop the history: bad curvature pair means we can't trust the
+        # quasi-Newton update for this step.
         state.pseudo_iteration = 0
         return true
     end
@@ -254,7 +282,7 @@ function update_fgh!(d, state::LBFGSState, method::LBFGS)
     state.dx_history[idx] .= state.dx
     state.dg_history[idx] .= state.dg
     state.rho[idx] = rho_iteration
-    false
+    return true
 end
 
 function trace!(tr, d, state::LBFGSState, iteration::Integer, method::LBFGS, options::Options, curr_time = time())

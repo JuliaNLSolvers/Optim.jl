@@ -27,6 +27,15 @@ end
 
 after_while!(d, state, method, options) = nothing
 
+# Validate and commit the trial iterate produced by update_state! / update_fgh!.
+# Default: no-op (un-migrated solvers mutate state.x/f_x/g_x directly and have
+# nothing to accept). Migrated solvers override this to:
+#   - check finiteness of state.f_candidate / g_candidate / x_candidate
+#   - on success, commit candidate -> state.x / state.f_x / state.g_x and return true
+#   - on failure, leave state.x / state.f_x / state.g_x at the last accepted iterate
+#     and return false (the main loop then breaks).
+accept_step!(d, state, method, options) = true
+
 function initial_convergence(state::AbstractOptimizerState, options::Options)
     stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
     return g_residual(state) <= options.g_abstol, stopped
@@ -84,6 +93,14 @@ function optimize(
         # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
         # TODO: Already perform in `update_state!`?
         update_fgh!(d, state, method)
+
+        # Validate the trial iterate and commit candidate -> state for migrated
+        # solvers. No-op for solvers that mutate state.x/f_x/g_x directly.
+        if !accept_step!(d, state, method, options)
+            options.show_warnings && @warn "Terminated early: trial iterate had non-finite values."
+            ls_success = false
+            break
+        end
 
         # Check convergence
         x_converged, f_converged, g_converged, f_increased =
