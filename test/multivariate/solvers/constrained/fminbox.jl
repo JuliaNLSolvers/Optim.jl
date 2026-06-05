@@ -181,6 +181,9 @@
                 Optim.Options(),
             )
         end
+        @testset "Guard against gbarrier_norm == 0 in computation of initial mu #1233" begin
+            optimize(exponential, fill(-Inf,2), fill(Inf,2), initial_x, Fminbox(), Optim.Options())
+        end
     end
 end
 
