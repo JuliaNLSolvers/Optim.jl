@@ -51,15 +51,15 @@ Base.summary(io::IO, ::SimpleLBFGSB) = print(io, "L-BFGS-B (simple reference)")
 
 # Own optimizer state for the termination code. Subtypes AbstractOptimizerState
 # (not ZerothOrderState) so the generic change accessors return real values.
-struct SimpleState{T,Tx} <: Optim.AbstractOptimizerState
+struct SimpleState{Tx,Tf,Tfp} <: Optim.AbstractOptimizerState
     x::Tx
-    f_x::T
+    f_x::Tf
     x_previous::Tx
-    f_x_previous::T
+    f_x_previous::Tfp
 end
 
 # Dense compact representation: all Gram matrices are rebuilt each update.
-mutable struct CompactLBFGS{T}
+mutable struct CompactLBFGS{T<:Real}
     m::Int
     S::Matrix{T}
     Y::Matrix{T}
@@ -271,8 +271,7 @@ function subspace_optimize(x, xc, c, g, lb, ub, B::CompactLBFGS; clip::Bool = tr
     return x̄
 end
 
-function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
-    T = eltype(x)
+function update_compact!(B::CompactLBFGS{T}, x, x_new, g, g_new) where {T}
     s = x_new .- x
     y = g_new .- g
     yts = dot(y, s)
@@ -309,7 +308,9 @@ function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     B.W[:, (k+1):2k] .= B.θ .* Sk
 
     D = Diagonal(diag(SᵀY))
-    Minv = zeros(T, 2k, 2k)
+    # `Matrix{T}(undef, …)` (not `zeros(T, …)`) so the element type and ndims=2 are
+    # fixed in the type; the four block assignments below overwrite every entry.
+    Minv = Matrix{T}(undef, 2k, 2k)::Matrix{T}
     Minv[1:k, 1:k] .= -D
     Minv[1:k, (k+1):2k] .= B.L[1:k, 1:k]'
     Minv[(k+1):2k, 1:k] .= B.L[1:k, 1:k]

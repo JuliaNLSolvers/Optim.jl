@@ -89,11 +89,11 @@ Base.summary(io::IO, ::LBFGSB) = print(io, "L-BFGS-B")
 # x_abschange/f_abschange accessors return the real change values: the
 # ZerothOrderState methods return NaN, which would mask the x/f-based
 # termination codes (SmallObjectiveChange, SmallXChange, ...).
-struct LBFGSBState{T,Tx} <: AbstractOptimizerState
+struct LBFGSBState{Tx,Tf,Tfp} <: AbstractOptimizerState
     x::Tx
-    f_x::T
+    f_x::Tf
     x_previous::Tx
-    f_x_previous::T
+    f_x_previous::Tfp
 end
 
 # Compact representation of the limited-memory Hessian approximation
