@@ -131,7 +131,7 @@ import LBFGSB as RefLBFGSB
             @test Optim.minimizer(res) ≈ clamp.(c, l, u) atol = 1e-6
         end
 
-        @testset "memory length m=$m" for m in (2, 3, 20)
+        @testset "memory length m=$m" for m in (2, 4, 20)
             rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
             res = optimize(rosen, [-2.0, -2.0], [2.0, 2.0], [-1.2, 1.0], V(m = m), Optim.Options(iterations = 2000, g_abstol = 1e-8))
             println(res)
