@@ -212,6 +212,27 @@ import LBFGSB as RefLBFGSB
             @test Optim.minimum(res) < big(1e-18)
         end
 
+        @testset "active set under $T" for T in (Float32, BigFloat)
+            # Heavily active box (~2/3 of the bounds active at the solution) under a
+            # non-Float64 eltype, exercising the Cauchy point + subspace solve
+            # (Cholesky formk!/bmv! for the efficient port, dense inv for the
+            # reference) end-to-end in T. min Σ(xᵢ - cᵢ)² over [-1, 1]ⁿ has the
+            # analytic minimizer clamp.(c, l, u).
+            n = 12
+            c = collect(range(T(-3), T(3); length = n))
+            f(x) = sum((x .- c) .^ 2)
+            l = fill(T(-1), n)
+            u = fill(T(1), n)
+            xstar = clamp.(c, l, u)
+            gtol, atol = T === BigFloat ? (T(1e-20), T(1e-12)) : (1.0f-5, 1.0f-4)
+            res = optimize(f, l, u, zeros(T, n), V(), Optim.Options(g_abstol = gtol))
+            @test eltype(Optim.minimizer(res)) == T
+            @test feasible(Optim.minimizer(res), l, u)
+            @test Optim.minimizer(res) ≈ xstar atol = atol
+            @test any(Optim.minimizer(res) .≈ T(-1))   # lower bounds active
+            @test any(Optim.minimizer(res) .≈ T(1))    # upper bounds active
+        end
+
         @testset "cross-check vs reference LBFGSB.jl (Fortran)" begin
             refkw = (m = 10, factr = 1e1, pgtol = 1e-9, maxiter = 10_000, maxfun = 10_000)
 
