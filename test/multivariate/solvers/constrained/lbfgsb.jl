@@ -147,6 +147,7 @@ import LBFGSB as RefLBFGSB
         @testset "memory length m=$m" for m in (2, 3, 20)
             rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
             res = optimize(rosen, [-2.0, -2.0], [2.0, 2.0], [-1.2, 1.0], V.make(m = m))
+            println(res)
             @test Optim.converged(res)
             @test Optim.minimizer(res) ≈ [1.0, 1.0] atol = 1e-4
         end
