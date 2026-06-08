@@ -3,7 +3,8 @@
 # Implements the four-case analysis of Fortran dcstep (MINPACK-2), which
 # runs regardless of bracket status. Local step bounds (stpmin, stpmax)
 # computed by the caller guide the extrapolation when not yet bracketed.
-
+# TODO maybe expose?
+const BRACKET_SAFEGUARD = 66 // 100
 """
     trial_value(αₗ, fₗ, gₗ, αᵤ, fᵤ, gᵤ, αₜ, fₜ, gₜ, bracketed,
                 stpmin, stpmax) -> αₜ⁺
@@ -33,8 +34,6 @@ bracketed, this runs the full case analysis in both states.
   - *Not bracketed*: jump to stpmax (or stpmin).
 """
 function trial_value(αₗ, fₗ, gₗ, αᵤ, fᵤ, gᵤ, αₜ, fₜ, gₜ, bracketed, stpmin, stpmax)
-    # TODO maybe expose?
-    BRACKET_SAFEGUARD = 66 // 100
     if fₜ > fₗ
         # Case 1: trial rose — minimum bracketed in (αₗ, αₜ).
         # Cubic α_c and quadratic α_q. Take α_c if closer to αₗ,
