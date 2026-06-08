@@ -30,6 +30,7 @@ ExplicitImports = "1.13.2"
 FillArrays = "0.6.2, 0.7, 0.8, 0.9, 0.10, 0.11, 0.12, 0.13, 1"
 ForwardDiff = "0.10, 1"
 JET = "0.9, 0.10, 0.11"
+LBFGSB = "0.4.1"
 LineSearches = "7.7"
 LinearAlgebra = "<0.0.1, 1.6"
 MathOptInterface = "1.17"
@@ -54,6 +55,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+LBFGSB = "5be7bae1-8223-5378-bac3-9e7378a2f6e6"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
 OptimTestProblems = "cec144fc-5a64-5bc6-99fb-dde8f63e154c"
@@ -64,4 +66,4 @@ StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Aqua", "Distributions", "ExplicitImports", "ForwardDiff", "JET", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "ReverseDiff"]
+test = ["Test", "Aqua", "Distributions", "ExplicitImports", "ForwardDiff", "JET", "LBFGSB", "MathOptInterface", "Measurements", "OptimTestProblems", "Random", "RecursiveArrayTools", "StableRNGs", "ReverseDiff"]

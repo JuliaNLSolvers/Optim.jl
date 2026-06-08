@@ -62,6 +62,7 @@ multivariate_tests = [
     ## solvers
     ## constrained
     "solvers/constrained/fminbox",
+    "solvers/constrained/lbfgsb",
     "solvers/constrained/ipnewton/interface",
     "solvers/constrained/ipnewton/constraints",
     "solvers/constrained/ipnewton/counter",

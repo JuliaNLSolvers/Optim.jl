@@ -52,6 +52,11 @@ Options(inherit_options; opts...)
 Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
 can be used to modify a subset of options in a previously defined `Options` variable.
 
+Note: for the bound-constrained solvers (`Fminbox` and `LBFGSB`), `g_abstol` is compared
+against the infinity norm of the *projected* gradient `‖x - P(x - g)‖∞` (with `P` the
+projection onto the box), which is the first-order stationarity measure under bounds, rather
+than against `‖g‖∞`. The two coincide only when no bound is active.
+
 For more information on individual options, see the documentation at
 <http://julianlsolvers.github.io/Optim.jl/stable/user/config>.
 """
