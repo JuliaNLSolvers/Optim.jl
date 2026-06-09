@@ -44,6 +44,8 @@
 
 struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     eta::Tf
+    theta::Tf
+    betamax::Tf
     P::T
     precondprep!::Tprep
     alphaguess!::IL
@@ -60,6 +62,8 @@ Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
 linesearch = LineSearches.HagerZhang(),
 eta = 0.4,
+theta = 1.0,
+betamax = Inf,
 P = nothing,
 precondprep = Returns(nothing),
 manifold = Flat())
@@ -68,6 +72,9 @@ The strictly positive constant ``eta`` is used in determining
 the next step direction, and the default here deviates from the one used in the
 original paper (where it was ``0.01``). See more details in the original papers
 referenced below.
+The non negative constant ``theta`` is also used in determining the next step direction (see HZ2013, Eq 2.2).
+When ``theta = 0``, the step direction switches to Hestenes-Stiefel method.
+The strictly positive constant ``betamax`` is used to ensure that the beta factor is not too large in absolute value.
 
 ## Description
 The `ConjugateGradient` method implements Hager and Zhang (2006) and elements
@@ -83,12 +90,14 @@ function ConjugateGradient(;
     alphaguess = LineSearches.InitialHagerZhang(),
     linesearch = LineSearches.HagerZhang(),
     eta::Real = 0.4,
+    theta::Real = 1.0,
+    betamax::Real = Inf,
     P::Any = nothing,
     precondprep = Returns(nothing),
     manifold::Manifold = Flat(),
 )
 
-    ConjugateGradient(eta, P, precondprep, _alphaguess(alphaguess), linesearch, manifold)
+    ConjugateGradient(eta, theta, betamax, P, precondprep, _alphaguess(alphaguess), linesearch, manifold)
 end
 
 mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
@@ -235,10 +244,11 @@ function accept_step!(d, state::ConjugateGradientState, method::ConjugateGradien
     betak =
         (
             real(dot(state.y, state.pg)) -
-            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots
+            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots * method.theta
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
+    beta = sign(beta) * Base.min(abs(beta), method.betamax) # Ensure beta is not too large in absolute value
     state.beta = beta
     state.s .= beta .* state.s .- state.pg
     project_tangent!(method.manifold, state.s, state.x)
