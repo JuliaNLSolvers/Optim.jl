@@ -120,6 +120,26 @@ import LBFGSB as RefLBFGSB
             @test any(Optim.minimizer(res) .≈ 1.0)
         end
 
+        @testset "iterate stays strictly in the box at active bounds" begin
+            # The committed step is projected onto [l, u], so the returned
+            # minimizer must satisfy l .<= x .<= u with NO tolerance, and the
+            # active coordinates must land exactly on a bound (not a ULP outside).
+            g(x) = (x[1] - 3.0)^2 + (x[2] + 4.0)^2   # unconstrained min [3, -4]
+            l2, u2 = [-2.0, -2.0], [2.0, 2.0]
+            r1 = optimize(g, l2, u2, [0.0, 0.0], V())
+            @test all(l2 .<= Optim.minimizer(r1) .<= u2)   # strict, no tolerance
+
+            n = 20
+            c = collect(range(-3.0, 3.0; length = n))     # ~2/3 of bounds active
+            f(x) = sum((x .- c) .^ 2)
+            lo, hi = fill(-1.0, n), fill(1.0, n)
+            r2 = optimize(f, lo, hi, zeros(n), V(), Optim.Options(g_abstol = 1e-8))
+            x2 = Optim.minimizer(r2)
+            @test all(lo .<= x2 .<= hi)                    # strict, no tolerance
+            # every coordinate is exactly on a bound or strictly interior
+            @test all(@. (x2 == -1.0) | (x2 == 1.0) | (-1.0 < x2 < 1.0))
+        end
+
         @testset "feasible start on the boundary" begin
             n = 10
             c = collect(range(-3.0, 3.0; length = n))

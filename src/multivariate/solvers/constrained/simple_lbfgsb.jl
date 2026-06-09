@@ -463,7 +463,9 @@ function Optim.optimize(
             α = min(T(1) / 10^4, αmax)
         end
 
-        x_new = x .+ α .* dvec
+        # Project onto the box (only a ULP-level correction at an active bound,
+        # since αmax already caps the step there) so every iterate stays feasible.
+        x_new = clamp.(x .+ α .* dvec, l, u)
         f_new, _gn = value_gradient!(d, x_new)
         g_new = copy(_gn)
 

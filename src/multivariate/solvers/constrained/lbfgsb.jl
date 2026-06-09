@@ -1055,7 +1055,11 @@ function optimize(
             α = min(T(1) / 10^4, αmax)
         end
 
-        @. x_candidate = x + α * B.d
+        # Project onto the box. The line search caps α at αmax (the exact step to
+        # the nearest bound), so this only matters at the ULP level when a bound
+        # is active — but it guarantees every iterate (and the returned x) is
+        # feasible rather than a rounding-width outside.
+        @. x_candidate = clamp(x + α * B.d, l, u)
         f_new, _gn = value_gradient!(d, x_candidate)
         g_new .= _gn
 
