@@ -213,7 +213,6 @@ end
 function update_lagrangian_h!(d, constraints::TwiceDifferentiableConstraints, state, method::IPNewton)
     x, μ, Hxx, J = state.x, state.μ, state.H_L_x, state.constr_J
     bstate, bgrad, bounds = state.bstate, state.bgrad, constraints.bounds
-    m, n = size(J, 1), size(J, 2)
 
     # Initialize the Hessian of the Langrangian with the Hessian of the objective function
     copyto!(Hxx, state.H_x)  # objective's Hessian
@@ -226,12 +225,12 @@ function update_lagrangian_h!(d, constraints::TwiceDifferentiableConstraints, st
     # This follows the approach by the CUTEst interface
     constraints.h!(Hxx, x, λ)
 
-    # Add the Jacobian terms (JI'*Hss*JI)
+    # Add the Jacobian terms (JI'*Hss*JI) in place: Hxx .+= JIc' * (Hssc * JIc)
     JIc = view(J, bounds.ineqc, :)
     Hssc = Diagonal(bstate.λc ./ bstate.slack_c)
-    HJ = JIc' * Hssc * JIc
-    for j = 1:n, i = 1:n
-        Hxx[i, j] += HJ[i, j]
+    if !isempty(bounds.ineqc)
+        HsscJIc = Hssc * JIc          # (nineqc × n), nineqc is usually small
+        mul!(Hxx, JIc', HsscJIc, 1, 1)
     end
     # Add the variable inequalities portions of J'*Hssx*J
     for (i, j) in enumerate(bounds.ineqx)
@@ -330,7 +329,7 @@ function solve_step!(
     ΔλE0 = MF \ (gE + JE * (Htilde \ state.gtilde))
     Δx0 = Htilde \ (JE' * ΔλE0 - state.gtilde)
     # Check that the solution to the linear equations represents an improvement
-    Hpstepx, HstepλE = Matrix(Htilde) * Δx0 - JE' * ΔλE0, -JE * Δx0  # TODO: don't use full here
+    Hpstepx, HstepλE = chol_matvec(Htilde, Δx0) - JE' * ΔλE0, -JE * Δx0
     # TODO: How to handle show_linesearch?
     # This was originally in options.show_linesearch, but I removed it as none of the other Optim algorithms have it there.
     # We should move show_linesearch back to options when we refactor
@@ -367,7 +366,8 @@ function solve_step!(
     μ = state.μ
     # Solve for the *real* step (including μ)
     μsinv = μ * [bounds.σx ./ bstate.slack_x; bounds.σc ./ bstate.slack_c]
-    gtildeμ = state.gtilde - jacobianI(state, bounds)' * μsinv
+    gtildeμ = copy(state.gtilde)
+    submul_JI_transpose!(gtildeμ, state, bounds, μsinv)  # gtildeμ .-= JI' * μsinv
     ΔλE = MF \ (gE + JE * (Htilde \ gtildeμ))
     Δx = Htilde \ (JE' * ΔλE - gtildeμ)
     copyto!(s, Δx)
@@ -434,7 +434,8 @@ Hf(constraints, state) = Hf(constraints.bounds, state)
 function gf(bounds::ConstraintBounds, state)
     bstate, μ = state.bstate, state.μ
     μsinv = μ * [bounds.σx ./ bstate.slack_x; bounds.σc ./ bstate.slack_c]
-    gtildeμ = state.gtilde - jacobianI(state, bounds)' * μsinv
+    gtildeμ = copy(state.gtilde)
+    submul_JI_transpose!(gtildeμ, state, bounds, μsinv)  # gtildeμ .-= JI' * μsinv
     [gtildeμ; state.bgrad.λxE; state.bgrad.λcE]
 end
 gf(constraints, state) = gf(constraints.bounds, state)

@@ -489,6 +489,54 @@ function jacobianI(state, bounds::ConstraintBounds)
 end
 jacobianI(state, constraints) = jacobianI(state, constraints.bounds)
 
+"""
+    submul_JI_transpose!(out, state, bounds, v) -> out
+
+Compute `out .-= JI' * v` in place, where `JI = [JIx; JIc]` is the inequality
+Jacobian (`JIx` the selector for the variable bounds `bounds.ineqx`, and
+`JIc = view(J, bounds.ineqc, :)`). This avoids materializing the dense,
+mostly-zero selector matrix `JIx` (and the `vcat`) that `jacobianI` builds.
+`v` is ordered `[v_ineqx; v_ineqc]`, matching `jacobianI`'s row order.
+"""
+function submul_JI_transpose!(out, state, bounds::ConstraintBounds, v)
+    nx = length(bounds.ineqx)
+    for i = 1:nx
+        out[bounds.ineqx[i]] -= v[i]
+    end
+    if !isempty(bounds.ineqc)
+        JIc = view(state.constr_J, bounds.ineqc, :)
+        mul!(out, JIc', view(v, nx+1:length(v)), -1, 1)
+    end
+    out
+end
+submul_JI_transpose!(out, state, constraints, v) =
+    submul_JI_transpose!(out, state, constraints.bounds, v)
+
+"""
+    chol_matvec(C, x) -> y
+
+Compute `y = M * x` where `M` is the (symmetric positive-definite) matrix
+represented by the pivoted Cholesky factorization `C` (`M[C.p, C.p] == C.U'C.U`),
+without materializing the dense `Matrix(C)`. Uses only `O(n)` temporaries.
+"""
+function chol_matvec(C::Union{Cholesky,LinearAlgebra.CholeskyPivoted}, x)
+    p = C isa LinearAlgebra.CholeskyPivoted ? C.p : eachindex(x)   # identity perm when unpivoted
+    xp = x[p]
+    # Wrap the stored factor without copying (`C.U`/`C.L` allocate a dense copy
+    # for pivoted factorizations). M[p, p] equals R'R for the upper factor R = U,
+    # or L*L' for the lower factor L, depending on which triangle is stored.
+    if C.uplo == 'U'
+        U = LinearAlgebra.UpperTriangular(C.factors)
+        y = U' * (U * xp)
+    else
+        L = LinearAlgebra.LowerTriangular(C.factors)
+        y = L * (L' * xp)
+    end
+    out = similar(x)
+    out[p] = y
+    out
+end
+
 # TODO: when Optim supports sparse arrays, make a SparseMatrixCSC version
 function jacobianx(J::AbstractArray, indx)
     Jx = zeros(eltype(J), length(indx), size(J, 2))
