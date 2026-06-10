@@ -248,7 +248,7 @@ function accept_step!(d, state::ConjugateGradientState, method::ConjugateGradien
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
-    beta = sign(beta) * Base.min(abs(beta), method.betamax) # Ensure beta is not too large in absolute value
+    beta = clamp(beta, -method.betamax, method.betamax) # Ensure beta is not too large in absolute value
     state.beta = beta
     state.s .= beta .* state.s .- state.pg
     project_tangent!(method.manifold, state.s, state.x)
