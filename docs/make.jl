@@ -55,6 +55,7 @@ makedocs(
                 "Conjugate Gradient" => "algo/cg.md",
                 "Gradient Descent" => "algo/gradientdescent.md",
                 "(L-)BFGS" => "algo/lbfgs.md",
+                "L-BFGS-B (box constrained)" => "algo/lbfgsb.md",
                 "Acceleration" => "algo/ngmres.md",
             ],
             "Hessian Required" => [
