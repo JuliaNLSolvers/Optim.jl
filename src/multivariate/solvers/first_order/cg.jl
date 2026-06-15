@@ -38,9 +38,8 @@
 #   exterior points. It's just more efficient if you know the
 #   maximum, because you don't have to test values that won't
 #   work.) The maximum should be specified as the largest value for
-#   which a finite value will be returned.  See, e.g., limits_box
-#   below.  The default value for alphamax is Inf. See alphamaxfunc
-#   for cgdescent and alphamax for linesearch_hz.
+#   which a finite value will be returned. The default value for
+#   alphamax is Inf.
 
 struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     eta::Tf
