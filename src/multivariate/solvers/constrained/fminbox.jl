@@ -145,27 +145,6 @@ function NLSolversBase.value_jvp!(obj::BarrierWrapper, x, v)
     return obj.Ftotal, JVPtotal
 end
 
-function limits_box(
-    x::AbstractArray{T},
-    d::AbstractArray{T},
-    l::AbstractArray{T},
-    u::AbstractArray{T},
-) where {T}
-    alphamax = convert(T, Inf)
-    @inbounds for i in eachindex(x)
-        if d[i] < 0
-            alphamax = min(alphamax, ((l[i] - x[i]) + eps(l[i])) / d[i])
-        elseif d[i] > 0
-            alphamax = min(alphamax, ((u[i] - x[i]) - eps(u[i])) / d[i])
-        end
-    end
-    epsilon = eps(max(alphamax, one(T)))
-    if !isinf(alphamax) && alphamax > epsilon
-        alphamax -= epsilon
-    end
-    return alphamax
-end
-
 # Default preconditioner for box-constrained optimization
 # This creates the inverse Hessian of the barrier penalty
 function precondprepbox!(P, x, l, u, dfbox)
