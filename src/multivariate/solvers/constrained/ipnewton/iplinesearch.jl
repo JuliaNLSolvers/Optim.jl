@@ -17,7 +17,9 @@ function backtrack_constrained(
     if show_linesearch
         println("L0 = $L0, L1 = $L1, L2 = $L2")
     end
-    while α >= αmin
+    # `α > 0` prevents a non-terminating loop when a collapsed `αmax` drives
+    # `α` and `αmin` to 0 (see `backtrack_constrained_grad`).
+    while α >= αmin && α > 0
         val = ϕ((α, αI))
         δ = evalgrad(L1, α, αI)
         if show_linesearch
@@ -53,7 +55,13 @@ function backtrack_constrained_grad(
     if show_linesearch
         println("L0 = $L0, L1 = $L1, L2 = $L2")
     end
-    while α >= αmin
+    # `α > 0` guards against a non-terminating loop: when the maximum feasible
+    # step `αmax` has collapsed to (sub)zero — e.g. a slack/multiplier has
+    # underflowed so `estimate_maxstep` returns `-0/negative == 0` — both `α`
+    # and `αmin` become 0 and `α *= ρ` keeps `α` pinned at 0, so `α >= αmin`
+    # (`0 >= 0`) would never become false. In that degenerate case we take a
+    # zero step and return.
+    while α >= αmin && α > 0
         val, slopeα = ϕ(α)
         δval = L1 * α
         δslope = L2 * α
