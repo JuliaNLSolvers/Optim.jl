@@ -267,7 +267,13 @@ function initial_mu(box::BoxBarrier, x::AbstractArray, g_x::AbstractArray, F::Fm
 
     gnorm, gbarrier_norm, mufactor, mu0 = promote(_gnorm, _gbarrier_norm, F.mufactor, F.mu0)
     mu = if isnan(mu0)
-        mufactor * gnorm / gbarrier_norm
+        # Guard against gbarrier_norm == 0 case leading to mu = 0/0, which is NaN
+        if gbarrier_norm > 0
+            mufactor * gnorm / gbarrier_norm
+        else
+             # Presumably, there is no barrier function
+            zero(gnorm)
+        end
     else
         mu0
     end
