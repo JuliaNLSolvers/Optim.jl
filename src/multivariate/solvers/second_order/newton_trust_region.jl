@@ -181,9 +181,9 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
 
                 F = cholesky(Hermitian(H_ridged), check = false)
                 # Sometimes, λ is not sufficiently large for the Cholesky factorization
-                # to succeed. In that case, we set increase λ and continue to next
-                # iteration. Merely doubling λ is not generally sufficient to make H + λI
-                # numerically positive-definite: e.g., if λ ~ 1e-15, we never reach a stable
+                # to succeed. In that case, we increase λ and continue to next iteration.
+                # Merely doubling λ is not generally sufficient to make H + λI numerically
+                # positive-definite: e.g., if λ ~ 1e-15, we would never reach a stable
                 # regime within  `max_iters`, which would leave `s` unchanged. Instead, jump
                 # to a ridge on the order of H's spectral scale so the next factorization
                 # succeeds; the root-finder can still descend toward a smaller optimal λ
