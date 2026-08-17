@@ -5,6 +5,11 @@ using Optim
     @test Base.ispublic(Optim, :converged)
 end
 
+@testset "converged public interface" begin
+    result = optimize(x -> (x - 1)^2, 0.0, 2.0)
+    @test converged(result)
+end
+
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 const MVP = MultivariateProblems

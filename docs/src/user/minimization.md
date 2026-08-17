@@ -197,6 +197,10 @@ Defined for all methods:
 * `f_calls(res)`
 * `converged(res)`
 
+```@docs
+Optim.converged
+```
+
 Defined for univariate optimization:
 
 * `lower_bound(res)`

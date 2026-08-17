@@ -110,6 +110,34 @@ h_calls(r::MultivariateOptimizationResults) = r.h_calls
 hvp_calls(r::OptimizationResults) = error(LazyString("`hvp_calls` is not implemented for ", summary(r), "."))
 hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
+"""
+    converged(r::OptimizationResults) -> Bool
+
+Return whether an optimization result satisfies the convergence criteria of
+the algorithm that produced it.
+
+# Arguments
+
+- `r::OptimizationResults`: The result returned by [`optimize`](@ref).
+
+For univariate optimization, this reports the algorithm's stored convergence
+flag. For multivariate optimization, at least one of the position, objective,
+or gradient convergence flags must be set, and the corresponding finite-value
+checks must pass. A `true` result indicates that the algorithm met its stopping
+criteria; it does not certify that the result is a global optimum.
+
+# Returns
+
+A `Bool` indicating whether the optimization terminated by convergence.
+
+# Examples
+
+```julia
+julia> result = optimize(x -> (x - 1)^2, 0.0, 2.0)
+julia> converged(result)
+true
+```
+"""
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 function converged(r::MultivariateOptimizationResults)
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
