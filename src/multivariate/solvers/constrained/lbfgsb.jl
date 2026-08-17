@@ -26,6 +26,48 @@ abstract type LineSearcher end
 include("lbfgsb/hz.jl")              # HZAW (Hager-Zhang approximate Wolfe)
 include("lbfgsb/linesearches_mt.jl") # MTLS (Moré-Thuente), pulls in mt/*
 
+"""
+    LBFGSB(; m=10, linesearch=HZAW(), stepsize=1.0, clip_subspace=true)
+
+Minimize a differentiable objective with box constraints using native
+limited-memory BFGS updates. Unlike [`Fminbox`](@ref), this method handles the
+bounds directly and reports convergence using the projected gradient.
+
+# Keyword Arguments
+
+- `m`: Number of correction pairs retained in the limited-memory model.
+- `linesearch`: Vendored line search, typically `HZAW()` or `MTLS()`.
+- `stepsize`: Default trial step supplied to the line search.
+- `clip_subspace`: Use component-wise subspace clipping when `true`; use
+  proportional backtracking when `false`.
+
+# Fields
+
+- `m`: Limited-memory history length.
+- `linesearch`: Bound-aware line-search implementation.
+- `stepsize`: Default trial step.
+- `clip_subspace`: Subspace step policy.
+
+# Returns
+
+An `LBFGSB` optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [-2.0, -2.0], [2.0, 2.0], [1.0, -1.0], LBFGSB())
+Optim.minimizer(result)
+```
+
+# References
+
+- Byrd, R. H., Lu, P., Nocedal, J. and Zhu, C. (1995), "A limited memory
+  algorithm for bound constrained optimization".
+"""
 struct LBFGSB{L<:LineSearcher,T} <: AbstractConstrainedOptimizer
     m::Int               # number of correction pairs kept in memory
     linesearch::L        # vendored line search (HZAW, MTLS, ...)
@@ -33,46 +75,6 @@ struct LBFGSB{L<:LineSearcher,T} <: AbstractConstrainedOptimizer
     clip_subspace::Bool  # true: component-wise clamp (Fortran), false: backtracking (paper)
 end
 
-"""
-# LBFGSB
-## Constructor
-```julia
-LBFGSB(; m::Integer = 10,
-         linesearch::LineSearcher = HZAW(),
-         stepsize = 1.0,
-         clip_subspace::Bool = true)
-```
-## Description
-`LBFGSB` is a native implementation of the limited-memory BFGS algorithm with
-box constraints `lb .<= x .<= ub`. It is a bound-constrained optimizer in its
-own right (a sibling of `Fminbox`/`SAMIN`), not a wrapper around an
-unconstrained method.
-
-Each iteration computes the generalized Cauchy point along the projected
-gradient, minimizes the limited-memory quadratic model over the variables that
-remain free at the Cauchy point, and performs a line search (capped at the
-distance to the nearest active bound) along the resulting search direction. The
-compact representation is maintained with Cholesky-factored intermediate
-matrices and an incrementally updated free/active set, so the per-iteration cost
-is linear in the number of variables for a fixed memory length `m`.
-
-The memory length `m` controls how many `(s, y)` correction pairs are stored.
-`linesearch` selects one of the vendored line searches (`HZAW()` or `MTLS()`).
-`clip_subspace` chooses between later style component-wise clamping of the
-subspace step (`true`) and the original paper's proportional backtracking (`false`).
-
-Gradient-based convergence uses the **projected gradient**, not the plain
-gradient: the run stops when `‖x - P(x - g)‖∞ ≤ g_abstol`, where `P` projects
-onto the box `[lb, ub]`. This is the correct first-order stationarity measure
-for a bound-constrained problem, and it equals `‖g‖∞` only when no bound is
-active. The reported `g_residual` (shown as `|g(x)|` in the results summary)
-is this projected-gradient norm.
-
-## References
- - Byrd, R. H., Lu, P., Nocedal, J. and Zhu, C. (1995). A Limited Memory
-   Algorithm for Bound Constrained Optimization. SIAM Journal on Scientific
-   Computing, 16(5), 1190-1208.
-"""
 function LBFGSB(;
     m::Integer = 10,
     linesearch::LineSearcher = HZAW(),

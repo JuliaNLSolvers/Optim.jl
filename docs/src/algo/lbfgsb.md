@@ -1,10 +1,6 @@
 # L-BFGS-B
-## Constructor
-```julia
-LBFGSB(; m::Integer = 10,
-         linesearch = HZAW(),
-         stepsize = 1.0,
-         clip_subspace::Bool = true)
+```@docs
+LBFGSB
 ```
 The keyword `m` sets how many `(s, y)` correction pairs are stored in the
 limited-memory Hessian approximation. `linesearch` selects one of the line

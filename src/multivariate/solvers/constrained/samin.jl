@@ -1,43 +1,49 @@
-# """
-# History: Based on Octave code samin.cc, by Michael Creel,
-# which was originally based on Gauss code by E.G. Tsionas. A source
-# for the Gauss code is http://web.stanford.edu/~doubleh/otherpapers/sa.txt
-# The original Fortran code by W. Goffe is at
-# http://www.degruyter.com/view/j/snde.1996.1.3/snde.1996.1.3.1020/snde.1996.1.3.1020.xml?format=INT
-# Tsionas and Goffe agreed to MIT licensing of samin.jl in email
-# messages to Creel.
-#
-# This Julia code uses the same names for control variables,
-# for the most part. A notable difference is that the initial
-# temperature can be found automatically to ensure that the active
-# bounds when the temperature begins to reduce cover the entire
-# parameter space (defined as a n-dimensional rectangle that is the
-# Cartesian product of the(lb_i, ub_i), i = 1,2,..n. The code also
-# allows for parameters to be restricted, by setting lb_i = ub_i,
-# for the appropriate i.
-
 """
-# SAMIN
-## Constructor
-```julia
-SAMIN(; nt::Int = 5     # reduce temperature every nt*ns*dim(x_init) evaluations
-        ns::Int = 5     # adjust bounds every ns*dim(x_init) evaluations
-        t0::T = 2.0     # Initial temperature
-        rt::T = 0.9     # geometric temperature reduction factor: when temp changes, new temp is t=rt*t
-        r_expand::T = 10.0 # geometric temperature promotion factor for situation with low coverage: when temp changes, new temp is t=r_expand*t
-        bounds_ratio::T = 0.6 # cut-off for bounds increment (1-bounds_ratio for decrease)
-        neps::Int = 5   # number of previous best values the final result is compared to
-        coverage_ok::Bool = false, # if false, increase temperature until initial parameter space is covered
-        verbosity::Int = 1) # scalar: 0, 1, 2 or 3 (default = 1).
-```
-## Description
-The `SAMIN` method implements the Simulated Annealing algorithm for problems with
-bounds constrains a described in Goffe et. al. (1994) and Goffe (1996). The
-algorithm
+    SAMIN(; nt=5, ns=5, t0=2.0, rt=0.9, r_expand=10.0,
+        bounds_ratio=0.6, neps=5, coverage_ok=false, verbosity=0)
 
-## References
- - Goffe, et. al. (1994) "Global Optimization of Statistical Functions with Simulated Annealing", Journal of Econometrics, V. 60, N. 1/2.
- - Goffe, William L. (1996) "SIMANN: A Global Optimization Algorithm using Simulated Annealing " Studies in Nonlinear Dynamics & Econometrics, Oct96, Vol. 1 Issue 3.
+Minimize a bounded objective with simulated annealing. The method adapts the
+temperature and search widths over a rectangular parameter region and is useful
+for global exploration when local derivative-based methods are unsuitable.
+
+# Keyword Arguments
+
+- `nt`: Temperature-reduction interval in units of objective evaluations.
+- `ns`: Search-width adjustment interval in units of objective evaluations.
+- `t0`: Initial temperature.
+- `rt`: Geometric temperature reduction factor.
+- `r_expand`: Temperature expansion factor when coverage is insufficient.
+- `bounds_ratio`: Cutoff controlling search-width updates.
+- `neps`: Number of previous best values used in the convergence check.
+- `coverage_ok`: Skip the initial coverage check when `true`.
+- `verbosity`: Amount of progress output, from 0 through 3.
+
+# Fields
+
+The fields correspond to the keyword arguments and can be inspected to record
+the annealing schedule used for a run.
+
+# Returns
+
+An `SAMIN` optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+result = optimize(f, [-5.0, -5.0], [5.0, 5.0], [1.0, -1.0], SAMIN(),
+    Optim.Options(iterations=1_000))
+Optim.minimizer(result)
+```
+
+# References
+
+- Goffe, W. L., Ferrier, G. D. and Rogers, J. (1994), "Global optimization
+  of statistical functions with simulated annealing".
+- Goffe, W. L. (1996), "SIMANN: A global optimization algorithm using
+  simulated annealing".
 """
 @kwdef struct SAMIN{T} <: AbstractConstrainedOptimizer
     nt::Int = 5 # reduce temperature every nt*ns*dim(x_init) evaluations

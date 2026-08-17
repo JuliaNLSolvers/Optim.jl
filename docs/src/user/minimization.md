@@ -78,6 +78,9 @@ exact Hessians.
 ## Box Constrained Optimization
 
 A primal interior-point algorithm for simple "box" constraints (lower and upper bounds) is available. Reusing our Rosenbrock example from above, boxed minimization is performed as follows:
+```@docs
+Fminbox
+```
 ```julia
 lower = [1.25, -2.1]
 upper = [Inf, Inf]

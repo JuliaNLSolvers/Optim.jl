@@ -151,6 +151,46 @@ function precondprepbox!(P, x, l, u, dfbox)
     @. P.diag = 1 / (dfbox.mu * (1 / (x - l)^2 + 1 / (u - x)^2) + 1)
 end
 
+"""
+    Fminbox(method=LBFGS(); mu0=NaN, mufactor=0.001, precondprep=...)
+
+Solve a box-constrained problem with a primal log-barrier method. The inner
+`method` solves a sequence of unconstrained barrier problems while the barrier
+coefficient is reduced by `mufactor`.
+
+# Keyword Arguments
+
+- `method`: Inner optimizer used for each barrier subproblem. Newton methods
+  are not supported.
+- `mu0`: Initial barrier coefficient. `NaN` selects automatic initialization.
+- `mufactor`: Factor applied when reducing the barrier coefficient.
+- `precondprep`: Callable used to prepare the inner optimizer's preconditioner.
+
+# Fields
+
+- `method`: Inner optimizer.
+- `mu0`, `mufactor`: Barrier initialization and reduction parameters.
+- `precondprep`: Preconditioner preparation callable.
+
+# Returns
+
+An `Fminbox` optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [-1.0, -1.0], [1.0, 1.0], [0.5, -0.5], Fminbox())
+Optim.minimizer(result)
+```
+
+# References
+
+- Nocedal, J. and Wright, S. J. (2006), *Numerical Optimization*, section 19.6.
+"""
 struct Fminbox{O<:AbstractOptimizer,T,P} <: AbstractConstrainedOptimizer
     method::O
     mu0::T
@@ -158,23 +198,6 @@ struct Fminbox{O<:AbstractOptimizer,T,P} <: AbstractConstrainedOptimizer
     precondprep::P
 end
 
-"""
-# Fminbox
-## Constructor
-```julia
-Fminbox(method;
-        mu0=NaN,
-        mufactor=0.0001,
-        precondprep(P, x, l, u, mu) -> precondprepbox!(P, x, l, u, mu))
-```
-## Description
-Fminbox implements a primal barrier method for optimization with simple
-bounds (or box constraints). A description of an approach very close to
-the one implemented here can be found in section 19.6 of Nocedal and Wright
- (sec. 19.6, 2006).
-## References
- - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
-"""
 function Fminbox(
     method::AbstractOptimizer = LBFGS();
     mu0::Real = NaN,

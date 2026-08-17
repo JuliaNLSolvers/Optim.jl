@@ -43,6 +43,11 @@ Special methods for bounded univariate optimization:
 ## General Options
 In addition to the solver, you can alter the behavior of the Optim package by using the list of keyword below in the `Optim.Options` constructor.
 
+```@docs
+Optim.Options
+Optim.TerminationCode
+```
+
 ### Termination
 * `x_abstol`: Absolute tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
 * `x_reltol`: Relative tolerance in changes of the input vector `x`, in infinity norm. Defaults to `0.0`.
