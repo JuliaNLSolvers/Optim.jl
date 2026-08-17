@@ -158,16 +158,15 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
 
                 tau = sqrt(delta_sq - p_lambda2)
 
-                # I don't think it matters which eigenvector we pick so take
-                # the first.
-                calc_p!(lambda, min_i, n, qg, H_eig, s)
-                LinearAlgebra.axpby!(tau, view(H_eig.vectors, :, 1), -1, s)
+                # Formula 4.45 is s = p + tau*z where z is any unit eigenvector
+                # for the smallest eigenvalue; s already holds p, so add tau
+                # times the first eigenvector.
+                LinearAlgebra.axpy!(tau, view(H_eig.vectors, :, 1), s)
             end
         end
 
-        lambda = initial_safeguards(H, gr, delta, lambda)
-
         if !hard_case
+            lambda = initial_safeguards(H, gr, delta, lambda)
             # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
             # with Optim.jl
 

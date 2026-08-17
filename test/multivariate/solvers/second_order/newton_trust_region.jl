@@ -132,6 +132,26 @@ Random.seed!(3288)
         @test reached_solution
         @test abs(lambda + L[1]) < 1e-4
         @test abs(norm(s) - delta) < 1e-12
+        # The hard-case step must satisfy the boundary KKT system
+        # (H + lambda*I)s = -gr; the reversed sign +gr also has norm delta
+        # but is not the subproblem minimizer.
+        @test norm((H + lambda * I) * s + gr) < 1e-10
+
+        # An analytically solvable hard case: lambda = 2, p = [0, -1/3],
+        # tau = sqrt(1 - 1/9), s = [±tau, -1/3], m = -7/6.
+        H2 = Matrix(Diagonal([-2.0, 1.0]))
+        gr2 = [0.0, 1.0]
+        s2 = zeros(2)
+        m2, interior2, lambda2, hard_case2, reached_solution2 =
+            Optim.solve_tr_subproblem!(gr2, H2, 1.0, s2)
+        @test hard_case2
+        @test !interior2
+        @test reached_solution2
+        @test abs(lambda2 - 2.0) < 1e-12
+        @test abs(norm(s2) - 1.0) < 1e-12
+        @test abs(s2[2] + 1 / 3) < 1e-12
+        @test abs(abs(s2[1]) - sqrt(8.0) / 3) < 1e-12
+        @test abs(m2 - (-7 / 6)) < 1e-12
 
 
         #######################################
