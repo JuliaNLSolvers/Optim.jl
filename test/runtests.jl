@@ -1,5 +1,10 @@
 using Test
 using Optim
+
+@static if VERSION >= v"1.11.0-DEV.469"
+    @test Base.ispublic(Optim, :converged)
+end
+
 using OptimTestProblems
 using OptimTestProblems.MultivariateProblems
 const MVP = MultivariateProblems

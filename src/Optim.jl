@@ -241,4 +241,8 @@ include("maximize.jl")
 # without creating a new global
 global Optimizer
 
+@static if VERSION >= v"1.11.0-DEV.469"
+    eval(Expr(:public, :converged))
+end
+
 end
