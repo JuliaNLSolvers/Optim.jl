@@ -10,33 +10,57 @@ function default_neighbor!(x::AbstractArray{T}, x_proposal::AbstractArray) where
     return
 end
 
+"""
+    SimulatedAnnealing(; neighbor=default_neighbor!,
+        temperature=log_temperature, keep_best=true)
+
+Simulated annealing is a derivative-free, probabilistic optimizer based on
+Metropolis acceptance. At each iteration `neighbor` proposes a new point and
+`temperature` controls the probability of accepting an uphill move. The
+`keep_best` flag is stored for compatibility but is currently not used by the
+implementation.
+
+# Keyword Arguments
+
+- `neighbor`: Mutating callable with signature `neighbor(x_current,
+  x_proposed)` that writes a proposal into `x_proposed`.
+- `temperature`: Callable of the iteration number returning the current
+  temperature. The default is [`log_temperature`](@ref).
+- `keep_best`: Stored compatibility flag; it currently has no effect.
+
+# Fields
+
+- `neighbor!`: Proposal-generating callable.
+- `temperature`: Temperature schedule callable.
+- `keep_best`: Stored compatibility flag; it currently has no effect.
+
+# Returns
+
+An initialized `SimulatedAnnealing` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+result = optimize(f, [1.0, -1.0], SimulatedAnnealing())
+Optim.minimizer(result)
+```
+
+For a custom proposal, mutate the second argument:
+
+```julia
+neighbor!(current, proposed) = (proposed .= current .+ randn(length(current)); proposed)
+```
+"""
 struct SimulatedAnnealing{Tn,Ttemp} <: ZerothOrderOptimizer
     neighbor!::Tn
     temperature::Ttemp
     keep_best::Bool # not used!?
 end
 
-"""
-# SimulatedAnnealing
-## Constructor
-```julia
-SimulatedAnnealing(; neighbor = default_neighbor!,
-                     temperature = log_temperature)
-```
-
-The constructor takes two keywords:
-* `neighbor = a!(x_current, x_proposed)`, a mutating function of the current `x`,
-and the proposed `x`
-* `temperature = b(iteration)`, a function of the current iteration that returns a temperature
-
-## Description
-Simulated Annealing is a derivative free method for optimization. It is based on the
-Metropolis-Hastings algorithm that was originally used to generate samples from a
-thermodynamics system, and is often used to generate draws from a posterior when doing
-Bayesian inference. As such, it is a probabilistic method for finding the minimum of a
-function, often over a quite large domains. For the historical reasons given above, the
-algorithm uses terms such as cooling, temperature, and acceptance probabilities.
-"""
 SimulatedAnnealing(;
     neighbor = default_neighbor!,
     temperature = log_temperature,

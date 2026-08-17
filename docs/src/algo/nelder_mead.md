@@ -1,9 +1,7 @@
 # Nelder-Mead
 Nelder-Mead is currently the standard algorithm when no derivatives are provided.
-## Constructor
-```julia
-NelderMead(; parameters = AdaptiveParameters(),
-             initial_simplex = AffineSimplexer())
+```@docs
+Optim.NelderMead
 ```
 The keywords in the constructor are used to control the following parts of the
 solver:

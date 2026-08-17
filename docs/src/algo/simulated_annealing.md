@@ -1,8 +1,6 @@
 # Simulated Annealing
-## Constructor
-```julia
-SimulatedAnnealing(; neighbor = default_neighbor!,
-                     temperature = default_temperature)
+```@docs
+Optim.SimulatedAnnealing
 ```
 
 The constructor takes two keywords:

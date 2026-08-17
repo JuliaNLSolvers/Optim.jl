@@ -1,7 +1,6 @@
 # Particle Swarm
-## Constructor
-```julia
-ParticleSwarm(; lower = [], upper = [], n_particles = 0)
+```@docs
+Optim.ParticleSwarm
 ```
 
 The constructor takes three keywords:

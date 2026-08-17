@@ -38,41 +38,53 @@ end
 FixedParameters(; α = 1.0, β = 2.0, γ = 0.5, δ = 0.5) = FixedParameters(α, β, γ, δ)
 parameters(P::FixedParameters, n::Integer) = (P.α, P.β, P.γ, P.δ)
 
+"""
+    NelderMead(; parameters=AdaptiveParameters(),
+        initial_simplex=AffineSimplexer())
+
+Nelder-Mead is a derivative-free direct-search method. It maintains a simplex
+of objective values and repeatedly reflects, expands, contracts, or shrinks
+the simplex. The method is useful when derivatives are unavailable, but its
+performance can depend on the initial simplex and parameter choice.
+
+# Keyword Arguments
+
+- `parameters`: An `AdaptiveParameters` or `FixedParameters` instance that
+  controls the reflection, expansion, contraction, and shrink coefficients.
+- `initial_simplex`: An `AffineSimplexer` instance that constructs the initial
+  simplex from the starting point.
+
+# Fields
+
+- `initial_simplex`: Simplex-construction strategy.
+- `parameters`: Nelder-Mead parameter strategy.
+
+# Returns
+
+An initialized `NelderMead` optimizer that can be passed to [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+result = optimize(f, [1.0, -1.0], NelderMead())
+Optim.minimizer(result)
+```
+
+# References
+
+- Nelder, J. A. and Mead, R. (1965), "A simplex method for function
+  minimization".
+- Gao, F. and Han, L. (2010), "Implementing the Nelder-Mead simplex algorithm
+  with adaptive parameters".
+"""
 struct NelderMead{Ts<:Simplexer,Tp<:NMParameters} <: ZerothOrderOptimizer
     initial_simplex::Ts
     parameters::Tp
 end
 
-"""
-# NelderMead
-## Constructor
-```julia
-NelderMead(; parameters = AdaptiveParameters(),
-             initial_simplex = AffineSimplexer())
-```
-
-The constructor takes 2 keywords:
-
-* `parameters`, an instance of either `AdaptiveParameters` or `FixedParameters`,
-and is used to generate parameters for the Nelder-Mead Algorithm
-* `initial_simplex`, an instance of `AffineSimplexer`
-
-## Description
-Our current implementation of the Nelder-Mead algorithm is based on [1] and [3].
-Gradient-free methods can be a bit sensitive to starting values and tuning parameters,
-so it is a good idea to be careful with the defaults provided in Optim.jl.
-
-Instead of using gradient information, Nelder-Mead is a direct search method. It keeps
-track of the function value at a number of points in the search space. Together, the
-points form a simplex. Given a simplex, we can perform one of four actions: reflect,
-expand, contract, or shrink. Basically, the goal is to iteratively replace the worst
-point with a better point. More information can be found in [1], [2] or [3].
-
-## References
-- [1] Nelder, John A. and R. Mead (1965). "A simplex method for function minimization". Computer Journal 7: 308–313. doi:10.1093/comjnl/7.4.308
-- [2] Lagarias, Jeffrey C., et al. "Convergence properties of the Nelder–Mead simplex method in low dimensions." SIAM Journal on Optimization 9.1 (1998): 112-147
-- [3] Gao, Fuchang and Lixing Han (2010). "Implementing the Nelder-Mead simplex algorithm with adaptive parameters". Computational Optimization and Applications. doi:10.1007/s10589-010-9329-3
-"""
 function NelderMead(; kwargs...)
     KW = Dict(kwargs)
     if haskey(KW, :initial_simplex) || haskey(KW, :parameters)
