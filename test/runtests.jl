@@ -109,6 +109,21 @@ input_tuple(method::Optim.SecondOrderOptimizer, prob) = (
     (MVP.objective(prob), MVP.gradient(prob), MVP.hessian(prob)),
 )
 
+# The first input passes the objective alone, so the gradient is finite
+# differenced. Central differences bottom out around eps^(1/3) relative, well
+# above the default g_tol of 1e-8, so whether these runs report convergence
+# comes down to the rounding of the machine they land on. Accept a gradient
+# that is at the finite-difference floor; the minimum and minimizer assertions
+# still pin down the answer.
+const FD_GRADIENT_TOL = 1e-6
+
+fd_gradient_input(method, i) =
+    i == 1 && method isa Union{Optim.FirstOrderOptimizer,Optim.SecondOrderOptimizer}
+
+converged_or_fd_floor(results, method, i) =
+    Optim.converged(results) ||
+    (fd_gradient_input(method, i) && Optim.g_residual(results) < FD_GRADIENT_TOL)
+
 function test_summary(x, ref::String)
     @test summary(x) == ref
     io = IOBuffer()
@@ -189,9 +204,9 @@ function run_optim_tests(
                 show_itcalls &&
                     printstyled("hvp-calls: ", Optim.hvp_calls(results), "\n"; color = :red)
                 if !((name, i) in convergence_exceptions)
-                    @test Optim.converged(results)
+                    @test converged_or_fd_floor(results, method, i)
                     # Print on error, easier to debug CI
-                    if !(Optim.converged(results))
+                    if !converged_or_fd_floor(results, method, i)
                         printstyled(
                             name,
                             " did not converge with i = ",
