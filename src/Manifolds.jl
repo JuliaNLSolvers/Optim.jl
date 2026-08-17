@@ -13,6 +13,35 @@
 # Princeton University Press, 2008
 
 
+"""
+    Manifold
+
+Abstract interface for manifolds used by Optim's first-order methods.
+
+An implementation must provide `retract!(M, x)`, which maps `x` back onto the
+manifold in place, and `project_tangent!(M, g, x)`, which projects a gradient
+onto the tangent space at `x` in place. The out-of-place [`retract`](@ref) and
+[`project_tangent`](@ref) methods allocate a copy and delegate to these
+operations.
+
+Manifold optimizers call the projection after evaluating a gradient and call
+the retraction after proposing an update. A custom manifold can therefore be
+used with an optimizer such as [`GradientDescent`](@ref) by defining those two
+mutating methods.
+
+# Examples
+
+```julia
+using Optim
+
+manifold = Sphere()
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, 1.0],
+    GradientDescent(manifold=manifold), Optim.Options(iterations=5))
+Optim.minimizer(result)
+```
+"""
 abstract type Manifold end
 
 # fallback for out-of-place ops
@@ -60,7 +89,13 @@ function NLSolversBase.value_jvp!(obj::ManifoldObjective, x, v)
     return f_x, dot(g_x, v)
 end
 
-"""Flat Euclidean space {R,C}^N, with projections equal to the identity."""
+"""
+    Flat
+
+Euclidean space over real or complex arrays. Retraction and tangent projection
+are identity operations, so this is the default manifold for unconstrained
+optimization.
+"""
 struct Flat <: Manifold end
 # all the functions below are no-ops, and therefore the generated code
 # for the flat manifold should be exactly the same as the one with all
@@ -74,17 +109,41 @@ project_tangent!(M::Flat, g, x) = g
 NLSolversBase.jvp!(obj::ManifoldObjective{Flat}, x, v) = NLSolversBase.jvp!(obj.inner_obj, x, v)
 NLSolversBase.value_jvp!(obj::ManifoldObjective{Flat}, x, v) = NLSolversBase.value_jvp!(obj.inner_obj, x, v)
 
-"""Spherical manifold {|x| = 1}."""
+"""
+    Sphere
+
+Spherical manifold containing arrays with unit Euclidean norm. Retraction
+normalizes an iterate and tangent projection removes its radial component.
+
+# Examples
+
+```julia
+using Optim
+
+result = optimize(x -> -x[1], [0.6, 0.8],
+    GradientDescent(manifold=Sphere()), Optim.Options(iterations=10))
+norm(Optim.minimizer(result))
+```
+"""
 struct Sphere <: Manifold end
 retract!(S::Sphere, x) = (x ./= norm(x))
 # dot accepts any iterables
 project_tangent!(S::Sphere, g, x) = (g .-= real(dot(x, g)) .* x)
 
 """
-N x n matrices with orthonormal columns, i.e. such that X'X = I.
-Special cases: N x 1 = sphere, N x N = orthogonal/unitary group.
-Stiefel() uses a SVD algorithm to compute the retraction. To use a Cholesky-based orthogonalization (faster but less stable), use Stiefel(:CholQR).
-When the function to be optimized depends only on the subspace X*X' spanned by a point X in the Stiefel manifold, first-order optimization algorithms are equivalent for the Stiefel and Grassmann manifold, so there is no separate Grassmann manifold.
+    Stiefel([retraction=:SVD])
+
+Stiefel manifold of matrices with orthonormal columns, `X'X = I`. The
+`retraction` choice is `:SVD` by default; `:CholQR` selects a faster
+Cholesky-based orthogonalization that may be less stable.
+
+# Arguments
+
+- `retraction`: Either `:SVD` or `:CholQR`.
+
+# Returns
+
+A concrete `Stiefel` manifold descriptor.
 """
 abstract type Stiefel <: Manifold end
 struct Stiefel_CholQR <: Stiefel end
@@ -111,8 +170,17 @@ project_tangent!(S::Stiefel, G, X) = (XG = X'G; G .-= X * ((XG .+ XG') ./ 2))
 
 
 """
-Multiple copies of the same manifold. Points are stored as inner_dims x outer_dims,
-e.g. the product of 2x2 Stiefel manifolds of dimension N x n would be a N x n x 2 x 2 matrix.
+    PowerManifold(inner_manifold, inner_dims, outer_dims)
+
+Construct a manifold containing multiple copies of `inner_manifold`. Points
+are stored with shape `inner_dims..., outer_dims...`; each outer index selects
+one embedded manifold instance.
+
+# Fields
+
+- `inner_manifold`: Manifold applied to each copy.
+- `inner_dims`: Shape of one embedded point.
+- `outer_dims`: Shape indexing the copies.
 """
 struct PowerManifold <: Manifold
     "Type of embedded manifold"
@@ -143,9 +211,15 @@ end
 
 
 """
-Product of two manifolds {P = (x1,x2), x1 ∈ m1, x2 ∈ m2}.
-P is stored as a flat 1D array, and x1 is before x2 in memory.
-Use get_inner(m, x, {1,2}) to access x1 or x2 in their original format.
+    ProductManifold(m1, m2, dims1, dims2)
+
+Construct the product of two manifolds. A point is stored as a flat vector,
+with the `m1` component preceding the `m2` component in memory.
+
+# Fields
+
+- `m1`, `m2`: Component manifolds.
+- `dims1`, `dims2`: Shapes used to view each component.
 """
 struct ProductManifold <: Manifold
     m1::Manifold
