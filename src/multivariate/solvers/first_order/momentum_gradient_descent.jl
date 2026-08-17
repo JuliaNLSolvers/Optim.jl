@@ -1,6 +1,46 @@
 # See p. 280 of Murphy's Machine Learning
 # x_k1 = x_k - alpha * gr + mu * (x - x_previous)
 
+"""
+    MomentumGradientDescent(; mu=0.01,
+        alphaguess=LineSearches.InitialPrevious(),
+        linesearch=LineSearches.HagerZhang(), manifold=Flat())
+
+Momentum gradient descent augments the negative-gradient direction with a
+momentum term proportional to the displacement between the current and
+previous iterates. A line search selects the gradient step length.
+
+# Keyword Arguments
+
+- `mu`: Momentum coefficient multiplying the displacement from the previous
+  iterate.
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+
+# Fields
+
+- `mu`: Momentum coefficient.
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `manifold`: Manifold used for vector operations.
+
+# Returns
+
+An initialized `MomentumGradientDescent` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], MomentumGradientDescent(mu=0.01))
+Optim.minimizer(result)
+```
+"""
 struct MomentumGradientDescent{Tf,IL,L} <: FirstOrderOptimizer
     mu::Tf
     alphaguess!::IL

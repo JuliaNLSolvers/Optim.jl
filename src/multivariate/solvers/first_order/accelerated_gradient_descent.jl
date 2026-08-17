@@ -6,6 +6,43 @@
 # If converged, return y_{t}
 # x_{t} = y_{t} + (t - 1.0) / (t + 2.0) * (y_{t} - y_{t - 1})
 
+"""
+    AcceleratedGradientDescent(; alphaguess=LineSearches.InitialPrevious(),
+        linesearch=LineSearches.HagerZhang(), manifold=Flat())
+
+Accelerated gradient descent combines a gradient step with an iteration-
+dependent extrapolation of the previous step. A line search selects the
+gradient step length. The method is intended for smooth objectives and may
+require tuning of the line-search configuration.
+
+# Keyword Arguments
+
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+
+# Fields
+
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `manifold`: Manifold used for vector operations.
+
+# Returns
+
+An initialized `AcceleratedGradientDescent` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], AcceleratedGradientDescent())
+Optim.minimizer(result)
+```
+"""
 struct AcceleratedGradientDescent{IL,L} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L

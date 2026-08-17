@@ -21,6 +21,11 @@ Requires a function and gradient (will be approximated if omitted):
 * `MomentumGradientDescent()`
 * `AcceleratedGradientDescent()`
 
+```@docs
+Optim.MomentumGradientDescent
+Optim.AcceleratedGradientDescent
+```
+
 Requires a function, a gradient, and a Hessian (cannot be omitted):
 
 * `Newton()`

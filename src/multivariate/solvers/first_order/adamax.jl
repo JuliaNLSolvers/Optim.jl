@@ -1,34 +1,48 @@
 """
-# AdaMax
-## Constant `alpha` case (default) constructor:
+    AdaMax(; alpha=0.002, beta_mean=0.9, beta_var=0.999,
+        epsilon=sqrt(eps(Float64)))
+
+AdaMax is a first-order optimizer that uses an exponentially weighted first
+gradient moment and an infinity-norm second-moment estimate. It is a variant
+of Adam that can be useful when the objective or gradient is stochastic.
+AdaMax does not perform a line search, so `alpha` may need to be tuned.
+
+# Keyword Arguments
+
+- `alpha`: Step-size parameter or callable scheduler. A scheduler is called as
+  `alpha(iteration)`.
+- `beta_mean`: Exponential decay factor for the first gradient moment.
+- `beta_var`: Exponential decay factor for the second-moment estimate.
+- `epsilon`: Positive numerical stabilizer. The default is
+  `sqrt(eps(Float64))`.
+
+# Fields
+
+- `α`: Step-size parameter or scheduler stored by the optimizer.
+- `β₁`: First-moment decay factor.
+- `β₂`: Second-moment decay factor.
+- `ϵ`: Numerical stabilizer.
+- `manifold`: Manifold used for iterate and tangent-space operations. The
+  keyword constructor uses [`Flat`](@ref).
+
+# Returns
+
+An initialized `AdaMax` optimizer that can be passed to [`optimize`](@ref).
+
+# Examples
 
 ```julia
-    AdaMax(; alpha=0.002, beta_mean=0.9, beta_var=0.999, epsilon=1e-8)
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], AdaMax(alpha=0.002))
+Optim.minimizer(result)
 ```
 
-## Scheduled `alpha` case constructor:
+# References
 
-Alternative to the above (default) usage where `alpha` is a fixed constant for
-all the iterations, the following constructor provides flexibility for `alpha`
-to be a callable object (a scheduler) that maps the current iteration count to
-a value of `alpha` that is to-be used for the current optimization iteration's
-update step. This helps us in scheduling `alpha` over the iterations as
-desired, using the following usage,
-
-```julia
-    # Let alpha_scheduler be iteration -> alpha value mapping callable object
-    AdaMax(; alpha=alpha_scheduler, other_kwargs...)
-```
-
-## Description
-AdaMax is a gradient based optimizer that chooses its search direction by
-building up estimates of the first two moments of the gradient vector. This
-makes it suitable for problems with a stochastic objective and thus gradient.
-The method is introduced in [1] where the related Adam method is also
-introduced, see `?Adam` for more information on that method.
-
-## References
-[1] https://arxiv.org/abs/1412.6980
+- "Adam: A Method for Stochastic Optimization" (2014).
 """
 struct AdaMax{Tα,T,Tm} <: FirstOrderOptimizer
     α::Tα

@@ -1,34 +1,52 @@
 """
-# Adam
-## Constant `alpha` case (default) constructor:
-
-```julia
     Adam(; alpha=0.0001, beta_mean=0.9, beta_var=0.999, epsilon=1e-8)
-```
 
-## Scheduled `alpha` case constructor:
+Adam is a first-order optimizer that updates the iterate using exponentially
+weighted estimates of the first and second moments of the gradient. The
+`alpha` keyword may be a number or a callable scheduler receiving the current
+iteration number. Adam does not perform a line search, so `alpha` may need to
+be tuned for the objective.
 
-Alternative to the above (default) usage where `alpha` is a fixed constant for
-all the iterations, the following constructor provides flexibility for `alpha`
-to be a callable object (a scheduler) that maps the current iteration count to
-a value of `alpha` that is to-be used for the current optimization iteration's
-update step. This helps us in scheduling `alpha` over the iterations as
-desired, using the following usage,
+# Keyword Arguments
+
+- `alpha`: Step-size parameter or callable scheduler. A scheduler is called as
+  `alpha(iteration)`.
+- `beta_mean`: Exponential decay factor for the first gradient moment. Values
+  closer to one retain more history.
+- `beta_var`: Exponential decay factor for the second gradient moment. Values
+  closer to one retain more history.
+- `epsilon`: Positive numerical stabilizer used in the denominator.
+
+# Fields
+
+- `α`: Step-size parameter or scheduler stored by the optimizer.
+- `β₁`: First-moment decay factor.
+- `β₂`: Second-moment decay factor.
+- `ϵ`: Numerical stabilizer.
+- `manifold`: Manifold used for iterate and tangent-space operations. The
+  keyword constructor uses [`Flat`](@ref).
+
+# Returns
+
+An initialized `Adam` optimizer that can be passed to [`optimize`](@ref).
+
+# Examples
 
 ```julia
-    # Let alpha_scheduler be iteration -> alpha value mapping callable object
-    Adam(; alpha=alpha_scheduler, other_kwargs...)
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], Adam(alpha=0.001))
+Optim.minimizer(result)
 ```
 
-## Description
-Adam is a gradient based optimizer that chooses its search direction by building
-up estimates of the first two moments of the gradient vector. This makes it
-suitable for problems with a stochastic objective and thus gradient. The method
-is introduced in [1] where the related AdaMax method is also introduced, see
-`?AdaMax` for more information on that method.
+To schedule the step size, pass a callable such as
+`alpha = iteration -> 0.001 / sqrt(iteration)`.
 
-## References
-[1] https://arxiv.org/abs/1412.6980
+# References
+
+- "Adam: A Method for Stochastic Optimization" (2014).
 """
 struct Adam{Tα,T,Tm} <: FirstOrderOptimizer
     α::Tα
