@@ -41,6 +41,63 @@
 #   which a finite value will be returned. The default value for
 #   alphamax is Inf.
 
+"""
+    ConjugateGradient(; alphaguess=LineSearches.InitialHagerZhang(),
+        linesearch=LineSearches.HagerZhang(), eta=0.4, theta=1.0,
+        betamax=Inf, P=nothing, precondprep=Returns(nothing), manifold=Flat())
+
+The nonlinear conjugate-gradient method computes successive search directions
+from the gradient and a conjugacy coefficient. This implementation follows
+the Hager-Zhang method and uses a line search to select each step length.
+
+# Keyword Arguments
+
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length. The
+  `HagerZhang` line search is recommended for this method.
+- `eta`: Positive safeguard parameter used when computing the conjugacy
+  coefficient. The default is `0.4`.
+- `theta`: Nonnegative parameter controlling the conjugacy update. Setting it
+  to zero selects the Hestenes-Stiefel variant.
+- `betamax`: Positive upper bound on the absolute conjugacy coefficient.
+- `P`: Optional preconditioner applied to the gradient direction.
+- `precondprep`: Callable of the form `precondprep(P, x)` that updates or
+  constructs `P` for the current iterate. The default leaves `P` unchanged.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+
+# Fields
+
+- `eta`: Conjugacy safeguard parameter.
+- `theta`: Conjugacy update parameter.
+- `betamax`: Maximum absolute conjugacy coefficient.
+- `P`: Preconditioner, or `nothing`.
+- `precondprep!`: Preconditioner preparation callable.
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `manifold`: Manifold used for vector operations.
+
+# Returns
+
+An initialized `ConjugateGradient` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], ConjugateGradient())
+Optim.minimizer(result)
+```
+
+# References
+
+- Hager, W. W. and Zhang, H. (2006), "Algorithm 851: CG_DESCENT".
+- Hager, W. W. and Zhang, H. (2013), "The Limited Memory Conjugate Gradient
+  Method".
+"""
 struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     eta::Tf
     theta::Tf
@@ -54,37 +111,6 @@ end
 
 Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 
-"""
-# Conjugate Gradient Descent
-## Constructor
-```julia
-ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
-linesearch = LineSearches.HagerZhang(),
-eta = 0.4,
-theta = 1.0,
-betamax = Inf,
-P = nothing,
-precondprep = Returns(nothing),
-manifold = Flat())
-```
-The strictly positive constant ``eta`` is used in determining
-the next step direction, and the default here deviates from the one used in the
-original paper (where it was ``0.01``). See more details in the original papers
-referenced below.
-The non negative constant ``theta`` is also used in determining the next step direction (see HZ2013, Eq 2.2).
-When ``theta = 0``, the step direction switches to Hestenes-Stiefel method.
-The strictly positive constant ``betamax`` is used to ensure that the beta factor is not too large in absolute value.
-
-## Description
-The `ConjugateGradient` method implements Hager and Zhang (2006) and elements
-from Hager and Zhang (2013). Notice, the default `linesearch` is `HagerZhang`
-from LineSearches.jl. This line search is exactly the one proposed in Hager and
-Zhang (2006).
-
-## References
- - W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
- - W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
-"""
 function ConjugateGradient(;
     alphaguess = LineSearches.InitialHagerZhang(),
     linesearch = LineSearches.HagerZhang(),

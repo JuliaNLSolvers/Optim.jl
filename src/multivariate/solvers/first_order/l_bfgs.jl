@@ -79,6 +79,63 @@ function twoloop!(
     return
 end
 
+"""
+    LBFGS(; m::Integer=10, alphaguess=LineSearches.InitialStatic(),
+        linesearch=LineSearches.HagerZhang(), P=nothing,
+        precondprep=Returns(nothing), manifold=Flat(),
+        scaleinvH0=P === nothing)
+
+The limited-memory BFGS (L-BFGS) method uses the previous `m` iterate and
+gradient differences to apply an inverse-Hessian approximation without
+storing the dense matrix. It is a quasi-Newton method suited to larger
+problems. The approximation can use a preconditioner through `P`.
+
+# Keyword Arguments
+
+- `m`: Number of iterate and gradient differences retained by the two-loop
+  recursion.
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+- `P`: Optional positive-definite preconditioner. With no preconditioner, the
+  initial inverse-Hessian approximation is the identity or its scaled form.
+- `precondprep`: Callable of the form `precondprep(P, x)` that updates or
+  constructs the preconditioner for the current iterate. The default leaves
+  `P` unchanged.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+- `scaleinvH0`: Whether to scale the initial inverse-Hessian approximation in
+  the two-loop recursion. It defaults to `P === nothing`.
+
+# Fields
+
+- `m`: Number of stored history pairs.
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `P`: Preconditioner, or `nothing`.
+- `precondprep!`: Preconditioner preparation callable.
+- `manifold`: Manifold used for vector operations.
+- `scaleinvH0`: Whether to scale the initial inverse-Hessian approximation.
+
+# Returns
+
+An initialized `LBFGS` optimizer that can be passed to [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], LBFGS(m=5))
+Optim.minimizer(result)
+```
+
+# References
+
+- Liu, D. C. and Nocedal, J. (1989), "On the Limited Memory Method for Large
+  Scale Optimization".
+- Wright, S. J. and Nocedal, J. (2006), *Numerical Optimization*, 2nd ed.
+"""
 struct LBFGS{T,IL,L,Tprep} <: FirstOrderOptimizer
     m::Int
     alphaguess!::IL
@@ -88,39 +145,6 @@ struct LBFGS{T,IL,L,Tprep} <: FirstOrderOptimizer
     manifold::Manifold
     scaleinvH0::Bool
 end
-"""
-# LBFGS
-## Constructor
-```julia
-LBFGS(; m::Integer = 10,
-alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.HagerZhang(),
-P=nothing,
-precondprep = Returns(nothing),
-manifold = Flat(),
-scaleinvH0::Bool = P === nothing)
-```
-`LBFGS` has two special keywords; the memory length `m`,
-and the `scaleinvH0` flag.
-The memory length determines how many previous Hessian
-approximations to store.
-When `scaleinvH0 == true`,
-then the initial guess in the two-loop recursion to approximate the
-inverse Hessian is the scaled identity, as can be found in Nocedal and Wright (2nd edition) (sec. 7.2).
-
-In addition, LBFGS supports preconditioning via the `P` and `precondprep`
-keywords.
-
-## Description
-The `LBFGS` method implements the limited-memory BFGS algorithm as described in
-Nocedal and Wright (sec. 7.2, 2006) and original paper by Liu & Nocedal (1989).
-It is a quasi-Newton method that updates an approximation to the Hessian using
-past approximations as well as the gradient.
-
-## References
- - Wright, S. J. and J. Nocedal (2006), Numerical optimization, 2nd edition. Springer
- - Liu, D. C. and Nocedal, J. (1989). "On the Limited Memory Method for Large Scale Optimization". Mathematical Programming B. 45 (3): 503–528
-"""
 function LBFGS(;
     m::Integer = 10,
     alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults

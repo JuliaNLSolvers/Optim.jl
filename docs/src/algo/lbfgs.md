@@ -5,12 +5,9 @@ Broyden–Fletcher–Goldfarb–Shanno ([BFGS](https://en.wikipedia.org/wiki/Bro
 
 ## Constructors
 
-```julia
-BFGS(; alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
-       initial_invH = nothing,
-       initial_stepnorm = nothing,
-       manifold = Flat())
+```@docs
+Optim.BFGS
+Optim.LBFGS
 ```
 
 `initial_invH` has a default value of `nothing`. If the user has a specific initial
@@ -20,16 +17,6 @@ to the initial point `x0`.
 If `initial_stepnorm` is set to a number `z`, the initial matrix will be the
 identity matrix scaled by `z` times the sup-norm of the gradient at the initial
 point `x0`.
-
-```julia
-LBFGS(; m = 10,
-        alphaguess = LineSearches.InitialStatic(),
-        linesearch = LineSearches.HagerZhang(),
-        P = nothing,
-        precondprep = (P, x) -> nothing,
-        manifold = Flat(),
-        scaleinvH0::Bool = P === nothing)
-```
 
 ## Description
 

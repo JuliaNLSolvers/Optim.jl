@@ -2,6 +2,56 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
+"""
+    BFGS(; alphaguess=LineSearches.InitialStatic(),
+        linesearch=LineSearches.HagerZhang(), initial_invH=nothing,
+        initial_stepnorm=nothing, manifold=Flat())
+
+The Broyden-Fletcher-Goldfarb-Shanno (BFGS) method is a quasi-Newton method
+that updates an approximation of the inverse Hessian from the objective
+gradient and successive iterates. Use [`LBFGS`](@ref) when storing a dense
+inverse-Hessian approximation is too expensive.
+
+# Keyword Arguments
+
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+- `initial_invH`: Optional function that returns the initial inverse-Hessian
+  approximation for a given initial point. When `nothing`, an identity matrix
+  is used unless `initial_stepnorm` is provided.
+- `initial_stepnorm`: Optional positive scale for the initial identity
+  approximation. The scale is divided by the infinity norm of the initial
+  gradient. This keyword is ignored when `initial_invH` is provided.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+
+# Fields
+
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `initial_invH`: Initial inverse-Hessian constructor, or `nothing`.
+- `initial_stepnorm`: Initial identity scale, or `nothing`.
+- `manifold`: Manifold used for vector operations.
+
+# Returns
+
+An initialized `BFGS` optimizer that can be passed to [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], BFGS())
+Optim.minimizer(result)
+```
+
+# References
+
+- Wright, S. J. and Nocedal, J. (1999), *Numerical Optimization*.
+- Broyden (1970), Fletcher (1970), Goldfarb (1970), and Shanno (1970).
+"""
 struct BFGS{IL,L,H,T,TM} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
@@ -12,31 +62,6 @@ end
 
 Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 
-"""
-# BFGS
-## Constructor
-```julia
-BFGS(; alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
-       manifold = Flat())
-```
-
-## Description
-The `BFGS` method implements the Broyden-Fletcher-Goldfarb-Shanno algorithm as
-described in Nocedal and Wright (sec. 8.1, 1999) and the four individual papers
-Broyden (1970), Fletcher (1970), Goldfarb (1970), and Shanno (1970). It is a
-quasi-Newton method that updates an approximation to the Hessian using past
-approximations as well as the gradient. See also the limited memory variant
-`LBFGS` for an algorithm that is more suitable for high dimensional problems.
-
-## References
- - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
- - Broyden, C. G. (1970), The convergence of a class of double-rank minimization algorithms, Journal of the Institute of Mathematics and Its Applications, 6: 76–90.
- - Fletcher, R. (1970), A New Approach to Variable Metric Algorithms, Computer Journal, 13 (3): 317–322,
- - Goldfarb, D. (1970), A Family of Variable Metric Updates Derived by Variational Means, Mathematics of Computation, 24 (109): 23–26,
- - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
-"""
 function BFGS(;
     alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
     linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults

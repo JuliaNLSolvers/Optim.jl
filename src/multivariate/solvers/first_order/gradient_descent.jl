@@ -1,3 +1,46 @@
+"""
+    GradientDescent(; alphaguess=LineSearches.InitialPrevious(),
+        linesearch=LineSearches.HagerZhang(), P=nothing,
+        precondprep=Returns(nothing), manifold=Flat())
+
+Gradient descent uses the negative gradient, optionally transformed by a
+preconditioner, as its search direction. A line search selects the step
+length. It is useful as a simple baseline and as a nonlinear preconditioner
+for acceleration methods, but can be slow on ill-conditioned problems.
+
+# Keyword Arguments
+
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+- `P`: Optional preconditioner applied to the gradient direction.
+- `precondprep`: Callable of the form `precondprep(P, x)` that updates or
+  constructs `P` for the current iterate. The default leaves `P` unchanged.
+- `manifold`: The [`Manifold`](@ref) on which the iterates are represented.
+
+# Fields
+
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+- `P`: Preconditioner, or `nothing`.
+- `precondprep!`: Preconditioner preparation callable.
+- `manifold`: Manifold used for vector operations.
+
+# Returns
+
+An initialized `GradientDescent` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+result = optimize(f, g!, [1.0, -1.0], GradientDescent())
+Optim.minimizer(result)
+```
+"""
 struct GradientDescent{IL,L,T,Tprep} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
@@ -8,27 +51,6 @@ end
 
 Base.summary(io::IO, ::GradientDescent) = print(io, "Gradient Descent")
 
-"""
-# Gradient Descent
-## Constructor
-```julia
-GradientDescent(; alphaguess = LineSearches.InitialHagerZhang(),
-linesearch = LineSearches.HagerZhang(),
-P = nothing,
-precondprep = Returns(nothing),
-manifold = Flat())
-```
-Keywords are used to control choice of line search, and preconditioning.
-
-## Description
-The `GradientDescent` method is a simple gradient descent algorithm, that is the
-search direction is simply the negative gradient at the current iterate, and
-then a line search step is used to compute the final step. See Nocedal and
-Wright (ch. 2.2, 1999) for an explanation of the approach.
-
-## References
- - Nocedal, J. and Wright, S. J. (1999), Numerical optimization. Springer Science 35.67-68: 7.
-"""
 function GradientDescent(;
     alphaguess = LineSearches.InitialPrevious(), # TODO: Investigate good defaults.
     linesearch = LineSearches.HagerZhang(),      # TODO: Investigate good defaults

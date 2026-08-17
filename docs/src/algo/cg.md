@@ -1,11 +1,6 @@
 # Conjugate Gradient Descent
-## Constructor
-```julia
-ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
-                    linesearch = LineSearches.HagerZhang(),
-                    eta = 0.4,
-                    P = nothing,
-                    precondprep = (P, x) -> nothing)
+```@docs
+Optim.ConjugateGradient
 ```
 
 ## Description

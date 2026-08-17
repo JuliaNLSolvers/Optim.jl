@@ -1,10 +1,6 @@
 # Gradient Descent
-## Constructor
-```julia
-GradientDescent(; alphaguess = LineSearches.InitialPrevious(),
-                  linesearch = LineSearches.HagerZhang(),
-                  P = nothing,
-                  precondprep = (P, x) -> nothing)
+```@docs
+Optim.GradientDescent
 ```
 ## Description
 Gradient Descent a common name for a quasi-Newton solver. This means that it takes
