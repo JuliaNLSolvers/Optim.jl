@@ -1,18 +1,26 @@
 """
-# GoldenSection
-## Constructor
+    GoldenSection
+
+Golden-section search minimizes a scalar objective on a finite interval. It
+maintains a bracket around the minimizer and reduces the bracket by a fixed
+golden-ratio factor at each iteration. The method requires no derivatives.
+
+# Returns
+
+An univariate optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
 ```julia
-    GoldenSection(;)
+using Optim
+
+result = optimize(x -> (x - 2)^2, 0.0, 4.0, GoldenSection())
+Optim.minimizer(result)
 ```
 
-## Description
-The `GoldenSection` method seeks to minimize a univariate function on an interval
-`[a, b]`. At all times the algorithm maintains a tuple of three minimizer candidates
-`(c, d, e)` where ``c<d<e`` such that the ratio of the largest to the smallest interval
-is the Golden Ratio.
+# References
 
-## References
-https://en.wikipedia.org/wiki/Golden-section_search
+- Kiefer, J. (1953), "Sequential minimax search for a maximum".
 """
 struct GoldenSection <: UnivariateOptimizer end
 

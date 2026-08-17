@@ -1,20 +1,26 @@
 """
-# Brent
-## Constructor
+    Brent
+
+Brent's method minimizes a scalar objective on a finite interval. It combines
+golden-section steps with parabolic interpolation and is appropriate when the
+objective is continuous but derivatives are unavailable.
+
+# Returns
+
+An univariate optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
 ```julia
-    Brent(;)
+using Optim
+
+result = optimize(x -> (x - 2)^2, 0.0, 4.0, Brent())
+Optim.minimizer(result)
 ```
 
-## Description
-Also known as the Brent-Dekker algorithm, `Brent` is a univariate optimization
-algorithm for minimizing functions on some interval `[a,b]`. The method uses bisection
-to find a zero of the gradient. If the original interval contains a minimum,
-bisection will reliably find the solution, but can be slow. To this end `Brent`
-combines bisection with the secant method and inverse quadratic interpolation to
-accelerate convergence.
+# References
 
-## References
-R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover edition.
+- Brent, R. P. (2002), *Algorithms for Minimization Without Derivatives*.
 """
 struct Brent <: UnivariateOptimizer end
 

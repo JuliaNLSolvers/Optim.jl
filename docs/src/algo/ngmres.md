@@ -1,31 +1,8 @@
 # Acceleration methods: N-GMRES and O-ACCEL
 ## Constructors
-```julia
-NGMRES(;
-        alphaguess = LineSearches.InitialStatic(),
-        linesearch = LineSearches.HagerZhang(),
-        manifold = Flat(),
-        wmax::Int = 10,
-        ϵ0 = 1e-12,
-        nlprecon = GradientDescent(
-            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
-            linesearch = LineSearches.Static(),
-            manifold = manifold),
-        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-      )
-```
-
-```julia
-OACCEL(;manifold::Manifold = Flat(),
-       alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
-       nlprecon = GradientDescent(
-           alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
-           linesearch = LineSearches.Static(),
-           manifold = manifold),
-       nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-       ϵ0 = 1e-12,
-       wmax::Int = 10)
+```@docs
+NGMRES
+OACCEL
 ```
 
 ## Description

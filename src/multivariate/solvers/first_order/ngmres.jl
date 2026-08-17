@@ -8,6 +8,59 @@
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
 # TODO: Enforce TPrec <: Union{FirstOrderOptimizer,SecondOrderOptimizer}?
+"""
+    NGMRES(; manifold=Flat(), alphaguess=InitialStatic(),
+        linesearch=HagerZhang(), nlprecon=GradientDescent(...),
+        nlpreconopts=Options(iterations=1, allow_f_increases=true),
+        ϵ0=1e-12, wmax=10)
+
+Accelerate a nonlinear preconditioner with a windowed nonlinear GMRES step.
+The preconditioner proposes a candidate and N-GMRES minimizes an approximation
+of the gradient residual over the span of recent iterates. It is intended for
+unconstrained or manifold optimization problems where a first-order method is
+already effective but slow.
+
+# Keyword Arguments
+
+- `manifold`: Manifold on which the iterates are retracted and gradients are
+  projected.
+- `alphaguess`, `linesearch`: Line-search configuration for the acceleration
+  step.
+- `nlprecon`: Optimizer used as the nonlinear preconditioner.
+- `nlpreconopts`: Options passed to the preconditioner at each iteration.
+- `ϵ0`: Positive regularization added to the acceleration system.
+- `wmax`: Maximum number of iterates retained in the acceleration window.
+
+# Fields
+
+- `alphaguess!`, `linesearch!`: Acceleration-step line-search callables.
+- `manifold`: Manifold used by the optimizer and preconditioner.
+- `nlprecon`, `nlpreconopts`: Nonlinear preconditioner and its options.
+- `ϵ0`, `wmax`: Regularization and acceleration-window size.
+
+# Returns
+
+An `NGMRES` optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+method = NGMRES(nlprecon=GradientDescent(), wmax=5)
+result = optimize(f, g!, [1.0, -1.0], method)
+Optim.converged(result)
+```
+
+# References
+
+- De Sterck, H. (2013), "Steepest descent preconditioning for nonlinear
+  GMRES optimization".
+- Washio, T. and Oosterlee, C. (1997), "Krylov subspace acceleration for
+  nonlinear multigrid schemes".
+"""
 struct NGMRES{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
@@ -18,6 +71,55 @@ struct NGMRES{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     wmax::Int             # Maximum window size
 end
 
+"""
+    OACCEL(; manifold=Flat(), alphaguess=InitialStatic(),
+        linesearch=HagerZhang(), nlprecon=GradientDescent(...),
+        nlpreconopts=Options(iterations=1, allow_f_increases=true),
+        ϵ0=1e-12, wmax=10)
+
+Accelerate a nonlinear preconditioner with the O-ACCEL objective-based
+subspace step. The method minimizes an approximation of the objective over a
+window of recent iterates, and is useful when a first-order preconditioner
+needs additional acceleration.
+
+# Keyword Arguments
+
+- `manifold`: Manifold on which the iterates are retracted and gradients are
+  projected.
+- `alphaguess`, `linesearch`: Line-search configuration for the acceleration
+  step.
+- `nlprecon`: Optimizer used as the nonlinear preconditioner.
+- `nlpreconopts`: Options passed to the preconditioner at each iteration.
+- `ϵ0`: Positive regularization added to the acceleration system.
+- `wmax`: Maximum number of iterates retained in the acceleration window.
+
+# Fields
+
+- `alphaguess!`, `linesearch!`: Acceleration-step line-search callables.
+- `manifold`: Manifold used by the optimizer and preconditioner.
+- `nlprecon`, `nlpreconopts`: Nonlinear preconditioner and its options.
+- `ϵ0`, `wmax`: Regularization and acceleration-window size.
+
+# Returns
+
+An `OACCEL` optimizer accepted by [`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+method = OACCEL(nlprecon=GradientDescent(), wmax=5)
+result = optimize(f, g!, [1.0, -1.0], method)
+Optim.converged(result)
+```
+
+# References
+
+- Riseth, A. (2019), "Objective acceleration for unconstrained optimization".
+"""
 struct OACCEL{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Linesearch between xP and xA (precondition x to accelerated x)
@@ -42,38 +144,6 @@ function Base.summary(io::IO, s::OACCEL)
     return
 end
 
-"""
-# N-GMRES
-## Constructor
-```julia
-NGMRES(;
-        alphaguess = LineSearches.InitialStatic(),
-        linesearch = LineSearches.HagerZhang(),
-        manifold = Flat(),
-        wmax::Int = 10,
-        ϵ0 = 1e-12,
-        nlprecon = GradientDescent(
-            alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
-            linesearch = LineSearches.Static(),
-            manifold = manifold),
-        nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-      )
-```
-
-## Description
-This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
-and proposes an accelerated step by minimizing an approximation of
-the (\ell_2) residual of the gradient on a subspace spanned by the previous
-`wmax` iterates.
-
-N-GMRES was originally developed for solving nonlinear systems [1], and reduces to
-GMRES for linear problems.
-Application of the algorithm to optimization is covered, for example, in [2].
-
-## References
-[1] De Sterck. Steepest descent preconditioning for nonlinear GMRES optimization. NLAA, 2013.
-[2] Washio and Oosterlee. Krylov subspace acceleration for nonlinear multigrid schemes. ETNA, 1997.
-"""
 function NGMRES(;
     manifold::Manifold = Flat(),
     alphaguess = LineSearches.InitialStatic(),
@@ -91,33 +161,6 @@ function NGMRES(;
     NGMRES(_alphaguess(alphaguess), linesearch, manifold, nlprecon, nlpreconopts, ϵ0, wmax)
 end
 
-"""
-# O-ACCEL
-## Constructor
-```julia
-OACCEL(;manifold::Manifold = Flat(),
-       alphaguess = LineSearches.InitialStatic(),
-       linesearch = LineSearches.HagerZhang(),
-       nlprecon = GradientDescent(
-           alphaguess = LineSearches.InitialStatic(alpha=1e-4,scaled=true),
-           linesearch = LineSearches.Static(),
-           manifold = manifold),
-       nlpreconopts = Options(iterations = 1, allow_f_increases = true),
-       ϵ0 = 1e-12,
-       wmax::Int = 10)
-```
-
-## Description
-This algorithm takes a step given by the nonlinear preconditioner `nlprecon`
-and proposes an accelerated step by minimizing an approximation of
-the objective on a subspace spanned by the previous
-`wmax` iterates.
-
-O-ACCEL is a slight tweak of N-GMRES, first presented in [1].
-
-## References
-[1] Riseth. Objective acceleration for unconstrained optimization. 2018.
-"""
 function OACCEL(;
     manifold::Manifold = Flat(),
     alphaguess = LineSearches.InitialStatic(),
