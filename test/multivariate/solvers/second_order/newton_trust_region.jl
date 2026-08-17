@@ -288,4 +288,17 @@ Random.seed!(3288)
         )
         @test Optim.termination_code(res) == Optim.TerminationCode.SmallTrustRegionRadius
     end
+
+    @testset "Singular Hessian in TR subproblem solve" begin
+        using Optim
+        H = [1.0 1.0; 1.0 1.0]   # positive-semidefinite, singular: eigenvalues 0 and 2
+        g = [1.0, 1.0]           # gradient in image space of H
+        s = fill(NaN, 2)
+        _, _, λ, hard_case, _ = Optim.solve_tr_subproblem!(g, H, 1.0, s)
+
+        @test !hard_case
+        @test all(isfinite, s)            # correctly update `s` to a finite value
+        @test (H + λ*I)*s ≈ -g atol=1e-6  # solves trust region problem
+        @test all(≥(0), eigvals(H + λ*I)) # positive-definite
+    end
 end
