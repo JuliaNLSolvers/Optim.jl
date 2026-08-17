@@ -1,25 +1,50 @@
+"""
+    Newton(; alphaguess=LineSearches.InitialStatic(),
+        linesearch=LineSearches.HagerZhang())
+
+Newton's method uses the objective Hessian to compute a second-order search
+direction and a line search to select the step length. A factorization from
+`PositiveFactorizations.jl` modifies indefinite Hessians so that the search
+direction remains a descent direction.
+
+# Keyword Arguments
+
+- `alphaguess`: Initial step-length guess used by `linesearch`.
+- `linesearch`: Line-search method used to choose the step length.
+
+# Fields
+
+- `alphaguess!`: Normalized initial step-length guess callable.
+- `linesearch!`: Line-search callable.
+
+# Returns
+
+An initialized `Newton` optimizer that can be passed to [`optimize`](@ref).
+The objective supplied to `optimize` must provide a Hessian, either directly
+or through the selected automatic-differentiation configuration.
+
+# Examples
+
+```julia
+using Optim
+using LinearAlgebra: I
+
+f(x) = sum(abs2, x)
+g!(G, x) = (G .= 2 .* x)
+h!(H, x) = (H .= 2 .* I(length(x)))
+result = optimize(f, g!, h!, [1.0, -1.0], Newton())
+Optim.minimizer(result)
+```
+
+# References
+
+- Nocedal, J. and Wright, S. J. (1999), *Numerical Optimization*.
+"""
 struct Newton{IL,L} <: SecondOrderOptimizer
     alphaguess!::IL
     linesearch!::L
 end
 
-"""
-# Newton
-## Constructor
-```julia
-Newton(; alphaguess = LineSearches.InitialStatic(),
-linesearch = LineSearches.HagerZhang())
-```
-
-## Description
-The `Newton` method implements Newton's method for optimizing a function. We use
-a special factorization from the package `PositiveFactorizations.jl` to ensure
-that each search direction is a direction of descent. See Wright and Nocedal and
-Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
-
-## References
- - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
-"""
 function Newton(;
     alphaguess = LineSearches.InitialStatic(), # Good default for Newton
     linesearch = LineSearches.HagerZhang(),

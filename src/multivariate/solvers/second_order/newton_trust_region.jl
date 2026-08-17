@@ -218,6 +218,59 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     return m, interior, lambda, hard_case, reached_solution
 end
 
+"""
+    NewtonTrustRegion(; initial_delta=1.0, delta_hat=100.0, delta_min=0.0,
+        eta=0.1, rho_lower=0.25, rho_upper=0.75, use_fg=true)
+
+Newton trust-region optimization minimizes a quadratic model of the objective
+inside a dynamically sized region. The region is accepted, shrunk, or grown
+according to the ratio between the actual and predicted objective reduction.
+The method requires an objective Hessian.
+
+# Keyword Arguments
+
+- `initial_delta`: Initial trust-region radius. It must be positive and less
+  than `delta_hat`.
+- `delta_hat`: Maximum trust-region radius. It must be positive.
+- `delta_min`: Smallest allowable radius. Optimization stops when the updated
+  radius is less than or equal to this value.
+- `eta`: Minimum actual-to-predicted reduction ratio required to accept a step.
+- `rho_lower`: Ratio below which the trust region is shrunk. It must be larger
+  than `eta`.
+- `rho_upper`: Ratio above which a boundary step grows the trust region. It
+  must be larger than `rho_lower`.
+- `use_fg`: Whether to evaluate the objective value and gradient together after
+  solving the trust-region subproblem.
+
+# Fields
+
+- `initial_delta`: Initial trust-region radius.
+- `delta_hat`: Maximum trust-region radius.
+- `delta_min`: Minimum trust-region radius.
+- `eta`: Acceptance threshold.
+- `rho_lower`: Shrinking threshold.
+- `rho_upper`: Growing threshold.
+- `use_fg`: Whether to use a combined objective-and-gradient evaluation.
+
+# Returns
+
+An initialized `NewtonTrustRegion` optimizer that can be passed to
+[`optimize`](@ref).
+
+# Examples
+
+```julia
+using Optim, OptimTestProblems
+
+prob = UnconstrainedProblems.examples["Rosenbrock"]
+result = optimize(prob.f, prob.g!, prob.h!, prob.initial_x, NewtonTrustRegion())
+Optim.minimizer(result)
+```
+
+# References
+
+- Nocedal, J. and Wright, S. (2006), *Numerical Optimization*, 2nd ed.
+"""
 struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     initial_delta::T
     delta_hat::T
@@ -259,41 +312,6 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     end
 end
 
-"""
-# NewtonTrustRegion
-## Constructor
-```julia
-NewtonTrustRegion(; initial_delta = 1.0,
-                    delta_hat = 100.0,
-                    delta_min = 0.0,
-                    eta = 0.1,
-                    rho_lower = 0.25,
-                    rho_upper = 0.75,
-                    use_fg = true)
-```
-
-The constructor has 7 keywords:
-* `initial_delta`, the initial trust region radius. Defaults to `1.0`.
-* `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
-* `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is less than or equal to this value. Defaults to `0.0`.
-* `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
-* `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
-* `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
-* `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
-
-## Description
-The `NewtonTrustRegion` method implements Newton's method with a trust region
-for optimizing a function. The method is designed to take advantage of the
-second-order information in a function's Hessian, but with more stability that
-Newton's method when functions are not globally well-approximated by a quadratic.
-This is achieved by repeatedly minimizing quadratic approximations within a
-dynamically-sized trust region in which the function is assumed to be locally
-quadratic. See Wright and Nocedal and Wright (ch. 4, 2006) for a discussion of
-trust-region methods in practice.
-
-## References
- - Nocedal, J., & Wright, S. (2006). Numerical optimization. Springer Science & Business Media.
-"""
 function NewtonTrustRegion(;
     initial_delta::Real = 1.0,
     delta_hat::Real = 100.0,

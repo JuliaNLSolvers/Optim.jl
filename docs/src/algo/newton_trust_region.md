@@ -1,11 +1,6 @@
 # Newton's Method With a Trust Region
-## Constructor
-```julia
-NewtonTrustRegion(; initial_delta = 1.0,
-                    delta_hat = 100.0,
-                    eta = 0.1,
-                    rho_lower = 0.25,
-                    rho_upper = 0.75)
+```@docs
+Optim.NewtonTrustRegion
 ```
 
 The constructor takes keywords that determine the initial and maximal size of the trust region, when to grow and shrink the region, and how close the function should be to the quadratic approximation.  The notation follows chapter four of Numerical Optimization.  Below, `rho` ``=\rho`` refers to the ratio of the actual function change to the change in the quadratic approximation for a given step.
