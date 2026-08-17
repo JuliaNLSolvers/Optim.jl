@@ -1,8 +1,94 @@
 Base.summary(io::IO, r::OptimizationResults) = summary(io, r.method) # might want to do more here than just return summary of the method used
+
+"""
+    minimizer(r::OptimizationResults)
+
+Return the final candidate point stored in an optimization result.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+The point at which the algorithm stopped. Its shape and element type match
+the input accepted by the optimizer.
+
+# Examples
+
+```julia
+julia> result = optimize(x -> (x - 1)^2, 0.0, 2.0)
+julia> minimizer(result)
+1.0
+```
+"""
 minimizer(r::OptimizationResults) = r.minimizer
+
+"""
+    minimum(r::OptimizationResults)
+
+Return the objective value at the final candidate point in an optimization
+result.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+The objective value stored in the result. This is the value reported by the
+algorithm and is not a certificate of global optimality.
+"""
 minimum(r::OptimizationResults) = r.minimum
+
+"""
+    iterations(r::OptimizationResults)
+
+Return the number of optimization iterations completed before termination.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+An `Int` iteration count. Objective, gradient, and Hessian evaluation counts
+are exposed separately through [`f_calls`](@ref) and related accessors.
+"""
 iterations(r::OptimizationResults) = r.iterations
+
+"""
+    iteration_limit_reached(r::OptimizationResults)
+
+Report whether optimization stopped because the configured iteration limit was
+reached.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+A `Bool`. This is independent of [`converged`](@ref); an iteration-limited
+result can be inspected even when it did not satisfy the convergence criteria.
+"""
 iteration_limit_reached(r::OptimizationResults) = r.stopped_by.iterations
+
+"""
+    trace(r::OptimizationResults)
+
+Return the stored optimization trace.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+The trace collection stored in `r`. A trace is available only when the
+optimizer was run with `store_trace = true`; otherwise this method throws an
+`ErrorException`.
+"""
 trace(r::OptimizationResults) =
     length(r.trace) > 0 ? r.trace :
     error(
@@ -94,12 +180,39 @@ function simplex_value_trace(r::MultivariateOptimizationResults)
 end
 
 
+"""
+    f_trace(r::OptimizationResults)
+
+Return the objective values recorded in an optimization trace.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref) with trace storage enabled.
+
+# Returns
+
+An array containing `state.value` for each stored trace state. Throws an
+`ErrorException` when no trace was stored.
+"""
 f_trace(r::OptimizationResults) = [state.value for state in trace(r)]
 g_norm_trace(r::OptimizationResults) =
     error("g_norm_trace is not implemented for $(summary(r)).")
 g_norm_trace(r::MultivariateOptimizationResults) = [state.g_norm for state in trace(r)]
 
 # TODO: Overload `NLSolversBase.xxx` instead of defining separate `Optim.xxx` methods?
+"""
+    f_calls(r::OptimizationResults)
+
+Return the number of objective-function evaluations used to produce a result.
+
+# Arguments
+
+- `r::OptimizationResults`: A result returned by [`optimize`](@ref).
+
+# Returns
+
+An `Int` count of objective-function evaluations.
+"""
 f_calls(r::OptimizationResults) = r.f_calls
 g_calls(r::OptimizationResults) = error(LazyString("`g_calls` is not implemented for ", summary(r), "."))
 g_calls(r::MultivariateOptimizationResults) = r.g_calls
@@ -134,7 +247,7 @@ A `Bool` indicating whether the optimization terminated by convergence.
 
 ```julia
 julia> result = optimize(x -> (x - 1)^2, 0.0, 2.0)
-julia> converged(result)
+julia> Optim.converged(result)
 true
 ```
 """

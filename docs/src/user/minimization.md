@@ -199,6 +199,16 @@ Defined for all methods:
 
 ```@docs
 Optim.converged
+Optim.OptimizationResults
+Optim.UnivariateOptimizationResults
+Optim.MultivariateOptimizationResults
+Optim.minimizer
+Optim.minimum
+Optim.iterations
+Optim.iteration_limit_reached
+Optim.trace
+Optim.f_trace
+Optim.f_calls
 ```
 
 Defined for univariate optimization:

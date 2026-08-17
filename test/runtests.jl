@@ -7,7 +7,29 @@ end
 
 @testset "converged public interface" begin
     result = optimize(x -> (x - 1)^2, 0.0, 2.0)
-    @test converged(result)
+    @test Optim.converged(result)
+end
+
+struct GenericOptimizationMethod end
+Base.summary(::GenericOptimizationMethod) = "generic optimization method"
+struct GenericOptimizationResult <: Optim.OptimizationResults
+    method::GenericOptimizationMethod
+    minimizer::Float64
+    minimum::Float64
+    iterations::Int
+    stopped_by::NamedTuple
+    f_calls::Int
+end
+
+@testset "generic OptimizationResults interface" begin
+    result = GenericOptimizationResult(
+        GenericOptimizationMethod(), 1.0, 0.0, 3, (; iterations = true), 5,
+    )
+    @test Optim.minimizer(result) == 1.0
+    @test Optim.minimum(result) == 0.0
+    @test Optim.iterations(result) == 3
+    @test Optim.iteration_limit_reached(result)
+    @test Optim.f_calls(result) == 5
 end
 
 using OptimTestProblems

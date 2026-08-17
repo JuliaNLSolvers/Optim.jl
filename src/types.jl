@@ -279,8 +279,64 @@ const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
     NotImplemented
 end
 
+"""
+    OptimizationResults
+
+Abstract supertype for results returned by an Optim optimization method.
+
+Concrete result types are consumed through the generic accessors in
+`Optim.api.jl`. An implementation must provide fields named `method`,
+`minimizer`, `minimum`, `iterations`, `stopped_by`, and `f_calls`. The
+`stopped_by` value must provide an `iterations` field for
+[`iteration_limit_reached`](@ref); additional accessors require the fields
+described by their individual docstrings.
+
+Solver implementations should return a concrete subtype rather than defining
+solver-specific result accessors. User code should inspect results through the
+generic accessors, because the concrete result layout is an implementation
+detail and may differ between univariate and multivariate methods.
+
+# Examples
+
+```julia
+julia> result = optimize(x -> (x - 1)^2, 0.0, 2.0)
+julia> result isa Optim.OptimizationResults
+true
+julia> Optim.minimizer(result)
+1.0
+```
+"""
 abstract type OptimizationResults end
 
+"""
+    MultivariateOptimizationResults
+
+Concrete result container for multivariate optimization methods.
+
+# Fields
+
+- `method`: The optimizer instance that produced the result.
+- `initial_x`: The initial point supplied to the optimizer.
+- `minimizer`: The final candidate point.
+- `minimum`: The objective value at `minimizer`.
+- `iterations`: Number of completed optimization iterations.
+- `x_abstol`, `x_reltol`: Absolute and relative tolerances for changes in the candidate point.
+- `x_abschange`, `x_relchange`: Absolute and relative changes in the candidate point at termination.
+- `f_abstol`, `f_reltol`: Absolute and relative tolerances for objective changes.
+- `f_abschange`, `f_relchange`: Absolute and relative objective changes at termination.
+- `g_abstol`: Absolute tolerance for the gradient residual.
+- `g_residual`: Gradient residual at termination.
+- `trace`: Stored optimization trace, when trace storage was requested.
+- `f_calls`, `g_calls`, `jvp_calls`, `h_calls`, `hvp_calls`: Counts of objective, gradient, Jacobian-vector, Hessian, and Hessian-vector evaluations.
+- `time_limit`: Maximum allowed runtime in seconds, or `NaN` when unlimited.
+- `time_run`: Runtime in seconds.
+- `stopped_by`: Named tuple of algorithm stopping flags.
+- `termination_code`: The algorithm termination code.
+
+Use the generic accessors such as [`minimizer`](@ref), [`minimum`](@ref),
+[`trace`](@ref), and [`converged`](@ref) instead of depending on this field
+layout directly.
+"""
 mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: OptimizationResults
     method::O
     initial_x::Tx
