@@ -301,4 +301,13 @@ Random.seed!(3288)
         @test (H + λ*I)*s ≈ -g atol=1e-6  # solves trust region problem
         @test all(≥(0), eigvals(H + λ*I)) # positive-definite
     end
+    @testset "non-finite Hessian leaves a well-defined zero step" begin
+        H = [1.0 0.0; 0.0 NaN]
+        g = [1.0, 1.0]
+        s = fill(NaN, 2)
+        m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 1.0, s)
+        @test m == Inf
+        @test !reached
+        @test all(iszero, s)
+    end
 end

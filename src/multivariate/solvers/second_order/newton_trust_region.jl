@@ -98,6 +98,9 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     # symmetric.  (Julia issue #17093)
     Hsym = Symmetric(H)
     if any(!isfinite, Hsym)
+        # Leave a well-defined (zero) step behind: callers read s after this
+        # returns, and a stale or NaN-filled s poisons the radius update.
+        fill!(s, zero(T))
         return T(Inf), false, zero(T), false, false
     end
     H_eig = eigen(Hsym)
@@ -105,6 +108,7 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     if !isempty(H_eig.values)
         min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
     else
+        fill!(s, zero(T))
         return T(Inf), false, zero(T), false, false
     end
     H_scale = max(abs(min_H_ev), abs(max_H_ev)) # spectral norm
@@ -412,7 +416,12 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         # steps reducing delta by constant factors while each solution
         # will be the same. If this keeps on happening it could be a sign
         # errors in the gradient or a non-differentiability at the optimum.
-        state.delta = norm(state.s) / 4
+        # A rejection must never enlarge the radius: an unconverged subproblem
+        # can return ‖s‖ far above delta (and a non-finite H can make it NaN),
+        # and norm(s)/4 alone would then blow the radius up instead of
+        # shrinking it, so cap by the current delta.
+        s_norm = norm(state.s)
+        state.delta = (isfinite(s_norm) ? min(state.delta, s_norm) : state.delta) / 4
     elseif state.rho < method.rho_lower
         state.delta /= 4
     elseif (state.rho > method.rho_upper) && !state.interior
