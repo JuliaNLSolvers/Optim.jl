@@ -290,16 +290,23 @@ Random.seed!(3288)
     end
 
     @testset "Singular Hessian in TR subproblem solve" begin
-        using Optim
         H = [1.0 1.0; 1.0 1.0]   # positive-semidefinite, singular: eigenvalues 0 and 2
         g = [1.0, 1.0]           # gradient in image space of H
         s = fill(NaN, 2)
-        _, _, λ, hard_case, _ = Optim.solve_tr_subproblem!(g, H, 1.0, s)
+        m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 1.0, s)
 
         @test !hard_case
         @test all(isfinite, s)            # correctly update `s` to a finite value
         @test (H + λ*I)*s ≈ -g atol=1e-6  # solves trust region problem
-        @test all(≥(0), eigvals(H + λ*I)) # positive-definite
+        # Positive-semidefinite up to eigensolver noise: λ sits one ulp above
+        # -min_H_ev, so the smallest eigenvalue of H + λI is zero to rounding.
+        @test all(≥(-sqrt(eps())), eigvals(H + λ*I))
+        # The minimizer is the interior pseudo-inverse step s = -[0.5, 0.5]
+        # with ‖s‖ = 0.707 < delta = 1 and model value -0.5.
+        @test reached
+        @test interior
+        @test m ≈ -0.5 atol = 1e-8
+        @test s ≈ [-0.5, -0.5] atol = 1e-6
     end
     @testset "non-finite Hessian leaves a well-defined zero step" begin
         H = [1.0 0.0; 0.0 NaN]

@@ -169,7 +169,39 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
             end
         end
 
-        if !hard_case
+        # ‖s(lambda)‖ decreases in lambda, so over the feasible range it is
+        # largest at lambda_lb. If even that step lies inside the region there is
+        # no boundary solution to find, and the minimizer is the interior step at
+        # lambda_lb. A direction with H_eig.values[i] + lambda_lb ≈ 0 sends
+        # ‖s‖ to infinity unless its gradient component vanishes, in which case
+        # it drops out of the sum and out of the step. "Vanishes" is judged on
+        # the gradient's own scale: comparing qg against an H-scaled tolerance
+        # drops components whose qg/d ratio is large, which truncates the step.
+        null_tol = sqrt(eps(T)) * max(one(T), H_scale)
+        gr_tol = sqrt(eps(T)) * norm(gr)
+        norm2_lb = zero(T)
+        first_nz = 1
+        boundary_solution_exists = false
+        for i = 1:n
+            d = H_eig.values[i] + lambda_lb
+            if d <= null_tol
+                first_nz = i + 1
+                if abs(qg[i]) > gr_tol
+                    boundary_solution_exists = true
+                    break
+                end
+            else
+                norm2_lb += (qg[i] / d)^2
+            end
+        end
+        interior_at_lb = !boundary_solution_exists && norm2_lb <= delta_sq
+
+        if !hard_case && interior_at_lb
+            calc_p!(lambda_lb, first_nz, n, qg, H_eig, s)
+            interior = true
+            reached_solution = true
+            lambda = lambda_lb
+        elseif !hard_case
             lambda = initial_safeguards(H, gr, delta, lambda)
             # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
             # with Optim.jl
