@@ -447,7 +447,10 @@ end
 
 function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
     if state.rho > state.eta
-        # Accept the point and check convergence
+        # Accept the point and check convergence against all five tolerances,
+        # like the default path used by the first-order solvers. The 8-argument
+        # method only honors x_abstol and f_reltol, silently ignoring x_reltol
+        # and f_abstol.
         return assess_convergence(
             state.x,
             state.x_previous,
@@ -455,6 +458,8 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
             state.f_x_previous,
             state.g_x,
             options.x_abstol,
+            options.x_reltol,
+            options.f_abstol,
             options.f_reltol,
             options.g_abstol,
         )

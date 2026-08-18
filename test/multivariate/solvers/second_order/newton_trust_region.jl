@@ -301,4 +301,24 @@ Random.seed!(3288)
         @test (H + λ*I)*s ≈ -g atol=1e-6  # solves trust region problem
         @test all(≥(0), eigvals(H + λ*I)) # positive-definite
     end
+    @testset "f_abstol and x_reltol terminate the solver" begin
+        # A shifted flat quartic: near the start the objective barely changes,
+        # so a loose f_abstol should stop the run long before g_abstol does.
+        f(x) = (x[1] - 5.0)^4 + 1.0
+        g!(G, x) = (G[1] = 4.0 * (x[1] - 5.0)^3; G)
+        h!(H, x) = (H[1, 1] = 12.0 * (x[1] - 5.0)^2; H)
+        d2 = TwiceDifferentiable(f, g!, h!, [0.0])
+        res = Optim.optimize(d2, [0.0], NewtonTrustRegion(),
+            Optim.Options(f_abstol = 1e-3, g_abstol = 0.0, iterations = 10_000))
+        @test Optim.f_converged(res)
+        # With f_abstol honored this stops at 11 iterations; ignoring it, the
+        # run only ends at 30 when the f change rounds to exactly zero.
+        @test Optim.iterations(res) <= 15
+
+        d3 = TwiceDifferentiable(f, g!, h!, [0.0])
+        res = Optim.optimize(d3, [0.0], NewtonTrustRegion(),
+            Optim.Options(x_reltol = 1e-3, g_abstol = 0.0, iterations = 10_000))
+        @test Optim.x_converged(res)
+        @test Optim.iterations(res) < 10_000
+    end
 end
