@@ -264,7 +264,18 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
             # with Optim.jl
 
             reached_solution = false
-            for iter = 1:max_iters
+            # Factorization failures draw on their own budget so they do not
+            # consume root-finding iterations: with max_iters = 5, a single
+            # failed Cholesky otherwise turns a run that converges in 5 root
+            # steps into reached_solution = false. Failures occur only while
+            # lambda <= -min_H_ev <= H_scale, and each failure at least doubles
+            # lambda starting from sqrt(eps(T)) * H_scale, so the number of
+            # failures is bounded by the doublings needed to cross H_scale,
+            # about half the significand width.
+            max_retries = 4 + ceil(Int, precision(T) / 2)
+            retries = 0
+            iter = 0
+            while iter < max_iters
                 lambda_previous = lambda
 
                 for i in diagind(H_ridged)
@@ -273,17 +284,20 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
 
                 F = cholesky(Hermitian(H_ridged), check = false)
                 # Sometimes, λ is not sufficiently large for the Cholesky factorization
-                # to succeed. In that case, we increase λ and continue to next iteration.
+                # to succeed. In that case, we increase λ and retry.
                 # Merely doubling λ is not generally sufficient to make H + λI numerically
                 # positive-definite: e.g., if λ ~ 1e-15, we would never reach a stable
-                # regime within  `max_iters`, which would leave `s` unchanged. Instead, jump
+                # regime, which would leave `s` unchanged. Instead, jump
                 # to a ridge on the order of H's spectral scale so the next factorization
                 # succeeds; the root-finder can still descend toward a smaller optimal λ
                 # afterwards, since `lambda_lb` is left at its initial value
                 if !issuccess(F)
+                    retries += 1
+                    retries > max_retries && break
                     lambda = max(2 * lambda, sqrt(eps(T)) * H_scale)
                     continue
                 end
+                iter += 1
 
                 R = F.U
                 s[:] = -R \ (R' \ gr)
