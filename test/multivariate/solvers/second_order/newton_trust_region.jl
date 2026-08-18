@@ -86,30 +86,30 @@ Random.seed!(3288)
 
         # Test the checking
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [0.0, 1.0, 1.0])
+            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [0.0, 1.0, 1.0], sqrt(eps()), sqrt(eps()))
         @test hard_case
         @test lambda_index == 2
 
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([-1.0, -1.0, 3.0], [0.0, 0.0, 1.0])
+            Optim.check_hard_case_candidate([-1.0, -1.0, 3.0], [0.0, 0.0, 1.0], sqrt(eps()), sqrt(eps()))
         @test hard_case
         @test lambda_index == 3
 
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 0.0])
+            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 0.0], sqrt(eps()), sqrt(eps()))
         @test hard_case
         @test lambda_index == 4
 
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([1.0, 2.0, 3.0], [0.0, 1.0, 1.0])
+            Optim.check_hard_case_candidate([1.0, 2.0, 3.0], [0.0, 1.0, 1.0], sqrt(eps()), sqrt(eps()))
         @test !hard_case
 
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 1.0])
+            Optim.check_hard_case_candidate([-1.0, -1.0, -1.0], [0.0, 0.0, 1.0], sqrt(eps()), sqrt(eps()))
         @test !hard_case
 
         hard_case, lambda_index =
-            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [1.0, 1.0, 1.0])
+            Optim.check_hard_case_candidate([-1.0, 2.0, 3.0], [1.0, 1.0, 1.0], sqrt(eps()), sqrt(eps()))
         @test !hard_case
 
         # Now check an actual hard case problem
@@ -317,13 +317,72 @@ Random.seed!(3288)
         @test !reached
         @test all(iszero, s)
     end
-    @testset "non-finite Hessian leaves a well-defined zero step" begin
-        H = [1.0 0.0; 0.0 NaN]
-        g = [1.0, 1.0]
+    @testset "zero Hessian returns the exact linear-model solution" begin
+        H = zeros(2, 2)
+        g = [3.0, 4.0]
+        s = fill(NaN, 2)
+        m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 2.0, s)
+        @test reached
+        @test !interior
+        @test s ≈ [-1.2, -1.6]        # -delta * g / ‖g‖
+        @test m ≈ -10.0               # -delta * ‖g‖
+        @test λ ≈ 2.5                 # ‖g‖ / delta
+
+        s = fill(NaN, 2)
+        m, interior, λ, hard_case, reached =
+            Optim.solve_tr_subproblem!(zeros(2), H, 2.0, s)
+        @test reached
+        @test interior
+        @test all(iszero, s)
+        @test iszero(m)
+    end
+
+    @testset "zero gradient with an indefinite Hessian is the hard case" begin
+        H = Matrix(Diagonal([-2.0, 1.0]))
+        g = zeros(2)
         s = fill(NaN, 2)
         m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 1.0, s)
-        @test m == Inf
-        @test !reached
-        @test all(iszero, s)
+        @test hard_case
+        @test reached
+        @test abs(norm(s) - 1.0) < 1e-12   # step to the boundary along v₁
+        @test m ≈ -1.0                     # 0.5 * λ_min * delta²
+    end
+
+    @testset "scaled and Float32 subproblems" begin
+        # The classification must be invariant under H -> c*H, g -> c*g.
+        H0 = [2.0 0.0; 0.0 1e-4]
+        g0 = [1.0, 1.0]
+        for c in (1e-6, 1e6)
+            s = fill(NaN, 2)
+            m, interior, λ, hard_case, reached =
+                Optim.solve_tr_subproblem!(c .* g0, c .* H0, 1.0, s)
+            s0 = fill(NaN, 2)
+            m0, interior0, _, _, reached0 =
+                Optim.solve_tr_subproblem!(g0, H0, 1.0, s0)
+            @test interior == interior0
+            @test reached == reached0
+            @test s ≈ s0 atol = 1e-8
+            @test m ≈ c * m0 rtol = 1e-8
+        end
+
+        H32 = Float32[2.0 0.0; 0.0 3.0]
+        g32 = Float32[1.0, 1.0]
+        s32 = zeros(Float32, 2)
+        m32, interior32, λ32, hard32, reached32 =
+            Optim.solve_tr_subproblem!(g32, H32, 5.0f0, s32)
+        @test m32 isa Float32
+        @test λ32 isa Float32
+        @test reached32
+        @test interior32
+        @test s32 ≈ Float32[-0.5, -1/3]
+
+        # A Float32 boundary solve must be able to report convergence: the
+        # historical absolute tolerance of 1e-10 sat below eps(Float32).
+        s32 = zeros(Float32, 2)
+        m32, interior32, λ32, hard32, reached32 =
+            Optim.solve_tr_subproblem!(g32, H32, 0.1f0, s32, max_iters = 100)
+        @test !interior32
+        @test reached32
+        @test abs(norm(s32) - 0.1f0) < 1e-5
     end
 end
