@@ -301,4 +301,18 @@ Random.seed!(3288)
         @test (H + λ*I)*s ≈ -g atol=1e-6  # solves trust region problem
         @test all(≥(0), eigvals(H + λ*I)) # positive-definite
     end
+    @testset "factorization retries do not consume root-finding iterations" begin
+        # The first Cholesky at lambda ~ lambda_lb fails for this singular H,
+        # and the retry used to burn one of the five root-finding iterations:
+        # reached_solution was false at the default max_iters and true at 6,
+        # with an identical step either way.
+        H = [1.0 1.0; 1.0 1.0]
+        g = [1.0, 0.0]
+        s = zeros(2)
+        m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 1.0, s)
+        @test reached
+        @test !interior
+        @test abs(norm(s) - 1.0) < 1e-8
+        @test m ≈ -0.799038 atol = 1e-5
+    end
 end
