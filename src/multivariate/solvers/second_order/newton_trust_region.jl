@@ -3,7 +3,7 @@
 #
 # Args:
 #  H_eigv: The eigenvalues of H, low to high
-#  qg: The inner product of the eigenvalues and the gradient in the same order
+#  qg: The inner products of the eigenvectors and the gradient, in the same order
 #
 # Returns:
 #  hard_case: Whether it is a candidate for the hard case
@@ -318,7 +318,6 @@ mutable struct NewtonTrustRegionState{Tx,T,Tg,TH} <: AbstractOptimizerState
     H_x::TH
     f_x::T
     x_previous::Tx
-    g_x_previous::Tg
     f_x_previous::T
     s::Tx
     x_cache::Tx
@@ -351,7 +350,6 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
         copy(H_x), # Maintain current Hessian in state.H_x
         f_x, # Maintain current f in state.f_x
         fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
-        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
         fill!(similar(x0), NaN), # Cache to be able to reset state.x
@@ -440,7 +438,6 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
 
         # Update history
         copyto!(state.x_previous, state.x_cache)
-        copyto!(state.g_x_previous, state.g_cache)
         state.f_x_previous = f_cache
     else
         # Reset state
