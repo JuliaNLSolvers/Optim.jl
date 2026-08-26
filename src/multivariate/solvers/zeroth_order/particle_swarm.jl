@@ -1,7 +1,10 @@
+using Random
+
 struct ParticleSwarm{Tl,Tu} <: ZerothOrderOptimizer
     lower::Tl
     upper::Tu
     n_particles::Int
+    rng::Random.AbstractRNG
 end
 
 """
@@ -10,13 +13,15 @@ end
 ```julia
 ParticleSwarm(; lower = [],
                 upper = [],
-                n_particles = 0)
+                n_particles = 0
+                rng = Random.default_rng())
 ```
 
-The constructor takes 3 keywords:
+The constructor takes 4 keywords:
 * `lower = []`, a vector of lower bounds, unbounded below if empty or `-Inf`'s
 * `upper = []`, a vector of upper bounds, unbounded above if empty or `Inf`'s
 * `n_particles = 0`, the number of particles in the swarm, defaults to least three
+* `rng = Random.default_rng()`, an instance of a random number generator
 
 ## Description
 The Particle Swarm implementation in Optim.jl is the so-called Adaptive Particle
@@ -33,8 +38,8 @@ reaches the maximum number of iterations set in Optim.Options(iterations=x)`.
 ## References
 - [1] Zhan, Zhang, and Chung. Adaptive particle swarm optimization, IEEE Transactions on Systems, Man, and Cybernetics, Part B: CyberneticsVolume 39, Issue 6 (2009): 1362-1381
 """
-ParticleSwarm(; lower = [], upper = [], n_particles = 0) =
-    ParticleSwarm(lower, upper, n_particles)
+ParticleSwarm(; lower = [], upper = [], n_particles = 0, rng = Random.default_rng()) =
+    ParticleSwarm(lower, upper, n_particles, rng)
 
 Base.summary(io::IO, ::ParticleSwarm) = print(io, "Particle Swarm")
 
@@ -137,9 +142,9 @@ function initial_state(
         for i = 1:n_particles
             for j = 1:n
                 ww = upper[j] - lower[j]
-                X[j, i] = lower[j] + ww * rand(T)
+                X[j, i] = lower[j] + ww * rand(rng,T)
                 X_best[j, i] = X[j, i]
-                V[j, i] = ww * (rand(T) * T(2) - T(1)) / 10
+                V[j, i] = ww * (rand(rng,T) * T(2) - T(1)) / 10
             end
         end
     else
@@ -152,9 +157,9 @@ function initial_state(
                         dx[j] = T(1)
                     end
                 end
-                X[j, i] = x0[j] + dx[j] * rand(T)
+                X[j, i] = x0[j] + dx[j] * rand(rng,T)
                 X_best[j, i] = X[j, i]
-                V[j, i] = abs(X[j, i]) * (rand(T) * T(2) - T(1))
+                V[j, i] = abs(X[j, i]) * (rand(rng,T) * T(2) - T(1))
             end
         end
     end
@@ -217,7 +222,7 @@ function update_state!(f, state::ParticleSwarmState{T}, method::ParticleSwarm) w
     for k = 1:n
         state.x_learn[k] = state.x[k]
     end
-    random_index = rand(1:n)
+    random_index = rand(rng,1:n)
     random_value = randn()
     sigma_learn = 1 - (1 - 0.1) * state.iteration / state.iterations
 
@@ -292,8 +297,8 @@ function update_swarm!(
     # compute new positions for the swarm particles
     for i = 1:n_particles
         for j = 1:n
-            r1 = rand(Tx)
-            r2 = rand(Tx)
+            r1 = rand(rng,Tx)
+            r2 = rand(rng,Tx)
             vx = X_best[j, i] - X[j, i]
             vg = best_point[j] - X[j, i]
             V[j, i] = V[j, i] * w + c1 * r1 * vx + c2 * r2 * vg
@@ -433,8 +438,8 @@ end
 
 function update_swarm_params!(c1, c2, w, current_state, f::T) where {T}
 
-    delta_c1 = T(5) / 100 + rand(T) / T(20)
-    delta_c2 = T(5) / 100 + rand(T) / T(20)
+    delta_c1 = T(5) / 100 + rand(rng,T) / T(20)
+    delta_c2 = T(5) / 100 + rand(rng,T) / T(20)
 
     if current_state == 1
         c1 += delta_c1
