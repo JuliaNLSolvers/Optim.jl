@@ -37,11 +37,12 @@ function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradi
 end
 
 function perform_linesearch!(state, method, d)
-    # Calculate search direction dphi0
-    dphi_0 = real(dot(state.g_x, state.s))
+    # The line search takes every later slope from `value_jvp!`, so take the one at
+    # alpha = 0 from the objective's JVP too.
+    dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s))
     # reset the direction if it becomes corrupted
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, method)
-        dphi_0 = real(dot(state.g_x, state.s)) # update after direction reset
+        dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s)) # update after direction reset
     end
     phi_0 = state.f_x
 
@@ -76,7 +77,7 @@ function perform_linesearch!(state, method, d)
 
     # On failure, reset the search direction and retry once
     if !lssuccess && reset_search_direction!(state, method)
-        dphi_0 = real(dot(state.g_x, state.s))
+        dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s))
         method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
         lssuccess = try
             state.alpha, ϕalpha =
