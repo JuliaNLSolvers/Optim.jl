@@ -21,6 +21,10 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 [extensions]
 OptimMOIExt = "MathOptInterface"
 
+# TEMPORARY: drop before merging, once LineSearches 7.8 is registered.
+[sources]
+LineSearches = {url = "https://github.com/devmotion/LineSearches.jl", rev = "dmw/xnew"}
+
 [compat]
 ADTypes = "1.11"
 Aqua = "0.8.14"
