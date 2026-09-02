@@ -89,6 +89,7 @@ multivariate_tests = [
     ## other
     "array",
     "extrapolate",
+    "linesearch_handoff",
     "precon",
     "manifolds",
     "complex",
