@@ -1,6 +1,6 @@
 name = "Optim"
 uuid = "429524aa-4258-5aef-a3af-852621145aeb"
-version = "2.2.2"
+version = "2.3.0"
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
@@ -20,10 +20,6 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [extensions]
 OptimMOIExt = "MathOptInterface"
-
-# TEMPORARY: drop before merging, once LineSearches 7.8 is registered.
-[sources]
-LineSearches = {url = "https://github.com/devmotion/LineSearches.jl", rev = "dmw/xnew"}
 
 [compat]
 ADTypes = "1.11"
