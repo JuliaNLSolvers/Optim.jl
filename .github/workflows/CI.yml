@@ -9,6 +9,9 @@ jobs:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      # Report every version/OS combination rather than cancelling the rest on the
+      # first failure
+      fail-fast: false
       matrix:
         version:
           - "min"
