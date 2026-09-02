@@ -163,9 +163,10 @@ function update_state!(d, state::BFGSState, method::BFGS)
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
-    state.dx .= state.alpha .* state.s
-    state.x_candidate .= state.x .+ state.dx
+    copyto!(state.x_candidate, state.x_ls)
     retract!(method.manifold, state.x_candidate)
+    # The displacement of the proposed step, which a retraction can bend away from alpha*s
+    state.dx .= state.x_candidate .- state.x
 
     return !lssuccess # break on linesearch error
 end

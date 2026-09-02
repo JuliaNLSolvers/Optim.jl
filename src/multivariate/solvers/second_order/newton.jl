@@ -93,7 +93,7 @@ function update_state!(d, state::NewtonState, method::Newton)
     lssuccess = perform_linesearch!(state, method, d)
 
     # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
-    @. state.x_candidate = state.x + state.alpha * state.s
+    copyto!(state.x_candidate, state.x_ls)
     return !lssuccess # break on linesearch error
 end
 

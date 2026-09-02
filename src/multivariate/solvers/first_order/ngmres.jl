@@ -472,7 +472,7 @@ function update_state!(
         lssuccess =
             perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
         if lssuccess
-            @. state.x = state.x + state.alpha * state.s
+            copyto!(state.x, state.x_ls)
             # Manifold start
             retract!(method.manifold, state.x)
             # Manifold stop
