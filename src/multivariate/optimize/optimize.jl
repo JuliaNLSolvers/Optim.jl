@@ -149,7 +149,7 @@ function _stopped_state(istate::IteratorState, iteration::Int, ls_success::Bool)
         istate._time,
         istate.tr,
         istate.tracing,
-        true,
+        true, # stopped
         istate.stopped_by_callback,
         istate.stopped_by_time_limit,
         istate.f_limit_reached,
