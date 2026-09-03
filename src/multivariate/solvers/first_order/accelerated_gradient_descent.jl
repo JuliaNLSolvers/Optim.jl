@@ -14,6 +14,36 @@ end
 
 Base.summary(io::IO, ::AcceleratedGradientDescent) = print(io, "Accelerated Gradient Descent")
 
+"""
+    AcceleratedGradientDescent(; alphaguess = LineSearches.InitialPrevious(),
+        linesearch = LineSearches.HagerZhang(), manifold = Flat())
+
+Construct a first-order optimizer using Nesterov-style accelerated gradient descent.
+The method takes a line-search step from an extrapolated iterate and updates that iterate
+from the current and previous accepted points. Use it with `optimize` on an unconstrained
+objective for which a gradient is available.
+
+# Arguments
+- `alphaguess`: Initial step-length strategy. A `Real` is converted to a static initial
+  step length; otherwise it must be compatible with `LineSearches`.
+- `linesearch`: Line-search method used to choose each step length.
+- `manifold`: Manifold on which iterates are retracted and gradients are projected.
+  The default, `Flat()`, solves an unconstrained Euclidean problem.
+
+# Example
+```julia
+julia> using Optim
+
+julia> f(x) = sum(abs2, x);
+
+julia> g!(storage, x) = (storage .= 2 .* x);
+
+julia> result = optimize(f, g!, [1.0, -1.0], AcceleratedGradientDescent());
+
+julia> Optim.converged(result)
+true
+```
+"""
 function AcceleratedGradientDescent(;
     alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
     linesearch = LineSearches.HagerZhang(),        # TODO: investigate good defaults
