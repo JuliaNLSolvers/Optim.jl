@@ -199,9 +199,11 @@
 
         @test only(Base.return_types(iterate, Tuple{typeof(iter),S})) ===
               Union{Nothing,Tuple{S,S}}
-        @inferred Union{Nothing,Tuple{S,S}} iterate(iter, first_istate)
+        @test (@inferred Union{Nothing,Tuple{S,S}} iterate(iter, first_istate)) isa
+              Tuple{S,S}
 
-        @inferred optimize(f, g!, initial_x, BFGS())
+        @test (@inferred optimize(f, g!, initial_x, BFGS())) isa
+              Optim.MultivariateOptimizationResults
     end
 
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "centroid")
