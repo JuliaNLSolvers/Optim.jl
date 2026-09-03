@@ -264,7 +264,7 @@ function optimize(
 
     g_converged, stopped = initial_convergence(d, state, method, x0, options)
     converged = g_converged
-    
+
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
 
@@ -274,8 +274,7 @@ function optimize(
     if tracing
         trace!(tr, d, state, iteration, method, options, t0)
     end
-    ls_success::Bool = true
-    
+
     # callbacks can stop routine early by returning true
     stopped_by_callback = callback !== nothing && callback(state)
     stopped |= stopped_by_callback
