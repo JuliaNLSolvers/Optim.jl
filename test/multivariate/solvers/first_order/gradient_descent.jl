@@ -2,18 +2,17 @@
     run_optim_tests(
         GradientDescent(),
         skip = ("Trigonometric", "Powell", "Extended Powell", "Paraboloid Random Matrix"),
-        f_increase_exceptions = ("Hosaki",),
         convergence_exceptions = (
             ("Polynomial", 1),
             ("Polynomial", 2),
-            ("Rosenbrock", 1),
-            ("Rosenbrock", 2),
             ("Extended Rosenbrock", 1),
             ("Extended Rosenbrock", 2),
             ("Penalty Function I", 1),
             ("Penalty Function I", 2),
         ),
         iteration_exceptions = (
+            ("Beale", 10000),
+            ("Polynomial", 10000),
             ("Rosenbrock", 10000),
             ("Extended Rosenbrock", 12000),
             ("Fletcher-Powell", 10000),

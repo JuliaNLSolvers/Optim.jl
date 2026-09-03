@@ -48,10 +48,10 @@ features through the packages in [JuliaDiff](http://www.juliadiff.org/).
 
 The package is a registered package, and can be installed with `Pkg.add`.
 
-```julia
+```julia-repl
 julia> using Pkg; Pkg.add("Optim")
 ```
 or through the `pkg` REPL mode by typing
-```
+```julia-repl
 ] add Optim
 ```

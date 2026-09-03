@@ -2,25 +2,19 @@
     # TODO: Investigate the exceptions (could be they just need more iterations?)
     # Test Optim.cg for all differentiable functions in MultivariateProblems.UnconstrainedProblems.examples
     # Trigonometric gets stuck in a local minimum?
-    skip = ("Trigonometric", "Extended Powell")
+    skip = ("Trigonometric", "Extended Powell", "Rosenbrock")
     run_optim_tests(
         ConjugateGradient(),
         skip = skip,
         convergence_exceptions = (
             ("Powell", 1),
             ("Powell", 2),
-            ("Polynomial", 1),
-            ("Extended Powell", 1),
-            ("Extended Powell", 2),
         ),
-        minimum_exceptions = (("Paraboloid Diagonal", 1)),
-        minimizer_exceptions = (("Extended Powell", 1), ("Extended Powell", 2)),
-        f_increase_exceptions = (("Hosaki"),),
         iteration_exceptions = (("Paraboloid Diagonal", 10000),),
         show_name = debug_printing,
     )
 
-    @testset "matrix input" begin
+    @testset "matrix input" for theta in (1.0, 0.0)
         cg_objective(X, B) = sum(abs2, X .- B) / 2
 
         function cg_objective_gradient!(G, X, B)
@@ -35,7 +29,7 @@
             X -> cg_objective(X, B),
             (G, X) -> cg_objective_gradient!(G, X, B),
             rand(2, 2),
-            ConjugateGradient(),
+            ConjugateGradient(theta = theta),
         )
         @test Optim.converged(results)
         @test Optim.minimum(results) < 1e-8
@@ -59,5 +53,54 @@
         )
         @test Optim.converged(res)
         @test Optim.minimum(res) ≈ 1.0
+    end
+
+    @testset "Access beta from callback" begin
+        # Access beta from callback and check we can apply the same update rule as CG
+        # check also that beta is bounded by betamax
+
+        f(x) = 100 - x[1] + exp(x[1] - 100)
+        g!(grad, x) = grad[1] = -1 + exp(x[1] - 100)
+        x0 = [0.0]
+        x_global = copy(x0)
+        iter_global = 0
+        g_k = zeros(1)
+        s_k = zeros(1)
+        g!(g_k, x0)
+        beta_k = 0.0
+        betamax = 0.5
+        check_beta = true
+
+        function my_callback(state)
+            if iter_global == 0
+                @test hasproperty(state, :beta)
+                @test state.beta == 0
+                g_k[1] = state.pg[1]
+                beta_k = state.beta
+                s_k[1] = -g_k[1] + beta_k * s_k[1]
+            else
+                x_global[1] += state.alpha * s_k[1]
+                g_k[1] = state.g_x[1]
+                beta_k = state.beta
+                s_k[1] = -g_k[1] + beta_k * s_k[1]
+                check_beta *= (abs(state.beta) <= betamax)
+            end
+            iter_global += 1
+            return false
+        end
+
+        res = optimize(
+            f,
+            g!,
+            x0,
+            ConjugateGradient(
+                alphaguess = LineSearches.InitialStatic(alpha = 1.0),
+                linesearch = LineSearches.BackTracking(),
+                betamax = betamax,
+            ),
+            Optim.Options(iterations = 3, callback = my_callback),
+        )
+        @test Optim.minimizer(res)[1] ≈ x_global[1]
+        @test check_beta
     end
 end

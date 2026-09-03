@@ -3,13 +3,19 @@
 #
 # Args:
 #  H_eigv: The eigenvalues of H, low to high
-#  qg: The inner product of the eigenvalues and the gradient in the same order
+#  qg: The inner products of the eigenvectors and the gradient, in the same order
+#  ev_tol: Eigenvalues within ev_tol of H_eigv[1] belong to the bottom cluster.
+#          Scale it to the Hessian (symmetric eigensolvers carry absolute error
+#          on the order of eps times the spectral norm).
+#  qg_tol: Gradient components below qg_tol count as zero: below the
+#          gradient's own noise floor, or too small for the boundary root
+#          they induce to be resolvable by the ridged solves.
 #
 # Returns:
 #  hard_case: Whether it is a candidate for the hard case
 #  lambda_index: The index of the first lambda not equal to the smallest
 #                eigenvalue, which is only correct if hard_case is true.
-function check_hard_case_candidate(H_eigv, qg)
+function check_hard_case_candidate(H_eigv, qg, ev_tol, qg_tol)
     @assert length(H_eigv) == length(qg)
     if H_eigv[1] >= 0
         # The hard case is only when the smallest eigenvalue is negative.
@@ -21,11 +27,11 @@ function check_hard_case_candidate(H_eigv, qg)
     while !hard_case_check_done
         if lambda_index > length(H_eigv)
             hard_case_check_done = true
-        elseif abs(H_eigv[1] - H_eigv[lambda_index]) > 1e-10
+        elseif abs(H_eigv[1] - H_eigv[lambda_index]) > ev_tol
             # The eigenvalues are reported in order.
             hard_case_check_done = true
         else
-            if abs(qg[lambda_index]) > 1e-10
+            if abs(qg[lambda_index]) > qg_tol
                 hard_case_check_done = true
                 hard_case = false
             end
@@ -67,7 +73,7 @@ function initial_safeguards(H, gr, delta, lambda)
 end
 
 # Choose a point in the trust region for the next step using
-# the interative (nearly exact) method of section 4.3 of N&W (2006).
+# the iterative (nearly exact) method of section 4.3 of N&W (2006).
 # This is appropriate for Hessians that you factorize quickly.
 #
 # Args:
@@ -75,7 +81,10 @@ end
 #  H:  The Hessian
 #  delta:  The trust region size, ||s|| <= delta
 #  s: Memory allocated for the step size, updated in place
-#  tolerance: The convergence tolerance for root finding
+#  tolerance: The convergence tolerance for root finding. The default
+#      (`nothing`) resolves to eps(T)^(2/3) times the width of the bracket
+#      containing the boundary root, which reproduces the historical absolute
+#      1e-10 at unit scale in Float64; pass a Real to override it.
 #  max_iters: The maximum number of root finding iterations
 #
 # Returns:
@@ -85,7 +94,7 @@ end
 #  hard_case - Whether or not it was a "hard case" as described by N&W (2006)
 #  reached_solution - Whether or not a solution was reached (as opposed to
 #      terminating early due to max_iters)
-function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
+function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 5)
     T = eltype(gr)
     n = length(gr)
     delta_sq = delta^2
@@ -98,6 +107,9 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     # symmetric.  (Julia issue #17093)
     Hsym = Symmetric(H)
     if any(!isfinite, Hsym)
+        # Leave a well-defined (zero) step behind: callers read s after this
+        # returns, and a stale or NaN-filled s poisons the radius update.
+        fill!(s, zero(T))
         return T(Inf), false, zero(T), false, false
     end
     H_eig = eigen(Hsym)
@@ -105,8 +117,31 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     if !isempty(H_eig.values)
         min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
     else
+        fill!(s, zero(T))
         return T(Inf), false, zero(T), false, false
     end
+    H_scale = max(abs(min_H_ev), abs(max_H_ev)) # spectral norm
+    gr_norm = norm(gr)
+
+    if iszero(H_scale)
+        # H == 0: the model is linear, and every tolerance below degenerates.
+        # The minimizer over the ball is the boundary Cauchy point, or the
+        # origin for a zero gradient; both are exact.
+        if iszero(gr_norm)
+            fill!(s, zero(T))
+            return zero(T), true, zero(T), false, true
+        else
+            s .= (-delta / gr_norm) .* gr
+            return -delta * gr_norm, false, gr_norm / delta, false, true
+        end
+    end
+
+    # All classification thresholds are relative and typed. Eigenvalue-space
+    # quantities compare against the spectral norm; gradient-space quantities
+    # (the qg components) compare against the gradient norm.
+    scale_tol = sqrt(eps(T)) * H_scale
+    gr_tol = sqrt(eps(T)) * gr_norm
+
     H_ridged = copy(H)
 
     # Cache the inner products between the eigenvectors and the gradient.
@@ -118,12 +153,14 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
     hard_case = false
     reached_solution = true
 
-    # Unconstrained solution
-    if min_H_ev >= 1e-8
+    # Unconstrained solution. The gate is a relative condition test: the
+    # historical absolute 1e-8 misread scaled Hessians in both directions.
+    positive_definite = min_H_ev > scale_tol
+    if positive_definite
         calc_p!(zero(T), 1, n, qg, H_eig, s)
     end
 
-    if min_H_ev >= 1e-8 && sum(abs2, s) <= delta_sq
+    if positive_definite && sum(abs2, s) <= delta_sq
         # No shrinkage is necessary: -(H \ gr) is the minimizer
         interior = true
         reached_solution = true
@@ -133,12 +170,36 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
 
         # The hard case is when the gradient is orthogonal to all
         # eigenvectors associated with the lowest eigenvalue.
-        hard_case_candidate, min_i = check_hard_case_candidate(H_eig.values, qg)
+        # A gradient component along the bottom cluster counts as zero for
+        # hard-case candidacy when it is below the gradient's noise floor, or
+        # when it is too small for the boundary root it induces to be
+        # resolvable: that root sits within qg/delta of -min_H_ev, and the
+        # ridged solves cannot resolve offsets below sqrt(eps)*H_scale. The
+        # conditioning floor applies only here, where min_H_ev < 0; the
+        # interior classification below computes its step in the eigenbasis,
+        # where such components are resolvable and must not be dropped.
+        qg_tol = max(gr_tol, scale_tol * delta)
+        hard_case_candidate, min_i =
+            check_hard_case_candidate(H_eig.values, qg, scale_tol, qg_tol)
 
-        # Solutions smaller than this lower bound on lambda are not allowed:
-        # they don't ridge H enough to make H_ridge PSD.
-        lambda_lb = nextfloat(-min_H_ev)
+        # The multiplier is bounded below by feasibility (lambda >= 0) and by
+        # positive semidefiniteness of H + lambda*I, and above by the root of
+        # the norm bound ‖s(lambda)‖ <= ‖g‖/(min_H_ev + lambda) (Geyer's
+        # lambda_up; also p. 558 of [MORESORENSEN]).
+        lambda_lb = max(zero(T), nextfloat(-min_H_ev))
+        lambda_ub = gr_norm / delta - min_H_ev
         lambda = lambda_lb
+
+        # The boundary root lives inside [lambda_lb, lambda_ub], an interval of
+        # width at most ‖g‖/delta, so the increment tolerance scales with the
+        # bracket width, floored by a few ulps of the iterates' own magnitude.
+        # eps^(2/3) reproduces the historical absolute 1e-10 at unit scale.
+        lambda_tol =
+            tolerance === nothing ?
+            max(
+                cbrt(eps(T))^2 * (lambda_ub - lambda_lb),
+                4 * eps(T) * lambda_ub,
+            ) : T(tolerance)
 
         hard_case = false
         if hard_case_candidate
@@ -157,17 +218,49 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
 
                 tau = sqrt(delta_sq - p_lambda2)
 
-                # I don't think it matters which eigenvector we pick so take
-                # the first.
-                calc_p!(lambda, min_i, n, qg, H_eig, s)
-                LinearAlgebra.axpby!(tau, view(H_eig.vectors, :, 1), -1, s)
+                # Formula 4.45 is s = p + tau*z where z is any unit eigenvector
+                # for the smallest eigenvalue; s already holds p, so add tau
+                # times the first eigenvector.
+                LinearAlgebra.axpy!(tau, view(H_eig.vectors, :, 1), s)
             end
         end
 
-        lambda = initial_safeguards(H, gr, delta, lambda)
+        # ‖s(lambda)‖ decreases in lambda, so over the feasible range it is
+        # largest at lambda_lb. If even that step lies inside the region there is
+        # no boundary solution to find, and the minimizer is the interior step at
+        # lambda_lb. A direction with H_eig.values[i] + lambda_lb ≈ 0 sends
+        # ‖s‖ to infinity unless its gradient component vanishes, in which case
+        # it drops out of the sum and out of the step. "Vanishes" is judged on
+        # the gradient's own scale: comparing qg against an H-scaled tolerance
+        # drops components whose qg/d ratio is large, which truncates the step.
+        # The eigenvalue-space tolerance here must equal the cluster tolerance
+        # in check_hard_case_candidate: both tests examine the same quantity,
+        # and unequal tolerances give contradictory classifications.
+        norm2_lb = zero(T)
+        first_nz = 1
+        boundary_solution_exists = false
+        for i = 1:n
+            d = H_eig.values[i] + lambda_lb
+            if d <= scale_tol
+                first_nz = i + 1
+                if abs(qg[i]) > gr_tol
+                    boundary_solution_exists = true
+                    break
+                end
+            else
+                norm2_lb += (qg[i] / d)^2
+            end
+        end
+        interior_at_lb = !boundary_solution_exists && norm2_lb <= delta_sq
 
-        if !hard_case
-            # Algorithim 4.3 of N&W (2006), with s insted of p_l for consistency
+        if !hard_case && interior_at_lb
+            calc_p!(lambda_lb, first_nz, n, qg, H_eig, s)
+            interior = true
+            reached_solution = true
+            lambda = lambda_lb
+        elseif !hard_case
+            lambda = initial_safeguards(H, gr, delta, lambda)
+            # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
             # with Optim.jl
 
             reached_solution = false
@@ -179,10 +272,16 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
                 end
 
                 F = cholesky(Hermitian(H_ridged), check = false)
-                # Sometimes, lambda is not sufficiently large for the Cholesky factorization
-                # to succeed. In that case, we set double lambda and continue to next iteration
+                # Sometimes, λ is not sufficiently large for the Cholesky factorization
+                # to succeed. In that case, we increase λ and continue to next iteration.
+                # Merely doubling λ is not generally sufficient to make H + λI numerically
+                # positive-definite: e.g., if λ ~ 1e-15, we would never reach a stable
+                # regime within  `max_iters`, which would leave `s` unchanged. Instead, jump
+                # to a ridge on the order of H's spectral scale so the next factorization
+                # succeeds; the root-finder can still descend toward a smaller optimal λ
+                # afterwards, since `lambda_lb` is left at its initial value
                 if !issuccess(F)
-                    lambda *= 2
+                    lambda = max(2 * lambda, sqrt(eps(T)) * H_scale)
                     continue
                 end
 
@@ -193,14 +292,21 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = 1e-10, max_iters = 5)
                 lambda_update = norm2_s * (sqrt(norm2_s) - delta) / (delta * dot(q_l, q_l))
                 lambda += lambda_update
 
-                # Check that lambda is not less than lambda_lb, and if so, go
-                # half the way to lambda_lb.
+                # Keep lambda inside the bracket [lambda_lb, lambda_ub]: a
+                # boundary root, when it exists, lies in it, so an iterate
+                # outside is an overshoot; go half the way back to the bound.
                 if lambda < lambda_lb
                     lambda = (lambda_previous + lambda_lb) / 2
+                elseif lambda > lambda_ub
+                    lambda = (lambda_previous + lambda_ub) / 2
                 end
 
-                if abs(lambda - lambda_previous) < tolerance
-                    reached_solution = true
+                if abs(lambda - lambda_previous) < lambda_tol
+                    # The lambda iterates have stopped moving. That means the
+                    # boundary root was found only if the step in hand actually
+                    # sits on the boundary; the same test also triggers on
+                    # safeguard stagnation at a bound, where the step does not.
+                    reached_solution = abs(sqrt(norm2_s) - delta) <= cbrt(eps(T)) * delta
                     break
                 end
             end
@@ -308,7 +414,6 @@ mutable struct NewtonTrustRegionState{Tx,T,Tg,TH} <: AbstractOptimizerState
     H_x::TH
     f_x::T
     x_previous::Tx
-    g_x_previous::Tg
     f_x_previous::T
     s::Tx
     x_cache::Tx
@@ -341,7 +446,6 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
         copy(H_x), # Maintain current Hessian in state.H_x
         f_x, # Maintain current f in state.f_x
         fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
-        fill!(similar(g_x), NaN), # Store previous gradient in state.g_x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
         fill!(similar(x0), NaN), # Cache to be able to reset state.x
@@ -406,7 +510,12 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         # steps reducing delta by constant factors while each solution
         # will be the same. If this keeps on happening it could be a sign
         # errors in the gradient or a non-differentiability at the optimum.
-        state.delta = norm(state.s) / 4
+        # A rejection must never enlarge the radius: an unconverged subproblem
+        # can return ‖s‖ far above delta (and a non-finite H can make it NaN),
+        # and norm(s)/4 alone would then blow the radius up instead of
+        # shrinking it, so cap by the current delta.
+        s_norm = norm(state.s)
+        state.delta = (isfinite(s_norm) ? min(state.delta, s_norm) : state.delta) / 4
     elseif state.rho < method.rho_lower
         state.delta /= 4
     elseif (state.rho > method.rho_upper) && !state.interior
@@ -425,7 +534,6 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
 
         # Update history
         copyto!(state.x_previous, state.x_cache)
-        copyto!(state.g_x_previous, state.g_cache)
         state.f_x_previous = f_cache
     else
         # Reset state
@@ -441,7 +549,10 @@ end
 
 function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
     if state.rho > state.eta
-        # Accept the point and check convergence
+        # Accept the point and check convergence against all five tolerances,
+        # like the default path used by the first-order solvers. The 8-argument
+        # method only honors x_abstol and f_reltol, silently ignoring x_reltol
+        # and f_abstol.
         return assess_convergence(
             state.x,
             state.x_previous,
@@ -449,6 +560,8 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
             state.f_x_previous,
             state.g_x,
             options.x_abstol,
+            options.x_reltol,
+            options.f_abstol,
             options.f_reltol,
             options.g_abstol,
         )

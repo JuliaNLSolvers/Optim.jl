@@ -6,7 +6,7 @@
 ```
 
 ## Description
-Also known as the Brent-Dekker algorith, `Brent` is a univariate optimization
+Also known as the Brent-Dekker algorithm, `Brent` is a univariate optimization
 algorithm for minimizing functions on some interval `[a,b]`. The method uses bisection
 to find a zero of the gradient. If the original interval contains a minimum,
 bisection will reliably find the solution, but can be slow. To this end `Brent`

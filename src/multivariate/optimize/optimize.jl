@@ -27,6 +27,15 @@ end
 
 after_while!(d, state, method, options) = nothing
 
+# Validate and commit the trial iterate produced by update_state! / update_fgh!.
+# Default: no-op (un-migrated solvers mutate state.x/f_x/g_x directly and have
+# nothing to accept). Migrated solvers override this to:
+#   - check finiteness of state.f_candidate / g_candidate / x_candidate
+#   - on success, commit candidate -> state.x / state.f_x / state.g_x and return true
+#   - on failure, leave state.x / state.f_x / state.g_x at the last accepted iterate
+#     and return false (the main loop then breaks).
+accept_step!(d, state, method, options) = true
+
 function initial_convergence(state::AbstractOptimizerState, options::Options)
     stopped = !isfinite(state.f_x) || any(!isfinite, state.g_x)
     return g_residual(state) <= options.g_abstol, stopped
@@ -88,18 +97,14 @@ function Base.iterate(iter::OptimIterator)
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     tr = _tracetype(iter)()
-    tracing =
-        options.store_trace ||
-        options.show_trace ||
-        options.extended_trace ||
-        options.callback != nothing
+    tracing = options.store_trace || options.show_trace || options.extended_trace
     stopped_by_time_limit = false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
     small_trustregion_radius = false
 
     g_converged, stopped = initial_convergence(state, options)
-    converged = g_converged
+    converged = g_converged || stopped
 
     # prepare iteration counter (used to make "initial state" trace entry)
     iteration = 0
@@ -133,6 +138,33 @@ function Base.iterate(iter::OptimIterator)
         small_trustregion_radius,
     )
     return istate, istate
+end
+
+# Where the main loop breaks out mid-iteration, the iterator instead reports the
+# attempted iteration and stops, so the following `iterate` call ends the iteration.
+# Everything the abandoned iteration would have computed is carried over unchanged.
+function _stopped_state(istate::IteratorState, iteration::Int, ls_success::Bool)
+    return IteratorState(
+        istate.t0,
+        istate._time,
+        istate.tr,
+        istate.tracing,
+        true,
+        istate.stopped_by_callback,
+        istate.stopped_by_time_limit,
+        istate.f_limit_reached,
+        istate.g_limit_reached,
+        istate.h_limit_reached,
+        istate.x_converged,
+        istate.f_converged,
+        istate.f_increased,
+        istate.counter_f_tol,
+        istate.g_converged,
+        istate.converged,
+        iteration,
+        ls_success,
+        istate.small_trustregion_radius,
+    )
 end
 
 function Base.iterate(iter::OptimIterator, istate::IteratorState)
@@ -170,10 +202,24 @@ function Base.iterate(iter::OptimIterator, istate::IteratorState)
     # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
     # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)`
     ls_success = !update_state!(d, state, method)
+    if !ls_success
+        # `update_state!` returns true if it's forced by something in update! to stop
+        # (eg dx_dg == 0.0 in BFGS, or linesearch errors)
+        stopped_istate = _stopped_state(istate, iteration, false)
+        return stopped_istate, stopped_istate
+    end
 
     # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
     # TODO: Already perform in `update_state!`?
     update_fgh!(d, state, method)
+
+    # Validate the trial iterate and commit candidate -> state for migrated
+    # solvers. No-op for solvers that mutate state.x/f_x/g_x directly.
+    if !accept_step!(d, state, method, options)
+        options.show_warnings && @warn "Terminated early: trial iterate had non-finite values."
+        stopped_istate = _stopped_state(istate, iteration, false)
+        return stopped_istate, stopped_istate
+    end
 
     # Check convergence
     x_converged, f_converged, g_converged, f_increased =
@@ -203,6 +249,15 @@ function Base.iterate(iter::OptimIterator, istate::IteratorState)
     h_limit_reached =
         options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
 
+    if (f_increased && !options.allow_f_increases) ||
+       stopped_by_callback ||
+       stopped_by_time_limit ||
+       f_limit_reached ||
+       g_limit_reached ||
+       h_limit_reached
+        stopped = true
+    end
+
     if method isa NewtonTrustRegion
         # If the trust region radius keeps on reducing we need to stop
         # because something is wrong. Wrong gradients or a non-differentiability
@@ -213,12 +268,11 @@ function Base.iterate(iter::OptimIterator, istate::IteratorState)
         end
     end
 
-    if (f_increased && !options.allow_f_increases) ||
-       stopped_by_callback ||
-       stopped_by_time_limit ||
-       f_limit_reached ||
-       g_limit_reached ||
-       h_limit_reached
+    if hasproperty(state, :g_x) && !all(isfinite, state.g_x)
+        options.show_warnings && @warn "Terminated early due to NaN in gradient."
+        stopped = true
+    elseif hasproperty(state, :H_x) && !all(isfinite, state.H_x)
+        options.show_warnings && @warn "Terminated early due to NaN in Hessian."
         stopped = true
     end
 

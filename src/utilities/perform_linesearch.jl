@@ -37,34 +37,64 @@ function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradi
 end
 
 function perform_linesearch!(state, method, d)
-    # Calculate search direction dphi0
-    dphi_0 = real(dot(state.g_x, state.s))
+    # The line search takes every later slope from `value_jvp!`, so take the one at
+    # alpha = 0 from the objective's JVP too.
+    dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s))
     # reset the direction if it becomes corrupted
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, method)
-        dphi_0 = real(dot(state.g_x, state.s)) # update after direction reset
+        dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s)) # update after direction reset
     end
     phi_0 = state.f_x
 
     # Guess an alpha
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
-    # Perform line search; catch LineSearchException to allow graceful exit
+    # Perform line search; catch LineSearchException to allow graceful exit.
+    # A returned alpha of zero counts as a failure (some line searches, e.g.
+    # HagerZhang, can silently return alpha = 0 without throwing).
+    #
+    # On success `state.x_ls` holds the accepted step, computed exactly as the objective
+    # evaluated it (LineSearches >= 7.8). Solvers propose that point rather than
+    # recompute `x + alpha*s`, which rounds differently: `update_fgh!` would then evaluate
+    # a neighbour the line search never examined, so `accept_step!` could reject a step
+    # for a non-finite gradient the vetted point does not have.
+    local ϕalpha
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
+        if !(state.alpha > zero(state.alpha))
+            throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
+        end
         true
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
-            # We shouldn't warn here, we should just carry it to the output
-            # @warn("Linesearch failed, using alpha = $(state.alpha) and
-            # exiting optimization.\nThe linesearch exited with message:\n$(ex.message)")
             false
         else
             rethrow()
         end
     end
 
+    # On failure, reset the search direction and retry once
+    if !lssuccess && reset_search_direction!(state, method)
+        dphi_0 = real(NLSolversBase.jvp!(d, state.x, state.s))
+        method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
+        lssuccess = try
+            state.alpha, ϕalpha =
+                method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
+            if !(state.alpha > zero(state.alpha))
+                throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
+            end
+            true
+        catch ex2
+            if ex2 isa LineSearches.LineSearchException
+                state.alpha = ex2.alpha
+                false
+            else
+                rethrow()
+            end
+        end
+    end
     # Store current x and f(x) for next iteration
     state.f_x_previous = phi_0
     copyto!(state.x_previous, state.x)

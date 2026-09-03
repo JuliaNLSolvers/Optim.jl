@@ -16,9 +16,9 @@ using StableRNGs
         manif = Optim.Stiefel(retraction)
 
         # AcceleratedGradientDescent should be compatible also, but I haven't been able to make it converge
-        for ls in
+        @testset for ls in
             (LineSearches.BackTracking, LineSearches.HagerZhang, LineSearches.StrongWolfe, LineSearches.MoreThuente)
-            for method in (
+            @testset for method in (
                 Optim.GradientDescent,
                 Optim.ConjugateGradient,
                 Optim.LBFGS,
@@ -42,6 +42,9 @@ using StableRNGs
                     "$(Optim.iterations(res))\t$(Optim.f_calls(res))\t$(Optim.g_calls(res))\n",
                     color = :red,
                 )
+                if !Optim.converged(res)
+                    println(res)
+                end
                 @test Optim.converged(res)
             end
         end

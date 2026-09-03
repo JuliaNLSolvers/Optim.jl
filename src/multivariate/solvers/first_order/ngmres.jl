@@ -7,7 +7,7 @@
 
 abstract type AbstractNGMRES <: FirstOrderOptimizer end
 
-# TODO: Enforce TPrec <: Union{FirstOrderoptimizer,SecondOrderOptimizer}?
+# TODO: Enforce TPrec <: Union{FirstOrderOptimizer,SecondOrderOptimizer}?
 struct NGMRES{IL,Tp,TPrec<:AbstractOptimizer,L} <: AbstractNGMRES
     alphaguess!::IL       # Initial step length guess for linesearch along direction xP->xA
     linesearch!::L        # Preconditioner moving from xP to xA (precondition x to accelerated x)
@@ -263,12 +263,12 @@ function initial_state(
         nlpreconstate.g_x,        # Maintain current gradient in state.g_x. Uses same vector as preconditioner.
         nlpreconstate.f_x,        # Maintain current f in state.f_x.
         nlpreconstate.x_previous, # Maintain in state.x_previous. Use same vector as preconditioner.
-        fill!(similar(nlpreconstate.x), NaN), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence asessment.
+        fill!(similar(nlpreconstate.x), NaN), # Maintain state at the beginning of an iteration in state.x_previous_0. Used for convergence assessment.
         T(NaN),                   # Store previous f in state.f_x_previous
-        T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence asessment.
+        T(NaN),                   # Store f value from the beginning of an iteration in state.f_x_previous_0. Used for convergence assessment.
         T(NaN),                   # Store value f_xP of f(x^P) for tracing purposes
         T(NaN),                   # Store value grnorm_xP of |g(x^P)| for tracing purposes
-        fill!(similar(x0), NaN), # Maintain current search direction in state.s
+        fill!(similar(x0), NaN),  # Maintain current search direction in state.s
         nlpreconstate,            # State storage for preconditioner
         X,
         R,
@@ -280,21 +280,94 @@ function initial_state(
         vec(similar(x0)),  # xA
         0,                        # iteration counter
         false,                    # Restart flag
-        options.g_abstol,            # Exit tolerance check after nonlinear preconditioner apply
-        Array{T}(undef, wmax),           # subspacealpha
+        options.g_abstol,         # Exit tolerance check after nonlinear preconditioner apply
+        Array{T}(undef, wmax),    # subspacealpha
         @initial_linesearch()...,
     )
 end
 
-nlprecon_post_optimize!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
-nlprecon_post_accelerate!(d, state, method) = update_fgh!(d, state.nlpreconstate, method)
+# Refresh the inner preconditioner's f_x / g_x to match the (possibly externally
+# updated) state.nlpreconstate.x. Bypasses the migrated update_fgh! path, which
+# writes to *_candidate fields rather than to f_x / g_x.
+function _refresh_precon_fg!(d, state, method)
+    inner = state.nlpreconstate
+    f_x, g_x = NLSolversBase.value_gradient!(d, inner.x)
+    inner.f_x = f_x
+    copyto!(inner.g_x, g_x)
+    if hasproperty(method, :manifold)
+        project_tangent!(method.manifold, inner.g_x, inner.x)
+    end
+    return nothing
+end
+
+nlprecon_post_optimize!(d, state, method) = _refresh_precon_fg!(d, state, method)
+nlprecon_post_accelerate!(d, state, method) = _refresh_precon_fg!(d, state, method)
+
+# Restore the pre-migration behavior: after the acceleration step, push a
+# curvature pair into the L-BFGS history at the bumped pseudo_iteration slot.
+# Without this, the migrated update_fgh! (which writes to candidate fields)
+# leaves half the history slots NaN-initialized, degrading the preconditioner
+# into gradient-descent-with-resets.
 function nlprecon_post_accelerate!(
     d,
     state::NGMRESState{X,T},
     method::LBFGS,
 ) where {X} where {T}
-    state.nlpreconstate.pseudo_iteration += 1
-    update_fgh!(d, state.nlpreconstate, method)
+    inner = state.nlpreconstate
+    inner.pseudo_iteration += 1
+    _refresh_precon_fg!(d, state, method)
+    inner.dg .= inner.g_x .- inner.g_x_previous
+    rho_iteration = one(eltype(inner.dx)) / real(dot(inner.dx, inner.dg))
+    if isinf(rho_iteration)
+        inner.pseudo_iteration = 0
+        return nothing
+    end
+    idx = mod1(inner.pseudo_iteration, method.m)
+    inner.dx_history[idx] .= inner.dx
+    inner.dg_history[idx] .= inner.dg
+    inner.rho[idx] = rho_iteration
+    return nothing
+end
+
+# Restore the pre-migration behavior: after the acceleration step, run the
+# Sherman-Morrison update on the BFGS preconditioner's inverse-Hessian
+# approximation, using state.dx (from the inner step) and dg (gradient change
+# from inner iteration start to post-acceleration point).
+function nlprecon_post_accelerate!(
+    d,
+    state::NGMRESState{X,T},
+    method::BFGS,
+) where {X} where {T}
+    _refresh_precon_fg!(d, state, method)
+    inner = state.nlpreconstate
+    (; invH, dx, dg, u) = inner
+    dg .= inner.g_x .- inner.g_x_previous
+    dx_dg = real(dot(dx, dg))
+    if dx_dg > 0
+        mul!(vec(u), invH, vec(dg))
+        c1 = (dx_dg + real(dot(dg, u))) / abs2(dx_dg)
+        c2 = 1 / dx_dg
+        if (invH isa Array)
+            n = length(dx)
+            @inbounds for j = 1:n
+                c1dxj = c1 * dx[j]'
+                c2dxj = c2 * dx[j]'
+                c2uj = c2 * u[j]'
+                for i = 1:n
+                    invH[i, j] = muladd(
+                        dx[i],
+                        c1dxj,
+                        muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])),
+                    )
+                end
+            end
+        else
+            mul!(invH, vec(dx), vec(dx)', c1, 1)
+            mul!(invH, vec(u), vec(dx)', -c2, 1)
+            mul!(invH, vec(dx), vec(u)', -c2, 1)
+        end
+    end
+    return nothing
 end
 
 
@@ -398,22 +471,32 @@ function update_state!(
 
         lssuccess =
             perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
-        @. state.x = state.x + state.alpha * state.s
-        # Manifold start
-        retract!(method.manifold, state.x)
-        # Manifold stop
+        if lssuccess
+            copyto!(state.x, state.x_ls)
+            # Manifold start
+            retract!(method.manifold, state.x)
+            # Manifold stop
 
-        # TODO: Move these into `nlprecon_post_accelerate!` ?
-        state.nlpreconstate.f_x_previous = state.f_x_previous
-        if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
-            nlprec = method.nlprecon
-            if isdefined(nlprec, :alphaguess!) &&
-               typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
-                nlprec.alphaguess!.dϕ_0_previous[] = method.alphaguess!.dϕ_0_previous[]
+            # TODO: Move these into `nlprecon_post_accelerate!` ?
+            state.nlpreconstate.f_x_previous = state.f_x_previous
+            if typeof(method.alphaguess!) <: LineSearches.InitialConstantChange
+                nlprec = method.nlprecon
+                if isdefined(nlprec, :alphaguess!) &&
+                   typeof(nlprec.alphaguess!) <: LineSearches.InitialConstantChange
+                    nlprec.alphaguess!.dϕ_0_previous[] = method.alphaguess!.dϕ_0_previous[]
+                end
             end
+            # Deals with update_h! etc. for preconditioner, if needed
+            nlprecon_post_accelerate!(d, state, method.nlprecon)
+        else
+            # Line search along the acceleration direction failed; discard xA
+            # and restart. The preconditioner already moved state.x earlier
+            # this iteration, so we still make progress this iteration; we
+            # just skip the acceleration step.
+            state.restart = true
+            state.alpha = zero(state.alpha)
+            lssuccess = true
         end
-        # Deals with update_h! etc. for preconditioner, if needed
-        nlprecon_post_accelerate!(d, state, method.nlprecon)
     end
     #=
     Update x_previous and f_x_previous to be the values at the beginning

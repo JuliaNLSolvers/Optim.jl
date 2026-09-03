@@ -30,5 +30,3 @@ x_{n+1} = x_n - \alpha P^{-1}\nabla f(x_n)
 ```
 
 and is chosen by a linesearch algorithm such that each step gives sufficient descent.
-## Example
-## References

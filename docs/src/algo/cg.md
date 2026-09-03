@@ -18,7 +18,7 @@ a strictly positive number.
 
 ## Example
 Let's optimize the 2D Rosenbrock function. The function and gradient are given by
-```
+```julia
 f(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
 function g!(storage, x)
     storage[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
@@ -26,7 +26,7 @@ function g!(storage, x)
 end
 ```
 we can then try to optimize this function from `x=[0.0, 0.0]`
-```
+```julia-repl
 julia> optimize(f, g!, zeros(2), ConjugateGradient())
 Results of Optimization Algorithm
  * Algorithm: Conjugate Gradient
@@ -47,9 +47,8 @@ Results of Optimization Algorithm
  * Gradient Calls: 39
 ```
 We can compare this to the default first order solver in Optim.jl
-```
- julia> optimize(f, g!, zeros(2))
-
+```julia-repl
+julia> optimize(f, g!, zeros(2))
  Results of Optimization Algorithm
   * Algorithm: L-BFGS
   * Starting Point: [0.0,0.0]
@@ -72,8 +71,6 @@ We see that for this objective and starting point, `ConjugateGradient()` require
 fewer gradient evaluations to reach convergence.
 
 ## References
-- W. W. Hager and H. Zhang (2006) Algorithm 851: CG_DESCENT, a conjugate gradient method with guaranteed descent. ACM Transactions on Mathematical Software 32: 113-137.
-- W. W. Hager and H. Zhang (2013), The Limited Memory Conjugate Gradient Method. SIAM Journal on Optimization, 23, pp. 2150-2168.
 
 ```@bibliography
 hager2006

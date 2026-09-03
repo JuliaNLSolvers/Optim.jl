@@ -38,12 +38,13 @@
 #   exterior points. It's just more efficient if you know the
 #   maximum, because you don't have to test values that won't
 #   work.) The maximum should be specified as the largest value for
-#   which a finite value will be returned.  See, e.g., limits_box
-#   below.  The default value for alphamax is Inf. See alphamaxfunc
-#   for cgdescent and alphamax for linesearch_hz.
+#   which a finite value will be returned. The default value for
+#   alphamax is Inf.
 
 struct ConjugateGradient{Tf,T,Tprep,IL,L} <: FirstOrderOptimizer
     eta::Tf
+    theta::Tf
+    betamax::Tf
     P::T
     precondprep!::Tprep
     alphaguess!::IL
@@ -60,6 +61,8 @@ Base.summary(io::IO, ::ConjugateGradient) = print(io, "Conjugate Gradient")
 ConjugateGradient(; alphaguess = LineSearches.InitialHagerZhang(),
 linesearch = LineSearches.HagerZhang(),
 eta = 0.4,
+theta = 1.0,
+betamax = Inf,
 P = nothing,
 precondprep = Returns(nothing),
 manifold = Flat())
@@ -68,6 +71,9 @@ The strictly positive constant ``eta`` is used in determining
 the next step direction, and the default here deviates from the one used in the
 original paper (where it was ``0.01``). See more details in the original papers
 referenced below.
+The non negative constant ``theta`` is also used in determining the next step direction (see HZ2013, Eq 2.2).
+When ``theta = 0``, the step direction switches to Hestenes-Stiefel method.
+The strictly positive constant ``betamax`` is used to ensure that the beta factor is not too large in absolute value.
 
 ## Description
 The `ConjugateGradient` method implements Hager and Zhang (2006) and elements
@@ -83,12 +89,14 @@ function ConjugateGradient(;
     alphaguess = LineSearches.InitialHagerZhang(),
     linesearch = LineSearches.HagerZhang(),
     eta::Real = 0.4,
+    theta::Real = 1.0,
+    betamax::Real = Inf,
     P::Any = nothing,
     precondprep = Returns(nothing),
     manifold::Manifold = Flat(),
 )
 
-    ConjugateGradient(eta, P, precondprep, _alphaguess(alphaguess), linesearch, manifold)
+    ConjugateGradient(eta, theta, betamax, P, precondprep, _alphaguess(alphaguess), linesearch, manifold)
 end
 
 mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
@@ -102,6 +110,12 @@ mutable struct ConjugateGradientState{Tx,T,G} <: AbstractOptimizerState
     py::Tx
     pg::Tx
     s::Tx
+    beta::T
+    # Trial iterate produced by update_state! / update_fgh!. Committed to
+    # state.x / state.g_x / state.f_x by accept_step! once validated.
+    x_candidate::Tx
+    g_candidate::G
+    f_candidate::T
     @add_linesearch_fields()
 end
 
@@ -162,34 +176,51 @@ function initial_state(method::ConjugateGradient, ::Options, d, x0)
         0 .* (x0), # Preconditioned intermediate value in CG calculation
         pg, # Maintain the preconditioned gradient in pg
         -pg, # Maintain current search direction in state.s
+        oftype(f_x, 0), # Store beta in state.beta
+        fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
+        fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
+        oftype(f_x, NaN), # Trial f value in state.f_candidate
         @initial_linesearch()...,
     )
 end
 
 function update_state!(d, state::ConjugateGradientState, method::ConjugateGradient)
-    # Search direction is predetermined
-
-    # Maintain a record of the previous gradient
-    copyto!(state.g_x_previous, state.g_x)
+    # Search direction state.s is predetermined (set during initial_state or in
+    # accept_step! at the end of the previous iteration).
 
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
-    # Update current position # x = x + alpha * s
-    state.x .= muladd.(state.alpha, state.s, state.x)
-    retract!(method.manifold, state.x)
+    # Propose trial iterate (do NOT mutate state.x; accept_step! commits)
+    copyto!(state.x_candidate, state.x_ls)
+    retract!(method.manifold, state.x_candidate)
 
-    # Update the function value and gradient
-    f_x, g_x = NLSolversBase.value_gradient!(d, state.x)
-    copyto!(state.g_x, g_x)
-    project_tangent!(method.manifold, state.g_x, state.x)
-    state.f_x = f_x
+    return !lssuccess # break on linesearch error
+end
 
-    # Check sanity of function and gradient
-    isfinite(f_x) || error(LazyString("Non-finite f(x) while optimizing (", f_x, ")"))
+function update_fgh!(d, state::ConjugateGradientState, method::ConjugateGradient)
+    f_c, g_c = NLSolversBase.value_gradient!(d, state.x_candidate)
+    copyto!(state.g_candidate, g_c)
+    project_tangent!(method.manifold, state.g_candidate, state.x_candidate)
+    state.f_candidate = f_c
+    return nothing
+end
 
-    # Determine the next search direction using HZ's CG rule
-    #  Calculate the beta factor (HZ2013)
+function accept_step!(d, state::ConjugateGradientState, method::ConjugateGradient, options)
+    if !isfinite(state.f_candidate) ||
+       !all(isfinite, state.g_candidate) ||
+       !all(isfinite, state.x_candidate)
+        return false
+    end
+
+    # Commit candidates. state.g_x_previous was already captured by perform_linesearch!
+    # before the step was proposed.
+    copyto!(state.x, state.x_candidate)
+    copyto!(state.g_x, state.g_candidate)
+    state.f_x = state.f_candidate
+
+    # Determine the next search direction using HZ's CG rule.
+    # Calculate the beta factor (HZ2013).
     # -----------------
     # Comment on py: one could replace the computation of py with
     #    ydotpgprev = dot(y, pg)
@@ -205,24 +236,23 @@ function update_state!(d, state::ConjugateGradientState, method::ConjugateGradie
     ydots = real(dot(state.y, state.s))
     copyto!(state.py, state.pg)        # below, store pg - pg_previous in py
     # P already updated in _apply_precondprep above
-    __precondition!(state.pg, method.P, g_x)
+    __precondition!(state.pg, method.P, state.g_x)
 
     state.py .= state.pg .- state.py
     # ydots may be zero if f is not strongly convex or the line search does not satisfy Wolfe
     betak =
         (
             real(dot(state.y, state.pg)) -
-            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots
+            real(dot(state.y, state.py)) * real(dot(state.g_x, state.s)) / ydots * method.theta
         ) / ydots
     # betak may be undefined if ydots is zero (may due to f not strongly convex or non-Wolfe linesearch)
     beta = NaNMath.max(betak, etak) # TODO: Set to zero if betak is NaN?
+    beta = clamp(beta, -method.betamax, method.betamax) # Ensure beta is not too large in absolute value
+    state.beta = beta
     state.s .= beta .* state.s .- state.pg
     project_tangent!(method.manifold, state.s, state.x)
-    return !lssuccess # break on linesearch error
+    return true
 end
-
-# Function value, gradient and Hessian are already updated in `update_state!`
-update_fgh!(d, state, ::ConjugateGradient) = nothing
 
 function trace!(
     tr,

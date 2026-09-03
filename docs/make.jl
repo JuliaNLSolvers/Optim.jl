@@ -12,6 +12,10 @@ bib = CitationBibliography(joinpath(@__DIR__, "src", "refs.bib"); style = :autho
 # use include("Rosenbrock.jl") etc
 # Generate examples
 include("generate.jl")
+GENERATE_EXAMPLES = get(ENV, "GENERATE_EXAMPLES", "true") != "false"
+if GENERATE_EXAMPLES
+    generate_examples()
+end
 
 cp(
     joinpath(@__DIR__, "..", "LICENSE.md"),
@@ -51,6 +55,7 @@ makedocs(
                 "Conjugate Gradient" => "algo/cg.md",
                 "Gradient Descent" => "algo/gradientdescent.md",
                 "(L-)BFGS" => "algo/lbfgs.md",
+                "L-BFGS-B (box constrained)" => "algo/lbfgsb.md",
                 "Acceleration" => "algo/ngmres.md",
             ],
             "Hessian Required" => [

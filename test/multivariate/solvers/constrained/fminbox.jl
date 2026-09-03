@@ -181,6 +181,33 @@
                 Optim.Options(),
             )
         end
+        @testset "Guard against gbarrier_norm == 0 in computation of initial mu #1233" begin
+            l_inf, u_inf = fill(-Inf, 2), fill(Inf, 2)
+        
+            # gnorm > 0, gbarrier_norm == 0: previously mu = gnorm/0 = Inf
+            res = optimize(exponential, l_inf, u_inf, initial_x, Fminbox(), Optim.Options())
+            @test Optim.converged(res)
+            @test Optim.minimizer(res) ≈ [2.0, 3.0] atol = 1e-3
+                                
+            # gnorm == 0 and gbarrier_norm == 0: previously mu = 0/0 = NaN
+            # ([2.0, 3.0] is the stationary point of `exponential`)
+            res = optimize(exponential, l_inf, u_inf, [2.0, 3.0], Fminbox(), Optim.Options())
+            @test Optim.converged(res)
+            @test Optim.minimizer(res) ≈ [2.0, 3.0]
+        
+            # initial_mu unit tests
+            box_inf = Optim.BoxBarrier(l_inf, u_inf)
+            @test Optim.initial_mu(box_inf, [0.0, 0.0], [1.0, 1.0], Fminbox()) == 0  # Inf case
+            @test Optim.initial_mu(box_inf, [0.0, 0.0], [0.0, 0.0], Fminbox()) == 0  # NaN case
+        
+            # half-bounded box: a single finite bound must still give mu > 0
+            box_half = Optim.BoxBarrier([-Inf, 0.0], [Inf, Inf])
+            @test Optim.initial_mu(box_half, [0.0, 1.0], [1.0, 1.0], Fminbox()) > 0
+        
+            # explicitly non-finite user-supplied mu0 should still throw
+            @test_throws ArgumentError Optim.initial_mu(box_inf, [0.0, 0.0], [1.0, 1.0],
+                                                        Fminbox(LBFGS(); mu0 = Inf))
+        end
     end
 end
 

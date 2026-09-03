@@ -68,7 +68,7 @@ See [328](https://github.com/JuliaOpt/Optim.jl/pull/328).
 * Assess convergence in *g* before iterating to avoid line search errors if `initial_x` is a stationary point
 * Fix trace bug in LevenbergMarquardt.
 * Add ForwardDiff AD functionality to NewtonTrustRegion
-* Make documentation even more noticable in README.md
+* Make documentation even more noticeable in README.md
 
 # Optim v0.6.0 release notes
 

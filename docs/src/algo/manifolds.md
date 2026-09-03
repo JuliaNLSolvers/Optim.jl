@@ -1,7 +1,7 @@
 # Manifold optimization
 Optim.jl supports the minimization of functions defined on Riemannian manifolds, i.e. with simple constraints such as normalization and orthogonality. The basic idea of such algorithms is to project back ("retract") each iterate of an unconstrained minimization method onto the manifold. This is used by passing a `manifold` keyword argument to the optimizer.
 
-## Howto
+## How-to
 Here is a simple test case where we minimize the Rayleigh quotient `<x, A x>` of a symmetric matrix `A` under the constraint `||x|| = 1`, finding an eigenvector associated with the lowest eigenvalue of `A`.
 ```julia
 n = 10
@@ -32,9 +32,6 @@ See `test/multivariate/manifolds.jl` for usage examples.
 Implementing new manifolds is as simple as adding methods `project_tangent!(M::YourManifold,g,x)` and `retract!(M::YourManifold,x)`. If you implement another manifold or optimization method, please contribute a PR!
 
 ## References
-The Geometry of Algorithms with Orthogonality Constraints, Alan Edelman, Tomás A. Arias, Steven T. Smith, SIAM. J. Matrix Anal. & Appl., 20(2), 303–353
-
-Optimization Algorithms on Matrix Manifolds, P.-A. Absil, R. Mahony, R. Sepulchre, Princeton University Press, 2008
 
 ```@bibliography
 edelman1998
