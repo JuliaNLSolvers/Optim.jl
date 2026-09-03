@@ -311,7 +311,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     state.x .= x_min
     state.f_x = f_min
     state.nm_x = nmobjective(state.f_simplex, n, m)
-    return nothing
+    return false
 end
 
 # We don't have an x_previous and f_x_previous in NelderMeadState, so we need to special case these

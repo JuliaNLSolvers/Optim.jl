@@ -160,14 +160,14 @@
     options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
     res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
 
-    local istate
-    iter_tmp = Optim.optimizing(f, initial_x, BFGS(),
-                                    Optim.Options(extended_trace = true,
-                                                  store_trace = true))
-    for istate′ in iter_tmp
-        istate = istate′
-        break
-    end
+    iter_tmp = Optim.optimizing(
+        f,
+        initial_x,
+        BFGS(),
+        Optim.Options(extended_trace = true, store_trace = true),
+    )
+    # An iterator always yields its initial state, so this never returns `nothing`.
+    istate, _ = iterate(iter_tmp)
     # (smoke) tests for accessor functions:
     @test summary(iter_tmp) == "BFGS"
     @test Optim.minimizer(iter_tmp, istate) == initial_x
@@ -186,6 +186,23 @@
     @test Optim.g_converged(istate) == false
     @test Optim.initial_state(iter_tmp) == initial_x
     @test Optim.OptimizationResults(iter_tmp, istate) isa Optim.MultivariateOptimizationResults
+
+    @testset "iterator inference" begin
+        iter = Optim.optimizing(f, g!, initial_x, BFGS())
+        S = eltype(iter)
+        @test isconcretetype(S)
+
+        # The one-argument method never returns `nothing`, which is what lets
+        # `optimize` name the state without a `local` declaration.
+        first_istate, _ = @inferred iterate(iter)
+        @test first_istate isa S
+
+        @test only(Base.return_types(iterate, Tuple{typeof(iter),S})) ===
+              Union{Nothing,Tuple{S,S}}
+        @inferred Union{Nothing,Tuple{S,S}} iterate(iter, first_istate)
+
+        @inferred optimize(f, g!, initial_x, BFGS())
+    end
 
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "centroid")
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "step_type")

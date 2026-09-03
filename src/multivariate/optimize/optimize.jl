@@ -51,7 +51,12 @@ _method(r::OptimIterator) = r.method
 
 Base.IteratorSize(::Type{<:OptimIterator}) = Base.SizeUnknown()
 Base.IteratorEltype(::Type{<:OptimIterator}) = Base.HasEltype()
-Base.eltype(::Type{<:OptimIterator}) = IteratorState
+Base.eltype(::Type{I}) where {I<:OptimIterator} = IteratorState{_tracetype(I)}
+
+# `iterate` builds its trace with this, so `eltype` cannot drift from what is yielded.
+_tracetype(iter::OptimIterator) = _tracetype(typeof(iter))
+_tracetype(::Type{<:OptimIterator{<:Any,M,<:Any,<:Any,S}}) where {M,S} =
+    OptimizationTrace{fieldtype(S, :f_x),M}
 
 struct IteratorState{TR<:OptimizationTrace}
     t0::Float64
@@ -72,121 +77,149 @@ struct IteratorState{TR<:OptimizationTrace}
     converged::Bool
     iteration::Int
     ls_success::Bool
+    small_trustregion_radius::Bool
 end
 
-function Base.iterate(iter::OptimIterator, istate = nothing)
-    (; d, initial_x, method, options, state) = iter
+# This method never returns `nothing`: an `OptimIterator` always yields the initial
+# state, which is what lets `optimize` build a result without a `local` declaration.
+function Base.iterate(iter::OptimIterator)
+    (; d, method, options, state) = iter
     (; callback) = options
-    if istate === nothing
-        t0 = time() # Initial time stamp used to control early stopping by options.time_limit
-        tr = OptimizationTrace{typeof(value(d)),typeof(method)}()
-        tracing =
-            options.store_trace ||
-            options.show_trace ||
-            options.extended_trace ||
-            options.callback != nothing
-        stopped, stopped_by_callback, stopped_by_time_limit = false, false, false
-        f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
-        x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
-        small_trustregion_radius = false
 
-        g_converged, stopped = initial_convergence(state, options)
-        converged = g_converged
+    t0 = time() # Initial time stamp used to control early stopping by options.time_limit
+    tr = _tracetype(iter)()
+    tracing =
+        options.store_trace ||
+        options.show_trace ||
+        options.extended_trace ||
+        options.callback != nothing
+    stopped_by_time_limit = false
+    f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
+    x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+    small_trustregion_radius = false
 
-        # prepare iteration counter (used to make "initial state" trace entry)
-        iteration = 0
+    g_converged, stopped = initial_convergence(state, options)
+    converged = g_converged
 
-        options.show_trace && print_header(method)
-        _time = time()
-        trace!(tr, d, state, iteration, method, options, _time - t0)
-        ls_success::Bool = true
-        stopped_by_callback = callback !== nothing && callback(state)
-        stopped |= stopped_by_callback
-    
-        # Note: `optimize` depends on that first iteration always yields something
-        # (i.e., `iterate` does _not_ return a `nothing` when `istate === nothing`).
-    else
-        (;
-            t0,
-            _time,
-            tr,
-            tracing,
-            stopped,
-            stopped_by_callback,
-            stopped_by_time_limit,
-            f_limit_reached,
-            g_limit_reached,
-            h_limit_reached,
-            x_converged,
-            f_converged,
-            f_increased,
-            counter_f_tol,
-            g_converged,
-            converged,
-            iteration,
-            ls_success,
-        ) = istate
+    # prepare iteration counter (used to make "initial state" trace entry)
+    iteration = 0
 
-        !converged && !stopped && iteration < options.iterations || return nothing
+    options.show_trace && print_header(method)
+    _time = time()
+    trace!(tr, d, state, iteration, method, options, _time - t0)
+    ls_success = true
+    stopped_by_callback = callback !== nothing && callback(state)
+    stopped |= stopped_by_callback
 
-        iteration += 1
+    istate = IteratorState(
+        t0,
+        _time,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+        small_trustregion_radius,
+    )
+    return istate, istate
+end
 
-        # Convention: When `update_state!` is called, then `state` satisfies:
-        # - `state.x`: Current state
-        # - `state.f`: Objective function value of the current state, ie. `d(state.x)`
-        # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
-        # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)` 
-        ls_success = !update_state!(d, state, method)
+function Base.iterate(iter::OptimIterator, istate::IteratorState)
+    (; d, method, options, state) = iter
+    (; callback) = options
+    (;
+        t0,
+        _time,
+        tr,
+        tracing,
+        stopped,
+        stopped_by_callback,
+        stopped_by_time_limit,
+        f_limit_reached,
+        g_limit_reached,
+        h_limit_reached,
+        x_converged,
+        f_converged,
+        f_increased,
+        counter_f_tol,
+        g_converged,
+        converged,
+        iteration,
+        ls_success,
+        small_trustregion_radius,
+    ) = istate
 
-        # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
-        # TODO: Already perform in `update_state!`?
-        update_fgh!(d, state, method)
+    !converged && !stopped && iteration < options.iterations || return nothing
 
-        # Check convergence
-        x_converged, f_converged, g_converged, f_increased =
-            assess_convergence(state, d, options)
-        # For some problems it may be useful to require `f_converged` to be hit multiple times
-        # TODO: Do the same for x_tol?
-        counter_f_tol = f_converged ? counter_f_tol + 1 : 0
-        converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
+    iteration += 1
 
-        # update trace
-        if tracing
-            trace!(tr, d, state, iteration, method, options, time() - t0)
-        end
-        # callbacks can stop routine early by returning true
-        if callback !== nothing
-            stopped_by_callback = callback(state)
-        end
+    # Convention: When `update_state!` is called, then `state` satisfies:
+    # - `state.x`: Current state
+    # - `state.f`: Objective function value of the current state, ie. `d(state.x)`
+    # - `state.g_x` (if available): Gradient of the objective function at the current state, i.e. `gradient(d, state.x)`
+    # - `state.H_x` (if available): Hessian of the objective function at the current state, i.e. `hessian(d, state.x)`
+    ls_success = !update_state!(d, state, method)
 
-        # Check time_limit; if none is provided it is NaN and the comparison
-        # will always return false.
-        _time = time()
-        stopped_by_time_limit = _time - t0 > options.time_limit
-        f_limit_reached =
-            options.f_calls_limit > 0 && NLSolversBase.f_calls(d) >= options.f_calls_limit ? true : false
-        g_limit_reached =
-            options.g_calls_limit > 0 && (NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)) >= options.g_calls_limit ? true : false
-        h_limit_reached =
-            options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
+    # Update function value, gradient and Hessian matrix (skipped by some methods that already update those in `update_state!`)
+    # TODO: Already perform in `update_state!`?
+    update_fgh!(d, state, method)
 
-        if method isa NewtonTrustRegion
-            # If the trust region radius keeps on reducing we need to stop
-            # because something is wrong. Wrong gradients or a non-differentiability
-            # at the solution could be explanations.
-            if state.delta ≤ method.delta_min
-                stopped = true
-            end
-        end
+    # Check convergence
+    x_converged, f_converged, g_converged, f_increased =
+        assess_convergence(state, d, options)
+    # For some problems it may be useful to require `f_converged` to be hit multiple times
+    # TODO: Do the same for x_tol?
+    counter_f_tol = f_converged ? counter_f_tol + 1 : 0
+    converged = x_converged || g_converged || (counter_f_tol > options.successive_f_tol)
 
-        if (f_increased && !options.allow_f_increases) ||
-           stopped_by_callback ||
-           stopped_by_time_limit ||
-           f_limit_reached ||
-           g_limit_reached ||
-           h_limit_reached
+    # update trace
+    if tracing
+        trace!(tr, d, state, iteration, method, options, time() - t0)
+    end
+    # callbacks can stop routine early by returning true
+    if callback !== nothing
+        stopped_by_callback = callback(state)
+    end
+
+    # Check time_limit; if none is provided it is NaN and the comparison
+    # will always return false.
+    _time = time()
+    stopped_by_time_limit = _time - t0 > options.time_limit
+    f_limit_reached =
+        options.f_calls_limit > 0 && NLSolversBase.f_calls(d) >= options.f_calls_limit ? true : false
+    g_limit_reached =
+        options.g_calls_limit > 0 && (NLSolversBase.g_calls(d) + NLSolversBase.jvp_calls(d)) >= options.g_calls_limit ? true : false
+    h_limit_reached =
+        options.h_calls_limit > 0 && (NLSolversBase.h_calls(d) + NLSolversBase.hvp_calls(d)) >= options.h_calls_limit ? true : false
+
+    if method isa NewtonTrustRegion
+        # If the trust region radius keeps on reducing we need to stop
+        # because something is wrong. Wrong gradients or a non-differentiability
+        # at the solution could be explanations.
+        if state.delta ≤ method.delta_min
+            small_trustregion_radius = true
             stopped = true
         end
+    end
+
+    if (f_increased && !options.allow_f_increases) ||
+       stopped_by_callback ||
+       stopped_by_time_limit ||
+       f_limit_reached ||
+       g_limit_reached ||
+       h_limit_reached
+        stopped = true
     end
 
     new_istate = IteratorState(
@@ -208,6 +241,7 @@ function Base.iterate(iter::OptimIterator, istate = nothing)
         converged,
         iteration,
         ls_success,
+        small_trustregion_radius,
     )
     return new_istate, new_istate
 end
@@ -232,19 +266,24 @@ function OptimizationResults(iter::OptimIterator, istate::IteratorState)
         converged,
         iteration,
         ls_success,
+        small_trustregion_radius,
     ) = istate
     (; d, initial_x, method, options, state) = iter
-    (; g_x, H_x) = state
-    if NLSolversBase.g_calls(d) > 0 && !all(isfinite, g_x)
+    if hasproperty(state, :g_x) &&
+       NLSolversBase.g_calls(d) > 0 &&
+       !all(isfinite, state.g_x)
         options.show_warnings && @warn "Terminated early due to NaN in gradient."
     end
-    if NLSolversBase.h_calls(d) > 0 && !(d isa TwiceDifferentiableHV) && !all(isfinite, H_x)
+    if hasproperty(state, :H_x) &&
+       NLSolversBase.h_calls(d) > 0 &&
+       !all(isfinite, state.H_x)
         options.show_warnings && @warn "Terminated early due to NaN in Hessian."
     end
 
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     Tf = typeof(state.f_x)
+    Tx = typeof(initial_x)
 
     f_incr_pick = f_increased && !options.allow_f_increases
     stopped_by = (

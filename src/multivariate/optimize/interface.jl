@@ -132,7 +132,7 @@ function optimizing(
     d = promote_objtype(method, x0, autodiff, inplace, f)
 
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 function optimizing(
     f,
@@ -145,9 +145,9 @@ function optimizing(
     method = fallback_method(f, g)
 
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
- 
+
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 function optimizing(
     f,
@@ -277,12 +277,12 @@ function optimizing(
 end
 
 function optimize(args...; kwargs...)
-    local istate
     iter = optimizing(args...; kwargs...)
-    for istate′ in iter
-        istate = istate′
+    istate, _ = iterate(iter)
+    while true
+        next = iterate(iter, istate)
+        next === nothing && break
+        istate, _ = next
     end
-    # We can safely assume that `istate` is defined at this point.  That is to say,
-    # `OptimIterator` guarantees that `iterate(::OptimIterator) !== nothing`.
     return OptimizationResults(iter, istate)
 end

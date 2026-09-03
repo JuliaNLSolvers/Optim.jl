@@ -1,6 +1,7 @@
 # Reset the search direction if it becomes corrupted
 # return true if the direction was changed
 reset_search_direction!(state, d, method) = false # no-op
+reset_search_direction!(state, method) = false # no-op (2-arg fallback)
 
 _alphaguess(a) = a
 _alphaguess(a::Number) = LineSearches.InitialStatic(alpha = a)
