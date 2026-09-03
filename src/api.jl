@@ -120,7 +120,7 @@ hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 converged(ot::OptimIterator, os::IteratorState) = converged(OptimizationResults(ot, os)) 
-function converged(r::Union{MultivariateOptimizationResults, IteratorState})
+function converged(r::MultivariateOptimizationResults)
     conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
     f_isfinite = if r.stopped_by.iterations > 0

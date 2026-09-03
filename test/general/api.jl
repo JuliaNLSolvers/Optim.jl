@@ -187,6 +187,17 @@
     @test Optim.initial_state(iter_tmp) == initial_x
     @test Optim.OptimizationResults(iter_tmp, istate) isa Optim.MultivariateOptimizationResults
 
+    @testset "iterator traits" begin
+        iter = Optim.optimizing(f, g!, initial_x, BFGS())
+        @test Base.IteratorSize(typeof(iter)) === Base.SizeUnknown()
+        @test Base.IteratorEltype(typeof(iter)) === Base.HasEltype()
+
+        # `collect` is the generic path that consults both traits
+        states = collect(iter)
+        @test states isa Vector{eltype(iter)}
+        @test Optim.iterations(states[end]) == length(states) - 1
+    end
+
     @testset "iterator inference" begin
         iter = Optim.optimizing(f, g!, initial_x, BFGS())
         S = eltype(iter)
