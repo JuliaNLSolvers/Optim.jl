@@ -466,9 +466,9 @@ end
 
 function minimum(iter::OptimIterator, istate::IteratorState)
     (; f_increased) = istate
-    (; d, options, state) = iter
+    (; options, state) = iter
     f_incr_pick = f_increased && !options.allow_f_increases
-    return pick_best_f(f_incr_pick, state, d)
+    return pick_best_f(f_incr_pick, state)
 end
 
 iterations(istate::IteratorState) = istate.iteration
@@ -482,6 +482,6 @@ f_converged(istate::IteratorState) = istate.f_converged
 g_converged(istate::IteratorState) = istate.g_converged
 initial_state(iter::OptimIterator) = iter.initial_x
 
-f_calls(iter::OptimIterator) = f_calls(iter.d)
-g_calls(iter::OptimIterator) = g_calls(iter.d)
-h_calls(iter::OptimIterator) = h_calls(iter.d)
+f_calls(iter::OptimIterator) = NLSolversBase.f_calls(iter.d)
+g_calls(iter::OptimIterator) = NLSolversBase.g_calls(iter.d)
+h_calls(iter::OptimIterator) = NLSolversBase.h_calls(iter.d)

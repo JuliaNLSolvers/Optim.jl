@@ -278,6 +278,8 @@ end
 
 function optimize(args...; kwargs...)
     iter = optimizing(args...; kwargs...)
+    # An `OptimIterator` yields its own iteration state, so the yielded value can be
+    # passed straight back as the state. The one-argument method always yields.
     istate, _ = iterate(iter)
     while true
         next = iterate(iter, istate)

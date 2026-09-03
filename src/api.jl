@@ -1,4 +1,5 @@
 Base.summary(io::IO, r::OptimizationResults) = summary(io, r.method) # might want to do more here than just return summary of the method used
+Base.summary(io::IO, iter::OptimIterator) = summary(io, iter.method)
 _method(r::OptimizationResults) = r.method
 minimizer(r::OptimizationResults) = r.minimizer
 minimum(r::OptimizationResults) = r.minimum
