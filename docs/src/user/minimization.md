@@ -238,8 +238,10 @@ will be true. This includes local minima, saddle points, and local maxima. If `i
 and `g_converged` is `true`, the user needs to keep this point in mind.
 
 ## Iterator interface
-For multivariable optimizations, iterator interface is provided through `Optim.optimizing`
-function.  Using this interface, `optimize(args...; kwargs...)` is equivalent to
+For unconstrained multivariate optimizations, an iterator interface is provided through the
+`Optim.optimizing` function.  The box constrained and constrained solvers (`Fminbox`,
+`LBFGSB` and `IPNewton`) run their own loops and are not available through it.  Using this
+interface, `optimize(args...; kwargs...)` is equivalent to
 
 ```jl
 let istate
