@@ -215,6 +215,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     shrink = false
     n, m = length(state.x), state.m
 
+    centroid!(state.x_centroid, state.simplex, state.i_order[m])
     copyto!(state.x_lowest, state.simplex[state.i_order[1]])
     copyto!(state.x_second_highest, state.simplex[state.i_order[n]])
     copyto!(state.x_highest, state.simplex[state.i_order[m]])
@@ -294,13 +295,18 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
         step_type = "shrink"
         sortperm!(state.i_order, state.f_simplex)
     end
+    state.nm_x = nmobjective(state.f_simplex, n, m)
+    false
+end
 
-    centroid!(state.x_centroid, state.simplex, state.i_order[m])
-    f_centroid_min = value(f, state.x_centroid)
+function after_while!(f, state, method::NelderMead, options)
+    sortperm!(state.i_order, state.f_simplex)
+    x_centroid_min = centroid(state.simplex, state.i_order[state.m])
+    f_centroid_min = value(f, x_centroid_min)
     f_min, i_f_min = findmin(state.f_simplex)
     x_min = state.simplex[i_f_min]
     if f_centroid_min < f_min
-        x_min = state.x_centroid
+        x_min = x_centroid_min
         f_min = f_centroid_min
     end
     if f isa BarrierWrapper
@@ -310,8 +316,7 @@ function update_state!(f::F, state::NelderMeadState{T}, method::NelderMead) wher
     end
     state.x .= x_min
     state.f_x = f_min
-    state.nm_x = nmobjective(state.f_simplex, n, m)
-    return false
+    return nothing
 end
 
 # We don't have an x_previous and f_x_previous in NelderMeadState, so we need to special case these

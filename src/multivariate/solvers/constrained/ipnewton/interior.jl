@@ -340,6 +340,8 @@ function optimize(
         end
     end # while
 
+    after_while!(d, constraints, state, method, options)
+
     # we can just check minimum, as we've earlier enforced same types/eltypes
     # in variables besides the option settings
     T = typeof(options.f_reltol)

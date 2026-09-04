@@ -323,6 +323,12 @@ function OptimizationResults(iter::OptimIterator, istate::IteratorState)
         small_trustregion_radius,
     ) = istate
     (; d, initial_x, method, options, state) = iter
+
+    # The main loop runs this once it is done; building a result is where an
+    # iterator is done. Only NelderMead does any work here, choosing between the
+    # best vertex and the centroid, which costs one objective call.
+    after_while!(d, state, method, options)
+
     if hasproperty(state, :g_x) &&
        NLSolversBase.g_calls(d) > 0 &&
        !all(isfinite, state.g_x)
