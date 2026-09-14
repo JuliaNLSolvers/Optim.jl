@@ -1,7 +1,6 @@
 # The slope at alpha = 0 is `dot(g, s)` with the gradient `update_fgh!` already computed.
 # An objective that supplies its own `fjvp` must not be asked for a JVP there: that is a
-# full extra evaluation per iteration, and its result is not more accurate than the
-# gradient's, only differently rounded.
+# full extra evaluation per iteration.
 @testset "dphi_0 does not evaluate the objective's JVP" begin
     fdf(F, G, x) = (G === nothing || (G .= 2 .* x); sum(abs2, x))
     jvp_calls = Ref(0)
