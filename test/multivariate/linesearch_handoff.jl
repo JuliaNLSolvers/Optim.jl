@@ -1,8 +1,10 @@
-# `dphi_0` has to be the slope the line search samples itself. `fjvp` here is the gradient
-# version off by one ulp, so the two routes are distinguishable without either being wrong.
-@testset "dphi_0 comes from the objective's JVP" begin
+# The slope at alpha = 0 is `dot(g, s)` with the gradient `update_fgh!` already computed.
+# An objective that supplies its own `fjvp` must not be asked for a JVP there: that is a
+# full extra evaluation per iteration.
+@testset "dphi_0 does not evaluate the objective's JVP" begin
     fdf(F, G, x) = (G === nothing || (G .= 2 .* x); sum(abs2, x))
-    fjvp(F, JVP, x, v) = (sum(abs2, x), nextfloat(dot(2 .* x, v)))
+    jvp_calls = Ref(0)
+    fjvp(F, JVP, x, v) = (jvp_calls[] += 1; (sum(abs2, x), dot(2 .* x, v)))
 
     x0 = [1.0, -2.0]
     d = OnceDifferentiable(NLSolversBase.InplaceObjective(; fdf, fjvp), x0)
@@ -10,9 +12,7 @@
     calls = Ref(0)
     linesearch = function (df, x, s, α, x_new, phi_0, dphi_0)
         calls[] += 1
-        @test dphi_0 == last(LineSearches.make_ϕdϕ(df, x_new, x, s)(zero(α)))
-        @test dphi_0 == NLSolversBase.jvp!(df, x, s)
-        @test dphi_0 != dot(NLSolversBase.gradient!(df, x), s)
+        @test dphi_0 == dot(NLSolversBase.gradient!(df, x), s)
         x_new .= x .+ α .* s
         return α, phi_0
     end
@@ -21,6 +21,7 @@
     state = Optim.initial_state(method, Optim.Options(), d, copy(x0))
     Optim.update_state!(d, state, method)
     @test calls[] == 1
+    @test jvp_calls[] == 0
 end
 
 @testset "Line search hand-off" begin
