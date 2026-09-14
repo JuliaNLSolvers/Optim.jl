@@ -37,7 +37,7 @@ function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradi
 end
 
 function perform_linesearch!(state, method, d)
-    # Calculate search direction dphi0
+    # Calculate search direction
     dphi_0 = real(dot(state.g_x, state.s))
     # reset the direction if it becomes corrupted
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, method)
