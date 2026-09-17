@@ -47,21 +47,23 @@ The eigenbasis of H and the gradient expressed in it. The fields are named after
 `eigvals` and `eigvecs`, which are what fill them.
 
 `solve_tr_subproblem!` only reads this, so it always holds the basis of the g and H
-it was constructed from or last refreshed with. `update_state!` refreshes it at the
-top of a step that follows an accepted one. A rejected step leaves g and H untouched
-and only shrinks delta, so the basis still holds, and skipping the refresh there is
-what saves the O(n³) decomposition.
+it was last refreshed with. `update_state!` refreshes it at the top of a step that
+follows an accepted one. A rejected step leaves g and H untouched and only shrinks
+delta, so the basis still holds, and skipping the refresh there is what saves the
+O(n³) decomposition.
 
-A Hessian with no eigenbasis gives an all-NaN cache.
+`initial_state` leaves it empty and sets rho to Inf, so the first step fills it and a
+run that converges at x0 never decomposes. rho therefore records whether the basis
+still matches g and H: anything replacing them outside that accepted branch must set
+rho to Inf too, or the next step solves in a stale basis.
+
+A Hessian with no eigenbasis gives an all-NaN cache, which is how an empty one reads.
 ==#
 struct TRSubproblemCache{Tg,TH}
     H_eigvals::Tg   # eigenvalues of H, ascending
     H_eigvecs::TH   # the matching eigenvectors, as columns
     qg::Tg          # H_eigvecs' * gr
 end
-
-TRSubproblemCache(gr::AbstractVector, H::AbstractMatrix) =
-    refresh!(TRSubproblemCache(similar(gr), similar(H), similar(gr)), gr, H)
 
 # The `Symmetric` wrapper is what puts the eigenvalues in ascending order, which
 # everything below relies on.
@@ -534,8 +536,12 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
         T(delta),
         T(lambda),
         T(method.eta), # eta
-        zero(T), # rho
-        TRSubproblemCache(g_x, H_x),
+        T(Inf), # rho: no step yet, so the first one refreshes the cache below
+        TRSubproblemCache(
+            fill!(similar(g_x), NaN),
+            fill!(similar(H_x), NaN),
+            fill!(similar(g_x), NaN),
+        ),
     )
 end
 

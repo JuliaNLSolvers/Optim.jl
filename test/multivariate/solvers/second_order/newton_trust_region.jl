@@ -1,5 +1,10 @@
 using Optim, Test, Distributions, Random, LinearAlgebra
 Random.seed!(3288)
+
+# a cache populated for this subproblem, which `solve_tr_subproblem!` only reads
+tr_cache(gr, H) =
+    Optim.refresh!(Optim.TRSubproblemCache(similar(gr), similar(H), similar(gr)), gr, H)
+
 @testset "Newton Trust Region" begin
     @testset "Subproblems I" begin
         # verify that solve_tr_subproblem! finds the minimum
@@ -13,7 +18,7 @@ Random.seed!(3288)
             H,
             1.0,
             s;
-            cache = Optim.TRSubproblemCache(gr, H),
+            cache = tr_cache(gr, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -40,7 +45,7 @@ Random.seed!(3288)
                 H,
                 1.0,
                 s;
-                cache = Optim.TRSubproblemCache(gr, H),
+                cache = tr_cache(gr, H),
                 tolerance = nothing,
                 max_iters = 100,
             )
@@ -83,7 +88,7 @@ Random.seed!(3288)
             H,
             delta,
             s;
-            cache = Optim.TRSubproblemCache(gr, H),
+            cache = tr_cache(gr, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -101,7 +106,7 @@ Random.seed!(3288)
             H,
             delta,
             s;
-            cache = Optim.TRSubproblemCache(gr, H),
+            cache = tr_cache(gr, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -160,7 +165,7 @@ Random.seed!(3288)
             H,
             delta,
             s;
-            cache = Optim.TRSubproblemCache(gr, H),
+            cache = tr_cache(gr, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -185,7 +190,7 @@ Random.seed!(3288)
                 H2,
                 1.0,
                 s2;
-                cache = Optim.TRSubproblemCache(gr2, H2),
+                cache = tr_cache(gr2, H2),
                 tolerance = nothing,
                 max_iters = 100,
             )
@@ -270,7 +275,7 @@ Random.seed!(3288)
             H,
             1e-2,
             ones(2);
-            cache = Optim.TRSubproblemCache(gr, H),
+            cache = tr_cache(gr, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -353,7 +358,7 @@ Random.seed!(3288)
             H,
             1.0,
             s;
-            cache = Optim.TRSubproblemCache(g, H),
+            cache = tr_cache(g, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -380,7 +385,7 @@ Random.seed!(3288)
             H,
             1.0,
             s;
-            cache = Optim.TRSubproblemCache(g, H),
+            cache = tr_cache(g, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -397,7 +402,7 @@ Random.seed!(3288)
             H,
             2.0,
             s;
-            cache = Optim.TRSubproblemCache(g, H),
+            cache = tr_cache(g, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -414,7 +419,7 @@ Random.seed!(3288)
             H,
             2.0,
             s;
-            cache = Optim.TRSubproblemCache(g, H),
+            cache = tr_cache(g, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -433,7 +438,7 @@ Random.seed!(3288)
             H,
             1.0,
             s;
-            cache = Optim.TRSubproblemCache(g, H),
+            cache = tr_cache(g, H),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -455,7 +460,7 @@ Random.seed!(3288)
                 H,
                 1.0,
                 s;
-                cache = Optim.TRSubproblemCache(gr, H),
+                cache = tr_cache(gr, H),
                 tolerance = nothing,
                 max_iters = 100,
             )
@@ -465,7 +470,7 @@ Random.seed!(3288)
                 H0,
                 1.0,
                 s0;
-                cache = Optim.TRSubproblemCache(g0, H0),
+                cache = tr_cache(g0, H0),
                 tolerance = nothing,
                 max_iters = 100,
             )
@@ -483,7 +488,7 @@ Random.seed!(3288)
             H32,
             5.0f0,
             s32;
-            cache = Optim.TRSubproblemCache(g32, H32),
+            cache = tr_cache(g32, H32),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -501,7 +506,7 @@ Random.seed!(3288)
             H32,
             0.1f0,
             s32;
-            cache = Optim.TRSubproblemCache(g32, H32),
+            cache = tr_cache(g32, H32),
             tolerance = nothing,
             max_iters = 100,
         )
@@ -522,7 +527,7 @@ Random.seed!(3288)
                 H,
                 1.0,
                 s;
-                cache = Optim.TRSubproblemCache(gr, H),
+                cache = tr_cache(gr, H),
                 tolerance = nothing,
                 max_iters = 100,
             )
@@ -549,7 +554,7 @@ Random.seed!(3288)
             H = randn(n, n)
             H = H + H'
             gr = randn(n)
-            cache = Optim.TRSubproblemCache(gr, H)
+            cache = tr_cache(gr, H)
             for delta in (1.0, 0.25, 0.0625, 0.015625)
                 s_once, s_each = fill(NaN, n), fill(NaN, n)
                 once = Optim.solve_tr_subproblem!(
@@ -566,7 +571,7 @@ Random.seed!(3288)
                     H,
                     delta,
                     s_each;
-                    cache = Optim.TRSubproblemCache(gr, H),
+                    cache = tr_cache(gr, H),
                     tolerance = nothing,
                     max_iters = 100,
                 )
@@ -581,7 +586,7 @@ Random.seed!(3288)
             gr = randn(T, 4)
             H = Matrix(Symmetric(randn(T, 4, 4)))
             s = similar(gr)
-            cache = Optim.TRSubproblemCache(gr, H)
+            cache = tr_cache(gr, H)
             @test (@inferred Optim.solve_tr_subproblem!(
                 gr,
                 H,
@@ -600,7 +605,7 @@ Random.seed!(3288)
         H = [2.0 0.0; 0.0 3.0]
         H_cached = [5.0 0.0; 0.0 7.0]
         gr = [1.0, 1.0]
-        cache = Optim.TRSubproblemCache(gr, H_cached)
+        cache = tr_cache(gr, H_cached)
 
         s = fill(NaN, 2)
         Optim.solve_tr_subproblem!(
@@ -620,7 +625,7 @@ Random.seed!(3288)
         # `eigen` cannot decompose a non-finite Hessian, so the cache is all NaN
         gr = [1.0, 1.0]
         H = [1.0 0.0; 0.0 NaN]
-        cache = Optim.TRSubproblemCache(gr, H)
+        cache = tr_cache(gr, H)
         @test all(isnan, cache.H_eigvals)
 
         s = fill(NaN, 2)
@@ -639,7 +644,7 @@ Random.seed!(3288)
 
         # a refresh must not leave a stale basis behind
         H_good = [2.0 0.0; 0.0 3.0]
-        cache = Optim.TRSubproblemCache(gr, H_good)
+        cache = tr_cache(gr, H_good)
         @test all(isfinite, cache.H_eigvals)
         Optim.refresh!(cache, gr, H)
         @test all(isnan, cache.H_eigvals)
@@ -651,7 +656,7 @@ Random.seed!(3288)
             H0,
             1.0,
             Float64[];
-            cache = Optim.TRSubproblemCache(gr0, H0),
+            cache = tr_cache(gr0, H0),
             tolerance = nothing,
             max_iters = 100,
         )
