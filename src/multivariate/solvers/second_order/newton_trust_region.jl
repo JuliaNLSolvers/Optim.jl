@@ -42,11 +42,51 @@ function check_hard_case_candidate(H_eigv, qg, ev_tol, qg_tol)
     hard_case, lambda_index
 end
 
+#==
+The eigenbasis of H and the gradient expressed in it. The fields are named after
+`eigvals` and `eigvecs`, which are what fill them.
+
+`solve_tr_subproblem!` only reads this, so it always holds the basis of the g and H
+it was constructed from or last refreshed with. `update_state!` refreshes it at the
+top of a step that follows an accepted one. A rejected step leaves g and H untouched
+and only shrinks delta, so the basis still holds, and skipping the refresh there is
+what saves the O(n³) decomposition.
+
+A Hessian with no eigenbasis gives an all-NaN cache.
+==#
+struct TRSubproblemCache{Tg,TH}
+    H_eigvals::Tg   # eigenvalues of H, ascending
+    H_eigvecs::TH   # the matching eigenvectors, as columns
+    qg::Tg          # H_eigvecs' * gr
+end
+
+TRSubproblemCache(gr::AbstractVector, H::AbstractMatrix) =
+    refresh!(TRSubproblemCache(similar(gr), similar(H), similar(gr)), gr, H)
+
+# The `Symmetric` wrapper is what puts the eigenvalues in ascending order, which
+# everything below relies on.
+function refresh!(cache::TRSubproblemCache, gr::AbstractVector, H::AbstractMatrix)
+    Hsym = Symmetric(H)
+    if all(isfinite, Hsym)
+        H_eig = eigen(Hsym)
+        copyto!(cache.H_eigvals, H_eig.values)
+        copyto!(cache.H_eigvecs, H_eig.vectors)
+        mul!(cache.qg, cache.H_eigvecs', gr)
+    else
+        # `eigen` throws on a non-finite H, and a stale basis must not survive
+        fill!(cache.H_eigvals, NaN)
+        fill!(cache.H_eigvecs, NaN)
+        fill!(cache.qg, NaN)
+    end
+    return cache
+end
+
 # Equation 4.38 in N&W (2006)
-function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where {T}
+function calc_p!(lambda::T, min_i, n, cache::TRSubproblemCache, p) where {T}
+    (; H_eigvals, H_eigvecs, qg) = cache
     fill!(p, zero(T))
     for i = min_i:n
-        LinearAlgebra.axpy!(-qg[i] / (H_eig.values[i] + lambda), view(H_eig.vectors, :, i), p)
+        LinearAlgebra.axpy!(-qg[i] / (H_eigvals[i] + lambda), view(H_eigvecs, :, i), p)
     end
     return nothing
 end
@@ -124,14 +164,16 @@ end
 #  H:  The Hessian
 #  delta:  The trust region size, ||s|| <= delta
 #  s: Memory allocated for the step size, updated in place
+#  cache: The eigenbasis of H and the gradient in it, which the caller must have
+#      refreshed for this H and gr. Read, never written. See `TRSubproblemCache`.
 #  tolerance: The relative tolerance on the boundary condition ‖s‖ == delta at
-#      which root finding stops. The default (`nothing`) resolves to a few ulps,
-#      which is all the eigendecomposition supports and which an O(n) root
-#      finding step can afford; pass a Real to override it.
+#      which root finding stops. `nothing` resolves to a few ulps, which is all
+#      the eigendecomposition supports and which an O(n) root finding step can
+#      afford. Pass a Real to override it.
 #  max_iters: The maximum number of root finding iterations. Each iteration
 #      excludes its own lambda from the bracket, so the iterates cannot cycle
-#      and one of the two exits below is reached well inside the default; this
-#      only bounds the work in the worst case.
+#      and one of the two exits below is reached well inside the usual budget.
+#      This only bounds the work in the worst case.
 #
 # Returns:
 #  m - The numeric value of the quadratic minimization.
@@ -145,8 +187,9 @@ function solve_tr_subproblem!(
     H::AbstractMatrix{T},
     delta::T,
     s::AbstractVector{T};
-    tolerance::Union{Real,Nothing} = nothing,
-    max_iters::Int = 100,
+    cache::TRSubproblemCache,
+    tolerance::Union{Real,Nothing},
+    max_iters::Int,
 ) where {T<:Real}
     n = length(gr)
     delta_sq = delta^2
@@ -155,23 +198,18 @@ function solve_tr_subproblem!(
     @assert (n, n) == size(H)
     @assert max_iters >= 1
 
-    # Note that currently the eigenvalues are only sorted if H is perfectly
-    # symmetric.  (Julia issue #17093)
-    Hsym = Symmetric(H)
-    if any(!isfinite, Hsym)
+    (; H_eigvals, H_eigvecs, qg) = cache
+
+    # A Hessian with no eigenbasis leaves the cache NaN, and there is no
+    # subproblem to solve in that basis
+    if iszero(n) || !isfinite(H_eigvals[1])
         # Leave a well-defined (zero) step behind: callers read s after this
         # returns, and a stale or NaN-filled s poisons the radius update.
         fill!(s, zero(T))
         return T(Inf), false, zero(T), false, false
     end
-    H_eig = eigen(Hsym)
 
-    if !isempty(H_eig.values)
-        min_H_ev, max_H_ev = H_eig.values[1], H_eig.values[n]
-    else
-        fill!(s, zero(T))
-        return T(Inf), false, zero(T), false, false
-    end
+    min_H_ev, max_H_ev = H_eigvals[1], H_eigvals[n]
     H_scale = max(abs(min_H_ev), abs(max_H_ev)) # spectral norm
     gr_norm = norm(gr)
 
@@ -194,9 +232,6 @@ function solve_tr_subproblem!(
     scale_tol = sqrt(eps(T)) * H_scale
     gr_tol = sqrt(eps(T)) * gr_norm
 
-    # Cache the inner products between the eigenvectors and the gradient.
-    qg = H_eig.vectors' * gr
-
     # These values describe the outcome of the subproblem.  They will be
     # set below and returned at the end.
     interior = true
@@ -207,7 +242,7 @@ function solve_tr_subproblem!(
     # historical absolute 1e-8 misread scaled Hessians in both directions.
     positive_definite = min_H_ev > scale_tol
     if positive_definite
-        calc_p!(zero(T), 1, n, qg, H_eig, s)
+        calc_p!(zero(T), 1, n, cache, s)
     end
 
     if positive_definite && sum(abs2, s) <= delta_sq
@@ -230,7 +265,7 @@ function solve_tr_subproblem!(
         # resolvable ones are not dropped from the step.
         qg_tol = max(gr_tol, scale_tol * delta)
         hard_case_candidate, min_i =
-            check_hard_case_candidate(H_eig.values, qg, scale_tol, qg_tol)
+            check_hard_case_candidate(H_eigvals, qg, scale_tol, qg_tol)
 
         # The multiplier is bounded below by feasibility (lambda >= 0) and by
         # positive semidefiniteness of H + lambda*I, and above by the root of
@@ -252,7 +287,7 @@ function solve_tr_subproblem!(
             # iterate on the boundary.
 
             # Formula 4.45 in N&W (2006)
-            calc_p!(lambda, min_i, n, qg, H_eig, s)
+            calc_p!(lambda, min_i, n, cache, s)
             p_lambda2 = sum(abs2, s)
             if p_lambda2 > delta_sq
                 # Then we can simply solve using root finding.
@@ -265,14 +300,14 @@ function solve_tr_subproblem!(
                 # Formula 4.45 is s = p + tau*z where z is any unit eigenvector
                 # for the smallest eigenvalue; s already holds p, so add tau
                 # times the first eigenvector.
-                LinearAlgebra.axpy!(tau, view(H_eig.vectors, :, 1), s)
+                LinearAlgebra.axpy!(tau, view(H_eigvecs, :, 1), s)
             end
         end
 
         # ‖s(lambda)‖ decreases in lambda, so over the feasible range it is
         # largest at lambda_lb. If even that step lies inside the region there is
         # no boundary solution to find, and the minimizer is the interior step at
-        # lambda_lb. A direction with H_eig.values[i] + lambda_lb ≈ 0 sends
+        # lambda_lb. A direction with H_eigvals[i] + lambda_lb ≈ 0 sends
         # ‖s‖ to infinity unless its gradient component vanishes, in which case
         # it drops out of the sum and out of the step. "Vanishes" is judged on
         # the gradient's own scale: comparing qg against an H-scaled tolerance
@@ -284,7 +319,7 @@ function solve_tr_subproblem!(
         first_nz = 1
         boundary_solution_exists = false
         for i = 1:n
-            d = H_eig.values[i] + lambda_lb
+            d = H_eigvals[i] + lambda_lb
             if d > scale_tol
                 norm2_lb += (qg[i] / d)^2
             elseif abs(qg[i]) > gr_tol
@@ -298,7 +333,7 @@ function solve_tr_subproblem!(
         interior_at_lb = !boundary_solution_exists && norm2_lb <= delta_sq
 
         if !hard_case && interior_at_lb
-            calc_p!(lambda_lb, first_nz, n, qg, H_eig, s)
+            calc_p!(lambda_lb, first_nz, n, cache, s)
             interior = true
             reached_solution = true
             lambda = lambda_lb
@@ -310,7 +345,7 @@ function solve_tr_subproblem!(
 
             for iter = 1:max_iters
                 lambda_previous = lambda
-                norm2_s, norm2_q = shifted_step_norms(H_eig.values, qg, lambda, first_nz)
+                norm2_s, norm2_q = shifted_step_norms(H_eigvals, qg, lambda, first_nz)
 
                 # ‖s(lambda)‖ decreases in lambda, so the sign of phi places
                 # lambda relative to the root and tightens the bracket
@@ -339,7 +374,7 @@ function solve_tr_subproblem!(
 
             # Forming the step from the returned lambda keeps the two describing
             # the same solution of (H + lambda*I)s = -gr
-            calc_p!(lambda, first_nz, n, qg, H_eig, s)
+            calc_p!(lambda, first_nz, n, cache, s)
             reached_solution = abs(norm(s) - delta) <= cbrt(eps(T)) * delta
         end
     end
@@ -444,24 +479,31 @@ end
 
 Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
 
-mutable struct NewtonTrustRegionState{Tx,T,Tg,TH} <: AbstractOptimizerState
-    x::Tx
-    g_x::Tg
-    H_x::TH
+mutable struct NewtonTrustRegionState{Tx,T,Tg,TH,TC<:TRSubproblemCache} <:
+               AbstractOptimizerState
+    const x::Tx
+    const g_x::Tg
+    const H_x::TH
     f_x::T
-    x_previous::Tx
+    const x_previous::Tx
     f_x_previous::T
-    s::Tx
-    x_cache::Tx
-    g_cache::Tg
+    const s::Tx
+    const x_cache::Tx
+    const g_cache::Tg
     hard_case::Bool
     reached_subproblem_solution::Bool
     interior::Bool
     delta::T
     lambda::T
-    eta::T
+    const eta::T
     rho::T
+    const subproblem_cache::TC
 end
+
+# NaN is false here, which is what rejects a nonfinite trial point. `initial_state`
+# sets rho to Inf so this reads true before the first step, where g and H have just
+# been evaluated and the subproblem cache is still empty.
+step_accepted(state::NewtonTrustRegionState) = state.rho > state.eta
 
 function initial_state(method::NewtonTrustRegion, options, d, x0)
     T = eltype(x0)
@@ -492,15 +534,29 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
         T(delta),
         T(lambda),
         T(method.eta), # eta
-        zero(T),
-    ) # rho
+        zero(T), # rho
+        TRSubproblemCache(g_x, H_x),
+    )
 end
 
 
 function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+    # An accepted step recomputed g and H; a rejected one only shrank delta
+    if step_accepted(state)
+        refresh!(state.subproblem_cache, state.g_x, state.H_x)
+    end
+
     # Find the next step direction.
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
-        solve_tr_subproblem!(state.g_x, state.H_x, state.delta, state.s)
+        solve_tr_subproblem!(
+            state.g_x,
+            state.H_x,
+            state.delta,
+            state.s;
+            cache = state.subproblem_cache,
+            tolerance = nothing,
+            max_iters = 100,
+        )
 
     # Maintain a record of current position, to be able to reset it below
     copyto!(state.x_cache, state.x)
@@ -538,7 +594,7 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     end
 
     # The step is accepted if the ratio is greater than eta
-    accept_step = state.rho > state.eta
+    accept_step = step_accepted(state)
 
     # Update trust region radius
     if !accept_step
@@ -569,7 +625,6 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
             copyto!(state.g_x, g_x)
             copyto!(state.H_x, H_x)
         end
-
         # Update history
         copyto!(state.x_previous, state.x_cache)
         state.f_x_previous = f_cache
@@ -586,7 +641,7 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
 end
 
 function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
-    if state.rho > state.eta
+    if step_accepted(state)
         # Accept the point and check convergence against all five tolerances,
         # like the default path used by the first-order solvers. The 8-argument
         # method only honors x_abstol and f_reltol, silently ignoring x_reltol
