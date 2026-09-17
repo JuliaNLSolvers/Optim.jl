@@ -413,13 +413,13 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
             throw(DomainError(delta_hat, "maximum trust region radius must be positive"))
         end
         if !(0 < initial_delta < delta_hat)
-            throw(DomainError(initial_delta, LazyString("initial trust region radius must be positive and below the maiximum trust region radius (", delta_hat, ")")))
+            throw(DomainError(initial_delta, LazyString("initial trust region radius must be positive and below the maximum trust region radius (", delta_hat, ")")))
         end
         if !(delta_min >= 0)
             throw(DomainError(delta_min, "smallest allowable trust region radius must be non-negative"))
         end
         if !(eta >= 0)
-            throw(DomainError(eta, "minimum threshold of actual and predicted reduction for accepting a step must be positivethreshold eta must be non-negative"))
+            throw(DomainError(eta, "minimum threshold of actual and predicted reduction for accepting a step must be non-negative"))
         end
         if !(rho_lower > eta)
             throw(DomainError(rho_lower, LazyString("maximum threshold of actual and predicted reduction for shrinking the trust region must be greater than the minimum threshold for accepting a step (", eta, ")")))
@@ -594,7 +594,7 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         # This can happen if the trust region radius is too large and the
         # Hessian is not positive definite.  We should shrink the trust
         # region.
-        state.rho = -1.0
+        state.rho = -one(state.rho)
     else
         state.rho = f_x_diff / (- m)
     end
