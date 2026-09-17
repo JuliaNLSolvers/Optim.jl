@@ -385,6 +385,30 @@ Random.seed!(3288)
         @test reached32
         @test abs(norm(s32) - 0.1f0) < 1e-5
     end
+    @testset "the returned lambda and step describe the same solution" begin
+        Random.seed!(4321)
+        for _ = 1:300
+            n = rand(2:8)
+            H = randn(n, n)
+            H = H + H'
+            gr = randn(n)
+            s = fill(NaN, n)
+            m, interior, λ, hard_case, reached =
+                Optim.solve_tr_subproblem!(gr, H, 1.0, s)
+            @test all(isfinite, s)
+            # λ is the multiplier that produced s, not a later iterate
+            @test (H + λ * I) * s ≈ -gr rtol = 1e-10
+            # m is the value of the quadratic it stands for
+            @test m ≈ dot(gr, s) + dot(s, H, s) / 2 rtol = 1e-10
+            @test m <= 0
+            if !interior && !hard_case
+                # the boundary is reached at the default iteration budget
+                @test reached
+                @test norm(s) ≈ 1.0 rtol = 1e-10
+            end
+        end
+    end
+
     @testset "f_abstol and x_reltol terminate the solver" begin
         # A shifted flat quartic: near the start the objective barely changes,
         # so a loose f_abstol should stop the run long before g_abstol does.

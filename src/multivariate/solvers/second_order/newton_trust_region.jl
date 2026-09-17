@@ -9,7 +9,7 @@
 #          on the order of eps times the spectral norm).
 #  qg_tol: Gradient components below qg_tol count as zero: below the
 #          gradient's own noise floor, or too small for the boundary root
-#          they induce to be resolvable by the ridged solves.
+#          they induce to be resolvable by the shifted solves.
 #
 # Returns:
 #  hard_case: Whether it is a candidate for the hard case
@@ -52,6 +52,49 @@ function calc_p!(lambda::T, min_i, n, qg, H_eig, p) where {T}
 end
 
 #==
+The two squared norms that the Newton step of Algorithm 4.3 in N&W (2006) needs,
+‖s(λ)‖² and ‖q(λ)‖² with q = R⁻ᵀs and RᵀR = H + λI, evaluated in the eigenbasis
+of H rather than through a Cholesky factorization of H + λI.
+
+Write H = Q*Diagonal(H_eigv)*Q' and qg = Q'gr. Equation 4.38 in that basis is
+Q's = -qg./(H_eigv.+λ), and ‖q‖² = s'R⁻¹R⁻ᵀs = s'(H + λI)⁻¹s, so
+
+    ‖s(λ)‖² = sum(qg[i]^2 / (H_eigv[i] + λ)^2)
+    ‖q(λ)‖² = sum(qg[i]^2 / (H_eigv[i] + λ)^3)
+
+Both cost O(n) and no factorization, which is what lets the root finder iterate
+to convergence rather than stopping after a handful of decompositions.
+
+`min_i` drops leading directions, as in `calc_p!`. Returns (‖s(λ)‖², ‖q(λ)‖²),
+or (Inf, 0) when H + λI is not positive definite over the retained directions,
+which tells the caller that λ is too small.
+==#
+function shifted_step_norms(
+    H_eigv::AbstractVector{T},
+    qg::AbstractVector{T},
+    lambda::T,
+    min_i::Int,
+) where {T<:Real}
+    n = length(qg)
+    min_i <= n || return zero(T), zero(T)
+    # The eigenvalues are ascending, so the smallest shifted one decides
+    # definiteness for the whole range
+    H_eigv[min_i] + lambda > 0 || return T(Inf), zero(T)
+
+    norm2_s = zero(T)
+    norm2_q = zero(T)
+    # Summing from the back adds the smallest terms first, and dividing the
+    # squared component once more avoids forming the cube of a small denominator
+    for i = n:-1:min_i
+        dλ = H_eigv[i] + lambda
+        s2 = (qg[i] / dλ)^2
+        norm2_s += s2
+        norm2_q += s2 / dλ
+    end
+    return norm2_s, norm2_q
+end
+
+#==
 Returns a tuple of initial safeguarding values for λ. Newton's method might not
 work well without these safeguards when the Hessian is not positive definite.
 ==#
@@ -81,21 +124,30 @@ end
 #  H:  The Hessian
 #  delta:  The trust region size, ||s|| <= delta
 #  s: Memory allocated for the step size, updated in place
-#  tolerance: The convergence tolerance for root finding. The default
-#      (`nothing`) resolves to eps(T)^(2/3) times the width of the bracket
-#      containing the boundary root, which reproduces the historical absolute
-#      1e-10 at unit scale in Float64; pass a Real to override it.
-#  max_iters: The maximum number of root finding iterations
+#  tolerance: The relative tolerance on the boundary condition ‖s‖ == delta at
+#      which root finding stops. The default (`nothing`) resolves to a few ulps,
+#      which is all the eigendecomposition supports and which an O(n) root
+#      finding step can afford; pass a Real to override it.
+#  max_iters: The maximum number of root finding iterations. Each iteration
+#      excludes its own lambda from the bracket, so the iterates cannot cycle
+#      and one of the two exits below is reached well inside the default; this
+#      only bounds the work in the worst case.
 #
 # Returns:
 #  m - The numeric value of the quadratic minimization.
 #  interior - A boolean indicating whether the solution was interior
 #  lambda - The chosen regularizing quantity
 #  hard_case - Whether or not it was a "hard case" as described by N&W (2006)
-#  reached_solution - Whether or not a solution was reached (as opposed to
-#      terminating early due to max_iters)
-function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 5)
-    T = eltype(gr)
+#  reached_solution - Whether the step returned solves the subproblem, judged on
+#      the step itself rather than on which exit the root finder took
+function solve_tr_subproblem!(
+    gr::AbstractVector{T},
+    H::AbstractMatrix{T},
+    delta::T,
+    s::AbstractVector{T};
+    tolerance::Union{Real,Nothing} = nothing,
+    max_iters::Int = 100,
+) where {T<:Real}
     n = length(gr)
     delta_sq = delta^2
 
@@ -142,8 +194,6 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
     scale_tol = sqrt(eps(T)) * H_scale
     gr_tol = sqrt(eps(T)) * gr_norm
 
-    H_ridged = copy(H)
-
     # Cache the inner products between the eigenvectors and the gradient.
     qg = H_eig.vectors' * gr
 
@@ -173,11 +223,11 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
         # A gradient component along the bottom cluster counts as zero for
         # hard-case candidacy when it is below the gradient's noise floor, or
         # when it is too small for the boundary root it induces to be
-        # resolvable: that root sits within qg/delta of -min_H_ev, and the
-        # ridged solves cannot resolve offsets below sqrt(eps)*H_scale. The
+        # resolvable: that root sits within qg/delta of -min_H_ev, which the
+        # eigensolver itself pins down only to sqrt(eps)*H_scale. The
         # conditioning floor applies only here, where min_H_ev < 0; the
-        # interior classification below computes its step in the eigenbasis,
-        # where such components are resolvable and must not be dropped.
+        # classification below judges a component against gr_tol alone, so
+        # resolvable ones are not dropped from the step.
         qg_tol = max(gr_tol, scale_tol * delta)
         hard_case_candidate, min_i =
             check_hard_case_candidate(H_eig.values, qg, scale_tol, qg_tol)
@@ -187,19 +237,13 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
         # the norm bound ‖s(lambda)‖ <= ‖g‖/(min_H_ev + lambda) (Geyer's
         # lambda_up; also p. 558 of [MORESORENSEN]).
         lambda_lb = max(zero(T), nextfloat(-min_H_ev))
-        lambda_ub = gr_norm / delta - min_H_ev
+        lambda_ub = max(gr_norm / delta - min_H_ev, lambda_lb)
         lambda = lambda_lb
 
-        # The boundary root lives inside [lambda_lb, lambda_ub], an interval of
-        # width at most ‖g‖/delta, so the increment tolerance scales with the
-        # bracket width, floored by a few ulps of the iterates' own magnitude.
-        # eps^(2/3) reproduces the historical absolute 1e-10 at unit scale.
-        lambda_tol =
-            tolerance === nothing ?
-            max(
-                cbrt(eps(T))^2 * (lambda_ub - lambda_lb),
-                4 * eps(T) * lambda_ub,
-            ) : T(tolerance)
+        # Root finding stops on the boundary condition ‖s(lambda)‖ == delta,
+        # relative to delta. The sum forming ‖s(lambda)‖² carries about one ulp
+        # per term, so n ulps is the accuracy the computation has to give.
+        phi_tol = tolerance === nothing ? n * eps(T) : T(tolerance)
 
         hard_case = false
         if hard_case_candidate
@@ -241,14 +285,14 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
         boundary_solution_exists = false
         for i = 1:n
             d = H_eig.values[i] + lambda_lb
-            if d <= scale_tol
-                first_nz = i + 1
-                if abs(qg[i]) > gr_tol
-                    boundary_solution_exists = true
-                    break
-                end
-            else
+            if d > scale_tol
                 norm2_lb += (qg[i] / d)^2
+            elseif abs(qg[i]) > gr_tol
+                boundary_solution_exists = true
+            elseif first_nz == i
+                # Only a leading run of negligible components drops out of the
+                # step, so a significant one is never skipped over
+                first_nz = i + 1
             end
         end
         interior_at_lb = !boundary_solution_exists && norm2_lb <= delta_sq
@@ -259,61 +303,53 @@ function solve_tr_subproblem!(gr, H, delta, s; tolerance = nothing, max_iters = 
             reached_solution = true
             lambda = lambda_lb
         elseif !hard_case
-            lambda = initial_safeguards(H, gr, delta, lambda)
             # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
-            # with Optim.jl
+            # with Optim.jl. Both norms come from `shifted_step_norms`, so an
+            # iteration is O(n) and needs no factorization of H + lambda*I.
+            lambda = clamp(initial_safeguards(H, gr, delta, lambda), lambda_lb, lambda_ub)
 
-            reached_solution = false
             for iter = 1:max_iters
                 lambda_previous = lambda
+                norm2_s, norm2_q = shifted_step_norms(H_eig.values, qg, lambda, first_nz)
 
-                for i in diagind(H_ridged)
-                    H_ridged[i] = H[i] + lambda
+                # ‖s(lambda)‖ decreases in lambda, so the sign of phi places
+                # lambda relative to the root and tightens the bracket
+                phi = sqrt(norm2_s) - delta
+                abs(phi) <= phi_tol * delta && break
+                if phi > 0
+                    lambda_lb = lambda
+                else
+                    lambda_ub = lambda
                 end
 
-                F = cholesky(Hermitian(H_ridged), check = false)
-                # Sometimes, λ is not sufficiently large for the Cholesky factorization
-                # to succeed. In that case, we increase λ and continue to next iteration.
-                # Merely doubling λ is not generally sufficient to make H + λI numerically
-                # positive-definite: e.g., if λ ~ 1e-15, we would never reach a stable
-                # regime within  `max_iters`, which would leave `s` unchanged. Instead, jump
-                # to a ridge on the order of H's spectral scale so the next factorization
-                # succeeds; the root-finder can still descend toward a smaller optimal λ
-                # afterwards, since `lambda_lb` is left at its initial value
-                if !issuccess(F)
-                    lambda = max(2 * lambda, sqrt(eps(T)) * H_scale)
-                    continue
+                lambda += norm2_s * phi / (delta * norm2_q)
+                if !(lambda_lb < lambda < lambda_ub)
+                    # An overshoot, or a lambda too small to keep H + lambda*I
+                    # positive definite; retreat by the same geometric mean that
+                    # `initial_safeguards` uses
+                    lambda = max(
+                        lambda_lb + (lambda_ub - lambda_lb) / 100,
+                        sqrt(lambda_lb * lambda_ub),
+                    )
                 end
 
-                R = F.U
-                s[:] = -R \ (R' \ gr)
-                q_l = R' \ s
-                norm2_s = dot(s, s)
-                lambda_update = norm2_s * (sqrt(norm2_s) - delta) / (delta * dot(q_l, q_l))
-                lambda += lambda_update
-
-                # Keep lambda inside the bracket [lambda_lb, lambda_ub]: a
-                # boundary root, when it exists, lies in it, so an iterate
-                # outside is an overshoot; go half the way back to the bound.
-                if lambda < lambda_lb
-                    lambda = (lambda_previous + lambda_lb) / 2
-                elseif lambda > lambda_ub
-                    lambda = (lambda_previous + lambda_ub) / 2
-                end
-
-                if abs(lambda - lambda_previous) < lambda_tol
-                    # The lambda iterates have stopped moving. That means the
-                    # boundary root was found only if the step in hand actually
-                    # sits on the boundary; the same test also triggers on
-                    # safeguard stagnation at a bound, where the step does not.
-                    reached_solution = abs(sqrt(norm2_s) - delta) <= cbrt(eps(T)) * delta
-                    break
-                end
+                # The iterates have stopped moving on their own scale
+                abs(lambda - lambda_previous) <= 4 * eps(T) * lambda && break
             end
+
+            # Forming the step from the returned lambda keeps the two describing
+            # the same solution of (H + lambda*I)s = -gr
+            calc_p!(lambda, first_nz, n, qg, H_eig, s)
+            reached_solution = abs(norm(s) - delta) <= cbrt(eps(T)) * delta
         end
     end
 
-    m = dot(gr, s) + dot(s, H, s) / 2
+    # Every branch above returns a step satisfying (H + lambda*I)s = -gr, which
+    # reduces the model value to this form. Both terms are non-positive, since
+    # dot(gr, s) = -gr'(H + lambda*I)⁻¹gr and lambda >= 0, so they cannot
+    # cancel; and unlike dot(s, H, s) neither carries an absolute error of order
+    # eps*‖H‖*‖s‖², which the model value itself can fall far below.
+    m = (dot(gr, s) - lambda * dot(s, s)) / 2
 
     return m, interior, lambda, hard_case, reached_solution
 end
@@ -488,8 +524,10 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     f_x_diff = f_cache - f_x
     if abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
-        # we should accept the step and assess_convergence().
-        state.rho = 1.0
+        # we should accept the step and assess_convergence(). There is no
+        # predicted reduction to compare against, so the only thing left to
+        # check is that the objective did not actually go up.
+        state.rho = f_x_diff >= 0 ? one(state.rho) : -one(state.rho)
     elseif m > 0
         # This can happen if the trust region radius is too large and the
         # Hessian is not positive definite.  We should shrink the trust

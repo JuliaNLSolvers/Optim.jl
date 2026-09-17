@@ -53,7 +53,6 @@ import ADTypes
 using LinearAlgebra:
     LinearAlgebra,
     Diagonal,
-    Hermitian,
     Symmetric,
     rmul!,
     mul!,
