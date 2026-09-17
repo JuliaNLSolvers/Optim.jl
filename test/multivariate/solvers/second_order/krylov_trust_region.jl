@@ -56,6 +56,31 @@
         @test norm(Optim.minimizer(result) - [0.0, 0.0]) < 0.01
     end
 
+    @testset "Zero curvature on the first CG direction" begin
+        # f(x, y) = x*y from [1, 0] has g'Hg == 0
+        f(x) = x[1] * x[2]
+        function fg!(_f, g, x)
+            if g !== nothing
+                g[1] = x[2]
+                g[2] = x[1]
+            end
+            return _f === nothing ? nothing : f(x)
+        end
+        _hvp!(HVP, x, v) = (HVP[1] = v[2]; HVP[2] = v[1]; HVP)
+
+        d = TwiceDifferentiable(NLSolversBase.only_fg_and_hvp!(fg!, _hvp!), [1.0, 0.0])
+        result = Optim.optimize(
+            d,
+            [1.0, 0.0],
+            Optim.KrylovTrustRegion(),
+            Optim.Options(iterations = 20, store_trace = true, extended_trace = true),
+        )
+        # a NaN rho leaves the radius frozen and the solver spinning
+        @test all(isfinite(t.metadata["rho"]) for t in result.trace)
+        # x*y is unbounded below along x == -y, so the run has to descend
+        @test Optim.minimum(result) < -1.0
+    end
+
     @testset "Stock test problems" begin
         for (name, prob) in MultivariateProblems.UnconstrainedProblems.examples
             if prob.istwicedifferentiable

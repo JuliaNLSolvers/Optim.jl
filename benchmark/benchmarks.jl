@@ -10,14 +10,18 @@ function gabor(x, phi)
     return sin(phi[1] + 0.06 * phi[2] * x) * exp(-(phi[1] + 0.06 * phi[1] * x)^2 / 32.0)
 end
 
+gabor_problem = (;
+    loss_generator = (X, Y) ->
+        (phi -> sum(i -> (gabor(X[i], phi) - Y[i])^2, eachindex(X, Y))),
+    init_phi = () -> [1.0, 6.0],
+    true_phi = () -> [0.0, 16.6],
+    domain = () -> LinRange(-15.0, 15.0, 64),
+    options = () -> Optim.Options(iterations = 100),
+)
+
 tests = (;
     first_order = (;
-        loss_generator = (X, Y) ->
-            (phi -> sum(i -> (gabor(X[i], phi) - Y[i])^2, eachindex(X, Y))),
-        init_phi = () -> [1.0, 6.0],
-        true_phi = () -> [0.0, 16.6],
-        domain = () -> LinRange(-15.0, 15.0, 64),
-        options = () -> Optim.Options(iterations = 100),
+        gabor_problem...,
         optimizers = [
             :Adam,
             :AdaMax,
@@ -28,17 +32,21 @@ tests = (;
             :GradientDescent,
             :MomentumGradientDescent,
         ],
-    )
+    ),
+    second_order = (;
+        gabor_problem...,
+        optimizers = [:Newton, :NewtonTrustRegion, :KrylovTrustRegion],
+    ),
 )
 
 for order in keys(tests), optimizer in tests[order].optimizers
-    isdefined(@__MODULE__, optimizer) || continue
+    isdefined(Optim, optimizer) || continue
     SUITE["multivariate"]["solvers"][order][optimizer] = @benchmarkable(
         optimize(loss, init_phi, opt, options),
         setup = (test = $(tests[order]);
         init_phi = test.init_phi();
         true_phi = test.true_phi();
-        opt = $(eval(optimizer))();
+        opt = $(getproperty(Optim, optimizer))();
         options = test.options();
         rng = MersenneTwister(0);
         X = collect(test.domain());
@@ -49,5 +57,38 @@ for order in keys(tests), optimizer in tests[order].optimizers
     )
 end
 
+# A problem that can be grown, to expose how the solvers scale with the number of
+# variables. Its Hessian is indefinite at the starting point, so the trust region
+# solvers spend their first iterations on the boundary of the trust region.
+rosenbrock(x) = sum(100 * (x[i+1] - x[i]^2)^2 + (1 - x[i])^2 for i = 1:2:length(x))
 
-results = run(SUITE)
+function rosenbrock_gradient!(G, x)
+    for i = 1:2:length(x)
+        G[i] = -400 * x[i] * (x[i+1] - x[i]^2) - 2 * (1 - x[i])
+        G[i+1] = 200 * (x[i+1] - x[i]^2)
+    end
+    return G
+end
+
+function rosenbrock_hessian!(H, x)
+    fill!(H, 0)
+    for i = 1:2:length(x)
+        H[i, i] = 1200 * x[i]^2 - 400 * x[i+1] + 2
+        H[i, i+1] = -400 * x[i]
+        H[i+1, i] = -400 * x[i]
+        H[i+1, i+1] = 200
+    end
+    return H
+end
+
+# Derivatives are supplied, and the iteration budget is generous, so that the timings
+# measure the solvers rather than finite differences or a truncated run
+for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRegion)
+    isdefined(Optim, optimizer) || continue
+    SUITE["multivariate"]["problems"]["rosenbrock"][n][optimizer] = @benchmarkable(
+        optimize(rosenbrock, rosenbrock_gradient!, rosenbrock_hessian!, x0, opt, options),
+        setup = (x0 = repeat([-1.2, 1.0], $n ÷ 2);
+        opt = $(getproperty(Optim, optimizer))();
+        options = Optim.Options(iterations = 1_000))
+    )
+end
