@@ -319,7 +319,12 @@ function solve_tr_subproblem!(
                 hard_case = true
                 reached_solution = true
 
-                tau = sqrt(delta_sq - p_lambda2)
+                # Either sign lands on the boundary, and in the hard case proper
+                # the two give the same model value, since the gradient has no
+                # component along this eigenvector. It has a small one whenever
+                # the screen only judged it negligible, and then this sign is
+                # the one that spends it on a decrease.
+                tau = -copysign(sqrt(delta_sq - p_lambda2), qg[1])
 
                 # Formula 4.45 is s = p + tau*z where z is any unit eigenvector
                 # for the smallest eigenvalue; s already holds p, so add tau
