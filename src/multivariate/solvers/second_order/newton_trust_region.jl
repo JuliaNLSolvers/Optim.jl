@@ -47,10 +47,15 @@ The eigenbasis of H and the gradient expressed in it. The fields are named after
 `eigvals` and `eigvecs`, which are what fill them.
 
 This is the sub-problem's only input, and `refresh!` is the only thing that writes
-it. It is called where g and H are written, so the two cannot drift apart: in
-`initial_state`, and in the accepted branch of `update_state!` that recomputes
-them. A rejected step restores the g and H this was built from and changes only
-delta, so it needs no refresh, which is what saves the O(n³) decomposition.
+it. Every write to g or H marks it out of date, by clearing `basis_current` on the
+state, and the next solve rebuilds it; the two therefore cannot drift apart. A
+rejected step restores the g and H this was built from and changes only delta, so
+it leaves the flag set, which is what saves the O(n³) decomposition.
+
+The rebuild is deferred to the solve rather than done at the write, so that a run
+converging at its starting point never decomposes at all. That matters beyond the
+work saved: `eigen` has no method for a `BigFloat` Hessian, and such a run is the
+one case where `NewtonTrustRegion` still serves one (see issue #720).
 
 A Hessian with no eigenbasis gives an all-NaN cache, which the solve screens for.
 ==#
@@ -547,6 +552,7 @@ mutable struct NewtonTrustRegionState{Tx,T,Tg,TH,TC<:TRSubproblemCache} <:
     const eta::T
     rho::T
     const subproblem_cache::TC
+    basis_current::Bool
 end
 
 # NaN is false here, which is what rejects a nonfinite trial point
@@ -582,19 +588,25 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
         T(lambda),
         T(method.eta), # eta
         zero(T), # rho
-        # The sub-problem is solved from this, so it is built where g and H are
-        refresh!(
-            TRSubproblemCache(similar(g_x), similar(H_x), similar(g_x)),
-            g_x,
-            H_x,
+        TRSubproblemCache(
+            fill!(similar(g_x), NaN),
+            fill!(similar(H_x), NaN),
+            fill!(similar(g_x), NaN),
         ),
+        false, # basis_current: g and H are new, so the first solve decomposes
     )
 end
 
 
 function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
-    # Find the next step direction. The eigenbasis is the one built where g and H
-    # were last written, which a rejected step leaves standing.
+    # Rebuild the basis if g or H have been written since it was built. A
+    # rejected step writes neither, and shrinking delta does not move it.
+    if !state.basis_current
+        refresh!(state.subproblem_cache, state.g_x, state.H_x)
+        state.basis_current = true
+    end
+
+    # Find the next step direction
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(state.subproblem_cache, state.delta, state.s)
 
@@ -665,9 +677,8 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
             copyto!(state.g_x, g_x)
             copyto!(state.H_x, H_x)
         end
-        # g and H have just been replaced, so the basis the next sub-problem
-        # solves in is replaced with them
-        refresh!(state.subproblem_cache, state.g_x, state.H_x)
+        # g and H have just been replaced, so the basis no longer describes them
+        state.basis_current = false
         # Update history
         copyto!(state.x_previous, state.x_cache)
         state.f_x_previous = f_cache

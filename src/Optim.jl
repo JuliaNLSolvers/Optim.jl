@@ -64,7 +64,6 @@ using LinearAlgebra:
     Cholesky, # factorizations
     I,
     svd,
-    opnorm, # for safeguards in newton trust regions
     issuccess,
     ldiv!,
     dot
