@@ -440,7 +440,6 @@ function solve_tr_subproblem!(
     tolerance::Union{Real,Nothing} = nothing,
     max_iters::Int = 100,
 ) where {T<:Real}
-    @assert (length(gr), length(gr)) == size(H)
     spec = refresh!(TRSubproblemCache(similar(gr), similar(H), similar(gr)), gr, H)
     return solve_tr_subproblem!(spec, delta, s; tolerance, max_iters)
 end
