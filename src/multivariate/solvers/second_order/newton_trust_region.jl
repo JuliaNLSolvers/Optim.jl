@@ -310,38 +310,17 @@ function solve_tr_subproblem!(
         phi_tol = tolerance === nothing ? n * eps(T) : T(tolerance)
 
         hard_case = false
+        p_lambda2 = zero(T) # ‖p(lambda_lb)‖², meaningful only in the hard case
         if hard_case_candidate
             # The "hard case". lambda is taken to be -min_H_ev and we only need
             # to find a multiple of an orthogonal eigenvector that lands the
             # iterate on the boundary.
 
-            # Formula 4.45 in N&W (2006)
+            # Formula 4.45 in N&W (2006). The step it gives settles the case: it
+            # is the hard case only if that step fits inside the region.
             calc_p!(lambda, min_i, n, spec, s)
             p_lambda2 = sum(abs2, s)
-            if p_lambda2 > delta_sq
-                # Then we can simply solve using root finding.
-            else
-                hard_case = true
-                reached_solution = true
-
-                # Either sign lands on the boundary, and in the hard case proper
-                # the two give the same model value, since the gradient has no
-                # component along this eigenvector. It has a small one whenever
-                # the screen only judged it negligible, and then this sign is
-                # the one that spends it on a decrease.
-                tau = -copysign(sqrt(delta_sq - p_lambda2), qg[1])
-
-                # Formula 4.45 is s = p + tau*z where z is any unit eigenvector
-                # for the smallest eigenvalue; s already holds p, so add tau
-                # times the first eigenvector.
-                LinearAlgebra.axpy!(tau, view(H_eigvecs, :, 1), s)
-
-                # p contributes over the retained directions, and the tau term
-                # over the first one, which p leaves empty
-                m =
-                    model_value_eigen(H_eigvals, qg, lambda, min_i) +
-                    (qg[1] + H_eigvals[1] * tau / 2) * tau
-            end
+            hard_case = p_lambda2 <= delta_sq
         end
 
         # ‖s(lambda)‖ decreases in lambda, so over the feasible range it is
@@ -372,13 +351,36 @@ function solve_tr_subproblem!(
         end
         interior_at_lb = !boundary_solution_exists && norm2_lb <= delta_sq
 
-        if !hard_case && interior_at_lb
+        # One arm per outcome, each forming the step and the model value of that
+        # same step. Written as a single chain so every path through it assigns
+        # both, rather than leaving that to an invariant across branches.
+        if hard_case
+            reached_solution = true
+
+            # Either sign lands on the boundary, and in the hard case proper the
+            # two give the same model value, since the gradient has no component
+            # along this eigenvector. It has a small one whenever the screen only
+            # judged it negligible, and then this sign is the one that spends it
+            # on a decrease.
+            tau = -copysign(sqrt(delta_sq - p_lambda2), qg[1])
+
+            # Formula 4.45 is s = p + tau*z where z is any unit eigenvector for
+            # the smallest eigenvalue; s already holds p, so add tau times the
+            # first eigenvector.
+            LinearAlgebra.axpy!(tau, view(H_eigvecs, :, 1), s)
+
+            # p contributes over the retained directions, and the tau term over
+            # the first one, which p leaves empty
+            m =
+                model_value_eigen(H_eigvals, qg, lambda, min_i) +
+                (qg[1] + H_eigvals[1] * tau / 2) * tau
+        elseif interior_at_lb
             calc_p!(lambda_lb, first_nz, n, spec, s)
             interior = true
             reached_solution = true
             lambda = lambda_lb
             m = model_value_eigen(H_eigvals, qg, lambda, first_nz)
-        elseif !hard_case
+        else
             # Algorithm 4.3 of N&W (2006), with s instead of p_l for consistency
             # with Optim.jl. Both norms come from `shifted_step_norms`, so an
             # iteration is O(n) and needs no factorization of H + lambda*I.
