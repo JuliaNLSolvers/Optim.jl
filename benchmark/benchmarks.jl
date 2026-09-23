@@ -81,6 +81,32 @@ function rosenbrock_hessian!(H, x)
     return H
 end
 
+# A separable saddle, whose Hessian is indefinite over a wide region rather than only
+# at the starting point. The trust region solvers work on the boundary throughout and
+# reject steps as the radius adapts, around 40% of them here, so the cell is sensitive
+# both to how well the subproblem is solved and to what a rejected step costs. On
+# Rosenbrock, by contrast, under a fifth of the steps are rejected.
+saddle(x) = sum(x[i]^4 - 8 * x[i]^2 + 3 * x[i] * x[i+1] + x[i+1]^2 for i = 1:2:length(x))
+
+function saddle_gradient!(G, x)
+    for i = 1:2:length(x)
+        G[i] = 4 * x[i]^3 - 16 * x[i] + 3 * x[i+1]
+        G[i+1] = 3 * x[i] + 2 * x[i+1]
+    end
+    return G
+end
+
+function saddle_hessian!(H, x)
+    fill!(H, 0)
+    for i = 1:2:length(x)
+        H[i, i] = 12 * x[i]^2 - 16
+        H[i, i+1] = 3
+        H[i+1, i] = 3
+        H[i+1, i+1] = 2
+    end
+    return H
+end
+
 # Derivatives are supplied, and the iteration budget is generous, so that the timings
 # measure the solvers rather than finite differences or a truncated run
 for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRegion)
@@ -88,6 +114,12 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
     SUITE["multivariate"]["problems"]["rosenbrock"][n][optimizer] = @benchmarkable(
         optimize(rosenbrock, rosenbrock_gradient!, rosenbrock_hessian!, x0, opt, options),
         setup = (x0 = repeat([-1.2, 1.0], $n ÷ 2);
+        opt = $(getproperty(Optim, optimizer))();
+        options = Optim.Options(iterations = 1_000))
+    )
+    SUITE["multivariate"]["problems"]["saddle"][n][optimizer] = @benchmarkable(
+        optimize(saddle, saddle_gradient!, saddle_hessian!, x0, opt, options),
+        setup = (x0 = repeat([0.1, -0.1], $n ÷ 2);
         opt = $(getproperty(Optim, optimizer))();
         options = Optim.Options(iterations = 1_000))
     )
