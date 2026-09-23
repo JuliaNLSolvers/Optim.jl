@@ -1,5 +1,11 @@
 using Optim, Test, Distributions, Random, LinearAlgebra
 Random.seed!(3288)
+
+# the decomposition `solve_tr_subproblem!` solves from, for the tests that hold one
+# across several solves
+tr_cache(gr, H) =
+    Optim.refresh!(Optim.TRSubproblemCache(similar(gr), similar(H), similar(gr)), gr, H)
+
 @testset "Newton Trust Region" begin
     @testset "Subproblems I" begin
         # verify that solve_tr_subproblem! finds the minimum
@@ -8,7 +14,7 @@ Random.seed!(3288)
         H = [0.945787 -3.07884; -3.07884 -1.27762]
 
         s = zeros(n)
-        m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s, max_iters = 100)
+        m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s)
 
         for j = 1:10
             bad_s = rand(n)
@@ -27,7 +33,7 @@ Random.seed!(3288)
             H += H'
 
             s = zeros(n)
-            m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s, max_iters = 100)
+            m, interior = Optim.solve_tr_subproblem!(gr, H, 1.0, s)
 
             model(s2) = (gr' * s2) + 0.5 * (s2' * H * s2)
             @test model(s) <= model(zeros(n)) + 1e-8  # origin
@@ -62,8 +68,7 @@ Random.seed!(3288)
 
         # An interior solution
         delta = sqrt(s_norm2) + 1.0
-        m, interior, lambda, hard_case, reached_solution =
-            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        m, interior, lambda, hard_case, reached_solution = Optim.solve_tr_subproblem!(gr, H, delta, s)
         @test interior
         @test !hard_case
         @test reached_solution
@@ -73,8 +78,7 @@ Random.seed!(3288)
 
         # A boundary solution
         delta = 0.5 * sqrt(s_norm2)
-        m, interior, lambda, hard_case, reached_solution =
-            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        m, interior, lambda, hard_case, reached_solution = Optim.solve_tr_subproblem!(gr, H, delta, s)
         @test !interior
         @test !hard_case
         @test reached_solution
@@ -125,8 +129,7 @@ Random.seed!(3288)
         true_m = dot(true_s, gr) + 0.5 * dot(true_s, H * true_s)
 
         delta = 0.5 * sqrt(s_norm2)
-        m, interior, lambda, hard_case, reached_solution =
-            Optim.solve_tr_subproblem!(gr, H, delta, s)
+        m, interior, lambda, hard_case, reached_solution = Optim.solve_tr_subproblem!(gr, H, delta, s)
         @test !interior
         @test hard_case
         @test reached_solution
@@ -218,7 +221,9 @@ Random.seed!(3288)
 
     @testset "PR #341" begin
         # verify that no PosDef exception is thrown
-        Optim.solve_tr_subproblem!([0, 1.0], [-1000 0; 0.0 -999], 1e-2, ones(2))
+        gr = [0, 1.0]
+        H = [-1000 0; 0.0 -999]
+        Optim.solve_tr_subproblem!(gr, H, 1e-2, ones(2))
     end
 
     @testset "Handle Inf without erroring" begin
@@ -329,8 +334,8 @@ Random.seed!(3288)
         @test λ ≈ 2.5                 # ‖g‖ / delta
 
         s = fill(NaN, 2)
-        m, interior, λ, hard_case, reached =
-            Optim.solve_tr_subproblem!(zeros(2), H, 2.0, s)
+        g = zeros(2)
+        m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(g, H, 2.0, s)
         @test reached
         @test interior
         @test all(iszero, s)
@@ -354,11 +359,10 @@ Random.seed!(3288)
         g0 = [1.0, 1.0]
         for c in (1e-6, 1e6)
             s = fill(NaN, 2)
-            m, interior, λ, hard_case, reached =
-                Optim.solve_tr_subproblem!(c .* g0, c .* H0, 1.0, s)
+            gr, H = c .* g0, c .* H0
+            m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(gr, H, 1.0, s)
             s0 = fill(NaN, 2)
-            m0, interior0, _, _, reached0 =
-                Optim.solve_tr_subproblem!(g0, H0, 1.0, s0)
+            m0, interior0, _, _, reached0 = Optim.solve_tr_subproblem!(g0, H0, 1.0, s0)
             @test interior == interior0
             @test reached == reached0
             @test s ≈ s0 atol = 1e-8
@@ -368,8 +372,7 @@ Random.seed!(3288)
         H32 = Float32[2.0 0.0; 0.0 3.0]
         g32 = Float32[1.0, 1.0]
         s32 = zeros(Float32, 2)
-        m32, interior32, λ32, hard32, reached32 =
-            Optim.solve_tr_subproblem!(g32, H32, 5.0f0, s32)
+        m32, interior32, λ32, hard32, reached32 = Optim.solve_tr_subproblem!(g32, H32, 5.0f0, s32)
         @test m32 isa Float32
         @test λ32 isa Float32
         @test reached32
@@ -379,12 +382,154 @@ Random.seed!(3288)
         # A Float32 boundary solve must be able to report convergence: the
         # historical absolute tolerance of 1e-10 sat below eps(Float32).
         s32 = zeros(Float32, 2)
-        m32, interior32, λ32, hard32, reached32 =
-            Optim.solve_tr_subproblem!(g32, H32, 0.1f0, s32, max_iters = 100)
+        m32, interior32, λ32, hard32, reached32 = Optim.solve_tr_subproblem!(g32, H32, 0.1f0, s32)
         @test !interior32
         @test reached32
         @test abs(norm(s32) - 0.1f0) < 1e-5
     end
+    @testset "the returned lambda and step describe the same solution" begin
+        Random.seed!(4321)
+        for _ = 1:300
+            n = rand(2:8)
+            H = randn(n, n)
+            H = H + H'
+            gr = randn(n)
+            s = fill(NaN, n)
+            m, interior, λ, hard_case, reached = Optim.solve_tr_subproblem!(gr, H, 1.0, s)
+            @test all(isfinite, s)
+            # λ is the multiplier that produced s, not a later iterate
+            @test (H + λ * I) * s ≈ -gr rtol = 1e-10
+            # m is the value of the quadratic it stands for
+            @test m ≈ dot(gr, s) + dot(s, H, s) / 2 rtol = 1e-10
+            @test m <= 0
+            if !interior && !hard_case
+                # the boundary is reached at the default iteration budget
+                @test reached
+                @test norm(s) ≈ 1.0 rtol = 1e-10
+            end
+        end
+    end
+
+    @testset "the model value describes the step on truncated solves" begin
+        # A gradient component counts as zero for the hard case below
+        # sqrt(eps)*‖H‖*delta. On a spectrum this wide that floor is 1.49, so the
+        # step drops directions carrying real gradient and (H + λI)s = -gr does
+        # not hold over them. The model value reported still has to be the value
+        # of the step that comes back.
+        Random.seed!(90210)
+        Q = Matrix(qr(randn(5, 5)).Q)
+        gr = Q * [0.9, 0.8, 1.1, 0.7, 0.6]
+        for lambda_1 in (-1e-9, -1e-3, -1.0, -2.0)
+            H = Q * Diagonal([lambda_1, 1e-4, 1.0, 1e4, 1e8]) * Q'
+            H = (H + H') / 2
+            s = fill(NaN, 5)
+            m, = Optim.solve_tr_subproblem!(gr, H, 1.0, s)
+            # The two ways of evaluating the same quadratic form agree only to
+            # the rounding of the larger one, and dot(s, H, s) carries
+            # eps*‖H‖*‖s‖², which here is 2.2e-8 against an m of order 1
+            quadratic_slack = eps() * opnorm(H) * dot(s, s)
+            @test m ≈ dot(gr, s) + dot(s, H, s) / 2 rtol = 1e-8 atol = quadratic_slack
+        end
+    end
+
+    @testset "one decomposition serves a whole rejection chain" begin
+        # Only delta changes as the radius shrinks, so decomposing once has to
+        # give the same answers as decomposing before every solve
+        Random.seed!(5150)
+        for _ = 1:300
+            n = rand(1:8)
+            H = randn(n, n)
+            H = H + H'
+            gr = randn(n)
+            spec = tr_cache(gr, H)
+            for delta in (1.0, 0.25, 0.0625, 0.015625)
+                s_once, s_each = fill(NaN, n), fill(NaN, n)
+                once = Optim.solve_tr_subproblem!(spec, delta, s_once)
+                each = Optim.solve_tr_subproblem!(gr, H, delta, s_each)
+                @test once === each
+                @test s_once == s_each
+            end
+        end
+    end
+
+    @testset "the subproblem solve stays inferable" begin
+        for T in (Float64, Float32)
+            gr = randn(T, 4)
+            H = Matrix(Symmetric(randn(T, 4, 4)))
+            s = similar(gr)
+            spec = tr_cache(gr, H)
+            @test (@inferred Optim.solve_tr_subproblem!(spec, one(T), s)) isa
+                  Tuple{T,Bool,T,Bool,Bool}
+            @test (@inferred Optim.solve_tr_subproblem!(gr, H, one(T), s)) isa
+                  Tuple{T,Bool,T,Bool,Bool}
+        end
+    end
+
+    @testset "a cache without an eigenbasis is screened" begin
+        # `eigen` cannot decompose a non-finite Hessian, so the cache is all NaN
+        gr = [1.0, 1.0]
+        H = [1.0 0.0; 0.0 NaN]
+        cache = tr_cache(gr, H)
+        @test all(isnan, cache.H_eigvals)
+
+        s = fill(NaN, 2)
+        m, _, _, _, reached = Optim.solve_tr_subproblem!(cache, 1.0, s)
+        @test m == Inf
+        @test !reached
+        @test all(iszero, s)
+
+        # a refresh must not leave a stale basis behind
+        H_good = [2.0 0.0; 0.0 3.0]
+        cache = tr_cache(gr, H_good)
+        @test all(isfinite, cache.H_eigvals)
+        Optim.refresh!(cache, gr, H)
+        @test all(isnan, cache.H_eigvals)
+
+        gr0 = Float64[]
+        H0 = Matrix{Float64}(undef, 0, 0)
+        m0, _, _, _, reached0 = Optim.solve_tr_subproblem!(gr0, H0, 1.0, Float64[])
+        @test m0 == Inf
+        @test !reached0
+    end
+
+    @testset "a trial point in a nonfinite region shrinks the radius" begin
+        # f is finite only for x[1] >= -0.5. A NaN there makes rho NaN, and NaN
+        # loses every comparison, so a radius update branching on rho would freeze.
+        f(x) = x[1] < -0.5 ? NaN : (sqrt(x[1] + 0.5) - 0.5)^2 + (x[2] - 4.0)^2
+        function g!(G, x)
+            u = x[1] + 0.5
+            G[1] = u < 0 ? NaN : (sqrt(u) - 0.5) / sqrt(u)
+            G[2] = 2 * (x[2] - 4.0)
+            return G
+        end
+        function h!(H, x)
+            u = x[1] + 0.5
+            H[1, 1] = u < 0 ? NaN : 0.25 * u^(-3 / 2)
+            H[1, 2] = H[2, 1] = 0.0
+            H[2, 2] = 2.0
+            return H
+        end
+
+        # The unconstrained step along x[1] is about -34.7, so a radius of 10 puts
+        # the first trial point at x[1] ≈ -5.5, inside the nonfinite region.
+        deltas = Float64[]
+        result = Optim.optimize(
+            f,
+            g!,
+            h!,
+            [4.5, 4.0],
+            NewtonTrustRegion(initial_delta = 10.0),
+            Optim.Options(
+                iterations = 100,
+                callback = st -> (push!(deltas, st.delta); false),
+            ),
+        )
+        @test deltas[2] < 10.0
+        @test Optim.converged(result)
+        @test Optim.minimizer(result) ≈ [-0.25, 4.0] rtol = 1e-6
+        @test Optim.iterations(result) < 100
+    end
+
     @testset "f_abstol and x_reltol terminate the solver" begin
         # A shifted flat quartic: near the start the objective barely changes,
         # so a loose f_abstol should stop the run long before g_abstol does.
