@@ -261,6 +261,7 @@ function optimize(
     stopped, stopped_by_time_limit = false, false
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
+    ls_failed = false
 
     g_converged, stopped = initial_convergence(d, state, method, x0, options)
     converged = g_converged
@@ -288,6 +289,10 @@ function optimize(
         fail = update_state!(d, constraints, state, method, options)
         if fail
             # `fail = true` e.g. if it's forced by something in update! to stop (eg dx_dg == 0.0 in BFGS or linesearch errors)
+            # For IPNewton this happens when the line search stalls (α = 0),
+            # i.e. it could not find an acceptable step. Flag it so the result
+            # is reported as a line-search failure rather than convergence.
+            ls_failed = true
             break
         end
 
@@ -369,7 +374,7 @@ function optimize(
         NLSolversBase.hvp_calls(d),
         options.time_limit,
         _time - t0,
-        (;x_converged, f_converged, g_converged,f_increased, iterations = iteration == options.iterations, ls_failed=false,),
+        (;x_converged, f_converged, g_converged,f_increased, iterations = iteration == options.iterations, ls_failed,),
         termination_code,
     )
 end
@@ -735,6 +740,174 @@ slopealpha(sx, gx, bstep, bgrad) =
     dot(bstep.λxE, bgrad.λxE) +
     dot(bstep.λcE, bgrad.λcE)
 
+## Filter line-search trial quantities (Wächter & Biegler 2006), milestone M2.
+# A filter line search measures each trial point by two scalars only: the
+# barrier objective ϕ_μ and the constraint violation θ. Unlike the Lagrangian
+# line functions above, no gradient or Jacobian is needed at the trial point —
+# the slope used by the switching/Armijo conditions is the barrier-objective
+# slope at the *current* iterate, computed once by `barrier_objective_slope`.
+# These are not yet wired into any line search; the filter line search (M3)
+# will consume them.
+
+"""
+    _barrier_linesearch(αs, d, constraints, state) -> (ϕ, θ)
+
+Evaluate the barrier objective `ϕ = f + barrier` and the constraint violation
+`θ` (see [`barrier_objective`](@ref) and [`constraint_violation`](@ref)) at the
+trial point `x + α·s`, with the slacks stepped by `αs`. Mirrors
+[`_lagrangian_linefunc`](@ref) but returns the two filter axes instead of the
+Lagrangian, and needs no gradient/Jacobian evaluation.
+"""
+function _barrier_linesearch(αs, d, constraints, state)
+    b_ls, bounds = state.b_ls, constraints.bounds
+    ls_update!(state.x_ls, state.x, state.s, alphax(αs))
+    ls_update!(b_ls.bstate, state.bstate, state.bstep, αs)
+    constraints.c!(b_ls.c, state.x_ls)
+    f_x_ls = NLSolversBase.value!(d, state.x_ls)
+    ϕ = f_x_ls + barrier_value(bounds, state.x_ls, b_ls.bstate, state.μ)
+    θ = constraint_violation(bounds, state.x_ls, b_ls.c, b_ls.bstate)
+    return ϕ, θ
+end
+
+"""
+    barrier_objective_slope(constraints, state) -> ∇ϕᵀd
+
+Directional derivative of the barrier objective `ϕ_μ` along the current primal
+search direction — the x-step `state.s` together with the slack steps in
+`state.bstep` — evaluated at the current iterate. This is `∇ϕ_μ(xₖ)ᵀ dₖ`, the
+quantity entering the filter switching and Armijo conditions (W&B eqs. 19-20).
+It excludes the equality-constraint (λ) terms, since `ϕ` itself does, and uses
+the objective gradient `state.g_x` (the barrier depends on the slacks, not x).
+"""
+function barrier_objective_slope(constraints, state)
+    bstate, bstep, μ = state.bstate, state.bstep, state.μ
+    slope = dot(state.s, state.g_x)              # ∇ₓf · dx
+    for i in eachindex(bstate.slack_x)           # ∇_sₓ(−μ log sₓ) · dsₓ
+        slope -= μ * bstep.slack_x[i] / bstate.slack_x[i]
+    end
+    for i in eachindex(bstate.slack_c)           # ∇_s_c(−μ log s_c) · ds_c
+        slope -= μ * bstep.slack_c[i] / bstate.slack_c[i]
+    end
+    slope
+end
+
+## Filter machinery (Wächter & Biegler 2006), milestone M3.
+# A filter is a set of (θ, ϕ) corner points marking regions a trial point may
+# not enter. The line-search acceptance rules (sufficient decrease, switching,
+# Armijo) and the minimum step size below are the pure predicates of the
+# method; the backtracking loop that drives them is `filter_linesearch`. These
+# are not yet wired into a line search.
+
+"""
+    FilterParams(; kwargs...)
+
+Constants of the filter line search (Wächter & Biegler 2006), with the paper's
+default values: `γ_θ`, `γ_ϕ` (sufficient-decrease fractions), `δ`, `s_θ`, `s_ϕ`
+(switching condition), `η_ϕ` (Armijo), `γ_α` (minimum-step safety factor),
+`τ_min` (fraction-to-the-boundary floor), and the factors setting `θ_max`,
+`θ_min` from the initial constraint violation.
+"""
+Base.@kwdef struct FilterParams{T}
+    γ_θ::T = 1//100000
+    γ_ϕ::T = 1//100000
+    δ::T = 1
+    s_θ::T = 11//10
+    s_ϕ::T = 23//10
+    η_ϕ::T = 1//10000
+    γ_α::T = 1//20
+    τ_min::T = 99//100
+    θ_max_fac::T = 10000
+    θ_min_fac::T = 1//10000
+end
+
+"""
+    Filter(θ_max)
+
+A filter (Wächter & Biegler 2006): the corner points `(θ_i, ϕ_i)` of the
+prohibited region plus the maximum constraint violation `θ_max`. A pair
+`(θ, ϕ)` is blocked when `θ ≥ θ_max`, or when `θ ≥ θ_i` and `ϕ ≥ ϕ_i` for some
+stored corner (the initial filter `F₀ = {θ ≥ θ_max}`, eq. 21).
+"""
+struct Filter{T}
+    θ::Vector{T}
+    ϕ::Vector{T}
+    θ_max::T
+end
+Filter(θ_max::T) where {T} = Filter{T}(T[], T[], θ_max)
+
+"""
+    filter_acceptable(F, θ, ϕ) -> Bool
+
+Whether `(θ, ϕ)` is acceptable to the filter `F`, i.e. not inside any prohibited
+region (eq. 21 for `θ_max`, and the corners added by [`augment_filter!`](@ref)).
+"""
+function filter_acceptable(F::Filter, θ, ϕ)
+    θ ≥ F.θ_max && return false
+    for i in eachindex(F.θ)
+        if θ ≥ F.θ[i] && ϕ ≥ F.ϕ[i]
+            return false
+        end
+    end
+    return true
+end
+
+"""
+    augment_filter!(F, θ_k, ϕ_k, p::FilterParams)
+
+Add the corner `((1 - γ_θ) θ_k, ϕ_k - γ_ϕ θ_k)` to the filter `F` (eq. 22),
+prohibiting a return to the neighbourhood of the accepted iterate `(θ_k, ϕ_k)`.
+"""
+function augment_filter!(F::Filter, θ_k, ϕ_k, p::FilterParams)
+    push!(F.θ, (1 - p.γ_θ) * θ_k)
+    push!(F.ϕ, ϕ_k - p.γ_ϕ * θ_k)
+    return F
+end
+
+"""
+    sufficient_decrease(θ, ϕ, θ_k, ϕ_k, p::FilterParams) -> Bool
+
+Filter sufficient-decrease test (eq. 18): the trial `(θ, ϕ)` makes enough
+progress toward feasibility (18a) or toward the barrier objective (18b),
+relative to the current iterate `(θ_k, ϕ_k)`.
+"""
+sufficient_decrease(θ, ϕ, θ_k, ϕ_k, p::FilterParams) =
+    θ ≤ (1 - p.γ_θ) * θ_k || ϕ ≤ ϕ_k - p.γ_ϕ * θ_k
+
+"""
+    switching_condition(∇ϕ, α, θ_k, p::FilterParams) -> Bool
+
+Switching condition (eq. 19): the step is a "ϕ-step", i.e. the barrier objective
+is expected to make significant progress, so the Armijo condition on ϕ should be
+used in place of the plain filter test. Requires a descent direction
+(`∇ϕ = ∇ϕᵀd < 0`) and `α (-∇ϕ)^{s_ϕ} > δ θ_k^{s_θ}`.
+"""
+switching_condition(∇ϕ, α, θ_k, p::FilterParams) =
+    ∇ϕ < 0 && α * (-∇ϕ)^p.s_ϕ > p.δ * θ_k^p.s_θ
+
+"""
+    armijo_barrier(ϕ, ϕ_k, ∇ϕ, α, p::FilterParams) -> Bool
+
+Armijo condition on the barrier objective (eq. 20): `ϕ ≤ ϕ_k + η_ϕ α ∇ϕᵀd`.
+"""
+armijo_barrier(ϕ, ϕ_k, ∇ϕ, α, p::FilterParams) = ϕ ≤ ϕ_k + p.η_ϕ * α * ∇ϕ
+
+"""
+    filter_min_step(θ_k, ∇ϕ, θ_min, p::FilterParams) -> α_min
+
+Minimum step size (eq. 23) below which the backtracking line search gives up and
+the feasibility restoration phase is entered. `∇ϕ = ∇ϕᵀd` is the barrier slope.
+"""
+function filter_min_step(θ_k, ∇ϕ, θ_min, p::FilterParams)
+    if ∇ϕ < 0 && θ_k ≤ θ_min
+        m = min(p.γ_θ, p.γ_ϕ * θ_k / (-∇ϕ), p.δ * θ_k^p.s_θ / (-∇ϕ)^p.s_ϕ)
+    elseif ∇ϕ < 0            # θ_k > θ_min
+        m = min(p.γ_θ, p.γ_ϕ * θ_k / (-∇ϕ))
+    else
+        m = p.γ_θ
+    end
+    return p.γ_α * m
+end
+
 function linesearch_anon(
     d,
     constraints,
@@ -995,6 +1168,70 @@ function equality_grad_λ!(gλ, v, target, idx)
     nothing
 end
 
+## Filter line-search quantities (Wächter & Biegler 2006)
+# The IPNewton barrier problem is a bound-constrained, equality-constrained
+# reformulation of the user's problem: the slack/coordinate variables are kept
+# positive by the log-barrier, and the *equalities* are the slack couplings
+# `s = σ(v - b)` together with any user equality constraints. Filter
+# line-search methods track that problem with two scalars: the constraint
+# violation θ (a true norm of the equality residual) and the barrier objective
+# ϕ. These are the building blocks; the filter itself is not implemented yet.
+
+"""
+    constraint_violation(bounds, x, c, bstate) -> θ
+    constraint_violation(constraints, state) -> θ
+
+The constraint-violation measure `θ ≥ 0` used by filter line-search methods
+(Wächter & Biegler 2006). It is the 1-norm of the *raw, unweighted* residual
+of the reformulated barrier problem's equality constraints:
+
+    [ slack_x - σx*(x[ineqx] - bx)     # slack couplings for box inequalities
+      slack_c - σc*(c[ineqc] - bc)     # slack couplings for nonlinear inequalities
+      x[eqx]  - valx                   # box equalities
+      c[eqc]  - valc ]                 # nonlinear equalities
+
+Unlike [`equality_violation`](@ref), this does not weight the residual by the
+Lagrange multipliers (so it cannot be small while infeasible) and is always
+nonnegative. It measures how far the current `(x, slack)` is from satisfying
+the slack couplings, i.e. the infeasibility that an interior-point step is
+supposed to drive to zero.
+"""
+function constraint_violation(bounds::ConstraintBounds, x, c, bstate::BarrierStateVars)
+    θ = zero(promote_type(eltype(x), eltype(c)))
+    sx, sc = bstate.slack_x, bstate.slack_c
+    for (i, iv) in enumerate(bounds.ineqx)
+        θ += abs(sx[i] - bounds.σx[i] * (x[iv] - bounds.bx[i]))
+    end
+    for (i, iv) in enumerate(bounds.ineqc)
+        θ += abs(sc[i] - bounds.σc[i] * (c[iv] - bounds.bc[i]))
+    end
+    for (i, iv) in enumerate(bounds.eqx)
+        θ += abs(x[iv] - bounds.valx[i])
+    end
+    for (i, iv) in enumerate(bounds.eqc)
+        θ += abs(c[iv] - bounds.valc[i])
+    end
+    θ
+end
+constraint_violation(bounds::ConstraintBounds, state::AbstractBarrierState) =
+    constraint_violation(bounds, state.x, state.constr_c, state.bstate)
+constraint_violation(constraints::AbstractConstraints, state::AbstractBarrierState) =
+    constraint_violation(constraints.bounds, state)
+
+"""
+    barrier_objective(bounds, state) -> ϕ
+    barrier_objective(constraints, state) -> ϕ
+
+The barrier objective `ϕ_μ = f(x) + (barrier penalty)`, i.e. the part of the
+Lagrangian that excludes the equality-constraint term. Together with
+[`constraint_violation`](@ref) this is the second axis on which filter
+line-search methods (Wächter & Biegler 2006) measure progress.
+"""
+barrier_objective(bounds::ConstraintBounds, state::AbstractBarrierState) =
+    state.f_x + barrier_value(bounds, state)
+barrier_objective(constraints::AbstractConstraints, state::AbstractBarrierState) =
+    barrier_objective(constraints.bounds, state)
+
 """
     isfeasible(constraints, state) -> Bool
     isfeasible(constraints, x, c) -> Bool
@@ -1081,11 +1318,30 @@ function unpack_vec!(x, vec::Vector, k::Int)
 end
 
 ## More utilities
-function estimate_maxstep(αmax, x, s)
+"""
+    fraction_to_boundary(μ; τ_min=0.99) -> τ
+
+The fraction-to-the-boundary parameter `τⱼ = max(τ_min, 1 - μ)` of Wächter &
+Biegler 2006, eq. (8). As `μ → 0` it approaches `1`, allowing steps that get
+ever closer to the boundary; far from the solution it is capped at `τ_min` so
+iterates keep a margin from the boundary of the feasible region.
+"""
+fraction_to_boundary(μ; τ_min = 99 // 100) = max(oftype(float(μ), τ_min), 1 - μ)
+
+"""
+    estimate_maxstep(αmax, x, s, τ=1) -> αmax
+
+Largest step `α ∈ (0, αmax]` along `s` that keeps `x` a fraction-to-the-boundary
+`τ ∈ (0, 1]` away from zero, i.e. `x + α s ≥ (1 - τ) x` componentwise
+(Wächter & Biegler 2006, eq. (15)). With `τ = 1` this is the plain
+step-to-the-boundary rule. Pass `τ = fraction_to_boundary(μ) < 1` to keep a
+margin.
+"""
+function estimate_maxstep(αmax, x, s, τ = one(eltype(αmax)))
     for i = 1:length(s)
         si = s[i]
         if si < 0
-            αmax = min(αmax, -x[i] / si)
+            αmax = min(αmax, -τ * x[i] / si)
         end
     end
     αmax

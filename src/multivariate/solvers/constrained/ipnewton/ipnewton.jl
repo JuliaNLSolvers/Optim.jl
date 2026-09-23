@@ -268,7 +268,11 @@ function update_state!(
         return false
     end
 
-    # Estimate αmax, the upper bound on distance of movement along the search line
+    # Estimate αmax, the upper bound on distance of movement along the search line.
+    # NOTE (M1): `estimate_maxstep` accepts a fraction-to-the-boundary τ; the
+    # filter line search (M3) will pass τ = fraction_to_boundary(state.μ) here.
+    # The default backtracking path keeps τ = 1 (step to the boundary) so its
+    # behavior is unchanged.
     αmax = convert(eltype(bstate), Inf)
     αmax = estimate_maxstep(αmax, bstate.slack_x, bstep.slack_x)
     αmax = estimate_maxstep(αmax, bstate.slack_c, bstep.slack_c)
@@ -280,6 +284,17 @@ function update_state!(
 
     state.alpha =
         method.linesearch!(ϕ, T(1), αmax, qp; show_linesearch = method.show_linesearch)
+
+    # A zero step size means the backtracking line search exhausted its range
+    # without finding an acceptable point: the iteration has stalled. Report
+    # this as a line-search failure. Otherwise the unchanged `x` would make
+    # `|x - x'| == 0 ≤ x_abstol` and masquerade as x-convergence, so the
+    # solver would claim `success` at a possibly infeasible, non-stationary
+    # point. (A genuine step-to-zero at a solution is caught earlier by the
+    # `is_smaller_eps` check above.)
+    if state.alpha == 0
+        return true
+    end
 
     # Maintain a record of previous position
     copyto!(state.x_previous, state.x)

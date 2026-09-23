@@ -67,6 +67,7 @@ multivariate_tests = [
     "solvers/constrained/ipnewton/constraints",
     "solvers/constrained/ipnewton/counter",
     "solvers/constrained/ipnewton/ipnewton_unconstrained",
+    "solvers/constrained/ipnewton/feasibility",
     "solvers/constrained/samin",
     ## first order
     "solvers/first_order/accelerated_gradient_descent",
