@@ -15,6 +15,7 @@ The constructor takes keywords that determine the initial and maximal size of th
 * `eta`: When `rho` is at least `eta`, accept the step.
 * `rho_lower`: When `rho` is less than `rho_lower`, shrink the trust region.
 * `rho_upper`: When `rho` is greater than `rho_upper`, grow the trust region (though no greater than `delta_hat`).
+* `epsilon_f`: A bound on the noise in computed values of the objective. When positive, `rho` tolerates changes of that size, which keeps the trust region from collapsing near a solution of a noisy objective. Defaults to `0.0`.
 
 ## Description
 Newton's method with a trust region is designed to take advantage of the second-order information in a function's Hessian, but with more stability than Newton's method when functions are not globally well-approximated by a quadratic.  This is achieved by repeatedly minimizing quadratic approximations within a dynamically-sized "trust region" in which the function is assumed to be locally quadratic [1].
