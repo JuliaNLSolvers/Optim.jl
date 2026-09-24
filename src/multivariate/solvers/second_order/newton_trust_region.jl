@@ -451,6 +451,7 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
     eta::T
     rho_lower::T
     rho_upper::T
+    epsilon_f::T
     use_fg::Bool
 
     function NewtonTrustRegion(
@@ -460,6 +461,7 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
         eta::T,
         rho_lower::T,
         rho_upper::T,
+        epsilon_f::T,
         use_fg::Bool,
     ) where {T<:Real}
         if !(delta_hat > 0)
@@ -481,7 +483,11 @@ struct NewtonTrustRegion{T<:Real} <: SecondOrderOptimizer
             throw(DomainError(rho_upper, LazyString("minimum threshold of actual and predicted reduction for growing the trust region must be greater than the minimum threshold for shrinking it (", rho_lower, ")")))
         end
 
-        return new{T}(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, use_fg)
+        if !(epsilon_f >= 0)
+            throw(DomainError(epsilon_f, "noise level of the objective must be non-negative"))
+        end
+
+        return new{T}(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, epsilon_f, use_fg)
     end
 end
 
@@ -495,16 +501,18 @@ NewtonTrustRegion(; initial_delta = 1.0,
                     eta = 0.1,
                     rho_lower = 0.25,
                     rho_upper = 0.75,
+                    epsilon_f = 0.0,
                     use_fg = true)
 ```
 
-The constructor has 7 keywords:
+The constructor has 8 keywords:
 * `initial_delta`, the initial trust region radius. Defaults to `1.0`.
 * `delta_hat`, the largest allowable trust region radius. Defaults to `100.0`.
 * `delta_min`, the smallest allowable trust region radius. Optimization halts if the updated radius is less than or equal to this value. Defaults to `0.0`.
 * `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
 * `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
 * `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
+* `epsilon_f`, a bound on the noise in computed values of the objective. When positive, the ratio of actual and predicted reduction tolerates changes in the objective of that size, which keeps the trust region from collapsing near a solution of a noisy objective. Defaults to `0.0`.
 * `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
 
 ## Description
@@ -527,9 +535,10 @@ function NewtonTrustRegion(;
     eta::Real = 0.1,
     rho_lower::Real = 0.25,
     rho_upper::Real = 0.75,
+    epsilon_f::Real = 0.0,
     use_fg::Bool = true,
 )
-    NewtonTrustRegion(promote(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper)..., use_fg)
+    NewtonTrustRegion(promote(initial_delta, delta_hat, delta_min, eta, rho_lower, rho_upper, epsilon_f)..., use_fg)
 end
 
 Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
@@ -631,7 +640,27 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     # Update the trust region size based on the discrepancy between
     # the predicted and actual function values.  (Algorithm 4.1 in N&W (2006))
     f_x_diff = f_cache - f_x
-    if abs(m) <= eps(typeof(m))
+    # `epsilon_f` bounds the noise in computed values of f; at zero this is the
+    # classical ratio. Once the predicted reduction falls below the noise, the
+    # classical ratio is noise too, and rejected steps collapse the radius.
+    # Adding r*epsilon_f to both terms sends the ratio to 1 there instead:
+    # Sun & Nocedal, "A Trust Region Method for the Optimization of Noisy
+    # Functions", equation (7), with r from their equation (8).
+    r_eps = if method.epsilon_f > 0
+        2 * method.epsilon_f / (1 - method.rho_upper)
+    else
+        zero(method.epsilon_f)
+    end
+    if r_eps > 0
+        if abs(m) <= eps(typeof(m))
+            # Reject only an increase larger than the noise.
+            state.rho = f_x_diff + r_eps >= 0 ? one(state.rho) : -one(state.rho)
+        elseif m > 0
+            state.rho = -one(state.rho)
+        else
+            state.rho = (f_x_diff + r_eps) / (-m + r_eps)
+        end
+    elseif abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
         # we should accept the step and assess_convergence(). There is no
         # predicted reduction to compare against, so the only thing left to
