@@ -662,10 +662,9 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         end
     elseif abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
-        # we should accept the step and assess_convergence(). There is no
-        # predicted reduction to compare against, so the only thing left to
-        # check is that the objective did not actually go up.
-        state.rho = f_x_diff >= 0 ? one(state.rho) : -one(state.rho)
+        # we should accept the step and assess_convergence(). Without a noise
+        # level the sign of f_x_diff is not informative here.
+        state.rho = one(state.rho)
     elseif m > 0
         # This can happen if the trust region radius is too large and the
         # Hessian is not positive definite.  We should shrink the trust
