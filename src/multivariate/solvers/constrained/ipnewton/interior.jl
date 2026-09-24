@@ -252,8 +252,8 @@ function optimize(
     (; callback) = options
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     _time = t0
-
     tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
+
     tracing =
         options.store_trace ||
         options.show_trace ||
@@ -269,10 +269,12 @@ function optimize(
     iteration = 0
 
     options.show_trace && print_header(method)
+
     # update trace
     if tracing
         trace!(tr, d, state, iteration, method, options, t0)
     end
+
     # callbacks can stop routine early by returning true
     stopped_by_callback = callback !== nothing && callback(state)
     stopped |= stopped_by_callback
