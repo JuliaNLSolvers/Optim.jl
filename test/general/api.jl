@@ -4,6 +4,14 @@
     @test Optim.minimum !== minimum
     @test Optim.maximum !== maximum
 
+    @testset "first-order optimizer documentation" begin
+        for optimizer in (AcceleratedGradientDescent, MomentumGradientDescent)
+            binding = Base.Docs.Binding(Optim, Symbol(optimizer))
+            @test haskey(Base.Docs.meta(Optim), binding)
+            @test occursin(string(optimizer), sprint(show, Base.Docs.meta(Optim)[binding]))
+        end
+    end
+
     rosenbrock = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
     f = MVP.objective(rosenbrock)
     g! = MVP.gradient(rosenbrock)
