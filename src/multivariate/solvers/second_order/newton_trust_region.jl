@@ -527,6 +527,7 @@ trust-region methods in practice.
 
 ## References
  - Nocedal, J., & Wright, S. (2006). Numerical optimization. Springer Science & Business Media.
+ - Sun, S., & Nocedal, J. (2023). A trust region method for noisy unconstrained optimization. Mathematical Programming, 202, 445-472.
 """
 function NewtonTrustRegion(;
     initial_delta::Real = 1.0,
@@ -644,8 +645,9 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     # classical ratio. Once the predicted reduction falls below the noise, the
     # classical ratio is noise too, and rejected steps collapse the radius.
     # Adding r*epsilon_f to both terms sends the ratio to 1 there instead:
-    # Sun & Nocedal, "A Trust Region Method for the Optimization of Noisy
-    # Functions", equation (7), with r from their equation (8).
+    # Sun & Nocedal, "A trust region method for noisy unconstrained
+    # optimization", Math. Program. 202 (2023); equations (7) and (8) in the
+    # numbering of the preprint, arXiv:2201.00973v1.
     r_eps = if method.epsilon_f > 0
         2 * method.epsilon_f / (1 - method.rho_upper)
     else
