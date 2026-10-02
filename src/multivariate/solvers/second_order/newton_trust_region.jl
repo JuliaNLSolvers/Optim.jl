@@ -653,19 +653,12 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     else
         zero(method.epsilon_f)
     end
-    if r_eps > 0
-        if abs(m) <= eps(typeof(m))
-            # Reject only an increase larger than the noise.
-            state.rho = f_x_diff + r_eps >= 0 ? one(state.rho) : -one(state.rho)
-        elseif m > 0
-            state.rho = -one(state.rho)
-        else
-            state.rho = (f_x_diff + r_eps) / (-m + r_eps)
-        end
-    elseif abs(m) <= eps(typeof(m))
+    if abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
-        # we should accept the step and assess_convergence(). Without a noise
-        # level the sign of f_x_diff is not informative here.
+        # we should accept the step and assess_convergence(). The sign of
+        # f_x_diff is noise here. Rejecting a rise above r*epsilon_f, as the
+        # relaxed ratio would, collapses the radius when epsilon_f
+        # underestimates the noise.
         state.rho = one(state.rho)
     elseif m > 0
         # This can happen if the trust region radius is too large and the
@@ -673,7 +666,7 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         # region.
         state.rho = -one(state.rho)
     else
-        state.rho = f_x_diff / (- m)
+        state.rho = (f_x_diff + r_eps) / (-m + r_eps)
     end
 
     # The step is accepted if the ratio is greater than eta
