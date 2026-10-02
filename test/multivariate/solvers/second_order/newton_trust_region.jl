@@ -622,5 +622,12 @@ tr_cache(gr, H) =
         @test gnorm(res) <= 1e-8
         @test Optim.iterations(res) <= 20
         @test minimum(t.metadata["delta"] for t in Optim.trace(res)) >= 1.0
+
+        # A noise level a hundred times too small must do no worse than none.
+        # Rejecting a step with no predicted reduction on f rising above it
+        # stops the run at |g| ~ 4e-6 with the radius at 4e-17.
+        res = Optim.optimize(f, g!, h!, copy(x0), NewtonTrustRegion(epsilon_f = noise_f / 100), options)
+        @test Optim.converged(res)
+        @test gnorm(res) <= 1e-8
     end
 end
