@@ -457,7 +457,7 @@ function update_swarm_params!(c1, c2, w, current_state, f::T) where {T}
     end
 
     if c2 < T(3) / 2
-        c2 = T(5) / 2
+        c2 = T(3) / 2
     elseif c2 > T(5) / 2
         c2 = T(5) / 2
     end

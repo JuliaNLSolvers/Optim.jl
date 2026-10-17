@@ -50,4 +50,12 @@
         options,
     )
     test_summary(res, "Particle Swarm")
+
+    # c1 and c2 are clamped to [3/2, 5/2] (issue #1203). In states 1 and 4 c2
+    # decreases, so starting from 3/2 it must stay at 3/2.
+    for state in (1, 4)
+        w, c1, c2 = Optim.update_swarm_params!(3 / 2, 3 / 2, 0.9, state, 0.5)
+        @test c2 == 3 / 2
+        @test 3 / 2 <= c1 <= 5 / 2
+    end
 end
