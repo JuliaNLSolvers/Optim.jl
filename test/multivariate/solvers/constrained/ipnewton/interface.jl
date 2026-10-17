@@ -78,6 +78,32 @@ end
     optimize(TwiceDifferentiable(od, initial_x), lb, ub, initial_x, Optim.Options())
 end
 
+@testset "#1243" begin
+    # box bounds with keyword arguments, including scalar bounds, which forward
+    # keyword arguments
+    f_1243(x) = sum(abs2, x)
+    g_1243!(G, x) = (G .= 2 .* x)
+    function h_1243!(H, x)
+        H .= 0
+        for i in eachindex(x)
+            H[i, i] = 2
+        end
+        H
+    end
+    lower, upper, x0 = fill(1.0, 5), fill(10.0, 5), fill(6.7, 5)
+    results = [
+        optimize(f_1243, lower, upper, x0, IPNewton(); autodiff = AutoForwardDiff()),
+        optimize(f_1243, 1.0, 10.0, x0, IPNewton()),
+        optimize(f_1243, 1.0, 10.0, x0, IPNewton(); autodiff = AutoForwardDiff()),
+        optimize(f_1243, g_1243!, lower, upper, x0, IPNewton(); autodiff = AutoForwardDiff()),
+        optimize(f_1243, g_1243!, h_1243!, lower, upper, x0, IPNewton(); inplace = true),
+    ]
+    for res in results
+        @test Optim.converged(res)
+        @test Optim.minimizer(res) ≈ ones(5) atol = 1e-6
+    end
+end
+
 @testset "non-terminating line search (αmax -> 0)" begin
     # Density-ratio (KLIEP) problem that used to hang IPNewton: as the barrier
     # parameter μ collapses, a slack/multiplier underflows to 0, `estimate_maxstep`
