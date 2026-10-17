@@ -284,6 +284,7 @@ tr_cache(gr, H) =
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
         @test Optim.termination_code(res) == Optim.TerminationCode.NoXChange
+        @test Optim.TerminationCode.NoXChange in Optim.termination_flags(res)
 
         res = Optim.optimize(
             t -> -ll(t[1]),
@@ -292,6 +293,7 @@ tr_cache(gr, H) =
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
         @test Optim.termination_code(res) == Optim.TerminationCode.SmallTrustRegionRadius
+        @test Optim.TerminationCode.SmallTrustRegionRadius in Optim.termination_flags(res)
     end
 
     @testset "Singular Hessian in TR subproblem solve" begin

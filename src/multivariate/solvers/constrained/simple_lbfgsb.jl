@@ -534,13 +534,9 @@ function Optim.optimize(
         small_trustregion_radius = false,
     )
 
-    termination_code = Optim._termination_code(
-        d,
-        pgnorm,
-        SimpleState(x, f_x, x_previous, f_x_previous),
-        stopped_by,
-        options,
-    )
+    simple_state = SimpleState(x, f_x, x_previous, f_x_previous)
+    termination_code = Optim._termination_code(d, pgnorm, simple_state, stopped_by, options)
+    termination_flags = Optim._termination_flags(simple_state, pgnorm, stopped_by, options)
 
     return Optim.MultivariateOptimizationResults(
         method,
@@ -568,6 +564,7 @@ function Optim.optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        termination_flags,
     )
 end
 

@@ -179,6 +179,7 @@ function optimize(
 
     termination_code =
         _termination_code(d, g_residual(state), state, stopped_by, options)
+    termination_flags = _termination_flags(state, g_residual(state), stopped_by, options)
 
     return MultivariateOptimizationResults{
         typeof(method),
@@ -213,7 +214,44 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        termination_flags,
     )
+end
+
+# All termination criteria satisfied by the final state of the optimization.
+# A rejected non-finite trial iterate is reported as `FailedLinesearch`.
+function _termination_flags(state, gres, stopped_by, options)
+    notfinite(name) = hasproperty(state, name) && !all(isfinite, getproperty(state, name))
+    # Nelder-Mead has no previous iterate
+    x_change, f_change = if hasproperty(state, :x_previous)
+        x_abschange(state.x, state.x_previous), f_abschange(state.f_x, state.f_x_previous)
+    else
+        NaN, NaN
+    end
+    x_converged = x_change <= options.x_abstol || x_change <= options.x_reltol * Base.maximum(abs, state.x)
+    f_converged = f_change <= options.f_abstol || f_change <= options.f_reltol * abs(state.f_x)
+    g_converged = gres <= options.g_abstol
+    criteria = (
+        TerminationCode.NelderMeadCriterion => g_converged && state isa NelderMeadState,
+        TerminationCode.GradientNorm => g_converged && !(state isa NelderMeadState),
+        TerminationCode.NoXChange => x_converged && iszero(x_change),
+        TerminationCode.SmallXChange => x_converged && !iszero(x_change),
+        TerminationCode.NoObjectiveChange => f_converged && iszero(f_change),
+        TerminationCode.SmallObjectiveChange => f_converged && !iszero(f_change),
+        TerminationCode.FailedLinesearch => stopped_by.ls_failed,
+        TerminationCode.Callback => stopped_by.callback,
+        TerminationCode.Iterations => stopped_by.iterations,
+        TerminationCode.Time => stopped_by.time_limit,
+        TerminationCode.ObjectiveCalls => stopped_by.f_limit_reached,
+        TerminationCode.GradientCalls => stopped_by.g_limit_reached,
+        TerminationCode.HessianCalls => stopped_by.h_limit_reached,
+        TerminationCode.ObjectiveIncreased => stopped_by.f_increased,
+        TerminationCode.ObjectiveNotFinite => notfinite(:f_x),
+        TerminationCode.GradientNotFinite => notfinite(:g_x),
+        TerminationCode.HessianNotFinite => notfinite(:H_x),
+        TerminationCode.SmallTrustRegionRadius => stopped_by.small_trustregion_radius,
+    )
+    return TerminationFlags(code for (code, satisfied) in criteria if satisfied)
 end
 
 function _termination_code(d, gres, state, stopped_by, options)

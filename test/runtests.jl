@@ -38,6 +38,7 @@ general_tests = [
     "types",
     "counter",
     "maximize",
+    "termination_flags",
 ]
 general_tests = map(s -> "./general/" * s * ".jl", general_tests)
 

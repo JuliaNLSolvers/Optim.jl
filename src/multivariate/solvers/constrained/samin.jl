@@ -215,6 +215,13 @@ function optimize(
                         end
                         converge = 0
                         termination_code = TerminationCode.NotImplemented
+                        termination_flags = TerminationFlags(
+                            code for (code, satisfied) in (
+                                TerminationCode.Iterations => NLSolversBase.f_calls(d) >= options.iterations,
+                                TerminationCode.Time => _time - time0 > options.time_limit,
+                                TerminationCode.Callback => stopped_by_callback,
+                            ) if satisfied
+                        )
                         return MultivariateOptimizationResults(
                             method,
                             x0,
@@ -242,6 +249,7 @@ function optimize(
                             (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = NLSolversBase.f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
                             # not hit ever since stopped_by were not here?
                             termination_code,
+                            termination_flags,
                         )
                     end
                 end

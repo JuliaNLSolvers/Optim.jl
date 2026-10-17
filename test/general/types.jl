@@ -23,19 +23,20 @@
         line_shift = res.method isa Union{SimulatedAnnealing,LBFGS} ? 5 : 1
 
         lines = split(s, '\n')
-        @test lines[4] |> contains("Final objective value")
-        @test lines[7] |> contains("Algorithm")
-        @test lines[9] |> contains("Convergence measures")
-        @test lines[13+line_shift] |> contains("Iterations")
-        @test lines[14+line_shift] |> contains("f(x) calls")
+        @test lines[2] |> contains("Termination flags")
+        @test lines[5] |> contains("Final objective value")
+        @test lines[8] |> contains("Algorithm")
+        @test lines[10] |> contains("Convergence measures")
+        @test lines[14+line_shift] |> contains("Iterations")
+        @test lines[15+line_shift] |> contains("f(x) calls")
         if res.method isa NelderMead
-            @test lines[10] |> contains("√(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08")
+            @test lines[11] |> contains("√(Σ(yᵢ-ȳ)²)/n ≤ 1.0e-08")
         elseif res.method isa Union{SimulatedAnnealing,LBFGS}
-            @test lines[10] |> contains("|x - x'|")
-            @test lines[11] |> contains("|x - x'|/|x'|")
-            @test lines[12] |> contains("|f(x) - f(x')|")
-            @test lines[13] |> contains("|f(x) - f(x')|/|f(x')|")
-            @test lines[14] |> contains("|g(x)|")
+            @test lines[11] |> contains("|x - x'|")
+            @test lines[12] |> contains("|x - x'|/|x'|")
+            @test lines[13] |> contains("|f(x) - f(x')|")
+            @test lines[14] |> contains("|f(x) - f(x')|/|f(x')|")
+            @test lines[15] |> contains("|g(x)|")
         end
     end
 
