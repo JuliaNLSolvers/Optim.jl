@@ -159,6 +159,64 @@
     @test haskey(Optim.trace(res_extended)[1].metadata, "x")
     options_extended_nm = Optim.Options(store_trace = true, extended_trace = true)
     res_extended_nm = Optim.optimize(f, g!, initial_x, NelderMead(), options_extended_nm)
+
+    iter_tmp = Optim.optimizing(
+        f,
+        initial_x,
+        BFGS(),
+        Optim.Options(extended_trace = true, store_trace = true),
+    )
+    # An iterator always yields its initial state, so this never returns `nothing`.
+    istate, _ = iterate(iter_tmp)
+    # (smoke) tests for accessor functions:
+    @test summary(iter_tmp) == "BFGS"
+    @test Optim.minimizer(iter_tmp, istate) == initial_x
+    @test Optim.minimum(iter_tmp, istate) == f(initial_x)
+    @test Optim.iterations(istate) == 0
+    @test Optim.iteration_limit_reached(iter_tmp, istate) == false # this should be a precalculated one like the others
+    @test Optim.trace(istate) isa Vector{<:Optim.OptimizationState}
+    @test Optim.x_trace(iter_tmp, istate) == [initial_x]
+    @test Optim.f_trace(iter_tmp, istate) == [f(initial_x)]
+    @test Optim.f_calls(iter_tmp) == 1
+    @test Optim.converged(istate) == false
+    @test Optim.g_norm_trace(iter_tmp, istate) ≈ [215.6] rtol=1e-6
+    @test Optim.g_calls(iter_tmp) == 1
+    @test Optim.x_converged(istate) == false
+    @test Optim.f_converged(istate) == false
+    @test Optim.g_converged(istate) == false
+    @test Optim.initial_state(iter_tmp) == initial_x
+    @test Optim.OptimizationResults(iter_tmp, istate) isa Optim.MultivariateOptimizationResults
+
+    @testset "iterator traits" begin
+        iter = Optim.optimizing(f, g!, initial_x, BFGS())
+        @test Base.IteratorSize(typeof(iter)) === Base.SizeUnknown()
+        @test Base.IteratorEltype(typeof(iter)) === Base.HasEltype()
+
+        # `collect` is the generic path that consults both traits
+        states = collect(iter)
+        @test states isa Vector{eltype(iter)}
+        @test Optim.iterations(states[end]) == length(states) - 1
+    end
+
+    @testset "iterator inference" begin
+        iter = Optim.optimizing(f, g!, initial_x, BFGS())
+        S = eltype(iter)
+        @test isconcretetype(S)
+
+        # The one-argument method never returns `nothing`, which is what lets
+        # `optimize` name the state without a `local` declaration.
+        first_istate, _ = @inferred iterate(iter)
+        @test first_istate isa S
+
+        @test only(Base.return_types(iterate, Tuple{typeof(iter),S})) ===
+              Union{Nothing,Tuple{S,S}}
+        @test (@inferred Union{Nothing,Tuple{S,S}} iterate(iter, first_istate)) isa
+              Tuple{S,S}
+
+        @test (@inferred optimize(f, g!, initial_x, BFGS())) isa
+              Optim.MultivariateOptimizationResults
+    end
+
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "centroid")
     @test haskey(Optim.trace(res_extended_nm)[1].metadata, "step_type")
 

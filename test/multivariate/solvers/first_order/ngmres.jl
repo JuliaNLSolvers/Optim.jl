@@ -11,7 +11,7 @@ using Optim, Test
         solver;
         skip = skip,
         iteration_exceptions = (
-            ("Polynomial", 10000), # goes above 3000 iterations on mac
+            ("Polynomial", 10000), #locally this does not converge in 1000 iterations. We should maybe investigate these, it seems very excessive for a polynomial....
             ("Penalty Function I", 10000),
             ("Paraboloid Random Matrix", 10000),
         ),

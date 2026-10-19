@@ -236,3 +236,25 @@ line search errors if `initial_x` is a stationary point. Notice, that this is on
 a first order check. If `initial_x` is any type of stationary point, `g_converged`
 will be true. This includes local minima, saddle points, and local maxima. If `iterations` is `0`
 and `g_converged` is `true`, the user needs to keep this point in mind.
+
+## Iterator interface
+For unconstrained multivariate optimizations, an iterator interface is provided through the
+`Optim.optimizing` function.  The box constrained and constrained solvers (`Fminbox`,
+`LBFGSB` and `IPNewton`) run their own loops and are not available through it.  Using this
+interface, `optimize(args...; kwargs...)` is equivalent to
+
+```jl
+let istate
+    iter = Optim.optimizing(args...; kwargs...)
+    for istate′ in iter
+        istate = istate′
+    end
+    Optim.OptimizationResults(iter, istate)
+end
+```
+
+The iterator returned by `Optim.optimizing` yields an iterator state for each iteration
+step.
+
+Functions that can be called on the result object (e.g. `minimizer`, `iterations`; see
+[Complete list of functions](@ref)) can be used on the iteration state `istate`.

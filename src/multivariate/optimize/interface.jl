@@ -122,7 +122,7 @@ promote_objtype(
 ) = td
 
 # if no method or options are present
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray;
     inplace::Bool = true,
@@ -132,9 +132,9 @@ function optimize(
     d = promote_objtype(method, x0, autodiff, inplace, f)
 
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray;
@@ -145,11 +145,11 @@ function optimize(
     method = fallback_method(f, g)
 
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
- 
+
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -161,19 +161,16 @@ function optimize(
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
     options = Options(; default_options(method)...)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
 # no method supplied with objective
-function optimize(
-    d::T,
-    x0::AbstractArray,
-    options::Options,
-) where {T<:AbstractObjective}
-    optimize(d, x0, fallback_method(d), options)
+function optimizing(d::AbstractObjective, x0::AbstractArray, options::Options)
+    optimizing(d, x0, fallback_method(d), options)
 end
+
 # no method supplied with inplace and autodiff keywords because objective is not supplied
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray,
     options::Options;
@@ -182,9 +179,9 @@ function optimize(
 )
     method = fallback_method(f)
     d = promote_objtype(method, x0, autodiff, inplace, f)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray,
@@ -195,9 +192,9 @@ function optimize(
 
     method = fallback_method(f, g)
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -209,11 +206,11 @@ function optimize(
     method = fallback_method(f, g, h)
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
 # potentially everything is supplied (besides caches)
-function optimize(
+function optimizing(
     f,
     x0::AbstractArray,
     method::AbstractOptimizer,
@@ -221,8 +218,9 @@ function optimize(
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
+
     d = promote_objtype(method, x0, autodiff, inplace, f)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 function optimize(
     f,
@@ -237,7 +235,7 @@ function optimize(
     d = promote_objtype(method, x0, autodiff, inplace, f)
     optimize(d, c, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     x0::AbstractArray,
@@ -247,10 +245,9 @@ function optimize(
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
     d = promote_objtype(method, x0, autodiff, inplace, f, g)
-
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
-function optimize(
+function optimizing(
     f,
     g,
     h,
@@ -263,10 +260,10 @@ function optimize(
 )
     d = promote_objtype(method, x0, autodiff, inplace, f, g, h)
 
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
 end
 
-function optimize(
+function optimizing(
     d::D,
     x0::AbstractArray,
     method::SecondOrderOptimizer,
@@ -274,6 +271,20 @@ function optimize(
     inplace::Bool = true,
     autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 ) where {D<:Union{NonDifferentiable,OnceDifferentiable}}
+
     d = promote_objtype(method, x0, autodiff, inplace, d)
-    optimize(d, x0, method, options)
+    optimizing(d, x0, method, options)
+end
+
+function optimize(args...; kwargs...)
+    iter = optimizing(args...; kwargs...)
+    # An `OptimIterator` yields its own iteration state, so the yielded value can be
+    # passed straight back as the state. The one-argument method always yields.
+    istate, _ = iterate(iter)
+    while true
+        next = iterate(iter, istate)
+        next === nothing && break
+        istate, _ = next
+    end
+    return OptimizationResults(iter, istate)
 end
