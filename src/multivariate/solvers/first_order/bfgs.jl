@@ -204,26 +204,10 @@ function accept_step!(d, state::BFGSState, method::BFGS, options)
         c1 = (dx_dg + real(dot(dg, u))) / abs2(dx_dg)
         c2 = 1 / dx_dg
 
-        # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u')
-        if (invH isa Array) # i.e. not a CuArray
-            n = length(dx)
-            @inbounds for j = 1:n
-                c1dxj = c1 * dx[j]'
-                c2dxj = c2 * dx[j]'
-                c2uj = c2 * u[j]'
-                for i = 1:n
-                    invH[i, j] = muladd(
-                        dx[i],
-                        c1dxj,
-                        muladd(-u[i], c2dxj, muladd(c2uj, -dx[i], invH[i, j])),
-                    )
-                end
-            end
-        else
-            mul!(invH, vec(dx), vec(dx)', c1, 1)
-            mul!(invH, vec(u), vec(dx)', -c2, 1)
-            mul!(invH, vec(dx), vec(u)', -c2, 1)
-        end
+        # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u') = invH + s * w' + w * s'
+        # with w = c1 / 2 * s - c2 * u, which keeps invH exactly symmetric
+        u .= (c1 / 2) .* dx .- c2 .* u
+        invH .+= vec(dx) .* vec(u)' .+ vec(u) .* vec(dx)'
     end
     return true
 end

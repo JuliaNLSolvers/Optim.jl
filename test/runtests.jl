@@ -10,7 +10,7 @@ using Random
 import LineSearches
 import NLSolversBase
 import NLSolversBase: clear!
-import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, issymmetric, mul!
+import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, ishermitian, issymmetric, mul!
 import SparseArrays: normalize!, spdiagm
 
 import ForwardDiff
