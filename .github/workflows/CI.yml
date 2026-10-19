@@ -29,6 +29,10 @@ jobs:
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
+        with:
+          # CompatHelper PRs force the newest allowed version of every dependency,
+          # which Julia 1.10 cannot install for JET (its last 1.10 release is 0.9.18)
+          force_latest_compatible_version: ${{ matrix.version == '1' && 'auto' || 'false' }}
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v7
         with:
