@@ -122,13 +122,13 @@ function cg_steihaug!(
         state.cg_iters += 1
         Hd = hvp!(objective, x, d)
         dHd = dot(d, Hd)
-        if -1e-15 < dHd < 1e-15
-            break
-        end
-
         alpha = dot(r, r) / dHd
 
-        if dHd < 0.0 || norm(z .+ alpha .* d) >= state.radius
+        # Nonpositive curvature along d puts the model's minimizer on the
+        # boundary, and a nonfinite alpha means dHd vanished to rounding, which
+        # is the same case. Neither can reach the interior step below, and the
+        # boundary branch does not use alpha.
+        if !(dHd > 0) || !isfinite(alpha) || norm(z .+ alpha .* d) >= state.radius
             a_ = dot(d, d)
             b_ = 2 * dot(z, d)
             c_ = dot(z, z) - state.radius^2
@@ -163,12 +163,16 @@ function update_state!(
     method::KrylovTrustRegion,
 )
     state.m_diff = cg_steihaug!(objective, state, method)
-    @assert state.m_diff <= 0
 
     state.x_cache .= state.x .+ state.s
     f_x_cache = NLSolversBase.value!(objective, state.x_cache)
     state.f_diff = f_x_cache - state.f_x
-    state.rho = state.f_diff / state.m_diff
+    # A model predicting no decrease gives nothing to measure the step against,
+    # and a nonfinite objective at the trial point leaves the ratio undefined.
+    # Both must yield a rejection: a NaN rho would fail every comparison below,
+    # leaving the radius untouched and the solver spinning on a zero step.
+    rho = state.m_diff < 0 ? state.f_diff / state.m_diff : -one(state.m_diff)
+    state.rho = isfinite(rho) ? rho : -one(rho)
     state.interior = norm(state.s) < 0.9 * state.radius
 
     if state.rho < method.rho_lower
@@ -198,28 +202,22 @@ update_fgh!(objective, state::KrylovTrustRegionState, ::KrylovTrustRegion) = not
 
 function assess_convergence(state::KrylovTrustRegionState, d, options::Options)
     if !state.accept_step
+        # A collapsing radius is the only signal a rejected step carries
         return state.radius < options.x_abstol, false, false, false
     end
 
-    x_converged, f_converged, f_increased, g_converged = false, false, false, false
-
-    if norm(state.s, Inf) < options.x_abstol
-        x_converged = true
-    end
-
-    # Absolute Tolerance
-    # if abs(f_x - f_x_previous) < f_tol
-    # Relative Tolerance
-    if abs(state.f_diff) < max(
-        options.f_reltol * (abs(state.f_x) + options.f_reltol),
-        eps(abs(state.f_x) + abs(state.f_x_previous)),
+    # Check the accepted point against all five tolerances, like the default
+    # path used by the first-order solvers
+    return assess_convergence(
+        state.x,
+        state.x_previous,
+        state.f_x,
+        state.f_x_previous,
+        state.g_x,
+        options.x_abstol,
+        options.x_reltol,
+        options.f_abstol,
+        options.f_reltol,
+        options.g_abstol,
     )
-        f_converged = true
-    end
-
-    if norm(state.g_x, Inf) < options.g_abstol
-        g_converged = true
-    end
-
-    return x_converged, f_converged, g_converged, false
 end

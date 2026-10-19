@@ -37,7 +37,7 @@ function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradi
 end
 
 function perform_linesearch!(state, method, d)
-    # Calculate search direction dphi0
+    # Calculate search direction
     dphi_0 = real(dot(state.g_x, state.s))
     # reset the direction if it becomes corrupted
     if dphi_0 >= zero(dphi_0) && reset_search_direction!(state, method)
@@ -51,6 +51,12 @@ function perform_linesearch!(state, method, d)
     # Perform line search; catch LineSearchException to allow graceful exit.
     # A returned alpha of zero counts as a failure (some line searches, e.g.
     # HagerZhang, can silently return alpha = 0 without throwing).
+    #
+    # On success `state.x_ls` holds the accepted step, computed exactly as the objective
+    # evaluated it (LineSearches >= 7.8). Solvers propose that point rather than
+    # recompute `x + alpha*s`, which rounds differently: `update_fgh!` would then evaluate
+    # a neighbour the line search never examined, so `accept_step!` could reject a step
+    # for a non-finite gradient the vetted point does not have.
     local ϕalpha
     lssuccess = try
         state.alpha, ϕalpha =

@@ -306,4 +306,28 @@ import LBFGSB as RefLBFGSB
             end
         end
     end
+
+    @testset "subspace backtracking measures from the Cauchy point" begin
+        # Box-constrained Rosenbrock instance where the clipped subspace step
+        # hits a bound and the direction to the clamped point is uphill
+        # (dd_p > 0 in subspace_optimize!). The backtracking safeguard must
+        # measure the step to the bounds from the unclamped Cauchy point;
+        # measuring from the already-clamped values collapses the step onto the
+        # flagged point, and the solver then recovers only by discarding its
+        # full history (65 objective evaluations on this instance instead of 44).
+        rosen2(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+        function rosen2_g!(G, x)
+            G[1] = -2.0 * (1.0 - x[1]) - 400.0 * (x[2] - x[1]^2) * x[1]
+            G[2] = 200.0 * (x[2] - x[1]^2)
+            G
+        end
+        l = [-0.6246061824346689, -1.3848789693740542]
+        u = [1.2952187059881008, 0.42144488961717363]
+        x0 = [-0.6246061824346689, 0.42144488961717363]
+        res = optimize(rosen2, rosen2_g!, l, u, x0, LBFGSB(m = 5))
+        @test Optim.converged(res)
+        @test feasible(Optim.minimizer(res), l, u)
+        @test Optim.minimum(res) ≈ 0.12234569775490675 atol = 1e-8
+        @test Optim.f_calls(res) <= 55
+    end
 end

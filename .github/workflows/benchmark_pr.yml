@@ -21,3 +21,6 @@ jobs:
           julia-version: '${{ matrix.julia }}'
           enable-plots: true
           exeflags: '-O3 --threads=auto'
+          # Take the benchmark script from the pull request, instead of the default
+          # branch, so that benchmarks added by a pull request are run
+          bench-on: ${{ github.event.pull_request.head.sha }}

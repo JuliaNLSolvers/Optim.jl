@@ -53,7 +53,6 @@ import ADTypes
 using LinearAlgebra:
     LinearAlgebra,
     Diagonal,
-    Hermitian,
     Symmetric,
     rmul!,
     mul!,
@@ -65,7 +64,6 @@ using LinearAlgebra:
     Cholesky, # factorizations
     I,
     svd,
-    opnorm, # for safeguards in newton trust regions
     issuccess,
     ldiv!,
     dot

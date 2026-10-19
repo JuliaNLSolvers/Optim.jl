@@ -753,14 +753,19 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
     end
     du ./= θ
 
-    # Project onto bounds, writing directly into B.xc (each element read before
-    # written at the same index, matching Fortran subsm).
+    # Project onto bounds, writing directly into B.xc. The clamp loop reads each
+    # element before writing the same index, but the dd_p > 0 backtracking below
+    # must measure from the unclamped Cauchy point, so its free components are
+    # stashed first (Fortran subsm keeps them in xp). r is dead once du has been
+    # formed, so its storage is reused.
     x̄ = xc
 
     if clip
+        xp = r
         any_bound_hit = false
         for i = 1:nsub
             k = B.index[i]
+            xp[i] = xc[k]
             x̄[k] = clamp(xc[k] + du[i], lb[k], ub[k])
             if x̄[k] == lb[k] || x̄[k] == ub[k]
                 any_bound_hit = true
@@ -775,16 +780,15 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
             if dd_p > 0
                 α_star = one(T)
                 for i = 1:nsub
-                    k = B.index[i]
                     if du[i] > 0
-                        α_star = min(α_star, (ub[k] - xc[k]) / du[i])
+                        α_star = min(α_star, (ub[B.index[i]] - xp[i]) / du[i])
                     elseif du[i] < 0
-                        α_star = min(α_star, (lb[k] - xc[k]) / du[i])
+                        α_star = min(α_star, (lb[B.index[i]] - xp[i]) / du[i])
                     end
                 end
                 for i = 1:nsub
                     k = B.index[i]
-                    x̄[k] = xc[k] + α_star * du[i]
+                    x̄[k] = xp[i] + α_star * du[i]
                 end
             end
         end

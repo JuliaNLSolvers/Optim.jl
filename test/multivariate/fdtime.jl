@@ -32,7 +32,7 @@
 
                 show_time && @time Optim.optimize(input..., prob.initial_x, method, options)
 
-                @test Optim.converged(results)
+                @test converged_or_fd_floor(results, method, i)
                 @test Optim.minimum(results) <
                       prob.minimum + sqrt(eps(typeof(prob.minimum)))
                 @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2

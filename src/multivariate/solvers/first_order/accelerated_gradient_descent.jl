@@ -83,7 +83,7 @@ function update_state!(
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Propose trial intermediary y (do NOT mutate state.y; accept_step! commits)
-    state.y_candidate .= state.x .+ state.alpha .* state.s
+    copyto!(state.y_candidate, state.x_ls)
     retract!(method.manifold, state.y_candidate)
 
     # Propose trial position with Nesterov correction. iteration is incremented
