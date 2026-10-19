@@ -90,6 +90,12 @@ end
         end
         H
     end
+    function fgh_1243!(F, G, H, x)
+        G === nothing || g_1243!(G, x)
+        H === nothing || h_1243!(H, x)
+        F === nothing || return f_1243(x)
+        nothing
+    end
     lower, upper, x0 = fill(1.0, 5), fill(10.0, 5), fill(6.7, 5)
     results = [
         optimize(f_1243, lower, upper, x0, IPNewton(); autodiff = AutoForwardDiff()),
@@ -97,6 +103,7 @@ end
         optimize(f_1243, 1.0, 10.0, x0, IPNewton(); autodiff = AutoForwardDiff()),
         optimize(f_1243, g_1243!, lower, upper, x0, IPNewton(); autodiff = AutoForwardDiff()),
         optimize(f_1243, g_1243!, h_1243!, lower, upper, x0, IPNewton(); inplace = true),
+        optimize(NLSolversBase.only_fgh!(fgh_1243!), lower, upper, x0, IPNewton()),
     ]
     for res in results
         @test Optim.converged(res)
