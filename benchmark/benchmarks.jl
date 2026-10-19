@@ -107,6 +107,18 @@ function saddle_hessian!(H, x)
     return H
 end
 
+# The saddle's minimum is about -13.1n, and near it the predicted reduction falls below
+# one ulp of f, so roundoff alone makes the objective noisy. NewtonTrustRegion is given
+# that rounding level as its noise floor where the version has the keyword; without it
+# the radius collapses there and the run ends on the f-change test above g_abstol.
+function saddle_optimizer(optimizer, n)
+    opt = getproperty(Optim, optimizer)
+    if optimizer === :NewtonTrustRegion && :epsilon_f in fieldnames(opt)
+        return opt(epsilon_f = eps(13.2 * n))
+    end
+    return opt()
+end
+
 # Derivatives are supplied, and the iteration budget is generous, so that the timings
 # measure the solvers rather than finite differences or a truncated run
 for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRegion)
@@ -120,7 +132,7 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
     SUITE["multivariate"]["problems"]["saddle"][n][optimizer] = @benchmarkable(
         optimize(saddle, saddle_gradient!, saddle_hessian!, x0, opt, options),
         setup = (x0 = repeat([0.1, -0.1], $n ÷ 2);
-        opt = $(getproperty(Optim, optimizer))();
+        opt = $(saddle_optimizer(optimizer, n));
         options = Optim.Options(iterations = 1_000))
     )
 end
