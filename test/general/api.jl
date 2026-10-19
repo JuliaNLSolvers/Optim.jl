@@ -141,6 +141,7 @@
     @test Optim.initial_x(res) == [-1.2, 1.0]
     @test haskey(Optim.trace(res_ext)[1].metadata, "x")
     @test Optim.termination_code(res_ext) == Optim.TerminationCode.Iterations
+    @test Optim.TerminationCode.Iterations in Optim.termination_flags(res_ext)
     # just testing if it runs
     Optim.trace(res)
     Optim.f_trace(res)
@@ -165,7 +166,8 @@
 
 
     resgterm = optimize(f, g!, initial_x, BFGS(), Optim.Options(g_abstol = 1e12))
-    Optim.termination_code(resgterm) == Optim.TerminationCode.GradientNorm
+    @test Optim.termination_code(resgterm) == Optim.TerminationCode.GradientNorm
+    @test Optim.TerminationCode.GradientNorm in Optim.termination_flags(resgterm)
 
     resx0term = optimize(
         f,
@@ -181,7 +183,8 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resx0term) == Optim.TerminationCode.NoXChange
+    @test Optim.termination_code(resx0term) == Optim.TerminationCode.NoXChange
+    @test Optim.TerminationCode.NoXChange in Optim.termination_flags(resx0term)
 
 
     resx0term1 = optimize(
@@ -198,7 +201,8 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resx0term1) == Optim.TerminationCode.NoXChange
+    @test Optim.termination_code(resx0term1) == Optim.TerminationCode.NoXChange
+    @test Optim.TerminationCode.NoXChange in Optim.termination_flags(resx0term1)
 
 
     resxsmallterm1 = optimize(
@@ -216,7 +220,8 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resxsmallterm1) == Optim.TerminationCode.SmallXChange
+    @test Optim.termination_code(resxsmallterm1) == Optim.TerminationCode.SmallXChange
+    @test Optim.TerminationCode.SmallXChange in Optim.termination_flags(resxsmallterm1)
     resxsmallterm2 = optimize(
         f,
         g!,
@@ -232,7 +237,8 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resxsmallterm2) == Optim.TerminationCode.SmallXChange
+    @test Optim.termination_code(resxsmallterm2) == Optim.TerminationCode.SmallXChange
+    @test Optim.TerminationCode.SmallXChange in Optim.termination_flags(resxsmallterm2)
 
 end
 

@@ -111,16 +111,27 @@ hvp_calls(r::OptimizationResults) = error(LazyString("`hvp_calls` is not impleme
 hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
+"""
+    converged(r::MultivariateOptimizationResults)
+
+Return `true` if a convergence criterion is satisfied and the optimization did not fail or stall.
+
+`GradientNorm` and `NelderMeadCriterion` are based on the gradient and the Nelder-Mead simplex at the end of the optimization.
+The other convergence criteria are based on the change of x and f in the last step and are only heuristics.
+See also `termination_flags`.
+"""
 function converged(r::MultivariateOptimizationResults)
-    conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
-    x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
-    f_isfinite = if r.stopped_by.iterations > 0
-        isfinite(f_abschange(r)) || isnan(f_relchange(r))
-    else
-        true
-    end
-    g_isfinite = isfinite(g_residual(r))
-    return conv_flags && all((x_isfinite, f_isfinite, g_isfinite))
+    TC = TerminationCode
+    flags = termination_flags(r)
+    success = (
+        TC.NelderMeadCriterion, TC.GradientNorm, TC.NoXChange, TC.SmallXChange,
+        TC.NoObjectiveChange, TC.SmallObjectiveChange,
+    )
+    failure = (
+        TC.ObjectiveNotFinite, TC.GradientNotFinite, TC.HessianNotFinite,
+        TC.FailedLinesearch, TC.SmallTrustRegionRadius, TC.ObjectiveIncreased,
+    )
+    return any(in(flags), success) && !any(in(flags), failure)
 end
 x_converged(r::OptimizationResults) =
     error("x_converged is not implemented for $(summary(r)).")

@@ -279,6 +279,27 @@ const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
     NotImplemented
 end
 
+"Set of `TerminationCode`s, e.g. `TerminationCode.GradientNorm in flags`."
+struct TerminationFlags
+    bits::UInt32
+    TerminationFlags(codes) = new(mapreduce(c -> UInt32(1) << Integer(c), |, codes; init = UInt32(0)))
+end
+
+Base.in(code::TerminationCode.T, flags::TerminationFlags) = isodd(flags.bits >> Integer(code))
+Base.isempty(flags::TerminationFlags) = iszero(flags.bits)
+Base.length(flags::TerminationFlags) = count_ones(flags.bits)
+Base.eltype(::Type{TerminationFlags}) = TerminationCode.T
+function Base.iterate(flags::TerminationFlags, bits = flags.bits)
+    iszero(bits) && return nothing
+    return TerminationCode.T(trailing_zeros(bits)), bits & (bits - one(bits))
+end
+
+function Base.show(io::IO, flags::TerminationFlags)
+    print(io, "TerminationFlags(")
+    join(io, flags, ", ")
+    print(io, ")")
+end
+
 abstract type OptimizationResults end
 
 mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: OptimizationResults
@@ -307,10 +328,14 @@ mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: Optimization
     time_run::Float64
     stopped_by::Tsb
     termination_code::TerminationCode.T
+    termination_flags::TerminationFlags
 end
 
-
+"Deprecated: only reports one of possibly several satisfied criteria; use `termination_flags`."
 termination_code(mvr::MultivariateOptimizationResults) = mvr.termination_code
+
+"All termination criteria satisfied at the end of the optimization."
+termination_flags(mvr::MultivariateOptimizationResults) = mvr.termination_flags
 
 # pick_best_x and pick_best_f are used to pick the minimizer if we stopped because
 # f increased and we didn't allow it
@@ -343,17 +368,8 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
     else
         print(io, "failure")
     end
-    if iteration_limit_reached(r)
-        print(io, " (reached maximum number of iterations)")
-    elseif f_increased(r)
-        print(io, " (objective increased between iterations)")
-    end
-    if isa(r.stopped_by.ls_failed, Bool) && r.stopped_by.ls_failed
-        print(io, " (line search failed)")
-    end
-    if time_run(r) > time_limit(r)
-        print(io, " (exceeded time limit of ", time_limit(r), ")")
-    end
+    print(io, "\n * Termination flags: ")
+    join(io, termination_flags(r), ", ")
 
     println(io, "\n\n * Candidate solution")
     @printf io "    Final objective value:     %e" minimum(r)
@@ -418,6 +434,8 @@ function Base.append!(
     a.minimizer = minimizer(b)
     a.minimum = minimum(b)
     a.stopped_by = b.stopped_by
+    a.termination_code = b.termination_code
+    a.termination_flags = b.termination_flags
     append!(a.trace, b.trace)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)

@@ -661,7 +661,9 @@ function optimize(
         g_converged = _g_converged,
         small_trustregion_radius = false,
     )
-    termination_code = _termination_code(df, g_residual(g), BoxState(x, f_x, x_previous, f_x_previous), stopped_by, options)
+    box_state = BoxState(x, f_x, x_previous, f_x_previous)
+    termination_code = _termination_code(df, g_residual(g), box_state, stopped_by, options)
+    termination_flags = _termination_flags(box_state, g_residual(g), stopped_by, options)
 
     return MultivariateOptimizationResults(
         F,
@@ -689,5 +691,6 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        termination_flags,
     )
 end

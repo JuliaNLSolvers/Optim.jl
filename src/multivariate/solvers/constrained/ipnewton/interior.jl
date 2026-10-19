@@ -345,6 +345,17 @@ function optimize(
     T = typeof(options.f_reltol)
     f_incr_pick = f_increased && !options.allow_f_increases
     termination_code = TerminationCode.NotImplemented
+    stopped_by = (;
+        x_converged, f_converged, g_converged,
+        f_increased,
+        iterations = iteration == options.iterations,
+        ls_failed = false,
+        callback = stopped_by_callback,
+        time_limit = stopped_by_time_limit,
+        f_limit_reached, g_limit_reached, h_limit_reached,
+        small_trustregion_radius = false,
+    )
+    termination_flags = _termination_flags(state, g_residual(state), merge(stopped_by, (; f_increased = f_incr_pick)), options)
     return MultivariateOptimizationResults(
         method,
         x0,
@@ -369,8 +380,9 @@ function optimize(
         NLSolversBase.hvp_calls(d),
         options.time_limit,
         _time - t0,
-        (;x_converged, f_converged, g_converged,f_increased, iterations = iteration == options.iterations, ls_failed=false,),
+        stopped_by,
         termination_code,
+        termination_flags,
     )
 end
 

@@ -213,6 +213,7 @@ Defined for multivariate optimization:
 * `x_converged(res)`
 * `f_converged(res)`
 * `g_converged(res)`
+* `termination_flags(res)`
 * `initial_x(res)`
 
 Defined for `NelderMead` with the option `trace_simplex=true`:
@@ -229,6 +230,36 @@ Currently, it is possible to access a minimizer using `Optim.minimizer(result)` 
 all convergence flags are `false`. This means that the user has to be a bit careful when using
 the output from the solvers. It is advised to include checks for convergence if the minimizer
 or minimum is used to carry out further calculations.
+
+For multivariate optimization, `Optim.termination_flags(res)` contains all termination
+criteria that are satisfied at the end of the optimization. You can check for a criterion with
+`Optim.TerminationCode.GradientNorm in Optim.termination_flags(res)`. Several criteria can
+be satisfied at the same time. For example, both `GradientNorm` and `Iterations` are set if
+the gradient tolerance is reached in the last allowed iteration.
+
+The criteria contain different kinds of information:
+
+* `GradientNorm` indicates that the norm of the gradient at the end of the optimization is
+  below `g_abstol`. `NelderMeadCriterion` indicates that the standard deviation of the
+  objective values at the vertices of the Nelder-Mead simplex is below `g_abstol`.
+* `ObjectiveNotFinite`, `GradientNotFinite` and `HessianNotFinite` indicate that the objective,
+  gradient or Hessian at the end of the optimization is not finite.
+  A point with a non-finite objective or gradient is not a minimizer.
+* `NoXChange`, `SmallXChange`, `NoObjectiveChange` and `SmallObjectiveChange` are based on the
+  change of x and f in the last step. They are only heuristics. For example, x and f do not
+  change if the line search fails.
+* `FailedLinesearch` and `SmallTrustRegionRadius` indicate that the solver could not make
+  progress. Either the line search failed, or the trust region radius of `NewtonTrustRegion`
+  fell below `delta_min`.
+* `ObjectiveIncreased` indicates that the last step increased the objective.
+* `Iterations`, `Time`, `ObjectiveCalls`, `GradientCalls`, `HessianCalls` and `Callback`
+  explain why the optimization stopped, but they do not provide any information about the returned point.
+
+`Optim.converged(res)` is `true` if at least one of `GradientNorm`, `NelderMeadCriterion`,
+`NoXChange`, `SmallXChange`, `NoObjectiveChange` and `SmallObjectiveChange` is set and none of
+`ObjectiveNotFinite`, `GradientNotFinite`, `HessianNotFinite`, `FailedLinesearch`,
+`SmallTrustRegionRadius` and `ObjectiveIncreased` is set.
+`Optim.termination_code(res)` is deprecated since it reports only one of the satisfied criteria.
 
 A related note is that first and second order methods makes a convergence check
 on the gradient before entering the optimization loop. This is done to prevent

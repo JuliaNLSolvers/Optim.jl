@@ -1134,13 +1134,9 @@ function optimize(
         small_trustregion_radius = false,
     )
 
-    termination_code = _termination_code(
-        d,
-        pgnorm,
-        LBFGSBState(x, f_x, x_previous, f_x_previous),
-        stopped_by,
-        options,
-    )
+    lbfgsb_state = LBFGSBState(x, f_x, x_previous, f_x_previous)
+    termination_code = _termination_code(d, pgnorm, lbfgsb_state, stopped_by, options)
+    termination_flags = _termination_flags(lbfgsb_state, pgnorm, stopped_by, options)
 
     return MultivariateOptimizationResults(
         method,
@@ -1168,5 +1164,6 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        termination_flags,
     )
 end

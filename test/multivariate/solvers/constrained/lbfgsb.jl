@@ -193,14 +193,17 @@ import LBFGSB as RefLBFGSB
             r_f = optimize(rosen, l, u, x0, V(), Optim.Options(f_calls_limit = 5))
             @test !Optim.converged(r_f)
             @test r_f.termination_code == Optim.TerminationCode.ObjectiveCalls
+            @test Optim.TerminationCode.ObjectiveCalls in Optim.termination_flags(r_f)
 
             r_g = optimize(rosen, l, u, x0, V(), Optim.Options(g_calls_limit = 5))
             @test !Optim.converged(r_g)
             @test r_g.termination_code == Optim.TerminationCode.GradientCalls
+            @test Optim.TerminationCode.GradientCalls in Optim.termination_flags(r_g)
 
             r_i = optimize(rosen, l, u, x0, V(), Optim.Options(iterations = 3))
             @test Optim.iterations(r_i) == 3
             @test r_i.termination_code == Optim.TerminationCode.Iterations
+            @test Optim.TerminationCode.Iterations in Optim.termination_flags(r_i)
         end
 
         @testset "termination codes for x/f tolerances" begin
@@ -217,10 +220,12 @@ import LBFGSB as RefLBFGSB
             r_f = optimize(rosen, g!, l, u, x0, V(), Optim.Options(g_abstol = 0.0, f_abstol = 1e-6))
             @test Optim.converged(r_f)
             @test r_f.termination_code == Optim.TerminationCode.SmallObjectiveChange
+            @test Optim.TerminationCode.SmallObjectiveChange in Optim.termination_flags(r_f)
 
             r_x = optimize(rosen, g!, l, u, x0, V(), Optim.Options(g_abstol = 0.0, x_abstol = 1e-4))
             @test Optim.converged(r_x)
             @test r_x.termination_code == Optim.TerminationCode.SmallXChange
+            @test Optim.TerminationCode.SmallXChange in Optim.termination_flags(r_x)
         end
 
         @testset "BigFloat precision" begin
