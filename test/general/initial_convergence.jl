@@ -17,10 +17,16 @@
 
         res = optimize(f, g!, [0.0], Optimizer())
         @test Optim.minimizer(res)[1] ≈ 0.0
+        @test Optim.iterations(res) == 0
+        @test Optim.converged(res)
+        @test Optim.termination_code(res) == Optim.TerminationCode.GradientNorm
     end
 
     for Optimizer in (Newton, NewtonTrustRegion)
         res = optimize(f, g!, h!, [0.0], Optimizer())
         @test Optim.minimizer(res)[1] ≈ 0.0
+        @test Optim.iterations(res) == 0
+        @test Optim.converged(res)
+        @test Optim.termination_code(res) == Optim.TerminationCode.GradientNorm
     end
 end
