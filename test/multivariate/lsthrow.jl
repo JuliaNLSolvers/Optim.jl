@@ -66,4 +66,30 @@
         @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
         @test !Optim.converged(opt)
     end
+
+    # A line search that reports success with a step too small to change x, as
+    # HagerZhang and BackTracking can on a noisy objective
+    struct SubUlpStep end
+    function (::SubUlpStep)(d, x, s, alpha, x_ls, phi_0, dphi_0)
+        alpha = 1e-300
+        x_ls .= x .+ alpha .* s
+        return alpha, phi_0
+    end
+    @testset "a step too small to change x, $optimizer" for optimizer in (
+        GradientDescent,
+        ConjugateGradient,
+        BFGS,
+        LBFGS,
+        Newton,
+    )
+        prob = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
+        input = (MVP.objective(prob), MVP.gradient(prob))
+        optimizer === Newton && (input = (input..., MVP.hessian(prob)))
+        opt = optimize(input..., prob.initial_x, optimizer(linesearch = SubUlpStep()))
+        @test Optim.iterations(opt) == 1
+        @test Optim.minimizer(opt) == prob.initial_x
+        @test opt.stopped_by.ls_failed
+        @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
+        @test !Optim.converged(opt)
+    end
 end
