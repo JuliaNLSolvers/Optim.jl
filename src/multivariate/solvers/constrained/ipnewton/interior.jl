@@ -219,9 +219,19 @@ function optimize(
     upper::AbstractArray,
     x0::AbstractArray,
     method::ConstrainedOptimizer,
-    options::Options = Options(; default_options(method)...),
+    options::Options = Options(; default_options(method)...);
+    inplace::Bool = true,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    twicediffed = d isa TwiceDifferentiable ? d : TwiceDifferentiable(d, x0)
+    # `inplace` is accepted (and has no effect here) so that calls with keyword
+    # arguments, such as those forwarded for scalar bounds, reach this method
+    twicediffed = if d isa TwiceDifferentiable
+        d
+    elseif d isa Union{InplaceObjective,NotInplaceObjective}
+        TwiceDifferentiable(d, x0)
+    else
+        TwiceDifferentiable(d, x0; autodiff)
+    end
 
     bounds = ConstraintBounds(lower, upper, [], [])
     constraints = TwiceDifferentiableConstraints(
