@@ -54,6 +54,7 @@ makedocs(
                 "Adam and AdaMax" => "algo/adam_adamax.md",
                 "Conjugate Gradient" => "algo/cg.md",
                 "Gradient Descent" => "algo/gradientdescent.md",
+                "Accelerated and Momentum Gradient Descent" => "algo/accelerated_gradient_descent.md",
                 "(L-)BFGS" => "algo/lbfgs.md",
                 "L-BFGS-B (box constrained)" => "algo/lbfgsb.md",
                 "Acceleration" => "algo/ngmres.md",
