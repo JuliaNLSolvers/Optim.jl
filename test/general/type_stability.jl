@@ -34,7 +34,7 @@
         Newton(),
     )
         for T in (Float32, Float64)
-            result = optimize(
+            result = @inferred optimize(
                 rosenbrock,
                 rosenbrock_gradient!,
                 rosenbrock_hessian!,
@@ -42,6 +42,7 @@
                 method,
             )
             @test eltype(Optim.minimizer(result)) == T
+            @test Optim.minimum(result) isa T
         end
     end
 end
