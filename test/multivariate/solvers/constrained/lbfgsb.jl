@@ -11,6 +11,15 @@ import LBFGSB as RefLBFGSB
     # the type's own module (`parentmodule(V).HZAW()` / `.MTLS()`).
     variants = (LBFGSB, Optim.SimpleLBFGSBReference.SimpleLBFGSB)
 
+    # Reference for "agreement with Fminbox(LBFGS())", the same for both variants
+    fminbox_rosen = optimize(
+        x -> (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2,
+        [-2.0, -2.0],
+        [2.0, 2.0],
+        [-1.2, 1.0],
+        Fminbox(LBFGS()),
+    )
+
     @testset "$(nameof(V))" for V in variants
         @testset "unconstrained problems with slack bounds" begin
             for (name, prob) in MVP.UnconstrainedProblems.examples
@@ -41,9 +50,8 @@ import LBFGSB as RefLBFGSB
             u = [2.0, 2.0]
             x0 = [-1.2, 1.0]
             rb = optimize(rosen, l, u, x0, V())
-            rf = optimize(rosen, l, u, x0, Fminbox(LBFGS()))
             @test Optim.minimizer(rb) ≈ [1.0, 1.0] atol = 1e-4
-            @test Optim.minimizer(rb) ≈ Optim.minimizer(rf) atol = 1e-3
+            @test Optim.minimizer(rb) ≈ Optim.minimizer(fminbox_rosen) atol = 1e-3
         end
 
         @testset "line searches" begin

@@ -1,6 +1,6 @@
 @testset "IPNewton Unconstrained" begin
     method = IPNewton()
-    run_optim_tests_constrained(
+    run_optim_tests(
         method;
         show_name = debug_printing,
         show_res = false,

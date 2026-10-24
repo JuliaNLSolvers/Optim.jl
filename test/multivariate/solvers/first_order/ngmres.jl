@@ -1,22 +1,29 @@
-using Optim, Test
-## REMEMBER TO UPDATE TESTS FOR BOTH THE N-GMRES and the O-ACCEL TEST SETS
-
-@testset "N-GMRES" begin
-    method = NGMRES
-    solver = method()
-    test_summary(solver, "Nonlinear GMRES (preconditioned with Gradient Descent)")
-
-    skip = ("Trigonometric", "Rosenbrock")
-    run_optim_tests(
-        solver;
-        skip = skip,
-        iteration_exceptions = (
+@testset "$name" for (name, method, summary_string, skip, iteration_exceptions, ξsize) in (
+    (
+        "N-GMRES",
+        NGMRES,
+        "Nonlinear GMRES (preconditioned with Gradient Descent)",
+        ("Trigonometric", "Rosenbrock"),
+        (
             ("Polynomial", 10000), # goes above 3000 iterations on mac
             ("Penalty Function I", 10000),
             ("Paraboloid Random Matrix", 10000),
         ),
-        show_name = debug_printing,
-    )
+        wmax -> (wmax,),
+    ),
+    (
+        "O-ACCEL",
+        OACCEL,
+        "O-ACCEL (preconditioned with Gradient Descent)",
+        ("Trigonometric",),
+        (("Penalty Function I", 10000),),
+        wmax -> (wmax, 2),
+    ),
+)
+    solver = method()
+    test_summary(solver, summary_string)
+
+    run_optim_tests(solver; skip, iteration_exceptions, show_name = debug_printing)
 
     # Specialized tests
     prob = MVP.UnconstrainedProblems.examples["Rosenbrock"]
@@ -34,113 +41,42 @@ using Optim, Test
     @test size(state.X) == (length(state.x), solver.wmax)
     @test size(state.R) == (length(state.x), solver.wmax)
     @test size(state.Q) == (solver.wmax, solver.wmax)
-    @test size(state.ξ) == (solver.wmax,)
+    @test size(state.ξ) == ξsize(solver.wmax)
     @test state.curw == 1
     @test size(state.A) == (solver.wmax, solver.wmax)
     @test length(state.b) == solver.wmax
     @test length(state.xA) == length(state.x)
 
     # Test that tracing doesn't throw errors
-    res = optimize(
-        df,
-        prob.initial_x,
-        solver,
-        Optim.Options(extended_trace = true, store_trace = true; defopts..., iterations = 10^5),
-    )
+    if method === NGMRES
+        res = optimize(
+            df,
+            prob.initial_x,
+            solver,
+            Optim.Options(extended_trace = true, store_trace = true; defopts..., iterations = 10^5),
+        )
 
-    @test Optim.converged(res)
-    # The bounds are due to different systems behaving differently
-    # TODO: is it a bad idea to hardcode these?
-    @test_broken 64 < Optim.iterations(res) < 100
-    @test_broken 234 <= Optim.f_calls(res) < 310
-    @test_broken 234 <= Optim.g_calls(res) < 310
-    @test Optim.minimum(res) < 1e-10
-
-    @test_throws AssertionError method(
-        manifold = Optim.Sphere(),
-        nlprecon = GradientDescent(),
-    )
-
-    for nlprec in (LBFGS, BFGS)
-        solver = method(nlprecon = nlprec())
-        clear!(df)
-        res = optimize(df, prob.initial_x, solver)
-
-        if !Optim.converged(res)
-            display(res)
-        end
         @test Optim.converged(res)
-        @test Optim.minimum(res) < 1e-10
-    end
-
-    # O-ACCEL handles the InitialConstantChange functionality in a special way,
-    # so we should test that it works well.
-    for nlprec in (
-        GradientDescent(),
-        GradientDescent(alphaguess = LineSearches.InitialConstantChange()),
-    )
-        solver =
-            method(nlprecon = nlprec, alphaguess = LineSearches.InitialConstantChange())
-        clear!(df)
-
-        res = optimize(df, prob.initial_x, solver)
-
-        if !Optim.converged(res)
-            display(res)
-        end
+        # The bounds are due to different systems behaving differently
+        # TODO: is it a bad idea to hardcode these?
+        @test_broken 64 < Optim.iterations(res) < 100
+        @test_broken 234 <= Optim.f_calls(res) < 310
+        @test_broken 234 <= Optim.g_calls(res) < 310
+    else
+        res = optimize(
+            df,
+            prob.initial_x,
+            solver,
+            Optim.Options(extended_trace = true, store_trace = true; defopts...),
+        )
         @test Optim.converged(res)
-        @test Optim.minimum(res) < 1e-10
+        # The bounds are due to different systems behaving differently. Two regimes
+        # have been observed for the call counts, 234 and 249, so the bounds carry
+        # enough slack to cover both and leave room for a third.
+        @test 72 < Optim.iterations(res) < 100
+        @test 200 < Optim.f_calls(res) < 350
+        @test 200 < Optim.g_calls(res) < 350
     end
-end
-
-@testset "O-ACCEL" begin
-    method = OACCEL
-    solver = method()
-    test_summary(solver, "O-ACCEL (preconditioned with Gradient Descent)")
-
-    skip = ("Trigonometric",)
-    run_optim_tests(
-        solver;
-        skip = skip,
-        iteration_exceptions = (("Penalty Function I", 10000),),
-        show_name = debug_printing,
-    )
-
-    prob = MVP.UnconstrainedProblems.examples["Rosenbrock"]
-    df = OnceDifferentiable(MVP.objective(prob), MVP.gradient(prob), prob.initial_x)
-    @test solver.nlpreconopts.iterations == 1
-    @test solver.nlpreconopts.allow_f_increases
-
-    defopts = Optim.default_options(solver)
-    @test defopts == (; allow_f_increases = true)
-
-    state = Optim.initial_state(solver, Optim.Options(; defopts...), df, prob.initial_x)
-    @test state.x === state.nlpreconstate.x
-    @test state.x_previous === state.nlpreconstate.x_previous
-    @test size(state.X) == (length(state.x), solver.wmax)
-    @test size(state.R) == (length(state.x), solver.wmax)
-    @test size(state.Q) == (solver.wmax, solver.wmax)
-    @test size(state.ξ) == (solver.wmax, 2)
-    @test state.curw == 1
-    @test size(state.A) == (solver.wmax, solver.wmax)
-    @test length(state.b) == solver.wmax
-    @test length(state.xA) == length(state.x)
-
-    # Test that tracing doesn't throw errors
-    res = optimize(
-        df,
-        prob.initial_x,
-        solver,
-        Optim.Options(extended_trace = true, store_trace = true; defopts...),
-    )
-    @test Optim.converged(res)
-    # The bounds are due to different systems behaving differently. Two regimes
-    # have been observed for the call counts, 234 and 249, so the bounds carry
-    # enough slack to cover both and leave room for a third.
-    @test 72 < Optim.iterations(res) < 100
-    @test 200 < Optim.f_calls(res) < 350
-    @test 200 < Optim.g_calls(res) < 350
-
     @test Optim.minimum(res) < 1e-10
 
     @test_throws AssertionError method(

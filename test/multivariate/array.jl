@@ -42,20 +42,21 @@ end
         end
     end
 
+    array_methods = (
+        AcceleratedGradientDescent,
+        ConjugateGradient,
+        BFGS,
+        LBFGS,
+        GradientDescent,
+        MomentumGradientDescent,
+        ParticleSwarm,
+        SimulatedAnnealing,
+        NGMRES,
+        OACCEL,
+    )
+
     @testset "matrix" begin
-        for m in (
-            AcceleratedGradientDescent,
-            ConjugateGradient,
-            BFGS,
-            LBFGS,
-            ConjugateGradient,
-            GradientDescent,
-            MomentumGradientDescent,
-            ParticleSwarm,
-            SimulatedAnnealing,
-            NGMRES,
-            OACCEL,
-        )
+        for m in array_methods
             res = optimize(f, g!, Matrix{Float64}(I, 2, 2), m())
             @test typeof(Optim.minimizer(res)) <: Matrix
             if !(m in (SimulatedAnnealing, ParticleSwarm))
@@ -67,19 +68,7 @@ end
     @testset "tensor" begin
         eye3 = zeros(2, 2, 1)
         eye3[:, :, 1] = Matrix{Float64}(I, 2, 2)
-        for m in (
-            AcceleratedGradientDescent,
-            ConjugateGradient,
-            BFGS,
-            LBFGS,
-            ConjugateGradient,
-            GradientDescent,
-            MomentumGradientDescent,
-            ParticleSwarm,
-            SimulatedAnnealing,
-            NGMRES,
-            OACCEL,
-        )
+        for m in array_methods
             res = optimize(f, g!, eye3, m())
             _minimizer = Optim.minimizer(res)
             @test typeof(_minimizer) <: Array{Float64,3}
