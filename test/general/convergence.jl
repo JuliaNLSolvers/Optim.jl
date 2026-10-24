@@ -46,9 +46,6 @@ mutable struct DummyMethodZeroth <: Optim.ZerothOrderOptimizer end
     @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) ==
           (true, false, true, true)
 
-    @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) ==
-          (true, false, true, true)
-
     f_tol = 1e-6 # rel tol
     dOpt = DummyOptions(x_tol, f_tol, g_tol, g_abstol)
     @test Optim.assess_convergence(x1, x0, f1, f0, g, x_tol, f_tol, g_tol) ==

@@ -29,10 +29,6 @@
     @test Optim.g_converged(results)
     @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
 
-    results = optimize(f1, [127.0, 921.0])
-    @test Optim.g_converged(results)
-    @test norm(Optim.minimizer(results) - [0.0, 0.0]) < 0.01
-
     # tests for bfgs_initial_invH
     initial_invH = zeros(2, 2)
     h1(initial_invH, [127.0, 921.0])
