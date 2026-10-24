@@ -8,7 +8,7 @@
         gamma = 0.66,
         linesearchmax = 2,
     )
-    for optimizer in (
+    @testset "$optimizer" for optimizer in (
         ConjugateGradient,
         GradientDescent,
         LBFGS,
@@ -17,7 +17,6 @@
         AcceleratedGradientDescent,
         MomentumGradientDescent,
     )
-        debug_printing && println("Testing $(string(optimizer))")
         prob = MultivariateProblems.UnconstrainedProblems.examples["Exponential"]
         opt = optimize(
             MVP.objective(prob),
@@ -28,5 +27,43 @@
             ),
         )
         @test opt.stopped_by.ls_failed
+        @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
+        @test !Optim.converged(opt)
+    end
+
+    # A line search that fails from its second call on. With a loose f_abstol and
+    # successive_f_tol = 5, the first iteration sets f_converged without stopping the
+    # run, and the failure in the second iteration must not be read as convergence.
+    mutable struct FailFromCall{L}
+        linesearch::L
+        calls::Int
+        fail_from::Int
+    end
+    function (ls::FailFromCall)(args...)
+        ls.calls += 1
+        if ls.calls >= ls.fail_from
+            throw(LineSearches.LineSearchException("forced failure", 0.0))
+        end
+        return ls.linesearch(args...)
+    end
+    @testset "f_converged before the failure, $optimizer" for optimizer in (
+        GradientDescent,
+        ConjugateGradient,
+        BFGS,
+        LBFGS,
+    )
+        prob = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
+        opt = optimize(
+            MVP.objective(prob),
+            MVP.gradient(prob),
+            prob.initial_x,
+            optimizer(linesearch = FailFromCall(LineSearches.HagerZhang(), 0, 2)),
+            Optim.Options(f_abstol = 1e10, successive_f_tol = 5),
+        )
+        @test Optim.iterations(opt) == 2
+        @test Optim.f_converged(opt)
+        @test opt.stopped_by.ls_failed
+        @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
+        @test !Optim.converged(opt)
     end
 end

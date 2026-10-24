@@ -120,7 +120,9 @@ function converged(r::MultivariateOptimizationResults)
         true
     end
     g_isfinite = isfinite(g_residual(r))
-    return conv_flags && all((x_isfinite, f_isfinite, g_isfinite))
+    # The flags of a run stopped by a failed line search are those of the
+    # iteration before it, so they do not describe the point returned
+    return conv_flags && !r.stopped_by.ls_failed && all((x_isfinite, f_isfinite, g_isfinite))
 end
 x_converged(r::OptimizationResults) =
     error("x_converged is not implemented for $(summary(r)).")
