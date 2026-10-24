@@ -10,6 +10,39 @@ end
 
 Base.summary(io::IO, ::MomentumGradientDescent) = print(io, "Momentum Gradient Descent")
 
+"""
+    MomentumGradientDescent(; mu = 0.01,
+        alphaguess = LineSearches.InitialPrevious(),
+        linesearch = LineSearches.HagerZhang(), manifold = Flat())
+
+Construct a first-order optimizer that adds a momentum term to each gradient-descent
+step. The next iterate combines the negative gradient with the displacement between the
+two previous accepted iterates. Use it with `optimize` on an unconstrained objective for
+which a gradient is available.
+
+# Arguments
+- `mu`: Momentum coefficient. `mu = 0` removes the momentum contribution and yields
+  line-search gradient descent.
+- `alphaguess`: Initial step-length strategy. A `Real` is converted to a static initial
+  step length; otherwise it must be compatible with `LineSearches`.
+- `linesearch`: Line-search method used to choose each step length.
+- `manifold`: Manifold on which iterates are retracted and gradients are projected.
+  The default, `Flat()`, solves an unconstrained Euclidean problem.
+
+# Example
+```julia
+julia> using Optim
+
+julia> f(x) = sum(abs2, x);
+
+julia> g!(storage, x) = (storage .= 2 .* x);
+
+julia> result = optimize(f, g!, [1.0, -1.0], MomentumGradientDescent(mu = 0.1));
+
+julia> Optim.converged(result)
+true
+```
+"""
 function MomentumGradientDescent(;
     mu::Real = 0.01,
     alphaguess = LineSearches.InitialPrevious(), # TODO: investigate good defaults
