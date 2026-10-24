@@ -51,6 +51,21 @@
     )
     test_summary(res, "Particle Swarm")
 
+    # Without bounds the initial particles are spread over [x0[j], x0[j] + |x0[j]|] in
+    # each coordinate, or over a width of 1 where x0[j] is zero
+    for x0 in ([0.0, 1000.0], [1000.0, 0.001], [3.0, -50.0])
+        state = Optim.initial_state(
+            ParticleSwarm(n_particles = 100),
+            Optim.Options(),
+            NonDifferentiable(rosenbrock_s, x0),
+            x0,
+        )
+        width = map(xj -> iszero(xj) ? 1.0 : abs(xj), x0)
+        offset = state.X[:, 2:end] .- x0
+        @test all(0 .<= offset .<= width)
+        @test all(maximum(offset; dims = 2) .> width ./ 2)
+    end
+
     # c1 and c2 are clamped to [3/2, 5/2] (issue #1203). In states 1 and 4 c2
     # decreases, so starting from 3/2 it must stay at 3/2.
     for state in (1, 4)
