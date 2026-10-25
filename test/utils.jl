@@ -171,12 +171,14 @@ function run_optim_tests(
                 elseif test_broken
                     @test_broken Optim.converged(results)
                 end
+                # Two-sided, so a run that diverges to -Inf on an objective that is
+                # unbounded below does not pass
                 if !((name, i) in minimum_exceptions)
-                    @test Optim.minimum(results) <
-                          prob.minimum + sqrt(eps(typeof(prob.minimum)))
+                    @test abs(Optim.minimum(results) - prob.minimum) <
+                          sqrt(eps(typeof(prob.minimum)))
                 elseif test_broken
-                    @test_broken Optim.minimum(results) <
-                                 prob.minimum + sqrt(eps(typeof(prob.minimum)))
+                    @test_broken abs(Optim.minimum(results) - prob.minimum) <
+                                 sqrt(eps(typeof(prob.minimum)))
                 end
                 if !((name, i) in minimizer_exceptions)
                     @test norm(Optim.minimizer(results) - prob.solutions) < 1e-2
