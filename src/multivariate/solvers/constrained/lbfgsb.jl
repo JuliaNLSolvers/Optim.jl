@@ -184,9 +184,10 @@ pcol(B::CompactLBFGS, j::Int) = mod(B.head + j - 2, B.m) + 1
 
 # Build T = θ·SᵀS + L·D⁻¹·Lᵀ and Cholesky-factor into B.J (upper triangle).
 # L = strict lower triangle of SY, D = Diagonal(diag(SY)). (Fortran `formt`.)
+# Returns false when T is not numerically positive definite.
 function formt!(B::CompactLBFGS)
     k = B.k
-    k == 0 && return
+    k == 0 && return true
     J, SY, SS = B.J, B.SY, B.SᵀS
 
     for i = 1:k
@@ -199,8 +200,7 @@ function formt!(B::CompactLBFGS)
         end
     end
 
-    cholesky!(Symmetric(@view(J[1:k, 1:k]), :U))
-    return
+    return issuccess(cholesky!(Symmetric(@view(J[1:k, 1:k]), :U); check = false))
 end
 
 # Compute p = M·v with M the middle matrix of the compact form, using the
@@ -812,7 +812,8 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
 end
 
 # Compute s = x_new - x, y = g_new - g into B.s/B.y, then update the compact
-# representation if curvature yᵀs > 0. Returns yᵀs (always computed).
+# representation if curvature yᵀs > 0. Returns yᵀs, or zero when the update
+# was dropped because T lost positive definiteness.
 function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     s = B.s
     y = B.y
@@ -864,7 +865,12 @@ function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     B.θ = dot(y, y) / yts
     B.iupdat += 1
 
-    formt!(B)   # Cholesky-factor T into B.J
+    # Cholesky-factor T into B.J. If T is not positive definite, refresh the
+    # memory and restart from B = I, as the Fortran `mainlb` does after `formt`.
+    if !formt!(B)
+        reset_history!(B)
+        return zero(yts)
+    end
 
     return yts
 end
