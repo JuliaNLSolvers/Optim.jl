@@ -126,27 +126,15 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
 end
 
 # A quadratic with noise on the objective and the gradient, like an objective that is
-# itself computed by an iterative method to a fixed tolerance. The noise is a
-# deterministic function of the bits of x, so every revision sees the same problem.
-# g_abstol sits below the gradient noise, so the runs end where the line search can no
-# longer move x, which exercises the check for that in perform_linesearch! and the
-# retry it triggers. Where that point lands depends on rounding, so a change that
-# reorders floating point work elsewhere can move these timings; the allocation
-# counts show whether the amount of work changed.
-function bitnoise(x, salt::UInt64)
-    h = salt
-    for xi in x
-        h ⊻= reinterpret(UInt64, Float64(xi))
-        h *= 0xbf58476d1ce4e5b9
-        h ⊻= h >> 31
-    end
-    h ⊻= h >> 30
-    h *= 0xbf58476d1ce4e5b9
-    h ⊻= h >> 27
-    h *= 0x94d049bb133111eb
-    h ⊻= h >> 31
-    return 2 * ((h >> 11) * 2.0^-53) - 1
-end
+# itself computed by an iterative method to a fixed tolerance. The noise is the hash
+# of x, so it is a fixed function of x and master and the pull request see the same
+# problem; Base.hash can change between Julia versions, which only matters when
+# comparing numbers across versions. g_abstol sits below the gradient noise, so the
+# runs end where the line search can no longer move x, which exercises the check for
+# that in perform_linesearch! and the retry it triggers. Where that point lands
+# depends on rounding, so a change that reorders floating point work elsewhere can
+# move these timings; the allocation counts show whether the amount of work changed.
+noise(x, salt) = 2 * ((hash(x, salt) >> 11) * 2.0^-53) - 1
 
 const NOISY_N = 8
 const NOISY_A = [1 / (i + j - 1) + (i == j ? NOISY_N : 0) for i = 1:NOISY_N, j = 1:NOISY_N]
@@ -155,7 +143,7 @@ const NOISY_XSTAR = collect(range(0.5, 1.5, length = NOISY_N))
 function noisy_quadratic(x)
     r = x .- NOISY_XSTAR
     return sum(r[i] * NOISY_A[i, j] * r[j] for i = 1:NOISY_N, j = 1:NOISY_N) / 2 +
-           1e-8 * bitnoise(x, 0x9e3779b97f4a7c15)
+           1e-8 * noise(x, UInt(1))
 end
 
 function noisy_quadratic_gradient!(G, x)
@@ -163,7 +151,7 @@ function noisy_quadratic_gradient!(G, x)
     for i = 1:NOISY_N
         G[i] =
             sum(NOISY_A[i, j] * r[j] for j = 1:NOISY_N) +
-            1e-9 * bitnoise(x, 0xbf58476d1ce4e5b9 + UInt64(i))
+            1e-9 * noise(x, UInt(1 + i))
     end
     return G
 end
