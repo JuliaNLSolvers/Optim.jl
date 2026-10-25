@@ -338,4 +338,20 @@ import LBFGSB as RefLBFGSB
         @test Optim.minimum(res) ≈ 0.12234569775490675 atol = 1e-8
         @test Optim.f_calls(res) <= 55
     end
+
+    @testset "an indefinite T refreshes the memory" begin
+        # T = θ SᵀS + L D⁻¹ Lᵀ is positive definite in exact arithmetic but can lose that
+        # in floating point when the stored steps are nearly dependent, as on Powell's
+        # badly scaled function. The Fortran then refreshes the memory and restarts from
+        # B = I. Corrupt the stored SᵀS so that T is indefinite after the next update.
+        B = Optim.CompactLBFGS{Float64}(2, 5)
+        Optim.update_compact!(B, [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [2.0, 1.0])
+        @test B.k == 1
+        B.SᵀS[1, 1] = -1.0
+        yts = Optim.update_compact!(B, [1.0, 0.0], [1.0, 1.0], [2.0, 1.0], [2.0, 2.0])
+        @test iszero(yts)
+        @test B.k == 0
+        @test B.θ == 1
+        @test B.iupdat == 0
+    end
 end
