@@ -36,6 +36,15 @@ function reset_search_direction!(state::ConjugateGradientState, ::ConjugateGradi
     return true
 end
 
+# A line search can report success without moving x: HagerZhang can return
+# alpha = 0, and on a noisy objective a step below the resolution of x (its
+# bracket collapses to adjacent floats, or the Armijo decrease of BackTracking
+# rounds away). The solver then repeats the same step forever. Count both as
+# failures, so the caller resets the search direction and retries once. They are
+# reported as a return value rather than thrown, since a throw costs far more than
+# an iteration on a cheap objective.
+_linesearch_moved_x(state) = state.alpha > zero(state.alpha) && state.x_ls != state.x
+
 function perform_linesearch!(state, method, d)
     # Calculate search direction
     dphi_0 = real(dot(state.g_x, state.s))
@@ -49,8 +58,7 @@ function perform_linesearch!(state, method, d)
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
     # Perform line search; catch LineSearchException to allow graceful exit.
-    # A returned alpha of zero counts as a failure (some line searches, e.g.
-    # HagerZhang, can silently return alpha = 0 without throwing).
+    # A step that does not move x counts as a failure, see `_linesearch_moved_x`.
     #
     # On success `state.x_ls` holds the accepted step, computed exactly as the objective
     # evaluated it (LineSearches >= 7.8). Solvers propose that point rather than
@@ -61,10 +69,7 @@ function perform_linesearch!(state, method, d)
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-        if !(state.alpha > zero(state.alpha))
-            throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
-        end
-        true
+        _linesearch_moved_x(state)
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
@@ -81,10 +86,7 @@ function perform_linesearch!(state, method, d)
         lssuccess = try
             state.alpha, ϕalpha =
                 method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-            if !(state.alpha > zero(state.alpha))
-                throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
-            end
-            true
+            _linesearch_moved_x(state)
         catch ex2
             if ex2 isa LineSearches.LineSearchException
                 state.alpha = ex2.alpha

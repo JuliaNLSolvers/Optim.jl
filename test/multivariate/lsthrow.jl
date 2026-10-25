@@ -66,4 +66,29 @@
         @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
         @test !Optim.converged(opt)
     end
+
+    # Line searches that report success without moving x: alpha = 0, which HagerZhang
+    # can return, and a step too small to change x, as HagerZhang and BackTracking
+    # can take on a noisy objective
+    struct FixedStep
+        alpha::Float64
+    end
+    function (ls::FixedStep)(d, x, s, alpha, x_ls, phi_0, dphi_0)
+        x_ls .= x .+ ls.alpha .* s
+        return ls.alpha, phi_0
+    end
+    @testset "a step that does not move x, alpha = $alpha, $optimizer" for alpha in
+                                                                          (0.0, 1e-300),
+        optimizer in (GradientDescent, ConjugateGradient, BFGS, LBFGS, Newton)
+
+        prob = MultivariateProblems.UnconstrainedProblems.examples["Rosenbrock"]
+        input = (MVP.objective(prob), MVP.gradient(prob))
+        optimizer === Newton && (input = (input..., MVP.hessian(prob)))
+        opt = optimize(input..., prob.initial_x, optimizer(linesearch = FixedStep(alpha)))
+        @test Optim.iterations(opt) == 1
+        @test Optim.minimizer(opt) == prob.initial_x
+        @test opt.stopped_by.ls_failed
+        @test Optim.termination_code(opt) == Optim.TerminationCode.FailedLinesearch
+        @test !Optim.converged(opt)
+    end
 end
