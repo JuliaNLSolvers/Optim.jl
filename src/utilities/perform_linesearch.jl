@@ -40,16 +40,10 @@ end
 # alpha = 0, and on a noisy objective a step below the resolution of x (its
 # bracket collapses to adjacent floats, or the Armijo decrease of BackTracking
 # rounds away). The solver then repeats the same step forever. Count both as
-# failures, so the caller resets the search direction and retries once.
-function _assert_linesearch_progress(state)
-    if !(state.alpha > zero(state.alpha))
-        throw(LineSearches.LineSearchException("Line search returned non-positive alpha.", state.alpha))
-    end
-    if state.x_ls == state.x
-        throw(LineSearches.LineSearchException("Line search returned a step too small to change x.", state.alpha))
-    end
-    return nothing
-end
+# failures, so the caller resets the search direction and retries once. They are
+# reported as a return value rather than thrown, since a throw costs far more than
+# an iteration on a cheap objective.
+_linesearch_moved_x(state) = state.alpha > zero(state.alpha) && state.x_ls != state.x
 
 function perform_linesearch!(state, method, d)
     # Calculate search direction
@@ -64,8 +58,7 @@ function perform_linesearch!(state, method, d)
     method.alphaguess!(method.linesearch!, state, phi_0, dphi_0, d)
 
     # Perform line search; catch LineSearchException to allow graceful exit.
-    # A step that does not move x counts as a failure, see
-    # `_assert_linesearch_progress`.
+    # A step that does not move x counts as a failure, see `_linesearch_moved_x`.
     #
     # On success `state.x_ls` holds the accepted step, computed exactly as the objective
     # evaluated it (LineSearches >= 7.8). Solvers propose that point rather than
@@ -76,8 +69,7 @@ function perform_linesearch!(state, method, d)
     lssuccess = try
         state.alpha, ϕalpha =
             method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-        _assert_linesearch_progress(state)
-        true
+        _linesearch_moved_x(state)
     catch ex
         if ex isa LineSearches.LineSearchException
             state.alpha = ex.alpha
@@ -94,8 +86,7 @@ function perform_linesearch!(state, method, d)
         lssuccess = try
             state.alpha, ϕalpha =
                 method.linesearch!(d, state.x, state.s, state.alpha, state.x_ls, phi_0, dphi_0)
-            _assert_linesearch_progress(state)
-            true
+            _linesearch_moved_x(state)
         catch ex2
             if ex2 isa LineSearches.LineSearchException
                 state.alpha = ex2.alpha
