@@ -9,10 +9,10 @@ Broyden–Fletcher–Goldfarb–Shanno ([BFGS](https://en.wikipedia.org/wiki/Bro
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        initial_invH = nothing,
-       initial_stepnorm = nothing,
+       initial_stepnorm = 1.0,
        manifold = Flat(),
-       initial_scaling = nothing,
-       self_scaling = nothing)
+       initial_scaling = Optim.ShannoPhua(),
+       self_scaling = Optim.AlBaali())
 ```
 
 `initial_invH` has a default value of `nothing`. If the user has a specific initial
@@ -21,7 +21,12 @@ to the initial point `x0`.
 
 If `initial_stepnorm` is set to a number `z`, the initial matrix will be the
 identity matrix divided by the sup-norm of the gradient at the initial point `x0`
-and multiplied by `z`, so that the first trial step has sup-norm `z`.
+and multiplied by `z`, so that the first trial step has sup-norm `z`. The default is
+`z = 1`; `initial_stepnorm = nothing` keeps the identity.
+
+The three scaling options are on by default. `BFGS(initial_stepnorm = nothing,
+initial_scaling = nothing, self_scaling = nothing)` is the unscaled method that was the
+default up to Optim 2.
 
 With `initial_scaling = Optim.ShannoPhua()` and no `initial_invH`, the initial matrix is
 replaced by ``(s^T y / y^T y) I`` just before the first update and after any reset of
