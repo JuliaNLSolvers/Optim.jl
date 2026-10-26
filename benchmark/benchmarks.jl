@@ -125,6 +125,22 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
     )
 end
 
+# The saddle's minimum is about -13.1n, and near it the predicted reduction falls below
+# one ulp of f, so roundoff alone makes the objective noisy. Without a noise level the
+# radius collapses there and the run ends on the f-change test above g_abstol, so the
+# cells above also run NewtonTrustRegion with that rounding level as its noise floor,
+# where the version has the keyword.
+if :epsilon_f in fieldnames(NewtonTrustRegion)
+    for n in (2, 20, 100)
+        SUITE["multivariate"]["problems"]["saddle"][n][:NewtonTrustRegion_noise_floor] = @benchmarkable(
+            optimize(saddle, saddle_gradient!, saddle_hessian!, x0, opt, options),
+            setup = (x0 = repeat([0.1, -0.1], $n ÷ 2);
+            opt = NewtonTrustRegion(epsilon_f = eps(13.2 * $n));
+            options = Optim.Options(iterations = 1_000))
+        )
+    end
+end
+
 # A quadratic with noise on the objective and the gradient, like an objective that is
 # itself computed by an iterative method to a fixed tolerance. The noise is the hash
 # of x, so it is a fixed function of x and master and the pull request see the same
