@@ -222,6 +222,10 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
         TerminationCode.GradientNorm
+    elseif stopped_by.ls_failed
+        # A failed line search leaves x where it was, so the change tests below
+        # would all read it as convergence
+        TerminationCode.FailedLinesearch
     elseif (iszero(options.x_abstol) && x_abschange(state) <= options.x_abstol) ||
            (iszero(options.x_reltol) && x_relchange(state) <= options.x_reltol)
         TerminationCode.NoXChange
@@ -233,8 +237,6 @@ function _termination_code(d, gres, state, stopped_by, options)
     elseif f_abschange(state) <= options.f_abstol ||
            f_relchange(state) <= options.f_reltol
         TerminationCode.SmallObjectiveChange
-    elseif stopped_by.ls_failed
-        TerminationCode.FailedLinesearch
     elseif stopped_by.callback
         TerminationCode.Callback
     elseif stopped_by.iterations

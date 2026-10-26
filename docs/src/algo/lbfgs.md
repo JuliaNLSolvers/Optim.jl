@@ -10,7 +10,9 @@ BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        initial_invH = nothing,
        initial_stepnorm = nothing,
-       manifold = Flat())
+       manifold = Flat(),
+       initial_scaling = nothing,
+       self_scaling = nothing)
 ```
 
 `initial_invH` has a default value of `nothing`. If the user has a specific initial
@@ -18,8 +20,16 @@ matrix they want to supply, it should be supplied as a function of an array simi
 to the initial point `x0`.
 
 If `initial_stepnorm` is set to a number `z`, the initial matrix will be the
-identity matrix scaled by `z` times the sup-norm of the gradient at the initial
-point `x0`.
+identity matrix divided by the sup-norm of the gradient at the initial point `x0`
+and multiplied by `z`, so that the first trial step has sup-norm `z`.
+
+With `initial_scaling = Optim.ShannoPhua()` and no `initial_invH`, the initial matrix is
+replaced by ``(s^T y / y^T y) I`` just before the first update and after any reset of
+the search direction (Shanno and Phua, 1978). `self_scaling` scales the Hessian
+approximation ``B`` by ``\tau`` before every other update, with ``\rho = y^T s / s^T B s``:
+`Optim.OrenLuenberger()` uses ``\tau = \rho`` (Oren and Luenberger, 1974) and
+`Optim.AlBaali(; cutoff = 0.5)` uses ``\tau = \min(1, \rho)``, unscaled when
+``\rho`` is below the cutoff (Al-Baali, 1998).
 
 ```julia
 LBFGS(; m = 10,
@@ -80,4 +90,7 @@ Pages = []
 Canonical = false
 
 nocedal2006
+shanno1978
+oren1974
+albaali1998
 ```

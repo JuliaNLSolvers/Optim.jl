@@ -12,8 +12,7 @@
     )
     run_optim_tests(
         NelderMead(),
-        convergence_exceptions = (("Powell", 1)),
-        minimum_exceptions = (("Exponential", 1), ("Exponential", 2)),
+        minimum_exceptions = (("Exponential", 1),),
         skip = skip,
         show_name = debug_printing,
     )
@@ -32,6 +31,7 @@
     @test (
         length(unique(Optim.g_norm_trace(res))) != 1 ||
         length(unique(Optim.f_trace(res))) != 1
-    ) && issorted(Optim.f_trace(res)[end:1])
+    )
+    @test issorted(Optim.f_trace(res); rev = true)
     @test !(res.trace[1].metadata["centroid"] === res.trace[end].metadata["centroid"])
 end

@@ -115,6 +115,10 @@ results = optimize(f, lower, upper, initial_x, IPNewton())
 results = optimize(f, g!, lower, upper, initial_x, IPNewton())
 results = optimize(f, g!, h!, lower, upper, initial_x, IPNewton())
 ```
+As for the unconstrained methods, the `autodiff` keyword chooses how missing derivatives are computed:
+```julia
+results = optimize(f, lower, upper, initial_x, IPNewton(); autodiff = AutoForwardDiff())
+```
 
 ## Minimizing a univariate function on a bounded interval
 

@@ -21,8 +21,6 @@
     end
     ad_res = optimize(od, problem.initial_x, Newton())
     @test norm(Optim.minimum(ref) - Optim.minimum(ad_res)) < 1e-6
-    ad_res2 = optimize(od, problem.initial_x, Newton())
-    @test norm(Optim.minimum(ref) - Optim.minimum(ad_res2)) < 1e-6
     # test f, g!, h! interface
     for tup in ((f,), (f, g!), (f, g!, h!))
         fgh_res = []
@@ -120,9 +118,6 @@ end
         isnothing(H) || h!(H, x)
         return f(x)
     end
-
-    res = Optim.optimize(NLSolversBase.only_fgh!(fgh!), w)
-    @test res.method isa Newton
 
     res = Optim.optimize(NLSolversBase.only_fgh!(fgh!), w)
     @test res.method isa Newton

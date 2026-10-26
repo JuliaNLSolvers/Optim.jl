@@ -59,13 +59,13 @@ using StableRNGs
 
     @testset "Power and Product" begin
         # Power
-        @views fprod(x) = fmanif(x[:, 1]) + fmanif(x[:, 2])
-        @views gprod!(stor, x) =
+        @views fpow(x) = fmanif(x[:, 1]) + fmanif(x[:, 2])
+        @views gpow!(stor, x) =
             (gmanif!(stor[:, 1], x[:, 1]); gmanif!(stor[:, 2], x[:, 2]); stor)
         m1 = Optim.PowerManifold(Optim.Sphere(), (n,), (2,))
         rng = StableRNG(0)
         x0 = randn(rng, n, 2) + im * randn(rng, n, 2)
-        res = Optim.optimize(fprod, gprod!, x0, Optim.ConjugateGradient(manifold = m1))
+        res = Optim.optimize(fpow, gpow!, x0, Optim.ConjugateGradient(manifold = m1))
         @test Optim.converged(res)
         minpow = Optim.minimizer(res)
 

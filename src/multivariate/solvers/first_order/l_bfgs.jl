@@ -179,8 +179,8 @@ function initial_state(method::LBFGS, options::Options, d, x0::AbstractArray)
     T = real(eltype(x0))
     x0 = copy(x0)
     retract!(method.manifold, x0)
-    f_x, g_x = NLSolversBase.value_gradient!(d, x0)
-    g_x = copy(g_x)
+    f_x, g_x0 = NLSolversBase.value_gradient!(d, x0)
+    g_x = copy(g_x0)
     project_tangent!(method.manifold, g_x, x0)
     LBFGSState(
         x0, # Maintain current state in state.x

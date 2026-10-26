@@ -146,8 +146,8 @@ function initial_state(
         for i = 1:n_particles
             for j = 1:n
                 if i == 1
-                    if abs(x0[i]) > T(0)
-                        dx[j] = abs(x0[i])
+                    if abs(x0[j]) > T(0)
+                        dx[j] = abs(x0[j])
                     else
                         dx[j] = T(1)
                     end
@@ -457,7 +457,7 @@ function update_swarm_params!(c1, c2, w, current_state, f::T) where {T}
     end
 
     if c2 < T(3) / 2
-        c2 = T(5) / 2
+        c2 = T(3) / 2
     elseif c2 > T(5) / 2
         c2 = T(5) / 2
     end

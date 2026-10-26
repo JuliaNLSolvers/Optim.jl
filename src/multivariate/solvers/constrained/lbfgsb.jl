@@ -61,6 +61,13 @@ The memory length `m` controls how many `(s, y)` correction pairs are stored.
 `clip_subspace` chooses between later style component-wise clamping of the
 subspace step (`true`) and the original paper's proportional backtracking (`false`).
 
+When the line search finds no acceptable step (no finite step, a step that
+leaves `x` where it is, or a non-finite value at the accepted point), the
+memory is discarded and the iteration is redone from `B = I`, as in the
+Fortran L-BFGS-B. If the memory was already empty the run stops with
+`FailedLinesearch` at the last point with finite values, and reports no
+convergence.
+
 Gradient-based convergence uses the **projected gradient**, not the plain
 gradient: the run stops when `‖x - P(x - g)‖∞ ≤ g_abstol`, where `P` projects
 onto the box `[lb, ub]`. This is the correct first-order stationarity measure
@@ -184,9 +191,10 @@ pcol(B::CompactLBFGS, j::Int) = mod(B.head + j - 2, B.m) + 1
 
 # Build T = θ·SᵀS + L·D⁻¹·Lᵀ and Cholesky-factor into B.J (upper triangle).
 # L = strict lower triangle of SY, D = Diagonal(diag(SY)). (Fortran `formt`.)
+# Returns false when T is not numerically positive definite.
 function formt!(B::CompactLBFGS)
     k = B.k
-    k == 0 && return
+    k == 0 && return true
     J, SY, SS = B.J, B.SY, B.SᵀS
 
     for i = 1:k
@@ -199,8 +207,7 @@ function formt!(B::CompactLBFGS)
         end
     end
 
-    cholesky!(Symmetric(@view(J[1:k, 1:k]), :U))
-    return
+    return issuccess(cholesky!(Symmetric(@view(J[1:k, 1:k]), :U); check = false))
 end
 
 # Compute p = M·v with M the middle matrix of the compact form, using the
@@ -478,6 +485,7 @@ function pg_norm(x, g, lb, ub)
             isfinite(lb[i]) && (gi = min(x[i] - lb[i], gi))
         end
         agi = abs(gi)
+        isnan(agi) && return agi
         agi > result && (result = agi)
     end
     return result
@@ -812,7 +820,8 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
 end
 
 # Compute s = x_new - x, y = g_new - g into B.s/B.y, then update the compact
-# representation if curvature yᵀs > 0. Returns yᵀs (always computed).
+# representation if curvature yᵀs > 0. Returns yᵀs, or zero when the update
+# was dropped because T lost positive definiteness.
 function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     s = B.s
     y = B.y
@@ -864,7 +873,12 @@ function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     B.θ = dot(y, y) / yts
     B.iupdat += 1
 
-    formt!(B)   # Cholesky-factor T into B.J
+    # Cholesky-factor T into B.J. If T is not positive definite, refresh the
+    # memory and restart from B = I, as the Fortran `mainlb` does after `formt`.
+    if !formt!(B)
+        reset_history!(B)
+        return zero(yts)
+    end
 
     return yts
 end
@@ -890,18 +904,34 @@ function trace_lbfgsb!(tr, iteration, f_x, pgnorm, x, g_x, options, curr_time)
     )
 end
 
+# The trial point for step α: the subspace point z itself at α = 1, and the
+# projection of x + αd otherwise. The line search and the main loop both use it,
+# so the accepted point is evaluated once and lies exactly on the bounds it
+# reached; x + αd itself can fall a rounding width inside a bound.
+function trial_point!(xα, x, dir, α, lb, ub, z)
+    if α == 1
+        copyto!(xα, z)
+    else
+        @. xα = clamp(x + α * dir, lb, ub)
+    end
+    return xα
+end
+
 # Callable that evaluates (ϕ(α), ϕ'(α)) along the search direction without
-# allocating per call. `x` and `dir` alias the loop's iterate and B.d, which are
-# mutated in place, so this is constructed once and reused every iteration.
-mutable struct LBFGSBLineFn{D,Tx}
+# allocating per call. `x`, `dir` and `z` alias the loop's iterate, B.d and B.xc,
+# which are mutated in place, so this is constructed once and reused every iteration.
+mutable struct LBFGSBLineFn{D,Tx,Tl,Tu}
     obj::D
     x::Tx
     dir::Tx
     xα::Tx
+    lb::Tl
+    ub::Tu
+    z::Tx
 end
 
 function (φ::LBFGSBLineFn)(α)
-    @. φ.xα = φ.x + α * φ.dir
+    trial_point!(φ.xα, φ.x, φ.dir, α, φ.lb, φ.ub, φ.z)
     fα, gα = value_gradient!(φ.obj, φ.xα)
     return (fα, dot(gα, φ.dir))
 end
@@ -972,7 +1002,7 @@ function optimize(
     g_new = similar(g)
 
     # x and B.d alias the fields the line search reads; both are mutated in place.
-    φ = LBFGSBLineFn(d, x, B.d, similar(x))
+    φ = LBFGSBLineFn(d, x, B.d, similar(x), l, u, B.xc)
 
     tr = OptimizationTrace{typeof(f_x),typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace
@@ -1027,7 +1057,8 @@ function optimize(
         @. B.d = B.xc - x
 
         dφ0 = dot(g, B.d)
-        if dφ0 >= 0 && B.k > 0
+        # !(dφ0 < 0) also catches a NaN slope from an overflowed memory
+        if !(dφ0 < 0) && B.k > 0
             # Not a descent direction: restart from B = I and redo the step.
             reset_history!(B)
             updatd = false
@@ -1040,7 +1071,7 @@ function optimize(
             @. B.d = B.xc - x
             dφ0 = dot(g, B.d)
         end
-        if dφ0 >= 0
+        if !(dφ0 < 0)
             ls_failed = true
             break
         end
@@ -1055,24 +1086,33 @@ function optimize(
         end
 
         α, _, _ = find_steplength(method.linesearch, φ, f_x, dφ0, α₀; αmax = αmax)
-        if !isfinite(α)
-            α = min(T(1) / 10^4, αmax)
-        end
 
-        # Project onto the box. The line search caps α at αmax (the exact step to
-        # the nearest bound), so this only matters at the ULP level when a bound
-        # is active — but it guarantees every iterate (and the returned x) is
-        # feasible rather than a rounding-width outside.
-        @. x_candidate = clamp(x + α * B.d, l, u)
-        f_new, _gn = value_gradient!(d, x_candidate)
-        g_new .= _gn
-
-        if isfinite(f_new)
-            yts = update_compact!(B, x, x_candidate, g, g_new)
-            updatd = yts > 0
+        # The point the line search evaluated last at α (see trial_point!).
+        isfinite(α) && trial_point!(x_candidate, x, B.d, α, l, u, B.xc)
+        f_new, g_new_ok = if isfinite(α) && x_candidate != x
+            fn, _gn = value_gradient!(d, x_candidate)
+            g_new .= _gn
+            fn, all(isfinite, g_new)
         else
-            updatd = false
+            oftype(f_x, NaN), false
         end
+
+        # No finite step, a step that leaves x where it is, or a non-finite value at
+        # the accepted point: the line search failed. As in the Fortran mainlb, drop
+        # the memory and redo the iteration from x with B = θI, θ = 1; with an empty
+        # memory the run stops with a failed line search, at the last good point.
+        if !(isfinite(f_new) && g_new_ok)
+            if B.k > 0
+                reset_history!(B)
+                updatd = false
+                continue
+            end
+            ls_failed = true
+            break
+        end
+
+        yts = update_compact!(B, x, x_candidate, g, g_new)
+        updatd = yts > 0
 
         copyto!(x_previous, x)
         f_x_previous = f_x

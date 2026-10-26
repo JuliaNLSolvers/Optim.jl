@@ -181,7 +181,11 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resx0term) == Optim.TerminationCode.NoXChange
+    # BFGS reaches the exact minimizer, where the gradient is zero and the line
+    # search cannot make progress. With the gradient test disabled that is reported
+    # as a failed line search rather than as convergence.
+    @test Optim.termination_code(resx0term) == Optim.TerminationCode.FailedLinesearch
+    @test !Optim.converged(resx0term)
 
 
     resx0term1 = optimize(
@@ -198,7 +202,8 @@
             allow_f_increases = true,
         ),
     )
-    Optim.termination_code(resx0term1) == Optim.TerminationCode.NoXChange
+    @test Optim.termination_code(resx0term1) == Optim.TerminationCode.FailedLinesearch
+    @test !Optim.converged(resx0term1)
 
 
     resxsmallterm1 = optimize(
