@@ -1181,6 +1181,7 @@ function optimize(
             min(T(method.stepsize), αmax)
         end
 
+        φ.α = T(NaN)
         α, _, _ = find_steplength(method.linesearch, φ, f_x, dφ0, α₀; αmax = αmax)
 
         # The point at α (see trial_point!). When the search ended on its last
