@@ -162,7 +162,7 @@ function optimize(
         if abs(step) >= x_tol
             new_x = new_minimizer + step
         else
-            new_x = new_minimizer + ((step > 0) ? x_tol : -x_tol)
+            new_x = new_minimizer + copysign(x_tol, step)
         end
 
         new_f = f(new_x)
