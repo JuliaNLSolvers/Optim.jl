@@ -1,4 +1,5 @@
 # Optim master release notes
+* BFGS: optional scaling of the inverse Hessian, `initial_scaling = Optim.ShannoPhua()` and `self_scaling = Optim.AlBaali()` or `Optim.OrenLuenberger()`, all off by default
 * Fix Preconditioning example for v1.0 syntax
 * Improve handling of alternative number types in univariate optimization
 * Add conditional likelihood example to docs

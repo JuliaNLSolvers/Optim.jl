@@ -21,6 +21,7 @@ function reset_search_direction!(state::BFGSState, method::BFGS)
         state.invH .= method.initial_invH(state.x)
     end
     #    copyto!(state.invH, method.initial_invH(state.x))
+    state.rescale_invH = true
     state.s .= .-gx
     return true
 end
