@@ -125,7 +125,7 @@ function optimize(
 
         if abs(p) < abs(q * old_step / 2) &&
            p < q * (x_upper - new_minimizer) &&
-           p < q * (new_minimizer - x_lower)
+           p > q * (x_lower - new_minimizer)
             old_step = step
             step = p / q
 

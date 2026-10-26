@@ -27,6 +27,13 @@
     @test Optim.converged(result)
     @test Optim.minimum(result) == -1.0
 
+    ## the parabolic step is taken whenever it lands inside the bracket; with the
+    ## bracket test the wrong way round this run took 24 evaluations, mostly golden
+    ## section steps
+    result = optimize(x -> exp(0.2x) - 0.2 * exp(0.1) * x, 0.0, 1.0, Brent())
+    @test Optim.minimizer(result) ≈ 0.5 atol = 1e-7
+    @test Optim.f_calls(result) <= 12
+
     ## time limit
     function slow_obj(x)
         sleep(0.05)
