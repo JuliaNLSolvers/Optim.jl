@@ -189,6 +189,11 @@ end
 # Map logical column j (1 = oldest) to physical column in the circular buffer.
 pcol(B::CompactLBFGS, j::Int) = mod(B.head + j - 2, B.m) + 1
 
+# The stored columns as matrices: a partly filled buffer has head = 1 and holds
+# columns 1:k in order; a full one holds all m, rotated by head.
+stored_Y(B::CompactLBFGS) = B.k == B.m ? B.Y : @view(B.Y[:, 1:B.k])
+stored_S(B::CompactLBFGS) = B.k == B.m ? B.S : @view(B.S[:, 1:B.k])
+
 # Build T = θ·SᵀS + L·D⁻¹·Lᵀ and Cholesky-factor into B.J (upper triangle).
 # L = strict lower triangle of SY, D = Diagonal(diag(SY)). (Fortran `formt`.)
 # Returns false when T is not numerically positive definite.
@@ -331,15 +336,21 @@ function formk!(B::CompactLBFGS, nenter::Int, ileave::Int, updatd::Bool)
 
         ipntr = pcol(B, col)
 
+        # all free: index[1:n] is 1:n and the sums are column products
+        allfree = B.nfree == n
         for jy = 1:col
             jpntr = pcol(B, jy)
             js = m + jy
             temp1 = zero(T)
             temp2 = zero(T)
             temp3 = zero(T)
-            for ii = 1:B.nfree
-                k1 = B.index[ii]
-                temp1 += B.Y[k1, ipntr] * B.Y[k1, jpntr]
+            if allfree
+                temp1 = dot(@view(B.Y[:, ipntr]), @view(B.Y[:, jpntr]))
+            else
+                for ii = 1:B.nfree
+                    k1 = B.index[ii]
+                    temp1 += B.Y[k1, ipntr] * B.Y[k1, jpntr]
+                end
             end
             for ii = (B.nfree+1):n
                 k1 = B.index[ii]
@@ -356,9 +367,13 @@ function formk!(B::CompactLBFGS, nenter::Int, ileave::Int, updatd::Bool)
             ipntr2 = pcol(B, i)
             is = m + i
             temp3 = zero(T)
-            for ii = 1:B.nfree
-                k1 = B.index[ii]
-                temp3 += B.S[k1, ipntr2] * B.Y[k1, jpntr]
+            if allfree
+                temp3 = dot(@view(B.S[:, ipntr2]), @view(B.Y[:, jpntr]))
+            else
+                for ii = 1:B.nfree
+                    k1 = B.index[ii]
+                    temp3 += B.S[k1, ipntr2] * B.Y[k1, jpntr]
+                end
             end
             B.wn1[is, col] = temp3
         end
@@ -569,6 +584,10 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
     ibkmin = 0
     bkmin = T(Inf)
 
+    # d, zero where the variable cannot move, is collected in r_ws, and p = W'd
+    # is formed from it by two column products below
+    dm = B.r_ws
+    fill!(dm, zero(T))
     for i = 1:n
         gi = g[i]
         if gi < 0
@@ -583,12 +602,7 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
 
         di = -gi
         f′ -= di * di
-
-        for j = 1:bk
-            pj = pcol(B, j)
-            p[j] += B.Y[i, pj] * di
-            p[bk+j] += B.S[i, pj] * di
-        end
+        dm[i] = di
 
         if isfinite(ti)
             nbreak += 1
@@ -599,6 +613,20 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
                 ibkmin = nbreak
             end
         end
+    end
+
+    if bk > 0
+        q1 = @view(B.Mv[1:size(stored_Y(B), 2)])
+        q2 = @view(B.wb[1:size(stored_Y(B), 2)])
+        mul!(q1, stored_Y(B)', dm)
+        mul!(q2, stored_S(B)', dm)
+        for j = 1:bk
+            pj = pcol(B, j)
+            p[j] = q1[pj]
+            p[bk+j] = q2[pj]
+        end
+        fill!(Mv, zero(T))
+        fill!(wb, zero(T))
     end
 
     for j = 1:bk
@@ -707,6 +735,12 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
 
     col2 = 2col
     wv = B.work
+    # All variables free: the free set is 1:n in order and the products are taken
+    # over whole columns, with coefficients scattered to the physical column order.
+    allfree = nsub == length(x)
+    Yc, Sc = stored_Y(B), stored_S(B)
+    q1 = @view(B.Mv[1:size(Yc, 2)])
+    q2 = @view(B.wb[1:size(Yc, 2)])
 
     # Reduced gradient r = -θ(xc - x) - g + W·(M·c).
     r = @view(B.r_ws[1:nsub])
@@ -716,28 +750,48 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
     end
 
     bmv!(wv, c, B)   # wv[1:2col] = M·c
-    for j = 1:col
-        pj = pcol(B, j)
-        a1 = wv[j]
-        a2 = θ * wv[col+j]
-        for i = 1:nsub
-            k = B.index[i]
-            r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+    if allfree
+        for j = 1:col
+            pj = pcol(B, j)
+            q1[pj] = wv[j]
+            q2[pj] = θ * wv[col+j]
+        end
+        mul!(r, Yc, q1, true, true)
+        mul!(r, Sc, q2, true, true)
+    else
+        for j = 1:col
+            pj = pcol(B, j)
+            a1 = wv[j]
+            a2 = θ * wv[col+j]
+            for i = 1:nsub
+                k = B.index[i]
+                r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+            end
         end
     end
 
     # wv = W'Z·r
-    for j = 1:col
-        pj = pcol(B, j)
-        temp1 = zero(T)
-        temp2 = zero(T)
-        for i = 1:nsub
-            k = B.index[i]
-            temp1 += B.Y[k, pj] * r[i]
-            temp2 += B.S[k, pj] * r[i]
+    if allfree
+        mul!(q1, Yc', r)
+        mul!(q2, Sc', r)
+        for j = 1:col
+            pj = pcol(B, j)
+            wv[j] = q1[pj]
+            wv[col+j] = θ * q2[pj]
         end
-        wv[j] = temp1
-        wv[col+j] = θ * temp2
+    else
+        for j = 1:col
+            pj = pcol(B, j)
+            temp1 = zero(T)
+            temp2 = zero(T)
+            for i = 1:nsub
+                k = B.index[i]
+                temp1 += B.Y[k, pj] * r[i]
+                temp2 += B.S[k, pj] * r[i]
+            end
+            wv[j] = temp1
+            wv[col+j] = θ * temp2
+        end
     end
 
     # Solve K⁻¹·wv via the U'EU factorization (E = diag(-I_col, I_col)).
@@ -752,11 +806,21 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
     # du = (1/θ)r + (1/θ²)Z'W·wv
     du = @view(B.du[1:nsub])
     copyto!(du, r)
-    for j = 1:col
-        pj = pcol(B, j)
-        for i = 1:nsub
-            k = B.index[i]
-            du[i] += B.Y[k, pj] * wv[j] / θ + B.S[k, pj] * wv[col+j]
+    if allfree
+        for j = 1:col
+            pj = pcol(B, j)
+            q1[pj] = wv[j] / θ
+            q2[pj] = wv[col+j]
+        end
+        mul!(du, Yc, q1, true, true)
+        mul!(du, Sc, q2, true, true)
+    else
+        for j = 1:col
+            pj = pcol(B, j)
+            for i = 1:nsub
+                k = B.index[i]
+                du[i] += B.Y[k, pj] * wv[j] / θ + B.S[k, pj] * wv[col+j]
+            end
         end
     end
     du ./= θ
@@ -1030,8 +1094,15 @@ function optimize(
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        # Generalized Cauchy point (writes B.xc, B.c_ws).
-        cauchy_point!(B, x, g, l, u)
+        # Generalized Cauchy point (writes B.xc, B.c_ws). Without bounds the subspace
+        # step minimizes the model over all variables wherever it starts, so with a
+        # memory it starts at x (c = 0), as the Fortran mainlb does.
+        if !B.cnstnd && B.k > 0
+            copyto!(B.xc, x)
+            fill!(B.c_ws, zero(T))
+        else
+            cauchy_point!(B, x, g, l, u)
+        end
 
         # Free/active sets and the K factorization for the subspace solve.
         for i = 1:n

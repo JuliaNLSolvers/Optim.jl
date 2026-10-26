@@ -339,6 +339,47 @@ import LBFGSB as RefLBFGSB
         @test Optim.f_calls(res) <= 55
     end
 
+    @testset "with every variable free the step is the two-loop L-BFGS direction" begin
+        # Five updates into a memory of three, so the buffer is full and rotated; with
+        # all variables free and the subspace step started at x, the step must be
+        # -H g for the L-BFGS H built from the last three pairs with H0 = I/θ.
+        n, m = 7, 3
+        B = Optim.CompactLBFGS{Float64}(n, m)
+        pairs = Tuple{Vector{Float64},Vector{Float64}}[]
+        updatd = false
+        for k in 1:5
+            s = [sin(k * i) + 0.1 * k for i in 1:n]
+            y = s .* (1 .+ (1:n) ./ n) .+ 0.01 .* cos.(k .* (1:n))
+            push!(pairs, (s, y))
+            yts = Optim.update_compact!(B, zeros(n), s, zeros(n), y)
+            @test yts > 0
+            fill!(B.iwhere, 0)
+            nenter, ileave, wrk = Optim.freev!(B, k, true)
+            @test Optim.formk!(B, nenter, ileave, true) == 0
+        end
+        @test B.k == m && B.head != 1
+        g = [cos(2i) for i in 1:n]
+        x = zeros(n)
+        copyto!(B.xc, x)
+        fill!(B.c_ws, 0.0)
+        Optim.subspace_optimize!(B, x, g, fill(-Inf, n), fill(Inf, n))
+        q = copy(g)
+        recent = pairs[end-m+1:end]
+        α = zeros(m)
+        for j in m:-1:1
+            s, y = recent[j]
+            α[j] = dot(s, q) / dot(y, s)
+            q .-= α[j] .* y
+        end
+        q ./= B.θ
+        for j in 1:m
+            s, y = recent[j]
+            β = dot(y, q) / dot(y, s)
+            q .+= (α[j] - β) .* s
+        end
+        @test B.xc - x ≈ -q rtol = 1e-10
+    end
+
     @testset "an indefinite T refreshes the memory" begin
         # T = θ SᵀS + L D⁻¹ Lᵀ is positive definite in exact arithmetic but can lose that
         # in floating point when the stored steps are nearly dependent, as on Powell's
