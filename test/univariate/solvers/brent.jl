@@ -26,13 +26,24 @@
     result = optimize(x -> sign(x), -2, 1)
     @test Optim.converged(result)
     @test Optim.minimum(result) == -1.0
+    ## the first interior point sits on a plateau above one of the bounds (#828)
+    for (a, b) in ((-2.0, 2.0), (-1.0, 2.0), (-2.0, 1.0))
+        result = optimize(x -> -sign(x), a, b, Brent())
+        @test Optim.minimum(result) == -1.0
+    end
+    result = optimize(x -> x > 1 ? 2.0 : x^2, -1.0, 10.0, Brent())
+    @test Optim.minimum(result) < 1e-10
+    @test abs(Optim.minimizer(result)) < 1e-5
 
     ## the parabolic step is taken whenever it lands inside the bracket; with the
     ## bracket test the wrong way round this run took 24 evaluations, mostly golden
     ## section steps
-    result = optimize(x -> exp(0.2x) - 0.2 * exp(0.1) * x, 0.0, 1.0, Brent())
+    f_exp(x) = exp(0.2x) - 0.2 * exp(0.1) * x
+    result = optimize(f_exp, 0.0, 1.0, Brent(evaluate_bounds = false))
     @test Optim.minimizer(result) ≈ 0.5 atol = 1e-7
     @test Optim.f_calls(result) <= 12
+    ## evaluating the bounds costs two calls when they do not move the search
+    @test Optim.f_calls(optimize(f_exp, 0.0, 1.0, Brent())) == Optim.f_calls(result) + 2
 
     ## time limit
     function slow_obj(x)
@@ -40,6 +51,8 @@
         return sin(x)
     end
     result = optimize(x -> slow_obj(x), 0, 2π, Brent(); time_limit = 0.01)
+    @test result.f_calls == 3
+    result = optimize(x -> slow_obj(x), 0, 2π, Brent(evaluate_bounds = false); time_limit = 0.01)
     @test result.f_calls == 1
 
     result = Optim.optimize(
