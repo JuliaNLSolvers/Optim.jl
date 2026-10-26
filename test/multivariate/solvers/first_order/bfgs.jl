@@ -1,3 +1,6 @@
+# The unscaled method, the default up to Optim 2
+const UNSCALED = (initial_stepnorm = nothing, initial_scaling = nothing, self_scaling = nothing)
+
 @testset "BFGS" begin
     # Trigonometric ends up in a local minimum
     skip = ("Trigonometric",)
@@ -6,20 +9,40 @@
         skip,
         show_name = debug_printing,
     )
+    run_optim_tests(
+        BFGS(; UNSCALED...);
+        skip,
+        show_name = debug_printing,
+    )
+end
+
+@testset "BFGS defaults" begin
+    m = BFGS()
+    @test m.initial_stepnorm == 1
+    @test m.initial_scaling isa Optim.ShannoPhua
+    @test m.self_scaling isa Optim.AlBaali
+    # the first trial step has sup-norm 1 by default, and is -g without scaling
+    f(x) = sum(abs2, x .- [3.0, -4.0]) / 2
+    g!(G, x) = (G .= x .- [3.0, -4.0])
+    opts = Optim.Options(iterations = 1, store_trace = true, extended_trace = true)
+    H1 = Optim.trace(optimize(f, g!, zeros(2), BFGS(), opts))[1].metadata["~inv(H)"]
+    @test H1 ≈ I(2) / 4
+    H1 = Optim.trace(optimize(f, g!, zeros(2), BFGS(; UNSCALED...), opts))[1].metadata["~inv(H)"]
+    @test H1 ≈ I(2)
 end
 
 @testset "BFGS with Hessian scaling" begin
     skip = ("Trigonometric",)
     # ShannoPhua alone needs 1906 and 1149 iterations on these two ill-conditioned quadratics
     run_optim_tests(
-        BFGS(initial_scaling = Optim.ShannoPhua());
+        BFGS(; UNSCALED..., initial_scaling = Optim.ShannoPhua());
         skip,
         iteration_exceptions = (("Paraboloid Diagonal", 3000), ("Paraboloid Random Matrix", 2000)),
         show_name = debug_printing,
     )
-    for method in (BFGS(self_scaling = Optim.AlBaali()), BFGS(self_scaling = Optim.OrenLuenberger()),
-                   BFGS(initial_scaling = Optim.ShannoPhua(), self_scaling = Optim.AlBaali()),
-                   BFGS(initial_stepnorm = 1.0, initial_scaling = Optim.ShannoPhua(), self_scaling = Optim.AlBaali()))
+    for method in (BFGS(; UNSCALED..., self_scaling = Optim.AlBaali()),
+                   BFGS(; UNSCALED..., self_scaling = Optim.OrenLuenberger()),
+                   BFGS(initial_stepnorm = nothing))
         run_optim_tests(method; skip, show_name = debug_printing)
     end
 end
@@ -35,7 +58,7 @@ bfgs_update(H, s, y) = (ρ = 1 / dot(s, y); V = I - ρ * y * s'; V' * H * V + ρ
     steps(tr, k) = (s = tr[k+1].metadata["x"] - tr[k].metadata["x"]; (s, a .* s))
 
     # ShannoPhua: the first update starts from (s'y / y'y) I instead of I
-    tr = Optim.trace(optimize(f, g!, ones(3), BFGS(initial_scaling = Optim.ShannoPhua()), opts))
+    tr = Optim.trace(optimize(f, g!, ones(3), BFGS(initial_scaling = Optim.ShannoPhua(), self_scaling = nothing), opts))
     s, y = steps(tr, 1)
     @test tr[2].metadata["~inv(H)"] ≈ bfgs_update(dot(s, y) / dot(y, y) * I(3), s, y)
     s, y = steps(tr, 2)

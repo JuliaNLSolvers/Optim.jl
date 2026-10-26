@@ -58,10 +58,10 @@ Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
        initial_invH = nothing,
-       initial_stepnorm = nothing,
+       initial_stepnorm = 1.0,
        manifold = Flat(),
-       initial_scaling = nothing,
-       self_scaling = nothing)
+       initial_scaling = Optim.ShannoPhua(),
+       self_scaling = Optim.AlBaali())
 ```
 
 ## Description
@@ -74,22 +74,30 @@ approximations as well as the gradient. See also the limited memory variant
 
 The inverse Hessian approximation starts from the identity matrix, or from
 `initial_invH(x0)` if given. `initial_stepnorm = z` divides the identity by the sup-norm
-of the initial gradient and multiplies it by `z`, so the first trial step has sup-norm `z`.
+of the initial gradient and multiplies it by `z`, so the first trial step has sup-norm `z`;
+`initial_stepnorm = nothing` keeps the identity, and the first trial step is then `-g`.
+
+The defaults scale the inverse Hessian: a first step of sup-norm 1, `ShannoPhua` before the
+first update and `AlBaali` after it. `BFGS(initial_stepnorm = nothing, initial_scaling =
+nothing, self_scaling = nothing)` is the unscaled method that was the default up to
+Optim 2.
 
 `initial_scaling = Optim.ShannoPhua()` replaces the starting matrix by `(s'y / y'y) I`
 just before the first update, and again after a reset of the search direction (Shanno and
 Phua, 1978). Here `s` is the step and `y` the change in gradient. The update never changes
 `w'Hu` for `w`, `u` orthogonal to the step, so the scale of the starting matrix persists in
-every direction not yet explored. It is ignored when `initial_invH` is given.
+every direction not yet explored. It is ignored when `initial_invH` is given; pass
+`initial_scaling = nothing` to keep the identity.
 
 `self_scaling` scales the Hessian approximation `B` by a factor `τ` before every other
 update, that is, the inverse Hessian by `1/τ`. `Optim.OrenLuenberger()` uses
 `τ = y's / s'Bs` (Oren and Luenberger, 1974). `Optim.AlBaali()` uses `τ = min(1, y's / s'Bs)`
 and no scaling when `y's / s'Bs < 1/2` (Al-Baali, 1998; Al-Baali and Khalfan, 2009), so it
 only ever enlarges the inverse Hessian. That repairs the case where `ShannoPhua` alone sets
-it too small: on ill-conditioned quadratics `initial_scaling = Optim.ShannoPhua()` alone can
-take several times more iterations than the default, and together with
-`self_scaling = Optim.AlBaali()` fewer.
+it too small: on ill-conditioned quadratics `ShannoPhua` alone can take several times more
+iterations than no scaling, and together with `AlBaali` fewer. `self_scaling` also applies
+when `initial_invH` is given; pass `self_scaling = nothing` to update a supplied matrix
+unscaled.
 
 ## References
  - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
@@ -106,10 +114,10 @@ function BFGS(;
     alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
     linesearch = LineSearches.HagerZhang(),  # TODO: benchmark defaults
     initial_invH = nothing,
-    initial_stepnorm = nothing,
+    initial_stepnorm = 1.0,
     manifold::Manifold = Flat(),
-    initial_scaling::Union{Nothing,InitialScaling} = nothing,
-    self_scaling::Union{Nothing,SelfScaling} = nothing,
+    initial_scaling::Union{Nothing,InitialScaling} = ShannoPhua(),
+    self_scaling::Union{Nothing,SelfScaling} = AlBaali(),
 )
     BFGS(_alphaguess(alphaguess), linesearch, initial_invH, initial_stepnorm, manifold,
          initial_scaling, self_scaling)
