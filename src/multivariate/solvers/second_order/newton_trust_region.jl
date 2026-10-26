@@ -512,7 +512,7 @@ The constructor has 8 keywords:
 * `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
 * `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
 * `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
-* `epsilon_f`, a bound on the noise in computed values of the objective. When positive, the ratio of actual and predicted reduction tolerates changes in the objective of that size, which keeps the trust region from collapsing near a solution of a noisy objective. Defaults to `0.0`.
+* `epsilon_f`, a bound on the noise in computed values of the objective. When positive, the ratio of actual and predicted reduction tolerates changes in the objective of that size, which keeps the trust region from collapsing near a solution of a noisy objective. A rise of that size does not count as an increase for `allow_f_increases = false` either. Defaults to `0.0`.
 * `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
 
 ## Description
@@ -564,6 +564,7 @@ mutable struct NewtonTrustRegionState{Tx,T,Tg,TH,TC<:TRSubproblemCache} <:
     rho::T
     const subproblem_cache::TC
     basis_current::Bool
+    const r_eps::T # r*epsilon_f of the relaxed ratio, with r = 2/(1 - rho_upper)
 end
 
 # NaN is false here, which is what rejects a nonfinite trial point
@@ -605,6 +606,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
             fill!(similar(g_x), NaN),
         ),
         false, # basis_current: g and H are new, so the first solve decomposes
+        method.epsilon_f > 0 ? T(2 * method.epsilon_f / (1 - method.rho_upper)) : zero(T), # r_eps
     )
 end
 
@@ -648,11 +650,7 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     # Sun & Nocedal, "A trust region method for noisy unconstrained
     # optimization", Math. Program. 202 (2023); equations (7) and (8) in the
     # numbering of the preprint, arXiv:2201.00973v1.
-    r_eps = if method.epsilon_f > 0
-        2 * method.epsilon_f / (1 - method.rho_upper)
-    else
-        zero(method.epsilon_f)
-    end
+    r_eps = state.r_eps
     if abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
         # we should accept the step and assess_convergence(). The sign of
@@ -724,7 +722,7 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
         # like the default path used by the first-order solvers. The 8-argument
         # method only honors x_abstol and f_reltol, silently ignoring x_reltol
         # and f_abstol.
-        return assess_convergence(
+        x_converged, f_converged, g_converged, f_increased = assess_convergence(
             state.x,
             state.x_previous,
             state.f_x,
@@ -736,6 +734,11 @@ function assess_convergence(state::NewtonTrustRegionState, d, options::Options)
             options.f_reltol,
             options.g_abstol,
         )
+        # The ratio accepts rises within the noise: rho > eta with m < 0 gives
+        # f_x - f_x_previous < (1 - eta) * r_eps. At epsilon_f = 0 this is the
+        # plain comparison.
+        f_increased = f_increased && state.f_x > state.f_x_previous + state.r_eps
+        return x_converged, f_converged, g_converged, f_increased
     else
         return false, false, false, false
     end

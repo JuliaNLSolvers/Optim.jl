@@ -629,5 +629,19 @@ tr_cache(gr, H) =
         res = Optim.optimize(f, g!, h!, copy(x0), NewtonTrustRegion(epsilon_f = noise_f / 100), options)
         @test Optim.converged(res)
         @test gnorm(res) <= 1e-8
+
+        # Under allow_f_increases = false a rise of f within the noise must not
+        # end the run. Whether the noise makes f rise near the solution depends
+        # on the last bits of the iterates, so the run starts from 25 points a
+        # few ulps apart; roughly half of them used to stop at |g| ~ 4e-6.
+        strict = Optim.Options(g_abstol = 1e-8, iterations = 500, allow_f_increases = false)
+        for i = -2:2, j = -2:2
+            xs = copy(x0)
+            xs[1] = nextfloat(xs[1], i)
+            xs[2] = nextfloat(xs[2], j)
+            res = Optim.optimize(f, g!, h!, xs, NewtonTrustRegion(epsilon_f = noise_f), strict)
+            @test Optim.converged(res)
+            @test gnorm(res) <= 1e-8
+        end
     end
 end

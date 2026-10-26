@@ -1,4 +1,5 @@
 # Optim master release notes
+* NewtonTrustRegion: under `allow_f_increases = false`, a rise of the objective within the noise level `epsilon_f` no longer ends the run
 * LBFGSB: the line search evaluates the point the iteration accepts, so a step that reaches a bound is no longer evaluated twice; a failed or zero-length line search restarts the memory, or ends the run unconverged, instead of taking a fixed step or ending as converged; MTLS backtracks from non-finite values; a NaN slope or gradient no longer passes the descent and convergence tests
 * BFGS: optional scaling of the inverse Hessian, `initial_scaling = Optim.ShannoPhua()` and `self_scaling = Optim.AlBaali()` or `Optim.OrenLuenberger()`, all off by default
 * Fix Preconditioning example for v1.0 syntax
