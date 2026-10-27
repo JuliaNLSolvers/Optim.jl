@@ -197,3 +197,53 @@ for optimizer in (:BFGS, :LBFGS, :ConjugateGradient),
             options = Optim.Options(g_abstol = 1e-10, iterations = 5_000))
         )
 end
+
+# A convex quadratic x'Ax/2 - b'x with A = tridiag(-1, 2.01, -1), condition number
+# about 400, for LBFGSB. b is chosen so that the minimizer in [-1, 1]^n has a random
+# half of the variables at a bound, on random sides, so the pattern of active
+# variables and gradient signs is not one a branch predictor can learn. The same
+# quadratic without bounds exercises the path where every variable is free.
+tridiagonal_product(x, i) =
+    2.01 * x[i] - (i > 1 ? x[i-1] : zero(eltype(x))) -
+    (i < length(x) ? x[i+1] : zero(eltype(x)))
+
+function tridiagonal_rhs(n)
+    rng = MersenneTwister(0)
+    side = [rand(rng) < 0.5 ? 0 : rand(rng, (-1, 1)) for _ = 1:n]
+    xstar = [s == 0 ? 2 * rand(rng) - 1 : float(s) for s in side]
+    # the gradient at xstar: zero on the free variables, pointing out of the box on the
+    # active ones
+    gstar = [-s * rand(rng) for s in side]
+    return [tridiagonal_product(xstar, i) - gstar[i] for i = 1:n]
+end
+
+tridiagonal_quadratic(x, b) =
+    sum(i -> x[i] * (tridiagonal_product(x, i) / 2 - b[i]), eachindex(x, b))
+
+function tridiagonal_quadratic_gradient!(G, x, b)
+    for i in eachindex(G, x, b)
+        G[i] = tridiagonal_product(x, i) - b[i]
+    end
+    return G
+end
+
+if isdefined(Optim, :LBFGSB)
+    for n in (100, 10_000), (bounds, lu) in (("box", (-1.0, 1.0)), ("none", (-Inf, Inf)))
+        SUITE["multivariate"]["problems"]["tridiagonal_quadratic"][n][bounds][:LBFGSB] =
+            @benchmarkable(
+                optimize(
+                    x -> tridiagonal_quadratic(x, b),
+                    (G, x) -> tridiagonal_quadratic_gradient!(G, x, b),
+                    l,
+                    u,
+                    x0,
+                    LBFGSB(),
+                    Optim.Options(),
+                ),
+                setup = (b = tridiagonal_rhs($n);
+                l = fill($(lu[1]), $n);
+                u = fill($(lu[2]), $n);
+                x0 = zeros($n))
+            )
+    end
+end
