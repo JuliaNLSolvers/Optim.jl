@@ -125,6 +125,17 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
     )
 end
 
+# The gradient is O(n), so for larger n the timings are dominated by the O(n^2) update
+# of the inverse Hessian approximation
+for n in (2, 20, 100), optimizer in (:BFGS,)
+    SUITE["multivariate"]["problems"]["rosenbrock"][n][optimizer] = @benchmarkable(
+        optimize(rosenbrock, rosenbrock_gradient!, x0, opt, options),
+        setup = (x0 = repeat([-1.2, 1.0], $n ÷ 2);
+        opt = $(getproperty(Optim, optimizer))();
+        options = Optim.Options(iterations = 1_000))
+    )
+end
+
 # The saddle's minimum is about -13.1n, and near it the predicted reduction falls below
 # one ulp of f, so roundoff alone makes the objective noisy. Without a noise level the
 # radius collapses there and the run ends on the f-change test above g_abstol, so the
