@@ -124,3 +124,14 @@ for n in (2, 20, 100), optimizer in (:Newton, :NewtonTrustRegion, :KrylovTrustRe
         options = Optim.Options(iterations = 1_000))
     )
 end
+
+# The gradient is O(n), so for larger n the timings are dominated by the O(n^2) update
+# of the inverse Hessian approximation
+for n in (2, 20, 100), optimizer in (:BFGS,)
+    SUITE["multivariate"]["problems"]["rosenbrock"][n][optimizer] = @benchmarkable(
+        optimize(rosenbrock, rosenbrock_gradient!, x0, opt, options),
+        setup = (x0 = repeat([-1.2, 1.0], $n ÷ 2);
+        opt = $(getproperty(Optim, optimizer))();
+        options = Optim.Options(iterations = 1_000))
+    )
+end

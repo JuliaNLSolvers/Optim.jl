@@ -207,9 +207,17 @@ function accept_step!(d, state::BFGSState, method::BFGS, options)
         # invH = invH + c1 * (s * s') - c2 * (u * s' + s * u') = invH + s * w' + w * s'
         # with w = c1 / 2 * s - c2 * u, which keeps invH exactly symmetric
         u .= (c1 / 2) .* dx .- c2 .* u
-        invH .+= vec(dx) .* vec(u)' .+ vec(u) .* vec(dx)'
+        _symmetric_rank2_update!(invH, vec(dx), vec(u))
     end
     return true
+end
+
+# H = H + s * w' + w * s'
+# A separate function, since inlined into `accept_step!` the broadcast is not vectorized
+# on Julia 1.10 and 1.12+ (#1291)
+function _symmetric_rank2_update!(H::AbstractMatrix, s::AbstractVector, w::AbstractVector)
+    H .+= s .* w' .+ w .* s'
+    return H
 end
 
 function trace!(tr, d, state::BFGSState, iteration::Integer, method::BFGS, options::Options, curr_time = time())
