@@ -2,21 +2,29 @@
 # Brent
 ## Constructor
 ```julia
-    Brent(;)
+    Brent(; evaluate_bounds = true)
 ```
 
 ## Description
-Also known as the Brent-Dekker algorithm, `Brent` is a univariate optimization
-algorithm for minimizing functions on some interval `[a,b]`. The method uses bisection
-to find a zero of the gradient. If the original interval contains a minimum,
-bisection will reliably find the solution, but can be slow. To this end `Brent`
-combines bisection with the secant method and inverse quadratic interpolation to
-accelerate convergence.
+`Brent` minimizes a function on an interval `[a,b]` without derivatives. It combines
+golden-section search, which shrinks the interval reliably but slowly, with parabolic
+interpolation through the best points found so far, which converges faster near a
+smooth minimum.
+
+With `evaluate_bounds = true` the objective is also evaluated at `a` and `b`, and the
+search starts from the lowest of those two and the first interior point. Since the
+search only moves to lower points, the result is never above either bound. This costs
+two evaluations and helps on functions that are flat over much of the interval, where
+the first interior point can sit on a plateau. Brent's original method does not
+evaluate the bounds.
 
 ## References
 R. P. Brent (2002) Algorithms for Minimization Without Derivatives. Dover edition.
 """
-struct Brent <: UnivariateOptimizer end
+struct Brent <: UnivariateOptimizer
+    evaluate_bounds::Bool
+end
+Brent(; evaluate_bounds::Bool = true) = Brent(evaluate_bounds)
 
 Base.summary(io::IO, ::Brent) = print(io, "Brent's Method")
 
@@ -59,6 +67,15 @@ function optimize(
     new_minimum = f(new_minimizer)
     best_bound = "initial"
     f_calls = 1 # Number of calls to f
+    if mo.evaluate_bounds
+        f_lower = f(x_lower)
+        f_upper = f(x_upper)
+        f_calls += 2
+        if min(f_lower, f_upper) < new_minimum
+            new_minimizer, new_minimum =
+                f_lower <= f_upper ? (x_lower, f_lower) : (x_upper, f_upper)
+        end
+    end
     step = zero(T)
     old_step = zero(T)
 
@@ -125,7 +142,7 @@ function optimize(
 
         if abs(p) < abs(q * old_step / 2) &&
            p < q * (x_upper - new_minimizer) &&
-           p < q * (new_minimizer - x_lower)
+           p > q * (x_lower - new_minimizer)
             old_step = step
             step = p / q
 
@@ -145,7 +162,7 @@ function optimize(
         if abs(step) >= x_tol
             new_x = new_minimizer + step
         else
-            new_x = new_minimizer + ((step > 0) ? x_tol : -x_tol)
+            new_x = new_minimizer + copysign(x_tol, step)
         end
 
         new_f = f(new_x)

@@ -446,9 +446,11 @@ function optimize(
     upper::AbstractArray,
     x0::AbstractArray,
     method::IPNewton,
-    options::Options = Options(; default_options(method)...),
+    options::Options = Options(; default_options(method)...);
+    inplace::Bool = true,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    d = TwiceDifferentiable(f, g, x0)
+    d = TwiceDifferentiable(f, g, x0; inplace, autodiff)
     optimize(d, lower, upper, x0, method, options)
 end
 function optimize(
@@ -459,9 +461,12 @@ function optimize(
     upper::AbstractArray,
     x0::AbstractArray,
     method::IPNewton = IPNewton(),
-    options::Options = Options(; default_options(method)...),
+    options::Options = Options(; default_options(method)...);
+    inplace::Bool = true,
+    autodiff::ADTypes.AbstractADType = DEFAULT_AD_TYPE,
 )
-    d = TwiceDifferentiable(f, g, h, x0)
+    # `autodiff` is accepted for a uniform interface; the Hessian is given
+    d = TwiceDifferentiable(f, g, h, x0; inplace)
     optimize(d, lower, upper, x0, method, options)
 end
 function optimize(

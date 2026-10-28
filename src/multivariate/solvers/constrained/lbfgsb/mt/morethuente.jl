@@ -59,6 +59,13 @@ function more_thuente(ϕdϕ, α0, ϕ0, dϕ0; μ=1e-4, η=0.9, max_iters=100,
 
     for _ in 1:max_iters
         fₜ, gₜ = ϕdϕ(αₜ)
+        # A non-finite trial bounds the search: no later trial goes that far, and the
+        # step shrinks toward the best point until ϕ and ϕ' are finite again.
+        if !(isfinite(fₜ) && isfinite(gₜ))
+            αmax = min(αmax, αₜ)
+            αₜ = αₗ + (αₜ - αₗ) / 10
+            continue
+        end
         ftest = ϕ0 + αₜ * μdϕ0
 
         # ── Termination checks ──────────────────────────────────────

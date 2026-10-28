@@ -12,10 +12,12 @@
         end
     end
     @testset "multivariate" begin
-        resmax = maximize(x -> x[1]^3 + x[2]^2, [3.0, 0.0])
-        resmin = optimize(x -> -x[1]^3 - x[2]^2, [3.0, 0.0])
+        g(x) = 3 - (x[1] - 1)^2 - 2 * (x[2] + 0.5)^2
+        resmax = maximize(g, [3.0, 0.0])
+        resmin = optimize(x -> -g(x), [3.0, 0.0])
         @test Optim.maximum(resmax) == -Optim.minimum(resmin)
-        @test resmax.res.minimum == resmin.minimum
+        @test Optim.maximizer(resmax) == Optim.minimizer(resmin)
+        @test Optim.maximum(resmax) ≈ 3 atol = 1e-2
         for meth in (
             NelderMead(),
             BFGS(),
@@ -25,10 +27,14 @@
             NewtonTrustRegion(),
             SimulatedAnnealing(),
         )
-            resmax = maximize(x -> x[1]^3 + x[2]^2, [3.0, 0.0])
-            resmin = optimize(x -> -x[1]^3 - x[2]^2, [3.0, 0.0])
+            Random.seed!(1)
+            resmax = maximize(g, [3.0, 0.0], meth)
+            Random.seed!(1)
+            resmin = optimize(x -> -g(x), [3.0, 0.0], meth)
+            @test summary(resmax.res) == summary(meth)
             @test Optim.maximum(resmax) == -Optim.minimum(resmin)
-            @test resmax.res.minimum == resmin.minimum
+            @test Optim.maximizer(resmax) == Optim.minimizer(resmin)
+            @test Optim.maximum(resmax) ≈ 3 atol = 1e-2
         end
     end
 
@@ -59,8 +65,8 @@
     end
 
     for alg in (NelderMead(), BFGS(), Newton())
-        resmax_fg = maximize(fmax, gmax, prob.initial_x, BFGS())
-        resmin_fg = optimize(f, g!, prob.initial_x, BFGS())
+        resmax_fg = maximize(fmax, gmax, prob.initial_x, alg)
+        resmin_fg = optimize(f, g!, prob.initial_x, alg)
         test_same_content(resmax_fg, resmin_fg)
     end
 

@@ -11,6 +11,15 @@ import LBFGSB as RefLBFGSB
     # the type's own module (`parentmodule(V).HZAW()` / `.MTLS()`).
     variants = (LBFGSB, Optim.SimpleLBFGSBReference.SimpleLBFGSB)
 
+    # Reference for "agreement with Fminbox(LBFGS())", the same for both variants
+    fminbox_rosen = optimize(
+        x -> (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2,
+        [-2.0, -2.0],
+        [2.0, 2.0],
+        [-1.2, 1.0],
+        Fminbox(LBFGS()),
+    )
+
     @testset "$(nameof(V))" for V in variants
         @testset "unconstrained problems with slack bounds" begin
             for (name, prob) in MVP.UnconstrainedProblems.examples
@@ -41,9 +50,8 @@ import LBFGSB as RefLBFGSB
             u = [2.0, 2.0]
             x0 = [-1.2, 1.0]
             rb = optimize(rosen, l, u, x0, V())
-            rf = optimize(rosen, l, u, x0, Fminbox(LBFGS()))
             @test Optim.minimizer(rb) ≈ [1.0, 1.0] atol = 1e-4
-            @test Optim.minimizer(rb) ≈ Optim.minimizer(rf) atol = 1e-3
+            @test Optim.minimizer(rb) ≈ Optim.minimizer(fminbox_rosen) atol = 1e-3
         end
 
         @testset "line searches" begin
@@ -329,5 +337,95 @@ import LBFGSB as RefLBFGSB
         @test feasible(Optim.minimizer(res), l, u)
         @test Optim.minimum(res) ≈ 0.12234569775490675 atol = 1e-8
         @test Optim.f_calls(res) <= 55
+    end
+
+    @testset "an indefinite T refreshes the memory" begin
+        # T = θ SᵀS + L D⁻¹ Lᵀ is positive definite in exact arithmetic but can lose that
+        # in floating point when the stored steps are nearly dependent, as on Powell's
+        # badly scaled function. The Fortran then refreshes the memory and restarts from
+        # B = I. Corrupt the stored SᵀS so that T is indefinite after the next update.
+        B = Optim.CompactLBFGS{Float64}(2, 5)
+        Optim.update_compact!(B, [0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [2.0, 1.0])
+        @test B.k == 1
+        B.SᵀS[1, 1] = -1.0
+        yts = Optim.update_compact!(B, [1.0, 0.0], [1.0, 1.0], [2.0, 1.0], [2.0, 2.0])
+        @test iszero(yts)
+        @test B.k == 0
+        @test B.θ == 1
+        @test B.iupdat == 0
+    end
+
+    @testset "each accepted point is evaluated once" begin
+        # x + αd can fall a rounding width inside a bound, so evaluating it in the line
+        # search and then its projection in the main loop cost a second call at what is
+        # the same point to within a few ulps.
+        c = [2.6644647576513965, 2.4315480519908306, -0.8310801300270224, 2.191680369462489, -5.973033768404758]
+        w = [27.99821012602616, 4.509132243751541, 1.415297678256256, 2.1084253095721075, 2.4406944118321636]
+        l = [-0.9396236707040456, -0.17291887058593405, -0.935081612015503, -1.082608005797607, -0.898426798441686]
+        u = [0.4596704334760291, 0.5820859319453694, 0.39933808684831007, 0.41393038856074815, 0.10136811645040592]
+        x0 = [0.10904983262356838, 0.08683263763958968, 0.2219384726137681, -0.7138648591312208, -0.47288496423442106]
+        xs = Vector{Vector{Float64}}()
+        f = x -> (push!(xs, copy(x)); sum(w .* (x .- c) .^ 2) + 0.1 * sum(x)^2)
+        g! = (G, x) -> (G .= 2 .* w .* (x .- c) .+ 0.2 * sum(x); G)
+        for ls in (Optim.HZAW(), Optim.MTLS())
+            empty!(xs)
+            res = optimize(f, g!, l, u, x0, LBFGSB(linesearch = ls))
+            @test Optim.converged(res)
+            @test feasible(Optim.minimizer(res), l, u)
+            @test !any(i -> isapprox(xs[i], xs[i+1]; rtol = 1e-14), 1:length(xs)-1)
+        end
+    end
+
+    @testset "a line search that does not move x is a failure" begin
+        # A step that leaves x unchanged used to end the run on the zero change in x as
+        # converged. It is a failed line search: with a memory the iteration is redone
+        # from B = I, and with none the run stops unconverged.
+        struct ZeroStep <: Optim.LineSearcher end
+        Optim.find_steplength(::ZeroStep, φ, φ0, dφ0, c; αmax = Inf) = (zero(c), φ0, false)
+        rosen(x) = (1.0 - x[1])^2 + 100.0 * (x[2] - x[1]^2)^2
+        res = optimize(rosen, [-2.0, -2.0], [2.0, 2.0], [-1.2, 1.0], LBFGSB(linesearch = ZeroStep()))
+        @test !Optim.converged(res)
+        @test res.termination_code == Optim.TerminationCode.FailedLinesearch
+        @test Optim.minimizer(res) == [-1.2, 1.0]
+    end
+
+    @testset "More-Thuente shrinks a step that gives a non-finite value" begin
+        # ϕ(α) = (α - 1)², not finite beyond α = 2; the first trial is α = 4
+        ϕdϕ(α) = α <= 2 ? ((α - 1)^2, 2 * (α - 1)) : (Inf, NaN)
+        α, fα, gα = Optim.more_thuente(ϕdϕ, 4.0, 1.0, -2.0)
+        @test isfinite(α) && isfinite(fα)
+        @test 0 < α <= 2
+        @test fα <= 1.0 + 1e-4 * α * -2.0
+    end
+
+    @testset "a NaN slope restarts the memory" begin
+        # Brown almost-linear from 10 x0: the compact representation overflows on the
+        # third iteration and every component of the direction is NaN. The slope used
+        # to pass the descent test, so MTLS threw its assertion and HZAW stepped to NaN.
+        n = 100
+        function brownal(x)
+            s = sum(x)
+            sum(i -> (x[i] + s - (n + 1))^2, 1:n-1) + (prod(x) - 1)^2
+        end
+        function brownal_g!(G, x)
+            s = sum(x)
+            r = [x[i] + s - (n + 1) for i in 1:n-1]
+            p = prod(x)
+            for k in 1:n
+                G[k] = 2 * (k < n ? r[k] : 0.0) + 2 * sum(r) + 2 * (p - 1) * prod(x[j] for j in 1:n if j != k)
+            end
+            G
+        end
+        x0 = fill(5.0, n)
+        for ls in (Optim.HZAW(), Optim.MTLS())
+            res = optimize(brownal, brownal_g!, fill(-Inf, n), fill(Inf, n), x0, LBFGSB(linesearch = ls))
+            @test isfinite(Optim.minimum(res))
+            @test all(isfinite, Optim.minimizer(res))
+            @test Optim.minimum(res) < 1e-10
+        end
+    end
+
+    @testset "the projected gradient norm of a NaN gradient is NaN" begin
+        @test isnan(Optim.pg_norm([0.0, 0.0], [NaN, 1.0], fill(-Inf, 2), fill(Inf, 2)))
     end
 end

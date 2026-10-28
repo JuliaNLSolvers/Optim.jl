@@ -2,13 +2,52 @@
 # JMW's dx <=> NW's s
 # JMW's dg <=> NW' y
 
-struct BFGS{IL,L,H,T,TM} <: FirstOrderOptimizer
+struct BFGS{IL,L,H,T,TM,IS,SS} <: FirstOrderOptimizer
     alphaguess!::IL
     linesearch!::L
     initial_invH::H
     initial_stepnorm::T
     manifold::TM
+    initial_scaling::IS
+    self_scaling::SS
 end
+
+abstract type InitialScaling end
+abstract type SelfScaling end
+
+"""
+    ShannoPhua()
+
+`initial_scaling` rule for `BFGS`: just before the first update, replace the initial
+inverse Hessian by `(s'y / y'y) I`, with `s` the step and `y` the change in gradient
+(Shanno and Phua, 1978).
+"""
+struct ShannoPhua <: InitialScaling end
+
+"""
+    OrenLuenberger()
+
+`self_scaling` rule for `BFGS`: before an update, scale the Hessian approximation
+`B` by `τ = ρ = y's / s'Bs` (Oren and Luenberger, 1974).
+"""
+struct OrenLuenberger <: SelfScaling end
+
+"""
+    AlBaali(; cutoff = 0.5)
+
+`self_scaling` rule for `BFGS`: before an update, scale the Hessian approximation
+`B` by `τ = min(1, ρ)`, `ρ = y's / s'Bs`, and leave it unchanged when `ρ < cutoff`. This
+is the restricted self-scaling of Al-Baali (1998) with the cutoff of Al-Baali and Khalfan
+(2009). It only ever enlarges the inverse Hessian.
+"""
+struct AlBaali{T<:Real} <: SelfScaling
+    cutoff::T
+end
+AlBaali(; cutoff::Real = 0.5) = AlBaali(cutoff)
+
+_initial_scale(::ShannoPhua, s, y, sy) = sy / real(dot(y, y))
+_self_scale(::OrenLuenberger, ρ) = ρ
+_self_scale(r::AlBaali, ρ) = r.cutoff <= ρ < 1 ? ρ : one(ρ)
 
 Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 
@@ -18,8 +57,11 @@ Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 ```julia
 BFGS(; alphaguess = LineSearches.InitialStatic(),
        linesearch = LineSearches.HagerZhang(),
-       initial_invH = x -> Matrix{eltype(x)}(I, length(x), length(x)),
-       manifold = Flat())
+       initial_invH = nothing,
+       initial_stepnorm = nothing,
+       manifold = Flat(),
+       initial_scaling = nothing,
+       self_scaling = nothing)
 ```
 
 ## Description
@@ -30,12 +72,35 @@ quasi-Newton method that updates an approximation to the Hessian using past
 approximations as well as the gradient. See also the limited memory variant
 `LBFGS` for an algorithm that is more suitable for high dimensional problems.
 
+The inverse Hessian approximation starts from the identity matrix, or from
+`initial_invH(x0)` if given. `initial_stepnorm = z` divides the identity by the sup-norm
+of the initial gradient and multiplies it by `z`, so the first trial step has sup-norm `z`.
+
+`initial_scaling = Optim.ShannoPhua()` replaces the starting matrix by `(s'y / y'y) I`
+just before the first update, and again after a reset of the search direction (Shanno and
+Phua, 1978). Here `s` is the step and `y` the change in gradient. The update never changes
+`w'Hu` for `w`, `u` orthogonal to the step, so the scale of the starting matrix persists in
+every direction not yet explored. It is ignored when `initial_invH` is given.
+
+`self_scaling` scales the Hessian approximation `B` by a factor `τ` before every other
+update, that is, the inverse Hessian by `1/τ`. `Optim.OrenLuenberger()` uses
+`τ = y's / s'Bs` (Oren and Luenberger, 1974). `Optim.AlBaali()` uses `τ = min(1, y's / s'Bs)`
+and no scaling when `y's / s'Bs < 1/2` (Al-Baali, 1998; Al-Baali and Khalfan, 2009), so it
+only ever enlarges the inverse Hessian. That repairs the case where `ShannoPhua` alone sets
+it too small: on ill-conditioned quadratics `initial_scaling = Optim.ShannoPhua()` alone can
+take several times more iterations than the default, and together with
+`self_scaling = Optim.AlBaali()` fewer.
+
 ## References
  - Wright, S. J. and J. Nocedal (1999), Numerical optimization. Springer Science 35.67-68: 7.
  - Broyden, C. G. (1970), The convergence of a class of double-rank minimization algorithms, Journal of the Institute of Mathematics and Its Applications, 6: 76–90.
  - Fletcher, R. (1970), A New Approach to Variable Metric Algorithms, Computer Journal, 13 (3): 317–322,
  - Goldfarb, D. (1970), A Family of Variable Metric Updates Derived by Variational Means, Mathematics of Computation, 24 (109): 23–26,
  - Shanno, D. F. (1970), Conditioning of quasi-Newton methods for function minimization, Mathematics of Computation, 24 (111): 647–656.
+ - Shanno, D. F. and K. H. Phua (1978), Matrix conditioning and nonlinear optimization, Mathematical Programming, 14: 149–160.
+ - Oren, S. S. and D. G. Luenberger (1974), Self-scaling variable metric (SSVM) algorithms, Part I, Management Science, 20 (5): 845–862.
+ - Al-Baali, M. (1998), Numerical experience with a class of self-scaling quasi-Newton algorithms, Journal of Optimization Theory and Applications, 96 (3): 533–553.
+ - Al-Baali, M. and H. Khalfan (2009), A combined class of self-scaling and modified quasi-Newton methods, Optimization Online preprint 2334.
 """
 function BFGS(;
     alphaguess = LineSearches.InitialStatic(), # TODO: benchmark defaults
@@ -43,8 +108,11 @@ function BFGS(;
     initial_invH = nothing,
     initial_stepnorm = nothing,
     manifold::Manifold = Flat(),
+    initial_scaling::Union{Nothing,InitialScaling} = nothing,
+    self_scaling::Union{Nothing,SelfScaling} = nothing,
 )
-    BFGS(_alphaguess(alphaguess), linesearch, initial_invH, initial_stepnorm, manifold)
+    BFGS(_alphaguess(alphaguess), linesearch, initial_invH, initial_stepnorm, manifold,
+         initial_scaling, self_scaling)
 end
 
 mutable struct BFGSState{Tx,Tm,T,G} <: AbstractOptimizerState
@@ -64,6 +132,8 @@ mutable struct BFGSState{Tx,Tm,T,G} <: AbstractOptimizerState
     x_candidate::Tx
     g_candidate::G
     f_candidate::T
+    # true until the first update after the initial matrix was set (initial_scaling)
+    rescale_invH::Bool
     @add_linesearch_fields()
 end
 
@@ -102,6 +172,7 @@ function reset!(method, state::BFGSState, obj, x)
     else
         state.invH .= method.initial_invH(x)
     end
+    state.rescale_invH = true
 
     return nothing
 end
@@ -145,6 +216,7 @@ function initial_state(method::BFGS, ::Options, d, x0::AbstractArray)
         fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
         fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
         oftype(f_x, NaN), # Trial f value in state.f_candidate
+        true, # rescale_invH
         @initial_linesearch()...,
     )
 end
@@ -199,6 +271,18 @@ function accept_step!(d, state::BFGSState, method::BFGS, options)
     # Update the inverse Hessian approximation using Sherman-Morrison
     dx_dg = real(dot(dx, dg))
     if dx_dg > 0
+        if method.initial_scaling !== nothing && method.initial_invH === nothing && state.rescale_invH
+            γ = _initial_scale(method.initial_scaling, dx, dg, dx_dg)
+            invH .= _init_identity_matrix(state.x, convert(eltype(state.x), γ))
+            state.rescale_invH = false
+        elseif method.self_scaling !== nothing
+            # B <- τ B, so invH <- invH / τ. The step is dx = α d with B d = -g, so s'Bs = -α dx'g.
+            sBs = -state.alpha * real(dot(dx, state.g_x_previous))
+            if sBs > 0
+                τ = _self_scale(method.self_scaling, dx_dg / sBs)
+                isone(τ) || rmul!(invH, inv(τ))
+            end
+        end
         mul!(vec(u), invH, vec(dg))
 
         c1 = (dx_dg + real(dot(dg, u))) / abs2(dx_dg)
