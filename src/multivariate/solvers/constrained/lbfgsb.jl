@@ -191,8 +191,8 @@ pcol(B::CompactLBFGS, j::Int) = mod(B.head + j - 2, B.m) + 1
 
 # The stored columns as matrices: a partly filled buffer has head = 1 and holds
 # columns 1:k in order; a full one holds all m, rotated by head.
-stored_Y(B::CompactLBFGS) = B.k == B.m ? B.Y : @view(B.Y[:, 1:B.k])
-stored_S(B::CompactLBFGS) = B.k == B.m ? B.S : @view(B.S[:, 1:B.k])
+stored_Y(B::CompactLBFGS) = @view(B.Y[:, 1:B.k])
+stored_S(B::CompactLBFGS) = @view(B.S[:, 1:B.k])
 
 # Build T = θ·SᵀS + L·D⁻¹·Lᵀ and Cholesky-factor into B.J (upper triangle).
 # L = strict lower triangle of SY, D = Diagonal(diag(SY)). (Fortran `formt`.)
@@ -625,8 +625,6 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
             p[j] = q1[pj]
             p[bk+j] = q2[pj]
         end
-        fill!(Mv, zero(T))
-        fill!(wb, zero(T))
     end
 
     for j = 1:bk
@@ -742,30 +740,35 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
     q1 = @view(B.Mv[1:size(Yc, 2)])
     q2 = @view(B.wb[1:size(Yc, 2)])
 
-    # Reduced gradient r = -θ(xc - x) - g + W·(M·c).
+    # Reduced gradient r = -θ(xc - x) - g + W·(M·c). Without bounds the step starts
+    # at x with c = 0 (see optimize), so r = -g, as in the Fortran cmprlb.
     r = @view(B.r_ws[1:nsub])
-    for i = 1:nsub
-        k = B.index[i]
-        r[i] = -θ * (xc[k] - x[k]) - g[k]
-    end
-
-    bmv!(wv, c, B)   # wv[1:2col] = M·c
-    if allfree
-        for j = 1:col
-            pj = pcol(B, j)
-            q1[pj] = wv[j]
-            q2[pj] = θ * wv[col+j]
-        end
-        mul!(r, Yc, q1, true, true)
-        mul!(r, Sc, q2, true, true)
+    if !B.cnstnd
+        @. r = -g
     else
-        for j = 1:col
-            pj = pcol(B, j)
-            a1 = wv[j]
-            a2 = θ * wv[col+j]
-            for i = 1:nsub
-                k = B.index[i]
-                r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+        for i = 1:nsub
+            k = B.index[i]
+            r[i] = -θ * (xc[k] - x[k]) - g[k]
+        end
+
+        bmv!(wv, c, B)   # wv[1:2col] = M·c
+        if allfree
+            for j = 1:col
+                pj = pcol(B, j)
+                q1[pj] = wv[j]
+                q2[pj] = θ * wv[col+j]
+            end
+            mul!(r, Yc, q1, true, true)
+            mul!(r, Sc, q2, true, true)
+        else
+            for j = 1:col
+                pj = pcol(B, j)
+                a1 = wv[j]
+                a2 = θ * wv[col+j]
+                for i = 1:nsub
+                    k = B.index[i]
+                    r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+                end
             end
         end
     end

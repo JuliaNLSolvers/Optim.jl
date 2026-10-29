@@ -211,8 +211,8 @@ function tridiagonal_rhs(n)
     rng = MersenneTwister(0)
     side = [rand(rng) < 0.5 ? 0 : rand(rng, (-1, 1)) for _ = 1:n]
     xstar = [s == 0 ? 2 * rand(rng) - 1 : float(s) for s in side]
-    # the gradient at xstar: zero on the free variables, pointing out of the box on the
-    # active ones
+    # the gradient at xstar: zero on the free variables, and pointing into the box on
+    # the active ones, so that -g points out of it
     gstar = [-s * rand(rng) for s in side]
     return [tridiagonal_product(xstar, i) - gstar[i] for i = 1:n]
 end
