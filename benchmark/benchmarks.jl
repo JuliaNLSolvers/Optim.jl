@@ -137,10 +137,10 @@ for n in (2, 20, 100), optimizer in (:BFGS,)
 end
 
 # The saddle's minimum is about -13.1n, and near it the predicted reduction falls below
-# one ulp of f, so roundoff alone makes the objective noisy. Without a noise level the
-# radius collapses there and the run ends on the f-change test above g_abstol, so the
-# cells above also run NewtonTrustRegion with that rounding level as its noise floor,
-# where the version has the keyword.
+# one ulp of f, so roundoff alone makes the objective noisy. NewtonTrustRegion floors
+# its noise level at eps(abs(f)); versions without that floor collapse the radius there
+# and end on the f-change test above g_abstol. These cells set the noise level
+# explicitly, where the version has the keyword, so they are comparable across versions.
 if :epsilon_f in fieldnames(NewtonTrustRegion)
     for n in (2, 20, 100)
         SUITE["multivariate"]["problems"]["saddle"][n][:NewtonTrustRegion_noise_floor] = @benchmarkable(
