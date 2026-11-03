@@ -1,4 +1,4 @@
-using Optim, Test, Distributions, Random, LinearAlgebra
+using Optim, Test, Distributions, Random, LinearAlgebra, StableRNGs
 Random.seed!(3288)
 
 # the decomposition `solve_tr_subproblem!` solves from, for the tests that hold one
@@ -283,7 +283,9 @@ tr_cache(gr, H) =
             NewtonTrustRegion(),
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
-        @test Optim.termination_code(res) == Optim.TerminationCode.NoXChange
+        # Stalled at the kink; the last accepted step may raise f within its rounding error.
+        @test Optim.termination_code(res) in
+              (Optim.TerminationCode.NoXChange, Optim.TerminationCode.ObjectiveIncreased)
 
         res = Optim.optimize(
             t -> -ll(t[1]),
@@ -554,6 +556,26 @@ tr_cache(gr, H) =
     @testset "epsilon_f" begin
         @test iszero(NewtonTrustRegion().epsilon_f)
         @test_throws DomainError(-1.0, "noise level of the objective must be non-negative") NewtonTrustRegion(epsilon_f = -1.0)
+    end
+
+    @testset "a final step at the rounding level of f" begin
+        # Robust regression: the predicted decrease of the last step is about eps(f).
+        for n = 20:5:215
+            rng = StableRNG(n)
+            A = randn(rng, 2n, n) / sqrt(n)
+            b = A * randn(rng, n) + 5 * randn(rng, 2n) .* (rand(rng, 2n) .< 0.3)
+            f(x) = (r = A * x - b; sum(log1p, r .^ 2) + sum(abs2, x) / 2)
+            g!(G, x) = (r = A * x - b; mul!(G, A', 2 .* r ./ (1 .+ r .^ 2)); G .+= x)
+            function h!(H, x)
+                r = A * x - b
+                mul!(H, A', (2 .* (1 .- r .^ 2) ./ (1 .+ r .^ 2) .^ 2) .* A)
+                H[diagind(H)] .+= 1
+                return H
+            end
+            res = Optim.optimize(f, g!, h!, 3 * randn(rng, n), NewtonTrustRegion())
+            @test Optim.converged(res)
+            @test Optim.iterations(res) < 50
+        end
     end
 
     @testset "a noisy objective" begin

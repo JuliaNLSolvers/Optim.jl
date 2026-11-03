@@ -512,7 +512,7 @@ The constructor has 8 keywords:
 * `eta`, when the ratio of actual and predicted reduction is greater than `eta`, accept the step. Defaults to `0.1`.
 * `rho_lower`, when the ratio of actual and predicted reduction is less than `rho_lower`, shrink the trust region. Defaults to `0.25`.
 * `rho_upper`, when the ratio of actual and predicted reduction is greater than `rho_upper` and the proposed step is at the boundary of the trust region, grow the trust region. Defaults to `0.75`.
-* `epsilon_f`, a bound on the noise in computed values of the objective. When positive, the ratio of actual and predicted reduction tolerates changes in the objective of that size, which keeps the trust region from collapsing near a solution of a noisy objective. Defaults to `0.0`.
+* `epsilon_f`, a bound on the noise in computed values of the objective. The ratio of actual and predicted reduction tolerates changes in the objective of that size, which keeps the trust region from collapsing near a solution of a noisy objective. Values below the rounding error `eps(abs(f))` of the objective are raised to it.
 * `use_fg`, when true always evaluate the gradient with the value after solving the subproblem. This is more efficient if f and g share expensive computations. Defaults to `true`.
 
 ## Description
@@ -641,18 +641,16 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
     # Update the trust region size based on the discrepancy between
     # the predicted and actual function values.  (Algorithm 4.1 in N&W (2006))
     f_x_diff = f_cache - f_x
-    # `epsilon_f` bounds the noise in computed values of f; at zero this is the
-    # classical ratio. Once the predicted reduction falls below the noise, the
+    # `epsilon_f` bounds the noise in computed values of f; far above it this is
+    # the classical ratio. Once the predicted reduction falls below the noise, the
     # classical ratio is noise too, and rejected steps collapse the radius.
     # Adding r*epsilon_f to both terms sends the ratio to 1 there instead:
     # Sun & Nocedal, "A trust region method for noisy unconstrained
     # optimization", Math. Program. 202 (2023); equations (7) and (8) in the
     # numbering of the preprint, arXiv:2201.00973v1.
-    r_eps = if method.epsilon_f > 0
-        2 * method.epsilon_f / (1 - method.rho_upper)
-    else
-        zero(method.epsilon_f)
-    end
+    # A computed f is never more accurate than its rounding, eps(|f|).
+    epsilon_f = max(method.epsilon_f, eps(abs(f_cache)))
+    r_eps = 2 * epsilon_f / (1 - method.rho_upper)
     if abs(m) <= eps(typeof(m))
         # This should only happen when the step is very small, in which case
         # we should accept the step and assess_convergence(). The sign of
