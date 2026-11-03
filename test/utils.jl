@@ -16,7 +16,7 @@ import LineSearches
 import NLSolversBase
 import NLSolversBase: clear!
 import LinearAlgebra: norm, diag, I, Diagonal, dot, eigen, ishermitian, issymmetric, mul!
-import SparseArrays: normalize!, spdiagm
+import SparseArrays: normalize!, sparse, spdiagm
 
 import ForwardDiff
 import ReverseDiff

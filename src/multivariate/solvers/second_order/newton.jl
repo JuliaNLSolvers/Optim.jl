@@ -12,10 +12,16 @@ linesearch = LineSearches.HagerZhang())
 ```
 
 ## Description
-The `Newton` method implements Newton's method for optimizing a function. We use
-a special factorization from the package `PositiveFactorizations.jl` to ensure
-that each search direction is a direction of descent. See Wright and Nocedal and
-Wright (ch. 6, 1999) for a discussion of Newton's method in practice.
+The `Newton` method implements Newton's method for optimizing a function. To
+ensure that each search direction is a direction of descent, an indefinite
+Hessian is shifted by a multiple of the identity: twice the smallest one, in a
+geometric sequence, for which its Cholesky factorization succeeds (cf. Algorithm
+3.3 in Nocedal and Wright, 2006). Doubling it gives the most negative curvature
+the opposite sign rather than nearly zero. See Nocedal and Wright (ch. 6, 1999)
+for a discussion of Newton's method in practice.
+
+The Hessian is used only through Cholesky factorizations, so besides dense
+matrices it can be a sparse or a user-defined structured matrix.
 
 ## References
  - Nocedal, J. and S. J. Wright (1999), Numerical optimization. Springer Science 35.67-68: 7.
@@ -29,14 +35,13 @@ end
 
 Base.summary(io::IO, ::Newton) = print(io, "Newton's Method")
 
-mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
+mutable struct NewtonState{Tx,Tg,TH,T} <: AbstractOptimizerState
     x::Tx
     g_x::Tg
     H_x::TH
     f_x::T
     x_previous::Tx
     f_x_previous::T
-    F::F
     s::Tx
     # Trial iterate produced by update_state! / update_fgh!. Committed to
     # state.x / state.g_x / state.H_x / state.f_x by accept_step! once validated.
@@ -44,6 +49,8 @@ mutable struct NewtonState{Tx,Tg,TH,T,F<:Cholesky} <: AbstractOptimizerState
     g_candidate::Tg
     H_candidate::TH
     f_candidate::T
+    # Workspace for factorizing (shifted copies of) H_x in place
+    const W::TH
     @add_linesearch_fields()
 end
 
@@ -57,37 +64,27 @@ function initial_state(method::Newton, options, d, x0)
         f_x, # Maintain current f in state.f_x
         fill!(similar(x0), NaN), # Maintain previous state in state.x_previous
         oftype(f_x, NaN), # Store previous f in state.f_x_previous
-        Cholesky(similar(H_x, 0, 0), :U, 0),
         fill!(similar(x0), NaN), # Maintain current search direction in state.s
         fill!(similar(x0), NaN), # Trial iterate in state.x_candidate
         fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
         similar(H_x), # Trial Hessian in state.H_candidate
         oftype(f_x, NaN), # Trial f value in state.f_candidate
+        similar(H_x), # Factorization workspace in state.W
         @initial_linesearch()...,
     )
 end
 
 function update_state!(d, state::NewtonState, method::Newton)
-    # Search direction is always the negative gradient divided by
-    # a matrix encoding the absolute values of the curvatures
-    # represented by H. It deviates from the usual "add a scaled
-    # identity matrix" version of the modified Newton method. More
-    # information can be found in the discussion at issue #153.
-
-    if state.H_x isa AbstractSparseMatrix
-        state.s .= .-(state.H_x \ convert(Vector, state.g_x))
+    # The search direction solves (H + τI)s = -g with H + τI positive definite
+    # (see `_modified_cholesky!`), so it is a direction of descent. `vec` lets x
+    # be an array of any shape.
+    F = _modified_cholesky!(state.W, state.H_x)
+    if F === nothing
+        # Only a non-finite H defeats every shift; fall back to steepest descent
+        state.s .= .-state.g_x
     else
-        state.F = cholesky!(Positive, state.H_x)
-        if state.g_x isa Array
-            # is this actually StridedArray?
-            ldiv!(state.s, state.F, state.g_x)
-            state.s .= .-state.s
-        else
-            # not Array, we can't do inplace ldiv
-            gv = Vector{eltype(state.g_x)}(undef, length(state.g_x))
-            gv .= .-state.g_x
-            copyto!(state.s, state.F \ gv)
-        end
+        ldiv!(vec(state.s), F, vec(state.g_x))
+        state.s .= .-state.s
     end
     # Determine the distance of movement along the search line
     lssuccess = perform_linesearch!(state, method, d)

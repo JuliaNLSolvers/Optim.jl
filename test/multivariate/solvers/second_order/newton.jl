@@ -55,6 +55,23 @@
             Newton(),
         )
         @test norm(Optim.minimizer(res) - prob.solutions) < 1e-9
+
+        # A sparse Hessian is shifted to be positive definite as well
+        x0 = [0.0, 0.0]
+        H0 = sparse([1.0 1.0; 1.0 1.0])
+        h!(H, x) = (Hd = zeros(2, 2); MVP.hessian(prob)(Hd, x); copyto!(H, Hd))
+        d = TwiceDifferentiable(
+            MVP.objective(prob),
+            MVP.gradient(prob),
+            h!,
+            x0,
+            0.0,
+            zeros(2),
+            H0,
+        )
+        res_sparse = optimize(d, x0, Newton())
+        @test Optim.converged(res_sparse)
+        @test Optim.minimizer(res_sparse) ≈ Optim.minimizer(res)
     end
 
     @testset "Optim problems" begin
