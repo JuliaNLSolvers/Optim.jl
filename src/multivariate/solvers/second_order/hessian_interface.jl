@@ -41,6 +41,12 @@ _cholesky!(W::StridedMatrix) = cholesky!(Symmetric(W); check = false)
 # anyway), and throws on a matrix that is not exactly symmetric.
 _cholesky!(W::AbstractSparseMatrix) = cholesky(Symmetric(W); check = false)
 
+_ldiv!(y, F, b) = ldiv!(y, F, b)
+@static if VERSION < v"1.12"
+    # CHOLMOD has no `ldiv!` into a given vector before Julia 1.12
+    _ldiv!(y, F::SparseArrays.CHOLMOD.Factor, b) = copyto!(y, F \ b)
+end
+
 # The smallest diagonal entry. Each Hᵢᵢ = eᵢᵀHeᵢ is a Rayleigh quotient, so
 # λ_min(H) ≤ min Hᵢᵢ: no shift τ ≤ -min Hᵢᵢ makes H + τI positive definite.
 # (`Base.` since Optim has a `minimum` of its own, for results.)

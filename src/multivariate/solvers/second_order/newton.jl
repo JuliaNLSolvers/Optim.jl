@@ -83,7 +83,7 @@ function update_state!(d, state::NewtonState, method::Newton)
         # Only a non-finite H defeats every shift; fall back to steepest descent
         state.s .= .-state.g_x
     else
-        ldiv!(vec(state.s), F, vec(state.g_x))
+        _ldiv!(vec(state.s), F, vec(state.g_x))
         state.s .= .-state.s
     end
     # Determine the distance of movement along the search line

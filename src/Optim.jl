@@ -67,7 +67,7 @@ using LinearAlgebra:
     ldiv!,
     dot
 
-using SparseArrays: AbstractSparseMatrix
+using SparseArrays: SparseArrays, AbstractSparseMatrix
 
 using EnumX: @enumx # Better enums
 
