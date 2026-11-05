@@ -112,7 +112,8 @@ hvp_calls(r::MultivariateOptimizationResults) = r.hvp_calls
 
 converged(r::UnivariateOptimizationResults) = r.stopped_by.converged
 function converged(r::MultivariateOptimizationResults)
-    conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged
+    conv_flags = r.stopped_by.x_converged || r.stopped_by.f_converged || r.stopped_by.g_converged ||
+        r.stopped_by.newton_decrement_converged
     x_isfinite = isfinite(x_abschange(r)) || isnan(x_relchange(r))
     f_isfinite = if r.stopped_by.iterations > 0
         isfinite(f_abschange(r)) || isnan(f_relchange(r))
@@ -136,6 +137,10 @@ f_increased(r::MultivariateOptimizationResults) = r.stopped_by.f_increased
 g_converged(r::OptimizationResults) =
     error("g_converged is not implemented for $(summary(r)).")
 g_converged(r::MultivariateOptimizationResults) = r.stopped_by.g_converged
+newton_decrement_converged(r::OptimizationResults) =
+    error("newton_decrement_converged is not implemented for $(summary(r)).")
+newton_decrement_converged(r::MultivariateOptimizationResults) =
+    r.stopped_by.newton_decrement_converged
 
 x_abstol(r::OptimizationResults) = error("x_abstol is not implemented for $(summary(r)).")
 x_reltol(r::OptimizationResults) = error("x_reltol is not implemented for $(summary(r)).")
@@ -159,6 +164,17 @@ g_tol(r::MultivariateOptimizationResults) = r.g_abstol
 g_abstol(r::OptimizationResults) = error("g_tol is not implemented for $(summary(r)).")
 g_abstol(r::MultivariateOptimizationResults) = r.g_abstol
 g_residual(r::MultivariateOptimizationResults) = r.g_residual
+
+newton_decrement_abstol(r::OptimizationResults) =
+    error("newton_decrement_abstol is not implemented for $(summary(r)).")
+newton_decrement_abstol(r::MultivariateOptimizationResults) = r.newton_decrement_abstol
+newton_decrement_reltol(r::OptimizationResults) =
+    error("newton_decrement_reltol is not implemented for $(summary(r)).")
+newton_decrement_reltol(r::MultivariateOptimizationResults) = r.newton_decrement_reltol
+# Half the squared Newton decrement at the minimizer, NaN when it was not evaluated there
+newton_decrement(r::OptimizationResults) =
+    error("newton_decrement is not implemented for $(summary(r)).")
+newton_decrement(r::MultivariateOptimizationResults) = r.newton_decrement
 
 
 initial_x(r::OptimizationResults) =

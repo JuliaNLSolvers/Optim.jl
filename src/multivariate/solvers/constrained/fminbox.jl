@@ -660,6 +660,7 @@ function optimize(
         f_converged = _f_converged,
         g_converged = _g_converged,
         small_trustregion_radius = false,
+        newton_decrement_converged = false,
     )
     termination_code = _termination_code(df, g_residual(g), BoxState(x, f_x, x_previous, f_x_previous), stopped_by, options)
 
@@ -689,5 +690,9 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        # The inner runs use the decrement of the barrier problem; the outer loop has none
+        oftype(results.g_abstol, NaN),
+        oftype(results.g_abstol, NaN),
+        oftype(g_residual(g), NaN),
     )
 end

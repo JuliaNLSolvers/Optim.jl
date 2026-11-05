@@ -67,6 +67,7 @@ function optimize(
     options::Options = Options(),
 ) where {Tx}
     (; callback) = options
+    _check_newton_decrement_support(method, options)
     time0 = time() # Initial time stamp used to control early stopping by options.time_limit
 
     hline = "="^80
@@ -239,9 +240,12 @@ function optimize(
                             NLSolversBase.hvp_calls(d),
                             options.time_limit,
                             _time - time0,
-                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = NLSolversBase.f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false),
+                            (;x_converged = x_absΔ <0.0, f_converged = f_absΔ  <= 0.0, g_converged = false, iterations = NLSolversBase.f_calls(d) >= options.iterations, time_limit = _time - time0 > options.time_limit, callback = stopped_by_callback, f_increased = false, ls_failed = false, newton_decrement_converged = false),
                             # not hit ever since stopped_by were not here?
                             termination_code,
+                            NaN,
+                            NaN,
+                            NaN,
                         )
                     end
                 end

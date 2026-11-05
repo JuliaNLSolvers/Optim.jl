@@ -17,6 +17,7 @@ general_tests = [
     "types",
     "counter",
     "maximize",
+    "newton_decrement",
 ]
 general_tests = map(s -> "./general/" * s * ".jl", general_tests)
 

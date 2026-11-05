@@ -19,6 +19,7 @@
 
     method = BFGS(; linesearch)
     state = Optim.initial_state(method, Optim.Options(), d, copy(x0))
+    Optim.search_direction!(d, state, method)
     Optim.update_state!(d, state, method)
     @test calls[] == 1
     @test jvp_calls[] == 0
@@ -43,6 +44,7 @@ end
         state = Optim.initial_state(method, options, d, copy(x0))
 
         for _ = 1:5
+            Optim.search_direction!(d, state, method)
             Optim.update_state!(d, state, method) && break
             f_calls = NLSolversBase.f_calls(d)
             Optim.update_fgh!(d, state, method)

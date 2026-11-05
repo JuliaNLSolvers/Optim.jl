@@ -17,6 +17,8 @@ KrylovTrustRegion(;
     cg_tol::Real = 0.01,
 ) = KrylovTrustRegion(initial_radius, max_radius, eta, rho_lower, rho_upper, cg_tol)
 
+_supports_newton_decrement(::KrylovTrustRegion) = true
+
 # TODO: support x::Array{T,N} et al.?
 mutable struct KrylovTrustRegionState{T} <: AbstractOptimizerState
     x::Vector{T}
@@ -116,6 +118,7 @@ function cg_steihaug!(
     copyto!(r, g_x)  # so at first the whole gradient is the residual.
     d .= .-r # the first direction is the direction of steepest descent.
     rho0 = 1e100  # just a big number
+    residual_exit = false
 
     state.cg_iters = 0
     for i = 1:length(x)
@@ -148,12 +151,32 @@ function cg_steihaug!(
         d[:] = -r + r_sqnorm_ratio * d
 
         if (rho_next / rho0) < method.cg_tol^2
+            residual_exit = true
             break
         end
     end
 
     Hd = hvp!(objective, x, z)
-    return dot(g_x, z) + 0.5 * dot(z, Hd)
+    return dot(g_x, z) + 0.5 * dot(z, Hd), residual_exit
+end
+
+function search_direction!(
+    objective,
+    state::KrylovTrustRegionState,
+    method::KrylovTrustRegion,
+)
+    state.m_diff, residual_exit = cg_steihaug!(objective, state, method)
+
+    # Only a CG run that stopped on its residual test, inside the radius and on positive
+    # curvature, approximates the Newton step. Its model decrease then falls short of
+    # λ²/2 by rᵀH⁻¹r/2, with ‖r‖ ≤ cg_tol * ‖g‖.
+    return if residual_exit && state.m_diff < 0
+        oftype(state.f_x, -state.m_diff)
+    elseif all(iszero, state.g_x)
+        zero(state.f_x)
+    else
+        oftype(state.f_x, Inf)
+    end
 end
 
 
@@ -162,8 +185,7 @@ function update_state!(
     state::KrylovTrustRegionState,
     method::KrylovTrustRegion,
 )
-    state.m_diff = cg_steihaug!(objective, state, method)
-
+    # `search_direction!` has set state.s and state.m_diff
     state.x_cache .= state.x .+ state.s
     f_x_cache = NLSolversBase.value!(objective, state.x_cache)
     state.f_diff = f_x_cache - state.f_x

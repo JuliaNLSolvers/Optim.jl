@@ -44,6 +44,8 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `f_abstol`: Absolute tolerance in changes of the objective value. Defaults to `0.0`.
 * `f_reltol`: Relative tolerance in changes of the objective value. Defaults to `0.0`.
 * `g_abstol`: Absolute tolerance in the gradient, in infinity norm. Defaults to `1e-8`. For gradient free methods, this will control the main convergence tolerance, which is solver specific.
+* `newton_decrement_abstol`: Absolute tolerance on half the squared Newton decrement, `λ²/2 = gᵀB⁻¹g/2`, where `B` is the Hessian or the method's approximation of it. Defaults to `NaN` (off).
+* `newton_decrement_reltol`: Relative tolerance on the same quantity: the run stops when `λ²/2 ≤ newton_decrement_reltol * |f(x)|`. Defaults to `NaN` (off).
 * `f_calls_limit`: A soft upper limit on the number of objective calls. Defaults to `0` (unlimited).
 * `g_calls_limit`: A soft upper limit on the number of gradient calls. Defaults to `0` (unlimited).
 * `h_calls_limit`: A soft upper limit on the number of Hessian calls. Defaults to `0` (unlimited).
@@ -52,6 +54,36 @@ In addition to the solver, you can alter the behavior of the Optim package by us
 * `iterations`: How many iterations will run before the algorithm gives up? Defaults to `1_000`.
 * `time_limit`: A soft upper limit on the total run time. Defaults to `NaN` (unlimited).
 * `callback`: A function to be called after every iteration. The return value should be a boolean, where `true` will stop the `optimize` call early. The argument to the callback is the state of the optimization algorithm.
+
+!!! note "The Newton decrement"
+    `λ²/2` is the decrease that the method's quadratic model predicts for a full step,
+    so it estimates `f(x) - f*` in the units of the objective. Unlike `|g(x)|`, it does
+    not change when the variables `x` are rescaled. `newton_decrement_abstol` bounds this
+    estimate in the units of `f`, so it is unaffected by adding a constant to `f`, but has
+    to follow the scale of `f`. `newton_decrement_reltol` bounds it as a fraction of `|f(x)|`,
+    so it is unaffected by scaling `f`, but it never fires on a problem whose minimum
+    is zero, such as a least squares problem with zero residual. The run stops when
+    either tolerance is met.
+
+    The criterion is checked before each line search, once the search direction is
+    known, so it costs no extra work. It is supported by `BFGS` and `LBFGS` once they
+    hold curvature information from at least one step, by `NewtonTrustRegion` where
+    the Hessian is positive definite, and by `KrylovTrustRegion` where its conjugate
+    gradient solve stops on its residual test inside the trust region. The conjugate
+    gradient estimate is smaller than `λ²/2`, by a relative error of at most `cg_tol²`
+    times the condition number of the Hessian, so lower `cg_tol` on badly conditioned
+    problems. `Fminbox` applies the criterion to the barrier problem of each inner run.
+    Setting either tolerance for any other method throws an `ArgumentError`. The value
+    at the returned point is `Optim.newton_decrement(res)`, which is `NaN` when both
+    tolerances are off, and a run stopped by the criterion has the termination code
+    `Optim.TerminationCode.NewtonDecrement`.
+
+!!! warning "Quasi-Newton methods estimate the decrement"
+    `BFGS` and `LBFGS` build `B` from past steps, so their `λ²/2` is only an estimate of
+    the true decrement. Where `B` overstates the curvature at `x`, the estimate is too
+    small, and the run can stop while `f(x) - f*` is still above the tolerance. This is
+    likely where the curvature shrinks toward the minimizer, as it does when the Hessian
+    is singular there. Set the tolerance below the accuracy you need in `f`.
 
 !!! tip "Disabling a termination criterion"
     If the `x_abstol`, `x_reltol`, `f_abstol`, `f_reltol`, `g_tol`, or `time_limit` tolerances are set to `NaN` all comparisons will be false internally, and this fact can be used to turn off the check. For example, `x_reltol` defaults to `0`. This does not mean that the check is turned off it only means that we stop at exactly zero change. However, if we set it to `NaN` specifically, the check of the termination criterion is always false and as such we will never stop due to any value of the infinity norm of the vector of relative changes.

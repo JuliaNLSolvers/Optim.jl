@@ -20,6 +20,8 @@ x_reltol::Real = 0.0,
 f_abstol::Real = 0.0,
 f_reltol::Real = 0.0,
 g_abstol::Real = 1e-8,
+newton_decrement_abstol::Real = NaN,
+newton_decrement_reltol::Real = NaN,
 outer_x_abstol::Real = 0.0,
 outer_x_reltol::Real = 0.0,
 outer_f_abstol::Real = 0.0,
@@ -52,6 +54,17 @@ Options(inherit_options; opts...)
 Default values for unspecified `opts` will then be "inherited" from `inherit_options`. This
 can be used to modify a subset of options in a previously defined `Options` variable.
 
+`newton_decrement_abstol` and `newton_decrement_reltol` stop a run when half the squared
+Newton decrement, `λ²/2 = gᵀB⁻¹g/2` with `B` the Hessian or its approximation, is at
+most `newton_decrement_abstol` or at most `newton_decrement_reltol * |f(x)|`. `λ²/2` is the
+decrease that the quadratic model predicts for a full step, so it estimates `f(x) - f*`
+in the units of `f`. `BFGS` and `LBFGS` build `B` from past steps, so their `λ²/2` is only
+an estimate of the true decrement: where `B` overstates the curvature, `λ²/2` is too small
+and the run can stop before `f(x) - f*` is within the tolerance. They are supported by `BFGS`, `LBFGS`, `NewtonTrustRegion` and
+`KrylovTrustRegion` (and by `Fminbox` with one of these as the inner optimizer), and
+`optimize` throws an `ArgumentError` when they are set for any other method. The default
+`NaN` turns them off.
+
 Note: for the bound-constrained solvers (`Fminbox` and `LBFGSB`), `g_abstol` is compared
 against the infinity norm of the *projected* gradient `‖x - P(x - g)‖∞` (with `P` the
 projection onto the box), which is the first-order stationarity measure under bounds, rather
@@ -66,6 +79,8 @@ struct Options{T, TCallback}
     f_abstol::T
     f_reltol::T
     g_abstol::T
+    newton_decrement_abstol::T
+    newton_decrement_reltol::T
     outer_x_abstol::T
     outer_x_reltol::T
     outer_f_abstol::T
@@ -98,6 +113,8 @@ function Options(;
     f_abstol::Real = 0.0,
     f_reltol::Real = 0.0,
     g_abstol::Real = 1e-8,
+    newton_decrement_abstol::Real = NaN,
+    newton_decrement_reltol::Real = NaN,
     outer_x_tol = nothing,
     outer_f_tol = nothing,
     outer_g_tol = nothing,
@@ -165,6 +182,8 @@ function Options(;
             f_abstol,
             f_reltol,
             g_abstol,
+            newton_decrement_abstol,
+            newton_decrement_reltol,
             outer_x_abstol,
             outer_x_reltol,
             outer_f_abstol,
@@ -277,6 +296,8 @@ const OptimizationTrace{Tf,T} = Vector{OptimizationState{Tf,T}}
     SmallTrustRegionRadius
     "For algorithms where the TerminationCode is not yet implemented."
     NotImplemented
+    "Half the squared Newton decrement was below the prescribed tolerance."
+    NewtonDecrement
 end
 
 abstract type OptimizationResults end
@@ -307,6 +328,9 @@ mutable struct MultivariateOptimizationResults{O,Tx,Tc,Tf,M,Tsb} <: Optimization
     time_run::Float64
     stopped_by::Tsb
     termination_code::TerminationCode.T
+    newton_decrement_abstol::Tf
+    newton_decrement_reltol::Tf
+    newton_decrement::Tc
 end
 
 
@@ -389,6 +413,15 @@ function Base.show(io::IO, r::MultivariateOptimizationResults)
         @printf io "    |g(x)|                 = %.2e %s %.1e\n" g_residual(r) g_residual(
             r,
         ) <= g_tol(r) ? "≤" : "≰" g_tol(r)
+        θ = newton_decrement(r)
+        if !isnan(newton_decrement_abstol(r))
+            tol = newton_decrement_abstol(r)
+            @printf io "    λ²/2                   = %.2e %s %.1e\n" θ θ <= tol ? "≤" : "≰" tol
+        end
+        if !isnan(newton_decrement_reltol(r))
+            θrel, tol = θ / abs(minimum(r)), newton_decrement_reltol(r)
+            @printf io "    λ²/2/|f(x)|            = %.2e %s %.1e\n" θrel θrel <= tol ? "≤" : "≰" tol
+        end
     end
 
     @printf io "\n"
@@ -418,6 +451,7 @@ function Base.append!(
     a.minimizer = minimizer(b)
     a.minimum = minimum(b)
     a.stopped_by = b.stopped_by
+    a.newton_decrement = b.newton_decrement
     append!(a.trace, b.trace)
     a.f_calls += f_calls(b)
     a.g_calls += g_calls(b)
