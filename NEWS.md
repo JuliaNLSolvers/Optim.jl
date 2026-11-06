@@ -1,5 +1,6 @@
 # Optim master release notes
 * **Breaking:** `BFGS()` defaults to `initial_stepnorm = 1.0`, `initial_scaling = Optim.ShannoPhua()` and `self_scaling = Optim.AlBaali()`, which changes its iterates. `BFGS(initial_stepnorm = nothing, initial_scaling = nothing, self_scaling = nothing)` is the previous default
+* LBFGSB: without bounds the Cauchy point search is skipped once a memory exists, and products over an all-free variable set use BLAS, which cuts the solver's time per iteration on large problems
 * LBFGSB: the line search evaluates the point the iteration accepts, so a step that reaches a bound is no longer evaluated twice; a failed or zero-length line search restarts the memory, or ends the run unconverged, instead of taking a fixed step or ending as converged; MTLS backtracks from non-finite values; a NaN slope or gradient no longer passes the descent and convergence tests
 * BFGS: optional scaling of the inverse Hessian, `initial_scaling = Optim.ShannoPhua()` and `self_scaling = Optim.AlBaali()` or `Optim.OrenLuenberger()`, all off by default
 * Fix Preconditioning example for v1.0 syntax

@@ -123,7 +123,7 @@ mutable struct CompactLBFGS{T}
     wn1::Matrix{T}        # 2m × 2m, inner products
     index::Vector{Int}    # length n: free vars (1:nfree), then active vars
     iwhere::Vector{Int}   # length n: 0=free, >0=at bound
-    indx2::Vector{Int}    # length n: entering/leaving scratch (also iorder in cauchy)
+    indx2::Vector{Int}    # length n + 1: entering/leaving scratch (also iorder in cauchy)
     nfree::Int            # number of free variables
     iupdat::Int           # total BFGS updates so far
     cnstnd::Bool          # whether the problem has finite bounds
@@ -157,7 +157,7 @@ function CompactLBFGS{T}(n::Integer, m::Integer) where {T}
         zeros(T, 2m, 2m),
         collect(1:n),
         zeros(Int, n),
-        zeros(Int, n),
+        zeros(Int, n + 1),
         0,
         0,
         false,
@@ -188,6 +188,11 @@ end
 
 # Map logical column j (1 = oldest) to physical column in the circular buffer.
 pcol(B::CompactLBFGS, j::Int) = mod(B.head + j - 2, B.m) + 1
+
+# The stored columns as matrices: a partly filled buffer has head = 1 and holds
+# columns 1:k in order; a full one holds all m, rotated by head.
+stored_Y(B::CompactLBFGS) = @view(B.Y[:, 1:B.k])
+stored_S(B::CompactLBFGS) = @view(B.S[:, 1:B.k])
 
 # Build T = θ·SᵀS + L·D⁻¹·Lᵀ and Cholesky-factor into B.J (upper triangle).
 # L = strict lower triangle of SY, D = Diagonal(diag(SY)). (Fortran `formt`.)
@@ -269,36 +274,34 @@ function freev!(B::CompactLBFGS, iter::Int, updatd::Bool)
     nenter = 0
     ileave = n + 1
 
+    # The loops write to a computed slot instead of branching on iwhere, whose
+    # pattern is unpredictable; indx2[n+1] takes the writes that are not kept.
     if iter > 0 && B.cnstnd
         for i = 1:B.nfree
             k = B.index[i]
-            if B.iwhere[k] > 0
-                ileave -= 1
-                B.indx2[ileave] = k
-            end
+            leaves = B.iwhere[k] > 0
+            B.indx2[ifelse(leaves, ileave - 1, n + 1)] = k
+            ileave -= leaves
         end
         for i = (B.nfree+1):n
             k = B.index[i]
-            if B.iwhere[k] <= 0
-                nenter += 1
-                B.indx2[nenter] = k
-            end
+            enters = B.iwhere[k] <= 0
+            B.indx2[ifelse(enters, nenter + 1, n + 1)] = k
+            nenter += enters
         end
     end
 
     wrk = (ileave < n + 1) || (nenter > 0) || updatd
 
-    B.nfree = 0
+    nfree = 0
     iact = n + 1
     for i = 1:n
-        if B.iwhere[i] <= 0
-            B.nfree += 1
-            B.index[B.nfree] = i
-        else
-            iact -= 1
-            B.index[iact] = i
-        end
+        free = B.iwhere[i] <= 0
+        B.index[ifelse(free, nfree + 1, iact - 1)] = i
+        nfree += free
+        iact -= !free
     end
+    B.nfree = nfree
 
     return nenter, ileave, wrk
 end
@@ -331,15 +334,21 @@ function formk!(B::CompactLBFGS, nenter::Int, ileave::Int, updatd::Bool)
 
         ipntr = pcol(B, col)
 
+        # all free: index[1:n] is 1:n and the sums are column products
+        allfree = B.nfree == n
         for jy = 1:col
             jpntr = pcol(B, jy)
             js = m + jy
             temp1 = zero(T)
             temp2 = zero(T)
             temp3 = zero(T)
-            for ii = 1:B.nfree
-                k1 = B.index[ii]
-                temp1 += B.Y[k1, ipntr] * B.Y[k1, jpntr]
+            if allfree
+                temp1 = dot(@view(B.Y[:, ipntr]), @view(B.Y[:, jpntr]))
+            else
+                for ii = 1:B.nfree
+                    k1 = B.index[ii]
+                    temp1 += B.Y[k1, ipntr] * B.Y[k1, jpntr]
+                end
             end
             for ii = (B.nfree+1):n
                 k1 = B.index[ii]
@@ -356,9 +365,13 @@ function formk!(B::CompactLBFGS, nenter::Int, ileave::Int, updatd::Bool)
             ipntr2 = pcol(B, i)
             is = m + i
             temp3 = zero(T)
-            for ii = 1:B.nfree
-                k1 = B.index[ii]
-                temp3 += B.S[k1, ipntr2] * B.Y[k1, jpntr]
+            if allfree
+                temp3 = dot(@view(B.S[:, ipntr2]), @view(B.Y[:, jpntr]))
+            else
+                for ii = 1:B.nfree
+                    k1 = B.index[ii]
+                    temp3 += B.S[k1, ipntr2] * B.Y[k1, jpntr]
+                end
             end
             B.wn1[is, col] = temp3
         end
@@ -460,33 +473,13 @@ end
 # Project x onto the box [lb, ub].
 project(x, lb, ub) = clamp.(x, lb, ub)
 
-# Maximum step before hitting a bound along direction d.
-function max_steplength(x, d, lb, ub)
-    T = eltype(x)
-    αmax = T(Inf)
-    for i in eachindex(x)
-        if d[i] > 0
-            αmax = min(αmax, (ub[i] - x[i]) / d[i])
-        elseif d[i] < 0
-            αmax = min(αmax, (lb[i] - x[i]) / d[i])
-        end
-    end
-    return αmax
-end
-
-# Projected gradient ∞-norm, ‖x - P(x - g)‖∞, computed without allocation.
+# Projected gradient ∞-norm, ‖x - P(x - g)‖∞, computed without allocation. Each
+# component is g clamped to [x - u, x - l]: exact, without branches on the sign
+# of g, and a NaN propagates through clamp and max.
 function pg_norm(x, g, lb, ub)
     result = zero(eltype(g))
     for i in eachindex(x, g, lb, ub)
-        gi = g[i]
-        if gi < 0
-            isfinite(ub[i]) && (gi = max(x[i] - ub[i], gi))
-        elseif gi > 0
-            isfinite(lb[i]) && (gi = min(x[i] - lb[i], gi))
-        end
-        agi = abs(gi)
-        isnan(agi) && return agi
-        agi > result && (result = agi)
+        result = max(result, abs(clamp(g[i], x[i] - ub[i], x[i] - lb[i])))
     end
     return result
 end
@@ -569,35 +562,38 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
     ibkmin = 0
     bkmin = T(Inf)
 
+    # d, zero where the variable cannot move, is collected in r_ws, and p = W'd
+    # is formed from it by two column products below. The loop has no branches:
+    # the sign pattern of g is unpredictable, and every slot past nbreak is
+    # scratch, so the breakpoint is stored unconditionally and counted only when
+    # it is one.
+    dm = B.r_ws
     for i = 1:n
         gi = g[i]
-        if gi < 0
-            ti = (x[i] - ub[i]) / gi
-        elseif gi > 0
-            ti = (x[i] - lb[i]) / gi
-        else
-            continue
-        end
-
-        ti > 0 || continue
-
-        di = -gi
+        ti = (x[i] - ifelse(gi < 0, ub[i], lb[i])) / gi
+        moves = (gi != 0) & (ti > 0)
+        di = ifelse(moves, -gi, zero(T))
         f′ -= di * di
+        dm[i] = di
 
+        isbreak = moves & isfinite(ti)
+        t_bp[nbreak+1] = ti
+        iorder[nbreak+1] = i
+        newmin = isbreak & (ti < bkmin)
+        bkmin = ifelse(newmin, ti, bkmin)
+        ibkmin = ifelse(newmin, nbreak + 1, ibkmin)
+        nbreak += isbreak
+    end
+
+    if bk > 0
+        q1 = @view(B.Mv[1:size(stored_Y(B), 2)])
+        q2 = @view(B.wb[1:size(stored_Y(B), 2)])
+        mul!(q1, stored_Y(B)', dm)
+        mul!(q2, stored_S(B)', dm)
         for j = 1:bk
             pj = pcol(B, j)
-            p[j] += B.Y[i, pj] * di
-            p[bk+j] += B.S[i, pj] * di
-        end
-
-        if isfinite(ti)
-            nbreak += 1
-            t_bp[nbreak] = ti
-            iorder[nbreak] = i
-            if nbreak == 1 || ti < bkmin
-                bkmin = ti
-                ibkmin = nbreak
-            end
+            p[j] = q1[pj]
+            p[bk+j] = q2[pj]
         end
     end
 
@@ -606,7 +602,7 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
     end
 
     if f′ == zero(T)
-        copyto!(B.xc, x)
+        set_cauchy_point!(B, x, g, lb, ub, zero(T))
         fill!(c, zero(T))
         return
     end
@@ -618,11 +614,7 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
 
     if nbreak == 0
         Δtmin = max(Δtmin, zero(T))
-        xc = B.xc
-        copyto!(xc, x)
-        for i = 1:n
-            g[i] == 0 || (xc[i] = clamp(x[i] - Δtmin * g[i], lb[i], ub[i]))
-        end
+        set_cauchy_point!(B, x, g, lb, ub, Δtmin)
         c .= Δtmin .* p
         return
     end
@@ -657,11 +649,10 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
         c .+= dt .* p
         g_b = g[b]
         Wrow!(wb, B, b)
-        bmv!(Mv, c, B)
-        wMc = dot(wb, Mv)
-        bmv!(Mv, p, B)
-        wMp = dot(wb, Mv)
+        # M is symmetric, so one product M·wb gives all three forms
         bmv!(Mv, wb, B)
+        wMc = dot(c, Mv)
+        wMp = dot(p, Mv)
         wMw = dot(wb, Mv)
         f′ += dt * f″ + g_b^2 + θ * g_b * z_b - g_b * wMc
         f″ += -θ * g_b^2 - 2 * g_b * wMp - g_b^2 * wMw
@@ -678,17 +669,22 @@ function cauchy_point!(B::CompactLBFGS, x, g, lb, ub)
 
     Δtmin = max(Δtmin, zero(T))
     t_old += Δtmin
-    xc = B.xc
-    copyto!(xc, x)
-    for i = 1:n
-        if g[i] == 0
-            xc[i] = x[i]  # avoid Inf*0 = NaN
-        else
-            xc[i] = clamp(x[i] - t_old * g[i], lb[i], ub[i])
-        end
-    end
+    set_cauchy_point!(B, x, g, lb, ub, t_old)
     c .+= Δtmin .* p
 
+    return
+end
+
+# xᶜ = P(x - t·g) into B.xc, with the variables at a bound marked in B.iwhere.
+function set_cauchy_point!(B::CompactLBFGS, x, g, lb, ub, t)
+    xc = B.xc
+    iwhere = B.iwhere
+    for i in eachindex(xc, x, g, lb, ub)
+        # g[i] == 0 keeps x[i], so that t = Inf cannot give Inf*0 = NaN
+        xi = ifelse(g[i] == 0, x[i], clamp(x[i] - t * g[i], lb[i], ub[i]))
+        xc[i] = xi
+        iwhere[i] = Int((xi <= lb[i]) | (xi >= ub[i]))
+    end
     return
 end
 
@@ -707,37 +703,68 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
 
     col2 = 2col
     wv = B.work
+    # All variables free: the free set is 1:n in order and the products are taken
+    # over whole columns, with coefficients scattered to the physical column order.
+    allfree = nsub == length(x)
+    Yc, Sc = stored_Y(B), stored_S(B)
+    q1 = @view(B.Mv[1:size(Yc, 2)])
+    q2 = @view(B.wb[1:size(Yc, 2)])
 
-    # Reduced gradient r = -θ(xc - x) - g + W·(M·c).
+    # Reduced gradient r = -θ(xc - x) - g + W·(M·c). Without bounds the step starts
+    # at x with c = 0 (see optimize), so r = -g, as in the Fortran cmprlb.
     r = @view(B.r_ws[1:nsub])
-    for i = 1:nsub
-        k = B.index[i]
-        r[i] = -θ * (xc[k] - x[k]) - g[k]
-    end
-
-    bmv!(wv, c, B)   # wv[1:2col] = M·c
-    for j = 1:col
-        pj = pcol(B, j)
-        a1 = wv[j]
-        a2 = θ * wv[col+j]
+    if !B.cnstnd
+        @. r = -g
+    else
         for i = 1:nsub
             k = B.index[i]
-            r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+            r[i] = -θ * (xc[k] - x[k]) - g[k]
+        end
+
+        bmv!(wv, c, B)   # wv[1:2col] = M·c
+        if allfree
+            for j = 1:col
+                pj = pcol(B, j)
+                q1[pj] = wv[j]
+                q2[pj] = θ * wv[col+j]
+            end
+            mul!(r, Yc, q1, true, true)
+            mul!(r, Sc, q2, true, true)
+        else
+            for j = 1:col
+                pj = pcol(B, j)
+                a1 = wv[j]
+                a2 = θ * wv[col+j]
+                for i = 1:nsub
+                    k = B.index[i]
+                    r[i] += B.Y[k, pj] * a1 + B.S[k, pj] * a2
+                end
+            end
         end
     end
 
     # wv = W'Z·r
-    for j = 1:col
-        pj = pcol(B, j)
-        temp1 = zero(T)
-        temp2 = zero(T)
-        for i = 1:nsub
-            k = B.index[i]
-            temp1 += B.Y[k, pj] * r[i]
-            temp2 += B.S[k, pj] * r[i]
+    if allfree
+        mul!(q1, Yc', r)
+        mul!(q2, Sc', r)
+        for j = 1:col
+            pj = pcol(B, j)
+            wv[j] = q1[pj]
+            wv[col+j] = θ * q2[pj]
         end
-        wv[j] = temp1
-        wv[col+j] = θ * temp2
+    else
+        for j = 1:col
+            pj = pcol(B, j)
+            temp1 = zero(T)
+            temp2 = zero(T)
+            for i = 1:nsub
+                k = B.index[i]
+                temp1 += B.Y[k, pj] * r[i]
+                temp2 += B.S[k, pj] * r[i]
+            end
+            wv[j] = temp1
+            wv[col+j] = θ * temp2
+        end
     end
 
     # Solve K⁻¹·wv via the U'EU factorization (E = diag(-I_col, I_col)).
@@ -752,11 +779,21 @@ function subspace_optimize!(B::CompactLBFGS, x, g, lb, ub; clip::Bool = true)
     # du = (1/θ)r + (1/θ²)Z'W·wv
     du = @view(B.du[1:nsub])
     copyto!(du, r)
-    for j = 1:col
-        pj = pcol(B, j)
-        for i = 1:nsub
-            k = B.index[i]
-            du[i] += B.Y[k, pj] * wv[j] / θ + B.S[k, pj] * wv[col+j]
+    if allfree
+        for j = 1:col
+            pj = pcol(B, j)
+            q1[pj] = wv[j] / θ
+            q2[pj] = wv[col+j]
+        end
+        mul!(du, Yc, q1, true, true)
+        mul!(du, Sc, q2, true, true)
+    else
+        for j = 1:col
+            pj = pcol(B, j)
+            for i = 1:nsub
+                k = B.index[i]
+                du[i] += B.Y[k, pj] * wv[j] / θ + B.S[k, pj] * wv[col+j]
+            end
         end
     end
     du ./= θ
@@ -825,9 +862,19 @@ end
 function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
     s = B.s
     y = B.y
-    @. s = x_new - x
-    @. y = g_new - g
-    yts = dot(y, s)
+    T = eltype(s)
+    yts = zero(T)
+    ss = zero(T)
+    yy = zero(T)
+    for i in eachindex(s, y, x, x_new, g, g_new)
+        si = x_new[i] - x[i]
+        yi = g_new[i] - g[i]
+        s[i] = si
+        y[i] = yi
+        yts += yi * si
+        ss += si * si
+        yy += yi * yi
+    end
 
     yts <= 0 && return yts
 
@@ -841,13 +888,18 @@ function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
         B.S[:, k] .= s
         B.Y[:, k] .= y
 
+        # row k of SY and of SᵀS, as two products over the stored columns
+        q1 = @view(B.Mv[1:k])
+        q2 = @view(B.wb[1:k])
+        mul!(q1, stored_Y(B)', s)
+        mul!(q2, stored_S(B)', s)
         for j = 1:(k-1)
-            B.SY[k, j] = dot(s, @view(B.Y[:, j]))
-            B.SᵀS[j, k] = dot(@view(B.S[:, j]), s)
-            B.SᵀS[k, j] = B.SᵀS[j, k]
+            B.SY[k, j] = q1[j]
+            B.SᵀS[j, k] = q2[j]
+            B.SᵀS[k, j] = q2[j]
         end
         B.SY[k, k] = yts
-        B.SᵀS[k, k] = dot(s, s)
+        B.SᵀS[k, k] = ss
     else
         # Buffer full: circular overwrite of the oldest column.
         for i = 1:(m-1), j = 1:(m-1)
@@ -860,17 +912,21 @@ function update_compact!(B::CompactLBFGS, x, x_new, g, g_new)
         B.Y[:, ph] .= y
         B.head = mod(ph, m) + 1
 
+        q1 = @view(B.Mv[1:m])
+        q2 = @view(B.wb[1:m])
+        mul!(q1, B.Y', s)
+        mul!(q2, B.S', s)
         for j = 1:(m-1)
             pj = pcol(B, j)
-            B.SY[m, j] = dot(s, @view(B.Y[:, pj]))
-            B.SᵀS[j, m] = dot(@view(B.S[:, pj]), s)
-            B.SᵀS[m, j] = B.SᵀS[j, m]
+            B.SY[m, j] = q1[pj]
+            B.SᵀS[j, m] = q2[pj]
+            B.SᵀS[m, j] = q2[pj]
         end
         B.SY[m, m] = yts
-        B.SᵀS[m, m] = dot(s, s)
+        B.SᵀS[m, m] = ss
     end
 
-    B.θ = dot(y, y) / yts
+    B.θ = yy / yts
     B.iupdat += 1
 
     # Cholesky-factor T into B.J. If T is not positive definite, refresh the
@@ -918,9 +974,11 @@ function trial_point!(xα, x, dir, α, lb, ub, z)
 end
 
 # Callable that evaluates (ϕ(α), ϕ'(α)) along the search direction without
-# allocating per call. `x`, `dir` and `z` alias the loop's iterate, B.d and B.xc,
-# which are mutated in place, so this is constructed once and reused every iteration.
-mutable struct LBFGSBLineFn{D,Tx,Tl,Tu}
+# allocating per call. `dir` and `z` alias B.d and B.xc, which are mutated in
+# place; `x` is the loop's iterate and is reassigned when the loop rotates its
+# buffers. The step and value of the last evaluation are kept, so that the loop
+# can take the accepted point from here when the search ended on it.
+mutable struct LBFGSBLineFn{D,Tx,Tl,Tu,Tα,Tf}
     obj::D
     x::Tx
     dir::Tx
@@ -928,12 +986,56 @@ mutable struct LBFGSBLineFn{D,Tx,Tl,Tu}
     lb::Tl
     ub::Tu
     z::Tx
+    α::Tα
+    fα::Tf
 end
 
 function (φ::LBFGSBLineFn)(α)
     trial_point!(φ.xα, φ.x, φ.dir, α, φ.lb, φ.ub, φ.z)
     fα, gα = value_gradient!(φ.obj, φ.xα)
+    φ.α = α
+    φ.fα = fα
     return (fα, dot(gα, φ.dir))
+end
+
+# d = z - x, with g'd, ‖d‖ and the largest α that keeps x + αd in the box, in one
+# pass. The signs of d are unpredictable, so the bound is chosen by ifelse.
+function search_direction!(d, z, x, g, lb, ub)
+    T = eltype(d)
+    dφ = zero(T)
+    dd = zero(T)
+    αmax = T(Inf)
+    for i in eachindex(d, z, x, g, lb, ub)
+        di = z[i] - x[i]
+        d[i] = di
+        dφ += g[i] * di
+        dd += di * di
+        r = (ifelse(di > 0, ub[i], lb[i]) - x[i]) / di
+        αmax = ifelse((di != 0) & (r < αmax), r, αmax)
+    end
+    return dφ, sqrt(dd), αmax
+end
+
+# copyto!(dst, src), returning whether every element is finite.
+function copy_finite!(dst, src)
+    ok = true
+    for i in eachindex(dst, src)
+        v = src[i]
+        dst[i] = v
+        ok &= isfinite(v)
+    end
+    return ok
+end
+
+# ‖x - y‖∞ and ‖x‖∞ in one pass, for x_abschange and x_relchange.
+function linf_change(x, y)
+    Δ = zero(eltype(x))
+    xmax = zero(eltype(x))
+    for i in eachindex(x, y)
+        Δ = max(Δ, abs(x[i] - y[i]))
+        xmax = max(xmax, abs(x[i]))
+    end
+    return Δ, xmax
 end
 
 function optimize(
@@ -1001,8 +1103,8 @@ function optimize(
     x_candidate = similar(x)
     g_new = similar(g)
 
-    # x and B.d alias the fields the line search reads; both are mutated in place.
-    φ = LBFGSBLineFn(d, x, B.d, similar(x), l, u, B.xc)
+    boxed = all(i -> isfinite(l[i]) && isfinite(u[i]), eachindex(x))
+    φ = LBFGSBLineFn(d, x, B.d, similar(x), l, u, B.xc, T(NaN), oftype(f_x, NaN))
 
     tr = OptimizationTrace{typeof(f_x),typeof(method)}()
     tracing = options.store_trace || options.show_trace || options.extended_trace
@@ -1030,13 +1132,18 @@ function optimize(
     while !converged && !stopped && iteration < options.iterations
         iteration += 1
 
-        # Generalized Cauchy point (writes B.xc, B.c_ws).
-        cauchy_point!(B, x, g, l, u)
-
-        # Free/active sets and the K factorization for the subspace solve.
-        for i = 1:n
-            B.iwhere[i] = (B.xc[i] <= l[i] || B.xc[i] >= u[i]) ? 1 : 0
+        # Generalized Cauchy point (writes B.xc, B.c_ws). Without bounds the subspace
+        # step minimizes the model over all variables wherever it starts, so with a
+        # memory it starts at x (c = 0), as the Fortran mainlb does.
+        if !B.cnstnd && B.k > 0
+            copyto!(B.xc, x)
+            fill!(B.c_ws, zero(T))
+        else
+            cauchy_point!(B, x, g, l, u)
         end
+
+        # Free/active sets (B.iwhere is set with the Cauchy point) and the K
+        # factorization for the subspace solve.
         nenter, ileave, wrk = freev!(B, iteration - 1, updatd)
         if wrk && B.k > 0
             info = formk!(B, nenter, ileave, updatd)
@@ -1045,54 +1152,49 @@ function optimize(
                 reset_history!(B)
                 updatd = false
                 cauchy_point!(B, x, g, l, u)
-                for i = 1:n
-                    B.iwhere[i] = (B.xc[i] <= l[i] || B.xc[i] >= u[i]) ? 1 : 0
-                end
                 freev!(B, 0, false)
             end
         end
 
         # Subspace minimization (writes B.xc); search direction d = xc - x.
         subspace_optimize!(B, x, g, l, u; clip = method.clip_subspace)
-        @. B.d = B.xc - x
+        dφ0, dnorm, αmax = search_direction!(B.d, B.xc, x, g, l, u)
 
-        dφ0 = dot(g, B.d)
         # !(dφ0 < 0) also catches a NaN slope from an overflowed memory
         if !(dφ0 < 0) && B.k > 0
             # Not a descent direction: restart from B = I and redo the step.
             reset_history!(B)
             updatd = false
             cauchy_point!(B, x, g, l, u)
-            for i = 1:n
-                B.iwhere[i] = (B.xc[i] <= l[i] || B.xc[i] >= u[i]) ? 1 : 0
-            end
             freev!(B, 0, false)
             subspace_optimize!(B, x, g, l, u; clip = method.clip_subspace)
-            @. B.d = B.xc - x
-            dφ0 = dot(g, B.d)
+            dφ0, dnorm, αmax = search_direction!(B.d, B.xc, x, g, l, u)
         end
         if !(dφ0 < 0)
             ls_failed = true
             break
         end
 
-        αmax = max_steplength(x, B.d, l, u)
-        dnorm = norm(B.d)
-        boxed = all(i -> isfinite(l[i]) && isfinite(u[i]), eachindex(x))
         α₀ = if B.k == 0 && !boxed && dnorm > 0
             min(one(T) / dnorm, αmax)
         else
             min(T(method.stepsize), αmax)
         end
 
+        φ.α = T(NaN)
         α, _, _ = find_steplength(method.linesearch, φ, f_x, dφ0, α₀; αmax = αmax)
 
-        # The point the line search evaluated last at α (see trial_point!).
-        isfinite(α) && trial_point!(x_candidate, x, B.d, α, l, u, B.xc)
+        # The point at α (see trial_point!). When the search ended on its last
+        # evaluation, that point, value and gradient are taken over as they are.
+        last_eval = isfinite(α) && α == φ.α
+        if last_eval
+            x_candidate, φ.xα = φ.xα, x_candidate
+        elseif isfinite(α)
+            trial_point!(x_candidate, x, B.d, α, l, u, B.xc)
+        end
         f_new, g_new_ok = if isfinite(α) && x_candidate != x
-            fn, _gn = value_gradient!(d, x_candidate)
-            g_new .= _gn
-            fn, all(isfinite, g_new)
+            fn, _gn = last_eval ? (φ.fα, NLSolversBase.gradient(d)) : value_gradient!(d, x_candidate)
+            fn, copy_finite!(g_new, _gn)
         else
             oftype(f_x, NaN), false
         end
@@ -1114,17 +1216,17 @@ function optimize(
         yts = update_compact!(B, x, x_candidate, g, g_new)
         updatd = yts > 0
 
-        copyto!(x_previous, x)
+        # x_previous ← x ← x_candidate and g ← g_new, by rotating the buffers
+        x_previous, x, x_candidate = x, x_candidate, x_previous
+        g, g_new = g_new, g
+        φ.x = x
         f_x_previous = f_x
-        copyto!(x, x_candidate)   # in place: keeps φ.x valid
         f_x = f_new
-        copyto!(g, g_new)
 
         pgnorm = pg_norm(x, g, l, u)
 
-        x_converged =
-            x_abschange(x, x_previous) <= options.x_abstol ||
-            x_relchange(x, x_previous) <= options.x_reltol
+        Δx, xmax = linf_change(x, x_previous)
+        x_converged = Δx <= options.x_abstol || Δx / xmax <= options.x_reltol
         f_converged =
             f_abschange(f_x, f_x_previous) <= options.f_abstol ||
             f_relchange(f_x, f_x_previous) <= options.f_reltol
@@ -1149,8 +1251,7 @@ function optimize(
            f_limit_reached ||
            g_limit_reached ||
            (f_increased && !options.allow_f_increases) ||
-           !isfinite(f_x) ||
-           any(!isfinite, g)
+           !isfinite(f_x)
             stopped = true
         end
     end

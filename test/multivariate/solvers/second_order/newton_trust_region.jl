@@ -1,4 +1,4 @@
-using Optim, Test, Distributions, Random, LinearAlgebra
+using Optim, Test, Distributions, Random, LinearAlgebra, StableRNGs
 Random.seed!(3288)
 
 # the decomposition `solve_tr_subproblem!` solves from, for the tests that hold one
@@ -283,7 +283,9 @@ tr_cache(gr, H) =
             NewtonTrustRegion(),
             Optim.Options(show_trace = false, allow_f_increases = false, g_tol = 1e-5),
         )
-        @test Optim.termination_code(res) == Optim.TerminationCode.NoXChange
+        # Stalled at the kink; the last accepted step may raise f within its rounding error.
+        @test Optim.termination_code(res) in
+              (Optim.TerminationCode.NoXChange, Optim.TerminationCode.ObjectiveIncreased)
 
         res = Optim.optimize(
             t -> -ll(t[1]),
@@ -549,5 +551,105 @@ tr_cache(gr, H) =
             Optim.Options(x_reltol = 1e-3, g_abstol = 0.0, iterations = 10_000))
         @test Optim.x_converged(res)
         @test Optim.iterations(res) < 10_000
+    end
+
+    @testset "epsilon_f" begin
+        @test iszero(NewtonTrustRegion().epsilon_f)
+        @test_throws DomainError(-1.0, "noise level of the objective must be non-negative") NewtonTrustRegion(epsilon_f = -1.0)
+    end
+
+    @testset "a final step at the rounding level of f" begin
+        # Robust regression: the predicted decrease of the last step is about eps(f).
+        for n = 20:5:215
+            rng = StableRNG(n)
+            A = randn(rng, 2n, n) / sqrt(n)
+            b = A * randn(rng, n) + 5 * randn(rng, 2n) .* (rand(rng, 2n) .< 0.3)
+            f(x) = (r = A * x - b; sum(log1p, r .^ 2) + sum(abs2, x) / 2)
+            g!(G, x) = (r = A * x - b; mul!(G, A', 2 .* r ./ (1 .+ r .^ 2)); G .+= x)
+            function h!(H, x)
+                r = A * x - b
+                mul!(H, A', (2 .* (1 .- r .^ 2) ./ (1 .+ r .^ 2) .^ 2) .* A)
+                H[diagind(H)] .+= 1
+                return H
+            end
+            res = Optim.optimize(f, g!, h!, 3 * randn(rng, n), NewtonTrustRegion())
+            @test Optim.converged(res)
+            @test Optim.iterations(res) < 50
+        end
+    end
+
+    @testset "a noisy objective" begin
+        # A nonlinear least-squares objective in 5 variables with bounded noise
+        # of level 1.5e-11 on f and 1e-13 on the gradient. The noise is a
+        # function of the bits of x, so it is reproducible at a point and
+        # independent at the next float, and splitmix64 keeps it the same on
+        # every Julia version. Near the solution the predicted reduction falls
+        # below the noise, which is where the classical ratio stops carrying
+        # information.
+        n = 5
+        noise_f = 1.5e-11
+        noise_g = 1.0e-13
+        Q = qr(reshape([sin(3i + 7j) for i = 1:n, j = 1:n], n, n)).Q * I
+        A = Q * Diagonal([1.08, 4.85, 16.1, 78.1, 1040.0]) * Q'
+        xstar = [0.3, -0.7, 0.2, 0.9, -0.4]
+        L = Matrix(cholesky(Symmetric(A)).L')
+        # One step of SplitMix64, constants as in Vigna's public-domain
+        # reference implementation (https://prng.di.unimi.it/splitmix64.c),
+        # used here as a hash of the bits of x.
+        function splitmix(z::UInt64)
+            z += 0x9e3779b97f4a7c15
+            z = (z ⊻ (z >> 30)) * 0xbf58476d1ce4e5b9
+            z = (z ⊻ (z >> 27)) * 0x94d049bb133111eb
+            return z ⊻ (z >> 31)
+        end
+        function nz(x, seed)
+            h = splitmix(UInt64(seed))
+            for xi in x
+                h = splitmix(h ⊻ reinterpret(UInt64, Float64(xi)))
+            end
+            return 2 * (h / typemax(UInt64)) - 1
+        end
+        # r(u) = u + 0.3u.^2 with u = L(x - xstar), f = |r|^2/2 plus noise
+        function f(x)
+            u = L * (x .- xstar)
+            return sum(abs2, u .+ 0.3 .* u .^ 2) / 2 + noise_f * nz(x, 0)
+        end
+        function g!(G, x)
+            u = L * (x .- xstar)
+            G .= L' * ((1 .+ 0.6 .* u) .* (u .+ 0.3 .* u .^ 2))
+            G .+= noise_g .* [nz(x, i) for i = 1:n]
+            return G
+        end
+        function h!(H, x)
+            u = L * (x .- xstar)
+            H .= L' * Diagonal((1 .+ 0.6 .* u) .^ 2 .+ 0.6 .* (u .+ 0.3 .* u .^ 2)) * L
+            return H
+        end
+        x0 = xstar .+ [2.0, -1.5, 1.0, -2.0, 1.5]
+        options = Optim.Options(g_abstol = 1e-8, iterations = 500,
+                                store_trace = true, extended_trace = true)
+        gnorm(res) = (G = zeros(n); g!(G, Optim.minimizer(res)); norm(G, Inf))
+
+        # Without a noise level the radius collapses, but a step with no
+        # predicted reduction is still accepted, so the run reaches g_abstol
+        # instead of stopping with x unchanged at |g| ~ 4e-6.
+        res = Optim.optimize(f, g!, h!, copy(x0), NewtonTrustRegion(), options)
+        @test Optim.converged(res)
+        @test gnorm(res) <= 1e-8
+
+        # With the noise level supplied the radius never shrinks and the run
+        # converges like a noiseless Newton method.
+        res = Optim.optimize(f, g!, h!, copy(x0), NewtonTrustRegion(epsilon_f = noise_f), options)
+        @test Optim.converged(res)
+        @test gnorm(res) <= 1e-8
+        @test Optim.iterations(res) <= 20
+        @test minimum(t.metadata["delta"] for t in Optim.trace(res)) >= 1.0
+
+        # A noise level a hundred times too small must do no worse than none.
+        # Rejecting a step with no predicted reduction on f rising above it
+        # stops the run at |g| ~ 4e-6 with the radius at 4e-17.
+        res = Optim.optimize(f, g!, h!, copy(x0), NewtonTrustRegion(epsilon_f = noise_f / 100), options)
+        @test Optim.converged(res)
+        @test gnorm(res) <= 1e-8
     end
 end
