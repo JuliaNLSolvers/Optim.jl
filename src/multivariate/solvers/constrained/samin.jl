@@ -363,6 +363,38 @@ function optimize(
         f_x = f_opt
         copyto!(x, x_opt)
     end
+
+    _time = time()
+    return MultivariateOptimizationResults(
+        method,
+        x0,
+        x_opt,
+        f_opt,
+        NLSolversBase.f_calls(d),
+        x_tol,
+        0.0,
+        x_absΔ,
+        NaN,
+        f_tol,
+        0.0,
+        f_absΔ,
+        NaN,
+        0.0,
+        NaN,
+        tr,
+        NLSolversBase.f_calls(d),
+        NLSolversBase.g_calls(d),
+        NLSolversBase.jvp_calls(d),
+        NLSolversBase.h_calls(d),
+        NLSolversBase.hvp_calls(d),
+        options.time_limit,
+        _time - time0,
+        (; x_converged, f_converged, g_converged = false,
+            iterations = NLSolversBase.f_calls(d) >= options.iterations,
+            time_limit = _time - time0 > options.time_limit,
+            callback = stopped_by_callback, f_increased = false, ls_failed = false),
+        TerminationCode.NotImplemented,
+    )
 end
 
 # TODO
