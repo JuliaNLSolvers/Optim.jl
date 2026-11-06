@@ -51,6 +51,8 @@ _self_scale(r::AlBaali, ρ) = r.cutoff <= ρ < 1 ? ρ : one(ρ)
 
 Base.summary(io::IO, ::BFGS) = print(io, "BFGS")
 
+_supports_newton_decrement(::BFGS) = true
+
 """
 # BFGS
 ## Constructor
@@ -134,6 +136,9 @@ mutable struct BFGSState{Tx,Tm,T,G} <: AbstractOptimizerState
     f_candidate::T
     # true until the first update after the initial matrix was set (initial_scaling)
     rescale_invH::Bool
+    # false until the first update after the initial matrix was set, which carries no
+    # curvature for the Newton decrement to use
+    invH_updated::Bool
     @add_linesearch_fields()
 end
 
@@ -173,6 +178,7 @@ function reset!(method, state::BFGSState, obj, x)
         state.invH .= method.initial_invH(x)
     end
     state.rescale_invH = true
+    state.invH_updated = false
 
     return nothing
 end
@@ -217,19 +223,24 @@ function initial_state(method::BFGS, ::Options, d, x0::AbstractArray)
         fill!(similar(g_x), NaN), # Trial gradient in state.g_candidate
         oftype(f_x, NaN), # Trial f value in state.f_candidate
         true, # rescale_invH
+        false, # invH_updated
         @initial_linesearch()...,
     )
 end
 
 
-function update_state!(d, state::BFGSState, method::BFGS)
-    # Set the search direction
+function search_direction!(d, state::BFGSState, method::BFGS)
     # Search direction is the negative gradient divided by the approximate Hessian
     mul!(vec(state.s), state.invH, vec(state.g_x))
     rmul!(state.s, eltype(state.s)(-1))
     project_tangent!(method.manifold, state.s, state.x)
 
-    # Determine the distance of movement along the search line
+    return state.invH_updated ? _newton_decrement(state.f_x, state.g_x, state.s) :
+           oftype(state.f_x, Inf)
+end
+
+function update_state!(d, state::BFGSState, method::BFGS)
+    # Determine the distance of movement along the search line set by `search_direction!`
     # This call resets invH to initial_invH if the former is not positive
     # semi-definite
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
@@ -292,6 +303,7 @@ function accept_step!(d, state::BFGSState, method::BFGS, options)
         # with w = c1 / 2 * s - c2 * u, which keeps invH exactly symmetric
         u .= (c1 / 2) .* dx .- c2 .* u
         _symmetric_rank2_update!(invH, vec(dx), vec(u))
+        state.invH_updated = true
     end
     return true
 end

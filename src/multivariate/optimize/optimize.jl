@@ -27,6 +27,52 @@ end
 
 after_while!(d, state, method, options) = nothing
 
+# Compute the search direction at `state.x` for the next `update_state!`, and return half
+# the squared Newton decrement, λ²/2 = -gᵀs/2 for s = -B⁻¹g, the decrease the method's
+# quadratic model predicts for a full step. It returns Inf when the method has no
+# curvature estimate it can trust, and must change nothing but the direction and caches
+# that depend on `state.x` alone, since the main loop may stop right after it and may call
+# it once more at the returned point. Methods that compute their direction in
+# `update_state!` keep this fallback, whose NaN never satisfies the tolerances.
+search_direction!(d, state, method) = oftype(state.f_x, NaN)
+
+_supports_newton_decrement(method::AbstractOptimizer) = false
+
+# -gᵀs/2 for the direction s = -B⁻¹g, in the type of f. Inf unless s is a descent
+# direction, which a B that has lost positive definiteness can fail to give, or the
+# gradient is zero, which has a zero decrement under any B.
+function _newton_decrement(f_x, g_x, s)
+    gs = real(dot(g_x, s))
+    return if gs < 0 && isfinite(gs)
+        oftype(f_x, -gs / 2)
+    elseif iszero(gs) && all(iszero, g_x)
+        zero(f_x)
+    else
+        oftype(f_x, Inf)
+    end
+end
+
+_newton_decrement_enabled(options::Options) =
+    !isnan(options.newton_decrement_abstol) || !isnan(options.newton_decrement_reltol)
+
+function _check_newton_decrement_support(method::AbstractOptimizer, options::Options)
+    if _newton_decrement_enabled(options) && !_supports_newton_decrement(method)
+        throw(
+            ArgumentError(
+                LazyString(
+                    "`newton_decrement_abstol` and `newton_decrement_reltol` are not supported by ",
+                    summary(method),
+                    ".",
+                ),
+            ),
+        )
+    end
+    return nothing
+end
+
+_newton_decrement_converged(θ, f_x, options::Options) =
+    θ <= options.newton_decrement_abstol || θ <= options.newton_decrement_reltol * abs(f_x)
+
 # Validate and commit the trial iterate produced by update_state! / update_fgh!.
 # Default: no-op (un-migrated solvers mutate state.x/f_x/g_x directly and have
 # nothing to accept). Migrated solvers override this to:
@@ -52,6 +98,7 @@ function optimize(
     state = initial_state(method, options, d, initial_x),
 ) where {D<:AbstractObjective,M<:AbstractOptimizer,Tx<:AbstractArray,T,TCallback}
     (; callback) = options
+    _check_newton_decrement_support(method, options)
 
     t0 = time() # Initial time stamp used to control early stopping by options.time_limit
     tr = OptimizationTrace{typeof(state.f_x),typeof(method)}()
@@ -63,6 +110,8 @@ function optimize(
     f_limit_reached, g_limit_reached, h_limit_reached = false, false, false
     x_converged, f_converged, f_increased, counter_f_tol = false, false, false, 0
     small_trustregion_radius = false
+    newton_decrement_converged = false
+    newton_decrement = oftype(state.f_x, NaN)
 
     g_converged, stopped = initial_convergence(state, options)
     converged = g_converged || stopped
@@ -78,6 +127,14 @@ function optimize(
     
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
+        # Stop before the line search if the model predicts too little decrease to
+        # be worth a step
+        newton_decrement = search_direction!(d, state, method)
+        if _newton_decrement_converged(newton_decrement, state.f_x, options)
+            newton_decrement_converged = converged = true
+            break
+        end
+
         iteration += 1
 
         # Convention: When `update_state!` is called, then `state` satisfies:
@@ -165,6 +222,15 @@ function optimize(
     # in variables besides the option settings
     Tf = typeof(state.f_x)
     f_incr_pick = f_increased && !options.allow_f_increases
+
+    # Report the decrement at the returned point. The loop has it only if it stopped on it.
+    if !_newton_decrement_enabled(options) || f_incr_pick ||
+       !isfinite(state.f_x) || !all(isfinite, state.g_x)
+        newton_decrement = oftype(newton_decrement, NaN)
+    elseif !newton_decrement_converged
+        newton_decrement = search_direction!(d, state, method)
+    end
+
     stopped_by = (x_converged, f_converged, g_converged,
         f_limit_reached = f_limit_reached,
         g_limit_reached = g_limit_reached,
@@ -175,6 +241,7 @@ function optimize(
         ls_failed = !ls_success,
         iterations = iteration == options.iterations,
         small_trustregion_radius,
+        newton_decrement_converged,
     )
 
     termination_code =
@@ -213,6 +280,9 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        Tf(options.newton_decrement_abstol),
+        Tf(options.newton_decrement_reltol),
+        newton_decrement,
     )
 end
 
@@ -222,6 +292,8 @@ function _termination_code(d, gres, state, stopped_by, options)
         TerminationCode.NelderMeadCriterion
     elseif !(state isa NelderMeadState) && gres <= options.g_abstol
         TerminationCode.GradientNorm
+    elseif stopped_by.newton_decrement_converged
+        TerminationCode.NewtonDecrement
     elseif stopped_by.ls_failed
         # A failed line search leaves x where it was, so the change tests below
         # would all read it as convergence

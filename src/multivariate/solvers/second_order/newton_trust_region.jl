@@ -48,14 +48,15 @@ The eigenbasis of H and the gradient expressed in it. The fields are named after
 
 This is the sub-problem's only input, and `refresh!` is the only thing that writes
 it. Every write to g or H marks it out of date, by clearing `basis_current` on the
-state, and the next solve rebuilds it; the two therefore cannot drift apart. A
+state, and the next iteration rebuilds it; the two therefore cannot drift apart. A
 rejected step restores the g and H this was built from and changes only delta, so
 it leaves the flag set, which is what saves the O(n³) decomposition.
 
-The rebuild is deferred to the solve rather than done at the write, so that a run
-converging at its starting point never decomposes at all. That matters beyond the
-work saved: `eigen` has no method for a `BigFloat` Hessian, and such a run is the
-one case where `NewtonTrustRegion` still serves one (see issue #720).
+The rebuild is deferred to the start of the next iteration (`search_direction!`)
+rather than done at the write, so that a run converging at its starting point never
+decomposes at all. That matters beyond the work saved: `eigen` has no method for a
+`BigFloat` Hessian, and such a run is the one case where `NewtonTrustRegion` still
+serves one (see issue #720).
 
 A Hessian with no eigenbasis gives an all-NaN cache, which the solve screens for.
 ==#
@@ -544,6 +545,8 @@ end
 
 Base.summary(io::IO, ::NewtonTrustRegion) = print(io, "Newton's Method (Trust Region)")
 
+_supports_newton_decrement(::NewtonTrustRegion) = true
+
 mutable struct NewtonTrustRegionState{Tx,T,Tg,TH,TC<:TRSubproblemCache} <:
                AbstractOptimizerState
     const x::Tx
@@ -609,7 +612,7 @@ function initial_state(method::NewtonTrustRegion, options, d, x0)
 end
 
 
-function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+function search_direction!(d, state::NewtonTrustRegionState, method::NewtonTrustRegion)
     # Rebuild the basis if g or H have been written since it was built. A
     # rejected step writes neither, and shrinking delta does not move it.
     if !state.basis_current
@@ -617,7 +620,18 @@ function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, me
         state.basis_current = true
     end
 
-    # Find the next step direction
+    # The decrement is the model decrease of the Newton step, lambda = 0, which
+    # minimizes the model only when H is positive definite. A NaN basis fails the test.
+    (; H_eigvals, qg) = state.subproblem_cache
+    return if H_eigvals[1] > 0
+        oftype(state.f_x, -model_value_eigen(H_eigvals, qg, zero(eltype(H_eigvals)), 1))
+    else
+        oftype(state.f_x, Inf)
+    end
+end
+
+function update_state!(d::TwiceDifferentiable, state::NewtonTrustRegionState, method::NewtonTrustRegion)
+    # Find the next step direction in the basis `search_direction!` brought up to date
     m, state.interior, state.lambda, state.hard_case, state.reached_subproblem_solution =
         solve_tr_subproblem!(state.subproblem_cache, state.delta, state.s)
 

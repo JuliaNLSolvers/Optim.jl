@@ -135,6 +135,8 @@ end
 
 Base.summary(io::IO, ::LBFGS) = print(io, "L-BFGS")
 
+_supports_newton_decrement(::LBFGS) = true
+
 mutable struct LBFGSState{Tx,Tdx,Tdg,T,G} <: AbstractOptimizerState
     x::Tx
     g_x::G
@@ -206,16 +208,12 @@ function initial_state(method::LBFGS, options::Options, d, x0::AbstractArray)
     )
 end
 
-function update_state!(d, state::LBFGSState, method::LBFGS)
-    # Increment the number of steps we've had to perform. Rolled back in
-    # accept_step! if the candidate is rejected, so the history index for the
-    # next attempt stays consistent.
-    state.pseudo_iteration += 1
-
+function search_direction!(d, state::LBFGSState, method::LBFGS)
     # update the preconditioner
     _apply_precondprep(method, state.x)
 
-    # Determine the L-BFGS search direction # FIXME just pass state and method?
+    # Determine the L-BFGS search direction for the step `update_state!` counts next
+    # FIXME just pass state and method?
     twoloop!(
         state.s,
         state.g_x,
@@ -223,7 +221,7 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
         state.dx_history,
         state.dg_history,
         method.m,
-        state.pseudo_iteration,
+        state.pseudo_iteration + 1,
         state.twoloop_alpha,
         state.twoloop_q,
         method.scaleinvH0,
@@ -231,7 +229,29 @@ function update_state!(d, state::LBFGSState, method::LBFGS)
     )
     project_tangent!(method.manifold, state.s, state.x)
 
-    # Determine the distance of movement along the search line
+    return _has_curvature_pairs(state, method.m) ?
+           _newton_decrement(state.f_x, state.g_x, state.s) : oftype(state.f_x, Inf)
+end
+
+# Whether the pairs the two-loop recursion used describe positive curvature. Without a
+# pair the direction is -P⁻¹g, a scaling and not curvature, and `accept_step!` keeps
+# pairs with dot(dx, dg) < 0, since it only drops an infinite rho.
+function _has_curvature_pairs(state::LBFGSState, m::Integer)
+    upper = state.pseudo_iteration
+    upper > 0 || return false
+    for index = max(1, upper - m + 1):upper
+        state.rho[mod1(index, m)] > 0 || return false
+    end
+    return true
+end
+
+function update_state!(d, state::LBFGSState, method::LBFGS)
+    # Increment the number of steps we've had to perform. Rolled back in
+    # accept_step! if the candidate is rejected, so the history index for the
+    # next attempt stays consistent.
+    state.pseudo_iteration += 1
+
+    # Determine the distance of movement along the search line set by `search_direction!`
     lssuccess = perform_linesearch!(state, method, ManifoldObjective(method.manifold, d))
 
     # Propose trial iterate (do NOT mutate state.x; accept_step! commits)

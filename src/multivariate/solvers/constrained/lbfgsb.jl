@@ -1081,6 +1081,7 @@ function optimize(
     T = eltype(x0)
     t0 = time()
     (; callback) = options
+    _check_newton_decrement_support(method, options)
 
     n = length(x0)
     (length(l) == n && length(u) == n) ||
@@ -1273,6 +1274,7 @@ function optimize(
         f_converged = f_converged,
         g_converged = g_converged,
         small_trustregion_radius = false,
+        newton_decrement_converged = false,
     )
 
     termination_code = _termination_code(
@@ -1309,5 +1311,8 @@ function optimize(
         _time - t0,
         stopped_by,
         termination_code,
+        Tf(NaN),
+        Tf(NaN),
+        oftype(pgnorm, NaN),
     )
 end

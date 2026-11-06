@@ -366,6 +366,7 @@ function nlprecon_post_accelerate!(
             mul!(invH, vec(u), vec(dx)', -c2, 1)
             mul!(invH, vec(dx), vec(u)', -c2, 1)
         end
+        inner.invH_updated = true
     end
     return nothing
 end
