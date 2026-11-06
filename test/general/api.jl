@@ -116,7 +116,9 @@
     options_sa = Optim.Options(iterations = 10, store_trace = true, show_trace = false)
     res = optimize(f, g!, h!, initial_x, SimulatedAnnealing(), options_sa)
 
-    res = optimize(f, g!, h!, initial_x, BFGS(), options_g)
+    # the values checked below are those of the unscaled method after 10 iterations
+    unscaled = BFGS(initial_stepnorm = nothing, initial_scaling = nothing, self_scaling = nothing)
+    res = optimize(f, g!, h!, initial_x, unscaled, options_g)
     options_ext = Optim.Options(
         g_abstol = 1e-12,
         iterations = 10,
