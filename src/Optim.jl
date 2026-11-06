@@ -18,7 +18,7 @@ module Optim
 
 import ADTypes
 
-using PositiveFactorizations: Positive # for globalization strategy in Newton
+using PositiveFactorizations: Positive # for globalization strategy in IPNewton
 
 using LineSearches: LineSearches # for globalization strategy in Quasi-Newton algs
 
@@ -61,14 +61,13 @@ using LinearAlgebra:
     eigen,
     cholesky,
     cholesky!,
-    Cholesky, # factorizations
     I,
     svd,
     issuccess,
     ldiv!,
     dot
 
-using SparseArrays: AbstractSparseMatrix
+using SparseArrays: SparseArrays, AbstractSparseMatrix
 
 using EnumX: @enumx # Better enums
 
@@ -174,6 +173,7 @@ include("multivariate/solvers/first_order/cg.jl")
 
 ## Newton
 ### Line search
+include("multivariate/solvers/second_order/hessian_interface.jl")
 include("multivariate/solvers/second_order/newton.jl")
 include("multivariate/solvers/second_order/krylov_trust_region.jl")
 ### Trust region
